@@ -551,9 +551,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Theory]
-        [InlineData("GET")]
-        [InlineData("PUT")]
-        public async Task ActivityDisplayNameIsSetUsingRouteData(string action)
+        [InlineData("Get")]
+        [InlineData("Put")]
+        public async Task ActivityDisplayNameAndHttpRouteIsSetUsingRouteData(string action)
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
 
@@ -569,15 +569,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             {
                 using var client = testFactory.CreateClient();
                 HttpRequestMessage request = null;
-                if (action == "GET")
+                if (action == "Get")
                 {
                     request = new HttpRequestMessage(HttpMethod.Get, "/api/values/2");
                 }
 
-                if (action == "PUT")
+                if (action == "Put")
                 {
                     request = new HttpRequestMessage(HttpMethod.Put, "/api/values/2");
-                    var content = new StringContent("Name", Encoding.UTF8, "application/json");
+                    var content = new StringContent("TestContent", Encoding.UTF8, "application/json");
                     request.Content = content;
                 }
 
@@ -594,6 +594,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
             Assert.Equal($"Values/{action} [id]", activity.DisplayName);
+            Assert.Equal($"Values/{action} [id]", activity.GetTagValue(SemanticConventions.AttributeHttpRoute) as string);
 
             ValidateAspNetCoreActivity(activity, "/api/values/2");
         }
