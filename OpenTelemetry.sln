@@ -216,7 +216,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentati
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-histogram", "docs\metrics\getting-started-histogram\getting-started-histogram.csproj", "{92ED77A6-37B4-447D-B4C4-15DB005A589C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "getting-started-gauge", "docs\metrics\getting-started-gauge\getting-started-gauge.csproj", "{E7F491CC-C37E-4A56-9CA7-8F77F59E0614}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "getting-started-async-gauge", "docs\metrics\getting-started-gauge\getting-started-async-gauge.csproj", "{E7F491CC-C37E-4A56-9CA7-8F77F59E0614}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

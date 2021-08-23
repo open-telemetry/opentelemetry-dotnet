@@ -6,8 +6,8 @@ SDK](https://dotnet.microsoft.com/download) on your computer.
 Create a new console application and run it:
 
 ```sh
-dotnet new console --output getting-started-gauge
-cd getting-started-gauge
+dotnet new console --output getting-started-async-gauge
+cd getting-started-async-gauge
 dotnet run
 ```
 
