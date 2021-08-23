@@ -61,8 +61,20 @@ namespace OpenTelemetry.Metrics
             {
                 aggregators.Add(new SumMetricAggregatorLong(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
             }
+            else if (this.instrument.GetType() == typeof(ObservableCounter<long>)
+                || this.instrument.GetType() == typeof(ObservableCounter<int>)
+                || this.instrument.GetType() == typeof(ObservableCounter<short>)
+                || this.instrument.GetType() == typeof(ObservableCounter<byte>))
+            {
+                aggregators.Add(new SumMetricAggregatorLong(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
+            }
             else if (this.instrument.GetType() == typeof(Counter<double>)
                 || this.instrument.GetType() == typeof(Counter<float>))
+            {
+                aggregators.Add(new SumMetricAggregatorDouble(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
+            }
+            else if (this.instrument.GetType() == typeof(ObservableCounter<double>)
+                || this.instrument.GetType() == typeof(ObservableCounter<float>))
             {
                 aggregators.Add(new SumMetricAggregatorDouble(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
             }
