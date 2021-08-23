@@ -24,9 +24,6 @@ namespace OpenTelemetry.Trace
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public const string StatusCodeKey = "otel.status_code";
         public const string StatusDescriptionKey = "otel.status_description";
-
-        public const string HttpPathKey = "http.path";
-
         public const string DatabaseStatementTypeKey = "db.statement_type";
 
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member

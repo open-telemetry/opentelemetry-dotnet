@@ -573,7 +573,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(ActivityKind.Server, activityToValidate.Kind);
             Assert.Equal(HttpInListener.ActivitySourceName, activityToValidate.Source.Name);
             Assert.Equal(HttpInListener.Version.ToString(), activityToValidate.Source.Version);
-            Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
+            Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SemanticConventions.AttributeHttpTarget) as string);
         }
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)
