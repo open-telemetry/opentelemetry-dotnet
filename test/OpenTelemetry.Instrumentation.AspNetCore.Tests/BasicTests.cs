@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -187,7 +188,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
 
             Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
-            Assert.Equal("api/Values/{id}", activity.DisplayName);
+            Assert.Equal("Values/Get [id]", activity.DisplayName);
 
             Assert.Equal(expectedTraceId, activity.Context.TraceId);
             Assert.Equal(expectedSpanId, activity.ParentSpanId);
@@ -257,7 +258,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
                 var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
                 Assert.True(activity.Duration != TimeSpan.Zero);
-                Assert.Equal("api/Values/{id}", activity.DisplayName);
+                Assert.Equal("Values/Get [id]", activity.DisplayName);
 
                 Assert.Equal(expectedTraceId, activity.Context.TraceId);
                 Assert.Equal(expectedSpanId, activity.ParentSpanId);
@@ -547,6 +548,54 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Assert
             Assert.Equal(shouldFilterBeCalled, filterCalled);
             Assert.Equal(shouldEnrichBeCalled, enrichCalled);
+        }
+
+        [Theory]
+        [InlineData("GET")]
+        [InlineData("PUT")]
+        public async Task ActivityDisplayNameIsSetUsingRouteData(string action)
+        {
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+
+            // Arrange
+            using (var testFactory = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(services =>
+                    {
+                        this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder().AddAspNetCoreInstrumentation()
+                        .AddProcessor(activityProcessor.Object)
+                        .Build();
+                    })))
+            {
+                using var client = testFactory.CreateClient();
+                HttpRequestMessage request = null;
+                if (action == "GET")
+                {
+                    request = new HttpRequestMessage(HttpMethod.Get, "/api/values/2");
+                }
+
+                if (action == "PUT")
+                {
+                    request = new HttpRequestMessage(HttpMethod.Put, "/api/values/2");
+                    var content = new StringContent("Name", Encoding.UTF8, "application/json");
+                    request.Content = content;
+                }
+
+                // Act
+                var response = await client.SendAsync(request);
+
+                // Assert
+                response.EnsureSuccessStatusCode(); // Status Code 200-299
+
+                WaitForProcessorInvocations(activityProcessor, 3);
+            }
+
+            var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
+
+            Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
+            Assert.Equal($"Values/{action} [id]", activity.DisplayName);
+
+            ValidateAspNetCoreActivity(activity, "/api/values/2");
         }
 
         public void Dispose()

@@ -40,9 +40,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly PropertyFetcher<HttpContext> startContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
         private readonly PropertyFetcher<HttpContext> stopContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new PropertyFetcher<Exception>("Exception");
-        private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new PropertyFetcher<object>("actionDescriptor");
-        private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new PropertyFetcher<object>("AttributeRouteInfo");
-        private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new PropertyFetcher<string>("Template");
+        private readonly PropertyFetcher<object> beforeActionRouteDataFetcher = new PropertyFetcher<object>("RouteData");
+        private readonly PropertyFetcher<object> routeValuesFetcher = new PropertyFetcher<object>("Values");
         private readonly bool hostingSupportsW3C;
         private readonly AspNetCoreInstrumentationOptions options;
 
@@ -241,25 +240,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             {
                 if (activity.IsAllDataRequested)
                 {
-                    // See https://github.com/aspnet/Mvc/blob/2414db256f32a047770326d14d8b0e2afd49ba49/src/Microsoft.AspNetCore.Mvc.Core/MvcCoreDiagnosticSourceExtensions.cs#L36-L44
-                    // Reflection accessing: ActionDescriptor.AttributeRouteInfo.Template
-                    // The reason to use reflection is to avoid a reference on MVC package.
-                    // This package can be used with non-MVC apps and this logic simply wouldn't run.
-                    // Taking reference on MVC will increase size of deployment for non-MVC apps.
-                    _ = this.beforeActionActionDescriptorFetcher.TryFetch(payload, out var actionDescriptor);
-                    _ = this.beforeActionAttributeRouteInfoFetcher.TryFetch(actionDescriptor, out var attributeRouteInfo);
-                    _ = this.beforeActionTemplateFetcher.TryFetch(attributeRouteInfo, out var template);
-
-                    if (!string.IsNullOrEmpty(template))
+                    var routeData = this.beforeActionRouteDataFetcher.Fetch(payload);
+                    var routeValues = this.routeValuesFetcher.Fetch(routeData) as IDictionary<string, object>;
+                    if (routeValues != null)
                     {
-                        // override the span name that was previously set to the path part of URL.
-                        activity.DisplayName = template;
-                        activity.SetTag(SemanticConventions.AttributeHttpRoute, template);
+                        var route = GetRoute(routeValues);
+                        activity.DisplayName = route;
+                        activity.SetTag(SemanticConventions.AttributeHttpRoute, route);
                     }
-
-                    // TODO: Should we get values from RouteData?
-                    // private readonly PropertyFetcher beforActionRouteDataFetcher = new PropertyFetcher("routeData");
-                    // var routeData = this.beforActionRouteDataFetcher.Fetch(payload) as RouteData;
                 }
             }
         }
@@ -325,6 +313,58 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
             return builder.ToString();
+        }
+
+        private static string GetRoute(IDictionary<string, object> routeValues)
+        {
+            string route = null;
+
+            if (routeValues.Count > 0)
+            {
+                object controller;
+                routeValues.TryGetValue("controller", out controller);
+                string controllerName = (controller == null) ? string.Empty : controller.ToString();
+
+                if (!string.IsNullOrEmpty(controllerName))
+                {
+                    route = controllerName;
+
+                    if (routeValues.TryGetValue("action", out var action) && action != null)
+                    {
+                        route += "/" + action.ToString();
+                    }
+
+                    if (routeValues.Keys.Count > 2)
+                    {
+                        // Add parameters
+                        var sortedKeys = routeValues.Keys
+                            .Where(key =>
+                                !string.Equals(key, "controller", StringComparison.OrdinalIgnoreCase) &&
+                                !string.Equals(key, "action", StringComparison.OrdinalIgnoreCase) &&
+                                !string.Equals(key, "!__route_group", StringComparison.OrdinalIgnoreCase))
+                            .OrderBy(key => key, StringComparer.OrdinalIgnoreCase)
+                            .ToArray();
+
+                        if (sortedKeys.Length > 0)
+                        {
+                            string arguments = string.Join(@"/", sortedKeys);
+                            route += " [" + arguments + "]";
+                        }
+                    }
+                }
+                else
+                {
+                    object page;
+                    routeValues.TryGetValue("page", out page);
+                    string pageName = (page == null) ? string.Empty : page.ToString();
+                    if (!string.IsNullOrEmpty(pageName))
+                    {
+                        route = pageName;
+                    }
+                }
+            }
+
+            return route;
         }
 
 #if NETSTANDARD2_1 || NETCOREAPP3_1 || NET5_0
