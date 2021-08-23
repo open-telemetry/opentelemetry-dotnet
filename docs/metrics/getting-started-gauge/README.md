@@ -6,8 +6,8 @@ SDK](https://dotnet.microsoft.com/download) on your computer.
 Create a new console application and run it:
 
 ```sh
-dotnet new console --output getting-started-histogram
-cd getting-started-histogram
+dotnet new console --output getting-started-async-gauge
+cd getting-started-async-gauge
 dotnet run
 ```
 
@@ -32,32 +32,26 @@ output from the console, similar to shown below:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-Export 14:30:58.201 14:30:59.177 histogram [tag1=value1;tag2=value2] Histogram, Meter: TestMeter/0.0.1
-Value: Sum: 33862 Count: 62
-(-? - 0) : 0
-(0 - 5) : 0
-(5 - 10) : 0
-(10 - 25) : 2
-(25 - 50) : 0
-(50 - 75) : 1
-(75 - 100) : 1
-(100 - 250) : 6
-(250 - 500) : 18
-(500 - 1000) : 34
-(1000 - ?) : 0
+Service.Nameunknown_service:getting-started-gauge
+Export 15:44:05.262 15:44:05.263 Gauge [tag1=value1;tag2=value2] LongGauge, Meter: TestMeter/0.0.1
+Value: 306
+Export 15:44:05.262 15:44:06.290 Gauge [tag1=value1;tag2=value2] LongGauge, Meter: TestMeter/0.0.1
+Value: 693
+Export 15:44:05.262 15:44:07.302 Gauge [tag1=value1;tag2=value2] LongGauge, Meter: TestMeter/0.0.1
+Value: 78
 ```
 <!-- markdownlint-enable MD013 -->
 
-Congratulations! You are now collecting histogram metrics using OpenTelemetry.
+Congratulations! You are now collecting metrics using OpenTelemetry.
 
 What does the above program do?
 
 The program creates a
 [Meter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meter)
 instance named "TestMeter" and then creates a
-[Histogram](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#histogram)
-instrument from it. This histogram is used to repeatedly report random metric
-measurements until exited after 10 seconds.
+[Asynchronous Gauge](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#asynchronous-gauge)
+instrument from it. This Gauge reports a randomnly generated number as its
+measurement until exited after 10 seconds.
 
 An OpenTelemetry
 [MeterProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meterprovider)
