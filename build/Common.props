@@ -28,13 +28,12 @@
     <GrpcToolsPkgVer>[2.25.0,3.0)</GrpcToolsPkgVer>
     <MicrosoftAspNetCoreHttpAbstractionsPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpAbstractionsPkgVer>
     <MicrosoftAspNetCoreHttpFeaturesPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpFeaturesPkgVer>
-    <MicrosoftAspNetTelemetryCorrelationPkgVer>[1.0.7,2.0)</MicrosoftAspNetTelemetryCorrelationPkgVer>
     <MicrosoftCodeAnalysisAnalyzersPkgVer>[3.3.1]</MicrosoftCodeAnalysisAnalyzersPkgVer>
     <MicrosoftCodeCoveragePkgVer>[16.10.0]</MicrosoftCodeCoveragePkgVer>
-    <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,6.0)</MicrosoftExtensionsHostingAbstractionsPkgVer>
-    <MicrosoftExtensionsLoggingPkgVer>[2.1.0,6.0)</MicrosoftExtensionsLoggingPkgVer>
-    <MicrosoftExtensionsLoggingConfigurationPkgVer>[2.1.0,6.0)</MicrosoftExtensionsLoggingConfigurationPkgVer>
-    <MicrosoftExtensionsOptionsPkgVer>[2.1.0,6.0)</MicrosoftExtensionsOptionsPkgVer>
+    <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,)</MicrosoftExtensionsHostingAbstractionsPkgVer>
+    <MicrosoftExtensionsLoggingPkgVer>[2.1.0,)</MicrosoftExtensionsLoggingPkgVer>
+    <MicrosoftExtensionsLoggingConfigurationPkgVer>[2.1.0,)</MicrosoftExtensionsLoggingConfigurationPkgVer>
+    <MicrosoftExtensionsOptionsPkgVer>[2.1.0,)</MicrosoftExtensionsOptionsPkgVer>
     <MicrosoftNETFrameworkReferenceAssembliesPkgVer>[1.0.0,2.0)</MicrosoftNETFrameworkReferenceAssembliesPkgVer>
     <MicrosoftSourceLinkGitHubPkgVer>[1.0.0,2.0)</MicrosoftSourceLinkGitHubPkgVer>
     <OpenTracingPkgVer>[0.12.1,0.13)</OpenTracingPkgVer>
@@ -57,7 +56,7 @@
     <PackageReference Include="StyleCop.Analyzers" Version="$(StyleCopAnalyzersPkgVer)" Condition="'$(SkipAnalysis)'!='true'">
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.CodeCoverage" Version="$(MicrosoftCodeCoveragePkgVer)" Condition="'$(Configuration)'=='Release'"/>
+    <PackageReference Include="Microsoft.CodeCoverage" Version="$(MicrosoftCodeCoveragePkgVer)" PrivateAssets="All" Condition="'$(Configuration)'=='Release'" />
     <!--<PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersPkgVer)" Condition="'$(SkipAnalysis)'!='true'">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>-->

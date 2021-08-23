@@ -51,9 +51,20 @@ namespace OpenTelemetry.Metrics
             var dt = DateTimeOffset.UtcNow;
 
             // TODO: Need to map each instrument to metrics (based on View API)
-            if (this.instrument.GetType().Name.Contains("Counter"))
+            // TODO: move most of this logic out of hotpath, and to MeterProvider's
+            // InstrumentPublished event, which is once per instrument creation.
+
+            if (this.instrument.GetType() == typeof(Counter<long>)
+                || this.instrument.GetType() == typeof(Counter<int>)
+                || this.instrument.GetType() == typeof(Counter<short>)
+                || this.instrument.GetType() == typeof(Counter<byte>))
             {
-                aggregators.Add(new SumMetricAggregator(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
+                aggregators.Add(new SumMetricAggregatorLong(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
+            }
+            else if (this.instrument.GetType() == typeof(Counter<double>)
+                || this.instrument.GetType() == typeof(Counter<float>))
+            {
+                aggregators.Add(new SumMetricAggregatorDouble(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
             }
             else if (this.instrument.GetType().Name.Contains("Gauge"))
             {
@@ -156,6 +167,18 @@ namespace OpenTelemetry.Metrics
         internal List<IMetric> Collect(bool isDelta, DateTimeOffset dt)
         {
             var collectedMetrics = new List<IMetric>();
+
+            if (this.tag0Metrics != null)
+            {
+                foreach (var aggregator in this.tag0Metrics)
+                {
+                    var m = aggregator.Collect(dt, isDelta);
+                    if (m != null)
+                    {
+                        collectedMetrics.Add(m);
+                    }
+                }
+            }
 
             // Lock to prevent new time series from being added
             // until collect is done.

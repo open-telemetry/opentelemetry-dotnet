@@ -20,89 +20,157 @@ using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class HistogramMetricAggregator : IHistogramMetric, IAggregator
+    internal class HistogramMetricAggregator : IAggregator
     {
+        private static readonly double[] DefaultBoundaries = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 };
+
         private readonly object lockUpdate = new object();
-        private List<HistogramBucket> buckets = new List<HistogramBucket>();
+        private HistogramBucket[] buckets;
+        private long populationCount;
+        private double populationSum;
+        private double[] boundaries;
+        private DateTimeOffset startTimeExclusive;
+        private HistogramMetric histogramMetric;
 
         internal HistogramMetricAggregator(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
+            : this(name, description, unit, meter, startTimeExclusive, attributes, DefaultBoundaries)
         {
-            this.Name = name;
-            this.Description = description;
-            this.Unit = unit;
-            this.Meter = meter;
-            this.StartTimeExclusive = startTimeExclusive;
-            this.Attributes = attributes;
         }
 
-        public string Name { get; private set; }
+        internal HistogramMetricAggregator(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, double[] boundaries)
+        {
+            this.startTimeExclusive = startTimeExclusive;
+            this.histogramMetric = new HistogramMetric(name, description, unit, meter, startTimeExclusive, attributes, boundaries.Length + 1);
 
-        public string Description { get; private set; }
+            if (boundaries.Length == 0)
+            {
+                boundaries = DefaultBoundaries;
+            }
 
-        public string Unit { get; private set; }
-
-        public Meter Meter { get; private set; }
-
-        public DateTimeOffset StartTimeExclusive { get; private set; }
-
-        public DateTimeOffset EndTimeInclusive { get; private set; }
-
-        public KeyValuePair<string, object>[] Attributes { get; private set; }
-
-        public bool IsDeltaTemporality { get; private set; }
-
-        public IEnumerable<IExemplar> Exemplars { get; private set; } = new List<IExemplar>();
-
-        public long PopulationCount { get; private set; }
-
-        public double PopulationSum { get; private set; }
-
-        public IEnumerable<HistogramBucket> Buckets => this.buckets;
+            this.boundaries = boundaries;
+            this.buckets = this.InitializeBucket(boundaries);
+        }
 
         public void Update<T>(T value)
             where T : struct
         {
-            // TODO: Implement Histogram!
+            // promote value to be a double
+
+            double val;
+            if (typeof(T) == typeof(long))
+            {
+                val = (long)(object)value;
+            }
+            else if (typeof(T) == typeof(double))
+            {
+                val = (double)(object)value;
+            }
+            else
+            {
+                throw new Exception("Unsupported Type!");
+            }
+
+            // Determine the bucket index
+
+            int i;
+            for (i = 0; i < this.boundaries.Length; i++)
+            {
+                if (val < this.boundaries[i])
+                {
+                    break;
+                }
+            }
 
             lock (this.lockUpdate)
             {
-                this.PopulationCount++;
+                this.populationCount++;
+                this.populationSum += val;
+                this.buckets[i].Count++;
             }
         }
 
         public IMetric Collect(DateTimeOffset dt, bool isDelta)
         {
-            if (this.PopulationCount == 0)
+            if (this.populationCount == 0)
             {
                 // TODO: Output stale markers
                 return null;
             }
 
-            var cloneItem = new HistogramMetricAggregator(this.Name, this.Description, this.Unit, this.Meter, this.StartTimeExclusive, this.Attributes);
-
             lock (this.lockUpdate)
             {
-                cloneItem.Exemplars = this.Exemplars;
-                cloneItem.EndTimeInclusive = dt;
-                cloneItem.PopulationCount = this.PopulationCount;
-                cloneItem.PopulationSum = this.PopulationSum;
-                cloneItem.buckets = this.buckets;
-                cloneItem.IsDeltaTemporality = isDelta;
+                this.histogramMetric.StartTimeExclusive = this.startTimeExclusive;
+                this.histogramMetric.EndTimeInclusive = dt;
+                this.histogramMetric.PopulationCount = this.populationCount;
+                this.histogramMetric.PopulationSum = this.populationSum;
+                this.buckets.CopyTo(this.histogramMetric.BucketsArray, 0);
+                this.histogramMetric.IsDeltaTemporality = isDelta;
 
                 if (isDelta)
                 {
-                    this.StartTimeExclusive = dt;
-                    this.PopulationCount = 0;
-                    this.PopulationSum = 0;
+                    this.startTimeExclusive = dt;
+                    this.populationCount = 0;
+                    this.populationSum = 0;
+                    for (int i = 0; i < this.buckets.Length; i++)
+                    {
+                        this.buckets[i].Count = 0;
+                    }
                 }
             }
 
-            return cloneItem;
+            // TODO: Confirm that this approach of
+            // re-using the same instance is correct.
+            // This avoids allocating a new instance.
+            // It is read only for Exporters,
+            // and also there is no parallel
+            // Collect allowed.
+            return this.histogramMetric;
         }
 
-        public string ToDisplayString()
+        private HistogramBucket[] InitializeBucket(double[] boundaries)
         {
-            return $"Count={this.PopulationCount},Sum={this.PopulationSum}";
+            var buckets = new HistogramBucket[boundaries.Length + 1];
+
+            var lastBoundary = boundaries[0];
+            for (int i = 0; i < buckets.Length; i++)
+            {
+                if (i == 0)
+                {
+                    // LowBoundary is inclusive
+                    buckets[i].LowBoundary = double.NegativeInfinity;
+
+                    // HighBoundary is exclusive
+                    buckets[i].HighBoundary = boundaries[i];
+                }
+                else if (i < boundaries.Length)
+                {
+                    // LowBoundary is inclusive
+                    buckets[i].LowBoundary = lastBoundary;
+
+                    // HighBoundary is exclusive
+                    buckets[i].HighBoundary = boundaries[i];
+                }
+                else
+                {
+                    // LowBoundary and HighBoundary are inclusive
+                    buckets[i].LowBoundary = lastBoundary;
+                    buckets[i].HighBoundary = double.PositiveInfinity;
+                }
+
+                buckets[i].Count = 0;
+
+                if (i < boundaries.Length)
+                {
+                    if (boundaries[i] < lastBoundary)
+                    {
+                        throw new ArgumentException("Boundary values must be increasing.", nameof(boundaries));
+                    }
+
+                    lastBoundary = boundaries[i];
+                }
+            }
+
+            return buckets;
         }
     }
 }
