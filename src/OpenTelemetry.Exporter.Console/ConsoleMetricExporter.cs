@@ -75,13 +75,13 @@ namespace OpenTelemetry.Exporter
 
                         case MetricType.LongGauge:
                             {
-                                // TODOs
+                                valueDisplay = (metric as IGaugeMetric).LastValue.Value.ToString();
                                 break;
                             }
 
                         case MetricType.DoubleGauge:
                             {
-                                // TODOs
+                                valueDisplay = (metric as IGaugeMetric).LastValue.Value.ToString();
                                 break;
                             }
 
