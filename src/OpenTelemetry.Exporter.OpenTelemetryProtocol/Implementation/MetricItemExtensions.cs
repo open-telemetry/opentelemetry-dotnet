@@ -140,7 +140,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             else if (metric is IGaugeMetric gaugeMetric)
             {
                 var gauge = new OtlpMetrics.Gauge();
-                var dataPoint = metric.ToNumberDataPoint(gaugeMetric.LastValue.Value, gaugeMetric.Exemplars);
+                var dataPoint = metric.ToNumberDataPoint(gaugeMetric.LastValue, gaugeMetric.Exemplars);
                 gauge.DataPoints.Add(dataPoint);
                 otlpMetric.Gauge = gauge;
             }
@@ -218,7 +218,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             return otlpMetric;
         }
 
-        private static OtlpMetrics.NumberDataPoint ToNumberDataPoint(this IMetric metric, object value, IEnumerable<IExemplar> exemplars)
+        private static OtlpMetrics.NumberDataPoint ToNumberDataPoint(this IMetric metric, IDataValue dataValue, IEnumerable<IExemplar> exemplars)
         {
             var dataPoint = new OtlpMetrics.NumberDataPoint
             {
@@ -226,6 +226,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 TimeUnixNano = (ulong)metric.EndTimeInclusive.ToUnixTimeNanoseconds(),
             };
 
+            var value = dataValue.Value;
             if (value is double doubleValue)
             {
                 dataPoint.AsDouble = doubleValue;
