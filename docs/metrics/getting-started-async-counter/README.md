@@ -32,13 +32,15 @@ output from the console, similar to shown below:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-Service.Nameunknown_service:getting-started-gauge
-Export 15:44:05.262 15:44:05.263 Gauge [tag1=value1;tag2=value2] LongGauge, Meter: TestMeter/0.0.1
-Value: 306
-Export 15:44:05.262 15:44:06.290 Gauge [tag1=value1;tag2=value2] LongGauge, Meter: TestMeter/0.0.1
-Value: 693
-Export 15:44:05.262 15:44:07.302 Gauge [tag1=value1;tag2=value2] LongGauge, Meter: TestMeter/0.0.1
-Value: 78
+Service.Nameunknown_service:getting-started-async-counter
+Export 16:35:25.669 16:35:25.670 observable-counter [tag1=value1;tag2=value2] LongSum, Meter: TestMeter/0.0.1
+Value: 10
+Export 16:35:25.669 16:35:26.698 observable-counter [tag1=value1;tag2=value2] LongSum, Meter: TestMeter/0.0.1
+Value: 20
+Export 16:35:25.669 16:35:27.711 observable-counter [tag1=value1;tag2=value2] LongSum, Meter: TestMeter/0.0.1
+Value: 30
+Export 16:35:25.669 16:35:28.729 observable-counter [tag1=value1;tag2=value2] LongSum, Meter: TestMeter/0.0.1
+Value: 40
 ```
 <!-- markdownlint-enable MD013 -->
 
