@@ -260,6 +260,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             return sum;
         }
+
         private static void CounterUpdateThread(object obj)
         {
             var arguments = obj as UpdateThreadArguments;
