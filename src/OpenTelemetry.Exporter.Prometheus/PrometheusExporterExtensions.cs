@@ -28,6 +28,7 @@ namespace OpenTelemetry.Exporter
     public static class PrometheusExporterExtensions
     {
         private const string PrometheusCounterType = "counter";
+        private const string PrometheusGaugeType = "gauge";
         private const string PrometheusSummaryType = "summary";
         private const string PrometheusSummarySumPostFix = "_sum";
         private const string PrometheusSummaryCountPostFix = "_count";
@@ -59,6 +60,18 @@ namespace OpenTelemetry.Exporter
                     {
                         WriteSum(writer, builder, metric.Attributes, (metric as ISumMetricDouble).DoubleSum);
                     }
+                    else if (metric.MetricType == MetricType.DoubleGauge)
+                    {
+                        var gaugeMetric = metric as IGaugeMetric;
+                        var doubleValue = (double)gaugeMetric.LastValue.Value;
+                        WriteGauge(writer, builder, metric.Attributes, doubleValue);
+                    }
+                    else if (metric.MetricType == MetricType.LongGauge)
+                    {
+                        var gaugeMetric = metric as IGaugeMetric;
+                        var longValue = (long)gaugeMetric.LastValue.Value;
+                        WriteGauge(writer, builder, metric.Attributes, longValue);
+                    }
                 }
             }
         }
@@ -81,6 +94,21 @@ namespace OpenTelemetry.Exporter
         private static void WriteSum(StreamWriter writer, PrometheusMetricBuilder builder, IEnumerable<KeyValuePair<string, object>> labels, double doubleValue)
         {
             builder = builder.WithType(PrometheusCounterType);
+
+            var metricValueBuilder = builder.AddValue();
+            metricValueBuilder = metricValueBuilder.WithValue(doubleValue);
+
+            foreach (var label in labels)
+            {
+                metricValueBuilder.WithLabel(label.Key, label.Value.ToString());
+            }
+
+            builder.Write(writer);
+        }
+
+        private static void WriteGauge(StreamWriter writer, PrometheusMetricBuilder builder, IEnumerable<KeyValuePair<string, object>> labels, double doubleValue)
+        {
+            builder = builder.WithType(PrometheusGaugeType);
 
             var metricValueBuilder = builder.AddValue();
             metricValueBuilder = metricValueBuilder.WithValue(doubleValue);
