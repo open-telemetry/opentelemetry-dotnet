@@ -37,6 +37,140 @@ namespace OpenTelemetry.Metrics.Tests
             this.output = output;
         }
 
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CounterAggregationTest(bool exportDelta)
+        {
+            var metricItems = new List<MetricItem>();
+            var metricExporter = new TestExporter<MetricItem>(ProcessExport);
+            void ProcessExport(Batch<MetricItem> batch)
+            {
+                foreach (var metricItem in batch)
+                {
+                    metricItems.Add(metricItem);
+                }
+            }
+
+            var pullProcessor = new PullMetricProcessor(metricExporter, exportDelta);
+
+            var meter = new Meter("TestMeter");
+            var counterLong = meter.CreateCounter<long>("mycounter");
+            var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource("TestMeter")
+                .AddMetricProcessor(pullProcessor)
+                .Build();
+
+            counterLong.Add(10);
+            counterLong.Add(10);
+            pullProcessor.PullRequest();
+            long sumReceived = GetSum(metricItems);
+            Assert.Equal(20, sumReceived);
+
+            metricItems.Clear();
+            counterLong.Add(10);
+            counterLong.Add(10);
+            pullProcessor.PullRequest();
+            sumReceived = GetSum(metricItems);
+            if (exportDelta)
+            {
+                Assert.Equal(20, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(40, sumReceived);
+            }
+
+            metricItems.Clear();
+            pullProcessor.PullRequest();
+            sumReceived = GetSum(metricItems);
+            if (exportDelta)
+            {
+                Assert.Equal(0, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(40, sumReceived);
+            }
+
+            metricItems.Clear();
+            counterLong.Add(40);
+            counterLong.Add(20);
+            pullProcessor.PullRequest();
+            sumReceived = GetSum(metricItems);
+            if (exportDelta)
+            {
+                Assert.Equal(60, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(100, sumReceived);
+            }
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ObservableCounterAggregationTest(bool exportDelta)
+        {
+            var meterName = "TestMeter" + exportDelta;
+            var metricItems = new List<MetricItem>();
+            var metricExporter = new TestExporter<MetricItem>(ProcessExport);
+            void ProcessExport(Batch<MetricItem> batch)
+            {
+                foreach (var metricItem in batch)
+                {
+                    metricItems.Add(metricItem);
+                }
+            }
+
+            var pullProcessor = new PullMetricProcessor(metricExporter, exportDelta);
+
+            var meter = new Meter(meterName);
+            int i = 1;
+            var counterLong = meter.CreateObservableCounter<long>(
+            "observable-counter",
+            () =>
+            {
+                return new List<Measurement<long>>()
+                {
+                    new Measurement<long>(i++ * 10),
+                };
+            });
+            var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource(meterName)
+                .AddMetricProcessor(pullProcessor)
+                .Build();
+
+            pullProcessor.PullRequest();
+            long sumReceived = GetSum(metricItems);
+            Assert.Equal(10, sumReceived);
+
+            metricItems.Clear();
+            pullProcessor.PullRequest();
+            sumReceived = GetSum(metricItems);
+            if (exportDelta)
+            {
+                Assert.Equal(10, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(20, sumReceived);
+            }
+
+            metricItems.Clear();
+            pullProcessor.PullRequest();
+            sumReceived = GetSum(metricItems);
+            if (exportDelta)
+            {
+                Assert.Equal(10, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(30, sumReceived);
+            }
+        }
+
         [Fact]
         public void SimpleTest()
         {
@@ -110,6 +244,21 @@ namespace OpenTelemetry.Metrics.Tests
 
             var expectedSum = deltaValueUpdatedByEachCall * numberOfMetricUpdateByEachThread * numberOfThreads;
             Assert.Equal(expectedSum, sumReceived);
+        }
+
+        private static long GetSum(List<MetricItem> metricItems)
+        {
+            long sum = 0;
+            foreach (var metricItem in metricItems)
+            {
+                var metrics = metricItem.Metrics;
+                foreach (var metric in metrics)
+                {
+                    sum += (metric as ISumMetricLong).LongSum;
+                }
+            }
+
+            return sum;
         }
 
         private static void CounterUpdateThread(object obj)
