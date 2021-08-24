@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Unit test project for ASP.NET HttpModule</Description>
+    <TargetFrameworks>net461</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Web" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkPkgVer)" />
+    <PackageReference Include="Microsoft.Web.Xdt" Version="3.1.0" />
+    <PackageReference Include="System.Reactive.Core" Version="3.1.1" />
+    <PackageReference Include="xunit" Version="$(XUnitPkgVer)" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="$(XUnitRunnerVisualStudioPkgVer)">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <DotNetCliToolReference Include="dotnet-xunit" Version="$(DotNetXUnitCliVer)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule\OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule\web.config.install.xdt">
+      <Link>Resources\web.config.install.xdt</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule\web.config.uninstall.xdt">
+      <Link>Resources\web.config.uninstall.xdt</Link>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>

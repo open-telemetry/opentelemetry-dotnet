@@ -145,7 +145,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
                 }
 
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, request.HttpMethod);
-                activity.SetTag(SpanAttributeConstants.HttpPathKey, path);
+                activity.SetTag(SemanticConventions.AttributeHttpTarget, path);
                 activity.SetTag(SemanticConventions.AttributeHttpUserAgent, request.UserAgent);
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, GetUriTagValueFromRequestUri(request.Url));
 
