@@ -336,7 +336,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             }
 
             Assert.Equal(HttpContext.Current.Request.HttpMethod, span.GetTagValue(SemanticConventions.AttributeHttpMethod) as string);
-            Assert.Equal(HttpContext.Current.Request.Path, span.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
+            Assert.Equal(HttpContext.Current.Request.Path, span.GetTagValue(SemanticConventions.AttributeHttpTarget) as string);
             Assert.Equal(HttpContext.Current.Request.UserAgent, span.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
         }
 
