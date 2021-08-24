@@ -171,21 +171,6 @@ namespace OpenTelemetry.Metrics.Tests
             }
         }
 
-        private static long GetSum(List<MetricItem> metricItems)
-        {
-            long sum = 0;
-            foreach (var metricItem in metricItems)
-            {
-                var metrics = metricItem.Metrics;
-                foreach (var metric in metrics)
-                {
-                    sum += (metric as ISumMetricLong).LongSum;
-                }
-            }
-
-            return sum;
-        }
-
         [Fact]
         public void SimpleTest()
         {
@@ -261,6 +246,20 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(expectedSum, sumReceived);
         }
 
+        private static long GetSum(List<MetricItem> metricItems)
+        {
+            long sum = 0;
+            foreach (var metricItem in metricItems)
+            {
+                var metrics = metricItem.Metrics;
+                foreach (var metric in metrics)
+                {
+                    sum += (metric as ISumMetricLong).LongSum;
+                }
+            }
+
+            return sum;
+        }
         private static void CounterUpdateThread(object obj)
         {
             var arguments = obj as UpdateThreadArguments;
