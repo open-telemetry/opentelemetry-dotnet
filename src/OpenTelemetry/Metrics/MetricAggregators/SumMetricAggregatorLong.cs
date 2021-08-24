@@ -24,12 +24,15 @@ namespace OpenTelemetry.Metrics
     {
         private readonly object lockUpdate = new object();
         private long sumLong = 0;
+        private long lastSumLong = 0;
+        private bool treatIncomingMeasurementAsDelta;
         private SumMetricLong sumMetricLong;
         private DateTimeOffset startTimeExclusive;
 
-        internal SumMetricAggregatorLong(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes)
+        internal SumMetricAggregatorLong(string name, string description, string unit, Meter meter, DateTimeOffset startTimeExclusive, KeyValuePair<string, object>[] attributes, bool treatIncomingMeasurementAsDelta)
         {
             this.startTimeExclusive = startTimeExclusive;
+            this.treatIncomingMeasurementAsDelta = treatIncomingMeasurementAsDelta;
             this.sumMetricLong = new SumMetricLong(name, description, unit, meter, startTimeExclusive, attributes);
         }
 
@@ -50,7 +53,14 @@ namespace OpenTelemetry.Metrics
                     }
                     else
                     {
-                        this.sumLong += val;
+                        if (this.treatIncomingMeasurementAsDelta)
+                        {
+                            this.sumLong += val;
+                        }
+                        else
+                        {
+                            this.sumLong = val;
+                        }
                     }
                 }
                 else
@@ -66,12 +76,16 @@ namespace OpenTelemetry.Metrics
             {
                 this.sumMetricLong.StartTimeExclusive = this.startTimeExclusive;
                 this.sumMetricLong.EndTimeInclusive = dt;
-                this.sumMetricLong.LongSum = this.sumLong;
                 this.sumMetricLong.IsDeltaTemporality = isDelta;
                 if (isDelta)
                 {
                     this.startTimeExclusive = dt;
-                    this.sumLong = 0;
+                    this.sumMetricLong.LongSum = this.sumLong - this.lastSumLong;
+                    this.lastSumLong = this.sumLong;
+                }
+                else
+                {
+                    this.sumMetricLong.LongSum = this.sumLong;
                 }
             }
 

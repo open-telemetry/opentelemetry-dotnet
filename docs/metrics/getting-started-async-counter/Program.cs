@@ -31,13 +31,13 @@ public class Program
             .AddConsoleExporter()
             .Build();
 
+        int i = 1;
         var observableCounter = MyMeter.CreateObservableCounter<long>(
             "observable-counter",
             () =>
             {
                 var tag1 = new KeyValuePair<string, object>("tag1", "value1");
                 var tag2 = new KeyValuePair<string, object>("tag2", "value2");
-                int i = 1;
                 return new List<Measurement<long>>()
                 {
                     // Report an absolute value (not an increment/delta value).
