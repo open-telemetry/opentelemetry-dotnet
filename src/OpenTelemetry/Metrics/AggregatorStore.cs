@@ -59,14 +59,14 @@ namespace OpenTelemetry.Metrics
                 || this.instrument.GetType() == typeof(Counter<short>)
                 || this.instrument.GetType() == typeof(Counter<byte>))
             {
-                aggregators.Add(new SumMetricAggregatorLong(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
+                aggregators.Add(new SumMetricAggregatorLong(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, true));
             }
             else if (this.instrument.GetType() == typeof(ObservableCounter<long>)
                 || this.instrument.GetType() == typeof(ObservableCounter<int>)
                 || this.instrument.GetType() == typeof(ObservableCounter<short>)
                 || this.instrument.GetType() == typeof(ObservableCounter<byte>))
             {
-                aggregators.Add(new SumMetricAggregatorLong(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
+                aggregators.Add(new SumMetricAggregatorLong(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, false));
             }
             else if (this.instrument.GetType() == typeof(Counter<double>)
                 || this.instrument.GetType() == typeof(Counter<float>))
