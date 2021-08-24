@@ -79,7 +79,6 @@ namespace Examples.Console
                                 new KeyValuePair<string, object>("tag1", "anothervalue"),
                                 new KeyValuePair<string, object>("tag2", "somethingelse"));
 
-
                     Task.Delay(10).Wait();
                 }
             });
