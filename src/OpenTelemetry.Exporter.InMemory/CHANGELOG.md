@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-alpha2
+
+Released 2021-Aug-24
+
 * Add Metrics
   support.([#2192](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2192))
 
