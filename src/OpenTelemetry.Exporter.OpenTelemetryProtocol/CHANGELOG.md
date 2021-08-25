@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-alpha2
+
+Released 2021-Aug-24
+
 * The `OtlpExporterOptions` defaults can be overridden using
   `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` and `OTEL_EXPORTER_OTLP_TIMEOUT`
   envionmental variables as defined in the
