@@ -15,7 +15,7 @@
 // </copyright>
 
 using System;
-using System.ComponentModel;
+using System.Diagnostics;
 using System.Reflection;
 using System.Web;
 
@@ -26,7 +26,15 @@ namespace OpenTelemetry.Instrumentation.AspNet
     /// </summary>
     public class TelemetryHttpModule : IHttpModule
     {
-        private const string BeginCalledFlag = "OpenTelemetry.Instrumentation.AspNet.BeginCalled";
+        /// <summary>
+        /// OpenTelemetry.Instrumentation.AspNet <see cref="ActivitySource"/> name.
+        /// </summary>
+        public const string AspNetSourceName = "OpenTelemetry.Instrumentation.AspNet.Telemetry";
+
+        /// <summary>
+        /// <see cref="Activity.OperationName"/> for OpenTelemetry.Instrumentation.AspNet created <see cref="Activity"/> objects.
+        /// </summary>
+        public const string AspNetActivityName = "Microsoft.AspNet.HttpReqIn";
 
         // ServerVariable set only on rewritten HttpContext by URL Rewrite module.
         private const string URLRewriteRewrittenRequest = "IIS_WasUrlRewritten";
@@ -37,10 +45,9 @@ namespace OpenTelemetry.Instrumentation.AspNet
         private static readonly MethodInfo OnStepMethodInfo = typeof(HttpApplication).GetMethod("OnExecuteRequestStep");
 
         /// <summary>
-        /// Gets or sets a value indicating whether TelemetryHttpModule should parse headers to get correlation ids.
+        /// Gets the <see cref="TelemetryHttpModuleOptions"/> applied to requests processed by the handler.
         /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool ParseHeaders { get; set; } = true;
+        public static TelemetryHttpModuleOptions Options { get; } = new TelemetryHttpModuleOptions();
 
         /// <inheritdoc />
         public void Dispose()
@@ -100,8 +107,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         {
             var context = ((HttpApplication)sender).Context;
             AspNetTelemetryEventSource.Log.TraceCallback("Application_BeginRequest");
-            ActivityHelper.CreateRootActivity(context, this.ParseHeaders);
-            context.Items[BeginCalledFlag] = true;
+            ActivityHelper.StartAspNetActivity(Options.TextMapPropagator, context, Options.OnRequestStartedCallback);
         }
 
         private void Application_PreRequestHandlerExecute(object sender, EventArgs e)
@@ -117,9 +123,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
 
             var context = ((HttpApplication)sender).Context;
 
-            // EndRequest does it's best effort to notify that request has ended
-            // BeginRequest has never been called
-            if (!context.Items.Contains(BeginCalledFlag))
+            if (!ActivityHelper.HasStarted(context, out Activity aspNetActivity))
             {
                 // Rewrite: In case of rewrite, a new request context is created, called the child request, and it goes through the entire IIS/ASP.NET integrated pipeline.
                 // The child request can be mapped to any of the handlers configured in IIS, and it's execution is no different than it would be if it was received via the HTTP stack.
@@ -135,13 +139,13 @@ namespace OpenTelemetry.Instrumentation.AspNet
                 else
                 {
                     // Activity has never been started
-                    ActivityHelper.CreateRootActivity(context, this.ParseHeaders);
+                    aspNetActivity = ActivityHelper.StartAspNetActivity(Options.TextMapPropagator, context, Options.OnRequestStartedCallback);
                 }
             }
 
             if (trackActivity)
             {
-                ActivityHelper.StopAspNetActivity(context.Items);
+                ActivityHelper.StopAspNetActivity(aspNetActivity, context, Options.OnRequestStoppedCallback);
             }
         }
 
@@ -154,12 +158,12 @@ namespace OpenTelemetry.Instrumentation.AspNet
             var exception = context.Error;
             if (exception != null)
             {
-                if (!context.Items.Contains(BeginCalledFlag))
+                if (!ActivityHelper.HasStarted(context, out Activity aspNetActivity))
                 {
-                    ActivityHelper.CreateRootActivity(context, this.ParseHeaders);
+                    aspNetActivity = ActivityHelper.StartAspNetActivity(Options.TextMapPropagator, context, Options.OnRequestStartedCallback);
                 }
 
-                ActivityHelper.WriteActivityException(context.Items, exception);
+                ActivityHelper.WriteActivityException(aspNetActivity, context, exception, Options.OnExceptionCallback);
             }
         }
     }
