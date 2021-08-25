@@ -16,6 +16,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace OpenTelemetry.Tests
@@ -268,6 +270,39 @@ namespace OpenTelemetry.Tests
             var expectedBaggage = Baggage.Create(new Dictionary<string, string> { [K1] = V1 });
 
             Assert.Equal(expectedBaggage.GetHashCode(), baggage.GetHashCode());
+        }
+
+        [Fact]
+        public async Task AsyncLocalTests()
+        {
+            int threadId = Thread.CurrentThread.ManagedThreadId;
+
+            Baggage.SetBaggage("key1", "value1");
+
+            await InnerTask().ConfigureAwait(false);
+
+            Assert.NotEqual(threadId, Thread.CurrentThread.ManagedThreadId);
+
+            Baggage.SetBaggage("key4", "value4");
+
+            Assert.Equal(4, Baggage.Current.Count);
+            Assert.Equal("value1", Baggage.GetBaggage("key1"));
+            Assert.Equal("value2", Baggage.GetBaggage("key2"));
+            Assert.Equal("value3", Baggage.GetBaggage("key3"));
+            Assert.Equal("value4", Baggage.GetBaggage("key4"));
+
+            static async Task InnerTask()
+            {
+                Baggage.SetBaggage("key2", "value2");
+
+                int threadId = Thread.CurrentThread.ManagedThreadId;
+
+                await Task.Yield();
+
+                Assert.NotEqual(threadId, Thread.CurrentThread.ManagedThreadId);
+
+                Baggage.SetBaggage("key3", "value3"); // Changes to this AsyncLocal don't flow backwards automatically.
+            }
         }
     }
 }
