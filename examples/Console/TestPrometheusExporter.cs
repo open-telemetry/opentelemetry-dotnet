@@ -28,7 +28,8 @@ namespace Examples.Console
     internal class TestPrometheusExporter
     {
         private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
-        private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("counter");
+        private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("myCounter");
+        private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("myHistogram");
         private static readonly Random RandomGenerator = new Random();
 
         internal static object Run(int port, int totalDurationInMins)
@@ -78,6 +79,11 @@ namespace Examples.Console
                                 100,
                                 new KeyValuePair<string, object>("tag1", "anothervalue"),
                                 new KeyValuePair<string, object>("tag2", "somethingelse"));
+
+                    MyHistogram.Record(
+                            RandomGenerator.Next(1, 1500),
+                            new KeyValuePair<string, object>("tag1", "value1"),
+                            new KeyValuePair<string, object>("tag2", "value2"));
 
                     Task.Delay(10).Wait();
                 }
