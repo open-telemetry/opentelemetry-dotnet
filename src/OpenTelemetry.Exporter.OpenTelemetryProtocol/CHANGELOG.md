@@ -12,6 +12,8 @@ Released 2021-Aug-24
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md).
   ([#2188](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2188))
 
+* Changed default temporality for Metrics to be cumulative.
+
 ## 1.2.0-alpha1
 
 Released 2021-Jul-23
