@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.2.0-alpha2
+
+Released 2021-Aug-24
+
+* Add Histogram Metrics support.
+* Changed default temporality to be cumulative.
+
 ## 1.2.0-alpha1
 
 Released 2021-Jul-23
