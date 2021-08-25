@@ -21,53 +21,64 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
     using System.Collections.Generic;
     using System.Collections.Specialized;
     using System.Diagnostics;
-    using System.Linq;
-    using System.Reflection;
     using System.Threading;
     using System.Threading.Tasks;
     using System.Web;
+    using OpenTelemetry.Context.Propagation;
     using Xunit;
 
     public class ActivityHelperTest : IDisposable
     {
+        private const string TraceParentHeaderName = "traceparent";
+        private const string TraceStateHeaderName = "tracestate";
+        private const string BaggageHeaderName = "baggage";
         private const string TestActivityName = "Activity.Test";
-        private readonly List<KeyValuePair<string, string>> baggageItems;
         private readonly string baggageInHeader;
-        private IDisposable subscriptionAllListeners;
-        private IDisposable subscriptionAspNetListener;
+        private ActivityListener activitySourceListener;
 
         public ActivityHelperTest()
         {
-            this.baggageItems = new List<KeyValuePair<string, string>>
-            {
-                new KeyValuePair<string, string>("TestKey1", "123"),
-                new KeyValuePair<string, string>("TestKey2", "456"),
-                new KeyValuePair<string, string>("TestKey1", "789"),
-            };
-
             this.baggageInHeader = "TestKey1=123,TestKey2=456,TestKey1=789";
-
-            // reset static fields
-            var allListenerField = typeof(DiagnosticListener).
-                GetField("s_allListenerObservable", BindingFlags.Static | BindingFlags.NonPublic);
-            allListenerField.SetValue(null, null);
-            var aspnetListenerField = typeof(ActivityHelper).
-                GetField("AspNetListener", BindingFlags.Static | BindingFlags.NonPublic);
-            aspnetListenerField.SetValue(null, new DiagnosticListener(ActivityHelper.AspNetListenerName));
         }
 
         public void Dispose()
         {
-            this.subscriptionAspNetListener?.Dispose();
-            this.subscriptionAllListeners?.Dispose();
+            this.activitySourceListener?.Dispose();
+        }
+
+        [Fact]
+        public void Has_Started_Returns_Correctly()
+        {
+            var context = HttpContextHelper.GetFakeHttpContext();
+
+            bool result = ActivityHelper.HasStarted(context, out Activity aspNetActivity);
+
+            Assert.False(result);
+            Assert.Null(aspNetActivity);
+
+            context.Items[ActivityHelper.ActivityKey] = ActivityHelper.StartedButNotSampledObj;
+
+            result = ActivityHelper.HasStarted(context, out aspNetActivity);
+
+            Assert.True(result);
+            Assert.Null(aspNetActivity);
+
+            Activity activity = new Activity(TestActivityName);
+            context.Items[ActivityHelper.ActivityKey] = activity;
+
+            result = ActivityHelper.HasStarted(context, out aspNetActivity);
+
+            Assert.True(result);
+            Assert.NotNull(aspNetActivity);
+            Assert.Equal(activity, aspNetActivity);
         }
 
         [Fact]
         public void Can_Restore_Activity()
         {
-            this.EnableAll();
+            this.EnableListener();
             var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = ActivityHelper.CreateRootActivity(context, false);
+            var rootActivity = ActivityHelper.StartAspNetActivity(new NoopTextMapPropagator(), context, null);
             rootActivity.AddTag("k1", "v1");
             rootActivity.AddTag("k2", "v2");
 
@@ -81,42 +92,21 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [Fact]
         public void Can_Stop_Lost_Activity()
         {
-            this.EnableAll(pair =>
+            this.EnableListener(a =>
             {
                 Assert.NotNull(Activity.Current);
-                Assert.Equal(ActivityHelper.AspNetActivityName, Activity.Current.OperationName);
+                Assert.Equal(Activity.Current, a);
+                Assert.Equal(TelemetryHttpModule.AspNetActivityName, Activity.Current.OperationName);
             });
             var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = ActivityHelper.CreateRootActivity(context, false);
+            var rootActivity = ActivityHelper.StartAspNetActivity(new NoopTextMapPropagator(), context, null);
             rootActivity.AddTag("k1", "v1");
             rootActivity.AddTag("k2", "v2");
 
             Activity.Current = null;
 
-            ActivityHelper.StopAspNetActivity(context.Items);
+            ActivityHelper.StopAspNetActivity(rootActivity, context, null);
             Assert.True(rootActivity.Duration != TimeSpan.Zero);
-            Assert.Null(Activity.Current);
-            Assert.Null(context.Items[ActivityHelper.ActivityKey]);
-        }
-
-        [Fact]
-        public void Can_Not_Stop_Lost_Activity_If_Not_In_Context()
-        {
-            this.EnableAll(pair =>
-            {
-                Assert.NotNull(Activity.Current);
-                Assert.Equal(ActivityHelper.AspNetActivityName, Activity.Current.OperationName);
-            });
-            var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = ActivityHelper.CreateRootActivity(context, false);
-            context.Items.Remove(ActivityHelper.ActivityKey);
-            rootActivity.AddTag("k1", "v1");
-            rootActivity.AddTag("k2", "v2");
-
-            Activity.Current = null;
-
-            ActivityHelper.StopAspNetActivity(context.Items);
-            Assert.True(rootActivity.Duration == TimeSpan.Zero);
             Assert.Null(Activity.Current);
             Assert.Null(context.Items[ActivityHelper.ActivityKey]);
         }
@@ -124,7 +114,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [Fact]
         public void Do_Not_Restore_Activity_When_There_Is_No_Activity_In_Context()
         {
-            this.EnableAll();
+            this.EnableListener();
             ActivityHelper.RestoreActivityIfNeeded(HttpContextHelper.GetFakeHttpContext().Items);
 
             Assert.Null(Activity.Current);
@@ -133,13 +123,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [Fact]
         public void Do_Not_Restore_Activity_When_It_Is_Not_Lost()
         {
-            this.EnableAll();
+            this.EnableListener();
             var root = new Activity("root").Start();
 
             var context = HttpContextHelper.GetFakeHttpContext();
             context.Items[ActivityHelper.ActivityKey] = root;
-
-            var module = new TelemetryHttpModule();
 
             ActivityHelper.RestoreActivityIfNeeded(context.Items);
 
@@ -150,11 +138,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         public void Can_Stop_Activity_Without_AspNetListener_Enabled()
         {
             var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = this.CreateActivity();
+            var rootActivity = new Activity(TestActivityName);
             rootActivity.Start();
             context.Items[ActivityHelper.ActivityKey] = rootActivity;
             Thread.Sleep(100);
-            ActivityHelper.StopAspNetActivity(context.Items);
+            ActivityHelper.StopAspNetActivity(rootActivity, context, null);
 
             Assert.True(rootActivity.Duration != TimeSpan.Zero);
             Assert.Null(rootActivity.Parent);
@@ -165,12 +153,12 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         public void Can_Stop_Activity_With_AspNetListener_Enabled()
         {
             var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = this.CreateActivity();
+            var rootActivity = new Activity(TestActivityName);
             rootActivity.Start();
             context.Items[ActivityHelper.ActivityKey] = rootActivity;
             Thread.Sleep(100);
-            this.EnableAspNetListenerOnly();
-            ActivityHelper.StopAspNetActivity(context.Items);
+            this.EnableListener();
+            ActivityHelper.StopAspNetActivity(rootActivity, context, null);
 
             Assert.True(rootActivity.Duration != TimeSpan.Zero);
             Assert.Null(rootActivity.Parent);
@@ -180,14 +168,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [Fact]
         public void Can_Stop_Root_Activity_With_All_Children()
         {
-            this.EnableAll();
+            this.EnableListener();
             var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = ActivityHelper.CreateRootActivity(context, false);
+            var rootActivity = ActivityHelper.StartAspNetActivity(new NoopTextMapPropagator(), context, null);
 
             var child = new Activity("child").Start();
             new Activity("grandchild").Start();
 
-            ActivityHelper.StopAspNetActivity(context.Items);
+            ActivityHelper.StopAspNetActivity(rootActivity, context, null);
 
             Assert.True(rootActivity.Duration != TimeSpan.Zero);
             Assert.True(child.Duration == TimeSpan.Zero);
@@ -198,59 +186,25 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [Fact]
         public void Can_Stop_Root_While_Child_Is_Current()
         {
-            this.EnableAll();
+            this.EnableListener();
             var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = ActivityHelper.CreateRootActivity(context, false);
+            var rootActivity = ActivityHelper.StartAspNetActivity(new NoopTextMapPropagator(), context, null);
             var child = new Activity("child").Start();
 
-            ActivityHelper.StopAspNetActivity(context.Items);
+            ActivityHelper.StopAspNetActivity(rootActivity, context, null);
 
             Assert.True(child.Duration == TimeSpan.Zero);
-            Assert.Null(Activity.Current);
+            Assert.NotNull(Activity.Current);
+            Assert.Equal(Activity.Current, child);
             Assert.Null(context.Items[ActivityHelper.ActivityKey]);
-        }
-
-        [Fact]
-        public void OnImportActivity_Is_Called()
-        {
-            bool onImportIsCalled = false;
-            Activity importedActivity = null;
-            this.EnableAll(onImport: (activity, _) =>
-            {
-                onImportIsCalled = true;
-                importedActivity = activity;
-                Assert.Null(Activity.Current);
-            });
-
-            var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = ActivityHelper.CreateRootActivity(context, false);
-            Assert.True(onImportIsCalled);
-            Assert.NotNull(importedActivity);
-            Assert.Equal(importedActivity, Activity.Current);
-            Assert.Equal(importedActivity, rootActivity);
-        }
-
-        [Fact]
-        public void OnImportActivity_Can_Set_Parent()
-        {
-            this.EnableAll(onImport: (activity, _) =>
-            {
-                Assert.Null(activity.ParentId);
-                activity.SetParentId("|guid.123.");
-            });
-
-            var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = ActivityHelper.CreateRootActivity(context, false);
-
-            Assert.Equal("|guid.123.", Activity.Current.ParentId);
         }
 
         [Fact]
         public async Task Can_Stop_Root_Activity_If_It_Is_Broken()
         {
-            this.EnableAll();
+            this.EnableListener();
             var context = HttpContextHelper.GetFakeHttpContext();
-            var root = ActivityHelper.CreateRootActivity(context, false);
+            var root = ActivityHelper.StartAspNetActivity(new NoopTextMapPropagator(), context, null);
             new Activity("child").Start();
 
             for (int i = 0; i < 2; i++)
@@ -269,7 +223,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             // do not affect 'parent' context in which Task.Run is called.
             // But 'child' Activity is stopped, thus consequent calls to Stop will
             // not update Current
-            ActivityHelper.StopAspNetActivity(context.Items);
+            ActivityHelper.StopAspNetActivity(root, context, null);
             Assert.True(root.Duration != TimeSpan.Zero);
             Assert.Null(context.Items[ActivityHelper.ActivityKey]);
             Assert.Null(Activity.Current);
@@ -278,9 +232,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [Fact]
         public void Stop_Root_Activity_With_129_Nesting_Depth()
         {
-            this.EnableAll();
+            this.EnableListener();
             var context = HttpContextHelper.GetFakeHttpContext();
-            var root = ActivityHelper.CreateRootActivity(context, false);
+            var root = ActivityHelper.StartAspNetActivity(new NoopTextMapPropagator(), context, null);
 
             for (int i = 0; i < 129; i++)
             {
@@ -288,100 +242,77 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             }
 
             // can stop any activity regardless of the stack depth
-            ActivityHelper.StopAspNetActivity(context.Items);
+            ActivityHelper.StopAspNetActivity(root, context, null);
 
             Assert.True(root.Duration != TimeSpan.Zero);
             Assert.Null(context.Items[ActivityHelper.ActivityKey]);
-            Assert.Null(Activity.Current);
+            Assert.NotNull(Activity.Current);
         }
 
         [Fact]
         public void Should_Not_Create_RootActivity_If_AspNetListener_Not_Enabled()
         {
             var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = ActivityHelper.CreateRootActivity(context, true);
+            var rootActivity = ActivityHelper.StartAspNetActivity(new NoopTextMapPropagator(), context, null);
 
             Assert.Null(rootActivity);
+            Assert.Equal(ActivityHelper.StartedButNotSampledObj, context.Items[ActivityHelper.ActivityKey]);
+
+            ActivityHelper.StopAspNetActivity(rootActivity, context, null);
+            Assert.Null(context.Items[ActivityHelper.ActivityKey]);
         }
 
         [Fact]
         public void Should_Not_Create_RootActivity_If_AspNetActivity_Not_Enabled()
         {
             var context = HttpContextHelper.GetFakeHttpContext();
-            this.EnableAspNetListenerOnly();
-            var rootActivity = ActivityHelper.CreateRootActivity(context, true);
+            this.EnableListener(onSample: (context) => ActivitySamplingResult.None);
+            var rootActivity = ActivityHelper.StartAspNetActivity(new NoopTextMapPropagator(), context, null);
 
             Assert.Null(rootActivity);
-        }
+            Assert.Equal(ActivityHelper.StartedButNotSampledObj, context.Items[ActivityHelper.ActivityKey]);
 
-        [Fact]
-        public void Should_Not_Create_RootActivity_If_AspNetActivity_Not_Enabled_With_Arguments()
-        {
-            var context = HttpContextHelper.GetFakeHttpContext();
-            this.EnableAspNetListenerAndDisableActivity();
-            var rootActivity = ActivityHelper.CreateRootActivity(context, true);
-
-            Assert.Null(rootActivity);
-        }
-
-        [Fact]
-        public void Can_Create_RootActivity_And_Restore_Info_From_Request_Header()
-        {
-            this.EnableAll();
-            var requestHeaders = new Dictionary<string, string>
-            {
-                { ActivityExtensions.RequestIdHeaderName, "|aba2f1e978b2cab6.1." },
-                { ActivityExtensions.CorrelationContextHeaderName, this.baggageInHeader },
-            };
-
-            var context = HttpContextHelper.GetFakeHttpContext(headers: requestHeaders);
-            this.EnableAspNetListenerAndActivity();
-            var rootActivity = ActivityHelper.CreateRootActivity(context, true);
-
-            Assert.NotNull(rootActivity);
-            Assert.True(rootActivity.ParentId == "|aba2f1e978b2cab6.1.");
-            var expectedBaggage = this.baggageItems.OrderBy(item => item.Value);
-            var actualBaggage = rootActivity.Baggage.OrderBy(item => item.Value);
-            Assert.Equal(expectedBaggage, actualBaggage);
+            ActivityHelper.StopAspNetActivity(rootActivity, context, null);
+            Assert.Null(context.Items[ActivityHelper.ActivityKey]);
         }
 
         [Fact]
         public void Can_Create_RootActivity_From_W3C_Traceparent()
         {
-            this.EnableAll();
+            this.EnableListener();
             var requestHeaders = new Dictionary<string, string>
             {
-                { ActivityExtensions.TraceparentHeaderName, "00-0123456789abcdef0123456789abcdef-0123456789abcdef-00" },
+                { TraceParentHeaderName, "00-0123456789abcdef0123456789abcdef-0123456789abcdef-00" },
             };
 
             var context = HttpContextHelper.GetFakeHttpContext(headers: requestHeaders);
-            this.EnableAspNetListenerAndActivity();
-            var rootActivity = ActivityHelper.CreateRootActivity(context, true);
+            var rootActivity = ActivityHelper.StartAspNetActivity(new TraceContextPropagator(), context, null);
 
             Assert.NotNull(rootActivity);
             Assert.Equal(ActivityIdFormat.W3C, rootActivity.IdFormat);
             Assert.Equal("00-0123456789abcdef0123456789abcdef-0123456789abcdef-00", rootActivity.ParentId);
             Assert.Equal("0123456789abcdef0123456789abcdef", rootActivity.TraceId.ToHexString());
             Assert.Equal("0123456789abcdef", rootActivity.ParentSpanId.ToHexString());
-            Assert.False(rootActivity.Recorded);
+            Assert.True(rootActivity.Recorded); // note: We're not using a parent-based sampler in this test so the recorded flag of traceparent is ignored.
 
             Assert.Null(rootActivity.TraceStateString);
             Assert.Empty(rootActivity.Baggage);
+
+            Assert.Equal(0, Baggage.Current.Count);
         }
 
         [Fact]
         public void Can_Create_RootActivityWithTraceState_From_W3C_TraceContext()
         {
-            this.EnableAll();
+            this.EnableListener();
             var requestHeaders = new Dictionary<string, string>
             {
-                { ActivityExtensions.TraceparentHeaderName, "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01" },
-                { ActivityExtensions.TracestateHeaderName, "ts1=v1,ts2=v2" },
+                { TraceParentHeaderName, "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01" },
+                { TraceStateHeaderName, "ts1=v1,ts2=v2" },
             };
 
             var context = HttpContextHelper.GetFakeHttpContext(headers: requestHeaders);
-            this.EnableAspNetListenerAndActivity();
-            var rootActivity = ActivityHelper.CreateRootActivity(context, true);
+            var rootActivity = ActivityHelper.StartAspNetActivity(new TraceContextPropagator(), context, null);
 
             Assert.NotNull(rootActivity);
             Assert.Equal(ActivityIdFormat.W3C, rootActivity.IdFormat);
@@ -392,21 +323,49 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             Assert.Equal("ts1=v1,ts2=v2", rootActivity.TraceStateString);
             Assert.Empty(rootActivity.Baggage);
+
+            Assert.Equal(0, Baggage.Current.Count);
+        }
+
+        [Fact]
+        public void Can_Create_RootActivity_From_W3C_Traceparent_With_Baggage()
+        {
+            this.EnableListener();
+            var requestHeaders = new Dictionary<string, string>
+            {
+                { TraceParentHeaderName, "00-0123456789abcdef0123456789abcdef-0123456789abcdef-00" },
+                { BaggageHeaderName, this.baggageInHeader },
+            };
+
+            var context = HttpContextHelper.GetFakeHttpContext(headers: requestHeaders);
+            var rootActivity = ActivityHelper.StartAspNetActivity(new CompositeTextMapPropagator(new TextMapPropagator[] { new TraceContextPropagator(), new BaggagePropagator() }), context, null);
+
+            Assert.NotNull(rootActivity);
+            Assert.Equal(ActivityIdFormat.W3C, rootActivity.IdFormat);
+            Assert.Equal("00-0123456789abcdef0123456789abcdef-0123456789abcdef-00", rootActivity.ParentId);
+            Assert.Equal("0123456789abcdef0123456789abcdef", rootActivity.TraceId.ToHexString());
+            Assert.Equal("0123456789abcdef", rootActivity.ParentSpanId.ToHexString());
+            Assert.True(rootActivity.Recorded); // note: We're not using a parent-based sampler in this test so the recorded flag of traceparent is ignored.
+
+            Assert.Null(rootActivity.TraceStateString);
+            Assert.Empty(rootActivity.Baggage);
+
+            Assert.Equal(2, Baggage.Current.Count);
+            Assert.Equal("789", Baggage.Current.GetBaggage("TestKey1"));
+            Assert.Equal("456", Baggage.Current.GetBaggage("TestKey2"));
         }
 
         [Fact]
         public void Can_Create_RootActivity_And_Ignore_Info_From_Request_Header_If_ParseHeaders_Is_False()
         {
-            this.EnableAll();
+            this.EnableListener();
             var requestHeaders = new Dictionary<string, string>
             {
-                { ActivityExtensions.RequestIdHeaderName, "|aba2f1e978b2cab6.1." },
-                { ActivityExtensions.CorrelationContextHeaderName, this.baggageInHeader },
+                { TraceParentHeaderName, "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01" },
             };
 
             var context = HttpContextHelper.GetFakeHttpContext(headers: requestHeaders);
-            this.EnableAspNetListenerAndActivity();
-            var rootActivity = ActivityHelper.CreateRootActivity(context, parseHeaders: false);
+            var rootActivity = ActivityHelper.StartAspNetActivity(new NoopTextMapPropagator(), context, null);
 
             Assert.NotNull(rootActivity);
             Assert.Null(rootActivity.ParentId);
@@ -416,10 +375,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [Fact]
         public void Can_Create_RootActivity_And_Start_Activity()
         {
-            this.EnableAll();
+            this.EnableListener();
             var context = HttpContextHelper.GetFakeHttpContext();
-            this.EnableAspNetListenerAndActivity();
-            var rootActivity = ActivityHelper.CreateRootActivity(context, true);
+            var rootActivity = ActivityHelper.StartAspNetActivity(new NoopTextMapPropagator(), context, null);
 
             Assert.NotNull(rootActivity);
             Assert.True(!string.IsNullOrEmpty(rootActivity.Id));
@@ -428,83 +386,52 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         [Fact]
         public void Can_Create_RootActivity_And_Saved_In_HttContext()
         {
-            this.EnableAll();
+            this.EnableListener();
             var context = HttpContextHelper.GetFakeHttpContext();
-            this.EnableAspNetListenerAndActivity();
-            var rootActivity = ActivityHelper.CreateRootActivity(context, true);
+            var rootActivity = ActivityHelper.StartAspNetActivity(new NoopTextMapPropagator(), context, null);
 
             Assert.NotNull(rootActivity);
             Assert.Same(rootActivity, context.Items[ActivityHelper.ActivityKey]);
         }
 
-        private Activity CreateActivity()
+        [Fact]
+        public void Fire_Exception_Events()
         {
-            var activity = new Activity(TestActivityName);
-            this.baggageItems.ForEach(kv => activity.AddBaggage(kv.Key, kv.Value));
+            int callbacksFired = 0;
 
-            return activity;
+            var context = HttpContextHelper.GetFakeHttpContext();
+
+            Activity activity = new Activity(TestActivityName);
+
+            ActivityHelper.WriteActivityException(activity, context, new InvalidOperationException(), (a, c, e) => { callbacksFired++; });
+
+            ActivityHelper.WriteActivityException(null, context, new InvalidOperationException(), (a, c, e) => { callbacksFired++; });
+
+            // Callback should fire only for non-null activity
+            Assert.Equal(1, callbacksFired);
         }
 
-        private void EnableAll(Action<KeyValuePair<string, object>> onNext = null, Action<Activity, object> onImport = null)
+        private void EnableListener(Action<Activity> onStarted = null, Action<Activity> onStopped = null, Func<ActivityContext, ActivitySamplingResult> onSample = null)
         {
-            this.subscriptionAllListeners = DiagnosticListener.AllListeners.Subscribe(listener =>
-            {
-                // if AspNetListener has subscription, then it is enabled
-                if (listener.Name == ActivityHelper.AspNetListenerName)
-                {
-                    this.subscriptionAspNetListener = listener.Subscribe(
-                        new TestDiagnosticListener(onNext),
-                        (name, a1, a2) => true,
-                        (a, o) => onImport?.Invoke(a, o),
-                        (a, o) => { });
-                }
-            });
-        }
+            Debug.Assert(this.activitySourceListener == null, "Cannot attach multiple listeners in tests.");
 
-        private void EnableAspNetListenerAndDisableActivity(
-            Action<KeyValuePair<string, object>> onNext = null,
-            string activityName = ActivityHelper.AspNetActivityName)
-        {
-            this.subscriptionAllListeners = DiagnosticListener.AllListeners.Subscribe(listener =>
+            this.activitySourceListener = new ActivityListener
             {
-                // if AspNetListener has subscription, then it is enabled
-                if (listener.Name == ActivityHelper.AspNetListenerName)
+                ShouldListenTo = (activitySource) => activitySource.Name == TelemetryHttpModule.AspNetSourceName,
+                ActivityStarted = (a) => onStarted?.Invoke(a),
+                ActivityStopped = (a) => onStopped?.Invoke(a),
+                Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                 {
-                    this.subscriptionAspNetListener = listener.Subscribe(
-                        new TestDiagnosticListener(onNext),
-                        (name, arg1, arg2) => name == activityName && arg1 == null);
-                }
-            });
-        }
+                    if (onSample != null)
+                    {
+                        return onSample(options.Parent);
+                    }
 
-        private void EnableAspNetListenerAndActivity(
-            Action<KeyValuePair<string, object>> onNext = null,
-            string activityName = ActivityHelper.AspNetActivityName)
-        {
-            this.subscriptionAllListeners = DiagnosticListener.AllListeners.Subscribe(listener =>
-            {
-                // if AspNetListener has subscription, then it is enabled
-                if (listener.Name == ActivityHelper.AspNetListenerName)
-                {
-                    this.subscriptionAspNetListener = listener.Subscribe(
-                        new TestDiagnosticListener(onNext),
-                        (name, arg1, arg2) => name == activityName);
-                }
-            });
-        }
+                    return ActivitySamplingResult.AllDataAndRecorded;
+                },
+            };
 
-        private void EnableAspNetListenerOnly(Action<KeyValuePair<string, object>> onNext = null)
-        {
-            this.subscriptionAllListeners = DiagnosticListener.AllListeners.Subscribe(listener =>
-            {
-                // if AspNetListener has subscription, then it is enabled
-                if (listener.Name == ActivityHelper.AspNetListenerName)
-                {
-                    this.subscriptionAspNetListener = listener.Subscribe(
-                        new TestDiagnosticListener(onNext),
-                        activityName => false);
-                }
-            });
+            ActivitySource.AddActivityListener(this.activitySourceListener);
         }
 
         private class TestHttpRequest : HttpRequestBase
@@ -564,6 +491,22 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             public override Exception Error { get; }
 
             public override HttpServerUtilityBase Server { get; }
+        }
+
+        private class NoopTextMapPropagator : TextMapPropagator
+        {
+            private static readonly PropagationContext DefaultPropagationContext = default;
+
+            public override ISet<string> Fields => null;
+
+            public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+            {
+                return DefaultPropagationContext;
+            }
+
+            public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
+            {
+            }
         }
     }
 }

@@ -8,6 +8,20 @@
 * Replaced `http.path` tag on activity with `http.target`.
   ([#2266](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2266))
 
+* ASP.NET instrumentation now uses
+  [OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule/)
+  instead of
+  [Microsoft.AspNet.TelemetryCorrelation](https://www.nuget.org/packages/Microsoft.AspNet.TelemetryCorrelation/)
+  to listen for incoming http requests to the process. Please see the (Step 2:
+  Modify
+  Web.config)[https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.AspNet#step-2-modify-webconfig]
+  README section for details on the new HttpModule definition required.
+  ([#2222](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2222))
+
+* Added `RecordException` option. Specify `true` to have unhandled exception
+  details automatically captured on spans.
+  ([#2256](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2256))
+
 ## 1.0.0-rc7
 
 Released 2021-Jul-12

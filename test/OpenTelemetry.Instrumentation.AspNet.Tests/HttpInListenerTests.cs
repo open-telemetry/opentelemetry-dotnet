@@ -31,47 +31,32 @@ using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNet.Tests
 {
-    public class HttpInListenerTests : IDisposable
+    public class HttpInListenerTests
     {
-        private readonly FakeAspNetDiagnosticSource fakeAspNetDiagnosticSource;
-
-        public HttpInListenerTests()
-        {
-            this.fakeAspNetDiagnosticSource = new FakeAspNetDiagnosticSource();
-        }
-
-        public void Dispose()
-        {
-            this.fakeAspNetDiagnosticSource.Dispose();
-        }
-
         [Theory]
-        [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext")]
-        [InlineData("http://localhost/", "http://localhost/", 0, null, "TraceContext", true)]
-        [InlineData("https://localhost/", "https://localhost/", 0, null, "TraceContext")]
-        [InlineData("https://localhost/", "https://user:pass@localhost/", 0, null, "TraceContext")] // Test URL sanitization
-        [InlineData("http://localhost:443/", "http://localhost:443/", 0, null, "TraceContext")] // Test http over 443
-        [InlineData("https://localhost:80/", "https://localhost:80/", 0, null, "TraceContext")] // Test https over 80
-        [InlineData("https://localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", "https://localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", 0, null, "TraceContext")] // Test complex URL
-        [InlineData("https://localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", "https://user:password@localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", 0, null, "TraceContext")] // Test complex URL sanitization
-        [InlineData("http://localhost:80/Index", "http://localhost:80/Index", 1, "{controller}/{action}/{id}", "TraceContext")]
-        [InlineData("https://localhost:443/about_attr_route/10", "https://localhost:443/about_attr_route/10", 2, "about_attr_route/{customerId}", "TraceContext")]
-        [InlineData("http://localhost:1880/api/weatherforecast", "http://localhost:1880/api/weatherforecast", 3, "api/{controller}/{id}", "TraceContext")]
-        [InlineData("https://localhost:1843/subroute/10", "https://localhost:1843/subroute/10", 4, "subroute/{customerId}", "TraceContext")]
-        [InlineData("http://localhost/api/value", "http://localhost/api/value", 0, null, "TraceContext", false, "/api/value")] // Request will be filtered
-        [InlineData("http://localhost/api/value", "http://localhost/api/value", 0, null, "TraceContext", false, "{ThrowException}")] // Filter user code will throw an exception
-        [InlineData("http://localhost/api/value/2", "http://localhost/api/value/2", 0, null, "CustomContextMatchParent")]
-        [InlineData("http://localhost/api/value/2", "http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent")]
-        [InlineData("http://localhost/api/value/2", "http://localhost/api/value/2", 0, null, "CustomContextNonmatchParent", false, null, true)]
+        [InlineData("http://localhost/", "http://localhost/", 0, null)]
+        [InlineData("http://localhost/", "http://localhost/", 0, null, true)]
+        [InlineData("https://localhost/", "https://localhost/", 0, null)]
+        [InlineData("https://localhost/", "https://user:pass@localhost/", 0, null)] // Test URL sanitization
+        [InlineData("http://localhost:443/", "http://localhost:443/", 0, null)] // Test http over 443
+        [InlineData("https://localhost:80/", "https://localhost:80/", 0, null)] // Test https over 80
+        [InlineData("https://localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", "https://localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", 0, null)] // Test complex URL
+        [InlineData("https://localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", "https://user:password@localhost:80/Home/Index.htm?q1=v1&q2=v2#FragmentName", 0, null)] // Test complex URL sanitization
+        [InlineData("http://localhost:80/Index", "http://localhost:80/Index", 1, "{controller}/{action}/{id}")]
+        [InlineData("https://localhost:443/about_attr_route/10", "https://localhost:443/about_attr_route/10", 2, "about_attr_route/{customerId}")]
+        [InlineData("http://localhost:1880/api/weatherforecast", "http://localhost:1880/api/weatherforecast", 3, "api/{controller}/{id}")]
+        [InlineData("https://localhost:1843/subroute/10", "https://localhost:1843/subroute/10", 4, "subroute/{customerId}")]
+        [InlineData("http://localhost/api/value", "http://localhost/api/value", 0, null, false, "/api/value")] // Request will be filtered
+        [InlineData("http://localhost/api/value", "http://localhost/api/value", 0, null, false, "{ThrowException}")] // Filter user code will throw an exception
+        [InlineData("http://localhost/", "http://localhost/", 0, null, false, null, true)] // Test RecordException option
         public void AspNetRequestsAreCollectedSuccessfully(
             string expectedUrl,
             string url,
             int routeType,
             string routeTemplate,
-            string carrierFormat,
             bool setStatusToErrorInEnrich = false,
             string filter = null,
-            bool restoreCurrentActivity = false)
+            bool recordException = false)
         {
             IDisposable openTelemetry = null;
             RouteData routeData;
@@ -130,28 +115,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             typeof(HttpRequest).GetField("_wr", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(HttpContext.Current.Request, workerRequest.Object);
 
-            var expectedTraceId = ActivityTraceId.CreateRandom();
-            var expectedSpanId = ActivitySpanId.CreateRandom();
-            var propagator = new Mock<TextMapPropagator>();
-            propagator.Setup(m => m.Extract<HttpRequest>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(new PropagationContext(
-                new ActivityContext(
-                    expectedTraceId,
-                    expectedSpanId,
-                    ActivityTraceFlags.Recorded,
-                    isRemote: true),
-                default));
+            List<Activity> exportedItems = new List<Activity>(16);
 
-            var activity = new Activity(HttpInListener.ActivityOperationName);
-            if (carrierFormat == "TraceContext" || carrierFormat == "CustomContextMatchParent")
-            {
-                activity.SetParentId(expectedTraceId, expectedSpanId, ActivityTraceFlags.Recorded);
-            }
-
-            var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            Sdk.SetDefaultTextMapPropagator(new TraceContextPropagator());
             using (openTelemetry = Sdk.CreateTracerProviderBuilder()
-                .AddAspNetInstrumentation(
-                (options) =>
+                .AddAspNetInstrumentation((options) =>
                 {
                     options.Filter = httpContext =>
                     {
@@ -177,134 +145,49 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     {
                         options.Enrich = GetEnrichmentAction(default);
                     }
+
+                    options.RecordException = recordException;
                 })
-            .AddProcessor(activityProcessor.Object).Build())
+                .AddInMemoryExporter(exportedItems)
+                .Build())
             {
-                activity.Start();
+                using var inMemoryEventListener = new InMemoryEventListener(AspNetInstrumentationEventSource.Log);
 
-                using (var inMemoryEventListener = new InMemoryEventListener(AspNetInstrumentationEventSource.Log))
+                var activity = ActivityHelper.StartAspNetActivity(Propagators.DefaultTextMapPropagator, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStartedCallback);
+
+                if (filter == "{ThrowException}")
                 {
-                    this.fakeAspNetDiagnosticSource.Write("Start", null);
-
-                    if (filter == "{ThrowException}")
-                    {
-                        Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 3));
-                    }
+                    Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 2));
                 }
 
-                if (restoreCurrentActivity)
+                Assert.Equal(TelemetryHttpModule.AspNetActivityName, Activity.Current.OperationName);
+
+                if (recordException)
                 {
-                    Activity.Current = activity;
+                    ActivityHelper.WriteActivityException(activity, HttpContext.Current, new InvalidOperationException(), TelemetryHttpModule.Options.OnExceptionCallback);
                 }
 
-                this.fakeAspNetDiagnosticSource.Write("Stop", null);
-
-                // The above line fires DS event which is listened by Instrumentation.
-                // Validate that Current activity is still the one created by Asp.Net
-                Assert.Equal(HttpInListener.ActivityOperationName, Activity.Current.OperationName);
-                activity.Stop();
+                ActivityHelper.StopAspNetActivity(activity, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStoppedCallback);
             }
 
             if (HttpContext.Current.Request.Path == filter || filter == "{ThrowException}")
             {
-                // only SetParentProvider/Shutdown/Dispose/OnStart are called because request was filtered.
-                Assert.Equal(4, activityProcessor.Invocations.Count);
+                Assert.Empty(exportedItems);
                 return;
             }
 
-            // Validate that Activity.Current is always the one created by Asp.Net
-            var currentActivity = Activity.Current;
+            Assert.Single(exportedItems);
 
-            Activity span;
-            if (carrierFormat == "CustomContextNonmatchParent")
-            {
-                Assert.Equal(6, activityProcessor.Invocations.Count); // SetParentProvider/OnStart(framework activity)/OnStart(sibling activity)/OnEnd(sibling activity)/OnShutdown/Dispose called.
+            Activity span = exportedItems[0];
 
-                var startedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnStart");
-                var stoppedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnEnd");
-                Assert.Equal(2, startedActivities.Count());
-                Assert.Single(stoppedActivities);
-
-                // The activity created by the framework and the sibling activity are both sent to Processor.OnStart
-                Assert.Contains(startedActivities, item =>
-                {
-                    var startedActivity = item.Arguments[0] as Activity;
-                    return startedActivity.OperationName == HttpInListener.ActivityOperationName;
-                });
-
-                Assert.Contains(startedActivities, item =>
-                {
-                    var startedActivity = item.Arguments[0] as Activity;
-                    return startedActivity.OperationName == HttpInListener.ActivityNameByHttpInListener;
-                });
-
-                // Only the sibling activity is sent to Processor.OnEnd
-                Assert.Contains(stoppedActivities, item =>
-                {
-                    var stoppedActivity = item.Arguments[0] as Activity;
-                    return stoppedActivity.OperationName == HttpInListener.ActivityNameByHttpInListener;
-                });
-            }
-            else
-            {
-                Assert.Equal(5, activityProcessor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
-
-                var startedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnStart");
-                var stoppedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnEnd");
-
-                // There is no sibling activity created
-                Assert.Single(startedActivities);
-                Assert.Single(stoppedActivities);
-
-                Assert.Contains(startedActivities, item =>
-                {
-                    var startedActivity = item.Arguments[0] as Activity;
-                    return startedActivity.OperationName == HttpInListener.ActivityOperationName;
-                });
-
-                // Only the sibling activity is sent to Processor.OnEnd
-                Assert.Contains(stoppedActivities, item =>
-                {
-                    var stoppedActivity = item.Arguments[0] as Activity;
-                    return stoppedActivity.OperationName == HttpInListener.ActivityOperationName;
-                });
-            }
-
-            span = (Activity)activityProcessor.Invocations[2].Arguments[0];
-
-            Assert.Equal(
-                carrierFormat == "TraceContext" || carrierFormat == "CustomContextMatchParent"
-                    ? HttpInListener.ActivityOperationName
-                    : HttpInListener.ActivityNameByHttpInListener,
-                span.OperationName);
+            Assert.Equal(TelemetryHttpModule.AspNetActivityName, span.OperationName);
             Assert.NotEqual(TimeSpan.Zero, span.Duration);
-            Assert.Equal(expectedTraceId, span.TraceId);
-            Assert.Equal(expectedSpanId, span.ParentSpanId);
 
             Assert.Equal(routeTemplate ?? HttpContext.Current.Request.Path, span.DisplayName);
             Assert.Equal(ActivityKind.Server, span.Kind);
             Assert.True(span.Duration != TimeSpan.Zero);
 
             Assert.Equal(200, span.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
-
-            if (setStatusToErrorInEnrich)
-            {
-                // This validates that users can override the
-                // status in Enrich.
-                Assert.Equal(Status.Error, span.GetStatus());
-
-                // Instrumentation is not expected to set status description
-                // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
-                Assert.True(string.IsNullOrEmpty(span.GetStatus().Description));
-            }
-            else
-            {
-                Assert.Equal(Status.Unset, span.GetStatus());
-
-                // Instrumentation is not expected to set status description
-                // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
-                Assert.True(string.IsNullOrEmpty(span.GetStatus().Description));
-            }
 
             var expectedUri = new Uri(expectedUrl);
             var actualUrl = span.GetTagValue(SemanticConventions.AttributeHttpUrl);
@@ -338,13 +221,37 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.Equal(HttpContext.Current.Request.HttpMethod, span.GetTagValue(SemanticConventions.AttributeHttpMethod) as string);
             Assert.Equal(HttpContext.Current.Request.Path, span.GetTagValue(SemanticConventions.AttributeHttpTarget) as string);
             Assert.Equal(HttpContext.Current.Request.UserAgent, span.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
+
+            if (recordException)
+            {
+                var status = span.GetStatus();
+                Assert.Equal(Status.Error.StatusCode, status.StatusCode);
+                Assert.Equal("Operation is not valid due to the current state of the object.", status.Description);
+            }
+            else if (setStatusToErrorInEnrich)
+            {
+                // This validates that users can override the
+                // status in Enrich.
+                Assert.Equal(Status.Error, span.GetStatus());
+
+                // Instrumentation is not expected to set status description
+                // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
+                Assert.True(string.IsNullOrEmpty(span.GetStatus().Description));
+            }
+            else
+            {
+                Assert.Equal(Status.Unset, span.GetStatus());
+
+                // Instrumentation is not expected to set status description
+                // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
+                Assert.True(string.IsNullOrEmpty(span.GetStatus().Description));
+            }
         }
 
         [Theory]
         [InlineData(SamplingDecision.Drop)]
         [InlineData(SamplingDecision.RecordOnly)]
         [InlineData(SamplingDecision.RecordAndSample)]
-
         public void ExtractContextIrrespectiveOfSamplingDecision(SamplingDecision samplingDecision)
         {
             HttpContext.Current = new HttpContext(
@@ -363,10 +270,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 .Returns(() =>
                 {
                     isPropagatorCalled = true;
-                    return default(PropagationContext);
+                    return default;
                 });
-
-            var activity = new Activity(HttpInListener.ActivityOperationName);
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             Sdk.SetDefaultTextMapPropagator(propagator.Object);
@@ -375,15 +280,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 .AddAspNetInstrumentation()
                 .AddProcessor(activityProcessor.Object).Build())
             {
-                activity.Start();
-
-                using (var inMemoryEventListener = new InMemoryEventListener(AspNetInstrumentationEventSource.Log))
-                {
-                    this.fakeAspNetDiagnosticSource.Write("Start", null);
-                }
-
-                this.fakeAspNetDiagnosticSource.Write("Stop", null);
-                activity.Stop();
+                var activity = ActivityHelper.StartAspNetActivity(Propagators.DefaultTextMapPropagator, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStartedCallback);
+                ActivityHelper.StopAspNetActivity(activity, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStoppedCallback);
             }
 
             Assert.True(isPropagatorCalled);
@@ -408,10 +306,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 .Returns(() =>
                 {
                     isPropagatorCalled = true;
-                    return default(PropagationContext);
+                    return default;
                 });
-
-            var activity = new Activity(HttpInListener.ActivityOperationName);
 
             bool isFilterCalled = false;
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
@@ -427,15 +323,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 })
                 .AddProcessor(activityProcessor.Object).Build())
             {
-                activity.Start();
-
-                using (var inMemoryEventListener = new InMemoryEventListener(AspNetInstrumentationEventSource.Log))
-                {
-                    this.fakeAspNetDiagnosticSource.Write("Start", null);
-                }
-
-                this.fakeAspNetDiagnosticSource.Write("Stop", null);
-                activity.Stop();
+                var activity = ActivityHelper.StartAspNetActivity(Propagators.DefaultTextMapPropagator, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStartedCallback);
+                ActivityHelper.StopAspNetActivity(activity, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStoppedCallback);
             }
 
             Assert.True(isFilterCalled);
@@ -444,9 +333,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
         private static Action<Activity, string, object> GetEnrichmentAction(Status statusToBeSet)
         {
-            Action<Activity, string, object> enrichAction;
-
-            enrichAction = (activity, method, obj) =>
+            void EnrichAction(Activity activity, string method, object obj)
             {
                 Assert.True(activity.IsAllDataRequested);
                 switch (method)
@@ -467,34 +354,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     default:
                         break;
                 }
-            };
-
-            return enrichAction;
-        }
-
-        private class FakeAspNetDiagnosticSource : IDisposable
-        {
-            private readonly DiagnosticListener listener;
-
-            public FakeAspNetDiagnosticSource()
-            {
-                this.listener = new DiagnosticListener(AspNetInstrumentation.AspNetDiagnosticListenerName);
             }
 
-            public void Write(string name, object value)
-            {
-                this.listener.Write(name, value);
-            }
-
-            public void Dispose()
-            {
-                this.listener.Dispose();
-            }
+            return EnrichAction;
         }
 
         private class TestSampler : Sampler
         {
-            private SamplingDecision samplingDecision;
+            private readonly SamplingDecision samplingDecision;
 
             public TestSampler(SamplingDecision samplingDecision)
             {

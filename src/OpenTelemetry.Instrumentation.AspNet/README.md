@@ -31,11 +31,11 @@ following shows changes required to your `Web.config` when using IIS web server.
 ```xml
 <system.webServer>
     <modules>
-    <add
-        name="TelemetryHttpModule"
-        type="OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule,
-            OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"
-        preCondition="integratedMode,managedHandler" />
+        <add
+            name="TelemetryHttpModule"
+            type="OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule,
+                OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule"
+            preCondition="integratedMode,managedHandler" />
     </modules>
 </system.webServer>
 ```
@@ -142,6 +142,12 @@ this.tracerProvider = Sdk.CreateTracerProviderBuilder()
 general extensibility point to add additional properties to any activity. The
 `Enrich` option is specific to this instrumentation, and is provided to get
 access to `HttpRequest` and `HttpResponse`.
+
+### RecordException
+
+This instrumentation automatically sets Activity Status to Error if an unhandled
+exception is thrown. Additionally, `RecordException` feature may be turned on,
+to store the exception to the Activity itself as ActivityEvent.
 
 ## References
 
