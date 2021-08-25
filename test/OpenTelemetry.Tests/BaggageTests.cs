@@ -275,13 +275,9 @@ namespace OpenTelemetry.Tests
         [Fact]
         public async Task AsyncLocalTests()
         {
-            int threadId = Thread.CurrentThread.ManagedThreadId;
-
             Baggage.SetBaggage("key1", "value1");
 
             await InnerTask().ConfigureAwait(false);
-
-            Assert.NotEqual(threadId, Thread.CurrentThread.ManagedThreadId);
 
             Baggage.SetBaggage("key4", "value4");
 
@@ -295,13 +291,11 @@ namespace OpenTelemetry.Tests
             {
                 Baggage.SetBaggage("key2", "value2");
 
-                int threadId = Thread.CurrentThread.ManagedThreadId;
-
                 await Task.Yield();
 
-                Assert.NotEqual(threadId, Thread.CurrentThread.ManagedThreadId);
+                Baggage.SetBaggage("key3", "value3");
 
-                Baggage.SetBaggage("key3", "value3"); // Changes to this AsyncLocal don't flow backwards automatically.
+                // key2 & key3 changes don't flow backward automatically
             }
         }
     }
