@@ -94,7 +94,7 @@ namespace OpenTelemetry
                 return default;
             }
 
-            Dictionary<string, string> baggageCopy = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, string> baggageCopy = new Dictionary<string, string>(baggageItems.Count, StringComparer.OrdinalIgnoreCase);
             foreach (KeyValuePair<string, string> baggageItem in baggageItems)
             {
                 if (string.IsNullOrEmpty(baggageItem.Value))
@@ -233,7 +233,7 @@ namespace OpenTelemetry
         /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
         public Baggage SetBaggage(IEnumerable<KeyValuePair<string, string>> baggageItems)
         {
-            if ((baggageItems?.Count() ?? 0) <= 0)
+            if (baggageItems?.Any() != true)
             {
                 return this;
             }
