@@ -33,7 +33,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             : base(name)
         {
             this.meter = meter;
-            this.httpServerDuration = meter.CreateHistogram<double>("http.server.duration", null, "measures the duration of the inbound HTTP request");
+            this.httpServerDuration = meter.CreateHistogram<double>("http.server.duration", "ms", "measures the duration of the inbound HTTP request");
         }
 
         public override void OnStopActivity(Activity activity, object payload)
