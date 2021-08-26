@@ -19,13 +19,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-#if NETSTANDARD2_1 || NETCOREAPP3_1 || NET5_0
+#if !NETSTANDARD2_0
 using System.Runtime.CompilerServices;
 #endif
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using OpenTelemetry.Context.Propagation;
-#if NETSTANDARD2_1 || NETCOREAPP3_1 || NET5_0
+#if !NETSTANDARD2_0
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 #endif
 using OpenTelemetry.Trace;
@@ -186,17 +186,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
-#if NETSTANDARD2_1 || NETCOREAPP3_1 || NET5_0
+#if !NETSTANDARD2_0
                 if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
                 {
                     AddGrpcAttributes(activity, grpcMethod, context);
                 }
-                else
+                else if (activity.GetStatus().StatusCode == StatusCode.Unset)
                 {
-                    if (activity.GetStatus().StatusCode == StatusCode.Unset)
-                    {
-                        activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
-                    }
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
                 }
 #else
                 if (activity.GetStatus().StatusCode == StatusCode.Unset)
@@ -333,7 +330,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             return builder.ToString();
         }
 
-#if NETSTANDARD2_1 || NETCOREAPP3_1 || NET5_0
+#if !NETSTANDARD2_0
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
         {
