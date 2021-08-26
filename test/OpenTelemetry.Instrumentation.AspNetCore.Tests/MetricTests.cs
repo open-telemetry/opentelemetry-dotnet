@@ -102,7 +102,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     metric.PopulationSum > b.LowBoundary &&
                     metric.PopulationSum <= b.HighBoundary)
                 .FirstOrDefault();
-            Assert.NotNull(bucket);
+            Assert.NotEqual(default, bucket);
             Assert.Equal(1, bucket.Count);
 
             var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, "GET");
