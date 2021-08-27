@@ -87,14 +87,23 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             this.meterProvider.Dispose();
 
             var requestMetrics = metricItems
-                .SelectMany(item => item.Metrics.Where(metric => metric.Name == "http.server.request_count"))
+                .SelectMany(item => item.Metrics.Where(metric => metric.Name == "http.server.duration"))
                 .ToArray();
 
             Assert.True(requestMetrics.Length == 1);
 
-            var metric = requestMetrics[0] as ISumMetricLong;
+            var metric = requestMetrics[0] as IHistogramMetric;
             Assert.NotNull(metric);
-            Assert.Equal(1L, metric.LongSum);
+            Assert.Equal(1L, metric.PopulationCount);
+            Assert.True(metric.PopulationSum > 0);
+
+            var bucket = metric.Buckets
+                .Where(b =>
+                    metric.PopulationSum > b.LowBoundary &&
+                    metric.PopulationSum <= b.HighBoundary)
+                .FirstOrDefault();
+            Assert.NotEqual(default, bucket);
+            Assert.Equal(1, bucket.Count);
 
             var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, "GET");
             var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
