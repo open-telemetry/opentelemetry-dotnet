@@ -145,7 +145,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
 
             if (trackActivity)
             {
-                ActivityHelper.StopAspNetActivity(aspNetActivity, context, Options.OnRequestStoppedCallback);
+                ActivityHelper.StopAspNetActivity(Options.TextMapPropagator, aspNetActivity, context, Options.OnRequestStoppedCallback);
             }
         }
 

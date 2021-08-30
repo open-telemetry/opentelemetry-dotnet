@@ -25,13 +25,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     {
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AspNetCoreInstrumentation"/> class.
-        /// </summary>
-        /// <param name="options">Configuration options for ASP.NET Core instrumentation.</param>
-        public AspNetCoreInstrumentation(AspNetCoreInstrumentationOptions options)
+        public AspNetCoreInstrumentation(HttpInListener httpInListener)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpInListener("Microsoft.AspNetCore", options), null);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(httpInListener, null);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

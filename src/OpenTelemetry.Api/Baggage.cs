@@ -29,7 +29,7 @@ namespace OpenTelemetry
     /// </remarks>
     public readonly struct Baggage : IEquatable<Baggage>
     {
-        private static readonly RuntimeContextSlot<Baggage> RuntimeContextSlot = RuntimeContext.RegisterSlot<Baggage>("otel.baggage");
+        private static readonly RuntimeContextSlot<BaggageHolder> RuntimeContextSlot = RuntimeContext.RegisterSlot<BaggageHolder>("otel.baggage");
         private static readonly Dictionary<string, string> EmptyBaggage = new Dictionary<string, string>();
 
         private readonly Dictionary<string, string> baggage;
@@ -48,8 +48,19 @@ namespace OpenTelemetry
         /// </summary>
         public static Baggage Current
         {
-            get => RuntimeContextSlot.Get();
-            set => RuntimeContextSlot.Set(value);
+            get => RuntimeContextSlot.Get()?.Baggage ?? default;
+            set
+            {
+                var baggageHolder = RuntimeContextSlot.Get();
+                if (baggageHolder == null)
+                {
+                    RuntimeContextSlot.Set(new BaggageHolder { Baggage = value });
+                }
+                else
+                {
+                    baggageHolder.Baggage = value;
+                }
+            }
         }
 
         /// <summary>
@@ -83,7 +94,7 @@ namespace OpenTelemetry
                 return default;
             }
 
-            Dictionary<string, string> baggageCopy = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, string> baggageCopy = new Dictionary<string, string>(baggageItems.Count, StringComparer.OrdinalIgnoreCase);
             foreach (KeyValuePair<string, string> baggageItem in baggageItems)
             {
                 if (string.IsNullOrEmpty(baggageItem.Value))
@@ -222,7 +233,7 @@ namespace OpenTelemetry
         /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
         public Baggage SetBaggage(IEnumerable<KeyValuePair<string, string>> baggageItems)
         {
-            if ((baggageItems?.Count() ?? 0) <= 0)
+            if (baggageItems?.Any() != true)
             {
                 return this;
             }
@@ -304,6 +315,11 @@ namespace OpenTelemetry
 
                 return res;
             }
+        }
+
+        private class BaggageHolder
+        {
+            public Baggage Baggage;
         }
     }
 }

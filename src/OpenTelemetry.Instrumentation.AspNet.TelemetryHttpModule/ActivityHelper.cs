@@ -83,7 +83,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
             {
                 context.Items[ActivityKey] = activity;
 
-                if (propagationContext.Baggage != default)
+                if (!(textMapPropagator is TraceContextPropagator))
                 {
                     // todo: RestoreActivityIfNeeded below compensates for
                     // AsyncLocal Activity.Current being lost. Baggage
@@ -116,11 +116,12 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// <summary>
         /// Stops the activity and notifies listeners about it.
         /// </summary>
+        /// <param name="textMapPropagator"><see cref="TextMapPropagator"/>.</param>
         /// <param name="aspNetActivity"><see cref="Activity"/>.</param>
         /// <param name="context"><see cref="HttpContext"/>.</param>
         /// <param name="onRequestStoppedCallback">Callback action.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void StopAspNetActivity(Activity aspNetActivity, HttpContext context, Action<Activity, HttpContext> onRequestStoppedCallback)
+        public static void StopAspNetActivity(TextMapPropagator textMapPropagator, Activity aspNetActivity, HttpContext context, Action<Activity, HttpContext> onRequestStoppedCallback)
         {
             Debug.Assert(context != null, "Context is null.");
 
@@ -151,6 +152,11 @@ namespace OpenTelemetry.Instrumentation.AspNet
             }
 
             AspNetTelemetryEventSource.Log.ActivityStopped(currentActivity);
+
+            if (!(textMapPropagator is TraceContextPropagator))
+            {
+                Baggage.Current = default;
+            }
 
             if (currentActivity != aspNetActivity)
             {
