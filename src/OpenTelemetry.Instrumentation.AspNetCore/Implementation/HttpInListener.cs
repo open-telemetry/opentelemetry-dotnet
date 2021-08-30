@@ -19,11 +19,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+#if !NETSTANDARD2_0
 using System.Runtime.CompilerServices;
+#endif
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using OpenTelemetry.Context.Propagation;
+#if !NETSTANDARD2_0
 using OpenTelemetry.Instrumentation.GrpcNetClient;
+#endif
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
@@ -35,6 +39,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+        private const string DiagnosticSourceName = "Microsoft.AspNetCore";
         private const string UnknownHostName = "UNKNOWN-HOST";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
         private readonly PropertyFetcher<HttpContext> startContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
@@ -45,8 +50,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new PropertyFetcher<string>("Template");
         private readonly AspNetCoreInstrumentationOptions options;
 
-        public HttpInListener(string name, AspNetCoreInstrumentationOptions options)
-            : base(name)
+        public HttpInListener(AspNetCoreInstrumentationOptions options)
+            : base(DiagnosticSourceName)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
         }
@@ -103,10 +108,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     activity = newOne;
                 }
 
-                if (ctx.Baggage != default)
-                {
-                    Baggage.Current = ctx.Baggage;
-                }
+                Baggage.Current = ctx.Baggage;
             }
 
             // enrich Activity from payload only if sampling decision
@@ -184,17 +186,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
-#if NETSTANDARD2_1 || NETCOREAPP3_1 || NET5_0
+#if !NETSTANDARD2_0
                 if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
                 {
                     AddGrpcAttributes(activity, grpcMethod, context);
                 }
-                else
+                else if (activity.GetStatus().StatusCode == StatusCode.Unset)
                 {
-                    if (activity.GetStatus().StatusCode == StatusCode.Unset)
-                    {
-                        activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
-                    }
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
                 }
 #else
                 if (activity.GetStatus().StatusCode == StatusCode.Unset)
@@ -230,6 +229,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // If yes, then we need to store the asp.net core activity inside
                 // the one created by the instrumentation.
                 // And retrieve it here, and set it to Current.
+            }
+
+            var textMapPropagator = Propagators.DefaultTextMapPropagator;
+            if (!(textMapPropagator is TraceContextPropagator))
+            {
+                Baggage.Current = default;
             }
         }
 
@@ -325,7 +330,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             return builder.ToString();
         }
 
-#if NETSTANDARD2_1 || NETCOREAPP3_1 || NET5_0
+#if !NETSTANDARD2_0
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
         {

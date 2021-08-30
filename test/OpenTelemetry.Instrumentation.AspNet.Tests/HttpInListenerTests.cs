@@ -167,7 +167,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                     ActivityHelper.WriteActivityException(activity, HttpContext.Current, new InvalidOperationException(), TelemetryHttpModule.Options.OnExceptionCallback);
                 }
 
-                ActivityHelper.StopAspNetActivity(activity, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStoppedCallback);
+                ActivityHelper.StopAspNetActivity(Propagators.DefaultTextMapPropagator, activity, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStoppedCallback);
             }
 
             if (HttpContext.Current.Request.Path == filter || filter == "{ThrowException}")
@@ -281,7 +281,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 .AddProcessor(activityProcessor.Object).Build())
             {
                 var activity = ActivityHelper.StartAspNetActivity(Propagators.DefaultTextMapPropagator, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStartedCallback);
-                ActivityHelper.StopAspNetActivity(activity, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStoppedCallback);
+                ActivityHelper.StopAspNetActivity(Propagators.DefaultTextMapPropagator, activity, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStoppedCallback);
             }
 
             Assert.True(isPropagatorCalled);
@@ -324,7 +324,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 .AddProcessor(activityProcessor.Object).Build())
             {
                 var activity = ActivityHelper.StartAspNetActivity(Propagators.DefaultTextMapPropagator, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStartedCallback);
-                ActivityHelper.StopAspNetActivity(activity, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStoppedCallback);
+                ActivityHelper.StopAspNetActivity(Propagators.DefaultTextMapPropagator, activity, HttpContext.Current, TelemetryHttpModule.Options.OnRequestStoppedCallback);
             }
 
             Assert.True(isFilterCalled);
