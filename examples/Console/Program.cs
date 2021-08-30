@@ -93,22 +93,19 @@ namespace Examples.Console
     [Verb("metrics", HelpText = "Specify the options required to test Metrics")]
     internal class MetricsOptions
     {
-        [Option('d', "IsDelta", HelpText = "Export Delta metrics", Required = false, Default = true)]
+        [Option('d', "IsDelta", HelpText = "Export Delta metrics", Required = false, Default = false)]
         public bool IsDelta { get; set; }
 
-        [Option('g', "Gauge", HelpText = "Include Observable Gauge.", Required = false)]
+        [Option('g', "Gauge", HelpText = "Include Observable Gauge.", Required = false, Default = false)]
         public bool? FlagGauge { get; set; }
 
-        [Option('u', "UpDownCounter", HelpText = "Include Observable Up/Down Counter.", Required = false)]
-        public bool? FlagUpDownCounter { get; set; }
-
-        [Option('c', "Counter", HelpText = "Include Counter.", Required = false)]
+        [Option('c', "Counter", HelpText = "Include Counter.", Required = false, Default = true)]
         public bool? FlagCounter { get; set; }
 
-        [Option('h', "Histogram", HelpText = "Include Histogram.", Required = false)]
+        [Option('h', "Histogram", HelpText = "Include Histogram.", Required = false, Default = false)]
         public bool? FlagHistogram { get; set; }
 
-        [Option("defaultCollection", Default = 500, HelpText = "Default collection period in milliseconds.", Required = false)]
+        [Option("defaultCollection", Default = 1000, HelpText = "Default collection period in milliseconds.", Required = false)]
         public int DefaultCollectionPeriodMilliseconds { get; set; }
 
         [Option("runtime", Default = 5000, HelpText = "Run time in milliseconds.", Required = false)]
