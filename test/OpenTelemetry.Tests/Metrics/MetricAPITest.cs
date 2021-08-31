@@ -42,9 +42,9 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(false)]
         public void CounterAggregationTest(bool exportDelta)
         {
-            var metricItems = new List<MetricItem>();
-            var metricExporter = new TestExporter<MetricItem>(ProcessExport);
-            void ProcessExport(Batch<MetricItem> batch)
+            var metricItems = new List<Metric>();
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
+            void ProcessExport(Batch<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {
@@ -114,9 +114,9 @@ namespace OpenTelemetry.Metrics.Tests
         public void ObservableCounterAggregationTest(bool exportDelta)
         {
             var meterName = "TestMeter" + exportDelta;
-            var metricItems = new List<MetricItem>();
-            var metricExporter = new TestExporter<MetricItem>(ProcessExport);
-            void ProcessExport(Batch<MetricItem> batch)
+            var metricItems = new List<Metric>();
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
+            void ProcessExport(Batch<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {
@@ -174,9 +174,9 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void SimpleTest()
         {
-            var metricItems = new List<MetricItem>();
-            var metricExporter = new TestExporter<MetricItem>(ProcessExport);
-            void ProcessExport(Batch<MetricItem> batch)
+            var metricItems = new List<Metric>();
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
+            void ProcessExport(Batch<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {
@@ -233,12 +233,11 @@ namespace OpenTelemetry.Metrics.Tests
             pullProcessor.PullRequest();
 
             long sumReceived = 0;
-            foreach (var metricItem in metricItems)
+            foreach (var metric in metricItems)
             {
-                var metrics = metricItem.Metrics;
-                foreach (var metric in metrics)
+                foreach (var metricPoint in metric.GetMetricPoints())
                 {
-                    sumReceived += (metric as ISumMetricLong).LongSum;
+                    sumReceived += metricPoint.LongValue;
                 }
             }
 
@@ -246,15 +245,14 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(expectedSum, sumReceived);
         }
 
-        private static long GetSum(List<MetricItem> metricItems)
+        private static long GetSum(List<Metric> metrics)
         {
             long sum = 0;
-            foreach (var metricItem in metricItems)
+            foreach (var metric in metrics)
             {
-                var metrics = metricItem.Metrics;
-                foreach (var metric in metrics)
+                foreach (var metricPoint in metric.GetMetricPoints())
                 {
-                    sum += (metric as ISumMetricLong).LongSum;
+                    sum += metricPoint.LongValue;
                 }
             }
 

@@ -23,7 +23,7 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
 {
-    public class ConsoleMetricExporter : ConsoleExporter<MetricItem>
+    public class ConsoleMetricExporter : ConsoleExporter<Metric>
     {
         private Resource resource;
 
@@ -32,7 +32,7 @@ namespace OpenTelemetry.Exporter
         {
         }
 
-        public override ExportResult Export(in Batch<MetricItem> batch)
+        public override ExportResult Export(in Batch<Metric> batch)
         {
             if (this.resource == null)
             {
@@ -49,13 +49,45 @@ namespace OpenTelemetry.Exporter
                 }
             }
 
-            foreach (var metricItem in batch)
+            foreach (var metric in batch)
             {
-                foreach (var metric in metricItem.Metrics)
+                var msg = new StringBuilder($"\nExport ");
+                msg.Append(metric.Name);
+                if (!string.IsNullOrEmpty(metric.Description))
                 {
-                    var tags = metric.Attributes.ToArray().Select(k => $"{k.Key}={k.Value?.ToString()}");
+                    msg.Append(' ');
+                    msg.Append(metric.Description);
+                }
 
+                if (!string.IsNullOrEmpty(metric.Unit))
+                {
+                    msg.Append($", Unit: {metric.Unit}");
+                }
+
+                if (!string.IsNullOrEmpty(metric.Meter.Name))
+                {
+                    msg.Append($", Meter: {metric.Meter.Name}");
+
+                    if (!string.IsNullOrEmpty(metric.Meter.Version))
+                    {
+                        msg.Append($"/{metric.Meter.Version}");
+                    }
+                }
+
+                Console.WriteLine(msg.ToString());
+
+                foreach (var metricPoint in metric.GetMetricPoints())
+                {
                     string valueDisplay = string.Empty;
+                    StringBuilder tagsBuilder = new StringBuilder();
+                    for (int i = 0; i < metricPoint.Keys.Length; i++)
+                    {
+                        tagsBuilder.Append(metricPoint.Keys[i]);
+                        tagsBuilder.Append(":");
+                        tagsBuilder.Append(metricPoint.Values[i]);
+                    }
+
+                    var tags = tagsBuilder.ToString();
 
                     // Switch would be faster than the if.else ladder
                     // of try and cast.
@@ -63,25 +95,25 @@ namespace OpenTelemetry.Exporter
                     {
                         case MetricType.LongSum:
                             {
-                                valueDisplay = (metric as ISumMetricLong).LongSum.ToString(CultureInfo.InvariantCulture);
+                                valueDisplay = metricPoint.LongValue.ToString(CultureInfo.InvariantCulture);
                                 break;
                             }
 
                         case MetricType.DoubleSum:
                             {
-                                valueDisplay = (metric as ISumMetricDouble).DoubleSum.ToString(CultureInfo.InvariantCulture);
+                                valueDisplay = metricPoint.DoubleValue.ToString(CultureInfo.InvariantCulture);
                                 break;
                             }
 
                         case MetricType.LongGauge:
                             {
-                                valueDisplay = (metric as IGaugeMetric).LastValue.Value.ToString();
+                                valueDisplay = metricPoint.LongValue.ToString(CultureInfo.InvariantCulture);
                                 break;
                             }
 
                         case MetricType.DoubleGauge:
                             {
-                                valueDisplay = (metric as IGaugeMetric).LastValue.Value.ToString();
+                                valueDisplay = metricPoint.DoubleValue.ToString(CultureInfo.InvariantCulture);
                                 break;
                             }
 
@@ -104,46 +136,16 @@ namespace OpenTelemetry.Exporter
                                 valueDisplay = bucketsBuilder.ToString();
                                 break;
                             }
-
-                        case MetricType.Summary:
-                            {
-                                var summaryMetric = metric as ISummaryMetric;
-                                valueDisplay = string.Format("Sum: {0} Count: {1}", summaryMetric.PopulationSum, summaryMetric.PopulationCount);
-                                break;
-                            }
                     }
 
-                    var msg = new StringBuilder($"Export (");
-                    msg.Append(metric.StartTimeExclusive.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                    msg = new StringBuilder();
+                    msg.Append(metricPoint.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                     msg.Append(", ");
-                    msg.Append(metric.EndTimeInclusive.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                    msg.Append(metricPoint.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                     msg.Append("] ");
-                    msg.Append(metric.Name);
-                    msg.Append(' ');
                     msg.Append(string.Join(";", tags));
                     msg.Append(' ');
                     msg.Append(metric.MetricType);
-
-                    if (!string.IsNullOrEmpty(metric.Description))
-                    {
-                        msg.Append($", Description: {metric.Description}");
-                    }
-
-                    if (!string.IsNullOrEmpty(metric.Unit))
-                    {
-                        msg.Append($", Unit: {metric.Unit}");
-                    }
-
-                    if (!string.IsNullOrEmpty(metric.Meter.Name))
-                    {
-                        msg.Append($", Meter: {metric.Meter.Name}");
-
-                        if (!string.IsNullOrEmpty(metric.Meter.Version))
-                        {
-                            msg.Append($"/{metric.Meter.Version}");
-                        }
-                    }
-
                     msg.AppendLine();
                     msg.Append($"Value: {valueDisplay}");
                     Console.WriteLine(msg);

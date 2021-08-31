@@ -20,16 +20,21 @@ namespace OpenTelemetry.Metrics
 {
     public abstract class MetricProcessor : BaseProcessor<MetricItem>
     {
-        protected readonly BaseExporter<MetricItem> exporter;
+        protected readonly BaseExporter<Metric> exporter;
 
-        protected MetricProcessor(BaseExporter<MetricItem> exporter)
+        protected MetricProcessor(BaseExporter<Metric> exporter)
         {
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }
 
+        public virtual AggregationTemporality GetAggregationTemporality()
+        {
+            return AggregationTemporality.Cumulative;
+        }
+
         // GetMetric or GetMemoryState or GetAggregatedMetrics..
         // ...or some other names
-        public abstract void SetGetMetricFunction(Func<bool, MetricItem> getMetrics);
+        public abstract void SetGetMetricFunction(Func<Batch<Metric>> getMetrics);
 
         internal override void SetParentProvider(BaseProvider parentProvider)
         {

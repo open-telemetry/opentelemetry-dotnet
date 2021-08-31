@@ -24,10 +24,10 @@ using OtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
 namespace OpenTelemetry.Exporter
 {
     /// <summary>
-    /// Exporter consuming <see cref="MetricItem"/> and exporting the data using
+    /// Exporter consuming <see cref="Metric"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    public class OtlpMetricsExporter : BaseOtlpExporter<MetricItem>
+    public class OtlpMetricsExporter : BaseOtlpExporter<Metric>
     {
         private readonly OtlpCollector.MetricsService.IMetricsServiceClient metricsClient;
 
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Exporter
         }
 
         /// <inheritdoc />
-        public override ExportResult Export(in Batch<MetricItem> batch)
+        public override ExportResult Export(in Batch<Metric> batch)
         {
             // Prevents the exporter's gRPC and HTTP operations from being instrumented.
             using var scope = SuppressInstrumentationScope.Begin();
