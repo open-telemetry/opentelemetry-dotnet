@@ -44,10 +44,10 @@ namespace Examples.Console
                  * launch the OpenTelemetry Collector with an OTLP receiver, by running:
                  *
                  *  - On Unix based systems use:
-                 *     docker run --rm -it -p 4317:4317 -v $(pwd):/cfg otel/opentelemetry-collector:0.28.0 --config=/cfg/otlp-collector-example/config.yaml
+                 *     docker run --rm -it -p 4317:4317 -v $(pwd):/cfg otel/opentelemetry-collector:0.33.0 --config=/cfg/otlp-collector-example/config.yaml
                  *
                  *  - On Windows use:
-                 *     docker run --rm -it -p 4317:4317 -v "%cd%":/cfg otel/opentelemetry-collector:0.28.0 --config=/cfg/otlp-collector-example/config.yaml
+                 *     docker run --rm -it -p 4317:4317 -v "%cd%":/cfg otel/opentelemetry-collector:0.33.0 --config=/cfg/otlp-collector-example/config.yaml
                  *
                  * Open another terminal window at the examples/Console/ directory and
                  * launch the OTLP example by running:
@@ -99,19 +99,6 @@ namespace Examples.Console
             if (options.FlagGauge ?? false)
             {
                 var observableCounter = meter.CreateObservableGauge<int>("gauge", () =>
-                {
-                    return new List<Measurement<int>>()
-                    {
-                        new Measurement<int>(
-                            (int)Process.GetCurrentProcess().PrivateMemorySize64,
-                            new KeyValuePair<string, object>("tag1", "value1")),
-                    };
-                });
-            }
-
-            if (options.FlagUpDownCounter ?? true)
-            {
-                var observableCounter = meter.CreateObservableCounter<int>("updown", () =>
                 {
                     return new List<Measurement<int>>()
                     {
