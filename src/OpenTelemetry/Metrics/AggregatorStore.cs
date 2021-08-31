@@ -170,7 +170,7 @@ namespace OpenTelemetry.Metrics
 
         internal BatchMetricPoint GetMetricPoints()
         {
-           return new BatchMetricPoint(this.metrics, this.metricPointIndex + 1, this.startTimeExclusive, this.endTimeInclusive);
+            return new BatchMetricPoint(this.metrics, this.metricPointIndex + 1, this.startTimeExclusive, this.endTimeInclusive);
         }
     }
 }
