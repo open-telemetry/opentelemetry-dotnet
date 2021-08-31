@@ -76,13 +76,13 @@ namespace Benchmarks.Metrics
             this.provider?.Dispose();
         }
 
-        [Benchmark]
+        // [Benchmark]
         public void CounterHotPath()
         {
             this.counter?.Add(100);
         }
 
-        [Benchmark]
+        // [Benchmark]
         public void CounterWith1LabelsHotPath()
         {
             var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 2)]);
@@ -98,7 +98,7 @@ namespace Benchmarks.Metrics
             this.counter?.Add(100, tag1, tag2, tag3);
         }
 
-        [Benchmark]
+        // [Benchmark]
         public void CounterWith5LabelsHotPath()
         {
             var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 2)]);

@@ -26,8 +26,6 @@ namespace OpenTelemetry.Metrics
         private double doubleVal;
         private double lastDoubleSum;
 
-        private readonly AggregationType AggType { get; }
-
         internal MetricPoint(AggregationType aggType, DateTimeOffset startTime, string[] keys, object[] values)
         {
             this.AggType = aggType;
@@ -43,9 +41,9 @@ namespace OpenTelemetry.Metrics
             this.lastDoubleSum = default;
         }
 
-        public readonly string[] Keys;
+        public string[] Keys { get; internal set; }
 
-        public readonly object[] Values;
+        public object[] Values { get; internal set; }
 
         public DateTimeOffset StartTime { get; internal set; }
 
@@ -54,6 +52,8 @@ namespace OpenTelemetry.Metrics
         public long LongValue { get; internal set; }
 
         public double DoubleValue { get; internal set; }
+
+        private readonly AggregationType AggType { get; }
 
         internal void Update(long number)
         {

@@ -1,4 +1,4 @@
-// <copyright file="AggStore.cs" company="OpenTelemetry Authors">
+// <copyright file="AggregatorStore.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,12 +27,12 @@ namespace OpenTelemetry.Metrics
         private static readonly string[] EmptySeqKey = new string[0];
         private static readonly object[] EmptySeqValue = new object[0];
         private readonly object lockKeyValue2MetricAggs = new object();
-        private AggregationTemporality temporality;
 
         // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
         private readonly Dictionary<string[], Dictionary<object[], int>> keyValue2MetricAggs =
             new Dictionary<string[], Dictionary<object[], int>>(new StringArrayEqualityComparer());
 
+        private AggregationTemporality temporality;
         private MetricPoint[] metrics;
         private int metricPointIndex = 0;
         private AggregationType aggType;

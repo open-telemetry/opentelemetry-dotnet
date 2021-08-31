@@ -40,7 +40,6 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc/>
         public void Dispose()
         {
-
         }
 
         /// <summary>
@@ -73,13 +72,11 @@ namespace OpenTelemetry.Metrics
                 this.end = end;
             }
 
-            /// <inheritdoc/>
             public MetricPoint Current { get; private set; }
 
             /// <inheritdoc/>
             object IEnumerator.Current => this.Current;
 
-            /// <inheritdoc/>
             public void Dispose()
             {
             }
