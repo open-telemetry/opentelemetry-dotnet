@@ -17,14 +17,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-
-using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Xunit;
 
-namespace OpenTelemetry.Exporter.Jaeger.Tests.Implementation
+namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
 {
     public class JaegerActivityConversionTest
     {

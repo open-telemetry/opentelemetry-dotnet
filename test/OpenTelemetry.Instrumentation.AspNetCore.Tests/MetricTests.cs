@@ -64,9 +64,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 }
             }
 
+            var processor = new PullMetricProcessor(metricExporter, true);
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddAspNetCoreInstrumentation()
-                .AddMetricProcessor(new PushMetricProcessor(exporter: metricExporter, exportIntervalMs: 10, isDelta: true))
+                .AddMetricProcessor(processor)
                 .Build();
 
             using (var client = this.factory.CreateClient())
@@ -75,22 +76,34 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 response.EnsureSuccessStatusCode();
             }
 
-            // Wait for at least two exporter invocations
-            WaitForMetricItems(metricItems, 2);
+            // We need to let End callback execute as it is executed AFTER response was returned.
+            // In unit tests environment there may be a lot of parallel unit tests executed, so
+            // giving some breezing room for the End callback to complete
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            // Invokes the TestExporter which will invoke ProcessExport
+            processor.PullRequest();
 
             this.meterProvider.Dispose();
 
-            // There should be more than one result here since we waited for at least two exporter invocations.
-            // The exporter continues to receive a metric even if it has not changed since the last export.
             var requestMetrics = metricItems
-                .SelectMany(item => item.Metrics.Where(metric => metric.Name == "http.server.request_count"))
+                .SelectMany(item => item.Metrics.Where(metric => metric.Name == "http.server.duration"))
                 .ToArray();
 
-            Assert.True(requestMetrics.Length > 1);
+            Assert.True(requestMetrics.Length == 1);
 
-            var metric = requestMetrics[0] as ISumMetric;
+            var metric = requestMetrics[0] as IHistogramMetric;
             Assert.NotNull(metric);
-            Assert.Equal(1L, metric.Sum.Value);
+            Assert.Equal(1L, metric.PopulationCount);
+            Assert.True(metric.PopulationSum > 0);
+
+            var bucket = metric.Buckets
+                .Where(b =>
+                    metric.PopulationSum > b.LowBoundary &&
+                    metric.PopulationSum <= b.HighBoundary)
+                .FirstOrDefault();
+            Assert.NotEqual(default, bucket);
+            Assert.Equal(1, bucket.Count);
 
             var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, "GET");
             var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
@@ -101,13 +114,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Contains(statusCode, metric.Attributes);
             Assert.Contains(flavor, metric.Attributes);
             Assert.Equal(4, metric.Attributes.Length);
-
-            for (var i = 1; i < requestMetrics.Length; ++i)
-            {
-                metric = requestMetrics[i] as ISumMetric;
-                Assert.NotNull(metric);
-                Assert.Equal(0L, metric.Sum.Value);
-            }
         }
 
         public void Dispose()

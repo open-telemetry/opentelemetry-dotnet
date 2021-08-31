@@ -61,6 +61,7 @@
     </Compile>
     <Compile Include="Models\WeatherForecast.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SuppressInstrumentationHttpModule.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\_ViewStart.cshtml" />

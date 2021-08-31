@@ -35,6 +35,7 @@ namespace OpenTelemetry.Metrics
             this.StartTimeExclusive = startTimeExclusive;
             this.Attributes = attributes;
             this.IsMonotonic = isMonotonic;
+            this.MetricType = MetricType.Summary;
         }
 
         public string Name { get; private set; }
@@ -58,6 +59,8 @@ namespace OpenTelemetry.Metrics
         public double PopulationSum { get; private set; }
 
         public IEnumerable<ValueAtQuantile> Quantiles => this.quantiles;
+
+        public MetricType MetricType { get; private set; }
 
         public void Update<T>(T value)
             where T : struct

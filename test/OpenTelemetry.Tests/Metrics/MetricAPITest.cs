@@ -16,18 +16,160 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading;
 using OpenTelemetry.Tests;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Tests
 {
     public class MetricApiTest
     {
-        private static int numberOfThreads = 10;
+        private static int numberOfThreads = Environment.ProcessorCount;
         private static long deltaValueUpdatedByEachCall = 10;
-        private static int numberOfMetricUpdateByEachThread = 1000000;
+        private static int numberOfMetricUpdateByEachThread = 100000;
+        private readonly ITestOutputHelper output;
+
+        public MetricApiTest(ITestOutputHelper output)
+        {
+            this.output = output;
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CounterAggregationTest(bool exportDelta)
+        {
+            var metricItems = new List<MetricItem>();
+            var metricExporter = new TestExporter<MetricItem>(ProcessExport);
+            void ProcessExport(Batch<MetricItem> batch)
+            {
+                foreach (var metricItem in batch)
+                {
+                    metricItems.Add(metricItem);
+                }
+            }
+
+            var pullProcessor = new PullMetricProcessor(metricExporter, exportDelta);
+
+            var meter = new Meter("TestMeter");
+            var counterLong = meter.CreateCounter<long>("mycounter");
+            var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource("TestMeter")
+                .AddMetricProcessor(pullProcessor)
+                .Build();
+
+            counterLong.Add(10);
+            counterLong.Add(10);
+            pullProcessor.PullRequest();
+            long sumReceived = GetSum(metricItems);
+            Assert.Equal(20, sumReceived);
+
+            metricItems.Clear();
+            counterLong.Add(10);
+            counterLong.Add(10);
+            pullProcessor.PullRequest();
+            sumReceived = GetSum(metricItems);
+            if (exportDelta)
+            {
+                Assert.Equal(20, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(40, sumReceived);
+            }
+
+            metricItems.Clear();
+            pullProcessor.PullRequest();
+            sumReceived = GetSum(metricItems);
+            if (exportDelta)
+            {
+                Assert.Equal(0, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(40, sumReceived);
+            }
+
+            metricItems.Clear();
+            counterLong.Add(40);
+            counterLong.Add(20);
+            pullProcessor.PullRequest();
+            sumReceived = GetSum(metricItems);
+            if (exportDelta)
+            {
+                Assert.Equal(60, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(100, sumReceived);
+            }
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ObservableCounterAggregationTest(bool exportDelta)
+        {
+            var meterName = "TestMeter" + exportDelta;
+            var metricItems = new List<MetricItem>();
+            var metricExporter = new TestExporter<MetricItem>(ProcessExport);
+            void ProcessExport(Batch<MetricItem> batch)
+            {
+                foreach (var metricItem in batch)
+                {
+                    metricItems.Add(metricItem);
+                }
+            }
+
+            var pullProcessor = new PullMetricProcessor(metricExporter, exportDelta);
+
+            var meter = new Meter(meterName);
+            int i = 1;
+            var counterLong = meter.CreateObservableCounter<long>(
+            "observable-counter",
+            () =>
+            {
+                return new List<Measurement<long>>()
+                {
+                    new Measurement<long>(i++ * 10),
+                };
+            });
+            var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource(meterName)
+                .AddMetricProcessor(pullProcessor)
+                .Build();
+
+            pullProcessor.PullRequest();
+            long sumReceived = GetSum(metricItems);
+            Assert.Equal(10, sumReceived);
+
+            metricItems.Clear();
+            pullProcessor.PullRequest();
+            sumReceived = GetSum(metricItems);
+            if (exportDelta)
+            {
+                Assert.Equal(10, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(20, sumReceived);
+            }
+
+            metricItems.Clear();
+            pullProcessor.PullRequest();
+            sumReceived = GetSum(metricItems);
+            if (exportDelta)
+            {
+                Assert.Equal(10, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(30, sumReceived);
+            }
+        }
 
         [Fact]
         public void SimpleTest()
@@ -42,11 +184,13 @@ namespace OpenTelemetry.Metrics.Tests
                 }
             }
 
+            var pullProcessor = new PullMetricProcessor(metricExporter, true);
+
             var meter = new Meter("TestMeter");
             var counterLong = meter.CreateCounter<long>("mycounter");
             var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
-                .AddMetricProcessor(new PushMetricProcessor(metricExporter, 100, isDelta: true))
+                .AddMetricProcessor(pullProcessor)
                 .Build();
 
             // setup args to threads.
@@ -69,6 +213,9 @@ namespace OpenTelemetry.Metrics.Tests
             // Block until all threads started.
             mreToEnsureAllThreadsStarted.WaitOne();
 
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
             // unblock all the threads.
             // (i.e let them start counter.Add)
             mreToBlockUpdateThreads.Set();
@@ -79,11 +226,11 @@ namespace OpenTelemetry.Metrics.Tests
                 t[i].Join();
             }
 
-            meterProvider.Dispose();
+            var timeTakenInMilliseconds = sw.ElapsedMilliseconds;
+            this.output.WriteLine($"Took {timeTakenInMilliseconds} msecs. Total threads: {numberOfThreads}, each thread doing {numberOfMetricUpdateByEachThread} recordings.");
 
-            // TODO: Once Dispose does flush, we may not need this
-            // unknown sleep below.
-            Thread.Sleep(1000);
+            meterProvider.Dispose();
+            pullProcessor.PullRequest();
 
             long sumReceived = 0;
             foreach (var metricItem in metricItems)
@@ -91,12 +238,27 @@ namespace OpenTelemetry.Metrics.Tests
                 var metrics = metricItem.Metrics;
                 foreach (var metric in metrics)
                 {
-                    sumReceived += (long)(metric as ISumMetric).Sum.Value;
+                    sumReceived += (metric as ISumMetricLong).LongSum;
                 }
             }
 
             var expectedSum = deltaValueUpdatedByEachCall * numberOfMetricUpdateByEachThread * numberOfThreads;
             Assert.Equal(expectedSum, sumReceived);
+        }
+
+        private static long GetSum(List<MetricItem> metricItems)
+        {
+            long sum = 0;
+            foreach (var metricItem in metricItems)
+            {
+                var metrics = metricItem.Metrics;
+                foreach (var metric in metrics)
+                {
+                    sum += (metric as ISumMetricLong).LongSum;
+                }
+            }
+
+            return sum;
         }
 
         private static void CounterUpdateThread(object obj)

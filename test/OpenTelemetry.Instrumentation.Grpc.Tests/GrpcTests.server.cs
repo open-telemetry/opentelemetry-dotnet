@@ -24,7 +24,7 @@ using Grpc.Core;
 using Grpc.Net.Client;
 using Moq;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Instrumentation.Grpc.Tests.Services;
+using OpenTelemetry.Instrumentation.Grpc.Services.Tests;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             // The following are http.* attributes that are also included on the span for the gRPC invocation.
             Assert.Equal($"localhost:{this.server.Port}", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
             Assert.Equal("POST", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
-            Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SpanAttributeConstants.HttpPathKey));
+            Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpTarget));
             Assert.Equal($"http://localhost:{this.server.Port}/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
             Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
         }
@@ -182,7 +182,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 // The following are http.* attributes that are also included on the span for the gRPC invocation.
                 Assert.Equal($"localhost:{this.server.Port}", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
                 Assert.Equal("POST", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
-                Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SpanAttributeConstants.HttpPathKey));
+                Assert.Equal("/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpTarget));
                 Assert.Equal($"http://localhost:{this.server.Port}/greet.Greeter/SayHello", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
                 Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
             }
