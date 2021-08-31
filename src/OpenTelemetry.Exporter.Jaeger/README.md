@@ -14,7 +14,7 @@ the Compact Thrift API port, and as such only supports Thrift over UDP.
 This package supports all the officially supported versions of [.NET
 Core](https://dotnet.microsoft.com/download/dotnet-core).
 
-For .NET Framework, versions 4.6 and above are supported.
+For .NET Framework, versions 4.6.1 and above are supported.
 
 ## Prerequisite
 
