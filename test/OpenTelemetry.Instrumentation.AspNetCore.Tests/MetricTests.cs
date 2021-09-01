@@ -92,7 +92,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             Assert.True(requestMetrics.Length == 1);
 
-            var metric = requestMetrics[0] as IHistogramMetric;
+            var metric = requestMetrics[0];
             Assert.NotNull(metric);
             Assert.Equal(1L, metric.PopulationCount);
             Assert.True(metric.PopulationSum > 0);

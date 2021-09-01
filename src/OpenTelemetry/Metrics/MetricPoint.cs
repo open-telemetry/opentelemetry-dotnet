@@ -53,6 +53,10 @@ namespace OpenTelemetry.Metrics
 
         public double DoubleValue { get; internal set; }
 
+        public long PopulationCount { get; internal set; }
+
+        public double PopulationSum { get; internal set; }
+
         private readonly AggregationType AggType { get; }
 
         internal void Update(long number)

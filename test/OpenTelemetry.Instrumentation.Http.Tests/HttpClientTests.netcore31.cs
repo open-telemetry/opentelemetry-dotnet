@@ -54,10 +54,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             var processor = new Mock<BaseProcessor<Activity>>();
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
-            var metricItems = new List<MetricItem>();
-            var metricExporter = new TestExporter<MetricItem>(ProcessExport);
+            var metricItems = new List<Metric>();
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
 
-            void ProcessExport(Batch<MetricItem> batch)
+            void ProcessExport(Batch<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {
@@ -115,7 +115,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             meterProvider.Dispose();
 
             var requestMetrics = metricItems
-                .SelectMany(item => item.Metrics.Where(metric => metric.Name == "http.client.duration"))
+                .Where(metric => metric.Name == "http.client.duration")
                 .ToArray();
 
             Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
