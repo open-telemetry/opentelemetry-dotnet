@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Linq;
 
 namespace OpenTelemetry.Metrics
 {
@@ -43,8 +42,6 @@ namespace OpenTelemetry.Metrics
         {
             var aggregators = new List<IAggregator>();
 
-            var name = $"{this.instrument.Meter.Name}:{this.instrument.Name}";
-
             var tags = new KeyValuePair<string, object>[seqKey.Length];
             for (int i = 0; i < seqKey.Length; i++)
             {
@@ -54,21 +51,44 @@ namespace OpenTelemetry.Metrics
             var dt = DateTimeOffset.UtcNow;
 
             // TODO: Need to map each instrument to metrics (based on View API)
-            if (this.instrument.GetType().Name.Contains("Counter"))
+            // TODO: move most of this logic out of hotpath, and to MeterProvider's
+            // InstrumentPublished event, which is once per instrument creation.
+
+            if (this.instrument.GetType() == typeof(Counter<long>)
+                || this.instrument.GetType() == typeof(Counter<int>)
+                || this.instrument.GetType() == typeof(Counter<short>)
+                || this.instrument.GetType() == typeof(Counter<byte>))
             {
-                aggregators.Add(new SumMetricAggregator(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
+                aggregators.Add(new SumMetricAggregatorLong(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, true));
+            }
+            else if (this.instrument.GetType() == typeof(ObservableCounter<long>)
+                || this.instrument.GetType() == typeof(ObservableCounter<int>)
+                || this.instrument.GetType() == typeof(ObservableCounter<short>)
+                || this.instrument.GetType() == typeof(ObservableCounter<byte>))
+            {
+                aggregators.Add(new SumMetricAggregatorLong(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, false));
+            }
+            else if (this.instrument.GetType() == typeof(Counter<double>)
+                || this.instrument.GetType() == typeof(Counter<float>))
+            {
+                aggregators.Add(new SumMetricAggregatorDouble(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
+            }
+            else if (this.instrument.GetType() == typeof(ObservableCounter<double>)
+                || this.instrument.GetType() == typeof(ObservableCounter<float>))
+            {
+                aggregators.Add(new SumMetricAggregatorDouble(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
             }
             else if (this.instrument.GetType().Name.Contains("Gauge"))
             {
-                aggregators.Add(new GaugeMetricAggregator(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
+                aggregators.Add(new GaugeMetricAggregator(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
             }
             else if (this.instrument.GetType().Name.Contains("Histogram"))
             {
-                aggregators.Add(new HistogramMetricAggregator(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
+                aggregators.Add(new HistogramMetricAggregator(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
             }
             else
             {
-                aggregators.Add(new SummaryMetricAggregator(name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, false));
+                aggregators.Add(new SummaryMetricAggregator(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, false));
             }
 
             return aggregators.ToArray();
@@ -156,22 +176,37 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal List<IMetric> Collect(bool isDelta)
+        internal List<IMetric> Collect(bool isDelta, DateTimeOffset dt)
         {
             var collectedMetrics = new List<IMetric>();
 
-            var dt = DateTimeOffset.UtcNow;
-
-            foreach (var keys in this.keyValue2MetricAggs)
+            if (this.tag0Metrics != null)
             {
-                foreach (var values in keys.Value)
+                foreach (var aggregator in this.tag0Metrics)
                 {
-                    foreach (var metric in values.Value)
+                    var m = aggregator.Collect(dt, isDelta);
+                    if (m != null)
                     {
-                        var m = metric.Collect(dt, isDelta);
-                        if (m != null)
+                        collectedMetrics.Add(m);
+                    }
+                }
+            }
+
+            // Lock to prevent new time series from being added
+            // until collect is done.
+            lock (this.lockKeyValue2MetricAggs)
+            {
+                foreach (var keys in this.keyValue2MetricAggs)
+                {
+                    foreach (var values in keys.Value)
+                    {
+                        foreach (var metric in values.Value)
                         {
-                            collectedMetrics.Add(m);
+                            var m = metric.Collect(dt, isDelta);
+                            if (m != null)
+                            {
+                                collectedMetrics.Add(m);
+                            }
                         }
                     }
                 }

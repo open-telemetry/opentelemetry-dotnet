@@ -1,16 +1,34 @@
 # Changelog
 
-## Experimental - Metrics
-
-Note: the metrics work is happening in the [metrics feature
-branch](https://github.com/open-telemetry/opentelemetry-dotnet/tree/metrics),
-please check the latest changes
-[here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/src/OpenTelemetry/CHANGELOG.md#experimental---metrics).
-
-* Removed existing Metrics code as the spec is completely being re-written.
-  ([#2030](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2030))
-
 ## Unreleased
+
+## 1.2.0-alpha2
+
+Released 2021-Aug-24
+
+* More Metrics features. All instrument types, push/pull
+  exporters, Delta/Cumulative temporality supported.
+
+* `ResourceBuilder.CreateDefault` has detectors for
+  `OTEL_RESOURCE_ATTRIBUTES`, `OTEL_SERVICE_NAME` environment variables
+  so that explicit `AddEnvironmentVariableDetector` call is not needed. ([#2247](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2247))
+
+* `ResourceBuilder.AddEnvironmentVariableDetector` handles `OTEL_SERVICE_NAME`
+   environmental variable. ([#2209](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2209))
+
+* Removes upper constraint for Microsoft.Extensions.Logging
+  dependencies. ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
+
+* OpenTelemetryLogger modified to not throw, when the
+  formatter supplied in ILogger.Log call is null. ([#2200](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2200))
+
+## 1.2.0-alpha1
+
+Released 2021-Jul-23
+
+* Add basic Metrics support with a single pipeline, and supporting Counter
+  (sync) instrument. Push and Pull exporters are supported.
+  ([#2174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2174))
 
 * Removes .NET Framework 4.5.2, .NET 4.6 support. The minimum .NET Framework
   version supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
@@ -164,6 +182,9 @@ Released 2021-Jan-29
   [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)
   for details on Metric release plans.
 * Fix Resource attribute telemetry.sdk.version to have correct file version.
+* Metrics removed as it is not part 1.0.0 release. See issue
+  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)
+  for details on Metric release plans.
 
 ## 1.0.0-rc1.1
 

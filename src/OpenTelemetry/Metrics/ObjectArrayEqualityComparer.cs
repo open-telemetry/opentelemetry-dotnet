@@ -41,7 +41,7 @@ namespace OpenTelemetry.Metrics
 
             for (int i = 0; i < len1; i++)
             {
-                if (obj1[i] != obj2[i])
+                if (!obj1[i].Equals(obj2[i]))
                 {
                     return false;
                 }

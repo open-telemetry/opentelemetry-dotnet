@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,7 +28,9 @@ namespace Examples.Console
     internal class TestPrometheusExporter
     {
         private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
-        private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("counter");
+        private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("myCounter");
+        private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("myHistogram");
+        private static readonly Random RandomGenerator = new Random();
 
         internal static object Run(int port, int totalDurationInMins)
         {
@@ -51,6 +52,19 @@ namespace Examples.Console
                 .AddPrometheusExporter(opt => opt.Url = $"http://localhost:{port}/metrics/")
                 .Build();
 
+            ObservableGauge<long> gauge = MyMeter.CreateObservableGauge<long>(
+            "Gauge",
+            () =>
+            {
+                var tag1 = new KeyValuePair<string, object>("tag1", "value1");
+                var tag2 = new KeyValuePair<string, object>("tag2", "value2");
+
+                return new List<Measurement<long>>()
+                {
+                    new Measurement<long>(RandomGenerator.Next(1, 1000), tag1, tag2),
+                };
+            });
+
             using var token = new CancellationTokenSource();
             Task writeMetricTask = new Task(() =>
             {
@@ -65,6 +79,12 @@ namespace Examples.Console
                                 100,
                                 new KeyValuePair<string, object>("tag1", "anothervalue"),
                                 new KeyValuePair<string, object>("tag2", "somethingelse"));
+
+                    MyHistogram.Record(
+                            RandomGenerator.Next(1, 1500),
+                            new KeyValuePair<string, object>("tag1", "value1"),
+                            new KeyValuePair<string, object>("tag2", "value2"));
+
                     Task.Delay(10).Wait();
                 }
             });

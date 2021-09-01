@@ -15,8 +15,6 @@
 // </copyright>
 
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace OpenTelemetry.Metrics
 {
@@ -42,8 +40,11 @@ namespace OpenTelemetry.Metrics
             if (this.getMetrics != null)
             {
                 var metricsToExport = this.getMetrics(this.isDelta);
-                Batch<MetricItem> batch = new Batch<MetricItem>(metricsToExport);
-                this.exporter.Export(batch);
+                if (metricsToExport != null && metricsToExport.Metrics.Count > 0)
+                {
+                    Batch<MetricItem> batch = new Batch<MetricItem>(metricsToExport);
+                    this.exporter.Export(batch);
+                }
             }
         }
 

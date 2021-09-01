@@ -36,6 +36,8 @@ namespace OpenTelemetry.Metrics
 
         KeyValuePair<string, object>[] Attributes { get; }
 
+        MetricType MetricType { get; }
+
         string ToDisplayString();
     }
 }

@@ -155,10 +155,9 @@ get access to `HttpRequest` and `HttpResponse`.
 
 ### RecordException
 
-This instrumentation automatically sets Activity Status to Error if the
-Http StatusCode is >= 400.
-Additionally, `RecordException` feature may be turned on, to store the exception
-to the Activity itself as ActivityEvent.
+This instrumentation automatically sets Activity Status to Error if an unhandled
+exception is thrown. Additionally, `RecordException` feature may be turned on,
+to store the exception to the Activity itself as ActivityEvent.
 
 ## References
 

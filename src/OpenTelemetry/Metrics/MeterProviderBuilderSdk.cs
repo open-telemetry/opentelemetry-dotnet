@@ -30,8 +30,6 @@ namespace OpenTelemetry.Metrics
         {
         }
 
-        internal List<MeasurementProcessor> MeasurementProcessors { get; } = new List<MeasurementProcessor>();
-
         internal List<MetricProcessor> MetricProcessors { get; } = new List<MetricProcessor>();
 
         public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
@@ -70,14 +68,13 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        internal MeterProviderBuilderSdk AddMeasurementProcessor(MeasurementProcessor processor)
-        {
-            this.MeasurementProcessors.Add(processor);
-            return this;
-        }
-
         internal MeterProviderBuilderSdk AddMetricProcessor(MetricProcessor processor)
         {
+            if (this.MetricProcessors.Count >= 1)
+            {
+                throw new InvalidOperationException("Only one MetricProcessor is allowed.");
+            }
+
             this.MetricProcessors.Add(processor);
             return this;
         }
@@ -94,7 +91,6 @@ namespace OpenTelemetry.Metrics
                 this.resourceBuilder.Build(),
                 this.meterSources,
                 this.instrumentationFactories,
-                this.MeasurementProcessors.ToArray(),
                 this.MetricProcessors.ToArray());
         }
 

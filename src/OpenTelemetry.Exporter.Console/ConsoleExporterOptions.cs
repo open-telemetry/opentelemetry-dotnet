@@ -24,14 +24,14 @@ namespace OpenTelemetry.Exporter
         public ConsoleExporterOutputTargets Targets { get; set; } = ConsoleExporterOutputTargets.Console;
 
         /// <summary>
-        /// Gets or sets the metric export interval.
+        /// Gets or sets the metric export interval in milliseconds. The default value is 1000 milliseconds.
         /// </summary>
-        public int MetricExportInterval { get; set; } = 1000;
+        public int MetricExportIntervalMilliseconds { get; set; } = 1000;
 
         /// <summary>
         /// Gets or sets a value indicating whether to export Delta
         /// values or not (Cumulative).
         /// </summary>
-        public bool IsDelta { get; set; } = true;
+        public bool IsDelta { get; set; } = false;
     }
 }
