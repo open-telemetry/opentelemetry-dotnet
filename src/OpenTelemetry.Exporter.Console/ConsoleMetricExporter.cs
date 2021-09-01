@@ -119,17 +119,38 @@ namespace OpenTelemetry.Exporter
 
                         case MetricType.Histogram:
                             {
-                                var histogramMetric = metric as IHistogramMetric;
                                 var bucketsBuilder = new StringBuilder();
-                                bucketsBuilder.Append($"Sum: {histogramMetric.PopulationSum} Count: {histogramMetric.PopulationCount} \n");
-                                foreach (var bucket in histogramMetric.Buckets)
+                                bucketsBuilder.Append($"Sum: {metricPoint.DoubleValue} Count: {metricPoint.LongValue} \n");
+                                for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
                                 {
-                                    bucketsBuilder.Append('(');
-                                    bucketsBuilder.Append(double.IsInfinity(bucket.LowBoundary) ? "-Infinity" : $"{bucket.LowBoundary}");
-                                    bucketsBuilder.Append(", ");
-                                    bucketsBuilder.Append(double.IsInfinity(bucket.HighBoundary) ? "+Infinity" : $"{bucket.HighBoundary}");
-                                    bucketsBuilder.Append(double.IsInfinity(bucket.HighBoundary) ? ')' : ']');
-                                    bucketsBuilder.Append($": {bucket.Count}");
+                                    if (i == 0)
+                                    {
+                                        bucketsBuilder.Append("(-Infinity,");
+                                        bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
+                                        bucketsBuilder.Append("]");
+                                        bucketsBuilder.Append(":");
+                                        bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                                    }
+                                    else if (i == metricPoint.ExplicitBounds.Length)
+                                    {
+                                        bucketsBuilder.Append("(");
+                                        bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
+                                        bucketsBuilder.Append(",");
+                                        bucketsBuilder.Append("+Infinity]");
+                                        bucketsBuilder.Append(":");
+                                        bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                                    }
+                                    else
+                                    {
+                                        bucketsBuilder.Append("(");
+                                        bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
+                                        bucketsBuilder.Append(",");
+                                        bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
+                                        bucketsBuilder.Append("]");
+                                        bucketsBuilder.Append(":");
+                                        bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                                    }
+
                                     bucketsBuilder.AppendLine();
                                 }
 
