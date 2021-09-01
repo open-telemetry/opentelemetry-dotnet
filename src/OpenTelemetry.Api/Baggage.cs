@@ -47,12 +47,12 @@ namespace OpenTelemetry
         /// Gets or sets the current <see cref="Baggage"/>.
         /// </summary>
         /// <remarks>
-        /// Note: <see cref="Current"/> returns a copy of the current Baggage.
-        /// Changes to the returned instance will not automatically be reflected
-        /// back on the <see cref="Current"/> version. To update the <see
-        /// cref="Current"/> version either set <see cref="Current"/> to a new
-        /// instance or use one of the static methods that target <see
-        /// cref="Current"/> as the default source. Examples:
+        /// Note: <see cref="Current"/> returns a forked version of the current
+        /// Baggage. Changes to the forked version will not automatically be
+        /// reflected back on <see cref="Current"/>. To update <see
+        /// cref="Current"/> either set <see cref="Current"/> to a new instance
+        /// or use one of the static methods that target <see cref="Current"/>
+        /// as the default source. Examples:
         /// <code>
         /// Baggage.SetBaggage("newKey1", "newValue1"); // Updates Baggage.Current with 'newKey1'
         /// Baggage.SetBaggage("newKey2", "newValue2"); // Updates Baggage.Current with 'newKey2'
