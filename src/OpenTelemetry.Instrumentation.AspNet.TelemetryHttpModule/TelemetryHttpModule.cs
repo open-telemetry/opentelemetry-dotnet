@@ -82,22 +82,22 @@ namespace OpenTelemetry.Instrumentation.AspNet
         }
 
         /// <summary>
-        /// Restores Activity before each pipeline step if it was lost.
+        /// Restores context before each pipeline step if it was lost.
         /// </summary>
         /// <param name="context">HttpContext instance.</param>
         /// <param name="step">Step to be executed.</param>
         internal void OnExecuteRequestStep(HttpContextBase context, Action step)
         {
-            // Once we have public Activity.Current setter (https://github.com/dotnet/corefx/issues/29207) this method will be
-            // simplified to just assign Current if is was lost.
-            // In the mean time, we are creating child Activity to restore the context. We have to send
-            // event with this Activity to tracing system. It created a lot of issues for listeners as
-            // we may potentially have a lot of them for different stages.
-            // To reduce amount of events, we only care about ExecuteRequestHandler stage - restore activity here and
-            // stop/report it to tracing system in EndRequest.
-            if (context.CurrentNotification == RequestNotification.ExecuteRequestHandler && !context.IsPostNotification)
+            if (!context.IsPostNotification)
             {
-                ActivityHelper.RestoreActivityIfNeeded(context.Items);
+                if (context.CurrentNotification == RequestNotification.ExecuteRequestHandler)
+                {
+                    ActivityHelper.RestoreContextIfNeeded(context.Items);
+                }
+                else if (context.CurrentNotification == RequestNotification.ReleaseRequestState)
+                {
+
+                }
             }
 
             step();
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         private void Application_PreRequestHandlerExecute(object sender, EventArgs e)
         {
             AspNetTelemetryEventSource.Log.TraceCallback("Application_PreRequestHandlerExecute");
-            ActivityHelper.RestoreActivityIfNeeded(((HttpApplication)sender).Context.Items);
+            ActivityHelper.RestoreContextIfNeeded(((HttpApplication)sender).Context.Items);
         }
 
         private void Application_EndRequest(object sender, EventArgs e)

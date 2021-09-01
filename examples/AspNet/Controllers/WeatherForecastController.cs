@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Web.Http;
 using Examples.AspNet.Models;
@@ -69,6 +70,48 @@ namespace Examples.AspNet.Controllers
             RequestGoogleHomPageViaHttpWebRequestLegacyAsyncResult();
 
             return GetWeatherForecast();
+        }
+
+        [Route("data")]
+        [HttpGet]
+        public async Task<string> GetData()
+        {
+            using var rng = RandomNumberGenerator.Create();
+
+            // 104857600
+            // 2147483647
+            var requestData = new byte[1024 * 1024 * 100];
+            rng.GetBytes(requestData);
+
+            using var client = new HttpClient();
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, this.Url.Content("~/data"));
+
+            request.Content = new ByteArrayContent(requestData);
+
+            using var response = await client.SendAsync(request).ConfigureAwait(false);
+
+            response.EnsureSuccessStatusCode();
+
+            var responseData = await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+
+            return responseData.SequenceEqual(responseData) ? "match" : "mismatch";
+        }
+
+        [Route("data")]
+        [HttpPost]
+        public async Task<HttpResponseMessage> PostData()
+        {
+            var stream = await this.Request.Content.ReadAsStreamAsync().ConfigureAwait(false);
+
+            var result = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StreamContent(stream),
+            };
+
+            result.Content.Headers.ContentType = this.Request.Content.Headers.ContentType;
+
+            return result;
         }
 
         private static IEnumerable<WeatherForecast> GetWeatherForecast()

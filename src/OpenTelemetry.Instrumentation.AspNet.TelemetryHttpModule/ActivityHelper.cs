@@ -200,11 +200,11 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// </summary>
         /// <param name="contextItems">HttpContext.Items dictionary.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void RestoreActivityIfNeeded(IDictionary contextItems)
+        internal static void RestoreContextIfNeeded(IDictionary contextItems)
         {
             Debug.Assert(contextItems != null, "Context Items is null.");
 
-            if (Activity.Current == null && contextItems[ActivityKey] is Activity aspNetActivity)
+            if (contextItems[ActivityKey] is Activity aspNetActivity && Activity.Current != aspNetActivity)
             {
                 Activity.Current = aspNetActivity;
                 AspNetTelemetryEventSource.Log.ActivityRestored(aspNetActivity);
