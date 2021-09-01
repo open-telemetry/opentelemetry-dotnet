@@ -303,7 +303,7 @@ namespace OpenTelemetry.Tests
         [Fact]
         public void ThreadSafetyTest()
         {
-            Baggage.SetBaggage("root", "root");
+            Baggage.SetBaggage("rootKey", "rootValue"); // Note: Required to establish a root ExecutionContext containg the BaggageHolder we use as a lock
 
             Parallel.For(0, 100, (i) =>
             {
