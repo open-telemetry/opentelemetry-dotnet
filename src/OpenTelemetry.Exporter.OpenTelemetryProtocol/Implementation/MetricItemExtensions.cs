@@ -152,13 +152,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
-                            if (metricPoint.Keys != null)
+                            for (int i = 0; i < ((metricPoint.Keys == null) ? 0 : metricPoint.Keys.Length); i++)
                             {
-                                for (int i = 0; i < metricPoint.Keys.Length; i++)
-                                {
-                                    KeyValuePair<string, object> tag = new KeyValuePair<string, object>(metricPoint.Keys[i], metricPoint.Values[i]);
-                                    dataPoint.Attributes.Add(tag.ToOtlpAttribute());
-                                }
+                                KeyValuePair<string, object> tag = new KeyValuePair<string, object>(metricPoint.Keys[i], metricPoint.Values[i]);
+                                dataPoint.Attributes.Add(tag.ToOtlpAttribute());
                             }
 
                             dataPoint.AsInt = metricPoint.LongValue;
@@ -190,7 +187,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
-                            for (int i = 0; i < metricPoint.Keys.Length; i++)
+                            for (int i = 0; i < ((metricPoint.Keys == null) ? 0 : metricPoint.Keys.Length); i++)
                             {
                                 KeyValuePair<string, object> tag = new KeyValuePair<string, object>(metricPoint.Keys[i], metricPoint.Values[i]);
                                 dataPoint.Attributes.Add(tag.ToOtlpAttribute());
@@ -215,7 +212,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
-                            for (int i = 0; i < metricPoint.Keys.Length; i++)
+                            for (int i = 0; i < ((metricPoint.Keys == null) ? 0 : metricPoint.Keys.Length); i++)
                             {
                                 KeyValuePair<string, object> tag = new KeyValuePair<string, object>(metricPoint.Keys[i], metricPoint.Values[i]);
                                 dataPoint.Attributes.Add(tag.ToOtlpAttribute());
@@ -240,7 +237,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
-                            for (int i = 0; i < metricPoint.Keys.Length; i++)
+                            for (int i = 0; i < ((metricPoint.Keys == null) ? 0 : metricPoint.Keys.Length); i++)
                             {
                                 KeyValuePair<string, object> tag = new KeyValuePair<string, object>(metricPoint.Keys[i], metricPoint.Values[i]);
                                 dataPoint.Attributes.Add(tag.ToOtlpAttribute());
@@ -274,10 +271,22 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
-                            for (int i = 0; i < metricPoint.Keys.Length; i++)
+                            for (int i = 0; i < ((metricPoint.Keys == null) ? 0 : metricPoint.Keys.Length); i++)
                             {
                                 KeyValuePair<string, object> tag = new KeyValuePair<string, object>(metricPoint.Keys[i], metricPoint.Values[i]);
                                 dataPoint.Attributes.Add(tag.ToOtlpAttribute());
+                            }
+
+                            dataPoint.Count = (ulong)metricPoint.LongValue;
+                            dataPoint.Sum = metricPoint.DoubleValue;
+
+                            for (int i = 0; i < metricPoint.BucketCounts.Length; i++)
+                            {
+                                dataPoint.BucketCounts.Add((ulong)metricPoint.BucketCounts[i]);
+                                if (i < metricPoint.BucketCounts.Length - 1)
+                                {
+                                    dataPoint.ExplicitBounds.Add(metricPoint.ExplicitBounds[i]);
+                                }
                             }
 
                             histogram.DataPoints.Add(dataPoint);

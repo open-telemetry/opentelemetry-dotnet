@@ -61,6 +61,30 @@ namespace OpenTelemetry.Metrics
                 aggType = AggregationType.DoubleSumIncomingCumulative;
                 this.MetricType = MetricType.DoubleSum;
             }
+            else if (instrument.GetType() == typeof(ObservableGauge<double>)
+                || instrument.GetType() == typeof(ObservableGauge<float>))
+            {
+                aggType = AggregationType.DoubleGauge;
+                this.MetricType = MetricType.DoubleGauge;
+            }
+            else if (instrument.GetType() == typeof(ObservableGauge<long>)
+                || instrument.GetType() == typeof(ObservableGauge<int>)
+                || instrument.GetType() == typeof(ObservableGauge<short>)
+                || instrument.GetType() == typeof(ObservableGauge<byte>))
+            {
+                aggType = AggregationType.LongGauge;
+                this.MetricType = MetricType.LongGauge;
+            }
+            else if (instrument.GetType() == typeof(Histogram<long>)
+                || instrument.GetType() == typeof(Histogram<int>)
+                || instrument.GetType() == typeof(Histogram<short>)
+                || instrument.GetType() == typeof(Histogram<byte>)
+                || instrument.GetType() == typeof(Histogram<float>)
+                || instrument.GetType() == typeof(Histogram<double>))
+            {
+                aggType = AggregationType.Histogram;
+                this.MetricType = MetricType.Histogram;
+            }
 
             this.aggStore = new AggregatorStore(aggType, temporality);
             this.Temporality = temporality;

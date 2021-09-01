@@ -25,8 +25,14 @@ namespace OpenTelemetry.Metrics
         private long lastLongSum;
         private double doubleVal;
         private double lastDoubleSum;
+        private object lockObject;
+        private long[] bucketCounts;
 
-        internal MetricPoint(AggregationType aggType, DateTimeOffset startTime, string[] keys, object[] values)
+        internal MetricPoint(
+            AggregationType aggType,
+            DateTimeOffset startTime,
+            string[] keys,
+            object[] values)
         {
             this.AggType = aggType;
             this.StartTime = startTime;
@@ -39,6 +45,21 @@ namespace OpenTelemetry.Metrics
             this.DoubleValue = default;
             this.doubleVal = default;
             this.lastDoubleSum = default;
+
+            if (this.AggType == AggregationType.Histogram)
+            {
+                this.ExplicitBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 };
+                this.BucketCounts = new long[this.ExplicitBounds.Length + 1];
+                this.bucketCounts = new long[this.ExplicitBounds.Length + 1];
+                this.lockObject = new object();
+            }
+            else
+            {
+                this.ExplicitBounds = null;
+                this.BucketCounts = null;
+                this.bucketCounts = null;
+                this.lockObject = null;
+            }
         }
 
         public string[] Keys { get; internal set; }
@@ -53,9 +74,9 @@ namespace OpenTelemetry.Metrics
 
         public double DoubleValue { get; internal set; }
 
-        public long PopulationCount { get; internal set; }
+        public long[] BucketCounts { get; internal set; }
 
-        public double PopulationSum { get; internal set; }
+        public double[] ExplicitBounds { get; internal set; }
 
         private readonly AggregationType AggType { get; }
 
@@ -78,6 +99,12 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.LongGauge:
                     {
                         Interlocked.Exchange(ref this.longVal, number);
+                        break;
+                    }
+
+                case AggregationType.Histogram:
+                    {
+                        this.Update((double)number);
                         break;
                     }
             }
@@ -108,6 +135,28 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.DoubleGauge:
                     {
                         Interlocked.Exchange(ref this.doubleVal, number);
+                        break;
+                    }
+
+                case AggregationType.Histogram:
+                    {
+                        int i;
+                        for (i = 0; i < this.ExplicitBounds.Length; i++)
+                        {
+                            // Upper bound is inclusive
+                            if (number <= this.ExplicitBounds[i])
+                            {
+                                break;
+                            }
+                        }
+
+                        lock (this.lockObject)
+                        {
+                            this.longVal++;
+                            this.doubleVal += number;
+                            this.bucketCounts[i]++;
+                        }
+
                         break;
                     }
             }
@@ -175,6 +224,31 @@ namespace OpenTelemetry.Metrics
                         // the exchange (to 0.0) will never occur,
                         // but we get the original value atomically.
                         this.DoubleValue = Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity);
+                        break;
+                    }
+
+                case AggregationType.Histogram:
+                    {
+                        lock (this.lockObject)
+                        {
+                            this.LongValue = this.longVal;
+                            this.DoubleValue = this.doubleVal;
+                            if (outputDelta)
+                            {
+                                this.longVal = 0;
+                                this.doubleVal = 0;
+                            }
+
+                            for (int i = 0; i < this.bucketCounts.Length; i++)
+                            {
+                                this.BucketCounts[i] = this.bucketCounts[i];
+                                if (outputDelta)
+                                {
+                                    this.bucketCounts[i] = 0;
+                                }
+                            }
+                        }
+
                         break;
                     }
             }

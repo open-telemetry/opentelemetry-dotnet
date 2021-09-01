@@ -54,13 +54,8 @@ namespace OpenTelemetry.Metrics
         DoubleGauge = 5,
 
         /// <summary>
-        /// Invalid.
+        /// Histogram.
         /// </summary>
-        Histogram_Delta = 6,
-
-        /// <summary>
-        /// Calculate histogram.
-        /// </summary>
-        Histogram_Cumulative = 7,
+        Histogram = 6,
     }
 }

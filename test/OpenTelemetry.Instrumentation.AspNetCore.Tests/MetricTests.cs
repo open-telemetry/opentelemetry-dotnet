@@ -94,9 +94,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             var metric = requestMetrics[0];
             Assert.NotNull(metric);
-            Assert.Equal(1L, metric.PopulationCount);
-            Assert.True(metric.PopulationSum > 0);
+            Assert.True(metric.MetricType == MetricType.Histogram);
+            var metricPoints = new List<MetricPoint>();
+            foreach (var p in metric.GetMetricPoints())
+            {
+                metricPoints.Add(p);
+            }
 
+            Assert.Single(metricPoints);
+
+            var metricPoint = metricPoints[0];
+            Assert.Equal(1L, metricPoint.LongValue);
+            Assert.True(metricPoint.DoubleValue > 0);
+
+            /*
             var bucket = metric.Buckets
                 .Where(b =>
                     metric.PopulationSum > b.LowBoundary &&
@@ -104,16 +115,23 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .FirstOrDefault();
             Assert.NotEqual(default, bucket);
             Assert.Equal(1, bucket.Count);
+            */
+
+            var attributes = new KeyValuePair<string, object>[metricPoint.Keys.Length];
+            for (int i = 0; i < attributes.Length; i++)
+            {
+                attributes[i] = new KeyValuePair<string, object>(metricPoint.Keys[i], metricPoint.Values[i]);
+            }
 
             var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, "GET");
             var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
             var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, 200);
             var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "HTTP/1.1");
-            Assert.Contains(method, metric.Attributes);
-            Assert.Contains(scheme, metric.Attributes);
-            Assert.Contains(statusCode, metric.Attributes);
-            Assert.Contains(flavor, metric.Attributes);
-            Assert.Equal(4, metric.Attributes.Length);
+            Assert.Contains(method, attributes);
+            Assert.Contains(scheme, attributes);
+            Assert.Contains(statusCode, attributes);
+            Assert.Contains(flavor, attributes);
+            Assert.Equal(4, attributes.Length);
         }
 
         public void Dispose()
