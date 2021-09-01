@@ -26,6 +26,7 @@ namespace OpenTelemetry.Trace.Tests
         public void CheckConstructorExceptions()
         {
             Assert.Throws<ArgumentNullException>(() => new Batch<string>(null));
+
             // Assert.Throws<ArgumentNullException>(() => new Batch<string>(null, 1));
         }
 
