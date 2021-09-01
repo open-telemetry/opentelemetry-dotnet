@@ -10,6 +10,10 @@
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/sdk-environment-variables.md#batch-span-processor).
   ([#2219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2219))
 
+## 1.2.0-alpha2
+
+Released 2021-Aug-24
+
 ## 1.2.0-alpha1
 
 Released 2021-Jul-23

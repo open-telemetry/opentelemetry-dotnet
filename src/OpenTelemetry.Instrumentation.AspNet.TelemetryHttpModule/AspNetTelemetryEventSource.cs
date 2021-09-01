@@ -15,7 +15,9 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Diagnostics.Tracing;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation.AspNet
 {
@@ -31,11 +33,47 @@ namespace OpenTelemetry.Instrumentation.AspNet
         public static readonly AspNetTelemetryEventSource Log = new AspNetTelemetryEventSource();
 
         [NonEvent]
-        public void ActivityException(string id, string eventName, Exception ex)
+        public void ActivityStarted(Activity activity)
+        {
+            if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+            {
+                this.ActivityStarted(activity?.Id);
+            }
+        }
+
+        [NonEvent]
+        public void ActivityStopped(Activity activity)
+        {
+            if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+            {
+                this.ActivityStopped(activity?.Id);
+            }
+        }
+
+        [NonEvent]
+        public void ActivityRestored(Activity activity)
+        {
+            if (this.IsEnabled(EventLevel.Informational, EventKeywords.All))
+            {
+                this.ActivityRestored(activity?.Id);
+            }
+        }
+
+        [NonEvent]
+        public void ActivityException(Activity activity, Exception ex)
         {
             if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                this.ActivityException(id, eventName, ex.ToString());
+                this.ActivityException(activity?.Id, ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
+        public void CallbackException(Activity activity, string eventName, Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                this.CallbackException(activity?.Id, eventName, ex.ToInvariantString());
             }
         }
 
@@ -51,58 +89,34 @@ namespace OpenTelemetry.Instrumentation.AspNet
             this.WriteEvent(2, id);
         }
 
-        [Event(3, Message = "Activity stopped, Id='{0}', Name='{1}'", Level = EventLevel.Verbose)]
-        public void ActivityStopped(string id, string eventName)
+        [Event(3, Message = "Activity stopped, Id='{0}'", Level = EventLevel.Verbose)]
+        public void ActivityStopped(string id)
         {
-            this.WriteEvent(3, id, eventName);
+            this.WriteEvent(3, id);
         }
 
-        [Event(4, Message = "Failed to parse header '{0}', value: '{1}'", Level = EventLevel.Informational)]
-        public void HeaderParsingError(string headerName, string headerValue)
-        {
-            this.WriteEvent(4, headerName, headerValue);
-        }
-
-        [Event(5, Message = "Failed to extract activity, reason '{0}'", Level = EventLevel.Error)]
-        public void ActvityExtractionError(string reason)
-        {
-            this.WriteEvent(5, reason);
-        }
-
-        [Event(6, Message = "Finished Activity is detected on the stack, Id: '{0}', Name: '{1}'", Level = EventLevel.Error)]
-        public void FinishedActivityIsDetected(string id, string name)
-        {
-            this.WriteEvent(6, id, name);
-        }
-
-        [Event(7, Message = "System.Diagnostics.Activity stack is too deep. This is a code authoring error, Activity will not be stopped.", Level = EventLevel.Error)]
-        public void ActivityStackIsTooDeepError()
-        {
-            this.WriteEvent(7);
-        }
-
-        [Event(8, Message = "Activity restored, Id='{0}'", Level = EventLevel.Informational)]
+        [Event(4, Message = "Activity restored, Id='{0}'", Level = EventLevel.Informational)]
         public void ActivityRestored(string id)
         {
-            this.WriteEvent(8, id);
+            this.WriteEvent(4, id);
         }
 
-        [Event(9, Message = "Failed to invoke OnExecuteRequestStep, Error='{0}'", Level = EventLevel.Error)]
+        [Event(5, Message = "Failed to invoke OnExecuteRequestStep, Error='{0}'", Level = EventLevel.Error)]
         public void OnExecuteRequestStepInvokationError(string error)
         {
-            this.WriteEvent(9, error);
+            this.WriteEvent(5, error);
         }
 
-        [Event(10, Message = "System.Diagnostics.Activity stack is too deep. Current Id: '{0}', Name: '{1}'", Level = EventLevel.Warning)]
-        public void ActivityStackIsTooDeepDetails(string id, string name)
+        [Event(6, Message = "Activity exception, Id='{0}': {1}", Level = EventLevel.Error)]
+        public void ActivityException(string id, string ex)
         {
-            this.WriteEvent(10, id, name);
+            this.WriteEvent(6, id, ex);
         }
 
-        [Event(11, Message = "Activity exception, Id='{0}', Name='{1}': {2}", Level = EventLevel.Error)]
-        public void ActivityException(string id, string eventName, string ex)
+        [Event(7, Message = "Callback exception, Id='{0}', Name='{1}': {2}", Level = EventLevel.Error)]
+        public void CallbackException(string id, string eventName, string ex)
         {
-            this.WriteEvent(11, id, eventName, ex);
+            this.WriteEvent(7, id, eventName, ex);
         }
     }
 }

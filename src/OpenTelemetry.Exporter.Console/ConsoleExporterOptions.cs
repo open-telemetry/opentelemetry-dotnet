@@ -32,6 +32,6 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets a value indicating whether to export Delta
         /// values or not (Cumulative).
         /// </summary>
-        public bool IsDelta { get; set; } = true;
+        public bool IsDelta { get; set; } = false;
     }
 }

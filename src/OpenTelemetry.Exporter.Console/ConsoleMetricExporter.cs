@@ -75,20 +75,33 @@ namespace OpenTelemetry.Exporter
 
                         case MetricType.LongGauge:
                             {
-                                // TODOs
+                                valueDisplay = (metric as IGaugeMetric).LastValue.Value.ToString();
                                 break;
                             }
 
                         case MetricType.DoubleGauge:
                             {
-                                // TODOs
+                                valueDisplay = (metric as IGaugeMetric).LastValue.Value.ToString();
                                 break;
                             }
 
                         case MetricType.Histogram:
                             {
                                 var histogramMetric = metric as IHistogramMetric;
-                                valueDisplay = string.Format("Sum: {0} Count: {1}", histogramMetric.PopulationSum, histogramMetric.PopulationCount);
+                                var bucketsBuilder = new StringBuilder();
+                                bucketsBuilder.Append($"Sum: {histogramMetric.PopulationSum} Count: {histogramMetric.PopulationCount} \n");
+                                foreach (var bucket in histogramMetric.Buckets)
+                                {
+                                    bucketsBuilder.Append('(');
+                                    bucketsBuilder.Append(double.IsInfinity(bucket.LowBoundary) ? "-Infinity" : $"{bucket.LowBoundary}");
+                                    bucketsBuilder.Append(", ");
+                                    bucketsBuilder.Append(double.IsInfinity(bucket.HighBoundary) ? "+Infinity" : $"{bucket.HighBoundary}");
+                                    bucketsBuilder.Append(double.IsInfinity(bucket.HighBoundary) ? ')' : ']');
+                                    bucketsBuilder.Append($": {bucket.Count}");
+                                    bucketsBuilder.AppendLine();
+                                }
+
+                                valueDisplay = bucketsBuilder.ToString();
                                 break;
                             }
 
@@ -100,9 +113,16 @@ namespace OpenTelemetry.Exporter
                             }
                     }
 
-                    string time = $"{metric.StartTimeExclusive.ToLocalTime().ToString("HH:mm:ss.fff")} {metric.EndTimeInclusive.ToLocalTime().ToString("HH:mm:ss.fff")}";
-
-                    var msg = new StringBuilder($"Export {time} {metric.Name} [{string.Join(";", tags)}] {metric.MetricType} Value: {valueDisplay}");
+                    var msg = new StringBuilder($"Export (");
+                    msg.Append(metric.StartTimeExclusive.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                    msg.Append(", ");
+                    msg.Append(metric.EndTimeInclusive.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                    msg.Append("] ");
+                    msg.Append(metric.Name);
+                    msg.Append(' ');
+                    msg.Append(string.Join(";", tags));
+                    msg.Append(' ');
+                    msg.Append(metric.MetricType);
 
                     if (!string.IsNullOrEmpty(metric.Description))
                     {
@@ -124,6 +144,8 @@ namespace OpenTelemetry.Exporter
                         }
                     }
 
+                    msg.AppendLine();
+                    msg.Append($"Value: {valueDisplay}");
                     Console.WriteLine(msg);
                 }
             }

@@ -9,6 +9,17 @@
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/sdk-environment-variables.md#batch-span-processor).
   ([#2219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2219))
 
+## 1.2.0-alpha2
+
+Released 2021-Aug-24
+
+* More Metrics features. All instrument types, push/pull
+  exporters, Delta/Cumulative temporality supported.
+
+* `ResourceBuilder.CreateDefault` has detectors for
+  `OTEL_RESOURCE_ATTRIBUTES`, `OTEL_SERVICE_NAME` environment variables
+  so that explicit `AddEnvironmentVariableDetector` call is not needed. ([#2247](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2247))
+
 * `ResourceBuilder.AddEnvironmentVariableDetector` handles `OTEL_SERVICE_NAME`
    environmental variable. ([#2209](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2209))
 

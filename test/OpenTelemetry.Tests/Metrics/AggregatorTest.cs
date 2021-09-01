@@ -44,9 +44,9 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = hist.Collect(DateTimeOffset.UtcNow, false);
 
             Assert.NotNull(metric);
-            Assert.IsType<HistogramMetricAggregator>(metric);
+            Assert.IsType<HistogramMetric>(metric);
 
-            if (metric is HistogramMetricAggregator agg)
+            if (metric is HistogramMetric agg)
             {
                 int len = 0;
                 foreach (var bucket in agg.Buckets)
@@ -71,9 +71,9 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = hist.Collect(DateTimeOffset.UtcNow, false);
 
             Assert.NotNull(metric);
-            Assert.IsType<HistogramMetricAggregator>(metric);
+            Assert.IsType<HistogramMetric>(metric);
 
-            if (metric is HistogramMetricAggregator agg)
+            if (metric is HistogramMetric agg)
             {
                 int len = 0;
                 foreach (var bucket in agg.Buckets)
@@ -102,9 +102,9 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = hist.Collect(DateTimeOffset.UtcNow, false);
 
             Assert.NotNull(metric);
-            Assert.IsType<HistogramMetricAggregator>(metric);
+            Assert.IsType<HistogramMetric>(metric);
 
-            if (metric is HistogramMetricAggregator agg)
+            if (metric is HistogramMetric agg)
             {
                 var expectedCounts = new int[] { 3, 0, 2, 1 };
                 int len = 0;
