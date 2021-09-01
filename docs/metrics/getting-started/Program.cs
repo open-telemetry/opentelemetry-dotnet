@@ -42,7 +42,6 @@ public class Program
                             10,
                             new KeyValuePair<string, object>("tag1", "value1"),
                             new KeyValuePair<string, object>("tag2", "value2"));
-
                 Task.Delay(10).Wait();
             }
         });
