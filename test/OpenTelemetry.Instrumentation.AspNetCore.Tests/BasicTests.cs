@@ -31,9 +31,7 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
-#if NETCOREAPP2_1
-using TestApp.AspNetCore._2._1;
-#elif NETCOREAPP3_1
+#if NETCOREAPP3_1
 using TestApp.AspNetCore._3._1;
 #else
 using TestApp.AspNetCore._5._0;
@@ -43,7 +41,7 @@ using Xunit;
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
     // See https://github.com/aspnet/Docs/tree/master/aspnetcore/test/integration-tests/samples/2.x/IntegrationTestsSample
-    public class BasicTests
+    public sealed class BasicTests
         : IClassFixture<WebApplicationFactory<Startup>>, IDisposable
     {
         private readonly WebApplicationFactory<Startup> factory;
@@ -108,6 +106,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         public async Task SuccessfulTemplateControllerCallGeneratesASpan(bool shouldEnrich)
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            activityProcessor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
@@ -139,6 +138,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             Assert.Equal(3, activityProcessor.Invocations.Count); // begin and end was called
             var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+
+            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
 
             ValidateAspNetCoreActivity(activity, "/api/values");
         }
@@ -506,6 +508,55 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
         }
 
+        [Fact]
+        public async Task BaggageClearedWhenActivityStopped()
+        {
+            int? baggageCountAfterStart = null;
+            int? baggageCountAfterStop = null;
+            using EventWaitHandle stopSignal = new EventWaitHandle(false, EventResetMode.ManualReset);
+
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
+                        new TestHttpInListener(new AspNetCoreInstrumentationOptions())
+                        {
+                            OnStartActivityCallback = (activity, payload) =>
+                            {
+                                baggageCountAfterStart = Baggage.Current.Count;
+                            },
+                            OnStopActivityCallback = (activity, payload) =>
+                            {
+                                baggageCountAfterStop = Baggage.Current.Count;
+                                stopSignal.Set();
+                            },
+                        }))
+                    .Build();
+            }
+
+            // Arrange
+            using (var client = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices))
+                .CreateClient())
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
+
+                request.Headers.TryAddWithoutValidation("baggage", "TestKey1=123,TestKey2=456");
+
+                // Act
+                using var response = await client.SendAsync(request);
+            }
+
+            stopSignal.WaitOne(5000);
+
+            // Assert
+            Assert.NotNull(baggageCountAfterStart);
+            Assert.Equal(2, baggageCountAfterStart);
+            Assert.NotNull(baggageCountAfterStop);
+            Assert.Equal(0, baggageCountAfterStop);
+        }
+
         [Theory]
         [InlineData(SamplingDecision.Drop, false, false)]
         [InlineData(SamplingDecision.RecordOnly, true, true)]
@@ -571,7 +622,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(ActivityKind.Server, activityToValidate.Kind);
             Assert.Equal(HttpInListener.ActivitySourceName, activityToValidate.Source.Name);
             Assert.Equal(HttpInListener.Version.ToString(), activityToValidate.Source.Version);
-            Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
+            Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SemanticConventions.AttributeHttpTarget) as string);
         }
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)
@@ -590,6 +641,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 default:
                     break;
             }
+
+            activity.SetTag("enriched", "yes");
         }
 
         private class ExtractOnlyPropagator : TextMapPropagator
@@ -618,7 +671,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
         private class TestSampler : Sampler
         {
-            private SamplingDecision samplingDecision;
+            private readonly SamplingDecision samplingDecision;
 
             public TestSampler(SamplingDecision samplingDecision)
             {
@@ -628,6 +681,32 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
             {
                 return new SamplingResult(this.samplingDecision);
+            }
+        }
+
+        private class TestHttpInListener : HttpInListener
+        {
+            public Action<Activity, object> OnStartActivityCallback;
+
+            public Action<Activity, object> OnStopActivityCallback;
+
+            public TestHttpInListener(AspNetCoreInstrumentationOptions options)
+                : base(options)
+            {
+            }
+
+            public override void OnStartActivity(Activity activity, object payload)
+            {
+                base.OnStartActivity(activity, payload);
+
+                this.OnStartActivityCallback?.Invoke(activity, payload);
+            }
+
+            public override void OnStopActivity(Activity activity, object payload)
+            {
+                base.OnStopActivity(activity, payload);
+
+                this.OnStopActivityCallback?.Invoke(activity, payload);
             }
         }
     }

@@ -37,8 +37,7 @@ namespace OpenTelemetry.Tests
         {
             using (var listener = new TestEventListener())
             {
-                const long AllKeywords = -1;
-                listener.EnableEvents(eventSource, EventLevel.Verbose, (EventKeywords)AllKeywords);
+                listener.EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
                 try
                 {
                     object[] eventArguments = GenerateEventArguments(eventMethod);
@@ -46,11 +45,7 @@ namespace OpenTelemetry.Tests
 
                     EventWrittenEventArgs actualEvent = null;
 
-#if !NET452
                     actualEvent = listener.Messages.First(q => q.EventName == eventMethod.Name);
-#else
-                    actualEvent = listener.Messages.First();
-#endif
 
                     VerifyEventId(eventMethod, actualEvent);
                     VerifyEventLevel(eventMethod, actualEvent);
