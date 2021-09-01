@@ -83,16 +83,53 @@ namespace OpenTelemetry.Exporter
                                 {
                                     metricValueBuilder.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
                                 }
-
-                                builder.Write(writer);
                             }
 
+                            builder.Write(writer);
                             break;
                         }
 
                     case MetricType.Histogram:
                         {
-                            // WriteHistogram(writer, builder, metric.Attributes, metric.Name, histogramMetric.PopulationSum, histogramMetric.PopulationCount, histogramMetric.Buckets);
+                            builder = builder.WithType(PrometheusHistogramType);
+                            foreach (var metricPoint in metric.GetMetricPoints())
+                            {
+                                var metricValueBuilderSum = builder.AddValue();
+                                metricValueBuilderSum.WithName(metric.Name + PrometheusHistogramSumPostFix);
+                                metricValueBuilderSum = metricValueBuilderSum.WithValue(metricPoint.DoubleValue);
+                                for (int i = 0; i < metricPoint.Keys.Length; i++)
+                                {
+                                    metricValueBuilderSum.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
+                                }
+
+                                var metricValueBuilderCount = builder.AddValue();
+                                metricValueBuilderCount.WithName(metric.Name + PrometheusHistogramCountPostFix);
+                                metricValueBuilderCount = metricValueBuilderCount.WithValue(metricPoint.LongValue);
+                                for (int i = 0; i < metricPoint.Keys.Length; i++)
+                                {
+                                    metricValueBuilderCount.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
+                                }
+
+                                long totalCount = 0;
+                                for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
+                                {
+                                    totalCount += metricPoint.BucketCounts[i];
+                                    var metricValueBuilderBuckets = builder.AddValue();
+                                    metricValueBuilderBuckets.WithName(metric.Name + PrometheusHistogramBucketPostFix);
+                                    metricValueBuilderBuckets = metricValueBuilderBuckets.WithValue(totalCount);
+                                    for (int j = 0; j < metricPoint.Keys.Length; j++)
+                                    {
+                                        metricValueBuilderBuckets.WithLabel(metricPoint.Keys[j], metricPoint.Values[j].ToString());
+                                    }
+
+                                    var bucketName = i == metricPoint.ExplicitBounds.Length ?
+                                    PrometheusHistogramBucketLabelPositiveInfinity : metricPoint.ExplicitBounds[i].ToString(CultureInfo.InvariantCulture);
+                                    metricValueBuilderBuckets.WithLabel(PrometheusHistogramBucketLabelLessThan, bucketName);
+                                }
+                            }
+
+                            builder.Write(writer);
+
                             break;
                         }
                 }
