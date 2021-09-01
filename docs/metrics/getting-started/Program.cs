@@ -24,7 +24,7 @@ using OpenTelemetry.Metrics;
 public class Program
 {
     private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
-    private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("testCounter");
+    private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("counter");
 
     public static async Task Main(string[] args)
     {
@@ -43,10 +43,6 @@ public class Program
                             new KeyValuePair<string, object>("tag1", "value1"),
                             new KeyValuePair<string, object>("tag2", "value2"));
 
-                Counter.Add(
-                            100,
-                            new KeyValuePair<string, object>("tag1", "valueA"),
-                            new KeyValuePair<string, object>("tag2", "valueB"));
                 Task.Delay(10).Wait();
             }
         });
