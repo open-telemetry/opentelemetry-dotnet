@@ -85,13 +85,13 @@ namespace OpenTelemetry.Metrics
             public bool MoveNext()
             {
                 var metricPoints = this.metricsPoints;
+                if (metricPoints[this.index].StartTime == default)
+                {
+                    this.index++;
+                }
+
                 if (this.index < this.targetCount)
                 {
-                    if (metricPoints[this.index].StartTime == default)
-                    {
-                        this.index++;
-                    }
-
                     metricPoints[this.index].StartTime = this.start;
                     metricPoints[this.index].EndTime = this.end;
                     this.Current = metricPoints[this.index];
