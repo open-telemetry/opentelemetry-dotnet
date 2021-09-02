@@ -32,19 +32,19 @@ output from the console, similar to shown below:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-Export 14:30:58.201 14:30:59.177 histogram [tag1=value1;tag2=value2] Histogram, Meter: TestMeter/0.0.1
-Value: Sum: 33862 Count: 62
-(-? - 0) : 0
-(0 - 5) : 0
-(5 - 10) : 0
-(10 - 25) : 2
-(25 - 50) : 0
-(50 - 75) : 1
-(75 - 100) : 1
-(100 - 250) : 6
-(250 - 500) : 18
-(500 - 1000) : 34
-(1000 - ?) : 0
+Export (2021-09-02T01:02:09.8013446Z, 2021-09-02T01:02:19.9749573Z] histogram tag1=value1;tag2=value2 Histogram, Meter: TestMeter/0.0.1
+Value: Sum: 304929 Count: 623
+(-Infinity, 0]: 0
+(0, 5]: 5
+(5, 10]: 5
+(10, 25]: 14
+(25, 50]: 15
+(50, 75]: 18
+(75, 100]: 17
+(100, 250]: 91
+(250, 500]: 158
+(500, 1000]: 300
+(1000, +Infinity): 0
 ```
 <!-- markdownlint-enable MD013 -->
 
