@@ -54,9 +54,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         public async Task RequestMetricIsCaptured()
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
+            var metricExporter = new TestMetricExporter(ProcessExport);
 
-            void ProcessExport(Batch<Metric> batch)
+            void ProcessExport(IEnumerable<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {
@@ -64,10 +64,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 }
             }
 
-            var processor = new PullMetricProcessor(metricExporter, true);
+            var metricReader = new BaseExportingMetricReader(metricExporter);
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddAspNetCoreInstrumentation()
-                .AddMetricProcessor(processor)
+                .AddMetricReader(metricReader)
                 .Build();
 
             using (var client = this.factory.CreateClient())
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             await Task.Delay(TimeSpan.FromSeconds(1));
 
             // Invokes the TestExporter which will invoke ProcessExport
-            processor.PullRequest();
+            metricReader.Collect();
 
             this.meterProvider.Dispose();
 

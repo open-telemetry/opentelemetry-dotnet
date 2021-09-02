@@ -55,9 +55,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
+            var metricExporter = new TestMetricExporter(ProcessExport);
 
-            void ProcessExport(Batch<Metric> batch)
+            void ProcessExport(IEnumerable<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {
@@ -65,10 +65,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
             }
 
-            var metricProcessor = new PullMetricProcessor(metricExporter, true);
+            var metricReader = new BaseExportingMetricReader(metricExporter);
             var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddHttpClientInstrumentation()
-                .AddMetricProcessor(metricProcessor)
+                .AddMetricReader(metricReader)
                 .Build();
 
             using (serverLifeTime)
@@ -110,7 +110,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
 
             // Invokes the TestExporter which will invoke ProcessExport
-            metricProcessor.PullRequest();
+            metricReader.Collect();
 
             meterProvider.Dispose();
 
