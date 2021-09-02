@@ -5,6 +5,8 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net461;net6.0</TargetFrameworks>
     <Description>OpenTelemetry .NET SDK</Description>
+    <PackageVersion>1.2.0</PackageVersion>
+    <PackageValidationBaselineVersion>1.1.0</PackageValidationBaselineVersion>
     <!--
     TODO: Disable this exception, and actually do document all public API.
     -->
