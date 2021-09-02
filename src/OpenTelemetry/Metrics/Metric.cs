@@ -85,6 +85,10 @@ namespace OpenTelemetry.Metrics
                 aggType = AggregationType.Histogram;
                 this.MetricType = MetricType.Histogram;
             }
+            else
+            {
+                // TODO: Log and assign some invalid Enum.
+            }
 
             this.aggStore = new AggregatorStore(aggType, temporality);
             this.Temporality = temporality;
