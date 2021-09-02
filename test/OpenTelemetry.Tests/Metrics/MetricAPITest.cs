@@ -43,8 +43,9 @@ namespace OpenTelemetry.Metrics.Tests
         public void CounterAggregationTest(bool exportDelta)
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
-            void ProcessExport(Batch<Metric> batch)
+            var metricExporter = new TestMetricExporter(ProcessExport, exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative);
+
+            void ProcessExport(IEnumerable<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {
@@ -52,25 +53,25 @@ namespace OpenTelemetry.Metrics.Tests
                 }
             }
 
-            var pullProcessor = new PullMetricProcessor(metricExporter, exportDelta);
+            var metricReader = new BaseExportingMetricReader(metricExporter);
 
             var meter = new Meter("TestMeter");
             var counterLong = meter.CreateCounter<long>("mycounter");
             var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
-                .AddMetricProcessor(pullProcessor)
+                .AddMetricReader(metricReader)
                 .Build();
 
             counterLong.Add(10);
             counterLong.Add(10);
-            pullProcessor.PullRequest();
+            metricReader.Collect();
             long sumReceived = GetSum(metricItems);
             Assert.Equal(20, sumReceived);
 
             metricItems.Clear();
             counterLong.Add(10);
             counterLong.Add(10);
-            pullProcessor.PullRequest();
+            metricReader.Collect();
             sumReceived = GetSum(metricItems);
             if (exportDelta)
             {
@@ -82,7 +83,7 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             metricItems.Clear();
-            pullProcessor.PullRequest();
+            metricReader.Collect();
             sumReceived = GetSum(metricItems);
             if (exportDelta)
             {
@@ -96,7 +97,7 @@ namespace OpenTelemetry.Metrics.Tests
             metricItems.Clear();
             counterLong.Add(40);
             counterLong.Add(20);
-            pullProcessor.PullRequest();
+            metricReader.Collect();
             sumReceived = GetSum(metricItems);
             if (exportDelta)
             {
@@ -115,8 +116,9 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var meterName = "TestMeter" + exportDelta;
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
-            void ProcessExport(Batch<Metric> batch)
+            var metricExporter = new TestMetricExporter(ProcessExport, exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative);
+
+            void ProcessExport(IEnumerable<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {
@@ -124,7 +126,7 @@ namespace OpenTelemetry.Metrics.Tests
                 }
             }
 
-            var pullProcessor = new PullMetricProcessor(metricExporter, exportDelta);
+            var metricReader = new BaseExportingMetricReader(metricExporter);
 
             var meter = new Meter(meterName);
             int i = 1;
@@ -139,15 +141,15 @@ namespace OpenTelemetry.Metrics.Tests
             });
             var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource(meterName)
-                .AddMetricProcessor(pullProcessor)
+                .AddMetricReader(metricReader)
                 .Build();
 
-            pullProcessor.PullRequest();
+            metricReader.Collect();
             long sumReceived = GetSum(metricItems);
             Assert.Equal(10, sumReceived);
 
             metricItems.Clear();
-            pullProcessor.PullRequest();
+            metricReader.Collect();
             sumReceived = GetSum(metricItems);
             if (exportDelta)
             {
@@ -159,7 +161,7 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             metricItems.Clear();
-            pullProcessor.PullRequest();
+            metricReader.Collect();
             sumReceived = GetSum(metricItems);
             if (exportDelta)
             {
@@ -175,8 +177,9 @@ namespace OpenTelemetry.Metrics.Tests
         public void SimpleTest()
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
-            void ProcessExport(Batch<Metric> batch)
+            var metricExporter = new TestMetricExporter(ProcessExport);
+
+            void ProcessExport(IEnumerable<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {
@@ -184,13 +187,13 @@ namespace OpenTelemetry.Metrics.Tests
                 }
             }
 
-            var pullProcessor = new PullMetricProcessor(metricExporter, true);
+            var metricReader = new BaseExportingMetricReader(metricExporter);
 
             var meter = new Meter("TestMeter");
             var counterLong = meter.CreateCounter<long>("mycounter");
             var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
-                .AddMetricProcessor(pullProcessor)
+                .AddMetricReader(metricReader)
                 .Build();
 
             // setup args to threads.
@@ -230,7 +233,7 @@ namespace OpenTelemetry.Metrics.Tests
             this.output.WriteLine($"Took {timeTakenInMilliseconds} msecs. Total threads: {numberOfThreads}, each thread doing {numberOfMetricUpdateByEachThread} recordings.");
 
             meterProvider.Dispose();
-            pullProcessor.PullRequest();
+            metricReader.Collect();
 
             long sumReceived = 0;
             foreach (var metric in metricItems)

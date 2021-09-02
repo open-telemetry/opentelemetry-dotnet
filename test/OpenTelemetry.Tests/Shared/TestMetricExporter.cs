@@ -23,10 +23,17 @@ namespace OpenTelemetry.Tests
     internal class TestMetricExporter : MetricExporter
     {
         private readonly Action<IEnumerable<Metric>> processBatchAction;
+        private AggregationTemporality temporality;
 
-        public TestMetricExporter(Action<IEnumerable<Metric>> processBatchAction)
+        public TestMetricExporter(Action<IEnumerable<Metric>> processBatchAction, AggregationTemporality temporality = AggregationTemporality.Cumulative)
         {
             this.processBatchAction = processBatchAction ?? throw new ArgumentNullException(nameof(processBatchAction));
+            this.temporality = temporality;
+        }
+
+        public override AggregationTemporality GetAggregationTemporality()
+        {
+            return this.temporality;
         }
 
         public override ExportResult Export(IEnumerable<Metric> batch)
