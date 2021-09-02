@@ -59,7 +59,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new KeyValuePair<string, object>("key2", "value2"),
             };
 
-            var processor = new PullMetricProcessor(new TestExporter<MetricItem>(RunTest), true);
+            var processor = new PullMetricProcessor(new TestExporter<Metric>(RunTest), true);
 
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.True(testCompleted);
 
-            void RunTest(Batch<MetricItem> metricItem)
+            void RunTest(Batch<Metric> metricItem)
             {
                 var request = new OtlpCollector.ExportMetricsServiceRequest();
                 request.AddBatch(exporter.ProcessResource, metricItem);

@@ -25,10 +25,11 @@ namespace OpenTelemetry.Metrics
         private Task exportTask;
         private CancellationTokenSource token;
         private int exportIntervalMs;
-        private Func<bool, MetricItem> getMetrics;
+        private Func<Batch<Metric>> getMetrics;
         private bool disposed;
+        private AggregationTemporality aggTemporality;
 
-        public PushMetricProcessor(BaseExporter<MetricItem> exporter, int exportIntervalMs, bool isDelta)
+        public PushMetricProcessor(BaseExporter<Metric> exporter, int exportIntervalMs, bool isDelta)
             : base(exporter)
         {
             this.exportIntervalMs = exportIntervalMs;
@@ -38,14 +39,20 @@ namespace OpenTelemetry.Metrics
                 while (!this.token.IsCancellationRequested)
                 {
                     Task.Delay(this.exportIntervalMs).Wait();
-                    this.Export(isDelta);
+                    this.Export();
                 }
             });
 
             this.exportTask.Start();
+            this.aggTemporality = isDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
         }
 
-        public override void SetGetMetricFunction(Func<bool, MetricItem> getMetrics)
+        public override AggregationTemporality GetAggregationTemporality()
+        {
+            return this.aggTemporality;
+        }
+
+        public override void SetGetMetricFunction(Func<Batch<Metric>> getMetrics)
         {
             this.getMetrics = getMetrics;
         }
@@ -72,16 +79,12 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        private void Export(bool isDelta)
+        private void Export()
         {
             if (this.getMetrics != null)
             {
-                var metricsToExport = this.getMetrics(isDelta);
-                if (metricsToExport != null && metricsToExport.Metrics.Count > 0)
-                {
-                    Batch<MetricItem> batch = new Batch<MetricItem>(metricsToExport);
-                    this.exporter.Export(batch);
-                }
+                var metricsToExport = this.getMetrics();
+                this.exporter.Export(metricsToExport);
             }
         }
     }

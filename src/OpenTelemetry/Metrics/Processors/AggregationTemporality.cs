@@ -1,4 +1,4 @@
-// <copyright file="InstrumentState.cs" company="OpenTelemetry Authors">
+// <copyright file="AggregationTemporality.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,26 +15,21 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
+using System.Text;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class InstrumentState
+    public enum AggregationTemporality
     {
-        private readonly AggregatorStore store;
+        /// <summary>
+        /// Cumulative.
+        /// </summary>
+        Cumulative = 1,
 
-        internal InstrumentState(MeterProviderSdk sdk, Instrument instrument)
-        {
-            this.store = new AggregatorStore(instrument);
-            sdk.AggregatorStores.TryAdd(this.store, true);
-        }
-
-        internal void Update<T>(T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
-            where T : struct
-        {
-            this.store.Update(value, tags);
-        }
+        /// <summary>
+        /// Delta.
+        /// </summary>
+        Delta = 2,
     }
 }

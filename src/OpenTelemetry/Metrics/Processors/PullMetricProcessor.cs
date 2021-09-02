@@ -20,17 +20,22 @@ namespace OpenTelemetry.Metrics
 {
     public class PullMetricProcessor : MetricProcessor, IDisposable
     {
-        private Func<bool, MetricItem> getMetrics;
+        private Func<Batch<Metric>> getMetrics;
         private bool disposed;
-        private bool isDelta;
+        private AggregationTemporality aggTemporality;
 
-        public PullMetricProcessor(BaseExporter<MetricItem> exporter, bool isDelta)
+        public PullMetricProcessor(BaseExporter<Metric> exporter, bool isDelta)
             : base(exporter)
         {
-            this.isDelta = isDelta;
+            this.aggTemporality = isDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
         }
 
-        public override void SetGetMetricFunction(Func<bool, MetricItem> getMetrics)
+        public override AggregationTemporality GetAggregationTemporality()
+        {
+            return this.aggTemporality;
+        }
+
+        public override void SetGetMetricFunction(Func<Batch<Metric>> getMetrics)
         {
             this.getMetrics = getMetrics;
         }
@@ -39,12 +44,8 @@ namespace OpenTelemetry.Metrics
         {
             if (this.getMetrics != null)
             {
-                var metricsToExport = this.getMetrics(this.isDelta);
-                if (metricsToExport != null && metricsToExport.Metrics.Count > 0)
-                {
-                    Batch<MetricItem> batch = new Batch<MetricItem>(metricsToExport);
-                    this.exporter.Export(batch);
-                }
+                var metricsToExport = this.getMetrics();
+                this.exporter.Export(metricsToExport);
             }
         }
 
