@@ -15,10 +15,8 @@
 // </copyright>
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Threading;
 
 namespace OpenTelemetry.Metrics
 {
@@ -84,6 +82,10 @@ namespace OpenTelemetry.Metrics
             {
                 aggType = AggregationType.Histogram;
                 this.MetricType = MetricType.Histogram;
+            }
+            else
+            {
+                // TODO: Log and assign some invalid Enum.
             }
 
             this.aggStore = new AggregatorStore(aggType, temporality);
