@@ -40,7 +40,7 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
-        /// Add metric processor.
+        /// Add metric reader.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="metricReader">Metricreader.</param>
