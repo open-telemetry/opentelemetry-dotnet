@@ -15,10 +15,8 @@
 // </copyright>
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Threading;
 
 namespace OpenTelemetry.Metrics
 {
