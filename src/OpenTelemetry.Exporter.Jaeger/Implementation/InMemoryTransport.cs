@@ -19,7 +19,7 @@ using Thrift.Transport;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    internal class InMemoryTransport : TTransport
+    internal sealed class InMemoryTransport : TTransport
     {
         private readonly BufferWriter bufferWriter;
         private BufferWriterMemory? buffer;

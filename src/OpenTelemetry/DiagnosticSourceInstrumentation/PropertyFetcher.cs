@@ -109,7 +109,7 @@ namespace OpenTelemetry.Instrumentation
                 return false;
             }
 
-            private class TypedPropertyFetch<TDeclaredObject, TDeclaredProperty> : PropertyFetch
+            private sealed class TypedPropertyFetch<TDeclaredObject, TDeclaredProperty> : PropertyFetch
                 where TDeclaredProperty : T
             {
                 private readonly Func<TDeclaredObject, TDeclaredProperty> propertyFetch;
