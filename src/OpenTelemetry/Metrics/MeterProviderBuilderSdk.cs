@@ -32,6 +32,8 @@ namespace OpenTelemetry.Metrics
 
         internal List<MetricProcessor> MetricProcessors { get; } = new List<MetricProcessor>();
 
+        internal List<MetricReader> MetricReaders { get; } = new List<MetricReader>();
+
         public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
         {
             if (instrumentationFactory == null)
@@ -79,6 +81,12 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
+        internal MeterProviderBuilderSdk AddMetricReader(MetricReader metricReader)
+        {
+            this.MetricReaders.Add(metricReader);
+            return this;
+        }
+
         internal MeterProviderBuilderSdk SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
             this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
@@ -91,7 +99,8 @@ namespace OpenTelemetry.Metrics
                 this.resourceBuilder.Build(),
                 this.meterSources,
                 this.instrumentationFactories,
-                this.MetricProcessors.ToArray());
+                this.MetricProcessors.ToArray(),
+                this.MetricReaders.ToArray());
         }
 
         // TODO: This is copied from TracerProviderBuilderSdk. Move to common location.

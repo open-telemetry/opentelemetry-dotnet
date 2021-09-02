@@ -33,26 +33,37 @@ namespace OpenTelemetry.Metrics
         private readonly object collectLock = new object();
         private readonly MeterListener listener;
         private readonly List<MetricProcessor> metricProcessors = new List<MetricProcessor>();
+        private readonly List<MetricReader> metricReaders = new List<MetricReader>();
         private int metricIndex = -1;
 
         internal MeterProviderSdk(
             Resource resource,
             IEnumerable<string> meterSources,
             List<MeterProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
-            MetricProcessor[] metricProcessors)
+            MetricProcessor[] metricProcessors,
+            MetricReader[] metricReaders)
         {
             this.Resource = resource;
             this.metrics = new Metric[MaxMetrics];
 
             // TODO: Replace with single CompositeProcessor.
             this.metricProcessors.AddRange(metricProcessors);
+            this.metricReaders.AddRange(metricReaders);
 
             AggregationTemporality temporality = AggregationTemporality.Cumulative;
             foreach (var processor in this.metricProcessors)
             {
-                processor.SetGetMetricFunction(this.Collect);
+                // processor.SetGetMetricFunction(this.Collect);
                 processor.SetParentProvider(this);
                 temporality = processor.GetAggregationTemporality();
+            }
+
+            // TODO: Actually support multiple readers.
+            // Currently the last reader's temporality wins.
+            foreach (var reader in this.metricReaders)
+            {
+                reader.SetParentProvider(this);
+                temporality = reader.GetAggregationTemporality();
             }
 
             if (instrumentationFactories.Any())
@@ -140,6 +151,38 @@ namespace OpenTelemetry.Metrics
             metric.UpdateLong(value, tagsRos);
         }
 
+        internal IEnumerable<Metric> Collect()
+        {
+            lock (this.collectLock)
+            {
+                try
+                {
+                    // Record all observable instruments
+                    this.listener.RecordObservableInstruments();
+                    var indexSnapShot = Math.Min(this.metricIndex, MaxMetrics - 1);
+                    for (int i = 0; i < indexSnapShot + 1; i++)
+                    {
+                        this.metrics[i].SnapShot();
+                    }
+
+                    return Iterate(this.metrics, indexSnapShot + 1);
+
+                    static IEnumerable<Metric> Iterate(Metric[] metrics, long targetCount)
+                    {
+                        for (int i = 0; i < targetCount; i++)
+                        {
+                            yield return metrics[i];
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    // TODO: Log
+                    return default;
+                }
+            }
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (this.instrumentations != null)
@@ -158,30 +201,6 @@ namespace OpenTelemetry.Metrics
             }
 
             this.listener.Dispose();
-        }
-
-        private Batch<Metric> Collect()
-        {
-            lock (this.collectLock)
-            {
-                try
-                {
-                    // Record all observable instruments
-                    this.listener.RecordObservableInstruments();
-                    var indexSnapShot = Math.Min(this.metricIndex, MaxMetrics - 1);
-                    for (int i = 0; i < indexSnapShot + 1; i++)
-                    {
-                        this.metrics[i].SnapShot();
-                    }
-
-                    return new Batch<Metric>(this.metrics, indexSnapShot + 1);
-                }
-                catch (Exception)
-                {
-                    // TODO: Log
-                    return default;
-                }
-            }
         }
     }
 }

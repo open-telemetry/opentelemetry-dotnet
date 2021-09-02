@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter
         /// <param name="writer">StreamWriter to write to.</param>
         public static void WriteMetricsCollection(this PrometheusExporter exporter, StreamWriter writer)
         {
-            foreach (var metric in exporter.Batch)
+            foreach (var metric in exporter.Metrics)
             {
                 var builder = new PrometheusMetricBuilder()
                     .WithName(metric.Name)

@@ -40,6 +40,22 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
+        /// Add metric processor.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="metricReader">Metricreader.</param>
+        /// <returns><see cref="MeterProvider"/>.</returns>
+        public static MeterProviderBuilder AddMetricReader(this MeterProviderBuilder meterProviderBuilder, MetricReader metricReader)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+            {
+                return meterProviderBuilderSdk.AddMetricReader(metricReader);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
         /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
         /// this provider is built from. Overwrites currently set ResourceBuilder.
         /// </summary>

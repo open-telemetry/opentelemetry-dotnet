@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter
@@ -22,10 +23,10 @@ namespace OpenTelemetry.Exporter
     /// <summary>
     /// Exporter of OpenTelemetry metrics to Prometheus.
     /// </summary>
-    public class PrometheusExporter : BaseExporter<Metric>
+    public class PrometheusExporter : MetricExporter
     {
         internal readonly PrometheusExporterOptions Options;
-        internal Batch<Metric> Batch;
+        internal IEnumerable<Metric> Metrics;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
@@ -36,11 +37,11 @@ namespace OpenTelemetry.Exporter
             this.Options = options;
         }
 
-        internal Action MakePullRequest { get; set; }
+        internal Action CollectMetric { get; set; }
 
-        public override ExportResult Export(in Batch<Metric> batch)
+        public override ExportResult Export(IEnumerable<Metric> metrics)
         {
-            this.Batch = batch;
+            this.Metrics = metrics;
             return ExportResult.Success;
         }
     }
