@@ -34,17 +34,17 @@ output from the console, similar to shown below:
 ```text
 Export 14:30:58.201 14:30:59.177 histogram [tag1=value1;tag2=value2] Histogram, Meter: TestMeter/0.0.1
 Value: Sum: 33862 Count: 62
-(-? - 0] : 0
-(0 - 5] : 0
-(5 - 10] : 0
-(10 - 25] : 2
-(25 - 50] : 0
-(50 - 75] : 1
-(75 - 100] : 1
-(100 - 250] : 6
-(250 - 500] : 18
-(500 - 1000] : 34
-(1000 - ?) : 0
+(-Infinity, 0]: 0
+(0, 5]: 0
+(5, 10]: 0
+(10, 25]: 2
+(25, 50]: 0
+(50, 75]: 1
+(75, 100]: 1
+(100, 250]: 6
+(250, 500]: 18
+(500, 1000]: 34
+(1000, +Infinity): 0
 ```
 <!-- markdownlint-enable MD013 -->
 
