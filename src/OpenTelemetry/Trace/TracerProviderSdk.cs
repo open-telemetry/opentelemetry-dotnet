@@ -25,7 +25,7 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
 {
-    internal class TracerProviderSdk : TracerProvider
+    internal sealed class TracerProviderSdk : TracerProvider
     {
         internal int ShutdownCount;
 
