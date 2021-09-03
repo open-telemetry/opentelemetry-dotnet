@@ -21,6 +21,7 @@ using System.Linq;
 #endif
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
+using System.Security;
 
 namespace OpenTelemetry.Internal
 {
@@ -122,6 +123,15 @@ namespace OpenTelemetry.Internal
             if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.TracerProviderException(evnt, ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
+        public void MissingPermissionsToReadEnvironmentVariable(SecurityException ex)
+        {
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+            {
+                this.MissingPermissionsToReadEnvironmentVariable(ex.ToInvariantString());
             }
         }
 
@@ -285,6 +295,18 @@ namespace OpenTelemetry.Internal
         public void TracerProviderException(string evnt, string ex)
         {
             this.WriteEvent(28, evnt, ex);
+        }
+
+        [Event(29, Message = "Failed to parse environment variable: '{0}', value: '{1}'.", Level = EventLevel.Warning)]
+        public void FailedToParseEnvironmentVariable(string name, string value)
+        {
+            this.WriteEvent(29, name, value);
+        }
+
+        [Event(30, Message = "Missing permissions to read environment variable: '{0}'", Level = EventLevel.Warning)]
+        public void MissingPermissionsToReadEnvironmentVariable(string exception)
+        {
+            this.WriteEvent(30, exception);
         }
 
 #if DEBUG

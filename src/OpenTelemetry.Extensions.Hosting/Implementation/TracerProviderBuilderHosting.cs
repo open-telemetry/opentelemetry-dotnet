@@ -23,7 +23,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// A <see cref="TracerProviderBuilderBase"/> with support for deferred initialization using <see cref="IServiceProvider"/> for dependency injection.
     /// </summary>
-    internal class TracerProviderBuilderHosting : TracerProviderBuilderBase, IDeferredTracerProviderBuilder
+    internal sealed class TracerProviderBuilderHosting : TracerProviderBuilderBase, IDeferredTracerProviderBuilder
     {
         private readonly List<Action<IServiceProvider, TracerProviderBuilder>> configurationActions = new List<Action<IServiceProvider, TracerProviderBuilder>>();
 
