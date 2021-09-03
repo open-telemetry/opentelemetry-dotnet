@@ -24,6 +24,7 @@ using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Web.Http;
 using Examples.AspNet.Models;
+using OpenTelemetry;
 
 namespace Examples.AspNet.Controllers
 {
@@ -72,14 +73,17 @@ namespace Examples.AspNet.Controllers
             return GetWeatherForecast();
         }
 
+        /// <summary>
+        /// For testing large async operation which causes IIS to jump threads and results in lost AsyncLocals.
+        /// </summary>
         [Route("data")]
         [HttpGet]
         public async Task<string> GetData()
         {
+            Baggage.SetBaggage("key1", "value1");
+
             using var rng = RandomNumberGenerator.Create();
 
-            // 104857600
-            // 2147483647
             var requestData = new byte[1024 * 1024 * 100];
             rng.GetBytes(requestData);
 
@@ -102,6 +106,12 @@ namespace Examples.AspNet.Controllers
         [HttpPost]
         public async Task<HttpResponseMessage> PostData()
         {
+            string value1 = Baggage.GetBaggage("key1");
+            if (string.IsNullOrEmpty(value1))
+            {
+                throw new InvalidOperationException("Key1 was not found on Baggage.");
+            }
+
             var stream = await this.Request.Content.ReadAsStreamAsync().ConfigureAwait(false);
 
             var result = new HttpResponseMessage(HttpStatusCode.OK)
