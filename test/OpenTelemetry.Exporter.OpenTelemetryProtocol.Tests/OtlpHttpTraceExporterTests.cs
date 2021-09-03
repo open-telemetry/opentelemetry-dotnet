@@ -23,6 +23,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Xunit;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
@@ -82,12 +83,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Contains(exporter.Headers, kvp => kvp.Key == header2.Name && kvp.Value == header2.Value);
         }
 
-        [Fact]
-        public async Task Export_ActivityBatch_SendsCorrectHttpRequest()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task Export_ActivityBatch_SendsCorrectHttpRequest(bool includeServiceNameInResource)
         {
-            using var activitySource = new ActivitySource(nameof(this.Export_ActivityBatch_SendsCorrectHttpRequest));
+            // Arrange
+            var activitySourceName = nameof(this.Export_ActivityBatch_SendsCorrectHttpRequest);
+            using var activitySource = new ActivitySource(activitySourceName);
 
-            using var activity = activitySource.StartActivity($"activity-{nameof(this.Export_ActivityBatch_SendsCorrectHttpRequest)}", ActivityKind.Producer);
+            var activityName = $"activity-{nameof(this.Export_ActivityBatch_SendsCorrectHttpRequest)}";
+            using var activity = activitySource.StartActivity(activityName, ActivityKind.Producer);
 
             var header1 = new { Name = "hdr1", Value = "val1" };
             var header2 = new { Name = "hdr2", Value = "val2" };
@@ -105,8 +111,28 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var exporter = new OtlpHttpTraceExporter(options, httpHandlerMock.Object);
 
+            var resourceBuilder = ResourceBuilder.CreateEmpty();
+            if (includeServiceNameInResource)
+            {
+                resourceBuilder.AddAttributes(
+                    new List<KeyValuePair<string, object>>
+                    {
+                        new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, "service_name"),
+                        new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceNamespace, "ns_1"),
+                    });
+            }
+
+            var builder = Sdk.CreateTracerProviderBuilder()
+                .SetResourceBuilder(resourceBuilder);
+
+            using var openTelemetrySdk = builder.Build();
+
+            exporter.ParentProvider = openTelemetrySdk;
+
+            // Act
             var result = exporter.Export(new Batch<Activity>(activity));
 
+            // Assert
             httpHandlerMock.Verify(m => m.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()), Times.Once());
 
             Assert.Equal(ExportResult.Success, result);
@@ -125,7 +151,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.NotNull(exportTraceRequest);
 
             Assert.Single(exportTraceRequest.ResourceSpans);
-            Assert.Single(exportTraceRequest.ResourceSpans.First().Resource.Attributes);
+
+            var resourceSpan = exportTraceRequest.ResourceSpans.First();
+            if (includeServiceNameInResource)
+            {
+                Assert.Contains(resourceSpan.Resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service_name");
+                Assert.Contains(resourceSpan.Resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceNamespace && kvp.Value.StringValue == "ns_1");
+            }
+            else
+            {
+                Assert.Contains(resourceSpan.Resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
+            }
+
+            Assert.Single(resourceSpan.InstrumentationLibrarySpans);
         }
 
         [Fact]
