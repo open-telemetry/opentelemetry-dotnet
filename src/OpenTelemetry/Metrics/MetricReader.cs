@@ -19,7 +19,7 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
-    public abstract class MetricReader
+    public abstract class MetricReader : IDisposable
     {
         public BaseProvider ParentProvider { get; private set; }
 
@@ -39,9 +39,20 @@ namespace OpenTelemetry.Metrics
             return AggregationTemporality.Cumulative;
         }
 
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         internal virtual void SetParentProvider(BaseProvider parentProvider)
         {
             this.ParentProvider = parentProvider;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
         }
     }
 }
