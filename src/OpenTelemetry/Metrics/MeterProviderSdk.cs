@@ -167,10 +167,15 @@ namespace OpenTelemetry.Metrics
 
                     return Iterate(this.metrics, indexSnapShot + 1);
 
+                    // We cannot simply return the internal structure (array)
+                    // as the user is not expected to navigate it.
+                    // properly.
                     static IEnumerable<Metric> Iterate(Metric[] metrics, long targetCount)
                     {
                         for (int i = 0; i < targetCount; i++)
                         {
+                            // Check if the Metric has valid
+                            // entries and skip, if not.
                             yield return metrics[i];
                         }
                     }
