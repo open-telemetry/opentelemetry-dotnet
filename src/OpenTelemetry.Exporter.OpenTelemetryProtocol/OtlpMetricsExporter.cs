@@ -16,7 +16,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Grpc.Core;
+#if NETSTANDARD2_1
+using Grpc.Net.Client;
+#endif
+using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Metrics;
 using OtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
@@ -30,7 +35,7 @@ namespace OpenTelemetry.Exporter
     /// </summary>
     public class OtlpMetricsExporter : MetricExporter
     {
-        private readonly OtlpMetricsExporterOld otlpMetricsExporter;
+        private readonly OtlpCollector.MetricsService.IMetricsServiceClient metricsClient;
         private OtlpResource.Resource processResource;
 
         /// <summary>
@@ -49,15 +54,40 @@ namespace OpenTelemetry.Exporter
         /// <param name="metricsServiceClient"><see cref="OtlpCollector.MetricsService.IMetricsServiceClient"/>.</param>
         internal OtlpMetricsExporter(OtlpExporterOptions options, OtlpCollector.MetricsService.IMetricsServiceClient metricsServiceClient = null)
         {
-            this.otlpMetricsExporter = new OtlpMetricsExporterOld(options, metricsServiceClient);
+            this.Options = options ?? throw new ArgumentNullException(nameof(options));
+            this.Headers = options.GetMetadataFromHeaders();
+            if (this.Options.TimeoutMilliseconds <= 0)
+            {
+                throw new ArgumentException("Timeout value provided is not a positive number.", nameof(this.Options.TimeoutMilliseconds));
+            }
+
+            if (metricsServiceClient != null)
+            {
+                this.metricsClient = metricsServiceClient;
+            }
+            else
+            {
+                this.Channel = options.CreateChannel();
+                this.metricsClient = new OtlpCollector.MetricsService.MetricsServiceClient(this.Channel);
+            }
         }
 
         internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
 
+#if NETSTANDARD2_1
+        internal GrpcChannel Channel { get; set; }
+#else
+        internal Channel Channel { get; set; }
+#endif
+
+        internal OtlpExporterOptions Options { get; }
+
+        internal Metadata Headers { get; }
+
         /// <inheritdoc />
         public override AggregationTemporality GetAggregationTemporality()
         {
-            return this.otlpMetricsExporter.Options.AggregationTemporality;
+            return this.Options.AggregationTemporality;
         }
 
         /// <inheritdoc />
@@ -68,12 +98,12 @@ namespace OpenTelemetry.Exporter
 
             var request = new OtlpCollector.ExportMetricsServiceRequest();
 
-            request.AddBatch(this.otlpMetricsExporter.ProcessResource, metrics);
-            var deadline = DateTime.UtcNow.AddMilliseconds(this.otlpMetricsExporter.Options.TimeoutMilliseconds);
+            request.AddBatch(this.ProcessResource, metrics);
+            var deadline = DateTime.UtcNow.AddMilliseconds(this.Options.TimeoutMilliseconds);
 
             try
             {
-                this.otlpMetricsExporter.MetricsClient.Export(request, headers: this.otlpMetricsExporter.Headers, deadline: deadline);
+                this.metricsClient.Export(request, headers: this.Headers, deadline: deadline);
             }
             catch (RpcException ex)
             {
@@ -96,7 +126,20 @@ namespace OpenTelemetry.Exporter
         /// <inheritdoc />
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
-            return this.otlpMetricsExporter.Shutdown(timeoutMilliseconds);
+            if (this.Channel == null)
+            {
+                return true;
+            }
+
+            if (timeoutMilliseconds == -1)
+            {
+                this.Channel.ShutdownAsync().Wait();
+                return true;
+            }
+            else
+            {
+                return Task.WaitAny(new Task[] { this.Channel.ShutdownAsync(), Task.Delay(timeoutMilliseconds) }) == 0;
+            }
         }
     }
 }
