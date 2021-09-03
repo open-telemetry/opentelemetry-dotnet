@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
 {
@@ -70,6 +71,6 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is BatchExporter.
         /// </summary>
-        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportProcessorOptions<Activity>();
+        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
     }
 }

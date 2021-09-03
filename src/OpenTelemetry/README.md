@@ -202,10 +202,24 @@ purposes, the SDK provides the following built-in processors:
 * [BatchExportProcessor&lt;T&gt;](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#batching-processor)
   : This is an exporting processor which batches the telemetry before sending to
   the configured exporter.
+
+  The following environment variables can be used to override the default
+  values of the `BatchExportActivityProcessorOptions`.
+
+  <!-- markdownlint-disable MD013 -->
+  | Environment variable             | `BatchExportActivityProcessorOptions` property |
+  | -------------------------------- | ---------------------------------------------- |
+  | `OTEL_BSP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                   |
+  | `OTEL_BSP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`                  |
+  | `OTEL_BSP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                                 |
+  | `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSizeEnvVarKey`                  |
+  <!-- markdownlint-enable MD013 -->
+
 * [CompositeProcessor&lt;T&gt;](../../src/OpenTelemetry/CompositeProcessor.cs)
   : This is a processor which can be composed from multiple processors. This is
   typically used to construct multiple processing pipelines, each ending with
   its own exporter.
+
 * [SimpleExportProcessor&lt;T&gt;](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#simple-processor)
   : This is an exporting processor which passes telemetry to the configured
   exporter without any batching.
