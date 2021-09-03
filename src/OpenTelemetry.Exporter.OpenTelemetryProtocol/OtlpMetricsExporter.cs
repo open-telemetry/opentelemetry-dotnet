@@ -92,5 +92,11 @@ namespace OpenTelemetry.Exporter
 
             return ExportResult.Success;
         }
+
+        /// <inheritdoc />
+        protected override bool OnShutdown(int timeoutMilliseconds)
+        {
+            return this.otlpMetricsExporter.Shutdown(timeoutMilliseconds);
+        }
     }
 }
