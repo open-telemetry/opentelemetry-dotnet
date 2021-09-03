@@ -1,4 +1,4 @@
-// <copyright file="OtlpMetricsExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpMetricsExporterOld.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,59 +15,65 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using Grpc.Core;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Metrics;
 using OtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
-using OtlpResource = Opentelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter
 {
+
     /// <summary>
     /// Exporter consuming <see cref="Metric"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    public class OtlpMetricsExporter : MetricExporter
+    internal class OtlpMetricsExporterOld : BaseOtlpExporter<Metric>
     {
-        private readonly OtlpMetricsExporterOld otlpMetricsExporter;
-        private OtlpResource.Resource processResource;
+        internal readonly OtlpCollector.MetricsService.IMetricsServiceClient MetricsClient;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OtlpMetricsExporter"/> class.
+        /// Initializes a new instance of the <see cref="OtlpMetricsExporterOld"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
-        public OtlpMetricsExporter(OtlpExporterOptions options)
+        public OtlpMetricsExporterOld(OtlpExporterOptions options)
             : this(options, null)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OtlpMetricsExporter"/> class.
+        /// Initializes a new instance of the <see cref="OtlpMetricsExporterOld"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
         /// <param name="metricsServiceClient"><see cref="OtlpCollector.MetricsService.IMetricsServiceClient"/>.</param>
-        internal OtlpMetricsExporter(OtlpExporterOptions options, OtlpCollector.MetricsService.IMetricsServiceClient metricsServiceClient = null)
+        internal OtlpMetricsExporterOld(OtlpExporterOptions options, OtlpCollector.MetricsService.IMetricsServiceClient metricsServiceClient = null)
+            : base(options)
         {
-            this.otlpMetricsExporter = new OtlpMetricsExporterOld(options, metricsServiceClient);
+            if (metricsServiceClient != null)
+            {
+                this.MetricsClient = metricsServiceClient;
+            }
+            else
+            {
+                this.Channel = options.CreateChannel();
+                this.MetricsClient = new OtlpCollector.MetricsService.MetricsServiceClient(this.Channel);
+            }
         }
 
-        internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
-
         /// <inheritdoc />
-        public override ExportResult Export(IEnumerable<Metric> metrics)
+        public override ExportResult Export(in Batch<Metric> batch)
         {
             // Prevents the exporter's gRPC and HTTP operations from being instrumented.
             using var scope = SuppressInstrumentationScope.Begin();
 
             var request = new OtlpCollector.ExportMetricsServiceRequest();
 
-            request.AddBatch(this.otlpMetricsExporter.ProcessResource, metrics);
-            var deadline = DateTime.UtcNow.AddMilliseconds(this.otlpMetricsExporter.Options.TimeoutMilliseconds);
+            // request.AddBatch(this.ProcessResource, batch);
+            var deadline = DateTime.UtcNow.AddMilliseconds(this.Options.TimeoutMilliseconds);
 
             try
             {
-                this.otlpMetricsExporter.MetricsClient.Export(request, headers: this.otlpMetricsExporter.Headers, deadline: deadline);
+                this.MetricsClient.Export(request, headers: this.Headers, deadline: deadline);
             }
             catch (RpcException ex)
             {
