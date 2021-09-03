@@ -55,6 +55,12 @@ namespace OpenTelemetry.Exporter
         internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
 
         /// <inheritdoc />
+        public override AggregationTemporality GetAggregationTemporality()
+        {
+            return this.otlpMetricsExporter.Options.AggregationTemporality;
+        }
+
+        /// <inheritdoc />
         public override ExportResult Export(IEnumerable<Metric> metrics)
         {
             // Prevents the exporter's gRPC and HTTP operations from being instrumented.
