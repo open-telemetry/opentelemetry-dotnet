@@ -54,29 +54,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
 
         public static Metadata GetMetadataFromHeaders(this OtlpExporterOptions options)
         {
-            var headers = options.Headers;
-            var metadata = new Metadata();
-            if (!string.IsNullOrEmpty(headers))
-            {
-                Array.ForEach(
-                    headers.Split(','),
-                    (pair) =>
-                    {
-                        // Specify the maximum number of substrings to return to 2
-                        // This treats everything that follows the first `=` in the string as the value to be added for the metadata key
-                        var keyValueData = pair.Split(new char[] { '=' }, 2);
-                        if (keyValueData.Length != 2)
-                        {
-                            throw new ArgumentException("Headers provided in an invalid format.");
-                        }
-
-                        var key = keyValueData[0].Trim();
-                        var value = keyValueData[1].Trim();
-                        metadata.Add(key, value);
-                    });
-            }
-
-            return metadata;
+            return options.GetHeaders<Metadata>((m, k, v) => m.Add(k, v));
         }
     }
 }

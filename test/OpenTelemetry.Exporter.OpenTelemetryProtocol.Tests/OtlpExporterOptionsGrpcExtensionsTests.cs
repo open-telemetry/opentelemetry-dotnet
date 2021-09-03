@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData("headers")]
         [InlineData("key,value")]
-        public void GetMetadataFromHeadersThrowsExceptionOnOnvalidFormat(string headers)
+        public void GetMetadataFromHeadersThrowsExceptionOnInvalidFormat(string headers)
         {
             try
             {

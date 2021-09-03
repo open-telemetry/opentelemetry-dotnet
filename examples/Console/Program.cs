@@ -33,6 +33,7 @@ namespace Examples.Console
         /// dotnet run -p Examples.Console.csproj jaeger -h localhost -p 6831
         /// dotnet run -p Examples.Console.csproj prometheus -i 15 -p 9184 -d 2
         /// dotnet run -p Examples.Console.csproj otlp -e "http://localhost:4317"
+        /// dotnet run -p Examples.Console.csproj otlphttp -e "http://localhost:4318"
         /// dotnet run -p Examples.Console.csproj zpages
         /// dotnet run -p Examples.Console.csproj metrics --help
         ///
@@ -42,7 +43,7 @@ namespace Examples.Console
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, OtlpHttpOptions, InMemoryOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
@@ -56,6 +57,7 @@ namespace Examples.Console
                     (OpenTelemetryShimOptions options) => TestOTelShimWithConsoleExporter.Run(options),
                     (OpenTracingShimOptions options) => TestOpenTracingShim.Run(options),
                     (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
+                    (OtlpHttpOptions options) => TestOtlpHttpExporter.Run(options.Endpoint),
                     (InMemoryOptions options) => TestInMemoryExporter.Run(options),
                     errs => 1);
         }
@@ -162,6 +164,13 @@ namespace Examples.Console
     internal class OtlpOptions
     {
         [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "http://localhost:4317")]
+        public string Endpoint { get; set; }
+    }
+
+    [Verb("otlphttp", HelpText = "Specify the options required to test OpenTelemetry Protocol (OTLP) over HTTP")]
+    internal class OtlpHttpOptions
+    {
+        [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "http://localhost:4318")]
         public string Endpoint { get; set; }
     }
 
