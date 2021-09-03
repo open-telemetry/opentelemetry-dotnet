@@ -32,7 +32,6 @@ namespace OpenTelemetry.Metrics
         private readonly List<object> instrumentations = new List<object>();
         private readonly object collectLock = new object();
         private readonly MeterListener listener;
-        private readonly List<MetricProcessor> metricProcessors = new List<MetricProcessor>();
         private readonly List<MetricReader> metricReaders = new List<MetricReader>();
         private int metricIndex = -1;
 
@@ -40,23 +39,14 @@ namespace OpenTelemetry.Metrics
             Resource resource,
             IEnumerable<string> meterSources,
             List<MeterProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
-            MetricProcessor[] metricProcessors,
             MetricReader[] metricReaders)
         {
             this.Resource = resource;
             this.metrics = new Metric[MaxMetrics];
 
-            // TODO: Replace with single CompositeProcessor.
-            this.metricProcessors.AddRange(metricProcessors);
+            // TODO: Replace with single CompositeReader.
             this.metricReaders.AddRange(metricReaders);
-
             AggregationTemporality temporality = AggregationTemporality.Cumulative;
-            foreach (var processor in this.metricProcessors)
-            {
-                // processor.SetGetMetricFunction(this.Collect);
-                processor.SetParentProvider(this);
-                temporality = processor.GetAggregationTemporality();
-            }
 
             // TODO: Actually support multiple readers.
             // Currently the last reader's temporality wins.
@@ -200,9 +190,9 @@ namespace OpenTelemetry.Metrics
                 this.instrumentations.Clear();
             }
 
-            foreach (var processor in this.metricProcessors)
+            foreach (var reader in this.metricReaders)
             {
-                processor.Dispose();
+                reader.Dispose();
             }
 
             this.listener.Dispose();

@@ -69,6 +69,9 @@ namespace OpenTelemetry.Metrics
 
         public virtual AggregationTemporality GetAggregationTemporality()
         {
+            // TODO: One suggestion is to have SupportedTemporality
+            // and PrefferedTemporality.
+            // see https://github.com/open-telemetry/opentelemetry-dotnet/pull/2306#discussion_r701532743
             return AggregationTemporality.Cumulative;
         }
 
