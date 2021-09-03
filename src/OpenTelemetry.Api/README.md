@@ -84,7 +84,7 @@ propagated out of proc using
 OpenTelemetry SDK ships a BaggagePropagator and enables it by default.
 
 ```csharp
-// Use Baggage.Current to get all the key/value pairs present in Baggage
+// Use GetBaggage to get all the key/value pairs present in Baggage
 foreach (var item in Baggage.GetBaggage())
 {
     Console.WriteLine(item.Key);
