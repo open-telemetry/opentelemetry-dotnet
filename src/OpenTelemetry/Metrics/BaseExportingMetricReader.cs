@@ -21,7 +21,8 @@ namespace OpenTelemetry.Metrics
 {
     public class BaseExportingMetricReader : MetricReader
     {
-        private MetricExporter exporter;
+        private readonly MetricExporter exporter;
+        private bool disposed;
 
         public BaseExportingMetricReader(MetricExporter exporter)
         {
@@ -36,6 +37,32 @@ namespace OpenTelemetry.Metrics
         public override AggregationTemporality GetAggregationTemporality()
         {
             return this.exporter.GetAggregationTemporality();
+        }
+
+        internal override void SetParentProvider(BaseProvider parentProvider)
+        {
+            base.SetParentProvider(parentProvider);
+            this.exporter.ParentProvider = parentProvider;
+        }
+
+        /// <inheritdoc/>
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+
+            if (disposing && !this.disposed)
+            {
+                try
+                {
+                    this.exporter.Dispose();
+                }
+                catch (Exception)
+                {
+                    // TODO: Log
+                }
+
+                this.disposed = true;
+            }
         }
     }
 }

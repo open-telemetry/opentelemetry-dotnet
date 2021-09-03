@@ -31,8 +31,8 @@ namespace OpenTelemetry.Exporter
         public int MetricExportIntervalMilliseconds { get; set; } = 1000;
 
         /// <summary>
-        /// Gets or sets the AggregationTemporality used for Sum, Histogram
-        /// metrics.
+        /// Gets or sets the AggregationTemporality used for Histogram
+        /// and Sum metrics.
         /// </summary>
         public AggregationTemporality AggregationTemporality { get; set; } = AggregationTemporality.Delta;
     }

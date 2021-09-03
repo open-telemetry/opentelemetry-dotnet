@@ -23,14 +23,17 @@ namespace OpenTelemetry.Metrics
 {
     public class PeriodicExportingMetricReader : MetricReader
     {
-        private MetricExporter exporter;
-        private Task exportTask;
-        private CancellationTokenSource token;
+        private readonly MetricExporter exporter;
+        private readonly Task exportTask;
+        private readonly CancellationTokenSource token;
+        private bool disposed;
 
         public PeriodicExportingMetricReader(MetricExporter exporter, int exportIntervalMs)
         {
             this.exporter = exporter;
             this.token = new CancellationTokenSource();
+
+            // TODO: Use dedicated thread.
             this.exportTask = new Task(() =>
             {
                 while (!this.token.IsCancellationRequested)
@@ -51,6 +54,34 @@ namespace OpenTelemetry.Metrics
         public override AggregationTemporality GetAggregationTemporality()
         {
             return this.exporter.GetAggregationTemporality();
+        }
+
+        internal override void SetParentProvider(BaseProvider parentProvider)
+        {
+            base.SetParentProvider(parentProvider);
+            this.exporter.ParentProvider = parentProvider;
+        }
+
+        /// <inheritdoc/>
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+
+            if (disposing && !this.disposed)
+            {
+                try
+                {
+                    this.token.Dispose();
+                    this.exportTask.Wait();
+                    this.exporter.Dispose();
+                }
+                catch (Exception)
+                {
+                    // TODO: Log
+                }
+
+                this.disposed = true;
+            }
         }
     }
 }
