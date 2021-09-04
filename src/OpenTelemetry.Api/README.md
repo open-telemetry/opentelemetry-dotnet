@@ -84,27 +84,26 @@ propagated out of proc using
 OpenTelemetry SDK ships a BaggagePropagator and enables it by default.
 
 ```csharp
-// Use Baggage.Current to get all the key/value pairs present in Baggage
-foreach (var item in Baggage.Current)
+// Use GetBaggage to get all the key/value pairs present in Baggage
+foreach (var item in Baggage.GetBaggage())
 {
     Console.WriteLine(item.Key);
     Console.WriteLine(item.Value);
 }
 
 // Use SetBaggage method to add a key/value pair in Baggage
-Baggage.Current.SetBaggage("AppName", "MyApp");
-Baggage.Current.SetBaggage("Region", "West US");
+Baggage.SetBaggage("AppName", "MyApp");
+Baggage.SetBaggage("Region", "West US");
 
 // Use RemoveBaggage method to remove a key/value pair in Baggage
-Baggage.Current.RemoveBaggage("AppName");
+Baggage.RemoveBaggage("AppName");
 
 // Use ClearBaggage method to remove all the key/value pairs in Baggage
-Baggage.Current.ClearBaggage();
+Baggage.ClearBaggage();
 ```
 
-The recommended way to add Baggage is to use `SetBaggage()` on
-`Baggage.Current`. OpenTelemetry users should not use the method `AddBaggage` on
-`Activity`.
+The recommended way to add Baggage is to use the `Baggage.SetBaggage()` API.
+OpenTelemetry users should not use the `Activity.AddBaggage` method.
 
 ## Introduction to OpenTelemetry .NET Tracing API
 
