@@ -22,12 +22,12 @@ namespace OpenTelemetry.Instrumentation
 {
     internal class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>
     {
+        private readonly List<IDisposable> listenerSubscriptions;
         private readonly Func<string, ListenerHandler> handlerFactory;
         private readonly Func<DiagnosticListener, bool> diagnosticSourceFilter;
         private readonly Func<string, object, object, bool> isEnabledFilter;
         private long disposed;
         private IDisposable allSourcesSubscription;
-        private List<IDisposable> listenerSubscriptions;
 
         public DiagnosticSourceSubscriber(
             ListenerHandler handler,

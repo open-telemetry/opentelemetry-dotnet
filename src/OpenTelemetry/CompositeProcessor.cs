@@ -24,7 +24,7 @@ namespace OpenTelemetry
 {
     public class CompositeProcessor<T> : BaseProcessor<T>
     {
-        private DoublyLinkedListNode head;
+        private readonly DoublyLinkedListNode head;
         private DoublyLinkedListNode tail;
         private bool disposed;
 
