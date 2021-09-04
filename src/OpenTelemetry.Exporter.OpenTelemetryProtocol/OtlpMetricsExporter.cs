@@ -98,7 +98,7 @@ namespace OpenTelemetry.Exporter
 
             var request = new OtlpCollector.ExportMetricsServiceRequest();
 
-            request.AddBatch(this.ProcessResource, metrics);
+            request.AddMetrics(this.ProcessResource, metrics);
             var deadline = DateTime.UtcNow.AddMilliseconds(this.Options.TimeoutMilliseconds);
 
             try

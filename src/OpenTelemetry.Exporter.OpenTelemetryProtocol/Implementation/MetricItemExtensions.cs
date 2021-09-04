@@ -36,10 +36,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         private static readonly ConcurrentBag<OtlpMetrics.InstrumentationLibraryMetrics> MetricListPool = new ConcurrentBag<OtlpMetrics.InstrumentationLibraryMetrics>();
         private static readonly Action<RepeatedField<OtlpMetrics.Metric>, int> RepeatedFieldOfMetricSetCountAction = CreateRepeatedFieldOfMetricSetCountAction();
 
-        internal static void AddBatch(
+        internal static void AddMetrics(
             this OtlpCollector.ExportMetricsServiceRequest request,
             OtlpResource.Resource processResource,
-            in IEnumerable<Metric> batch)
+            in IEnumerable<Metric> metrics)
         {
             var metricsByLibrary = new Dictionary<string, OtlpMetrics.InstrumentationLibraryMetrics>();
             var resourceMetrics = new OtlpMetrics.ResourceMetrics
@@ -48,14 +48,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             };
             request.ResourceMetrics.Add(resourceMetrics);
 
-            foreach (var metric in batch)
+            foreach (var metric in metrics)
             {
                 var otlpMetric = metric.ToOtlpMetric();
                 if (otlpMetric == null)
                 {
                     OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateMetric(
                         nameof(MetricItemExtensions),
-                        nameof(AddBatch));
+                        nameof(AddMetrics));
                     continue;
                 }
 

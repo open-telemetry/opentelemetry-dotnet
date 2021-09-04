@@ -85,7 +85,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             void RunTest(IEnumerable<Metric> metrics)
             {
                 var request = new OtlpCollector.ExportMetricsServiceRequest();
-                request.AddBatch(exporter.ProcessResource, metrics);
+                request.AddMetrics(exporter.ProcessResource, metrics);
 
                 Assert.Single(request.ResourceMetrics);
                 var resourceMetric = request.ResourceMetrics.First();
