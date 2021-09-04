@@ -217,7 +217,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
             }
         }
 
-        private class ContextHolder
+        internal class ContextHolder
         {
             public Activity Activity;
             public object Baggage;
