@@ -33,7 +33,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
     public class OtlpMetricsExporterTests
     {
-        [Theory(Skip = "temporarily disabling")]
+        [Theory]
         [InlineData(true)]
         [InlineData(false)]
         public void ToOtlpResourceMetricsTest(bool includeServiceNameInResource)
@@ -59,11 +59,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new KeyValuePair<string, object>("key2", "value2"),
             };
 
-            var processor = new PullMetricProcessor(new TestExporter<Metric>(RunTest), true);
+            var metricReader = new BaseExportingMetricReader(new TestMetricExporter(RunTest, AggregationTemporality.Delta));
 
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddSource("TestMeter")
+                .AddMetricReader(metricReader)
                 .Build();
 
             exporter.ParentProvider = provider;
@@ -77,14 +78,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var testCompleted = false;
 
             // Invokes the TestExporter which will invoke RunTest
-            processor.PullRequest();
+            metricReader.Collect();
 
             Assert.True(testCompleted);
 
-            void RunTest(Batch<Metric> metricItem)
+            void RunTest(IEnumerable<Metric> metrics)
             {
                 var request = new OtlpCollector.ExportMetricsServiceRequest();
-                request.AddBatch(exporter.ProcessResource, metricItem);
+                request.AddBatch(exporter.ProcessResource, metrics);
 
                 Assert.Single(request.ResourceMetrics);
                 var resourceMetric = request.ResourceMetrics.First();

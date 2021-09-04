@@ -15,11 +15,17 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Grpc.Core;
+#if NETSTANDARD2_1
+using Grpc.Net.Client;
+#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Metrics;
 using OtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
+using OtlpResource = Opentelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter
 {
@@ -27,9 +33,10 @@ namespace OpenTelemetry.Exporter
     /// Exporter consuming <see cref="Metric"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    public class OtlpMetricsExporter : BaseOtlpExporter<Metric>
+    public class OtlpMetricsExporter : MetricExporter
     {
         private readonly OtlpCollector.MetricsService.IMetricsServiceClient metricsClient;
+        private OtlpResource.Resource processResource;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpMetricsExporter"/> class.
@@ -46,8 +53,14 @@ namespace OpenTelemetry.Exporter
         /// <param name="options">Configuration options for the exporter.</param>
         /// <param name="metricsServiceClient"><see cref="OtlpCollector.MetricsService.IMetricsServiceClient"/>.</param>
         internal OtlpMetricsExporter(OtlpExporterOptions options, OtlpCollector.MetricsService.IMetricsServiceClient metricsServiceClient = null)
-            : base(options)
         {
+            this.Options = options ?? throw new ArgumentNullException(nameof(options));
+            this.Headers = options.GetMetadataFromHeaders();
+            if (this.Options.TimeoutMilliseconds <= 0)
+            {
+                throw new ArgumentException("Timeout value provided is not a positive number.", nameof(this.Options.TimeoutMilliseconds));
+            }
+
             if (metricsServiceClient != null)
             {
                 this.metricsClient = metricsServiceClient;
@@ -59,15 +72,33 @@ namespace OpenTelemetry.Exporter
             }
         }
 
+        internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
+
+#if NETSTANDARD2_1
+        internal GrpcChannel Channel { get; set; }
+#else
+        internal Channel Channel { get; set; }
+#endif
+
+        internal OtlpExporterOptions Options { get; }
+
+        internal Metadata Headers { get; }
+
         /// <inheritdoc />
-        public override ExportResult Export(in Batch<Metric> batch)
+        public override AggregationTemporality GetAggregationTemporality()
+        {
+            return this.Options.AggregationTemporality;
+        }
+
+        /// <inheritdoc />
+        public override ExportResult Export(IEnumerable<Metric> metrics)
         {
             // Prevents the exporter's gRPC and HTTP operations from being instrumented.
             using var scope = SuppressInstrumentationScope.Begin();
 
             var request = new OtlpCollector.ExportMetricsServiceRequest();
 
-            request.AddBatch(this.ProcessResource, batch);
+            request.AddBatch(this.ProcessResource, metrics);
             var deadline = DateTime.UtcNow.AddMilliseconds(this.Options.TimeoutMilliseconds);
 
             try
@@ -90,6 +121,25 @@ namespace OpenTelemetry.Exporter
             }
 
             return ExportResult.Success;
+        }
+
+        /// <inheritdoc />
+        protected override bool OnShutdown(int timeoutMilliseconds)
+        {
+            if (this.Channel == null)
+            {
+                return true;
+            }
+
+            if (timeoutMilliseconds == -1)
+            {
+                this.Channel.ShutdownAsync().Wait();
+                return true;
+            }
+            else
+            {
+                return Task.WaitAny(new Task[] { this.Channel.ShutdownAsync(), Task.Delay(timeoutMilliseconds) }) == 0;
+            }
         }
     }
 }
