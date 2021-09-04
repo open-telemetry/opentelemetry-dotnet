@@ -71,7 +71,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         }
 
         [Fact]
-        public void Can_Restore_Activity()
+        public async Task Can_Restore_Activity()
         {
             this.EnableListener();
             var context = HttpContextHelper.GetFakeHttpContext();
@@ -79,15 +79,24 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             rootActivity.AddTag("k1", "v1");
             rootActivity.AddTag("k2", "v2");
 
-            Activity.Current = null;
+            Task testTask;
+            using (ExecutionContext.SuppressFlow())
+            {
+                testTask = Task.Run(() =>
+                {
+                    Assert.Null(Activity.Current);
 
-            ActivityHelper.RestoreContextIfNeeded(context);
+                    ActivityHelper.RestoreContextIfNeeded(context);
 
-            Assert.Same(Activity.Current, rootActivity);
+                    Assert.Same(Activity.Current, rootActivity);
+                });
+            }
+
+            await testTask.ConfigureAwait(false);
         }
 
         [Fact]
-        public void Can_Restore_Baggage()
+        public async Task Can_Restore_Baggage()
         {
             this.EnableListener();
 
@@ -102,17 +111,26 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             rootActivity.AddTag("k1", "v1");
             rootActivity.AddTag("k2", "v2");
 
-            Activity.Current = null;
-            RuntimeContext.SetValue("otel.baggage", null);
+            Task testTask;
+            using (ExecutionContext.SuppressFlow())
+            {
+                testTask = Task.Run(() =>
+                {
+                    Assert.Null(Activity.Current);
+                    Assert.Equal(0, Baggage.Current.Count);
 
-            ActivityHelper.RestoreContextIfNeeded(context);
+                    ActivityHelper.RestoreContextIfNeeded(context);
 
-            Assert.Same(Activity.Current, rootActivity);
-            Assert.Empty(rootActivity.Baggage);
+                    Assert.Same(Activity.Current, rootActivity);
+                    Assert.Empty(rootActivity.Baggage);
 
-            Assert.Equal(2, Baggage.Current.Count);
-            Assert.Equal("789", Baggage.Current.GetBaggage("TestKey1"));
-            Assert.Equal("456", Baggage.Current.GetBaggage("TestKey2"));
+                    Assert.Equal(2, Baggage.Current.Count);
+                    Assert.Equal("789", Baggage.Current.GetBaggage("TestKey1"));
+                    Assert.Equal("456", Baggage.Current.GetBaggage("TestKey2"));
+                });
+            }
+
+            await testTask.ConfigureAwait(false);
         }
 
         [Fact]
