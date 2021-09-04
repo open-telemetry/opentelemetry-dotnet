@@ -30,8 +30,8 @@ namespace Examples.Console
     internal class InstrumentationWithActivitySource : IDisposable
     {
         private const string RequestPath = "/api/request";
-        private SampleServer server = new SampleServer();
-        private SampleClient client = new SampleClient();
+        private readonly SampleServer server = new SampleServer();
+        private readonly SampleClient client = new SampleClient();
 
         public void Start(ushort port = 19999)
         {
@@ -48,7 +48,7 @@ namespace Examples.Console
 
         private class SampleServer : IDisposable
         {
-            private HttpListener listener = new HttpListener();
+            private readonly HttpListener listener = new HttpListener();
 
             public void Start(string url)
             {
