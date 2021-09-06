@@ -47,9 +47,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
         public HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            // TODO: replace by synchronous vesrion of Send method when it becomes availabe.
-            // See https://github.com/dotnet/runtime/pull/34948 (should be available starting form .NET 5.0).
+#if NET5_0
+            return this.HttpClient.Send(request);
+#else
             return AsyncHelper.RunSync(() => this.HttpClient.SendAsync(request));
+#endif
         }
     }
 }

@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
-        public void OtlpExporter_BadArgs()
+        public void AddOtlpHttpExporter_BadArgs_Throws()
         {
             TracerProviderBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddOtlpHttpExporter());
