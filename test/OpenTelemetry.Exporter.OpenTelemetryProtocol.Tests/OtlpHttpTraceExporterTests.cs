@@ -106,7 +106,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var httpHandlerMock = new Mock<IHttpHandler>();
             HttpRequestMessage httpRequest = null;
-            httpHandlerMock.Setup(h => h.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
+            httpHandlerMock.Setup(h => h.Send(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
                 .Callback<HttpRequestMessage, CancellationToken>((r, ct) => httpRequest = r);
 
             var exporter = new OtlpHttpTraceExporter(options, httpHandlerMock.Object);
@@ -133,7 +133,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var result = exporter.Export(new Batch<Activity>(activity));
 
             // Assert
-            httpHandlerMock.Verify(m => m.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()), Times.Once());
+            httpHandlerMock.Verify(m => m.Send(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()), Times.Once());
 
             Assert.Equal(ExportResult.Success, result);
             Assert.NotNull(httpRequest);
@@ -188,7 +188,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
             }
 
-            public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken = default)
+            public HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken = default)
             {
                 return null;
             }

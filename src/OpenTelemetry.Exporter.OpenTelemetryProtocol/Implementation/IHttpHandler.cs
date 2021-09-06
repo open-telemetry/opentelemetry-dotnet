@@ -17,7 +17,6 @@
 using System;
 using System.Net.Http;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
@@ -37,6 +36,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         /// <param name="request">The HTTP request message to send.</param>
         /// <param name="cancellationToken">The cancellation token to cancel operation.</param>
         /// <returns>Result of the export operation.</returns>
-        Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken = default);
+        HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken = default);
     }
 }

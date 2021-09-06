@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading.Tasks;
 using Google.Protobuf;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -51,14 +52,11 @@ namespace OpenTelemetry.Exporter
             try
             {
                 var httpRequest = this.CreateHttpRequest(request);
-
-                // TODO: replace by synchronous vesrion of Send method when it becomes availabe.
-                // See https://github.com/dotnet/runtime/pull/34948 (should be available starting form .NET 5.0).
-                var response = this.HttpHandler.SendAsync(httpRequest).Result;
+                this.HttpHandler.Send(httpRequest);
             }
             catch (HttpRequestException ex)
             {
-                OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
+                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(ex);
 
                 return ExportResult.Failure;
             }

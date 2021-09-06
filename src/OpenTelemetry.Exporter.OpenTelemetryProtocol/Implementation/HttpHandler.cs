@@ -17,7 +17,6 @@
 using System;
 using System.Net.Http;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
@@ -46,9 +45,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             this.HttpClient.Dispose();
         }
 
-        public async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        public HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            return await this.HttpClient.SendAsync(request, cancellationToken);
+            // TODO: replace by synchronous vesrion of Send method when it becomes availabe.
+            // See https://github.com/dotnet/runtime/pull/34948 (should be available starting form .NET 5.0).
+            return AsyncHelper.RunSync(() => this.HttpClient.SendAsync(request));
         }
     }
 }
