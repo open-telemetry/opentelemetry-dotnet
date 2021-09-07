@@ -84,6 +84,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             {
                 testTask = Task.Run(() =>
                 {
+                    Task.Yield();
+
                     Assert.Null(Activity.Current);
 
                     ActivityHelper.RestoreContextIfNeeded(context);
@@ -116,6 +118,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             {
                 testTask = Task.Run(() =>
                 {
+                    Task.Yield();
+
                     Assert.Null(Activity.Current);
                     Assert.Equal(0, Baggage.Current.Count);
 
