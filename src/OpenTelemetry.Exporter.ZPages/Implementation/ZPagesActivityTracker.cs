@@ -26,7 +26,7 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
     /// </summary>
     internal static class ZPagesActivityTracker
     {
-        private static long startTime;
+        private static readonly long StartTime;
 
         /// <summary>
         /// Initializes static members of the <see cref="ZPagesActivityTracker"/> class.
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
             TotalEndedCount = new Dictionary<string, long>();
             TotalErrorCount = new Dictionary<string, long>();
             TotalLatency = new Dictionary<string, long>();
-            startTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            StartTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         }
 
         /// <summary>
@@ -103,7 +103,7 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
             CurrentMinuteList.Clear();
 
             // Remove the stale activity information which is at the end of the list
-            if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - startTime >= RetentionTime)
+            if (DateTimeOffset.Now.ToUnixTimeMilliseconds() - StartTime >= RetentionTime)
             {
                 ZQueue.RemoveLast();
             }

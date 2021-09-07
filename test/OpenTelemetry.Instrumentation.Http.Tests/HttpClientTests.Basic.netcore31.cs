@@ -375,11 +375,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Start();
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
-            Baggage.Current.SetBaggage("b1", "v1");
+            Baggage.SetBaggage("b1", "v1");
             using (Sdk.CreateTracerProviderBuilder()
-                        .AddHttpClientInstrumentation()
-                        .AddProcessor(processor.Object)
-                        .Build())
+                .AddHttpClientInstrumentation()
+                .AddProcessor(processor.Object)
+                .Build())
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
