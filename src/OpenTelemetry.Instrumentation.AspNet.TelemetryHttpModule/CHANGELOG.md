@@ -22,3 +22,7 @@
   & OpenTelemetry.API
   ([#2249](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2249) &
   follow-ups (linked to #2249))
+
+* TelemetryHttpModule will now restore Baggage on .NET 4.7.1+ runtimes when IIS
+  switches threads
+  ([#2314](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2314))
