@@ -46,13 +46,16 @@ namespace OpenTelemetry.Exporter
             // Prevents the exporter's gRPC and HTTP operations from being instrumented.
             using var scope = SuppressInstrumentationScope.Begin();
 
-            var request = new OtlpCollector.ExportTraceServiceRequest();
-            request.AddBatch(this.ProcessResource, activityBatch);
+            var exportRequest = new OtlpCollector.ExportTraceServiceRequest();
+            exportRequest.AddBatch(this.ProcessResource, activityBatch);
 
             try
             {
-                var httpRequest = this.CreateHttpRequest(request);
-                this.HttpHandler.Send(httpRequest);
+                using var request = this.CreateHttpRequest(exportRequest);
+
+                using var response = this.HttpHandler.Send(request);
+
+                response?.EnsureSuccessStatusCode();
             }
             catch (HttpRequestException ex)
             {
@@ -68,32 +71,32 @@ namespace OpenTelemetry.Exporter
             }
             finally
             {
-                request.Return();
+                exportRequest.Return();
             }
 
             return ExportResult.Success;
         }
 
-        private HttpRequestMessage CreateHttpRequest(OtlpCollector.ExportTraceServiceRequest request)
+        private HttpRequestMessage CreateHttpRequest(OtlpCollector.ExportTraceServiceRequest exportRequest)
         {
-            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, this.Options.Endpoint);
+            var request = new HttpRequestMessage(HttpMethod.Post, this.Options.Endpoint);
             foreach (var header in this.Headers)
             {
-                httpRequestMessage.Headers.Add(header.Key, header.Value);
+                request.Headers.Add(header.Key, header.Value);
             }
 
             var content = Array.Empty<byte>();
             using (var stream = new MemoryStream())
             {
-                request.WriteTo(stream);
+                exportRequest.WriteTo(stream);
                 content = stream.ToArray();
             }
 
             var binaryContent = new ByteArrayContent(content);
             binaryContent.Headers.ContentType = new MediaTypeHeaderValue(MediaContentType);
-            httpRequestMessage.Content = binaryContent;
+            request.Content = binaryContent;
 
-            return httpRequestMessage;
+            return request;
         }
     }
 }

@@ -106,8 +106,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var httpHandlerMock = new Mock<IHttpHandler>();
             HttpRequestMessage httpRequest = null;
+            var httpRequestContent = Array.Empty<byte>();
             httpHandlerMock.Setup(h => h.Send(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
-                .Callback<HttpRequestMessage, CancellationToken>((r, ct) => httpRequest = r);
+                .Callback<HttpRequestMessage, CancellationToken>(async (r, ct) =>
+                {
+                    httpRequest = r;
+                    // We have to capture content as it can't be accessed when request is disposed inside of Export method
+                    httpRequestContent = await r.Content.ReadAsByteArrayAsync();
+                });
 
             var exporter = new OtlpHttpTraceExporter(options, httpHandlerMock.Object);
 
@@ -147,7 +153,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.IsType<ByteArrayContent>(httpRequest.Content);
             Assert.Contains(httpRequest.Content.Headers, h => h.Key == "Content-Type" && h.Value.First() == OtlpHttpTraceExporter.MediaContentType);
 
-            var exportTraceRequest = OtlpCollector.ExportTraceServiceRequest.Parser.ParseFrom(await httpRequest.Content.ReadAsByteArrayAsync());
+            var exportTraceRequest = OtlpCollector.ExportTraceServiceRequest.Parser.ParseFrom(httpRequestContent);
             Assert.NotNull(exportTraceRequest);
 
             Assert.Single(exportTraceRequest.ResourceSpans);

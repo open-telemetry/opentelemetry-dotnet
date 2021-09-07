@@ -34,12 +34,5 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 .Unwrap()
                 .GetAwaiter()
                 .GetResult();
-
-        public static void RunSync(Func<Task> func)
-            => TaskFactory
-                .StartNew(func)
-                .Unwrap()
-                .GetAwaiter()
-                .GetResult();
     }
 }
