@@ -75,7 +75,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         {
             this.EnableListener();
             var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
+            using var rootActivity = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
             rootActivity.AddTag("k1", "v1");
             rootActivity.AddTag("k2", "v2");
 
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             };
 
             var context = HttpContextHelper.GetFakeHttpContext(headers: requestHeaders);
-            var rootActivity = ActivityHelper.StartAspNetActivity(new CompositeTextMapPropagator(new TextMapPropagator[] { new TraceContextPropagator(), new BaggagePropagator() }), context, null);
+            using var rootActivity = ActivityHelper.StartAspNetActivity(new CompositeTextMapPropagator(new TextMapPropagator[] { new TraceContextPropagator(), new BaggagePropagator() }), context, null);
 
             rootActivity.AddTag("k1", "v1");
             rootActivity.AddTag("k2", "v2");
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 Assert.Equal(TelemetryHttpModule.AspNetActivityName, Activity.Current.OperationName);
             });
             var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
+            using var rootActivity = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
             rootActivity.AddTag("k1", "v1");
             rootActivity.AddTag("k2", "v2");
 
@@ -214,7 +214,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         {
             this.EnableListener();
             var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
+            using var rootActivity = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
 
             var child = new Activity("child").Start();
             new Activity("grandchild").Start();
@@ -232,7 +232,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         {
             this.EnableListener();
             var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
+            using var rootActivity = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
             var child = new Activity("child").Start();
 
             ActivityHelper.StopAspNetActivity(this.noopTextMapPropagator, rootActivity, context, null);
@@ -248,7 +248,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         {
             this.EnableListener();
             var context = HttpContextHelper.GetFakeHttpContext();
-            var root = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
+            using var root = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
             new Activity("child").Start();
 
             for (int i = 0; i < 2; i++)
@@ -278,7 +278,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         {
             this.EnableListener();
             var context = HttpContextHelper.GetFakeHttpContext();
-            var root = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
+            using var root = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
 
             for (int i = 0; i < 129; i++)
             {
@@ -297,7 +297,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         public void Should_Not_Create_RootActivity_If_AspNetListener_Not_Enabled()
         {
             var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
+            using var rootActivity = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
 
             Assert.Null(rootActivity);
             Assert.Equal(ActivityHelper.StartedButNotSampledObj, context.Items[ActivityHelper.ContextKey]);
@@ -311,7 +311,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         {
             var context = HttpContextHelper.GetFakeHttpContext();
             this.EnableListener(onSample: (context) => ActivitySamplingResult.None);
-            var rootActivity = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
+            using var rootActivity = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
 
             Assert.Null(rootActivity);
             Assert.Equal(ActivityHelper.StartedButNotSampledObj, context.Items[ActivityHelper.ContextKey]);
@@ -330,7 +330,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             };
 
             var context = HttpContextHelper.GetFakeHttpContext(headers: requestHeaders);
-            var rootActivity = ActivityHelper.StartAspNetActivity(new TraceContextPropagator(), context, null);
+            using var rootActivity = ActivityHelper.StartAspNetActivity(new TraceContextPropagator(), context, null);
 
             Assert.NotNull(rootActivity);
             Assert.Equal(ActivityIdFormat.W3C, rootActivity.IdFormat);
@@ -356,7 +356,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             };
 
             var context = HttpContextHelper.GetFakeHttpContext(headers: requestHeaders);
-            var rootActivity = ActivityHelper.StartAspNetActivity(new TraceContextPropagator(), context, null);
+            using var rootActivity = ActivityHelper.StartAspNetActivity(new TraceContextPropagator(), context, null);
 
             Assert.NotNull(rootActivity);
             Assert.Equal(ActivityIdFormat.W3C, rootActivity.IdFormat);
@@ -382,7 +382,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             };
 
             var context = HttpContextHelper.GetFakeHttpContext(headers: requestHeaders);
-            var rootActivity = ActivityHelper.StartAspNetActivity(new CompositeTextMapPropagator(new TextMapPropagator[] { new TraceContextPropagator(), new BaggagePropagator() }), context, null);
+            using var rootActivity = ActivityHelper.StartAspNetActivity(new CompositeTextMapPropagator(new TextMapPropagator[] { new TraceContextPropagator(), new BaggagePropagator() }), context, null);
 
             Assert.NotNull(rootActivity);
             Assert.Equal(ActivityIdFormat.W3C, rootActivity.IdFormat);
@@ -408,7 +408,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         {
             this.EnableListener();
             var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
+            using var rootActivity = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
 
             Assert.NotNull(rootActivity);
             Assert.True(!string.IsNullOrEmpty(rootActivity.Id));
@@ -419,7 +419,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         {
             this.EnableListener();
             var context = HttpContextHelper.GetFakeHttpContext();
-            var rootActivity = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
+            using var rootActivity = ActivityHelper.StartAspNetActivity(this.noopTextMapPropagator, context, null);
 
             Assert.NotNull(rootActivity);
             Assert.Same(rootActivity, ((ActivityHelper.ContextHolder)context.Items[ActivityHelper.ContextKey])?.Activity);
