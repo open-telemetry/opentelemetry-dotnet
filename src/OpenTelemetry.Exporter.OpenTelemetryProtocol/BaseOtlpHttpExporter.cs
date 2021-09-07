@@ -29,7 +29,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         where T : class
     {
         private OtlpResource.Resource processResource;
-        private bool disposedValue; // To avoid duplicate dispose calls
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BaseOtlpHttpExporter{T}"/> class.
@@ -55,22 +54,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         internal IReadOnlyDictionary<string, string> Headers { get; }
 
         internal IHttpHandler HttpHandler { get; }
-
-        /// <inheritdoc/>
-        protected override void Dispose(bool disposing)
-        {
-            if (!this.disposedValue)
-            {
-                if (disposing)
-                {
-                    this.HttpHandler?.Dispose();
-                }
-
-                this.disposedValue = true;
-            }
-
-            base.Dispose(disposing);
-        }
 
         /// <inheritdoc/>
         protected override bool OnShutdown(int timeoutMilliseconds)

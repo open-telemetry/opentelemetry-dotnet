@@ -40,11 +40,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             this.HttpClient.CancelPendingRequests();
         }
 
-        public void Dispose()
-        {
-            this.HttpClient.Dispose();
-        }
-
         public HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
         {
 #if NET5_0

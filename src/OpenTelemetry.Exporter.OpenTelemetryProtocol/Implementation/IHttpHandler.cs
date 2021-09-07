@@ -23,7 +23,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
     /// <summary>
     /// Interface partialy exposing <see cref="HttpClient"/> methods.
     /// </summary>
-    public interface IHttpHandler : IDisposable
+    public interface IHttpHandler
     {
         /// <summary>
         /// Cancel all pending requests on this instance.
