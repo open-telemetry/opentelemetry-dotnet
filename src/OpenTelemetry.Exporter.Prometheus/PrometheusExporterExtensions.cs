@@ -72,6 +72,26 @@ namespace OpenTelemetry.Exporter
                             break;
                         }
 
+                    case MetricType.DoubleSum:
+                        {
+                            builder = builder.WithType(PrometheusCounterType);
+                            foreach (var metricPoint in metric.GetMetricPoints())
+                            {
+                                var metricValueBuilder = builder.AddValue();
+                                metricValueBuilder = metricValueBuilder.WithValue(metricPoint.DoubleValue);
+                                if (metricPoint.Keys != null)
+                                {
+                                    for (int i = 0; i < metricPoint.Keys.Length; i++)
+                                    {
+                                        metricValueBuilder.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
+                                    }
+                                }
+                            }
+
+                            builder.Write(writer);
+                            break;
+                        }
+
                     case MetricType.LongGauge:
                         {
                             builder = builder.WithType(PrometheusGaugeType);
@@ -79,6 +99,23 @@ namespace OpenTelemetry.Exporter
                             {
                                 var metricValueBuilder = builder.AddValue();
                                 metricValueBuilder = metricValueBuilder.WithValue(metricPoint.LongValue);
+                                for (int i = 0; i < metricPoint.Keys.Length; i++)
+                                {
+                                    metricValueBuilder.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
+                                }
+                            }
+
+                            builder.Write(writer);
+                            break;
+                        }
+
+                    case MetricType.DoubleGauge:
+                        {
+                            builder = builder.WithType(PrometheusGaugeType);
+                            foreach (var metricPoint in metric.GetMetricPoints())
+                            {
+                                var metricValueBuilder = builder.AddValue();
+                                metricValueBuilder = metricValueBuilder.WithValue(metricPoint.DoubleValue);
                                 for (int i = 0; i < metricPoint.Keys.Length; i++)
                                 {
                                     metricValueBuilder.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
