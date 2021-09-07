@@ -18,8 +18,8 @@ using System;
 using System.Diagnostics;
 using System.Security;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
 {
