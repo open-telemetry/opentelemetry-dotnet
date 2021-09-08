@@ -307,7 +307,8 @@ namespace OpenTelemetry.Metrics.Tests
 
             var sumReceived = GetDoubleSum(metricItems);
             var expectedSum = deltaDoubleValueUpdatedByEachCall * numberOfMetricUpdateByEachThread * numberOfThreads;
-            Assert.Equal(expectedSum, sumReceived);
+            var difference = Math.Abs(sumReceived - expectedSum);
+            Assert.True(difference <= 0.0001);
         }
 
         private static long GetLongSum(List<Metric> metrics)
