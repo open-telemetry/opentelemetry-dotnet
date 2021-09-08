@@ -151,8 +151,7 @@ namespace OpenTelemetry.Metrics
 
         internal void SnapShot()
         {
-            var indexSnapShot = this.metricPointIndex;
-            indexSnapShot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
+            var indexSnapShot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
 
             for (int i = 0; i <= indexSnapShot; i++)
             {
