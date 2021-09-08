@@ -199,6 +199,7 @@ namespace OpenTelemetry.Metrics.Tests
             var mreToEnsureAllThreadsStarted = new ManualResetEvent(false);
 
             var argToThread = new UpdateThreadArguments<long>();
+            argToThread.DeltaValueUpdatedByEachCall = deltaLongValueUpdatedByEachCall;
             argToThread.Counter = counterLong;
             argToThread.ThreadsStartedCount = 0;
             argToThread.MreToBlockUpdateThread = mreToBlockUpdateThreads;
@@ -207,7 +208,7 @@ namespace OpenTelemetry.Metrics.Tests
             Thread[] t = new Thread[numberOfThreads];
             for (int i = 0; i < numberOfThreads; i++)
             {
-                t[i] = new Thread(CounterUpdateThreadLong);
+                t[i] = new Thread(CounterUpdateThread<long>);
                 t[i].Start(argToThread);
             }
 
@@ -265,6 +266,7 @@ namespace OpenTelemetry.Metrics.Tests
             var mreToEnsureAllThreadsStarted = new ManualResetEvent(false);
 
             var argToThread = new UpdateThreadArguments<double>();
+            argToThread.DeltaValueUpdatedByEachCall = deltaDoubleValueUpdatedByEachCall;
             argToThread.Counter = counterDouble;
             argToThread.ThreadsStartedCount = 0;
             argToThread.MreToBlockUpdateThread = mreToBlockUpdateThreads;
@@ -273,7 +275,7 @@ namespace OpenTelemetry.Metrics.Tests
             Thread[] t = new Thread[numberOfThreads];
             for (int i = 0; i < numberOfThreads; i++)
             {
-                t[i] = new Thread(CounterUpdateThreadDouble);
+                t[i] = new Thread(CounterUpdateThread<double>);
                 t[i].Start(argToThread);
             }
 
@@ -301,7 +303,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             double sumReceived = GetDoubleSum(metricItems);
             var expectedSum = deltaDoubleValueUpdatedByEachCall * numberOfMetricUpdateByEachThread * numberOfThreads;
-            Assert.Equal(expectedSum, sumReceived, 0.0001);
+            Assert.Equal(expectedSum, sumReceived);
         }
 
         private static long GetLongSum(List<MetricItem> metricItems)
@@ -334,9 +336,10 @@ namespace OpenTelemetry.Metrics.Tests
             return sum;
         }
 
-        private static void CounterUpdateThreadLong(object obj)
+        private static void CounterUpdateThread<T>(object obj)
+            where T : struct, IComparable
         {
-            var arguments = obj as UpdateThreadArguments<long>;
+            var arguments = obj as UpdateThreadArguments<T>;
             if (arguments == null)
             {
                 throw new Exception("Invalid args");
@@ -356,34 +359,14 @@ namespace OpenTelemetry.Metrics.Tests
 
             for (int i = 0; i < numberOfMetricUpdateByEachThread; i++)
             {
-                counter.Add(deltaLongValueUpdatedByEachCall, new KeyValuePair<string, object>("verb", "GET"));
+                counter.Add(arguments.DeltaValueUpdatedByEachCall, new KeyValuePair<string, object>("verb", "GET"));
             }
         }
 
-        private static void CounterUpdateThreadDouble(object obj)
+        private void AreDoubleEqual(double expected, double value, double precision)
         {
-            var arguments = obj as UpdateThreadArguments<double>;
-            if (arguments == null)
-            {
-                throw new Exception("Invalid args");
-            }
-
-            var mre = arguments.MreToBlockUpdateThread;
-            var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
-            var counter = arguments.Counter;
-
-            if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == numberOfThreads)
-            {
-                mreToEnsureAllThreadsStart.Set();
-            }
-
-            // Wait until signalled to start calling update on aggregator
-            mre.WaitOne();
-
-            for (int i = 0; i < numberOfMetricUpdateByEachThread; i++)
-            {
-                counter.Add(deltaDoubleValueUpdatedByEachCall, new KeyValuePair<string, object>("verb", "GET"));
-            }
+            var diff = Math.Abs(expected - value);
+            Assert.InRange(diff, -precision / 2,  precision / 2);
         }
 
         private class UpdateThreadArguments<T>
@@ -393,6 +376,7 @@ namespace OpenTelemetry.Metrics.Tests
             public ManualResetEvent MreToEnsureAllThreadsStart;
             public int ThreadsStartedCount;
             public Counter<T> Counter;
+            public T DeltaValueUpdatedByEachCall;
         }
     }
 }
