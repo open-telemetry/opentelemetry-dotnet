@@ -151,7 +151,10 @@ namespace OpenTelemetry.Metrics
 
         internal void SnapShot()
         {
-            for (int i = 0; i <= this.metricPointIndex; i++)
+            var indexSnapShot = this.metricPointIndex;
+            indexSnapShot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
+
+            for (int i = 0; i <= indexSnapShot; i++)
             {
                 this.metrics[i].TakeSnapShot(this.temporality == AggregationTemporality.Delta ? true : false);
             }
@@ -170,7 +173,8 @@ namespace OpenTelemetry.Metrics
 
         internal BatchMetricPoint GetMetricPoints()
         {
-            return new BatchMetricPoint(this.metrics, this.metricPointIndex + 1, this.startTimeExclusive, this.endTimeInclusive);
+            var indexSnapShot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
+            return new BatchMetricPoint(this.metrics, indexSnapShot + 1, this.startTimeExclusive, this.endTimeInclusive);
         }
     }
 }
