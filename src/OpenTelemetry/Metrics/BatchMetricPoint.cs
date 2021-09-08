@@ -24,7 +24,7 @@ namespace OpenTelemetry.Metrics
     public readonly struct BatchMetricPoint : IDisposable
     {
         private readonly MetricPoint[] metricsPoints;
-        private readonly long targetCount;
+        private readonly int targetCount;
         private readonly DateTimeOffset start;
         private readonly DateTimeOffset end;
 
@@ -56,13 +56,13 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         public struct Enumerator : IEnumerator
         {
-            private readonly MetricPoint[] metricsPoints;
+            private readonly Memory<MetricPoint> metricsPoints;
             private readonly DateTimeOffset start;
             private readonly DateTimeOffset end;
-            private long targetCount;
-            private long index;
+            private int targetCount;
+            private int index;
 
-            internal Enumerator(MetricPoint[] metricsPoints, long targetCount, DateTimeOffset start, DateTimeOffset end)
+            internal Enumerator(MetricPoint[] metricsPoints, int targetCount, DateTimeOffset start, DateTimeOffset end)
             {
                 this.Current = default;
                 this.metricsPoints = metricsPoints;
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Metrics
                 this.end = end;
             }
 
-            public MetricPoint Current { get; private set; }
+            public MetricPointPointer Current { get; private set; }
 
             /// <inheritdoc/>
             object IEnumerator.Current => this.Current;
@@ -84,17 +84,22 @@ namespace OpenTelemetry.Metrics
             /// <inheritdoc/>
             public bool MoveNext()
             {
-                var metricPoints = this.metricsPoints;
-                if (metricPoints[this.index].StartTime == default)
+                if (this.metricsPoints.Span[this.index].StartTime == default)
                 {
                     this.index++;
                 }
 
                 if (this.index < this.targetCount)
                 {
-                    metricPoints[this.index].StartTime = this.start;
-                    metricPoints[this.index].EndTime = this.end;
-                    this.Current = metricPoints[this.index];
+                    this.metricsPoints.Span[this.index].StartTime = this.start;
+                    this.metricsPoints.Span[this.index].EndTime = this.end;
+
+                    // The following is going to copy the MetricPoint
+                    // struct.
+                    // this.Current = metricPoints[this.index];
+                    // the following does not copy the whole struct
+                    // but just pointer to the struct.
+                    this.Current = new MetricPointPointer(this.metricsPoints.Slice(this.index, 1));
                     this.index++;
                     return true;
                 }

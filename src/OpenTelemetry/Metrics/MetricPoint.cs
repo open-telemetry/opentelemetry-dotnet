@@ -19,7 +19,7 @@ using System.Threading;
 
 namespace OpenTelemetry.Metrics
 {
-    public struct MetricPoint
+    internal struct MetricPoint
     {
         private long longVal;
         private long lastLongSum;

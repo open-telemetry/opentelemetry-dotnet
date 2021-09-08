@@ -158,7 +158,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.NotNull(metric);
                 Assert.True(metric.MetricType == MetricType.Histogram);
 
-                var metricPoints = new List<MetricPoint>();
+                var metricPoints = new List<MetricPointPointer>();
                 foreach (var p in metric.GetMetricPoints())
                 {
                     metricPoints.Add(p);
@@ -188,7 +188,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             else
             {
                 Assert.Single(requestMetrics);
-                var metricPoints = new List<MetricPoint>();
+                var metricPoints = new List<MetricPointPointer>();
                 foreach (var p in requestMetrics[0].GetMetricPoints())
                 {
                     metricPoints.Add(p);

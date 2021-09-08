@@ -95,7 +95,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var metric = requestMetrics[0];
             Assert.NotNull(metric);
             Assert.True(metric.MetricType == MetricType.Histogram);
-            var metricPoints = new List<MetricPoint>();
+            var metricPoints = new List<MetricPointPointer>();
             foreach (var p in metric.GetMetricPoints())
             {
                 metricPoints.Add(p);
