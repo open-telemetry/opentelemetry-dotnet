@@ -85,7 +85,7 @@ namespace OpenTelemetry.Metrics.Tests.Stress
                             var tag1 = new KeyValuePair<string, object>("DimName1", dimensionValues[random.Next(0, 10)]);
                             var tag2 = new KeyValuePair<string, object>("DimName2", dimensionValues[random.Next(0, 10)]);
                             var tag3 = new KeyValuePair<string, object>("DimName3", dimensionValues[random.Next(0, 10)]);
-                            Counter?.Add(100, tag1, tag2, tag3);
+                            Counter.Add(100, tag1, tag2, tag3);
                             writes[i]++;
                             if (writes[i] > maxWritesPerWriter)
                             {
