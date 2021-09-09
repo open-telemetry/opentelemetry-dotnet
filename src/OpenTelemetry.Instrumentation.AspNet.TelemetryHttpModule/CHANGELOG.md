@@ -18,7 +18,7 @@
   [#2240](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2240))
 
 * Updated to use
-  [ActivitySource](https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.activitysource)
+  [ActivitySource](https://docs.microsoft.com/dotnet/api/system.diagnostics.activitysource)
   & OpenTelemetry.API
   ([#2249](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2249) &
   follow-ups (linked to #2249))
