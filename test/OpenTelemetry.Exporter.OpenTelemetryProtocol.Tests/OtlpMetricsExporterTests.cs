@@ -59,12 +59,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new KeyValuePair<string, object>("key2", "value2"),
             };
 
-            // var metricReader = new BaseExportingMetricReader(new TestMetricExporter(RunTest, AggregationTemporality.Delta));
+            var metricReader = new BaseExportingMetricReader(new TestExporter<Metric>(RunTest, AggregationTemporality.Delta));
 
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddSource("TestMeter")
-                // .AddMetricReader(metricReader)
+                .AddMetricReader(metricReader)
                 .Build();
 
             exporter.ParentProvider = provider;
@@ -78,14 +78,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var testCompleted = false;
 
             // Invokes the TestExporter which will invoke RunTest
-            // metricReader.Collect();
+            metricReader.Collect();
 
             Assert.True(testCompleted);
 
-            void RunTest(IEnumerable<Metric> metrics)
+            void RunTest(Batch<Metric> metrics)
             {
                 var request = new OtlpCollector.ExportMetricsServiceRequest();
-                request.AddMetrics(exporter.ProcessResource, metrics);
+
+                // TODO: Uncomment the following once OTLP metric exporter derives from BaseExporter<Metric>
+                // request.AddMetrics(exporter.ProcessResource, metrics);
 
                 Assert.Single(request.ResourceMetrics);
                 var resourceMetric = request.ResourceMetrics.First();
