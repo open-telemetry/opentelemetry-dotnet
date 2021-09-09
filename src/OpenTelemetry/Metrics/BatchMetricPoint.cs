@@ -85,7 +85,7 @@ namespace OpenTelemetry.Metrics
             public bool MoveNext()
             {
                 var metricPoints = this.metricsPoints;
-                if (metricPoints[this.index].StartTime == default)
+                if (this.index < this.targetCount && metricPoints[this.index].StartTime == default)
                 {
                     this.index++;
                 }
