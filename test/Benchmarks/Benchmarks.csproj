@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestHttpServer.cs" Link="Includes\TestHttpServer.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestMetricExporter.cs" Link="TestMetricExporter.cs" />
   </ItemGroup>
 
   <ItemGroup>
