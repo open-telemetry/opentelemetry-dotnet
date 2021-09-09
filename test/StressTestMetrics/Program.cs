@@ -73,11 +73,11 @@ namespace OpenTelemetry.Metrics.Tests.Stress
                     }
                 }, () =>
                 {
-                    Parallel.For(0, Environment.ProcessorCount, i
+                    Parallel.For(0, numberOfMetricWriters, i
                     =>
                     {
-                        Console.WriteLine($"Metric push by {i} started.");
-                        while (true)
+                        Console.WriteLine($"Metric writer {i} started.");
+                        while (writes[i]++ < maxWritesPerWriter)
                         {
                             // 10 * 10 * 10 = 1000 unique combination is produced
                             // which is well within the current hard-coded cap of
@@ -86,14 +86,9 @@ namespace OpenTelemetry.Metrics.Tests.Stress
                             var tag2 = new KeyValuePair<string, object>("DimName2", dimensionValues[random.Next(0, 10)]);
                             var tag3 = new KeyValuePair<string, object>("DimName3", dimensionValues[random.Next(0, 10)]);
                             Counter.Add(100, tag1, tag2, tag3);
-                            writes[i]++;
-                            if (writes[i] > maxWritesPerWriter)
-                            {
-                                break;
-                            }
                         }
 
-                        Console.WriteLine($"Metric push by {i} completed.");
+                        Console.WriteLine($"Metric writer {i} completed.");
                     });
                 });
 
