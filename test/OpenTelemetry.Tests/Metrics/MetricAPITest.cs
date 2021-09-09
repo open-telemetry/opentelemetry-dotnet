@@ -43,9 +43,9 @@ namespace OpenTelemetry.Metrics.Tests
         public void CounterAggregationTest(bool exportDelta)
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestMetricExporter(ProcessExport, exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative);
+            var metricExporter = new TestExporter<Metric>(ProcessExport, exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative);
 
-            void ProcessExport(IEnumerable<Metric> batch)
+            void ProcessExport(Batch<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {
@@ -116,9 +116,9 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var meterName = "TestMeter" + exportDelta;
             var metricItems = new List<Metric>();
-            var metricExporter = new TestMetricExporter(ProcessExport, exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative);
+            var metricExporter = new TestExporter<Metric>(ProcessExport, exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative);
 
-            void ProcessExport(IEnumerable<Metric> batch)
+            void ProcessExport(Batch<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {
@@ -177,9 +177,9 @@ namespace OpenTelemetry.Metrics.Tests
         public void SimpleTest()
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestMetricExporter(ProcessExport);
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
 
-            void ProcessExport(IEnumerable<Metric> batch)
+            void ProcessExport(Batch<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {

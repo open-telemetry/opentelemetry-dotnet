@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,12 +22,12 @@ namespace OpenTelemetry.Metrics
 {
     public class PeriodicExportingMetricReader : MetricReader
     {
-        private readonly MetricExporter exporter;
+        private readonly BaseExporter<Metric> exporter;
         private readonly Task exportTask;
         private readonly CancellationTokenSource token;
         private bool disposed;
 
-        public PeriodicExportingMetricReader(MetricExporter exporter, int exportIntervalMs)
+        public PeriodicExportingMetricReader(BaseExporter<Metric> exporter, int exportIntervalMs)
         {
             this.exporter = exporter;
             this.token = new CancellationTokenSource();
@@ -46,7 +45,7 @@ namespace OpenTelemetry.Metrics
             this.exportTask.Start();
         }
 
-        public override void OnCollect(IEnumerable<Metric> metrics)
+        public override void OnCollect(Batch<Metric> metrics)
         {
             this.exporter.Export(metrics);
         }

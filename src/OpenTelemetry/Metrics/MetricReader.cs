@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
@@ -30,7 +29,7 @@ namespace OpenTelemetry.Metrics
             this.OnCollect(metricsCollected);
         }
 
-        public virtual void OnCollect(IEnumerable<Metric> metrics)
+        public virtual void OnCollect(Batch<Metric> metrics)
         {
         }
 
