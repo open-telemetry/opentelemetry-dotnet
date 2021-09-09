@@ -36,8 +36,8 @@ namespace OpenTelemetry.Metrics.Tests.Stress
             long maxWritesPerWriter = 10000000;
             var writes = new long[numberOfMetricWriters];
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                    .AddSource("TestMeter")
-                    .Build();
+                .AddSource("TestMeter")
+                .Build();
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
