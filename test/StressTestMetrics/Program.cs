@@ -20,81 +20,85 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry;
-using OpenTelemetry.Metrics;
 
-public class Program
+namespace OpenTelemetry.Metrics.Tests.Stress
 {
-    private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
-    private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("counter");
-    private static string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
-    private static Random random = new Random();
-
-    public static void Main(string[] args)
+    public class Program
     {
-        long numberOfMetricWriters = Environment.ProcessorCount;
-        long maxWritesPerWriter = 10000000;
-        var writes = new long[numberOfMetricWriters];
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestMeter")
-                .Build();
-        Stopwatch sw = new Stopwatch();
-        sw.Start();
+        private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
+        private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("counter");
+        private static string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
+        private static Random random = new Random();
 
-        Parallel.Invoke(
-            () =>
-            {
-                var watch = new Stopwatch();
-                while (true)
+        public static void Main(string[] args)
+        {
+            long numberOfMetricWriters = Environment.ProcessorCount;
+            long maxWritesPerWriter = 10000000;
+            var writes = new long[numberOfMetricWriters];
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                    .AddSource("TestMeter")
+                    .Build();
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
+            Parallel.Invoke(
+                () =>
                 {
-                    long totalWrites = 0;
-                    for (int i = 0; i < numberOfMetricWriters; i++)
-                    {
-                        totalWrites += writes[i];
-                    }
-
-                    watch.Restart();
-                    Thread.Sleep(1000);
-                    watch.Stop();
-
-                    long newTotalWrites = 0;
-                    for (int i = 0; i < numberOfMetricWriters; i++)
-                    {
-                        newTotalWrites += writes[i];
-                    }
-
-                    var writesPerSec = (newTotalWrites - totalWrites) / (watch.ElapsedMilliseconds / 1000.0);
-                    Console.Title = $"Writes (Million/Sec): {writesPerSec / 1000000}";
-
-                    if (totalWrites > numberOfMetricWriters * 10000000)
-                    {
-                        break;
-                    }
-                }
-            }, () =>
-            {
-                Parallel.For(0, Environment.ProcessorCount, i
-                =>
-                {
-                    Console.WriteLine($"Metric push by {i} started.");
+                    var watch = new Stopwatch();
                     while (true)
                     {
-                        var tag1 = new KeyValuePair<string, object>("DimName1", dimensionValues[random.Next(0, 10)]);
-                        var tag2 = new KeyValuePair<string, object>("DimName2", dimensionValues[random.Next(0, 10)]);
-                        var tag3 = new KeyValuePair<string, object>("DimName3", dimensionValues[random.Next(0, 10)]);
-                        Counter?.Add(100, tag1, tag2, tag3);
-                        writes[i]++;
-                        if (writes[i] > maxWritesPerWriter)
+                        long totalWrites = 0;
+                        for (int i = 0; i < numberOfMetricWriters; i++)
+                        {
+                            totalWrites += writes[i];
+                        }
+
+                        watch.Restart();
+                        Thread.Sleep(1000);
+                        watch.Stop();
+
+                        long newTotalWrites = 0;
+                        for (int i = 0; i < numberOfMetricWriters; i++)
+                        {
+                            newTotalWrites += writes[i];
+                        }
+
+                        var writesPerSec = (newTotalWrites - totalWrites) / (watch.ElapsedMilliseconds / 1000.0);
+                        Console.Title = $"Writes (Million/Sec): {writesPerSec / 1000000}";
+
+                        if (totalWrites > numberOfMetricWriters * 10000000)
                         {
                             break;
                         }
                     }
+                }, () =>
+                {
+                    Parallel.For(0, Environment.ProcessorCount, i
+                    =>
+                    {
+                        Console.WriteLine($"Metric push by {i} started.");
+                        while (true)
+                        {
+                            // 10 * 10 * 10 = 1000 unique combination is produced
+                            // which is well within the current hard-coded cap of
+                            // 2000.
+                            var tag1 = new KeyValuePair<string, object>("DimName1", dimensionValues[random.Next(0, 10)]);
+                            var tag2 = new KeyValuePair<string, object>("DimName2", dimensionValues[random.Next(0, 10)]);
+                            var tag3 = new KeyValuePair<string, object>("DimName3", dimensionValues[random.Next(0, 10)]);
+                            Counter?.Add(100, tag1, tag2, tag3);
+                            writes[i]++;
+                            if (writes[i] > maxWritesPerWriter)
+                            {
+                                break;
+                            }
+                        }
 
-                    Console.WriteLine($"Metric push by {i} completed.");
+                        Console.WriteLine($"Metric push by {i} completed.");
+                    });
                 });
-            });
 
-        var rate = (double)(numberOfMetricWriters * 10000000) / (sw.ElapsedMilliseconds / 1000);
-        Console.WriteLine($"{rate / 1000000} Million writes Per Sec.");
+            var rate = (double)(numberOfMetricWriters * 10000000) / (sw.ElapsedMilliseconds / 1000);
+            Console.WriteLine($"{rate / 1000000} M/sec.");
+        }
     }
 }
