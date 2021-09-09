@@ -46,11 +46,13 @@ namespace Benchmarks.Metrics
         private Counter<long> counter;
         private MeterProvider provider;
         private Meter meter;
-        private Random random = new Random();
         private CancellationTokenSource token;
         private BaseExportingMetricReader reader;
         private Task writeMetricTask;
         private string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
+
+        // TODO: Confirm if this needs to be thread-safe
+        private Random random = new Random();
 
         [Params(false, true)]
         public bool ExportDelta { get; set; }
@@ -85,7 +87,7 @@ namespace Benchmarks.Metrics
                     var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
                     var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[this.random.Next(0, 10)]);
                     var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[this.random.Next(0, 10)]);
-                    this.counter?.Add(100, tag1, tag2, tag3);
+                    this.counter.Add(100, tag1, tag2, tag3);
                 }
             });
             this.writeMetricTask.Start();
@@ -97,8 +99,8 @@ namespace Benchmarks.Metrics
             this.token.Cancel();
             this.token.Dispose();
             this.writeMetricTask.Wait();
-            this.meter?.Dispose();
-            this.provider?.Dispose();
+            this.meter.Dispose();
+            this.provider.Dispose();
         }
 
         [Benchmark]
