@@ -32,10 +32,10 @@ Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical c
   DefaultJob : .NET Core 3.1.18 (CoreCLR 4.700.21.35901, CoreFX 4.700.21.36305), X64 RyuJIT
 
 
-|  Method | ExportDelta |      Mean |    Error |   StdDev | Gen 0 | Gen 1 | Gen 2 | Allocated |
-|-------- |------------ |----------:|---------:|---------:|------:|------:|------:|----------:|
-| Collect |       False | 100.59 us | 1.970 us | 5.490 us |     - |     - |     - |     136 B |
-| Collect |        True |  98.41 us | 1.861 us | 4.670 us |     - |     - |     - |     136 B |
+|  Method | UseWithRef |     Mean |    Error |   StdDev | Gen 0 | Gen 1 | Gen 2 | Allocated |
+|-------- |----------- |---------:|---------:|---------:|------:|------:|------:|----------:|
+| Collect |      False | 38.15 us | 1.068 us | 3.133 us |     - |     - |     - |     136 B |
+| Collect |       True | 34.73 us | 0.690 us | 1.912 us |     - |     - |     - |     136 B |
 */
 
 namespace Benchmarks.Metrics

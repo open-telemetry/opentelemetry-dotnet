@@ -74,9 +74,9 @@ namespace OpenTelemetry.Metrics
             public ref MetricPoint Current
             {
                 get
-                    {
-                        return ref this.metricsPoints[this.index];
-                    }
+                {
+                    return ref this.metricsPoints[this.index];
+                }
             }
 
             /// <inheritdoc/>
