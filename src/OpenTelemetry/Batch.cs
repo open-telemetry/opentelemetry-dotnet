@@ -140,10 +140,27 @@ namespace OpenTelemetry
             /// <inheritdoc/>
             public bool MoveNext()
             {
-                var circularBuffer = this.circularBuffer;
-                var metrics = this.metrics;
+                if (typeof(T) == typeof(Metric))
+                {
+                    var metrics = this.metrics;
 
-                if (circularBuffer == null && metrics == null)
+                    if (metrics != null)
+                    {
+                        if (this.metricIndex < this.targetCount)
+                        {
+                            this.Current = metrics[this.metricIndex];
+                            this.metricIndex++;
+                            return true;
+                        }
+                    }
+
+                    this.Current = null;
+                    return false;
+                }
+
+                var circularBuffer = this.circularBuffer;
+
+                if (circularBuffer == null)
                 {
                     if (this.targetCount >= 0)
                     {
@@ -155,23 +172,10 @@ namespace OpenTelemetry
                     return true;
                 }
 
-                if (circularBuffer != null)
+                if (circularBuffer.RemovedCount < this.targetCount)
                 {
-                    if (circularBuffer.RemovedCount < this.targetCount)
-                    {
-                        this.Current = circularBuffer.Read();
-                        return true;
-                    }
-                }
-
-                if (metrics != null)
-                {
-                    if (this.metricIndex < this.targetCount)
-                    {
-                        this.Current = metrics[this.metricIndex];
-                        this.metricIndex++;
-                        return true;
-                    }
+                    this.Current = circularBuffer.Read();
+                    return true;
                 }
 
                 this.Current = null;
