@@ -309,6 +309,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(30, exception);
         }
 
+        [Event(31, Message = "Telemetry items dropped since the start due to a full buffer: '{0}'.", Level = EventLevel.Informational)]
+        public void DroppedExportProcessorItems(long droppedCount)
+        {
+            this.WriteEvent(31, droppedCount);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {
