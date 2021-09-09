@@ -173,6 +173,60 @@ namespace OpenTelemetry.Metrics.Tests
             }
         }
 
+        [Theory]
+        [InlineData(AggregationTemporality.Cumulative)]
+        [InlineData(AggregationTemporality.Delta)]
+        public void TestMetricPointCap(AggregationTemporality temporality)
+        {
+            var metricItems = new List<Metric>();
+            int metricPointCount = 0;
+            var metricExporter = new TestMetricExporter(ProcessExport, temporality);
+
+            void ProcessExport(IEnumerable<Metric> batch)
+            {
+                foreach (var metric in batch)
+                {
+                    foreach (var metricPoint in metric.GetMetricPoints())
+                    {
+                        metricPointCount++;
+                    }
+                }
+            }
+
+            var metricReader = new BaseExportingMetricReader(metricExporter);
+            var meter = new Meter("TestMeter");
+            var counterLong = meter.CreateCounter<long>("mycounter");
+            var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource("TestMeter")
+                .AddMetricReader(metricReader)
+                .Build();
+
+            // Make one Add with no tags.
+            // as currently we reserve 0th index
+            // for no tag point!
+            // This may be changed later.
+            counterLong.Add(10);
+            for (int i = 0; i < AggregatorStore.MaxMetricPoints + 1; i++)
+            {
+                counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
+            }
+
+            metricReader.Collect();
+            Assert.Equal(AggregatorStore.MaxMetricPoints, metricPointCount);
+
+            metricPointCount = 0;
+            metricReader.Collect();
+            Assert.Equal(AggregatorStore.MaxMetricPoints, metricPointCount);
+
+            // These updates would be dropped.
+            counterLong.Add(10, new KeyValuePair<string, object>("key", "valueA"));
+            counterLong.Add(10, new KeyValuePair<string, object>("key", "valueB"));
+            counterLong.Add(10, new KeyValuePair<string, object>("key", "valueC"));
+            metricPointCount = 0;
+            metricReader.Collect();
+            Assert.Equal(AggregatorStore.MaxMetricPoints, metricPointCount);
+        }
+
         [Fact]
         public void SimpleTest()
         {
