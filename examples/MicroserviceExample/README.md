@@ -55,5 +55,5 @@ With everything running:
 * [Docker Desktop](https://www.docker.com/products/docker-desktop)
 * [OpenTelemetry Project](https://opentelemetry.io/)
 * [RabbitMQ](https://www.rabbitmq.com/)
-* [Worker Service](https://docs.microsoft.com/en-us/azure/azure-monitor/app/worker-service)
+* [Worker Service](https://docs.microsoft.com/azure/azure-monitor/app/worker-service)
 * [Zipkin](https://zipkin.io)

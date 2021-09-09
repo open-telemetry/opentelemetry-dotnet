@@ -19,7 +19,7 @@
   <PropertyGroup Label="Package versions used in this repository">
     <!--
       Please sort alphabetically.
-      Refer to https://docs.microsoft.com/en-us/nuget/concepts/package-versioning for semver syntax.
+      Refer to https://docs.microsoft.com/nuget/concepts/package-versioning for semver syntax.
     -->
     <MinVerPkgVer>[2.3.0,3.0)</MinVerPkgVer>
     <GoogleProtobufPkgVer>[3.15.5,4.0)</GoogleProtobufPkgVer>
