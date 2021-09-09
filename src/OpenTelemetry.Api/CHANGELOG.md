@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Static Baggage operations (`SetBaggage`, `RemoveBaggage`, & `ClearBaggage`)
+  are now thread-safe. Instance-based Baggage operations no longer mutate
+  `Baggage.Current` (breaking behavior change). For details see:
+  ([#2298](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2298))
+
 ## 1.2.0-alpha2
 
 Released 2021-Aug-24
