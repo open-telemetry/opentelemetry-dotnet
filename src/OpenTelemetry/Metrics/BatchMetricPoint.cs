@@ -89,22 +89,19 @@ namespace OpenTelemetry.Metrics
             /// <inheritdoc/>
             public bool MoveNext()
             {
-                this.index++;
-
-                var metricPoints = this.metricsPoints;
-                if (this.index < this.targetCount && metricPoints[this.index].StartTime == default)
+                while (++this.index < this.targetCount)
                 {
-                    this.index++;
-                }
+                    ref var metricPoint = ref this.metricsPoints[this.index];
+                    if (metricPoint.StartTime == default)
+                    {
+                        continue;
+                    }
 
-                if (this.index < this.targetCount)
-                {
-                    metricPoints[this.index].StartTime = this.start;
-                    metricPoints[this.index].EndTime = this.end;
+                    metricPoint.StartTime = this.start;
+                    metricPoint.EndTime = this.end;
                     return true;
                 }
 
-                this.Current = default;
                 return false;
             }
 

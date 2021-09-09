@@ -55,18 +55,29 @@ namespace Benchmarks.Metrics
         private Random random = new Random();
 
         [Params(false, true)]
-        public bool ExportDelta { get; set; }
+        public bool UseWithRef { get; set; }
 
         [GlobalSetup]
         public void Setup()
         {
-            var metricExporter = new TestMetricExporter(ProcessExport, this.ExportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative);
+            var metricExporter = new TestMetricExporter(ProcessExport);
             void ProcessExport(IEnumerable<Metric> batch)
             {
                 foreach (var metric in batch)
                 {
-                    foreach (var metricPoint in metric.GetMetricPoints())
+                    if (this.UseWithRef)
                     {
+                        foreach (ref var metricPoint in metric.GetMetricPoints())
+                        {
+                            var sum = metricPoint.LongValue;
+                        }
+                    }
+                    else
+                    {
+                        foreach (var metricPoint in metric.GetMetricPoints())
+                        {
+                            var sum = metricPoint.LongValue;
+                        }
                     }
                 }
             }
