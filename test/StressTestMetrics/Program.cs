@@ -66,7 +66,7 @@ namespace OpenTelemetry.Metrics.Tests.Stress
                         var writesPerSec = (newTotalWrites - totalWrites) / (watch.ElapsedMilliseconds / 1000.0);
                         Console.Title = $"Writes (Million/Sec): {writesPerSec / 1000000}";
 
-                        if (totalWrites > numberOfMetricWriters * 10000000)
+                        if (totalWrites > numberOfMetricWriters * maxWritesPerWriter)
                         {
                             break;
                         }
@@ -92,7 +92,7 @@ namespace OpenTelemetry.Metrics.Tests.Stress
                     });
                 });
 
-            var rate = (double)(numberOfMetricWriters * 10000000) / (sw.ElapsedMilliseconds / 1000);
+            var rate = (double)(numberOfMetricWriters * maxWritesPerWriter) / (sw.ElapsedMilliseconds / 1000);
             Console.WriteLine($"{rate / 1000000} M/sec.");
         }
     }
