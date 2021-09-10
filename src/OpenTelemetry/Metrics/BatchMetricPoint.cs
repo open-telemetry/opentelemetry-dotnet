@@ -64,15 +64,20 @@ namespace OpenTelemetry.Metrics
 
             internal Enumerator(MetricPoint[] metricsPoints, long targetCount, DateTimeOffset start, DateTimeOffset end)
             {
-                this.Current = default;
                 this.metricsPoints = metricsPoints;
                 this.targetCount = targetCount;
-                this.index = 0;
+                this.index = -1;
                 this.start = start;
                 this.end = end;
             }
 
-            public MetricPoint Current { get; private set; }
+            public ref MetricPoint Current
+            {
+                get
+                {
+                    return ref this.metricsPoints[this.index];
+                }
+            }
 
             /// <inheritdoc/>
             object IEnumerator.Current => this.Current;
@@ -84,22 +89,19 @@ namespace OpenTelemetry.Metrics
             /// <inheritdoc/>
             public bool MoveNext()
             {
-                var metricPoints = this.metricsPoints;
-                if (this.index < this.targetCount && metricPoints[this.index].StartTime == default)
+                while (++this.index < this.targetCount)
                 {
-                    this.index++;
-                }
+                    ref var metricPoint = ref this.metricsPoints[this.index];
+                    if (metricPoint.StartTime == default)
+                    {
+                        continue;
+                    }
 
-                if (this.index < this.targetCount)
-                {
-                    metricPoints[this.index].StartTime = this.start;
-                    metricPoints[this.index].EndTime = this.end;
-                    this.Current = metricPoints[this.index];
-                    this.index++;
+                    metricPoint.StartTime = this.start;
+                    metricPoint.EndTime = this.end;
                     return true;
                 }
 
-                this.Current = default;
                 return false;
             }
 
