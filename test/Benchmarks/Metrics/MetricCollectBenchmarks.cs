@@ -34,8 +34,8 @@ Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical c
 
 |  Method | UseWithRef |     Mean |    Error |   StdDev | Gen 0 | Gen 1 | Gen 2 | Allocated |
 |-------- |----------- |---------:|---------:|---------:|------:|------:|------:|----------:|
-| Collect |      False | 38.15 us | 1.068 us | 3.133 us |     - |     - |     - |     136 B |
-| Collect |       True | 34.73 us | 0.690 us | 1.912 us |     - |     - |     - |     136 B |
+| Collect |      False | 51.38 us | 1.027 us | 1.261 us |     - |     - |     - |     136 B |
+| Collect |       True | 33.86 us | 0.716 us | 2.088 us |     - |     - |     - |     136 B |
 */
 
 namespace Benchmarks.Metrics
