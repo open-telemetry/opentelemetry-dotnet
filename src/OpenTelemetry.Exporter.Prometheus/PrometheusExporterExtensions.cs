@@ -128,6 +128,23 @@ namespace OpenTelemetry.Exporter
 
                     case MetricType.Histogram:
                         {
+                            /*
+                             *  For Histogram we emit one row for Sum, Count and as
+                             *  many rows as number of buckets.
+                             *  myHistogram_sum{tag1="value1",tag2="value2"} 258330 1629860660991
+                             *  myHistogram_count{tag1="value1",tag2="value2"} 355 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="0"} 0 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="5"} 2 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="10"} 4 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="25"} 6 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="50"} 12 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="75"} 19 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="100"} 26 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="250"} 65 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="500"} 128 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="1000"} 241 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="+Inf"} 355 1629860660991
+                            */
                             builder = builder.WithType(PrometheusHistogramType);
                             foreach (var metricPoint in metric.GetMetricPoints())
                             {
@@ -186,69 +203,6 @@ namespace OpenTelemetry.Exporter
             writer.Flush();
 
             return Encoding.UTF8.GetString(stream.ToArray(), 0, (int)stream.Length);
-        }
-
-        private static void WriteHistogram(
-            StreamWriter writer,
-            PrometheusMetricBuilder builder,
-            IEnumerable<KeyValuePair<string, object>> labels,
-            string metricName,
-            double sum,
-            long count,
-            IEnumerable<HistogramBucket> buckets)
-        {
-            /*  For Histogram we emit one row for Sum, Count and as
-             *  many rows as number of buckets.
-             *  myHistogram_sum{tag1="value1",tag2="value2"} 258330 1629860660991
-             *  myHistogram_count{tag1="value1",tag2="value2"} 355 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="0"} 0 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="5"} 2 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="10"} 4 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="25"} 6 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="50"} 12 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="75"} 19 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="100"} 26 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="250"} 65 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="500"} 128 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="1000"} 241 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="+Inf"} 355 1629860660991
-             */
-
-            builder = builder.WithType(PrometheusHistogramType);
-            var metricValueBuilderSum = builder.AddValue();
-            metricValueBuilderSum.WithName(metricName + PrometheusHistogramSumPostFix);
-            metricValueBuilderSum = metricValueBuilderSum.WithValue(sum);
-            foreach (var label in labels)
-            {
-                metricValueBuilderSum.WithLabel(label.Key, label.Value.ToString());
-            }
-
-            var metricValueBuilderCount = builder.AddValue();
-            metricValueBuilderCount.WithName(metricName + PrometheusHistogramCountPostFix);
-            metricValueBuilderCount = metricValueBuilderCount.WithValue(count);
-            foreach (var label in labels)
-            {
-                metricValueBuilderCount.WithLabel(label.Key, label.Value.ToString());
-            }
-
-            long totalCount = 0;
-            foreach (var bucket in buckets)
-            {
-                totalCount += bucket.Count;
-                var metricValueBuilderBuckets = builder.AddValue();
-                metricValueBuilderBuckets.WithName(metricName + PrometheusHistogramBucketPostFix);
-                metricValueBuilderBuckets = metricValueBuilderBuckets.WithValue(totalCount);
-                foreach (var label in labels)
-                {
-                    metricValueBuilderBuckets.WithLabel(label.Key, label.Value.ToString());
-                }
-
-                var bucketName = double.IsPositiveInfinity(bucket.HighBoundary) ?
-                    PrometheusHistogramBucketLabelPositiveInfinity : bucket.HighBoundary.ToString(CultureInfo.InvariantCulture);
-                metricValueBuilderBuckets.WithLabel(PrometheusHistogramBucketLabelLessThan, bucketName);
-            }
-
-            builder.Write(writer);
         }
     }
 }
