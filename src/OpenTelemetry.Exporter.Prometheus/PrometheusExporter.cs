@@ -23,10 +23,10 @@ namespace OpenTelemetry.Exporter
     /// <summary>
     /// Exporter of OpenTelemetry metrics to Prometheus.
     /// </summary>
-    public class PrometheusExporter : MetricExporter
+    public class PrometheusExporter : BaseExporter<Metric>
     {
         internal readonly PrometheusExporterOptions Options;
-        internal IEnumerable<Metric> Metrics;
+        internal Batch<Metric> Metrics;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
@@ -39,10 +39,15 @@ namespace OpenTelemetry.Exporter
 
         internal Action CollectMetric { get; set; }
 
-        public override ExportResult Export(IEnumerable<Metric> metrics)
+        public override ExportResult Export(in Batch<Metric> metrics)
         {
             this.Metrics = metrics;
             return ExportResult.Success;
+        }
+
+        public override AggregationTemporality GetAggregationTemporality()
+        {
+            return AggregationTemporality.Cumulative;
         }
     }
 }
