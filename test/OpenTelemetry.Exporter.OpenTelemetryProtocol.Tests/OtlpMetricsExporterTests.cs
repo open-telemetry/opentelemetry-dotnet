@@ -33,7 +33,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
     public class OtlpMetricsExporterTests
     {
-        [Theory(Skip = "Re-enable once OTLP exporter derives from BaseExporter<Metric>")]
+        [Theory]
         [InlineData(true)]
         [InlineData(false)]
         public void ToOtlpResourceMetricsTest(bool includeServiceNameInResource)
@@ -85,9 +85,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             void RunTest(Batch<Metric> metrics)
             {
                 var request = new OtlpCollector.ExportMetricsServiceRequest();
-
-                // TODO: Uncomment the following once OTLP metric exporter derives from BaseExporter<Metric>
-                // request.AddMetrics(exporter.ProcessResource, metrics);
+                request.AddMetrics(exporter.ProcessResource, metrics);
 
                 Assert.Single(request.ResourceMetrics);
                 var resourceMetric = request.ResourceMetrics.First();

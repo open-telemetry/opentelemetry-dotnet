@@ -39,7 +39,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         internal static void AddMetrics(
             this OtlpCollector.ExportMetricsServiceRequest request,
             OtlpResource.Resource processResource,
-            in IEnumerable<Metric> metrics)
+            in Batch<Metric> metrics)
         {
             var metricsByLibrary = new Dictionary<string, OtlpMetrics.InstrumentationLibraryMetrics>();
             var resourceMetrics = new OtlpMetrics.ResourceMetrics

@@ -40,11 +40,9 @@ namespace OpenTelemetry.Metrics
             var options = new OtlpExporterOptions();
             configure?.Invoke(options);
 
-            // var metricExporter = new OtlpMetricsExporter(options);
-            // var metricReader = new PeriodicExportingMetricReader(metricExporter, options.MetricExportIntervalMilliseconds);
-            // return builder.AddMetricReader(metricReader);
-
-            return builder;
+            var metricExporter = new OtlpMetricsExporter(options);
+            var metricReader = new PeriodicExportingMetricReader(metricExporter, options.MetricExportIntervalMilliseconds);
+            return builder.AddMetricReader(metricReader);
         }
     }
 }
