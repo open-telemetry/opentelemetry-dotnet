@@ -141,7 +141,7 @@ namespace OpenTelemetry.Metrics
             metric.UpdateLong(value, tagsRos);
         }
 
-        internal IEnumerable<Metric> Collect()
+        internal Batch<Metric> Collect()
         {
             lock (this.collectLock)
             {
@@ -155,20 +155,7 @@ namespace OpenTelemetry.Metrics
                         this.metrics[i].SnapShot();
                     }
 
-                    return Iterate(this.metrics, indexSnapShot + 1);
-
-                    // We cannot simply return the internal structure (array)
-                    // as the user is not expected to navigate it.
-                    // properly.
-                    static IEnumerable<Metric> Iterate(Metric[] metrics, long targetCount)
-                    {
-                        for (int i = 0; i < targetCount; i++)
-                        {
-                            // Check if the Metric has valid
-                            // entries and skip, if not.
-                            yield return metrics[i];
-                        }
-                    }
+                    return new Batch<Metric>(this.metrics, indexSnapShot + 1);
                 }
                 catch (Exception)
                 {

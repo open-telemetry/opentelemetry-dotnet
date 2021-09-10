@@ -60,8 +60,8 @@ namespace Benchmarks.Metrics
         [GlobalSetup]
         public void Setup()
         {
-            var metricExporter = new TestMetricExporter(ProcessExport);
-            void ProcessExport(IEnumerable<Metric> batch)
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
+            void ProcessExport(Batch<Metric> batch)
             {
                 double sum = 0;
                 foreach (var metric in batch)

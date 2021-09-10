@@ -51,7 +51,7 @@ namespace OpenTelemetry
             return Resource.Empty;
         }
 
-        public static Func<IEnumerable<Metric>> GetMetricCollect(this BaseProvider baseProvider)
+        public static Func<Batch<Metric>> GetMetricCollect(this BaseProvider baseProvider)
         {
             if (baseProvider is MeterProviderSdk meterProviderSdk)
             {

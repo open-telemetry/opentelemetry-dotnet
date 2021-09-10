@@ -55,9 +55,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
             var metricItems = new List<Metric>();
-            var metricExporter = new TestMetricExporter(ProcessExport);
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
 
-            void ProcessExport(IEnumerable<Metric> batch)
+            void ProcessExport(Batch<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {

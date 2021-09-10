@@ -44,9 +44,9 @@ namespace OpenTelemetry.Metrics.Tests
         public void CounterAggregationTest(bool exportDelta)
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestMetricExporter(ProcessExport, exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative);
+            var metricExporter = new TestExporter<Metric>(ProcessExport, exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative);
 
-            void ProcessExport(IEnumerable<Metric> batch)
+            void ProcessExport(Batch<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {
@@ -117,9 +117,9 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var meterName = "TestMeter" + exportDelta;
             var metricItems = new List<Metric>();
-            var metricExporter = new TestMetricExporter(ProcessExport, exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative);
+            var metricExporter = new TestExporter<Metric>(ProcessExport, exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative);
 
-            void ProcessExport(IEnumerable<Metric> batch)
+            void ProcessExport(Batch<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {
@@ -181,9 +181,9 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var metricItems = new List<Metric>();
             int metricPointCount = 0;
-            var metricExporter = new TestMetricExporter(ProcessExport, temporality);
+            var metricExporter = new TestExporter<Metric>(ProcessExport, temporality);
 
-            void ProcessExport(IEnumerable<Metric> batch)
+            void ProcessExport(Batch<Metric> batch)
             {
                 foreach (var metric in batch)
                 {
@@ -232,9 +232,9 @@ namespace OpenTelemetry.Metrics.Tests
         public void MultithreadedLongCounterTest()
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestMetricExporter(ProcessExport);
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
 
-            void ProcessExport(IEnumerable<Metric> batch)
+            void ProcessExport(Batch<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {
@@ -300,9 +300,9 @@ namespace OpenTelemetry.Metrics.Tests
         public void MultithreadedDoubleCounterTest()
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestMetricExporter(ProcessExport);
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
 
-            void ProcessExport(IEnumerable<Metric> batch)
+            void ProcessExport(Batch<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {

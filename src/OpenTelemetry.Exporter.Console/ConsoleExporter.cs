@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Metrics;
+
 namespace OpenTelemetry.Exporter
 {
     public abstract class ConsoleExporter<T> : BaseExporter<T>
@@ -24,6 +26,11 @@ namespace OpenTelemetry.Exporter
         protected ConsoleExporter(ConsoleExporterOptions options)
         {
             this.options = options ?? new ConsoleExporterOptions();
+        }
+
+        public override AggregationTemporality GetAggregationTemporality()
+        {
+            return this.options.AggregationTemporality;
         }
 
         protected void WriteLine(string message)

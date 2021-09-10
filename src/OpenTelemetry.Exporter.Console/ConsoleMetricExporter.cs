@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -24,22 +23,16 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
 {
-    public class ConsoleMetricExporter : MetricExporter
+    public class ConsoleMetricExporter : ConsoleExporter<Metric>
     {
         private Resource resource;
-        private ConsoleExporterOptions options;
 
         public ConsoleMetricExporter(ConsoleExporterOptions options)
+            : base(options)
         {
-            this.options = options;
         }
 
-        public override AggregationTemporality GetAggregationTemporality()
-        {
-            return this.options.AggregationTemporality;
-        }
-
-        public override ExportResult Export(IEnumerable<Metric> metrics)
+        public override ExportResult Export(in Batch<Metric> batch)
         {
             if (this.resource == null)
             {
@@ -56,7 +49,7 @@ namespace OpenTelemetry.Exporter
                 }
             }
 
-            foreach (var metric in metrics)
+            foreach (var metric in batch)
             {
                 var msg = new StringBuilder($"\nExport ");
                 msg.Append(metric.Name);
@@ -167,7 +160,6 @@ namespace OpenTelemetry.Exporter
                     }
 
                     msg = new StringBuilder();
-                    msg.Append("(");
                     msg.Append(metricPoint.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                     msg.Append(", ");
                     msg.Append(metricPoint.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));

@@ -15,21 +15,20 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
     public class BaseExportingMetricReader : MetricReader
     {
-        private readonly MetricExporter exporter;
+        private readonly BaseExporter<Metric> exporter;
         private bool disposed;
 
-        public BaseExportingMetricReader(MetricExporter exporter)
+        public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
             this.exporter = exporter;
         }
 
-        public override void OnCollect(IEnumerable<Metric> metrics)
+        public override void OnCollect(Batch<Metric> metrics)
         {
             this.exporter.Export(metrics);
         }
