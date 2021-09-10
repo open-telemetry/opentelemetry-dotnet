@@ -32,10 +32,10 @@ Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical c
   DefaultJob : .NET Core 3.1.18 (CoreCLR 4.700.21.35901, CoreFX 4.700.21.36305), X64 RyuJIT
 
 
-|  Method | ExportDelta |      Mean |    Error |   StdDev | Gen 0 | Gen 1 | Gen 2 | Allocated |
-|-------- |------------ |----------:|---------:|---------:|------:|------:|------:|----------:|
-| Collect |       False | 100.59 us | 1.970 us | 5.490 us |     - |     - |     - |     136 B |
-| Collect |        True |  98.41 us | 1.861 us | 4.670 us |     - |     - |     - |     136 B |
+|  Method | UseWithRef |     Mean |    Error |   StdDev | Gen 0 | Gen 1 | Gen 2 | Allocated |
+|-------- |----------- |---------:|---------:|---------:|------:|------:|------:|----------:|
+| Collect |      False | 51.38 us | 1.027 us | 1.261 us |     - |     - |     - |     136 B |
+| Collect |       True | 33.86 us | 0.716 us | 2.088 us |     - |     - |     - |     136 B |
 */
 
 namespace Benchmarks.Metrics
@@ -43,7 +43,7 @@ namespace Benchmarks.Metrics
     [MemoryDiagnoser]
     public class MetricCollectBenchmarks
     {
-        private Counter<long> counter;
+        private Counter<double> counter;
         private MeterProvider provider;
         private Meter meter;
         private CancellationTokenSource token;
@@ -55,18 +55,33 @@ namespace Benchmarks.Metrics
         private Random random = new Random();
 
         [Params(false, true)]
-        public bool ExportDelta { get; set; }
+        public bool UseWithRef { get; set; }
 
         [GlobalSetup]
         public void Setup()
         {
-            var metricExporter = new TestMetricExporter(ProcessExport, this.ExportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative);
+            var metricExporter = new TestMetricExporter(ProcessExport);
             void ProcessExport(IEnumerable<Metric> batch)
             {
+                double sum = 0;
                 foreach (var metric in batch)
                 {
-                    foreach (var metricPoint in metric.GetMetricPoints())
+                    if (this.UseWithRef)
                     {
+                        // The performant way of iterating.
+                        foreach (ref var metricPoint in metric.GetMetricPoints())
+                        {
+                            sum += metricPoint.LongValue;
+                        }
+                    }
+                    else
+                    {
+                        // The non-performant way of iterating.
+                        // This is still "correct", but less performant.
+                        foreach (var metricPoint in metric.GetMetricPoints())
+                        {
+                            sum += metricPoint.LongValue;
+                        }
                     }
                 }
             }
@@ -78,7 +93,7 @@ namespace Benchmarks.Metrics
                 .Build();
 
             this.meter = new Meter("TestMeter");
-            this.counter = this.meter.CreateCounter<long>("counter");
+            this.counter = this.meter.CreateCounter<double>("counter");
             this.token = new CancellationTokenSource();
             this.writeMetricTask = new Task(() =>
             {
@@ -87,7 +102,7 @@ namespace Benchmarks.Metrics
                     var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
                     var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[this.random.Next(0, 10)]);
                     var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[this.random.Next(0, 10)]);
-                    this.counter.Add(100, tag1, tag2, tag3);
+                    this.counter.Add(100.00, tag1, tag2, tag3);
                 }
             });
             this.writeMetricTask.Start();
