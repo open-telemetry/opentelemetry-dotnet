@@ -55,7 +55,7 @@ namespace OpenTelemetry.Exporter
                     case MetricType.LongSum:
                         {
                             builder = builder.WithType(PrometheusCounterType);
-                            foreach (var metricPoint in metric.GetMetricPoints())
+                            foreach (ref var metricPoint in metric.GetMetricPoints())
                             {
                                 var metricValueBuilder = builder.AddValue();
                                 metricValueBuilder = metricValueBuilder.WithValue(metricPoint.LongValue);
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Exporter
                     case MetricType.DoubleSum:
                         {
                             builder = builder.WithType(PrometheusCounterType);
-                            foreach (var metricPoint in metric.GetMetricPoints())
+                            foreach (ref var metricPoint in metric.GetMetricPoints())
                             {
                                 var metricValueBuilder = builder.AddValue();
                                 metricValueBuilder = metricValueBuilder.WithValue(metricPoint.DoubleValue);
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Exporter
                     case MetricType.LongGauge:
                         {
                             builder = builder.WithType(PrometheusGaugeType);
-                            foreach (var metricPoint in metric.GetMetricPoints())
+                            foreach (ref var metricPoint in metric.GetMetricPoints())
                             {
                                 var metricValueBuilder = builder.AddValue();
                                 metricValueBuilder = metricValueBuilder.WithValue(metricPoint.LongValue);
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Exporter
                     case MetricType.DoubleGauge:
                         {
                             builder = builder.WithType(PrometheusGaugeType);
-                            foreach (var metricPoint in metric.GetMetricPoints())
+                            foreach (ref var metricPoint in metric.GetMetricPoints())
                             {
                                 var metricValueBuilder = builder.AddValue();
                                 metricValueBuilder = metricValueBuilder.WithValue(metricPoint.DoubleValue);
@@ -146,7 +146,7 @@ namespace OpenTelemetry.Exporter
                              *  myHistogram_bucket{tag1="value1",tag2="value2",le="+Inf"} 355 1629860660991
                             */
                             builder = builder.WithType(PrometheusHistogramType);
-                            foreach (var metricPoint in metric.GetMetricPoints())
+                            foreach (ref var metricPoint in metric.GetMetricPoints())
                             {
                                 var metricValueBuilderSum = builder.AddValue();
                                 metricValueBuilderSum.WithName(metric.Name + PrometheusHistogramSumPostFix);
