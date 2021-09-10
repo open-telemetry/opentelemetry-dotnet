@@ -138,16 +138,5 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         {
             this.meterProvider?.Dispose();
         }
-
-        private static void WaitForMetricItems(List<MetricItem> metricItems, int count)
-        {
-            Assert.True(SpinWait.SpinUntil(
-                () =>
-                {
-                    Thread.Sleep(10);
-                    return metricItems.Count >= count;
-                },
-                TimeSpan.FromSeconds(1)));
-        }
     }
 }
