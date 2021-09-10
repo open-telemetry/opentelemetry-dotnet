@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Metrics perf improvements, bug fixes.
-  Replace MetricProcessor with Metric reader.
+  Replace MetricProcessor with MetricReader.
 
 * Add `BatchExportActivityProcessorOptions` which supports field value overriding
   using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
