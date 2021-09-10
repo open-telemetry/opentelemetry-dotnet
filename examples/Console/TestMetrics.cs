@@ -67,7 +67,7 @@ namespace Examples.Console
                     .AddOtlpExporter(o =>
                     {
                         o.MetricExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
-                        o.IsDelta = options.IsDelta;
+                        o.AggregationTemporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                     });
             }
             else
@@ -76,7 +76,7 @@ namespace Examples.Console
                     .AddConsoleExporter(o =>
                     {
                         o.MetricExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
-                        o.IsDelta = options.IsDelta;
+                        o.AggregationTemporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                     });
             }
 

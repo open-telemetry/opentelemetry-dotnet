@@ -1,4 +1,4 @@
-// <copyright file="TestExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="TestMetricExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,37 +15,32 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Tests
 {
-    internal class TestExporter<T> : BaseExporter<T>
-        where T : class
+    internal class TestMetricExporter : MetricExporter
     {
-        private readonly Action<Batch<T>> processBatchAction;
-        private readonly AggregationTemporality aggregationTemporality;
+        private readonly Action<IEnumerable<Metric>> processBatchAction;
+        private AggregationTemporality temporality;
 
-        public TestExporter(Action<Batch<T>> processBatchAction)
+        public TestMetricExporter(Action<IEnumerable<Metric>> processBatchAction, AggregationTemporality temporality = AggregationTemporality.Cumulative)
         {
             this.processBatchAction = processBatchAction ?? throw new ArgumentNullException(nameof(processBatchAction));
-        }
-
-        public TestExporter(Action<Batch<T>> processBatchAction, AggregationTemporality aggregationTemporality)
-            : this(processBatchAction)
-        {
-            this.aggregationTemporality = aggregationTemporality;
-        }
-
-        public override ExportResult Export(in Batch<T> batch)
-        {
-            this.processBatchAction(batch);
-
-            return ExportResult.Success;
+            this.temporality = temporality;
         }
 
         public override AggregationTemporality GetAggregationTemporality()
         {
-            return this.aggregationTemporality;
+            return this.temporality;
+        }
+
+        public override ExportResult Export(IEnumerable<Metric> batch)
+        {
+            this.processBatchAction(batch);
+
+            return ExportResult.Success;
         }
     }
 }

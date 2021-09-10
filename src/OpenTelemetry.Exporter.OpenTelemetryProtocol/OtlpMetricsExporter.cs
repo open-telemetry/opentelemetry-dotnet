@@ -15,19 +15,24 @@
 // </copyright>
 
 using System;
+using System.Threading.Tasks;
 using Grpc.Core;
+#if NETSTANDARD2_1
+using Grpc.Net.Client;
+#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Metrics;
 using OtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
+using OtlpResource = Opentelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter
 {
     /// <summary>
-    /// Exporter consuming <see cref="MetricItem"/> and exporting the data using
+    /// Exporter consuming <see cref="Metric"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    public class OtlpMetricsExporter : BaseOtlpExporter<MetricItem>
+    public class OtlpMetricsExporter : BaseOtlpExporter<Metric>
     {
         private readonly OtlpCollector.MetricsService.IMetricsServiceClient metricsClient;
 
@@ -60,14 +65,20 @@ namespace OpenTelemetry.Exporter
         }
 
         /// <inheritdoc />
-        public override ExportResult Export(in Batch<MetricItem> batch)
+        public override AggregationTemporality GetAggregationTemporality()
+        {
+            return this.Options.AggregationTemporality;
+        }
+
+        /// <inheritdoc />
+        public override ExportResult Export(in Batch<Metric> metrics)
         {
             // Prevents the exporter's gRPC and HTTP operations from being instrumented.
             using var scope = SuppressInstrumentationScope.Begin();
 
             var request = new OtlpCollector.ExportMetricsServiceRequest();
 
-            request.AddBatch(this.ProcessResource, batch);
+            request.AddMetrics(this.ProcessResource, metrics);
             var deadline = DateTime.UtcNow.AddMilliseconds(this.Options.TimeoutMilliseconds);
 
             try
@@ -90,6 +101,25 @@ namespace OpenTelemetry.Exporter
             }
 
             return ExportResult.Success;
+        }
+
+        /// <inheritdoc />
+        protected override bool OnShutdown(int timeoutMilliseconds)
+        {
+            if (this.Channel == null)
+            {
+                return true;
+            }
+
+            if (timeoutMilliseconds == -1)
+            {
+                this.Channel.ShutdownAsync().Wait();
+                return true;
+            }
+            else
+            {
+                return Task.WaitAny(new Task[] { this.Channel.ShutdownAsync(), Task.Delay(timeoutMilliseconds) }) == 0;
+            }
         }
     }
 }

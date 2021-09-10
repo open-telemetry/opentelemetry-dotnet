@@ -6,8 +6,8 @@ SDK](https://dotnet.microsoft.com/download) on your computer.
 Create a new console application and run it:
 
 ```sh
-dotnet new console --output getting-started
-cd getting-started
+dotnet new console --output getting-started-counter
+cd getting-started-counter
 dotnet run
 ```
 
@@ -32,11 +32,29 @@ output from the console, similar to shown below:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-Export[] 16:38:36.241 16:38:37.233 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 590, Details: Delta=True,Mon=True,Count=59,Sum=590
-Export[] 16:38:37.233 16:38:38.258 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 640, Details: Delta=True,Mon=True,Count=64,Sum=640
-Export[] 16:38:38.258 16:38:39.261 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 640, Details: Delta=True,Mon=True,Count=64,Sum=640
-Export[] 16:38:39.261 16:38:40.266 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 630, Details: Delta=True,Mon=True,Count=63,Sum=630
-Export[] 16:38:40.266 16:38:41.271 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 640, Details: Delta=True,Mon=True,Count=64,Sum=640
+Export counter, Meter: TestMeter/0.0.1
+(2021-09-03T04:29:37.1096398Z, 2021-09-03T04:29:38.0649233Z] tag1:value1tag2:value2 LongSum
+Value: 460
+
+Export counter, Meter: TestMeter/0.0.1
+(2021-09-03T04:29:38.0649233Z, 2021-09-03T04:29:39.1483639Z] tag1:value1tag2:value2 LongSum
+Value: 640
+
+Export counter, Meter: TestMeter/0.0.1
+(2021-09-03T04:29:39.1483639Z, 2021-09-03T04:29:40.1679696Z] tag1:value1tag2:value2 LongSum
+Value: 420
+
+Export counter, Meter: TestMeter/0.0.1
+(2021-09-03T04:29:40.1679696Z, 2021-09-03T04:29:41.1774527Z] tag1:value1tag2:value2 LongSum
+Value: 560
+
+Export counter, Meter: TestMeter/0.0.1
+(2021-09-03T04:29:41.1774527Z, 2021-09-03T04:29:42.1791523Z] tag1:value1tag2:value2 LongSum
+Value: 650
+
+Export counter, Meter: TestMeter/0.0.1
+(2021-09-03T04:29:42.1791523Z, 2021-09-03T04:29:43.1875033Z] tag1:value1tag2:value2 LongSum
+Value: 620
 ```
 <!-- markdownlint-enable MD013 -->
 

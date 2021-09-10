@@ -1,4 +1,4 @@
-// <copyright file="InMemoryExporterOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="AggregationTemporality.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,22 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Metrics;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Metrics
 {
-    public class InMemoryExporterOptions
+    public enum AggregationTemporality
     {
         /// <summary>
-        /// Gets or sets the metric export interval in milliseconds. The default value is 1000 milliseconds.
+        /// Cumulative.
         /// </summary>
-        public int MetricExportIntervalMilliseconds { get; set; } = 1000;
+        Cumulative = 1,
 
         /// <summary>
-        /// Gets or sets the AggregationTemporality used for Histogram
-        /// and Sum metrics.
+        /// Delta.
         /// </summary>
-        public AggregationTemporality AggregationTemporality { get; set; } = AggregationTemporality.Delta;
+        Delta = 2,
     }
 }

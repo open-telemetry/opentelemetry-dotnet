@@ -6,8 +6,8 @@ SDK](https://dotnet.microsoft.com/download) on your computer.
 Create a new console application and run it:
 
 ```sh
-dotnet new console --output getting-started-async-counter
-cd getting-started-async-counter
+dotnet new console --output getting-started-observable-counter
+cd getting-started-observable-counter
 dotnet run
 ```
 
@@ -32,7 +32,7 @@ output from the console, similar to shown below:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-Service.Nameunknown_service:getting-started-async-counter
+Service.Nameunknown_service:getting-started-observable-counter
 Export 16:35:25.669 16:35:25.670 observable-counter [tag1=value1;tag2=value2] LongSum, Meter: TestMeter/0.0.1
 Value: 10
 Export 16:35:25.669 16:35:26.698 observable-counter [tag1=value1;tag2=value2] LongSum, Meter: TestMeter/0.0.1
