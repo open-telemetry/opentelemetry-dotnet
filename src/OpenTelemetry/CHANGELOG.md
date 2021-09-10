@@ -4,6 +4,7 @@
 
 * Metrics perf improvements, bug fixes.
   Replace MetricProcessor with MetricReader.
+  ([#2306](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2306))
 
 * Add `BatchExportActivityProcessorOptions` which supports field value overriding
   using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,

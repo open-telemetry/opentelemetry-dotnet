@@ -128,22 +128,23 @@ namespace OpenTelemetry.Exporter
 
                     case MetricType.Histogram:
                         {
-            /*  For Histogram we emit one row for Sum, Count and as
-             *  many rows as number of buckets.
-             *  myHistogram_sum{tag1="value1",tag2="value2"} 258330 1629860660991
-             *  myHistogram_count{tag1="value1",tag2="value2"} 355 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="0"} 0 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="5"} 2 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="10"} 4 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="25"} 6 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="50"} 12 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="75"} 19 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="100"} 26 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="250"} 65 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="500"} 128 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="1000"} 241 1629860660991
-             *  myHistogram_bucket{tag1="value1",tag2="value2",le="+Inf"} 355 1629860660991
-             */
+                            /*
+                             *  For Histogram we emit one row for Sum, Count and as
+                             *  many rows as number of buckets.
+                             *  myHistogram_sum{tag1="value1",tag2="value2"} 258330 1629860660991
+                             *  myHistogram_count{tag1="value1",tag2="value2"} 355 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="0"} 0 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="5"} 2 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="10"} 4 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="25"} 6 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="50"} 12 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="75"} 19 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="100"} 26 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="250"} 65 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="500"} 128 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="1000"} 241 1629860660991
+                             *  myHistogram_bucket{tag1="value1",tag2="value2",le="+Inf"} 355 1629860660991
+                            */
                             builder = builder.WithType(PrometheusHistogramType);
                             foreach (var metricPoint in metric.GetMetricPoints())
                             {
