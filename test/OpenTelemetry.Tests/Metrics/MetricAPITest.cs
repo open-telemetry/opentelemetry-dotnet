@@ -181,9 +181,9 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var metricItems = new List<Metric>();
             int metricPointCount = 0;
-            var metricExporter = new TestMetricExporter(ProcessExport, temporality);
+            var metricExporter = new TestExporter<Metric>(ProcessExport, temporality);
 
-            void ProcessExport(IEnumerable<Metric> batch)
+            void ProcessExport(Batch<Metric> batch)
             {
                 foreach (var metric in batch)
                 {
@@ -300,9 +300,9 @@ namespace OpenTelemetry.Metrics.Tests
         public void MultithreadedDoubleCounterTest()
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestMetricExporter(ProcessExport);
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
 
-            void ProcessExport(IEnumerable<Metric> batch)
+            void ProcessExport(Batch<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {
