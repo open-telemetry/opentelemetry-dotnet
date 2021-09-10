@@ -43,7 +43,7 @@ namespace Benchmarks.Metrics
     [MemoryDiagnoser]
     public class MetricCollectBenchmarks
     {
-        private Counter<long> counter;
+        private Counter<double> counter;
         private MeterProvider provider;
         private Meter meter;
         private CancellationTokenSource token;
@@ -63,20 +63,24 @@ namespace Benchmarks.Metrics
             var metricExporter = new TestMetricExporter(ProcessExport);
             void ProcessExport(IEnumerable<Metric> batch)
             {
+                double sum = 0;
                 foreach (var metric in batch)
                 {
                     if (this.UseWithRef)
                     {
+                        // The performant way of iterating.
                         foreach (ref var metricPoint in metric.GetMetricPoints())
                         {
-                            var sum = metricPoint.LongValue;
+                            sum += metricPoint.LongValue;
                         }
                     }
                     else
                     {
+                        // The non-performant way of iterating.
+                        // This is still "correct", but less performant.
                         foreach (var metricPoint in metric.GetMetricPoints())
                         {
-                            var sum = metricPoint.LongValue;
+                            sum += metricPoint.LongValue;
                         }
                     }
                 }
@@ -89,7 +93,7 @@ namespace Benchmarks.Metrics
                 .Build();
 
             this.meter = new Meter("TestMeter");
-            this.counter = this.meter.CreateCounter<long>("counter");
+            this.counter = this.meter.CreateCounter<double>("counter");
             this.token = new CancellationTokenSource();
             this.writeMetricTask = new Task(() =>
             {
@@ -98,7 +102,7 @@ namespace Benchmarks.Metrics
                     var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
                     var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[this.random.Next(0, 10)]);
                     var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[this.random.Next(0, 10)]);
-                    this.counter.Add(100, tag1, tag2, tag3);
+                    this.counter.Add(100.00, tag1, tag2, tag3);
                 }
             });
             this.writeMetricTask.Start();
