@@ -19,35 +19,19 @@ using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter
 {
-    public class InMemoryMetricExporter : MetricExporter
+    public class InMemoryMetricExporter : InMemoryExporter<Metric>
     {
-        private readonly ICollection<Metric> exportedItems;
         private InMemoryExporterOptions options;
 
         public InMemoryMetricExporter(ICollection<Metric> exportedItems, InMemoryExporterOptions options)
+            : base(exportedItems)
         {
-            this.exportedItems = exportedItems;
             this.options = options;
         }
 
         public override AggregationTemporality GetAggregationTemporality()
         {
             return this.options.AggregationTemporality;
-        }
-
-        public override ExportResult Export(IEnumerable<Metric> metrics)
-        {
-            if (this.exportedItems == null)
-            {
-                return ExportResult.Failure;
-            }
-
-            foreach (var metric in metrics)
-            {
-                this.exportedItems.Add(metric);
-            }
-
-            return ExportResult.Success;
         }
     }
 }
