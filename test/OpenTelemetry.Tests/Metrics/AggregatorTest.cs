@@ -26,36 +26,35 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void HistogramDistributeToAllBuckets()
         {
-            using var meter = new Meter("TestMeter", "0.0.1");
+            var histogramPoint = new MetricPoint(AggregationType.Histogram, DateTimeOffset.Now, null, null);
+            histogramPoint.Update(-1);
+            histogramPoint.Update(0);
+            histogramPoint.Update(2);
+            histogramPoint.Update(5);
+            histogramPoint.Update(8);
+            histogramPoint.Update(10);
+            histogramPoint.Update(11);
+            histogramPoint.Update(25);
+            histogramPoint.Update(40);
+            histogramPoint.Update(50);
+            histogramPoint.Update(70);
+            histogramPoint.Update(75);
+            histogramPoint.Update(99);
+            histogramPoint.Update(100);
+            histogramPoint.Update(246);
+            histogramPoint.Update(250);
+            histogramPoint.Update(499);
+            histogramPoint.Update(500);
+            histogramPoint.Update(999);
+            histogramPoint.Update(1000);
+            histogramPoint.Update(1001);
+            histogramPoint.Update(10000000);
+            histogramPoint.TakeSnapShot(true);
 
-            var hist = new HistogramMetricAggregator("test", "desc", "1", meter, DateTimeOffset.UtcNow, new KeyValuePair<string, object>[0]);
-
-            hist.Update<long>(-1);
-            hist.Update<long>(0);
-            hist.Update<long>(5);
-            hist.Update<long>(10);
-            hist.Update<long>(25);
-            hist.Update<long>(50);
-            hist.Update<long>(75);
-            hist.Update<long>(100);
-            hist.Update<long>(250);
-            hist.Update<long>(500);
-            hist.Update<long>(1000);
-            var metric = hist.Collect(DateTimeOffset.UtcNow, false);
-
-            Assert.NotNull(metric);
-            Assert.IsType<HistogramMetric>(metric);
-
-            if (metric is HistogramMetric agg)
+            Assert.Equal(22, histogramPoint.LongValue);
+            for (int i = 0; i < histogramPoint.BucketCounts.Length; i++)
             {
-                int len = 0;
-                foreach (var bucket in agg.Buckets)
-                {
-                    Assert.Equal(1, bucket.Count);
-                    len++;
-                }
-
-                Assert.Equal(11, len);
+                Assert.Equal(2, histogramPoint.BucketCounts[i]);
             }
         }
 

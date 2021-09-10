@@ -17,6 +17,7 @@
 using System;
 using System.Threading;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry
 {
@@ -103,6 +104,14 @@ namespace OpenTelemetry
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        public virtual AggregationTemporality GetAggregationTemporality()
+        {
+            // TODO: One suggestion is to have SupportedTemporality
+            // and PreferredTemporality.
+            // see https://github.com/open-telemetry/opentelemetry-dotnet/pull/2306#discussion_r701532743
+            return AggregationTemporality.Cumulative;
         }
 
         /// <summary>

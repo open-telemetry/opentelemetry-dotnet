@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
-        public static MeterProviderBuilder AddInMemoryExporter(this MeterProviderBuilder builder, ICollection<MetricItem> exportedItems, Action<InMemoryExporterOptions> configure = null)
+        public static MeterProviderBuilder AddInMemoryExporter(this MeterProviderBuilder builder, ICollection<Metric> exportedItems, Action<InMemoryExporterOptions> configure = null)
         {
             if (builder == null)
             {
@@ -44,7 +44,9 @@ namespace OpenTelemetry.Metrics
 
             var options = new InMemoryExporterOptions();
             configure?.Invoke(options);
-            return builder.AddMetricProcessor(new PushMetricProcessor(new InMemoryExporter<MetricItem>(exportedItems), options.MetricExportIntervalMilliseconds, options.IsDelta));
+
+            var exporter = new InMemoryMetricExporter(exportedItems, options);
+            return builder.AddMetricReader(new PeriodicExportingMetricReader(exporter, options.MetricExportIntervalMilliseconds));
         }
     }
 }

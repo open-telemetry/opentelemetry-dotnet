@@ -44,42 +44,131 @@ namespace OpenTelemetry.Exporter
         /// <param name="writer">StreamWriter to write to.</param>
         public static void WriteMetricsCollection(this PrometheusExporter exporter, StreamWriter writer)
         {
-            foreach (var metricItem in exporter.Batch)
+            foreach (var metric in exporter.Metrics)
             {
-                foreach (var metric in metricItem.Metrics)
-                {
-                    var builder = new PrometheusMetricBuilder()
+                var builder = new PrometheusMetricBuilder()
                     .WithName(metric.Name)
                     .WithDescription(metric.Description);
 
-                    // TODO: Use switch case for higher perf.
-                    if (metric.MetricType == MetricType.LongSum)
-                    {
-                        WriteSum(writer, builder, metric.Attributes, (metric as ISumMetricLong).LongSum);
-                    }
-                    else if (metric.MetricType == MetricType.DoubleSum)
-                    {
-                        WriteSum(writer, builder, metric.Attributes, (metric as ISumMetricDouble).DoubleSum);
-                    }
-                    else if (metric.MetricType == MetricType.DoubleGauge)
-                    {
-                        var gaugeMetric = metric as IGaugeMetric;
-                        var doubleValue = (double)gaugeMetric.LastValue.Value;
-                        WriteGauge(writer, builder, metric.Attributes, doubleValue);
-                    }
-                    else if (metric.MetricType == MetricType.LongGauge)
-                    {
-                        var gaugeMetric = metric as IGaugeMetric;
-                        var longValue = (long)gaugeMetric.LastValue.Value;
+                switch (metric.MetricType)
+                {
+                    case MetricType.LongSum:
+                        {
+                            builder = builder.WithType(PrometheusCounterType);
+                            foreach (var metricPoint in metric.GetMetricPoints())
+                            {
+                                var metricValueBuilder = builder.AddValue();
+                                metricValueBuilder = metricValueBuilder.WithValue(metricPoint.LongValue);
+                                if (metricPoint.Keys != null)
+                                {
+                                    for (int i = 0; i < metricPoint.Keys.Length; i++)
+                                    {
+                                        metricValueBuilder.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
+                                    }
+                                }
+                            }
 
-                        // TODO: Prometheus only supports float/double
-                        WriteGauge(writer, builder, metric.Attributes, longValue);
-                    }
-                    else if (metric.MetricType == MetricType.Histogram)
-                    {
-                        var histogramMetric = metric as IHistogramMetric;
-                        WriteHistogram(writer, builder, metric.Attributes, metric.Name, histogramMetric.PopulationSum, histogramMetric.PopulationCount, histogramMetric.Buckets);
-                    }
+                            builder.Write(writer);
+                            break;
+                        }
+
+                    case MetricType.DoubleSum:
+                        {
+                            builder = builder.WithType(PrometheusCounterType);
+                            foreach (var metricPoint in metric.GetMetricPoints())
+                            {
+                                var metricValueBuilder = builder.AddValue();
+                                metricValueBuilder = metricValueBuilder.WithValue(metricPoint.DoubleValue);
+                                if (metricPoint.Keys != null)
+                                {
+                                    for (int i = 0; i < metricPoint.Keys.Length; i++)
+                                    {
+                                        metricValueBuilder.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
+                                    }
+                                }
+                            }
+
+                            builder.Write(writer);
+                            break;
+                        }
+
+                    case MetricType.LongGauge:
+                        {
+                            builder = builder.WithType(PrometheusGaugeType);
+                            foreach (var metricPoint in metric.GetMetricPoints())
+                            {
+                                var metricValueBuilder = builder.AddValue();
+                                metricValueBuilder = metricValueBuilder.WithValue(metricPoint.LongValue);
+                                for (int i = 0; i < metricPoint.Keys.Length; i++)
+                                {
+                                    metricValueBuilder.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
+                                }
+                            }
+
+                            builder.Write(writer);
+                            break;
+                        }
+
+                    case MetricType.DoubleGauge:
+                        {
+                            builder = builder.WithType(PrometheusGaugeType);
+                            foreach (var metricPoint in metric.GetMetricPoints())
+                            {
+                                var metricValueBuilder = builder.AddValue();
+                                metricValueBuilder = metricValueBuilder.WithValue(metricPoint.DoubleValue);
+                                for (int i = 0; i < metricPoint.Keys.Length; i++)
+                                {
+                                    metricValueBuilder.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
+                                }
+                            }
+
+                            builder.Write(writer);
+                            break;
+                        }
+
+                    case MetricType.Histogram:
+                        {
+                            builder = builder.WithType(PrometheusHistogramType);
+                            foreach (var metricPoint in metric.GetMetricPoints())
+                            {
+                                var metricValueBuilderSum = builder.AddValue();
+                                metricValueBuilderSum.WithName(metric.Name + PrometheusHistogramSumPostFix);
+                                metricValueBuilderSum = metricValueBuilderSum.WithValue(metricPoint.DoubleValue);
+                                for (int i = 0; i < metricPoint.Keys.Length; i++)
+                                {
+                                    metricValueBuilderSum.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
+                                }
+
+                                var metricValueBuilderCount = builder.AddValue();
+                                metricValueBuilderCount.WithName(metric.Name + PrometheusHistogramCountPostFix);
+                                metricValueBuilderCount = metricValueBuilderCount.WithValue(metricPoint.LongValue);
+                                for (int i = 0; i < metricPoint.Keys.Length; i++)
+                                {
+                                    metricValueBuilderCount.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
+                                }
+
+                                long totalCount = 0;
+                                for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
+                                {
+                                    totalCount += metricPoint.BucketCounts[i];
+                                    var metricValueBuilderBuckets = builder.AddValue();
+                                    metricValueBuilderBuckets.WithName(metric.Name + PrometheusHistogramBucketPostFix);
+                                    metricValueBuilderBuckets = metricValueBuilderBuckets.WithValue(totalCount);
+                                    for (int j = 0; j < metricPoint.Keys.Length; j++)
+                                    {
+                                        metricValueBuilderBuckets.WithLabel(metricPoint.Keys[j], metricPoint.Values[j].ToString());
+                                    }
+
+                                    var bucketName = i == metricPoint.ExplicitBounds.Length ?
+                                    PrometheusHistogramBucketLabelPositiveInfinity : metricPoint.ExplicitBounds[i].ToString(CultureInfo.InvariantCulture);
+                                    metricValueBuilderBuckets.WithLabel(PrometheusHistogramBucketLabelLessThan, bucketName);
+                                }
+                            }
+
+                            builder.Write(writer);
+
+                            break;
+                        }
                 }
             }
         }
@@ -97,36 +186,6 @@ namespace OpenTelemetry.Exporter
             writer.Flush();
 
             return Encoding.UTF8.GetString(stream.ToArray(), 0, (int)stream.Length);
-        }
-
-        private static void WriteSum(StreamWriter writer, PrometheusMetricBuilder builder, IEnumerable<KeyValuePair<string, object>> labels, double doubleValue)
-        {
-            builder = builder.WithType(PrometheusCounterType);
-
-            var metricValueBuilder = builder.AddValue();
-            metricValueBuilder = metricValueBuilder.WithValue(doubleValue);
-
-            foreach (var label in labels)
-            {
-                metricValueBuilder.WithLabel(label.Key, label.Value.ToString());
-            }
-
-            builder.Write(writer);
-        }
-
-        private static void WriteGauge(StreamWriter writer, PrometheusMetricBuilder builder, IEnumerable<KeyValuePair<string, object>> labels, double doubleValue)
-        {
-            builder = builder.WithType(PrometheusGaugeType);
-
-            var metricValueBuilder = builder.AddValue();
-            metricValueBuilder = metricValueBuilder.WithValue(doubleValue);
-
-            foreach (var label in labels)
-            {
-                metricValueBuilder.WithLabel(label.Key, label.Value.ToString());
-            }
-
-            builder.Write(writer);
         }
 
         private static void WriteHistogram(

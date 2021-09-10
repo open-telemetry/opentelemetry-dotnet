@@ -6,8 +6,8 @@ SDK](https://dotnet.microsoft.com/download) on your computer.
 Create a new console application and run it:
 
 ```sh
-dotnet new console --output getting-started-async-gauge
-cd getting-started-async-gauge
+dotnet new console --output getting-started-observable-gauge
+cd getting-started-observable-gauge
 dotnet run
 ```
 
@@ -32,7 +32,7 @@ output from the console, similar to shown below:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-Service.Nameunknown_service:getting-started-gauge
+Service.Nameunknown_service:getting-started-observable-gauge
 Export 15:44:05.262 15:44:05.263 Gauge [tag1=value1;tag2=value2] LongGauge, Meter: TestMeter/0.0.1
 Value: 306
 Export 15:44:05.262 15:44:06.290 Gauge [tag1=value1;tag2=value2] LongGauge, Meter: TestMeter/0.0.1

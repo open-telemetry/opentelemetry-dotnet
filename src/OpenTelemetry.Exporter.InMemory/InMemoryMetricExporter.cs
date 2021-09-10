@@ -1,4 +1,4 @@
-// <copyright file="ConsoleExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="InMemoryMetricExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,36 +14,24 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter
 {
-    public abstract class ConsoleExporter<T> : BaseExporter<T>
-        where T : class
+    public class InMemoryMetricExporter : InMemoryExporter<Metric>
     {
-        private readonly ConsoleExporterOptions options;
+        private InMemoryExporterOptions options;
 
-        protected ConsoleExporter(ConsoleExporterOptions options)
+        public InMemoryMetricExporter(ICollection<Metric> exportedItems, InMemoryExporterOptions options)
+            : base(exportedItems)
         {
-            this.options = options ?? new ConsoleExporterOptions();
+            this.options = options;
         }
 
         public override AggregationTemporality GetAggregationTemporality()
         {
             return this.options.AggregationTemporality;
-        }
-
-        protected void WriteLine(string message)
-        {
-            if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Console))
-            {
-                System.Console.WriteLine(message);
-            }
-
-            if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Debug))
-            {
-                System.Diagnostics.Trace.WriteLine(message);
-            }
         }
     }
 }

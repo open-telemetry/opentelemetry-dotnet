@@ -1,4 +1,4 @@
-// <copyright file="MetricProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricReader.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +18,19 @@ using System;
 
 namespace OpenTelemetry.Metrics
 {
-    public abstract class MetricProcessor : BaseProcessor<MetricItem>
+    public abstract class MetricReader : IDisposable
     {
-        protected readonly BaseExporter<Metric> exporter;
+        public BaseProvider ParentProvider { get; private set; }
 
-        protected MetricProcessor(BaseExporter<Metric> exporter)
+        public virtual void Collect()
         {
-            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+            var collectMetric = this.ParentProvider.GetMetricCollect();
+            var metricsCollected = collectMetric();
+            this.OnCollect(metricsCollected);
+        }
+
+        public virtual void OnCollect(Batch<Metric> metrics)
+        {
         }
 
         public virtual AggregationTemporality GetAggregationTemporality()
@@ -32,15 +38,20 @@ namespace OpenTelemetry.Metrics
             return AggregationTemporality.Cumulative;
         }
 
-        // GetMetric or GetMemoryState or GetAggregatedMetrics..
-        // ...or some other names
-        public abstract void SetGetMetricFunction(Func<Batch<Metric>> getMetrics);
-
-        internal override void SetParentProvider(BaseProvider parentProvider)
+        /// <inheritdoc/>
+        public void Dispose()
         {
-            base.SetParentProvider(parentProvider);
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
-            this.exporter.ParentProvider = parentProvider;
+        internal virtual void SetParentProvider(BaseProvider parentProvider)
+        {
+            this.ParentProvider = parentProvider;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
         }
     }
 }

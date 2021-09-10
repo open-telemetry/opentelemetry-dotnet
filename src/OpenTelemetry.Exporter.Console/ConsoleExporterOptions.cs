@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using OpenTelemetry.Metrics;
+
 namespace OpenTelemetry.Exporter
 {
     public class ConsoleExporterOptions
@@ -29,9 +31,9 @@ namespace OpenTelemetry.Exporter
         public int MetricExportIntervalMilliseconds { get; set; } = 1000;
 
         /// <summary>
-        /// Gets or sets a value indicating whether to export Delta
-        /// values or not (Cumulative).
+        /// Gets or sets the AggregationTemporality used for Histogram
+        /// and Sum metrics.
         /// </summary>
-        public bool IsDelta { get; set; } = false;
+        public AggregationTemporality AggregationTemporality { get; set; } = AggregationTemporality.Delta;
     }
 }

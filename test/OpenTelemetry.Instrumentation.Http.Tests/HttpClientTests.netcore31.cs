@@ -54,10 +54,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             var processor = new Mock<BaseProcessor<Activity>>();
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
-            var metricItems = new List<MetricItem>();
-            var metricExporter = new TestExporter<MetricItem>(ProcessExport);
+            var metricItems = new List<Metric>();
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
 
-            void ProcessExport(Batch<MetricItem> batch)
+            void ProcessExport(Batch<Metric> batch)
             {
                 foreach (var metricItem in batch)
                 {
@@ -65,10 +65,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
             }
 
-            var metricProcessor = new PullMetricProcessor(metricExporter, true);
+            var metricReader = new BaseExportingMetricReader(metricExporter);
             var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddHttpClientInstrumentation()
-                .AddMetricProcessor(metricProcessor)
+                .AddMetricReader(metricReader)
                 .Build();
 
             using (serverLifeTime)
@@ -110,12 +110,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
 
             // Invokes the TestExporter which will invoke ProcessExport
-            metricProcessor.PullRequest();
+            metricReader.Collect();
 
             meterProvider.Dispose();
 
             var requestMetrics = metricItems
-                .SelectMany(item => item.Metrics.Where(metric => metric.Name == "http.client.duration"))
+                .Where(metric => metric.Name == "http.client.duration")
                 .ToArray();
 
             Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
@@ -154,24 +154,47 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             {
                 Assert.Single(requestMetrics);
 
-                var metric = requestMetrics[0] as IHistogramMetric;
+                var metric = requestMetrics[0];
                 Assert.NotNull(metric);
-                Assert.Equal(1L, metric.PopulationCount);
-                Assert.Equal(activity.Duration.TotalMilliseconds, metric.PopulationSum);
+                Assert.True(metric.MetricType == MetricType.Histogram);
+
+                var metricPoints = new List<MetricPoint>();
+                foreach (var p in metric.GetMetricPoints())
+                {
+                    metricPoints.Add(p);
+                }
+
+                Assert.Single(metricPoints);
+                var metricPoint = metricPoints[0];
+                Assert.Equal(1L, metricPoint.LongValue);
+                Assert.Equal(activity.Duration.TotalMilliseconds, metricPoint.DoubleValue);
+
+                var attributes = new KeyValuePair<string, object>[metricPoint.Keys.Length];
+                for (int i = 0; i < attributes.Length; i++)
+                {
+                    attributes[i] = new KeyValuePair<string, object>(metricPoint.Keys[i], metricPoint.Values[i]);
+                }
 
                 var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, tc.Method);
                 var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
                 var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, tc.ResponseCode == 0 ? 200 : tc.ResponseCode);
                 var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "2.0");
-                Assert.Contains(method, metric.Attributes);
-                Assert.Contains(scheme, metric.Attributes);
-                Assert.Contains(statusCode, metric.Attributes);
-                Assert.Contains(flavor, metric.Attributes);
-                Assert.Equal(4, metric.Attributes.Length);
+                Assert.Contains(method, attributes);
+                Assert.Contains(scheme, attributes);
+                Assert.Contains(statusCode, attributes);
+                Assert.Contains(flavor, attributes);
+                Assert.Equal(4, attributes.Length);
             }
             else
             {
-                Assert.Empty(requestMetrics);
+                Assert.Single(requestMetrics);
+                var metricPoints = new List<MetricPoint>();
+                foreach (var p in requestMetrics[0].GetMetricPoints())
+                {
+                    metricPoints.Add(p);
+                }
+
+                Assert.Empty(metricPoints);
             }
         }
 

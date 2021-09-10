@@ -19,6 +19,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
+using System.Threading;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -26,28 +27,33 @@ namespace OpenTelemetry.Metrics
     public class MeterProviderSdk
         : MeterProvider
     {
-        internal readonly ConcurrentDictionary<AggregatorStore, bool> AggregatorStores = new ConcurrentDictionary<AggregatorStore, bool>();
-
+        internal const int MaxMetrics = 1000;
+        private readonly Metric[] metrics;
         private readonly List<object> instrumentations = new List<object>();
         private readonly object collectLock = new object();
         private readonly MeterListener listener;
-        private readonly List<MetricProcessor> metricProcessors = new List<MetricProcessor>();
+        private readonly List<MetricReader> metricReaders = new List<MetricReader>();
+        private int metricIndex = -1;
 
         internal MeterProviderSdk(
             Resource resource,
             IEnumerable<string> meterSources,
             List<MeterProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
-            MetricProcessor[] metricProcessors)
+            MetricReader[] metricReaders)
         {
             this.Resource = resource;
+            this.metrics = new Metric[MaxMetrics];
 
-            // TODO: Replace with single CompositeProcessor.
-            this.metricProcessors.AddRange(metricProcessors);
+            // TODO: Replace with single CompositeReader.
+            this.metricReaders.AddRange(metricReaders);
+            AggregationTemporality temporality = AggregationTemporality.Cumulative;
 
-            foreach (var processor in this.metricProcessors)
+            // TODO: Actually support multiple readers.
+            // Currently the last reader's temporality wins.
+            foreach (var reader in this.metricReaders)
             {
-                processor.SetGetMetricFunction(this.Collect);
-                processor.SetParentProvider(this);
+                reader.SetParentProvider(this);
+                temporality = reader.GetAggregationTemporality();
             }
 
             if (instrumentationFactories.Any())
@@ -71,14 +77,16 @@ namespace OpenTelemetry.Metrics
                 {
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
-                        var aggregatorStore = new AggregatorStore(instrument);
-
-                        // Lock to prevent new instrument (aggregatorstore)
-                        // from being added while Collect is going on.
-                        lock (this.collectLock)
+                        var index = Interlocked.Increment(ref this.metricIndex);
+                        if (index >= MaxMetrics)
                         {
-                            this.AggregatorStores.TryAdd(aggregatorStore, true);
-                            listener.EnableMeasurementEvents(instrument, aggregatorStore);
+                            // Log that all measurements are dropped from this instrument.
+                        }
+                        else
+                        {
+                            var metric = new Metric(instrument, temporality);
+                            this.metrics[index] = metric;
+                            listener.EnableMeasurementEvents(instrument, metric);
                         }
                     }
                 },
@@ -86,14 +94,14 @@ namespace OpenTelemetry.Metrics
             };
 
             // Everything double
-            this.listener.SetMeasurementEventCallback<double>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
-            this.listener.SetMeasurementEventCallback<float>((i, m, l, c) => this.MeasurementRecorded(i, (double)m, l, c));
+            this.listener.SetMeasurementEventCallback<double>((instrument, value, tags, state) => this.MeasurementRecordedDouble(instrument, value, tags, state));
+            this.listener.SetMeasurementEventCallback<float>((instrument, value, tags, state) => this.MeasurementRecordedDouble(instrument, value, tags, state));
 
             // Everything long
-            this.listener.SetMeasurementEventCallback<long>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
-            this.listener.SetMeasurementEventCallback<int>((i, m, l, c) => this.MeasurementRecorded(i, (long)m, l, c));
-            this.listener.SetMeasurementEventCallback<short>((i, m, l, c) => this.MeasurementRecorded(i, (long)m, l, c));
-            this.listener.SetMeasurementEventCallback<byte>((i, m, l, c) => this.MeasurementRecorded(i, (long)m, l, c));
+            this.listener.SetMeasurementEventCallback<long>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
+            this.listener.SetMeasurementEventCallback<int>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
+            this.listener.SetMeasurementEventCallback<short>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
+            this.listener.SetMeasurementEventCallback<byte>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
 
             this.listener.Start();
         }
@@ -105,19 +113,56 @@ namespace OpenTelemetry.Metrics
             Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
         }
 
-        internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
-            where T : struct
+        internal void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
             // Get Instrument State
-            var aggregatorStore = state as AggregatorStore;
+            var metric = state as Metric;
 
-            if (instrument == null || aggregatorStore == null)
+            if (instrument == null || metric == null)
             {
                 // TODO: log
                 return;
             }
 
-            aggregatorStore.Update(value, tagsRos);
+            metric.UpdateDouble(value, tagsRos);
+        }
+
+        internal void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
+        {
+            // Get Instrument State
+            var metric = state as Metric;
+
+            if (instrument == null || metric == null)
+            {
+                // TODO: log
+                return;
+            }
+
+            metric.UpdateLong(value, tagsRos);
+        }
+
+        internal Batch<Metric> Collect()
+        {
+            lock (this.collectLock)
+            {
+                try
+                {
+                    // Record all observable instruments
+                    this.listener.RecordObservableInstruments();
+                    var indexSnapShot = Math.Min(this.metricIndex, MaxMetrics - 1);
+                    for (int i = 0; i < indexSnapShot + 1; i++)
+                    {
+                        this.metrics[i].SnapShot();
+                    }
+
+                    return new Batch<Metric>(this.metrics, indexSnapShot + 1);
+                }
+                catch (Exception)
+                {
+                    // TODO: Log
+                    return default;
+                }
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -132,38 +177,12 @@ namespace OpenTelemetry.Metrics
                 this.instrumentations.Clear();
             }
 
-            foreach (var processor in this.metricProcessors)
+            foreach (var reader in this.metricReaders)
             {
-                processor.Dispose();
+                reader.Dispose();
             }
 
             this.listener.Dispose();
-        }
-
-        private MetricItem Collect(bool isDelta)
-        {
-            lock (this.collectLock)
-            {
-                MetricItem metricItem = null;
-                try
-                {
-                    // Record all observable instruments
-                    this.listener.RecordObservableInstruments();
-                    var dt = DateTimeOffset.UtcNow;
-                    metricItem = new MetricItem();
-                    foreach (var kv in this.AggregatorStores)
-                    {
-                        var metrics = kv.Key.Collect(isDelta, dt);
-                        metricItem.Metrics.AddRange(metrics);
-                    }
-                }
-                catch (Exception)
-                {
-                    // TODO: Log
-                }
-
-                return metricItem;
-            }
         }
     }
 }

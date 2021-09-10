@@ -1,4 +1,4 @@
-// <copyright file="PullMetricProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="BaseExportingMetricReader.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,35 +18,30 @@ using System;
 
 namespace OpenTelemetry.Metrics
 {
-    public class PullMetricProcessor : MetricProcessor, IDisposable
+    public class BaseExportingMetricReader : MetricReader
     {
-        private Func<Batch<Metric>> getMetrics;
+        private readonly BaseExporter<Metric> exporter;
         private bool disposed;
-        private AggregationTemporality aggTemporality;
 
-        public PullMetricProcessor(BaseExporter<Metric> exporter, bool isDelta)
-            : base(exporter)
+        public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
-            this.aggTemporality = isDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
+            this.exporter = exporter;
+        }
+
+        public override void OnCollect(Batch<Metric> metrics)
+        {
+            this.exporter.Export(metrics);
         }
 
         public override AggregationTemporality GetAggregationTemporality()
         {
-            return this.aggTemporality;
+            return this.exporter.GetAggregationTemporality();
         }
 
-        public override void SetGetMetricFunction(Func<Batch<Metric>> getMetrics)
+        internal override void SetParentProvider(BaseProvider parentProvider)
         {
-            this.getMetrics = getMetrics;
-        }
-
-        public void PullRequest()
-        {
-            if (this.getMetrics != null)
-            {
-                var metricsToExport = this.getMetrics();
-                this.exporter.Export(metricsToExport);
-            }
+            base.SetParentProvider(parentProvider);
+            this.exporter.ParentProvider = parentProvider;
         }
 
         /// <inheritdoc/>
