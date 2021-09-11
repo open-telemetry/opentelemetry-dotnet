@@ -35,7 +35,6 @@ namespace OpenTelemetry.Metrics
             object[] values)
         {
             this.AggType = aggType;
-            this.StartTime = startTime;
             this.Keys = keys;
             this.Values = values;
             this.EndTime = default;
@@ -60,6 +59,8 @@ namespace OpenTelemetry.Metrics
                 this.bucketCounts = null;
                 this.lockObject = null;
             }
+
+            this.StartTime = startTime;
         }
 
         public string[] Keys { get; internal set; }
