@@ -1,4 +1,4 @@
-// <copyright file="PullMetricProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="BaseExportingMetricReader.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,34 +18,30 @@ using System;
 
 namespace OpenTelemetry.Metrics
 {
-    public class PullMetricProcessor : MetricProcessor, IDisposable
+    public class BaseExportingMetricReader : MetricReader
     {
-        private Func<bool, MetricItem> getMetrics;
+        private readonly BaseExporter<Metric> exporter;
         private bool disposed;
-        private bool isDelta;
 
-        public PullMetricProcessor(BaseExporter<MetricItem> exporter, bool isDelta)
-            : base(exporter)
+        public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
-            this.isDelta = isDelta;
+            this.exporter = exporter;
         }
 
-        public override void SetGetMetricFunction(Func<bool, MetricItem> getMetrics)
+        public override void OnCollect(Batch<Metric> metrics)
         {
-            this.getMetrics = getMetrics;
+            this.exporter.Export(metrics);
         }
 
-        public void PullRequest()
+        public override AggregationTemporality GetAggregationTemporality()
         {
-            if (this.getMetrics != null)
-            {
-                var metricsToExport = this.getMetrics(this.isDelta);
-                if (metricsToExport != null && metricsToExport.Metrics.Count > 0)
-                {
-                    Batch<MetricItem> batch = new Batch<MetricItem>(metricsToExport);
-                    this.exporter.Export(batch);
-                }
-            }
+            return this.exporter.GetAggregationTemporality();
+        }
+
+        internal override void SetParentProvider(BaseProvider parentProvider)
+        {
+            base.SetParentProvider(parentProvider);
+            this.exporter.ParentProvider = parentProvider;
         }
 
         /// <inheritdoc/>

@@ -1,4 +1,4 @@
-// <copyright file="PushMetricProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="PeriodicExportingMetricReader.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,34 +20,45 @@ using System.Threading.Tasks;
 
 namespace OpenTelemetry.Metrics
 {
-    public class PushMetricProcessor : MetricProcessor, IDisposable
+    public class PeriodicExportingMetricReader : MetricReader
     {
-        private Task exportTask;
-        private CancellationTokenSource token;
-        private int exportIntervalMs;
-        private Func<bool, MetricItem> getMetrics;
+        private readonly BaseExporter<Metric> exporter;
+        private readonly Task exportTask;
+        private readonly CancellationTokenSource token;
         private bool disposed;
 
-        public PushMetricProcessor(BaseExporter<MetricItem> exporter, int exportIntervalMs, bool isDelta)
-            : base(exporter)
+        public PeriodicExportingMetricReader(BaseExporter<Metric> exporter, int exportIntervalMs)
         {
-            this.exportIntervalMs = exportIntervalMs;
+            this.exporter = exporter;
             this.token = new CancellationTokenSource();
+
+            // TODO: Use dedicated thread.
             this.exportTask = new Task(() =>
             {
                 while (!this.token.IsCancellationRequested)
                 {
-                    Task.Delay(this.exportIntervalMs).Wait();
-                    this.Export(isDelta);
+                    Task.Delay(exportIntervalMs).Wait();
+                    this.Collect();
                 }
             });
 
             this.exportTask.Start();
         }
 
-        public override void SetGetMetricFunction(Func<bool, MetricItem> getMetrics)
+        public override void OnCollect(Batch<Metric> metrics)
         {
-            this.getMetrics = getMetrics;
+            this.exporter.Export(metrics);
+        }
+
+        public override AggregationTemporality GetAggregationTemporality()
+        {
+            return this.exporter.GetAggregationTemporality();
+        }
+
+        internal override void SetParentProvider(BaseProvider parentProvider)
+        {
+            base.SetParentProvider(parentProvider);
+            this.exporter.ParentProvider = parentProvider;
         }
 
         /// <inheritdoc/>
@@ -60,8 +71,9 @@ namespace OpenTelemetry.Metrics
                 try
                 {
                     this.token.Cancel();
-                    this.exporter.Dispose();
+                    this.token.Dispose();
                     this.exportTask.Wait();
+                    this.exporter.Dispose();
                 }
                 catch (Exception)
                 {
@@ -69,19 +81,6 @@ namespace OpenTelemetry.Metrics
                 }
 
                 this.disposed = true;
-            }
-        }
-
-        private void Export(bool isDelta)
-        {
-            if (this.getMetrics != null)
-            {
-                var metricsToExport = this.getMetrics(isDelta);
-                if (metricsToExport != null && metricsToExport.Metrics.Count > 0)
-                {
-                    Batch<MetricItem> batch = new Batch<MetricItem>(metricsToExport);
-                    this.exporter.Export(batch);
-                }
             }
         }
     }

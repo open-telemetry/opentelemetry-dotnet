@@ -6,8 +6,8 @@ SDK](https://dotnet.microsoft.com/download) on your computer.
 Create a new console application and run it:
 
 ```sh
-dotnet new console --output getting-started
-cd getting-started
+dotnet new console --output getting-started-observable-counter
+cd getting-started-observable-counter
 dotnet run
 ```
 
@@ -22,7 +22,7 @@ Install the
 package:
 
 ```sh
-dotnet add package OpenTelemetry.Exporter.Console --version 1.2.*.*
+dotnet add package --prerelease OpenTelemetry.Exporter.Console
 ```
 
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs):
@@ -32,11 +32,15 @@ output from the console, similar to shown below:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-Export[] 16:38:36.241 16:38:37.233 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 590, Details: Delta=True,Mon=True,Count=59,Sum=590
-Export[] 16:38:37.233 16:38:38.258 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 640, Details: Delta=True,Mon=True,Count=64,Sum=640
-Export[] 16:38:38.258 16:38:39.261 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 640, Details: Delta=True,Mon=True,Count=64,Sum=640
-Export[] 16:38:39.261 16:38:40.266 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 630, Details: Delta=True,Mon=True,Count=63,Sum=630
-Export[] 16:38:40.266 16:38:41.271 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 640, Details: Delta=True,Mon=True,Count=64,Sum=640
+Service.Nameunknown_service:getting-started-observable-counter
+Export 16:35:25.669 16:35:25.670 observable-counter [tag1=value1;tag2=value2] LongSum, Meter: TestMeter/0.0.1
+Value: 10
+Export 16:35:25.669 16:35:26.698 observable-counter [tag1=value1;tag2=value2] LongSum, Meter: TestMeter/0.0.1
+Value: 20
+Export 16:35:25.669 16:35:27.711 observable-counter [tag1=value1;tag2=value2] LongSum, Meter: TestMeter/0.0.1
+Value: 30
+Export 16:35:25.669 16:35:28.729 observable-counter [tag1=value1;tag2=value2] LongSum, Meter: TestMeter/0.0.1
+Value: 40
 ```
 <!-- markdownlint-enable MD013 -->
 
@@ -47,9 +51,9 @@ What does the above program do?
 The program creates a
 [Meter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meter)
 instance named "TestMeter" and then creates a
-[Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#counter)
-instrument from it. This counter is used to repeatedly report metric
-measurements until exited after 10 seconds.
+[Asynchronous Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#asynchronous-counter)
+instrument from it. This Counter reports an ever increasing number as its
+measurement until exited after 10 seconds.
 
 An OpenTelemetry
 [MeterProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meterprovider)

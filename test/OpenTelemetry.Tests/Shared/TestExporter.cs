@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Tests
 {
@@ -22,10 +23,17 @@ namespace OpenTelemetry.Tests
         where T : class
     {
         private readonly Action<Batch<T>> processBatchAction;
+        private readonly AggregationTemporality aggregationTemporality;
 
         public TestExporter(Action<Batch<T>> processBatchAction)
         {
             this.processBatchAction = processBatchAction ?? throw new ArgumentNullException(nameof(processBatchAction));
+        }
+
+        public TestExporter(Action<Batch<T>> processBatchAction, AggregationTemporality aggregationTemporality)
+            : this(processBatchAction)
+        {
+            this.aggregationTemporality = aggregationTemporality;
         }
 
         public override ExportResult Export(in Batch<T> batch)
@@ -33,6 +41,11 @@ namespace OpenTelemetry.Tests
             this.processBatchAction(batch);
 
             return ExportResult.Success;
+        }
+
+        public override AggregationTemporality GetAggregationTemporality()
+        {
+            return this.aggregationTemporality;
         }
     }
 }

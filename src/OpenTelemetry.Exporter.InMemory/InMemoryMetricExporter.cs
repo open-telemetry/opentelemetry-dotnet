@@ -1,4 +1,4 @@
-// <copyright file="IMetric.cs" company="OpenTelemetry Authors">
+// <copyright file="InMemoryMetricExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,30 +14,24 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
+using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Exporter
 {
-    public interface IMetric
+    public class InMemoryMetricExporter : InMemoryExporter<Metric>
     {
-        string Name { get; }
+        private InMemoryExporterOptions options;
 
-        string Description { get; }
+        public InMemoryMetricExporter(ICollection<Metric> exportedItems, InMemoryExporterOptions options)
+            : base(exportedItems)
+        {
+            this.options = options;
+        }
 
-        string Unit { get; }
-
-        Meter Meter { get; }
-
-        DateTimeOffset StartTimeExclusive { get; }
-
-        DateTimeOffset EndTimeInclusive { get; }
-
-        KeyValuePair<string, object>[] Attributes { get; }
-
-        MetricType MetricType { get; }
-
-        string ToDisplayString();
+        public override AggregationTemporality GetAggregationTemporality()
+        {
+            return this.options.AggregationTemporality;
+        }
     }
 }

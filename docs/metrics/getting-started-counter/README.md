@@ -6,8 +6,8 @@ SDK](https://dotnet.microsoft.com/download) on your computer.
 Create a new console application and run it:
 
 ```sh
-dotnet new console --output getting-started-async-counter
-cd getting-started-async-counter
+dotnet new console --output getting-started-counter
+cd getting-started-counter
 dotnet run
 ```
 
@@ -22,7 +22,7 @@ Install the
 package:
 
 ```sh
-dotnet add package OpenTelemetry.Exporter.Console --version 1.2.*.*
+dotnet add package --prerelease OpenTelemetry.Exporter.Console
 ```
 
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs):
@@ -32,15 +32,29 @@ output from the console, similar to shown below:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-Service.Nameunknown_service:getting-started-async-counter
-Export 16:35:25.669 16:35:25.670 observable-counter [tag1=value1;tag2=value2] LongSum, Meter: TestMeter/0.0.1
-Value: 10
-Export 16:35:25.669 16:35:26.698 observable-counter [tag1=value1;tag2=value2] LongSum, Meter: TestMeter/0.0.1
-Value: 20
-Export 16:35:25.669 16:35:27.711 observable-counter [tag1=value1;tag2=value2] LongSum, Meter: TestMeter/0.0.1
-Value: 30
-Export 16:35:25.669 16:35:28.729 observable-counter [tag1=value1;tag2=value2] LongSum, Meter: TestMeter/0.0.1
-Value: 40
+Export counter, Meter: TestMeter/0.0.1
+(2021-09-03T04:29:37.1096398Z, 2021-09-03T04:29:38.0649233Z] tag1:value1tag2:value2 LongSum
+Value: 460
+
+Export counter, Meter: TestMeter/0.0.1
+(2021-09-03T04:29:38.0649233Z, 2021-09-03T04:29:39.1483639Z] tag1:value1tag2:value2 LongSum
+Value: 640
+
+Export counter, Meter: TestMeter/0.0.1
+(2021-09-03T04:29:39.1483639Z, 2021-09-03T04:29:40.1679696Z] tag1:value1tag2:value2 LongSum
+Value: 420
+
+Export counter, Meter: TestMeter/0.0.1
+(2021-09-03T04:29:40.1679696Z, 2021-09-03T04:29:41.1774527Z] tag1:value1tag2:value2 LongSum
+Value: 560
+
+Export counter, Meter: TestMeter/0.0.1
+(2021-09-03T04:29:41.1774527Z, 2021-09-03T04:29:42.1791523Z] tag1:value1tag2:value2 LongSum
+Value: 650
+
+Export counter, Meter: TestMeter/0.0.1
+(2021-09-03T04:29:42.1791523Z, 2021-09-03T04:29:43.1875033Z] tag1:value1tag2:value2 LongSum
+Value: 620
 ```
 <!-- markdownlint-enable MD013 -->
 
@@ -51,9 +65,9 @@ What does the above program do?
 The program creates a
 [Meter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meter)
 instance named "TestMeter" and then creates a
-[Asynchronous Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#asynchronous-counter)
-instrument from it. This Counter reports an ever increasing number as its
-measurement until exited after 10 seconds.
+[Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#counter)
+instrument from it. This counter is used to repeatedly report metric
+measurements until exited after 10 seconds.
 
 An OpenTelemetry
 [MeterProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meterprovider)

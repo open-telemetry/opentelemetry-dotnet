@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -47,6 +49,16 @@ namespace OpenTelemetry
             }
 
             return Resource.Empty;
+        }
+
+        public static Func<Batch<Metric>> GetMetricCollect(this BaseProvider baseProvider)
+        {
+            if (baseProvider is MeterProviderSdk meterProviderSdk)
+            {
+                return meterProviderSdk.Collect;
+            }
+
+            return null;
         }
 
         /// <summary>
