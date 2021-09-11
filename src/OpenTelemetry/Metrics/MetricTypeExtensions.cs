@@ -27,7 +27,7 @@ namespace OpenTelemetry.Metrics
         internal const MetricType METRIC_TYPE_SUM = (MetricType)0x10;
         internal const MetricType METRIC_TYPE_GAUGE = (MetricType)0x20;
         internal const MetricType METRIC_TYPE_HISTOGRAM = (MetricType)0x30;
-        /* internal const byte Summary = 0x40; // not used */
+        /* internal const byte METRIC_TYPE_SUMMARY = 0x40; // not used */
 
         internal const MetricType POINT_KIND_MASK = (MetricType)0x0f;
 
