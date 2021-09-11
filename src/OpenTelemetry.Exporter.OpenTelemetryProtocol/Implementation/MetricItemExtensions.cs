@@ -144,7 +144,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             sum.AggregationTemporality = OtlpMetrics.AggregationTemporality.Cumulative;
                         }
 
-                        foreach (var metricPoint in metric.GetMetricPoints())
+                        foreach (ref var metricPoint in metric.GetMetricPoints())
                         {
                             var dataPoint = new OtlpMetrics.NumberDataPoint
                             {
@@ -179,7 +179,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             sum.AggregationTemporality = OtlpMetrics.AggregationTemporality.Cumulative;
                         }
 
-                        foreach (var metricPoint in metric.GetMetricPoints())
+                        foreach (ref var metricPoint in metric.GetMetricPoints())
                         {
                             var dataPoint = new OtlpMetrics.NumberDataPoint
                             {
@@ -204,7 +204,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 case MetricType.LongGauge:
                     {
                         var gauge = new OtlpMetrics.Gauge();
-                        foreach (var metricPoint in metric.GetMetricPoints())
+                        foreach (ref var metricPoint in metric.GetMetricPoints())
                         {
                             var dataPoint = new OtlpMetrics.NumberDataPoint
                             {
@@ -229,7 +229,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 case MetricType.DoubleGauge:
                     {
                         var gauge = new OtlpMetrics.Gauge();
-                        foreach (var metricPoint in metric.GetMetricPoints())
+                        foreach (ref var metricPoint in metric.GetMetricPoints())
                         {
                             var dataPoint = new OtlpMetrics.NumberDataPoint
                             {
@@ -263,7 +263,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             histogram.AggregationTemporality = OtlpMetrics.AggregationTemporality.Cumulative;
                         }
 
-                        foreach (var metricPoint in metric.GetMetricPoints())
+                        foreach (ref var metricPoint in metric.GetMetricPoints())
                         {
                             var dataPoint = new OtlpMetrics.HistogramDataPoint
                             {
