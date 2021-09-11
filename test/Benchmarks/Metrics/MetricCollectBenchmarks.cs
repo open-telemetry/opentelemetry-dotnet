@@ -60,7 +60,7 @@ namespace Benchmarks.Metrics
         [GlobalSetup]
         public void Setup()
         {
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
+            var metricExporter = new TestExporter<Metric>(ProcessExport, AggregationTemporality.Cumulative);
             void ProcessExport(Batch<Metric> batch)
             {
                 double sum = 0;
