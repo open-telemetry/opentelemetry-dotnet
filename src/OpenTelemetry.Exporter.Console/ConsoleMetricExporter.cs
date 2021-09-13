@@ -80,7 +80,7 @@ namespace OpenTelemetry.Exporter
                 {
                     string valueDisplay = string.Empty;
                     StringBuilder tagsBuilder = new StringBuilder();
-                    for (int i = 0; i < metricPoint.Keys.Length; i++)
+                    for (int i = 0; i < ((metricPoint.Keys == null) ? 0 : metricPoint.Keys.Length); i++)
                     {
                         tagsBuilder.Append(metricPoint.Keys[i]);
                         tagsBuilder.Append(":");

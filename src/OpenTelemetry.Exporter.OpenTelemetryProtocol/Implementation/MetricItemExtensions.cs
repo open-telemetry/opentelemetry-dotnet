@@ -51,6 +51,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             foreach (var metric in metrics)
             {
                 var otlpMetric = metric.ToOtlpMetric();
+
+                // TODO: Replace null check with exception handling.
                 if (otlpMetric == null)
                 {
                     OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateMetric(
@@ -129,20 +131,23 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 otlpMetric.Unit = metric.Unit;
             }
 
+            OtlpMetrics.AggregationTemporality temporality;
+            if (metric.Temporality == AggregationTemporality.Delta)
+            {
+                temporality = OtlpMetrics.AggregationTemporality.Delta;
+            }
+            else
+            {
+                temporality = OtlpMetrics.AggregationTemporality.Cumulative;
+            }
+
             switch (metric.MetricType)
             {
                 case MetricType.LongSum:
                     {
                         var sum = new OtlpMetrics.Sum();
                         sum.IsMonotonic = true;
-                        if (metric.Temporality == AggregationTemporality.Delta)
-                        {
-                            sum.AggregationTemporality = OtlpMetrics.AggregationTemporality.Delta;
-                        }
-                        else
-                        {
-                            sum.AggregationTemporality = OtlpMetrics.AggregationTemporality.Cumulative;
-                        }
+                        sum.AggregationTemporality = temporality;
 
                         foreach (ref var metricPoint in metric.GetMetricPoints())
                         {
@@ -170,14 +175,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     {
                         var sum = new OtlpMetrics.Sum();
                         sum.IsMonotonic = true;
-                        if (metric.Temporality == AggregationTemporality.Delta)
-                        {
-                            sum.AggregationTemporality = OtlpMetrics.AggregationTemporality.Delta;
-                        }
-                        else
-                        {
-                            sum.AggregationTemporality = OtlpMetrics.AggregationTemporality.Cumulative;
-                        }
+                        sum.AggregationTemporality = temporality;
 
                         foreach (ref var metricPoint in metric.GetMetricPoints())
                         {
@@ -254,14 +252,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 case MetricType.Histogram:
                     {
                         var histogram = new OtlpMetrics.Histogram();
-                        if (metric.Temporality == AggregationTemporality.Delta)
-                        {
-                            histogram.AggregationTemporality = OtlpMetrics.AggregationTemporality.Delta;
-                        }
-                        else
-                        {
-                            histogram.AggregationTemporality = OtlpMetrics.AggregationTemporality.Cumulative;
-                        }
+                        histogram.AggregationTemporality = temporality;
 
                         foreach (ref var metricPoint in metric.GetMetricPoints())
                         {
