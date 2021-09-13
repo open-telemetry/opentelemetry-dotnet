@@ -95,7 +95,7 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Gets or sets the max waiting time (in milliseconds) for the backend to process each span batch. The default value is 10000.
         /// </summary>
-        public int TimeoutMilliseconds { get; set; } = 10000;
+        public uint TimeoutMilliseconds { get; set; } = 10000;
 
         /// <summary>
         /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
