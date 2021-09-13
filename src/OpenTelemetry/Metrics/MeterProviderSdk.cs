@@ -53,7 +53,7 @@ namespace OpenTelemetry.Metrics
             foreach (var reader in this.metricReaders)
             {
                 reader.SetParentProvider(this);
-                temporality = reader.GetAggregationTemporality();
+                temporality = reader.PreferredAggregationTemporality;
             }
 
             if (instrumentationFactories.Any())

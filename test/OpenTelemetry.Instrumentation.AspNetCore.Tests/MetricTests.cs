@@ -54,7 +54,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         public async Task RequestMetricIsCaptured()
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
+            var metricExporter = new TestExporter<Metric>(ProcessExport, AggregationTemporality.Cumulative);
 
             void ProcessExport(Batch<Metric> batch)
             {

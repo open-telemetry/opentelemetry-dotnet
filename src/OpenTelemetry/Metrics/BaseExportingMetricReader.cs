@@ -20,22 +20,19 @@ namespace OpenTelemetry.Metrics
 {
     public class BaseExportingMetricReader : MetricReader
     {
-        private readonly BaseExporter<Metric> exporter;
-        private bool disposed;
+        protected readonly BaseExporter<Metric> exporter;
+        protected bool disposed;
 
         public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
-            this.exporter = exporter;
+            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+            this.PreferredAggregationTemporality = exporter.GetAggregationTemporality();
+            this.SupportedAggregationTemporality = exporter.GetAggregationTemporality();
         }
 
         public override void OnCollect(Batch<Metric> metrics)
         {
             this.exporter.Export(metrics);
-        }
-
-        public override AggregationTemporality GetAggregationTemporality()
-        {
-            return this.exporter.GetAggregationTemporality();
         }
 
         internal override void SetParentProvider(BaseProvider parentProvider)
