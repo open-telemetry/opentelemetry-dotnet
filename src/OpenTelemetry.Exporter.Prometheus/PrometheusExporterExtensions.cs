@@ -186,5 +186,4 @@ namespace OpenTelemetry.Exporter
             }
         }
     }
-
 }
