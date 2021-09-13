@@ -56,8 +56,8 @@ namespace OpenTelemetry.Metrics
                 try
                 {
                     this.token.Cancel();
-                    this.token.Dispose();
                     this.exportTask.Wait();
+                    this.token.Dispose();
                 }
                 catch (Exception)
                 {
