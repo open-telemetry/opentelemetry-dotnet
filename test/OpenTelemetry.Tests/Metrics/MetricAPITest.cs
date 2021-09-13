@@ -232,7 +232,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void MultithreadedLongCounterTest()
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
+            var metricExporter = new TestExporter<Metric>(ProcessExport, AggregationTemporality.Cumulative);
 
             void ProcessExport(Batch<Metric> batch)
             {
@@ -300,7 +300,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void MultithreadedDoubleCounterTest()
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
+            var metricExporter = new TestExporter<Metric>(ProcessExport, AggregationTemporality.Cumulative);
 
             void ProcessExport(Batch<Metric> batch)
             {
