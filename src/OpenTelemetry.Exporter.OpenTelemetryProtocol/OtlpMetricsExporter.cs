@@ -32,6 +32,7 @@ namespace OpenTelemetry.Exporter
     /// Exporter consuming <see cref="Metric"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
+    [AggregationTemporality(AggregationTemporality.Both, AggregationTemporality.Cumulative)]
     public class OtlpMetricsExporter : BaseOtlpExporter<Metric>
     {
         private readonly OtlpCollector.MetricsService.IMetricsServiceClient metricsClient;
@@ -62,12 +63,6 @@ namespace OpenTelemetry.Exporter
                 this.Channel = options.CreateChannel();
                 this.metricsClient = new OtlpCollector.MetricsService.MetricsServiceClient(this.Channel);
             }
-        }
-
-        /// <inheritdoc />
-        public override AggregationTemporality GetAggregationTemporality()
-        {
-            return this.Options.AggregationTemporality;
         }
 
         /// <inheritdoc />

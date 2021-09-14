@@ -60,7 +60,7 @@ namespace Benchmarks.Metrics
         [GlobalSetup]
         public void Setup()
         {
-            var metricExporter = new TestExporter<Metric>(ProcessExport, AggregationTemporality.Cumulative);
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
             void ProcessExport(Batch<Metric> batch)
             {
                 double sum = 0;
@@ -86,7 +86,10 @@ namespace Benchmarks.Metrics
                 }
             }
 
-            this.reader = new BaseExportingMetricReader(metricExporter);
+            this.reader = new BaseExportingMetricReader(metricExporter)
+            {
+                PreferredAggregationTemporality = AggregationTemporality.Cumulative,
+            };
             this.provider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
                 .AddMetricReader(this.reader)
