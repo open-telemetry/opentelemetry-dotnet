@@ -23,18 +23,18 @@ using OpenTelemetry.Metrics;
 
 public class Program
 {
-    private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
+    private static readonly Meter MyMeter = new Meter("MyMeter", "0.0.1");
     private static readonly Random RandomGenerator = new Random();
 
     public static async Task Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestMeter")
+                .AddSource("MyMeter")
                 .AddConsoleExporter()
                 .Build();
 
         ObservableGauge<long> gauge = MyMeter.CreateObservableGauge<long>(
-            "DemoGauge",
+            "MyGauge",
             () => new List<Measurement<long>>()
             {
                 new (RandomGenerator.Next(1, 1000), new ("tag1", "value1"), new ("tag2", "value2")),

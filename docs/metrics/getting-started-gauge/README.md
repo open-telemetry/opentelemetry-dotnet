@@ -33,11 +33,11 @@ output from the console, similar to shown below:
 <!-- markdownlint-disable MD013 -->
 ```text
 Service.Nameunknown_service:getting-started-observable-gauge
-Export 15:44:05.262 15:44:05.263 Gauge [tag1=value1;tag2=value2] LongGauge, Meter: TestMeter/0.0.1
+Export 15:44:05.262 15:44:05.263 Gauge [tag1=value1;tag2=value2] LongGauge, Meter: MyMeter/0.0.1
 Value: 306
-Export 15:44:05.262 15:44:06.290 Gauge [tag1=value1;tag2=value2] LongGauge, Meter: TestMeter/0.0.1
+Export 15:44:05.262 15:44:06.290 Gauge [tag1=value1;tag2=value2] LongGauge, Meter: MyMeter/0.0.1
 Value: 693
-Export 15:44:05.262 15:44:07.302 Gauge [tag1=value1;tag2=value2] LongGauge, Meter: TestMeter/0.0.1
+Export 15:44:05.262 15:44:07.302 Gauge [tag1=value1;tag2=value2] LongGauge, Meter: MyMeter/0.0.1
 Value: 78
 ```
 <!-- markdownlint-enable MD013 -->
@@ -48,14 +48,14 @@ What does the above program do?
 
 The program creates a
 [Meter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meter)
-instance named "TestMeter" and then creates a
+instance named "MyMeter" and then creates a
 [Asynchronous Gauge](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#asynchronous-gauge)
-instrument from it. This Gauge reports a randomnly generated number as its
+instrument from it. This Gauge reports a randomly generated number as its
 measurement until exited after 10 seconds.
 
 An OpenTelemetry
 [MeterProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meterprovider)
-is configured to subscribe to instruments from the Meter `TestMeter`, and
+is configured to subscribe to instruments from the Meter `MyMeter`, and
 aggregate the measurements in-memory. The pre-aggregated metrics are exported
 every 1 second to a `ConsoleExporter`. `ConsoleExporter` simply displays it on
 the console.

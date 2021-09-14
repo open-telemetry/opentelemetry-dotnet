@@ -23,13 +23,13 @@ using OpenTelemetry.Metrics;
 
 public class Program
 {
-    private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
-    private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("DemoCounter");
+    private static readonly Meter MyMeter = new Meter("MyMeter", "0.0.1");
+    private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("MyCounter");
 
     public static async Task Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestMeter")
+                .AddSource("MyMeter")
                 .AddConsoleExporter()
                 .Build();
 
