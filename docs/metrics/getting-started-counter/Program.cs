@@ -14,40 +14,26 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
 public class Program
 {
-    private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
-    private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("counter");
+    private static readonly Meter MyMeter = new Meter("MyCompany.MyProduct.MyLibrary", "1.0");
 
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestMeter")
-                .AddConsoleExporter()
-                .Build();
+            .AddSource("MyCompany.MyProduct.MyLibrary")
+            .AddConsoleExporter()
+            .Build();
 
-        using var token = new CancellationTokenSource();
-        Task writeMetricTask = new Task(() =>
+        var counter = MyMeter.CreateCounter<long>("MyCounter");
+
+        for (int i = 0; i < 20000000; i++)
         {
-            while (!token.IsCancellationRequested)
-            {
-                Counter.Add(
-                            10,
-                            new KeyValuePair<string, object>("tag1", "value1"),
-                            new KeyValuePair<string, object>("tag2", "value2"));
-                Task.Delay(10).Wait();
-            }
-        });
-        writeMetricTask.Start();
-
-        token.CancelAfter(10000);
-        await writeMetricTask;
+            counter.Add(1, new("tag1", "value1"), new("tag2", "value2"));
+        }
     }
 }

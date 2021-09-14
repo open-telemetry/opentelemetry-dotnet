@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading.Tasks;
 using OpenTelemetry;
@@ -22,27 +23,21 @@ using OpenTelemetry.Metrics;
 
 public class Program
 {
-    private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
+    private static readonly Meter MyMeter = new Meter("MyCompany.MyProduct.MyLibrary", "1.0");
 
     public static async Task Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddSource("TestMeter")
+            .AddSource("MyCompany.MyProduct.MyLibrary")
             .AddConsoleExporter()
             .Build();
 
-        int i = 1;
-        var observableCounter = MyMeter.CreateObservableCounter<long>(
-            "observable-counter",
-            () =>
+        var process = Process.GetCurrentProcess();
+        MyMeter.CreateObservableCounter<double>(
+            "ProcessCpuTime",
+            () => new List<Measurement<double>>()
             {
-                var tag1 = new KeyValuePair<string, object>("tag1", "value1");
-                var tag2 = new KeyValuePair<string, object>("tag2", "value2");
-                return new List<Measurement<long>>()
-                {
-                    // Report an absolute value (not an increment/delta value).
-                    new Measurement<long>(i++ * 10, tag1, tag2),
-                };
+                new(process.TotalProcessorTime.TotalMilliseconds, new("tag1", "value1"), new("tag2", "value2")),
             });
 
         await Task.Delay(10000);

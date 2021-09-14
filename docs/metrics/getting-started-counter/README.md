@@ -32,27 +32,27 @@ output from the console, similar to shown below:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-Export counter, Meter: TestMeter/0.0.1
+Export MyCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
 (2021-09-03T04:29:37.1096398Z, 2021-09-03T04:29:38.0649233Z] tag1:value1tag2:value2 LongSum
 Value: 460
 
-Export counter, Meter: TestMeter/0.0.1
+Export MyCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
 (2021-09-03T04:29:38.0649233Z, 2021-09-03T04:29:39.1483639Z] tag1:value1tag2:value2 LongSum
 Value: 640
 
-Export counter, Meter: TestMeter/0.0.1
+Export MyCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
 (2021-09-03T04:29:39.1483639Z, 2021-09-03T04:29:40.1679696Z] tag1:value1tag2:value2 LongSum
 Value: 420
 
-Export counter, Meter: TestMeter/0.0.1
+Export MyCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
 (2021-09-03T04:29:40.1679696Z, 2021-09-03T04:29:41.1774527Z] tag1:value1tag2:value2 LongSum
 Value: 560
 
-Export counter, Meter: TestMeter/0.0.1
+Export MyCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
 (2021-09-03T04:29:41.1774527Z, 2021-09-03T04:29:42.1791523Z] tag1:value1tag2:value2 LongSum
 Value: 650
 
-Export counter, Meter: TestMeter/0.0.1
+Export MyCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
 (2021-09-03T04:29:42.1791523Z, 2021-09-03T04:29:43.1875033Z] tag1:value1tag2:value2 LongSum
 Value: 620
 ```
@@ -64,14 +64,14 @@ What does the above program do?
 
 The program creates a
 [Meter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meter)
-instance named "TestMeter" and then creates a
+instance named "MyCompany.MyProduct.MyLibrary" and then creates a
 [Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#counter)
 instrument from it. This counter is used to repeatedly report metric
-measurements until exited after 10 seconds.
+measurements until it reaches a certain number of loops.
 
 An OpenTelemetry
 [MeterProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meterprovider)
-is configured to subscribe to instruments from the Meter `TestMeter`, and
-aggregate the measurements in-memory. The pre-aggregated metrics are exported
-every 1 second to a `ConsoleExporter`. `ConsoleExporter` simply displays it on
-the console.
+is configured to subscribe to instruments from the Meter
+`MyCompany.MyProduct.MyLibrary`, and aggregate the measurements in-memory. The
+pre-aggregated metrics are exported every 1 second to a `ConsoleExporter`.
+`ConsoleExporter` simply displays it on the console.
