@@ -1,4 +1,4 @@
-// <copyright file="MetricType.cs" company="OpenTelemetry Authors">
+// <copyright file="AggregationType.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,36 +16,46 @@
 
 namespace OpenTelemetry.Metrics
 {
-    public enum MetricType
+    internal enum AggregationType
     {
         /// <summary>
-        /// Sum of Long type.
+        /// Invalid.
         /// </summary>
-        LongSum = 0,
+        Invalid = -1,
 
         /// <summary>
-        /// Sum of Double type.
+        /// Calculate SUM from incoming delta measurements.
         /// </summary>
-        DoubleSum = 1,
+        LongSumIncomingDelta = 0,
 
         /// <summary>
-        /// Gauge of Long type.
+        /// Calculate SUM from incoming cumulative measurements.
         /// </summary>
-        LongGauge = 2,
+        LongSumIncomingCumulative = 1,
 
         /// <summary>
-        /// Gauge of Double type.
+        /// Calculate SUM from incoming delta measurements.
         /// </summary>
-        DoubleGauge = 3,
+        DoubleSumIncomingDelta = 2,
+
+        /// <summary>
+        /// Calculate SUM from incoming cumulative measurements.
+        /// </summary>
+        DoubleSumIncomingCumulative = 3,
+
+        /// <summary>
+        /// Keep LastValue.
+        /// </summary>
+        LongGauge = 4,
+
+        /// <summary>
+        /// Keep LastValue.
+        /// </summary>
+        DoubleGauge = 5,
 
         /// <summary>
         /// Histogram.
         /// </summary>
-        Histogram = 4,
-
-        /// <summary>
-        /// Summary.
-        /// </summary>
-        Summary = 5,
+        Histogram = 6,
     }
 }

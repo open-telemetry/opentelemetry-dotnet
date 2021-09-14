@@ -23,7 +23,8 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
 {
-    public class ConsoleMetricExporter : ConsoleExporter<MetricItem>
+    [AggregationTemporality(AggregationTemporality.Both, AggregationTemporality.Cumulative)]
+    public class ConsoleMetricExporter : ConsoleExporter<Metric>
     {
         private Resource resource;
 
@@ -32,7 +33,7 @@ namespace OpenTelemetry.Exporter
         {
         }
 
-        public override ExportResult Export(in Batch<MetricItem> batch)
+        public override ExportResult Export(in Batch<Metric> batch)
         {
             if (this.resource == null)
             {
@@ -49,101 +50,107 @@ namespace OpenTelemetry.Exporter
                 }
             }
 
-            foreach (var metricItem in batch)
+            foreach (var metric in batch)
             {
-                foreach (var metric in metricItem.Metrics)
+                var msg = new StringBuilder($"\nExport ");
+                msg.Append(metric.Name);
+                if (!string.IsNullOrEmpty(metric.Description))
                 {
-                    var tags = metric.Attributes.ToArray().Select(k => $"{k.Key}={k.Value?.ToString()}");
+                    msg.Append(' ');
+                    msg.Append(metric.Description);
+                }
 
+                if (!string.IsNullOrEmpty(metric.Unit))
+                {
+                    msg.Append($", Unit: {metric.Unit}");
+                }
+
+                if (!string.IsNullOrEmpty(metric.Meter.Name))
+                {
+                    msg.Append($", Meter: {metric.Meter.Name}");
+
+                    if (!string.IsNullOrEmpty(metric.Meter.Version))
+                    {
+                        msg.Append($"/{metric.Meter.Version}");
+                    }
+                }
+
+                Console.WriteLine(msg.ToString());
+
+                foreach (ref var metricPoint in metric.GetMetricPoints())
+                {
                     string valueDisplay = string.Empty;
-
-                    // Switch would be faster than the if.else ladder
-                    // of try and cast.
-                    switch (metric.MetricType)
+                    StringBuilder tagsBuilder = new StringBuilder();
+                    if (metricPoint.Keys != null)
                     {
-                        case MetricType.LongSum:
-                            {
-                                valueDisplay = (metric as ISumMetricLong).LongSum.ToString(CultureInfo.InvariantCulture);
-                                break;
-                            }
-
-                        case MetricType.DoubleSum:
-                            {
-                                valueDisplay = (metric as ISumMetricDouble).DoubleSum.ToString(CultureInfo.InvariantCulture);
-                                break;
-                            }
-
-                        case MetricType.LongGauge:
-                            {
-                                valueDisplay = (metric as IGaugeMetric).LastValue.Value.ToString();
-                                break;
-                            }
-
-                        case MetricType.DoubleGauge:
-                            {
-                                valueDisplay = (metric as IGaugeMetric).LastValue.Value.ToString();
-                                break;
-                            }
-
-                        case MetricType.Histogram:
-                            {
-                                var histogramMetric = metric as IHistogramMetric;
-                                var bucketsBuilder = new StringBuilder();
-                                bucketsBuilder.Append($"Sum: {histogramMetric.PopulationSum} Count: {histogramMetric.PopulationCount} \n");
-                                foreach (var bucket in histogramMetric.Buckets)
-                                {
-                                    bucketsBuilder.Append('(');
-                                    bucketsBuilder.Append(double.IsInfinity(bucket.LowBoundary) ? "-Infinity" : $"{bucket.LowBoundary}");
-                                    bucketsBuilder.Append(", ");
-                                    bucketsBuilder.Append(double.IsInfinity(bucket.HighBoundary) ? "+Infinity" : $"{bucket.HighBoundary}");
-                                    bucketsBuilder.Append(double.IsInfinity(bucket.HighBoundary) ? ')' : ']');
-                                    bucketsBuilder.Append($": {bucket.Count}");
-                                    bucketsBuilder.AppendLine();
-                                }
-
-                                valueDisplay = bucketsBuilder.ToString();
-                                break;
-                            }
-
-                        case MetricType.Summary:
-                            {
-                                var summaryMetric = metric as ISummaryMetric;
-                                valueDisplay = string.Format("Sum: {0} Count: {1}", summaryMetric.PopulationSum, summaryMetric.PopulationCount);
-                                break;
-                            }
-                    }
-
-                    var msg = new StringBuilder($"Export (");
-                    msg.Append(metric.StartTimeExclusive.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
-                    msg.Append(", ");
-                    msg.Append(metric.EndTimeInclusive.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
-                    msg.Append("] ");
-                    msg.Append(metric.Name);
-                    msg.Append(' ');
-                    msg.Append(string.Join(";", tags));
-                    msg.Append(' ');
-                    msg.Append(metric.MetricType);
-
-                    if (!string.IsNullOrEmpty(metric.Description))
-                    {
-                        msg.Append($", Description: {metric.Description}");
-                    }
-
-                    if (!string.IsNullOrEmpty(metric.Unit))
-                    {
-                        msg.Append($", Unit: {metric.Unit}");
-                    }
-
-                    if (!string.IsNullOrEmpty(metric.Meter.Name))
-                    {
-                        msg.Append($", Meter: {metric.Meter.Name}");
-
-                        if (!string.IsNullOrEmpty(metric.Meter.Version))
+                        for (int i = 0; i < metricPoint.Keys.Length; i++)
                         {
-                            msg.Append($"/{metric.Meter.Version}");
+                            tagsBuilder.Append(metricPoint.Keys[i]);
+                            tagsBuilder.Append(":");
+                            tagsBuilder.Append(metricPoint.Values[i]);
                         }
                     }
 
+                    var tags = tagsBuilder.ToString();
+
+                    var metricType = metric.MetricType;
+
+                    if (metricType.IsHistogram())
+                    {
+                        var bucketsBuilder = new StringBuilder();
+                        bucketsBuilder.Append($"Sum: {metricPoint.DoubleValue} Count: {metricPoint.LongValue} \n");
+                        for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
+                        {
+                            if (i == 0)
+                            {
+                                bucketsBuilder.Append("(-Infinity,");
+                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
+                                bucketsBuilder.Append("]");
+                                bucketsBuilder.Append(":");
+                                bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                            }
+                            else if (i == metricPoint.ExplicitBounds.Length)
+                            {
+                                bucketsBuilder.Append("(");
+                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
+                                bucketsBuilder.Append(",");
+                                bucketsBuilder.Append("+Infinity]");
+                                bucketsBuilder.Append(":");
+                                bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                            }
+                            else
+                            {
+                                bucketsBuilder.Append("(");
+                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
+                                bucketsBuilder.Append(",");
+                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
+                                bucketsBuilder.Append("]");
+                                bucketsBuilder.Append(":");
+                                bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                            }
+
+                            bucketsBuilder.AppendLine();
+                        }
+
+                        valueDisplay = bucketsBuilder.ToString();
+                    }
+                    else if (metricType.IsDouble())
+                    {
+                        valueDisplay = metricPoint.DoubleValue.ToString(CultureInfo.InvariantCulture);
+                    }
+                    else if (metricType.IsLong())
+                    {
+                        valueDisplay = metricPoint.LongValue.ToString(CultureInfo.InvariantCulture);
+                    }
+
+                    msg = new StringBuilder();
+                    msg.Append(metricPoint.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                    msg.Append(", ");
+                    msg.Append(metricPoint.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                    msg.Append("] ");
+                    msg.Append(string.Join(";", tags));
+                    msg.Append(' ');
+                    msg.Append(metric.MetricType);
                     msg.AppendLine();
                     msg.Append($"Value: {valueDisplay}");
                     Console.WriteLine(msg);
