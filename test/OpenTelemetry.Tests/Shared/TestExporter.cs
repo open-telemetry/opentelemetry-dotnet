@@ -19,21 +19,15 @@ using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Tests
 {
+    [AggregationTemporality(AggregationTemporality.Both)]
     internal class TestExporter<T> : BaseExporter<T>
         where T : class
     {
         private readonly Action<Batch<T>> processBatchAction;
-        private readonly AggregationTemporality aggregationTemporality;
 
         public TestExporter(Action<Batch<T>> processBatchAction)
         {
             this.processBatchAction = processBatchAction ?? throw new ArgumentNullException(nameof(processBatchAction));
-        }
-
-        public TestExporter(Action<Batch<T>> processBatchAction, AggregationTemporality aggregationTemporality)
-            : this(processBatchAction)
-        {
-            this.aggregationTemporality = aggregationTemporality;
         }
 
         public override ExportResult Export(in Batch<T> batch)
