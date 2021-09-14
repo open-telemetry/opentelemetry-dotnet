@@ -4,7 +4,7 @@
 
 ## 1.2.0-alpha3
 
-    Released 2021-Sep-13
+Released 2021-Sep-13
 
 * Metrics perf improvements, bug fixes.
   Replace MetricProcessor with MetricReader.
