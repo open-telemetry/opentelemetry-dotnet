@@ -37,7 +37,7 @@ public class Program
             "ProcessCpuTime",
             () => new List<Measurement<double>>()
             {
-                new(process.TotalProcessorTime.TotalMilliseconds, new("tag1", "value1"), new("tag2", "value2")),
+                new (process.TotalProcessorTime.TotalMilliseconds, new ("tag1", "value1"), new ("tag2", "value2")),
             });
 
         await Task.Delay(10000);

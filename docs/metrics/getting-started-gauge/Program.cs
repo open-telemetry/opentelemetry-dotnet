@@ -37,7 +37,7 @@ public class Program
             "MyGauge",
             () => new List<Measurement<long>>()
             {
-                new(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2")),
+                new (random.Next(1, 1000), new ("tag1", "value1"), new ("tag2", "value2")),
             });
 
         await Task.Delay(10000);
