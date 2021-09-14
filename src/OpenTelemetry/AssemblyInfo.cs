@@ -23,6 +23,8 @@ using System.Runtime.CompilerServices;
 
 // TODO: Much of the metrics SDK is currently internal. These should be removed once the public API surface area for metrics is defined.
 [assembly: InternalsVisibleTo("OpenTelemetry.Exporter.Jaeger" + AssemblyInfo.PublicKey)]
+[assembly: InternalsVisibleTo("OpenTelemetry.Exporter.Jaeger.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Exporter.OpenTelemetryProtocol" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Exporter.Zipkin" + AssemblyInfo.PublicKey)]
+[assembly: InternalsVisibleTo("OpenTelemetry.Exporter.Zipkin.Tests" + AssemblyInfo.PublicKey)]
