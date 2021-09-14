@@ -136,7 +136,7 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void DroppedExportProcessorItems(long droppedCount, Type type)
+        public void DroppedExportProcessorItems(long droppedCount, object exporter)
         {
             if (droppedCount <= 0 && this.IsEnabled(EventLevel.Informational, EventKeywords.All))
             {
@@ -147,7 +147,7 @@ namespace OpenTelemetry.Internal
             // Positive number of dropped items
             if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
-                this.ExistsDroppedExportProcessorItems(droppedCount, type);
+                this.ExistsDroppedExportProcessorItems(droppedCount, exporter.GetType());
             }
         }
 
@@ -334,7 +334,7 @@ namespace OpenTelemetry.Internal
         [Event(32, Message = "Telemetry items dropped: '{0}', type: '{1}'.", Level = EventLevel.Warning)]
         public void ExistsDroppedExportProcessorItems(long droppedCount, Type type)
         {
-            this.WriteEvent(32, droppedCount, type);
+            this.WriteEvent(32, droppedCount, type.ToString());
         }
 
 #if DEBUG
