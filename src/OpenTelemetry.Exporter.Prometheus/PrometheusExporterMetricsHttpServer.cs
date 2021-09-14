@@ -124,7 +124,7 @@ namespace OpenTelemetry.Exporter
 
                     using var output = ctx.Response.OutputStream;
                     using var writer = new StreamWriter(output);
-                    this.exporter.MakePullRequest();
+                    this.exporter.CollectMetric();
                     this.exporter.WriteMetricsCollection(writer);
                 }
             }
