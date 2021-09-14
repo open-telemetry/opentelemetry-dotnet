@@ -30,8 +30,8 @@ public class Program
             .AddConsoleExporter()
             .Build();
 
-        var histogram = MyMeter.CreateHistogram<long>("MyHistogram");
         var random = new Random();
+        var histogram = MyMeter.CreateHistogram<long>("MyHistogram");
 
         for (int i = 0; i < 20000000; i++)
         {
