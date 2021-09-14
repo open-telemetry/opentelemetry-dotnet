@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-alpha3
+
+Released 2021-Sep-13
+
 * Metrics perf improvements, bug fixes.
   Replace MetricProcessor with MetricReader.
   ([#2306](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2306))

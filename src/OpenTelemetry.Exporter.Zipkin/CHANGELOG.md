@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-alpha3
+
+Released 2021-Sep-13
+
 * `ZipkinExporterOptions.BatchExportProcessorOptions` is initialized with
   `BatchExportActivityProcessorOptions` which supports field value overriding
   using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
