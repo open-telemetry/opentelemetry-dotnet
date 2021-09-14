@@ -33,7 +33,7 @@ public class Program
 
         for (int i = 0; i < 20000000; i++)
         {
-            counter.Add(1, new ("tag1", "value1"), new ("tag2", "value2"));
+            counter.Add(1, new("tag1", "value1"), new("tag2", "value2"));
         }
     }
 }
