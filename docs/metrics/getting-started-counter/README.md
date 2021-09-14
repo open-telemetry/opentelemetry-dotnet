@@ -67,7 +67,7 @@ The program creates a
 instance named "MyMeter" and then creates a
 [Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#counter)
 instrument from it. This counter is used to repeatedly report metric
-measurements until exited after 10 seconds.
+measurements until it reaches a certain number of loops.
 
 An OpenTelemetry
 [MeterProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meterprovider)

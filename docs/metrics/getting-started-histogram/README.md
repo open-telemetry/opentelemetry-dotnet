@@ -57,7 +57,7 @@ The program creates a
 instance named "MyMeter" and then creates a
 [Histogram](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#histogram)
 instrument from it. This histogram is used to repeatedly report random metric
-measurements until exited after 10 seconds.
+measurements until it reaches a certain number of loops.
 
 An OpenTelemetry
 [MeterProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meterprovider)

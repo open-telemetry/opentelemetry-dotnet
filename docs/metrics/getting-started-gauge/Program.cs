@@ -23,7 +23,7 @@ using OpenTelemetry.Metrics;
 
 public class Program
 {
-    private static readonly Meter MyMeter = new Meter("MyMeter", "0.0.1");
+    private static readonly Meter MyMeter = new Meter("MyMeter", "1.0");
     private static readonly Random RandomGenerator = new Random();
 
     public static async Task Main(string[] args)

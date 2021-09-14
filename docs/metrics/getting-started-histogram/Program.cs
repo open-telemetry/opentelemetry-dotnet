@@ -15,38 +15,27 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
 public class Program
 {
-    private static readonly Meter MyMeter = new Meter("MyMeter", "0.0.1");
-    private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("MyHistogram");
-    private static readonly Random RandomGenerator = new Random();
+    private static readonly Meter MyMeter = new Meter("MyMeter", "1.0");
 
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("MyMeter")
-                .AddConsoleExporter()
-                .Build();
+            .AddSource("MyMeter")
+            .AddConsoleExporter()
+            .Build();
 
-        using var token = new CancellationTokenSource();
-        Task writeMetricTask = new Task(() =>
+        var histogram = MyMeter.CreateHistogram<long>("MyHistogram");
+        var random = new Random();
+
+        for (int i = 0; i < 20000000; i++)
         {
-            while (!token.IsCancellationRequested)
-            {
-                MyHistogram.Record(RandomGenerator.Next(1, 1000), new ("tag1", "value1"), new ("tag2", "value2"));
-                Task.Delay(10).Wait();
-            }
-        });
-        writeMetricTask.Start();
-
-        token.CancelAfter(10000);
-        await writeMetricTask;
+            histogram.Record(random.Next(1, 1000), new ("tag1", "value1"), new ("tag2", "value2"));
+        }
     }
 }
