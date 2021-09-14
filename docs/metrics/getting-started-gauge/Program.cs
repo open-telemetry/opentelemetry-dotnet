@@ -33,7 +33,7 @@ public class Program
                 .AddConsoleExporter()
                 .Build();
 
-        ObservableGauge<long> gauge = MyMeter.CreateObservableGauge<long>(
+        MyMeter.CreateObservableGauge<long>(
             "MyGauge",
             () => new List<Measurement<long>>()
             {

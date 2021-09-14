@@ -33,7 +33,7 @@ public class Program
             .Build();
 
         var process = Process.GetCurrentProcess();
-        var observableCounter = MyMeter.CreateObservableCounter<double>(
+        MyMeter.CreateObservableCounter<double>(
             "ProcessCpuTime",
             () => new List<Measurement<double>>()
             {
