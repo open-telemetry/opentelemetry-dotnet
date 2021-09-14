@@ -69,7 +69,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         public void OtlpExporterOptions_InvalidTimeoutVariableOverride()
         {
             Environment.SetEnvironmentVariable(OtlpExporterOptions.TimeoutEnvVarName, "invalid");
-            // negative value
 
             var options = new OtlpExporterOptions();
 
