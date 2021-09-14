@@ -34,16 +34,10 @@ public class Program
                 .Build();
 
         ObservableGauge<long> gauge = MyMeter.CreateObservableGauge<long>(
-            "Gauge",
-            () =>
+            "DemoGauge",
+            () => new List<Measurement<long>>()
             {
-                var tag1 = new KeyValuePair<string, object>("tag1", "value1");
-                var tag2 = new KeyValuePair<string, object>("tag2", "value2");
-
-                return new List<Measurement<long>>()
-                {
-                    new Measurement<long>(RandomGenerator.Next(1, 1000), tag1, tag2),
-                };
+                new (RandomGenerator.Next(1, 1000), new ("tag1", "value1"), new ("tag2", "value2")),
             });
 
         await Task.Delay(10000);

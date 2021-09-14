@@ -25,7 +25,7 @@ using OpenTelemetry.Metrics;
 public class Program
 {
     private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
-    private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("histogram");
+    private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("DemoHistogram");
     private static readonly Random RandomGenerator = new Random();
 
     public static async Task Main(string[] args)
@@ -40,10 +40,7 @@ public class Program
         {
             while (!token.IsCancellationRequested)
             {
-                MyHistogram.Record(
-                            RandomGenerator.Next(1, 1000),
-                            new KeyValuePair<string, object>("tag1", "value1"),
-                            new KeyValuePair<string, object>("tag2", "value2"));
+                MyHistogram.Record(RandomGenerator.Next(1, 1000), new ("tag1", "value1"), new ("tag2", "value2"));
                 Task.Delay(10).Wait();
             }
         });
