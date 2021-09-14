@@ -14,12 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
 using OpenTelemetry.Exporter.Prometheus.Implementation;
 using OpenTelemetry.Metrics;
+using static OpenTelemetry.Exporter.Prometheus.Implementation.PrometheusMetricBuilder;
 
 namespace OpenTelemetry.Exporter
 {
@@ -59,13 +59,7 @@ namespace OpenTelemetry.Exporter
                             {
                                 var metricValueBuilder = builder.AddValue();
                                 metricValueBuilder = metricValueBuilder.WithValue(metricPoint.LongValue);
-                                if (metricPoint.Keys != null)
-                                {
-                                    for (int i = 0; i < metricPoint.Keys.Length; i++)
-                                    {
-                                        metricValueBuilder.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
-                                    }
-                                }
+                                metricValueBuilder.AddLabels(metricPoint.Keys, metricPoint.Values);
                             }
 
                             builder.Write(writer);
@@ -79,13 +73,7 @@ namespace OpenTelemetry.Exporter
                             {
                                 var metricValueBuilder = builder.AddValue();
                                 metricValueBuilder = metricValueBuilder.WithValue(metricPoint.DoubleValue);
-                                if (metricPoint.Keys != null)
-                                {
-                                    for (int i = 0; i < metricPoint.Keys.Length; i++)
-                                    {
-                                        metricValueBuilder.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
-                                    }
-                                }
+                                metricValueBuilder.AddLabels(metricPoint.Keys, metricPoint.Values);
                             }
 
                             builder.Write(writer);
@@ -99,10 +87,7 @@ namespace OpenTelemetry.Exporter
                             {
                                 var metricValueBuilder = builder.AddValue();
                                 metricValueBuilder = metricValueBuilder.WithValue(metricPoint.LongValue);
-                                for (int i = 0; i < metricPoint.Keys.Length; i++)
-                                {
-                                    metricValueBuilder.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
-                                }
+                                metricValueBuilder.AddLabels(metricPoint.Keys, metricPoint.Values);
                             }
 
                             builder.Write(writer);
@@ -116,10 +101,7 @@ namespace OpenTelemetry.Exporter
                             {
                                 var metricValueBuilder = builder.AddValue();
                                 metricValueBuilder = metricValueBuilder.WithValue(metricPoint.DoubleValue);
-                                for (int i = 0; i < metricPoint.Keys.Length; i++)
-                                {
-                                    metricValueBuilder.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
-                                }
+                                metricValueBuilder.AddLabels(metricPoint.Keys, metricPoint.Values);
                             }
 
                             builder.Write(writer);
@@ -151,18 +133,12 @@ namespace OpenTelemetry.Exporter
                                 var metricValueBuilderSum = builder.AddValue();
                                 metricValueBuilderSum.WithName(metric.Name + PrometheusHistogramSumPostFix);
                                 metricValueBuilderSum = metricValueBuilderSum.WithValue(metricPoint.DoubleValue);
-                                for (int i = 0; i < metricPoint.Keys.Length; i++)
-                                {
-                                    metricValueBuilderSum.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
-                                }
+                                metricValueBuilderSum.AddLabels(metricPoint.Keys, metricPoint.Values);
 
                                 var metricValueBuilderCount = builder.AddValue();
                                 metricValueBuilderCount.WithName(metric.Name + PrometheusHistogramCountPostFix);
                                 metricValueBuilderCount = metricValueBuilderCount.WithValue(metricPoint.LongValue);
-                                for (int i = 0; i < metricPoint.Keys.Length; i++)
-                                {
-                                    metricValueBuilderCount.WithLabel(metricPoint.Keys[i], metricPoint.Values[i].ToString());
-                                }
+                                metricValueBuilderCount.AddLabels(metricPoint.Keys, metricPoint.Values);
 
                                 long totalCount = 0;
                                 for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
@@ -171,10 +147,7 @@ namespace OpenTelemetry.Exporter
                                     var metricValueBuilderBuckets = builder.AddValue();
                                     metricValueBuilderBuckets.WithName(metric.Name + PrometheusHistogramBucketPostFix);
                                     metricValueBuilderBuckets = metricValueBuilderBuckets.WithValue(totalCount);
-                                    for (int j = 0; j < metricPoint.Keys.Length; j++)
-                                    {
-                                        metricValueBuilderBuckets.WithLabel(metricPoint.Keys[j], metricPoint.Values[j].ToString());
-                                    }
+                                    metricValueBuilderBuckets.AddLabels(metricPoint.Keys, metricPoint.Values);
 
                                     var bucketName = i == metricPoint.ExplicitBounds.Length ?
                                     PrometheusHistogramBucketLabelPositiveInfinity : metricPoint.ExplicitBounds[i].ToString(CultureInfo.InvariantCulture);
@@ -203,6 +176,17 @@ namespace OpenTelemetry.Exporter
             writer.Flush();
 
             return Encoding.UTF8.GetString(stream.ToArray(), 0, (int)stream.Length);
+        }
+
+        private static void AddLabels(this PrometheusMetricValueBuilder valueBuilder, string[] keys, object[] values)
+        {
+            if (keys != null)
+            {
+                for (int i = 0; i < keys.Length; i++)
+                {
+                    valueBuilder.WithLabel(keys[i], values[i].ToString());
+                }
+            }
         }
     }
 }
