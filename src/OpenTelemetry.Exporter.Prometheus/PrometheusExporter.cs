@@ -23,6 +23,7 @@ namespace OpenTelemetry.Exporter
     /// <summary>
     /// Exporter of OpenTelemetry metrics to Prometheus.
     /// </summary>
+    [AggregationTemporality(AggregationTemporality.Cumulative)]
     public class PrometheusExporter : BaseExporter<Metric>
     {
         internal readonly PrometheusExporterOptions Options;
@@ -43,11 +44,6 @@ namespace OpenTelemetry.Exporter
         {
             this.Metrics = metrics;
             return ExportResult.Success;
-        }
-
-        public override AggregationTemporality GetAggregationTemporality()
-        {
-            return AggregationTemporality.Cumulative;
         }
     }
 }

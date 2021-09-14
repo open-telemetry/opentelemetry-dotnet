@@ -26,8 +26,14 @@ namespace OpenTelemetry.Metrics
         public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
-            this.PreferredAggregationTemporality = exporter.GetAggregationTemporality();
-            this.SupportedAggregationTemporality = exporter.GetAggregationTemporality();
+
+            var attributes = exporter.GetType().GetCustomAttributes(typeof(AggregationTemporalityAttribute), true);
+            if (attributes.Length > 0)
+            {
+                AggregationTemporalityAttribute aggregationTemporality = (AggregationTemporalityAttribute)attributes[attributes.Length - 1];
+                this.PreferredAggregationTemporality = aggregationTemporality.Preferred;
+                this.SupportedAggregationTemporality = aggregationTemporality.Supported;
+            }
         }
 
         public override void OnCollect(Batch<Metric> metrics)

@@ -44,7 +44,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void CounterAggregationTest(bool exportDelta)
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport, exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative);
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
 
             void ProcessExport(Batch<Metric> batch)
             {
@@ -54,7 +54,10 @@ namespace OpenTelemetry.Metrics.Tests
                 }
             }
 
-            var metricReader = new BaseExportingMetricReader(metricExporter);
+            var metricReader = new BaseExportingMetricReader(metricExporter)
+            {
+                PreferredAggregationTemporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+            };
 
             var meter = new Meter("TestMeter");
             var counterLong = meter.CreateCounter<long>("mycounter");
@@ -117,7 +120,7 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var meterName = "TestMeter" + exportDelta;
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport, exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative);
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
 
             void ProcessExport(Batch<Metric> batch)
             {
@@ -127,7 +130,10 @@ namespace OpenTelemetry.Metrics.Tests
                 }
             }
 
-            var metricReader = new BaseExportingMetricReader(metricExporter);
+            var metricReader = new BaseExportingMetricReader(metricExporter)
+            {
+                PreferredAggregationTemporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+            };
 
             var meter = new Meter(meterName);
             int i = 1;
@@ -181,7 +187,7 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var metricItems = new List<Metric>();
             int metricPointCount = 0;
-            var metricExporter = new TestExporter<Metric>(ProcessExport, temporality);
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
 
             void ProcessExport(Batch<Metric> batch)
             {
@@ -194,7 +200,10 @@ namespace OpenTelemetry.Metrics.Tests
                 }
             }
 
-            var metricReader = new BaseExportingMetricReader(metricExporter);
+            var metricReader = new BaseExportingMetricReader(metricExporter)
+            {
+                PreferredAggregationTemporality = temporality,
+            };
             var meter = new Meter("TestMeter");
             var counterLong = meter.CreateCounter<long>("mycounter");
             var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -232,7 +241,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void MultithreadedLongCounterTest()
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport, AggregationTemporality.Cumulative);
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
 
             void ProcessExport(Batch<Metric> batch)
             {
@@ -242,7 +251,10 @@ namespace OpenTelemetry.Metrics.Tests
                 }
             }
 
-            var metricReader = new BaseExportingMetricReader(metricExporter);
+            var metricReader = new BaseExportingMetricReader(metricExporter)
+            {
+                PreferredAggregationTemporality = AggregationTemporality.Cumulative,
+            };
 
             var meter = new Meter("TestMeter");
             var counterLong = meter.CreateCounter<long>("mycounter");
@@ -300,7 +312,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void MultithreadedDoubleCounterTest()
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport, AggregationTemporality.Cumulative);
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
 
             void ProcessExport(Batch<Metric> batch)
             {
@@ -310,7 +322,10 @@ namespace OpenTelemetry.Metrics.Tests
                 }
             }
 
-            var metricReader = new BaseExportingMetricReader(metricExporter);
+            var metricReader = new BaseExportingMetricReader(metricExporter)
+            {
+                PreferredAggregationTemporality = AggregationTemporality.Cumulative,
+            };
 
             var meter = new Meter("TestMeter");
             var counterDouble = meter.CreateCounter<double>("mycounter");
