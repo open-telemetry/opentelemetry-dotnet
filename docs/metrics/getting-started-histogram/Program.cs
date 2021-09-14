@@ -35,7 +35,7 @@ public class Program
 
         for (int i = 0; i < 20000000; i++)
         {
-            histogram.Record(random.Next(1, 1000), new ("tag1", "value1"), new ("tag2", "value2"));
+            histogram.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
         }
     }
 }
