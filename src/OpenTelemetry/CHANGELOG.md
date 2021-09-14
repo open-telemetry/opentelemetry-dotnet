@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* `BatchExportActivityProcessorOptions` is made internal. ([#2350](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2350))
+
 ## 1.2.0-alpha3
 
 Released 2021-Sep-13

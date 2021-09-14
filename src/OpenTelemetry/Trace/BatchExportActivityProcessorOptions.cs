@@ -21,7 +21,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
-    public class BatchExportActivityProcessorOptions : BatchExportProcessorOptions<Activity>
+    internal sealed class BatchExportActivityProcessorOptions : BatchExportProcessorOptions<Activity>
     {
         internal const string MaxQueueSizeEnvVarKey = "OTEL_BSP_MAX_QUEUE_SIZE";
 

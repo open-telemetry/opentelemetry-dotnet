@@ -1,2 +1,0 @@
-OpenTelemetry.Trace.BatchExportActivityProcessorOptions
-OpenTelemetry.Trace.BatchExportActivityProcessorOptions.BatchExportActivityProcessorOptions() -> void
