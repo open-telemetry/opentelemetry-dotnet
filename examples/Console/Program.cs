@@ -99,10 +99,10 @@ namespace Examples.Console
         [Option('g', "Gauge", HelpText = "Include Observable Gauge.", Required = false, Default = false)]
         public bool? FlagGauge { get; set; }
 
-        [Option('c', "Counter", HelpText = "Include Counter.", Required = false, Default = true)]
+        [Option('c', "Counter", HelpText = "Include Counter.", Required = false, Default = false)]
         public bool? FlagCounter { get; set; }
 
-        [Option('h', "Histogram", HelpText = "Include Histogram.", Required = false, Default = false)]
+        [Option('h', "Histogram", HelpText = "Include Histogram.", Required = false, Default = true)]
         public bool? FlagHistogram { get; set; }
 
         [Option("defaultCollection", Default = 1000, HelpText = "Default collection period in milliseconds.", Required = false)]
@@ -117,7 +117,7 @@ namespace Examples.Console
         [Option("maxLoops", Default = 0, HelpText = "Maximum number of loops/iterations per task. (0 = No Limit)", Required = false)]
         public int MaxLoops { get; set; }
 
-        [Option("useExporter", Default = "console", HelpText = "Options include otlp or console.", Required = false)]
+        [Option("useExporter", Default = "otlp", HelpText = "Options include otlp or console.", Required = false)]
         public string UseExporter { get; set; }
     }
 

@@ -180,9 +180,12 @@ namespace OpenTelemetry.Exporter
 
         private static void AddLabels(this PrometheusMetricValueBuilder valueBuilder, string[] keys, object[] values)
         {
-            for (int i = 0; i < ((keys == null) ? 0 : keys.Length); i++)
+            if (keys != null)
             {
-                valueBuilder.WithLabel(keys[i], values[i].ToString());
+                for (int i = 0; i < keys.Length; i++)
+                {
+                    valueBuilder.WithLabel(keys[i], values[i].ToString());
+                }
             }
         }
     }
