@@ -28,15 +28,12 @@ namespace OpenTelemetry.Metrics
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
 
             var attributes = exporter.GetType().GetCustomAttributes(typeof(AggregationTemporalityAttribute), true);
-            if (attributes.Length == 0)
+            if (attributes.Length > 0)
             {
-                throw new ArgumentException("The exporter does not have an AggregationTemporality attribute.", nameof(exporter));
+                AggregationTemporalityAttribute aggregationTemporality = (AggregationTemporalityAttribute)attributes[attributes.Length - 1];
+                this.PreferredAggregationTemporality = aggregationTemporality.Preferred;
+                this.SupportedAggregationTemporality = aggregationTemporality.Supported;
             }
-
-            AggregationTemporalityAttribute aggregationTemporality = (AggregationTemporalityAttribute)attributes[attributes.Length - 1];
-
-            this.PreferredAggregationTemporality = aggregationTemporality.Preferred;
-            this.SupportedAggregationTemporality = aggregationTemporality.Supported;
         }
 
         public override void OnCollect(Batch<Metric> metrics)

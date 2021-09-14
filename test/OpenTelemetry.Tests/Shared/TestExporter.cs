@@ -15,11 +15,9 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Tests
 {
-    [AggregationTemporality(AggregationTemporality.Both)]
     internal class TestExporter<T> : BaseExporter<T>
         where T : class
     {
