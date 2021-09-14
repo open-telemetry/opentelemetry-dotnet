@@ -23,12 +23,12 @@ using OpenTelemetry.Metrics;
 
 public class Program
 {
-    private static readonly Meter MyMeter = new Meter("MyMeter", "1.0");
+    private static readonly Meter MyMeter = new Meter("MyCompany.MyProduct.MyLibrary", "1.0");
 
     public static async Task Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddSource("MyMeter")
+            .AddSource("MyCompany.MyProduct.MyLibrary")
             .AddConsoleExporter()
             .Build();
 
