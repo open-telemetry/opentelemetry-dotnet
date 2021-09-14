@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Tests
 {
