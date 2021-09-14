@@ -82,9 +82,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Environment.SetEnvironmentVariable(OtlpExporterOptions.HeadersEnvVarName, "A=2,B=3");
             Environment.SetEnvironmentVariable(OtlpExporterOptions.TimeoutEnvVarName, "2000");
 
-            // If your application is targeting .NET Core 3.1, and you are using an insecure (HTTP) endpoint, the following switch must be set before adding OtlpExporter.
-            // AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
             var options = new OtlpExporterOptions
             {
                 Endpoint = new Uri("http://localhost:200"),
