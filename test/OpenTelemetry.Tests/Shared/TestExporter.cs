@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Tests
 {
@@ -41,11 +40,6 @@ namespace OpenTelemetry.Tests
             this.processBatchAction(batch);
 
             return ExportResult.Success;
-        }
-
-        public override AggregationTemporality GetAggregationTemporality()
-        {
-            return this.aggregationTemporality;
         }
     }
 }

@@ -28,11 +28,6 @@ namespace OpenTelemetry.Exporter
             this.options = options ?? new ConsoleExporterOptions();
         }
 
-        public override AggregationTemporality GetAggregationTemporality()
-        {
-            return this.options.AggregationTemporality;
-        }
-
         protected void WriteLine(string message)
         {
             if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Console))

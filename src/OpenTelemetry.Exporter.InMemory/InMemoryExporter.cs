@@ -15,9 +15,11 @@
 // </copyright>
 
 using System.Collections.Generic;
+using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter
 {
+    [AggregationTemporality(AggregationTemporality.Both)]
     public class InMemoryExporter<T> : BaseExporter<T>
         where T : class
     {
