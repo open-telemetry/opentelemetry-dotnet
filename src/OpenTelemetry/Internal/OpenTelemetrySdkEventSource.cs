@@ -138,7 +138,7 @@ namespace OpenTelemetry.Internal
         [NonEvent]
         public void DroppedExportProcessorItems(long droppedCount, Type type)
         {
-            if (this.IsEnabled(EventLevel.Informational, EventKeywords.All) && droppedCount <= 0)
+            if (droppedCount <= 0 && this.IsEnabled(EventLevel.Informational, EventKeywords.All))
             {
                 this.ZeroDroppedExportProcessorItems();
                 return;
