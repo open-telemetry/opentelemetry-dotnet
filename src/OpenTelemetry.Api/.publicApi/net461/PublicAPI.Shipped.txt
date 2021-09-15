@@ -178,9 +178,7 @@ static OpenTelemetry.Context.Propagation.Propagators.DefaultTextMapPropagator.ge
 static OpenTelemetry.Context.RuntimeContext.ContextSlotType.get -> System.Type
 static OpenTelemetry.Context.RuntimeContext.ContextSlotType.set -> void
 static OpenTelemetry.Context.RuntimeContext.GetSlot<T>(string slotName) -> OpenTelemetry.Context.RuntimeContextSlot<T>
-static OpenTelemetry.Context.RuntimeContext.GetValue<T>(string name) -> T
 static OpenTelemetry.Context.RuntimeContext.RegisterSlot<T>(string slotName) -> OpenTelemetry.Context.RuntimeContextSlot<T>
-static OpenTelemetry.Context.RuntimeContext.SetValue<T>(string name, T value) -> void
 static OpenTelemetry.Trace.ActivityExtensions.GetStatus(this System.Diagnostics.Activity activity) -> OpenTelemetry.Trace.Status
 static OpenTelemetry.Trace.ActivityExtensions.RecordException(this System.Diagnostics.Activity activity, System.Exception ex) -> void
 static OpenTelemetry.Trace.ActivityExtensions.SetStatus(this System.Diagnostics.Activity activity, OpenTelemetry.Trace.Status status) -> void
