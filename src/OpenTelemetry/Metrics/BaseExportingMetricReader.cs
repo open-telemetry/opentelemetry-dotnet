@@ -29,8 +29,8 @@ namespace OpenTelemetry.Metrics
         {
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
 
-            var exportType = exporter.GetType();
-            var attributes = exportType.GetCustomAttributes(typeof(AggregationTemporalityAttribute), true);
+            var exportorType = exporter.GetType();
+            var attributes = exportorType.GetCustomAttributes(typeof(AggregationTemporalityAttribute), true);
             if (attributes.Length > 0)
             {
                 var attr = (AggregationTemporalityAttribute)attributes[attributes.Length - 1];
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Metrics
                 this.SupportedAggregationTemporality = attr.Supported;
             }
 
-            attributes = exportType.GetCustomAttributes(typeof(ExportModeAttribute), true);
+            attributes = exportorType.GetCustomAttributes(typeof(ExportModeAttribute), true);
             if (attributes.Length > 0)
             {
                 var attr = (ExportModeAttribute)attributes[attributes.Length - 1];
