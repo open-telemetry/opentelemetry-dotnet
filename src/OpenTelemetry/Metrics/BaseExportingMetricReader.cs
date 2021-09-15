@@ -23,18 +23,30 @@ namespace OpenTelemetry.Metrics
         protected readonly BaseExporter<Metric> exporter;
         protected bool disposed;
 
+        private readonly ExportModes supportedExportModes = ExportModes.Push | ExportModes.Pull;
+
         public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
 
-            var attributes = exporter.GetType().GetCustomAttributes(typeof(AggregationTemporalityAttribute), true);
+            var exportorType = exporter.GetType();
+            var attributes = exportorType.GetCustomAttributes(typeof(AggregationTemporalityAttribute), true);
             if (attributes.Length > 0)
             {
-                AggregationTemporalityAttribute aggregationTemporality = (AggregationTemporalityAttribute)attributes[attributes.Length - 1];
-                this.PreferredAggregationTemporality = aggregationTemporality.Preferred;
-                this.SupportedAggregationTemporality = aggregationTemporality.Supported;
+                var attr = (AggregationTemporalityAttribute)attributes[attributes.Length - 1];
+                this.PreferredAggregationTemporality = attr.Preferred;
+                this.SupportedAggregationTemporality = attr.Supported;
+            }
+
+            attributes = exportorType.GetCustomAttributes(typeof(ExportModesAttribute), true);
+            if (attributes.Length > 0)
+            {
+                var attr = (ExportModesAttribute)attributes[attributes.Length - 1];
+                this.supportedExportModes = attr.Supported;
             }
         }
+
+        protected ExportModes SupportedExportModes => this.supportedExportModes;
 
         public override void OnCollect(Batch<Metric> metrics)
         {
