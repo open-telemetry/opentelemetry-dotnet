@@ -1,4 +1,4 @@
-// <copyright file="InMemoryExporterOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="IRuntimeContextSlotValueAccessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Metrics;
-
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Context
 {
-    public class InMemoryExporterOptions
+    /// <summary>
+    /// Describes a type of <see cref="RuntimeContextSlot{T}"/> which can expose its value as an <see cref="object"/>.
+    /// </summary>
+    public interface IRuntimeContextSlotValueAccessor
     {
         /// <summary>
-        /// Gets or sets the metric export interval in milliseconds. The default value is 1000 milliseconds.
+        /// Gets or sets the value of the slot as an <see cref="object"/>.
         /// </summary>
-        public int MetricExportIntervalMilliseconds { get; set; } = 1000;
-
-        /// <summary>
-        /// Gets or sets the AggregationTemporality used for Histogram
-        /// and Sum metrics.
-        /// </summary>
-        public AggregationTemporality AggregationTemporality { get; set; } = AggregationTemporality.Delta;
+        object Value { get; set; }
     }
 }

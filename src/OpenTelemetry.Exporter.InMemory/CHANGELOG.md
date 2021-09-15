@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-alpha3
+
+Released 2021-Sep-13
+
 ## 1.2.0-alpha2
 
 Released 2021-Aug-24

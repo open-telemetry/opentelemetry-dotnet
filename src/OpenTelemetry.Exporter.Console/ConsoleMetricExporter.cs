@@ -23,6 +23,7 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
 {
+    [AggregationTemporality(AggregationTemporality.Both, AggregationTemporality.Cumulative)]
     public class ConsoleMetricExporter : ConsoleExporter<Metric>
     {
         private Resource resource;
@@ -80,11 +81,14 @@ namespace OpenTelemetry.Exporter
                 {
                     string valueDisplay = string.Empty;
                     StringBuilder tagsBuilder = new StringBuilder();
-                    for (int i = 0; i < metricPoint.Keys.Length; i++)
+                    if (metricPoint.Keys != null)
                     {
-                        tagsBuilder.Append(metricPoint.Keys[i]);
-                        tagsBuilder.Append(":");
-                        tagsBuilder.Append(metricPoint.Values[i]);
+                        for (int i = 0; i < metricPoint.Keys.Length; i++)
+                        {
+                            tagsBuilder.Append(metricPoint.Keys[i]);
+                            tagsBuilder.Append(":");
+                            tagsBuilder.Append(metricPoint.Values[i]);
+                        }
                     }
 
                     var tags = tagsBuilder.ToString();
