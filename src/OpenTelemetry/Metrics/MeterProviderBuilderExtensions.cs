@@ -24,16 +24,16 @@ namespace OpenTelemetry.Metrics
     public static class MeterProviderBuilderExtensions
     {
         /// <summary>
-        /// Add metric processor.
+        /// Add metric reader.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="processor">Measurement Processors.</param>
+        /// <param name="metricReader">Metricreader.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder AddMetricProcessor(this MeterProviderBuilder meterProviderBuilder, MetricProcessor processor)
+        public static MeterProviderBuilder AddMetricReader(this MeterProviderBuilder meterProviderBuilder, MetricReader metricReader)
         {
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                return meterProviderBuilderSdk.AddMetricProcessor(processor);
+                return meterProviderBuilderSdk.AddMetricReader(metricReader);
             }
 
             return meterProviderBuilder;

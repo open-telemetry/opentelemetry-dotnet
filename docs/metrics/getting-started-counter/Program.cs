@@ -14,10 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
@@ -25,21 +22,18 @@ public class Program
 {
     private static readonly Meter MyMeter = new Meter("MyCompany.MyProduct.MyLibrary", "1.0");
 
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddSource("MyCompany.MyProduct.MyLibrary")
             .AddConsoleExporter()
             .Build();
 
-        var random = new Random();
-        MyMeter.CreateObservableGauge<long>(
-            "MyGauge",
-            () => new List<Measurement<long>>()
-            {
-                new(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2")),
-            });
+        var counter = MyMeter.CreateCounter<long>("MyCounter");
 
-        await Task.Delay(10000);
+        for (int i = 0; i < 20000000; i++)
+        {
+            counter.Add(1, new("tag1", "value1"), new("tag2", "value2"));
+        }
     }
 }

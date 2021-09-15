@@ -22,7 +22,7 @@
   <PropertyGroup Label="Package versions used by test and example projects">
     <!--
       Please sort alphabetically.
-      Refer to https://docs.microsoft.com/en-us/nuget/concepts/package-versioning for semver syntax.
+      Refer to https://docs.microsoft.com/nuget/concepts/package-versioning for semver syntax.
     -->
     <BenchmarkDotNetPkgVer>[0.12.1,0.13)</BenchmarkDotNetPkgVer>
     <CommandLineParserPkgVer>[2.3.0,3.0)</CommandLineParserPkgVer>

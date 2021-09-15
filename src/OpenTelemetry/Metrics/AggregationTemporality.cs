@@ -1,4 +1,4 @@
-// <copyright file="ISumMetricLong.cs" company="OpenTelemetry Authors">
+// <copyright file="AggregationTemporality.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,10 +14,31 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Metrics
 {
-    public interface ISumMetricLong : ISumMetric
+    [Flags]
+    public enum AggregationTemporality : byte
     {
-        long LongSum { get; }
+        /// <summary>
+        /// Cumulative.
+        /// </summary>
+        Cumulative = 0b1,
+
+        /// <summary>
+        /// Delta.
+        /// </summary>
+        Delta = 0b10,
+
+        /// <summary>
+        /// Neither.
+        /// </summary>
+        Neither = 0b0,
+
+        /// <summary>
+        /// Both.
+        /// </summary>
+        Both = 0b11,
     }
 }
