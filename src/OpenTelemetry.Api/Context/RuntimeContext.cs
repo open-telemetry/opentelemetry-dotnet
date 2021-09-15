@@ -73,8 +73,12 @@ namespace OpenTelemetry.Context
                 throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
             }
 
-            Slots.TryGetValue(slotName, out var slot);
-            return slot as RuntimeContextSlot<T> ?? throw new ArgumentException($"The context slot {slotName} is not found.");
+            if (!Slots.TryGetValue(slotName, out var slot))
+            {
+                throw new ArgumentException($"The context slot {slotName} could not be found.");
+            }
+
+            return slot as RuntimeContextSlot<T> ?? throw new ArgumentException($"The context slot {slotName} cannot be cast as {typeof(RuntimeContextSlot<T>)}.");
         }
 
         /*
@@ -104,27 +108,76 @@ namespace OpenTelemetry.Context
         /// <summary>
         /// Sets the value to a registered slot.
         /// </summary>
-        /// <param name="name">The name of the context slot.</param>
+        /// <param name="slotName">The name of the context slot.</param>
         /// <param name="value">The value to be set.</param>
         /// <typeparam name="T">The type of the value.</typeparam>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void SetValue<T>(string name, T value)
+        public static void SetValue<T>(string slotName, T value)
         {
-            var slot = (RuntimeContextSlot<T>)Slots[name];
-            slot.Set(value);
+            GetSlot<T>(slotName).Set(value);
         }
 
         /// <summary>
         /// Gets the value from a registered slot.
         /// </summary>
-        /// <param name="name">The name of the context slot.</param>
+        /// <param name="slotName">The name of the context slot.</param>
         /// <typeparam name="T">The type of the value.</typeparam>
         /// <returns>The value retrieved from the context slot.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T GetValue<T>(string name)
+        public static T GetValue<T>(string slotName)
         {
-            var slot = (RuntimeContextSlot<T>)Slots[name];
-            return slot.Get();
+            return GetSlot<T>(slotName).Get();
+        }
+
+        /// <summary>
+        /// Sets the value to a registered slot.
+        /// </summary>
+        /// <param name="slotName">The name of the context slot.</param>
+        /// <param name="value">The value to be set.</param>
+        public static void SetValue(string slotName, object value)
+        {
+            if (string.IsNullOrEmpty(slotName))
+            {
+                throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
+            }
+
+            if (!Slots.TryGetValue(slotName, out var slot))
+            {
+                throw new ArgumentException($"The context slot {slotName} could not be found.");
+            }
+
+            if (slot is IRuntimeContextSlotValueAccessor runtimeContextSlotValueAccessor)
+            {
+                runtimeContextSlotValueAccessor.Value = value;
+                return;
+            }
+
+            throw new NotSupportedException($"The context slot {slotName} value cannot be accessed as an object.");
+        }
+
+        /// <summary>
+        /// Gets the value from a registered slot.
+        /// </summary>
+        /// <param name="slotName">The name of the context slot.</param>
+        /// <returns>The value retrieved from the context slot.</returns>
+        public static object GetValue(string slotName)
+        {
+            if (string.IsNullOrEmpty(slotName))
+            {
+                throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
+            }
+
+            if (!Slots.TryGetValue(slotName, out var slot))
+            {
+                throw new ArgumentException($"The context slot {slotName} could not be found.");
+            }
+
+            if (slot is IRuntimeContextSlotValueAccessor runtimeContextSlotValueAccessor)
+            {
+                return runtimeContextSlotValueAccessor.Value;
+            }
+
+            throw new NotSupportedException($"The context slot {slotName} value cannot be accessed as an object.");
         }
 
         // For testing purpose

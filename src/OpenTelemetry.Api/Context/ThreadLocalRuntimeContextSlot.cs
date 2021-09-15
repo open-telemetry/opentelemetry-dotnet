@@ -23,7 +23,7 @@ namespace OpenTelemetry.Context
     /// The thread local (TLS) implementation of context slot.
     /// </summary>
     /// <typeparam name="T">The type of the underlying value.</typeparam>
-    public class ThreadLocalRuntimeContextSlot<T> : RuntimeContextSlot<T>
+    public class ThreadLocalRuntimeContextSlot<T> : RuntimeContextSlot<T>, IRuntimeContextSlotValueAccessor
     {
         private readonly ThreadLocal<T> slot;
         private bool disposedValue;
@@ -36,6 +36,13 @@ namespace OpenTelemetry.Context
             : base(name)
         {
             this.slot = new ThreadLocal<T>();
+        }
+
+        /// <inheritdoc/>
+        public object Value
+        {
+            get => this.slot.Value;
+            set => this.slot.Value = (T)value;
         }
 
         /// <inheritdoc/>
@@ -55,14 +62,11 @@ namespace OpenTelemetry.Context
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(true);
-            if (!this.disposedValue)
-            {
-                if (disposing)
-                {
-                    this.slot.Dispose();
-                }
+            base.Dispose(disposing);
 
+            if (disposing && !this.disposedValue)
+            {
+                this.slot.Dispose();
                 this.disposedValue = true;
             }
         }

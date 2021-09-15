@@ -19,7 +19,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Web;
+using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Instrumentation.AspNet
@@ -30,11 +32,12 @@ namespace OpenTelemetry.Instrumentation.AspNet
     internal static class ActivityHelper
     {
         /// <summary>
-        /// Key to store the activity in HttpContext.
+        /// Key to store the state in HttpContext.
         /// </summary>
-        internal const string ActivityKey = "__AspnetActivity__";
-
+        internal const string ContextKey = "__AspnetInstrumentationContext__";
         internal static readonly object StartedButNotSampledObj = new object();
+
+        private const string BaggageSlotName = "otel.baggage";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         private static readonly ActivitySource AspNetSource = new ActivitySource(
             TelemetryHttpModule.AspNetSourceName,
@@ -53,10 +56,10 @@ namespace OpenTelemetry.Instrumentation.AspNet
         {
             Debug.Assert(context != null, "Context is null.");
 
-            object itemValue = context.Items[ActivityKey];
-            if (itemValue is Activity activity)
+            object itemValue = context.Items[ContextKey];
+            if (itemValue is ContextHolder contextHolder)
             {
-                aspNetActivity = activity;
+                aspNetActivity = contextHolder.Activity;
                 return true;
             }
 
@@ -81,17 +84,15 @@ namespace OpenTelemetry.Instrumentation.AspNet
 
             if (activity != null)
             {
-                context.Items[ActivityKey] = activity;
-
                 if (!(textMapPropagator is TraceContextPropagator))
                 {
-                    // todo: RestoreActivityIfNeeded below compensates for
-                    // AsyncLocal Activity.Current being lost. Baggage
-                    // potentially will suffer from the same issue, but we can't
-                    // simply add it to context.Items because any change results
-                    // in a new instance. Probably need to save it at the end of
-                    // each OnExecuteRequestStep.
                     Baggage.Current = propagationContext.Baggage;
+
+                    context.Items[ContextKey] = new ContextHolder { Activity = activity, Baggage = RuntimeContext.GetValue(BaggageSlotName) };
+                }
+                else
+                {
+                    context.Items[ContextKey] = new ContextHolder { Activity = activity };
                 }
 
                 try
@@ -107,7 +108,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
             }
             else
             {
-                context.Items[ActivityKey] = StartedButNotSampledObj;
+                context.Items[ContextKey] = StartedButNotSampledObj;
             }
 
             return activity;
@@ -127,20 +128,20 @@ namespace OpenTelemetry.Instrumentation.AspNet
 
             if (aspNetActivity == null)
             {
-                Debug.Assert(context.Items[ActivityKey] == StartedButNotSampledObj, "Context item is not StartedButNotSampledObj.");
+                Debug.Assert(context.Items[ContextKey] == StartedButNotSampledObj, "Context item is not StartedButNotSampledObj.");
 
                 // This is the case where a start was called but no activity was
                 // created due to a sampling decision.
-                context.Items[ActivityKey] = null;
+                context.Items[ContextKey] = null;
                 return;
             }
 
-            Debug.Assert(context.Items[ActivityKey] is Activity, "Context item is not an Activity instance.");
+            Debug.Assert(context.Items[ContextKey] is ContextHolder, "Context item is not an ContextHolder instance.");
 
             var currentActivity = Activity.Current;
 
             aspNetActivity.Stop();
-            context.Items[ActivityKey] = null;
+            context.Items[ContextKey] = null;
 
             try
             {
@@ -198,17 +199,28 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// This method is intended to restore the current activity in order to correlate the child
         /// activities with the root activity of the request.
         /// </summary>
-        /// <param name="contextItems">HttpContext.Items dictionary.</param>
+        /// <param name="context"><see cref="HttpContext"/>.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void RestoreActivityIfNeeded(IDictionary contextItems)
+        internal static void RestoreContextIfNeeded(HttpContext context)
         {
-            Debug.Assert(contextItems != null, "Context Items is null.");
+            Debug.Assert(context != null, "Context is null.");
 
-            if (Activity.Current == null && contextItems[ActivityKey] is Activity aspNetActivity)
+            if (context.Items[ContextKey] is ContextHolder contextHolder && Activity.Current != contextHolder.Activity)
             {
-                Activity.Current = aspNetActivity;
-                AspNetTelemetryEventSource.Log.ActivityRestored(aspNetActivity);
+                Activity.Current = contextHolder.Activity;
+                if (contextHolder.Baggage != null)
+                {
+                    RuntimeContext.SetValue(BaggageSlotName, contextHolder.Baggage);
+                }
+
+                AspNetTelemetryEventSource.Log.ActivityRestored(contextHolder.Activity);
             }
+        }
+
+        internal class ContextHolder
+        {
+            public Activity Activity;
+            public object Baggage;
         }
     }
 }

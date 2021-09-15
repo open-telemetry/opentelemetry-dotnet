@@ -1,0 +1,11 @@
+OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Value.get -> object
+OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Value.set -> void
+OpenTelemetry.Context.IRuntimeContextSlotValueAccessor
+OpenTelemetry.Context.IRuntimeContextSlotValueAccessor.Value.get -> object
+OpenTelemetry.Context.IRuntimeContextSlotValueAccessor.Value.set -> void
+OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Value.get -> object
+OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Value.set -> void
+static OpenTelemetry.Context.RuntimeContext.GetValue(string slotName) -> object
+static OpenTelemetry.Context.RuntimeContext.GetValue<T>(string slotName) -> T
+static OpenTelemetry.Context.RuntimeContext.SetValue(string slotName, object value) -> void
+static OpenTelemetry.Context.RuntimeContext.SetValue<T>(string slotName, T value) -> void

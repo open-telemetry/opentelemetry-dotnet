@@ -42,7 +42,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         // ServerVariable set on every request if URL module is registered in HttpModule pipeline.
         private const string URLRewriteModuleVersion = "IIS_UrlRewriteModule";
 
-        private static readonly MethodInfo OnStepMethodInfo = typeof(HttpApplication).GetMethod("OnExecuteRequestStep");
+        private static readonly MethodInfo OnExecuteRequestStepMethodInfo = typeof(HttpApplication).GetMethod("OnExecuteRequestStep");
 
         /// <summary>
         /// Gets the <see cref="TelemetryHttpModuleOptions"/> applied to requests processed by the handler.
@@ -61,59 +61,36 @@ namespace OpenTelemetry.Instrumentation.AspNet
             context.EndRequest += this.Application_EndRequest;
             context.Error += this.Application_Error;
 
-            // OnExecuteRequestStep is availabile starting with 4.7.1
-            // If this is executed in 4.7.1 runtime (regardless of targeted .NET version),
-            // we will use it to restore lost activity, otherwise keep PreRequestHandlerExecute
-            if (OnStepMethodInfo != null && HttpRuntime.UsingIntegratedPipeline)
+            if (HttpRuntime.UsingIntegratedPipeline && OnExecuteRequestStepMethodInfo != null)
             {
+                // OnExecuteRequestStep is availabile starting with 4.7.1
                 try
                 {
-                    OnStepMethodInfo.Invoke(context, new object[] { (Action<HttpContextBase, Action>)this.OnExecuteRequestStep });
+                    OnExecuteRequestStepMethodInfo.Invoke(context, new object[] { (Action<HttpContextBase, Action>)this.OnExecuteRequestStep });
                 }
                 catch (Exception e)
                 {
                     AspNetTelemetryEventSource.Log.OnExecuteRequestStepInvokationError(e.Message);
                 }
             }
-            else
-            {
-                context.PreRequestHandlerExecute += this.Application_PreRequestHandlerExecute;
-            }
-        }
-
-        /// <summary>
-        /// Restores Activity before each pipeline step if it was lost.
-        /// </summary>
-        /// <param name="context">HttpContext instance.</param>
-        /// <param name="step">Step to be executed.</param>
-        internal void OnExecuteRequestStep(HttpContextBase context, Action step)
-        {
-            // Once we have public Activity.Current setter (https://github.com/dotnet/corefx/issues/29207) this method will be
-            // simplified to just assign Current if is was lost.
-            // In the mean time, we are creating child Activity to restore the context. We have to send
-            // event with this Activity to tracing system. It created a lot of issues for listeners as
-            // we may potentially have a lot of them for different stages.
-            // To reduce amount of events, we only care about ExecuteRequestHandler stage - restore activity here and
-            // stop/report it to tracing system in EndRequest.
-            if (context.CurrentNotification == RequestNotification.ExecuteRequestHandler && !context.IsPostNotification)
-            {
-                ActivityHelper.RestoreActivityIfNeeded(context.Items);
-            }
-
-            step();
         }
 
         private void Application_BeginRequest(object sender, EventArgs e)
         {
-            var context = ((HttpApplication)sender).Context;
             AspNetTelemetryEventSource.Log.TraceCallback("Application_BeginRequest");
-            ActivityHelper.StartAspNetActivity(Options.TextMapPropagator, context, Options.OnRequestStartedCallback);
+            ActivityHelper.StartAspNetActivity(Options.TextMapPropagator, ((HttpApplication)sender).Context, Options.OnRequestStartedCallback);
         }
 
-        private void Application_PreRequestHandlerExecute(object sender, EventArgs e)
+        private void OnExecuteRequestStep(HttpContextBase context, Action step)
         {
-            AspNetTelemetryEventSource.Log.TraceCallback("Application_PreRequestHandlerExecute");
-            ActivityHelper.RestoreActivityIfNeeded(((HttpApplication)sender).Context.Items);
+            // Called only on 4.7.1+ runtimes
+
+            if (context.CurrentNotification == RequestNotification.ExecuteRequestHandler && !context.IsPostNotification)
+            {
+                ActivityHelper.RestoreContextIfNeeded(context.ApplicationInstance.Context);
+            }
+
+            step();
         }
 
         private void Application_EndRequest(object sender, EventArgs e)
