@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics
         protected readonly BaseExporter<Metric> exporter;
         protected bool disposed;
 
-        private readonly ExportMode supportedExportMode = ExportMode.Push | ExportMode.Pull;
+        private readonly ExportModes supportedExportModes = ExportModes.Push | ExportModes.Pull;
 
         public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
@@ -38,15 +38,15 @@ namespace OpenTelemetry.Metrics
                 this.SupportedAggregationTemporality = attr.Supported;
             }
 
-            attributes = exportorType.GetCustomAttributes(typeof(ExportModeAttribute), true);
+            attributes = exportorType.GetCustomAttributes(typeof(ExportModesAttribute), true);
             if (attributes.Length > 0)
             {
-                var attr = (ExportModeAttribute)attributes[attributes.Length - 1];
-                this.supportedExportMode = attr.Supported;
+                var attr = (ExportModesAttribute)attributes[attributes.Length - 1];
+                this.supportedExportModes = attr.Supported;
             }
         }
 
-        protected ExportMode SupportedExportMode => this.supportedExportMode;
+        protected ExportModes SupportedExportModes => this.supportedExportModes;
 
         public override void OnCollect(Batch<Metric> metrics)
         {

@@ -1,4 +1,4 @@
-// <copyright file="ExportModeAttribute.cs" company="OpenTelemetry Authors">
+// <copyright file="ExportModesAttribute.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +18,16 @@ using System;
 
 namespace OpenTelemetry.Metrics
 {
-    public sealed class ExportModeAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple=false, Inherited=true)]
+    public sealed class ExportModesAttribute : Attribute
     {
-        private ExportMode supportedExportMode;
+        private ExportModes supportedExportModes;
 
-        public ExportModeAttribute(ExportMode supported)
+        public ExportModesAttribute(ExportModes supported)
         {
-            this.supportedExportMode = supported;
+            this.supportedExportModes = supported;
         }
 
-        public ExportMode Supported => this.supportedExportMode;
+        public ExportModes Supported => this.supportedExportModes;
     }
 }

@@ -34,7 +34,7 @@ namespace OpenTelemetry.Metrics
             int exportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
             : base(exporter)
         {
-            if ((this.SupportedExportMode & ExportMode.Push) != ExportMode.Push)
+            if ((this.SupportedExportModes & ExportModes.Push) != ExportModes.Push)
             {
                 throw new InvalidOperationException("The exporter does not support push mode.");
             }
