@@ -137,7 +137,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     // named "MyCompany.MyProduct.MyLibrary" only.
     .AddSource("MyCompany.MyProduct.MyLibrary")
     // The following subscribes to activities from all Activity Sources
-    // whose name starts with  "ABCCompany.XYZProduct.".
+    // whose name starts with "ABCCompany.XYZProduct.".
     .AddSource("ABCCompany.XYZProduct.*")
     .Build();
 ```
