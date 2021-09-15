@@ -186,7 +186,7 @@ namespace OpenTelemetry
             this.shutdownDrainTarget = this.circularBuffer.AddedCount;
             this.shutdownTrigger.Set();
 
-            OpenTelemetrySdkEventSource.Log.DroppedExportProcessorItems(this.droppedCount, this);
+            OpenTelemetrySdkEventSource.Log.DroppedExportProcessorItems(this.GetType().Name, this.droppedCount);
 
             if (timeoutMilliseconds == Timeout.Infinite)
             {

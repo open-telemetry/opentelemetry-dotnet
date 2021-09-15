@@ -136,18 +136,21 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void DroppedExportProcessorItems(long droppedCount, object exporter)
+        public void DroppedExportProcessorItems(string exporterName, long droppedCount)
         {
-            if (droppedCount <= 0 && this.IsEnabled(EventLevel.Informational, EventKeywords.All))
+            if (droppedCount > 0)
             {
-                this.ZeroDroppedExportProcessorItems();
-                return;
+                if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+                {
+                    this.ExistsDroppedExportProcessorItems(exporterName, droppedCount);
+                }
             }
-
-            // Positive number of dropped items
-            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+            else
             {
-                this.ExistsDroppedExportProcessorItems(droppedCount, exporter.GetType());
+                if (this.IsEnabled(EventLevel.Informational, EventKeywords.All))
+                {
+                    this.NoDroppedExportProcessorItems(exporterName);
+                }
             }
         }
 
@@ -325,16 +328,16 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(30, exception);
         }
 
-        [Event(31, Message = "Zero telemetry items were dropped.", Level = EventLevel.Informational)]
-        public void ZeroDroppedExportProcessorItems()
+        [Event(31, Message = "'{0}' dropped '0' items.", Level = EventLevel.Informational)]
+        public void NoDroppedExportProcessorItems(string exporterName)
         {
-            this.WriteEvent(31);
+            this.WriteEvent(31, exporterName);
         }
 
-        [Event(32, Message = "Telemetry items dropped: '{0}', type: '{1}'.", Level = EventLevel.Warning)]
-        public void ExistsDroppedExportProcessorItems(long droppedCount, Type type)
+        [Event(32, Message = "'{0}' dropped '{1}' item(s).", Level = EventLevel.Warning)]
+        public void ExistsDroppedExportProcessorItems(string exporterName, long droppedCount)
         {
-            this.WriteEvent(32, droppedCount, type.ToString());
+            this.WriteEvent(32, exporterName, droppedCount);
         }
 
 #if DEBUG
