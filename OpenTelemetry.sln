@@ -220,7 +220,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-observable-
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-counter", "docs\metrics\getting-started-counter\getting-started-counter.csproj", "{EA60B549-F712-4ABE-8E44-FCA83B78C06E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StressTestMetrics", "test\StressTestMetrics\StressTestMetrics.csproj", "{A885DBE2-4B82-432C-A77B-19844D7BBC96}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "extending-the-sdk", "docs\metrics\extending-the-sdk\extending-the-sdk.csproj", "{1F9D7748-D099-4E25-97F5-9C969D6FF969}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StressTestMetrics", "test\StressTestMetrics\StressTestMetrics.csproj", "{A885DBE2-4B82-432C-A77B-19844D7BBC96}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -448,6 +450,10 @@ Global
 		{A885DBE2-4B82-432C-A77B-19844D7BBC96}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A885DBE2-4B82-432C-A77B-19844D7BBC96}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A885DBE2-4B82-432C-A77B-19844D7BBC96}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F9D7748-D099-4E25-97F5-9C969D6FF969}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F9D7748-D099-4E25-97F5-9C969D6FF969}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F9D7748-D099-4E25-97F5-9C969D6FF969}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F9D7748-D099-4E25-97F5-9C969D6FF969}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -484,6 +490,7 @@ Global
 		{43005998-0247-4620-AF88-27DACD48712E} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
 		{EA60B549-F712-4ABE-8E44-FCA83B78C06E} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
 		{A885DBE2-4B82-432C-A77B-19844D7BBC96} = {0169B149-FB8B-46F4-9EF7-8A0E69F8FAAF}
+		{1F9D7748-D099-4E25-97F5-9C969D6FF969} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}
