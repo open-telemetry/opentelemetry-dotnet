@@ -34,7 +34,7 @@ namespace OpenTelemetry.Metrics
         private AggregationTemporality temporality;
         private MetricPoint[] metrics;
         private int metricPointIndex = 0;
-        private bool zeroTagUsed;
+        private bool zeroTagMetricPointInitialized;
         private AggregationType aggType;
         private DateTimeOffset startTimeExclusive;
         private DateTimeOffset endTimeInclusive;
@@ -52,15 +52,15 @@ namespace OpenTelemetry.Metrics
             int len = tags.Length;
             if (len == 0)
             {
-                if (!this.zeroTagUsed)
+                if (!this.zeroTagMetricPointInitialized)
                 {
                     lock (this.lockZeroTags)
                     {
-                        if (!this.zeroTagUsed)
+                        if (!this.zeroTagMetricPointInitialized)
                         {
                             var dt = DateTimeOffset.UtcNow;
                             this.metrics[0] = new MetricPoint(this.aggType, dt, null, null);
-                            this.zeroTagUsed = true;
+                            this.zeroTagMetricPointInitialized = true;
                         }
                     }
                 }
