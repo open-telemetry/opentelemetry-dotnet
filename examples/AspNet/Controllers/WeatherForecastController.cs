@@ -20,9 +20,11 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Web.Http;
 using Examples.AspNet.Models;
+using OpenTelemetry;
 
 namespace Examples.AspNet.Controllers
 {
@@ -69,6 +71,57 @@ namespace Examples.AspNet.Controllers
             RequestGoogleHomPageViaHttpWebRequestLegacyAsyncResult();
 
             return GetWeatherForecast();
+        }
+
+        /// <summary>
+        /// For testing large async operation which causes IIS to jump threads and results in lost AsyncLocals.
+        /// </summary>
+        [Route("data")]
+        [HttpGet]
+        public async Task<string> GetData()
+        {
+            Baggage.SetBaggage("key1", "value1");
+
+            using var rng = RandomNumberGenerator.Create();
+
+            var requestData = new byte[1024 * 1024 * 100];
+            rng.GetBytes(requestData);
+
+            using var client = new HttpClient();
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, this.Url.Content("~/data"));
+
+            request.Content = new ByteArrayContent(requestData);
+
+            using var response = await client.SendAsync(request).ConfigureAwait(false);
+
+            response.EnsureSuccessStatusCode();
+
+            var responseData = await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+
+            return responseData.SequenceEqual(responseData) ? "match" : "mismatch";
+        }
+
+        [Route("data")]
+        [HttpPost]
+        public async Task<HttpResponseMessage> PostData()
+        {
+            string value1 = Baggage.GetBaggage("key1");
+            if (string.IsNullOrEmpty(value1))
+            {
+                throw new InvalidOperationException("Key1 was not found on Baggage.");
+            }
+
+            var stream = await this.Request.Content.ReadAsStreamAsync().ConfigureAwait(false);
+
+            var result = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StreamContent(stream),
+            };
+
+            result.Content.Headers.ContentType = this.Request.Content.Headers.ContentType;
+
+            return result;
         }
 
         private static IEnumerable<WeatherForecast> GetWeatherForecast()

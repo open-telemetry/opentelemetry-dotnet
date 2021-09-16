@@ -26,7 +26,7 @@ namespace OpenTelemetry.Context
     /// The .NET Remoting implementation of context slot.
     /// </summary>
     /// <typeparam name="T">The type of the underlying value.</typeparam>
-    public class RemotingRuntimeContextSlot<T> : RuntimeContextSlot<T>
+    public class RemotingRuntimeContextSlot<T> : RuntimeContextSlot<T>, IRuntimeContextSlotValueAccessor
     {
         // A special workaround to suppress context propagation cross AppDomains.
         //
@@ -51,23 +51,25 @@ namespace OpenTelemetry.Context
         }
 
         /// <inheritdoc/>
+        public object Value
+        {
+            get => this.Get();
+            set => this.Set((T)value);
+        }
+
+        /// <inheritdoc/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override T Get()
         {
-            var wrapper = CallContext.LogicalGetData(this.Name) as BitArray;
-
-            if (wrapper == null)
+            if (!(CallContext.LogicalGetData(this.Name) is BitArray wrapper))
             {
-                return default(T);
+                return default;
             }
 
             var value = WrapperField.GetValue(wrapper);
-            if (value is T)
-            {
-                return (T)value;
-            }
-
-            return default(T);
+            return value is T t
+                ? t
+                : default;
         }
 
         /// <inheritdoc/>
