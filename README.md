@@ -21,7 +21,7 @@ Any exceptions to this are noted in the individual `README.md` files.
 
 ## Getting Started
 
-As an application owner or the library author, you can find the getting started
+[Draft] As an application owner or the library author, you can find the getting started
 guide and reference documentation at [opentelemetry-dotnet.readthedocs.io](https://opentelemetry-dotnet.readthedocs.io/)
 
 If you are new here, please read the getting started docs:
