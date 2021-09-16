@@ -1,4 +1,4 @@
-// <copyright file="PushMetricProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="PeriodicExportingMetricReader.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,69 +20,52 @@ using System.Threading.Tasks;
 
 namespace OpenTelemetry.Metrics
 {
-    public class PushMetricProcessor : MetricProcessor, IDisposable
+    public class PeriodicExportingMetricReader : BaseExportingMetricReader
     {
-        private Task exportTask;
-        private CancellationTokenSource token;
-        private int exportIntervalMs;
-        private Func<bool, MetricItem> getMetrics;
-        private bool disposed;
+        private readonly Task exportTask;
+        private readonly CancellationTokenSource token;
 
-        public PushMetricProcessor(BaseExporter<MetricItem> exporter, int exportIntervalMs, bool isDelta)
+        public PeriodicExportingMetricReader(BaseExporter<Metric> exporter, int exportIntervalMs)
             : base(exporter)
         {
-            this.exportIntervalMs = exportIntervalMs;
             this.token = new CancellationTokenSource();
+
+            // TODO: Use dedicated thread.
             this.exportTask = new Task(() =>
             {
                 while (!this.token.IsCancellationRequested)
                 {
-                    Task.Delay(this.exportIntervalMs).Wait();
-                    this.Export(isDelta);
+                    Task.Delay(exportIntervalMs).Wait();
+                    this.Collect();
                 }
             });
 
             this.exportTask.Start();
         }
 
-        public override void SetGetMetricFunction(Func<bool, MetricItem> getMetrics)
+        public override void OnCollect(Batch<Metric> metrics)
         {
-            this.getMetrics = getMetrics;
+            this.exporter.Export(metrics);
         }
 
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
-
             if (disposing && !this.disposed)
             {
                 try
                 {
                     this.token.Cancel();
-                    this.exporter.Dispose();
                     this.exportTask.Wait();
+                    this.token.Dispose();
                 }
                 catch (Exception)
                 {
                     // TODO: Log
                 }
-
-                this.disposed = true;
             }
-        }
 
-        private void Export(bool isDelta)
-        {
-            if (this.getMetrics != null)
-            {
-                var metricsToExport = this.getMetrics(isDelta);
-                if (metricsToExport != null && metricsToExport.Metrics.Count > 0)
-                {
-                    Batch<MetricItem> batch = new Batch<MetricItem>(metricsToExport);
-                    this.exporter.Export(batch);
-                }
-            }
+            base.Dispose(disposing);
         }
     }
 }

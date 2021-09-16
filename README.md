@@ -24,7 +24,7 @@ Any exceptions to this are noted in the individual `README.md` files.
 If you are new here, please read the getting started docs:
 
 * [logs](./docs/logs/getting-started/README.md)
-* [metrics](./docs/metrics/getting-started/README.md) (experimental)
+* [metrics](./docs/metrics/README.md) (experimental)
 * [trace](./docs/trace/getting-started/README.md)
 
 This repository includes multiple installable components, available on

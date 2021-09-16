@@ -1,4 +1,4 @@
-// <copyright file="PullMetricProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="BaseExportingMetricReader.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,34 +18,33 @@ using System;
 
 namespace OpenTelemetry.Metrics
 {
-    public class PullMetricProcessor : MetricProcessor, IDisposable
+    public class BaseExportingMetricReader : MetricReader
     {
-        private Func<bool, MetricItem> getMetrics;
-        private bool disposed;
-        private bool isDelta;
+        protected readonly BaseExporter<Metric> exporter;
+        protected bool disposed;
 
-        public PullMetricProcessor(BaseExporter<MetricItem> exporter, bool isDelta)
-            : base(exporter)
+        public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
-            this.isDelta = isDelta;
-        }
+            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
 
-        public override void SetGetMetricFunction(Func<bool, MetricItem> getMetrics)
-        {
-            this.getMetrics = getMetrics;
-        }
-
-        public void PullRequest()
-        {
-            if (this.getMetrics != null)
+            var attributes = exporter.GetType().GetCustomAttributes(typeof(AggregationTemporalityAttribute), true);
+            if (attributes.Length > 0)
             {
-                var metricsToExport = this.getMetrics(this.isDelta);
-                if (metricsToExport != null && metricsToExport.Metrics.Count > 0)
-                {
-                    Batch<MetricItem> batch = new Batch<MetricItem>(metricsToExport);
-                    this.exporter.Export(batch);
-                }
+                AggregationTemporalityAttribute aggregationTemporality = (AggregationTemporalityAttribute)attributes[attributes.Length - 1];
+                this.PreferredAggregationTemporality = aggregationTemporality.Preferred;
+                this.SupportedAggregationTemporality = aggregationTemporality.Supported;
             }
+        }
+
+        public override void OnCollect(Batch<Metric> metrics)
+        {
+            this.exporter.Export(metrics);
+        }
+
+        internal override void SetParentProvider(BaseProvider parentProvider)
+        {
+            base.SetParentProvider(parentProvider);
+            this.exporter.ParentProvider = parentProvider;
         }
 
         /// <inheritdoc/>

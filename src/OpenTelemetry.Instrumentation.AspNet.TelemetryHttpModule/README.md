@@ -14,7 +14,7 @@ If you are using the traditional `packages.config` reference style, a
 `TelemetryHttpModule` for you. If you are using the more modern PackageReference
 style, this may be needed to be done manually. For more information, see:
 [Migrate from packages.config to
-PackageReference](https://docs.microsoft.com/en-us/nuget/consume-packages/migrate-packages-config-to-package-reference).
+PackageReference](https://docs.microsoft.com/nuget/consume-packages/migrate-packages-config-to-package-reference).
 
 To configure your `web.config` manually, add this:
 
