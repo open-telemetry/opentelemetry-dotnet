@@ -25,9 +25,7 @@ namespace OpenTelemetry.Metrics
     internal class AggregatorStore
     {
         internal const int MaxMetricPoints = 2000;
-        private static readonly string[] EmptySeqKey = new string[0];
-        private static readonly object[] EmptySeqValue = new object[0];
-        private readonly object lockKeyValue2MetricAggs = new object();
+        private readonly object lockZeroTags = new object();
 
         // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
         private readonly ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>> keyValue2MetricAggs =
@@ -36,6 +34,7 @@ namespace OpenTelemetry.Metrics
         private AggregationTemporality temporality;
         private MetricPoint[] metrics;
         private int metricPointIndex = 0;
+        private bool zeroTagUsed;
         private AggregationType aggType;
         private DateTimeOffset startTimeExclusive;
         private DateTimeOffset endTimeInclusive;
@@ -53,10 +52,17 @@ namespace OpenTelemetry.Metrics
             int len = tags.Length;
             if (len == 0)
             {
-                if (this.metrics[0].StartTime == default)
+                if (!this.zeroTagUsed)
                 {
-                    var dt = DateTimeOffset.UtcNow;
-                    this.metrics[0] = new MetricPoint(this.aggType, dt, null, null);
+                    lock (this.lockZeroTags)
+                    {
+                        if (!this.zeroTagUsed)
+                        {
+                            var dt = DateTimeOffset.UtcNow;
+                            this.metrics[0] = new MetricPoint(this.aggType, dt, null, null);
+                            this.zeroTagUsed = true;
+                        }
+                    }
                 }
 
                 return 0;
@@ -79,16 +85,17 @@ namespace OpenTelemetry.Metrics
             // Get back a Dictionary of [ Values x Metrics[] ].
             if (!this.keyValue2MetricAggs.TryGetValue(tagKey, out var value2metrics))
             {
-                // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                seqKey = new string[len];
-                tagKey.CopyTo(seqKey, 0);
-
-                value2metrics = new ConcurrentDictionary<object[], int>(new ObjectArrayEqualityComparer());
-                if (!this.keyValue2MetricAggs.TryAdd(seqKey, value2metrics))
+                lock (this.keyValue2MetricAggs)
                 {
-                    // Some other thread added value2metrics, take it.
-                    // The one created by this thread is wasted.
-                    this.keyValue2MetricAggs.TryGetValue(tagKey, out value2metrics);
+                    if (!this.keyValue2MetricAggs.TryGetValue(tagKey, out value2metrics))
+                    {
+                        // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                        seqKey = new string[len];
+                        tagKey.CopyTo(seqKey, 0);
+
+                        value2metrics = new ConcurrentDictionary<object[], int>(new ObjectArrayEqualityComparer());
+                        this.keyValue2MetricAggs.TryAdd(seqKey, value2metrics);
+                    }
                 }
             }
 
@@ -96,50 +103,44 @@ namespace OpenTelemetry.Metrics
             // Get back Metrics[].
             if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex))
             {
-                this.metricPointIndex++;
                 aggregatorIndex = this.metricPointIndex;
                 if (aggregatorIndex >= MaxMetricPoints)
                 {
                     // sorry! out of data points.
-                    // TODO: This doesn't account for "wasted space"
-                    // in the array. Need to reclaim them when we
-                    // really need. i.e inside this if block.
-                    // this can take explicit lock, as this
-                    // condition is not the common code path.
+                    // TODO: Once we support cleanup of
+                    // unused points (typically with delta)
+                    // we can re-claim them here.
                     return -1;
                 }
 
-                // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-
-                if (seqKey == null)
+                lock (value2metrics)
                 {
-                    seqKey = new string[len];
-                    tagKey.CopyTo(seqKey, 0);
-                }
-
-                var seqVal = new object[len];
-                tagValue.CopyTo(seqVal, 0);
-                if (!value2metrics.TryAdd(seqVal, aggregatorIndex))
-                {
-                    // This thread lost the Add.
-                    // Some other thread added aggregatorIndex, take it.
-                    // aggregatorIndex incremented by this thread is
-                    // now a "wasted space" in the array.
-                    value2metrics.TryGetValue(tagValue, out aggregatorIndex);
-                    ref var metricPoint = ref this.metrics[aggregatorIndex];
-                    while (metricPoint.StartTime == default)
+                    // check again after acquiring lock.
+                    if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex))
                     {
-                        // spin wait until the thread who won adding to dictionary
-                        // also constructs a valid metric point.
-                    }
-                }
-                else
-                {
-                    // This thread won the Add.
-                    // Responsible for initializing MetricPoint.
-                    ref var metricPoint = ref this.metrics[aggregatorIndex];
-                    if (metricPoint.StartTime == default)
-                    {
+                        this.metricPointIndex++;
+                        aggregatorIndex = this.metricPointIndex;
+                        if (aggregatorIndex >= MaxMetricPoints)
+                        {
+                            // sorry! out of data points.
+                            // TODO: Once we support cleanup of
+                            // unused points (typically with delta)
+                            // we can re-claim them here.
+                            return -1;
+                        }
+
+                        // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                        if (seqKey == null)
+                        {
+                            seqKey = new string[len];
+                            tagKey.CopyTo(seqKey, 0);
+                        }
+
+                        var seqVal = new object[len];
+                        tagValue.CopyTo(seqVal, 0);
+
+                        value2metrics.TryAdd(seqVal, aggregatorIndex);
+                        ref var metricPoint = ref this.metrics[aggregatorIndex];
                         var dt = DateTimeOffset.UtcNow;
                         metricPoint = new MetricPoint(this.aggType, dt, seqKey, seqVal);
                     }
