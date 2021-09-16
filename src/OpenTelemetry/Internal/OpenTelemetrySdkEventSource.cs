@@ -328,13 +328,13 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(30, exception);
         }
 
-        [Event(31, Message = "'{0}' dropped '0' items.", Level = EventLevel.Informational)]
+        [Event(31, Message = "BatchExportProcessor<Activity> exporting to '{0}' dropped '0' items.", Level = EventLevel.Informational)]
         public void NoDroppedExportProcessorItems(string exporterName)
         {
             this.WriteEvent(31, exporterName);
         }
 
-        [Event(32, Message = "'{0}' dropped '{1}' item(s).", Level = EventLevel.Warning)]
+        [Event(32, Message = "BatchExportProcessor<Activity> exporting to '{0}' dropped '{1}' item(s) due to buffer full.", Level = EventLevel.Warning)]
         public void ExistsDroppedExportProcessorItems(string exporterName, long droppedCount)
         {
             this.WriteEvent(32, exporterName, droppedCount);
