@@ -1,7 +1,7 @@
-Getting started
----------------
+Getting Started
+===============
 
-All getting started projects start with the same setup.
+All getting started projects start with the same setup: logs, traces, metrics.
 
 .. toctree::
    :maxdepth: 1
@@ -11,4 +11,3 @@ All getting started projects start with the same setup.
    GettingStartedWithMetrics
    GettingStartedWithTraces
    LearnMore
-

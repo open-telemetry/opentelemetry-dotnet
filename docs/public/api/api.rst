@@ -1,5 +1,5 @@
-Opentelmetry Dotnet API
-=======================
+OpenTelemetry Dotnet API
+========================
 
 .. toctree::
    :maxdepth: 1

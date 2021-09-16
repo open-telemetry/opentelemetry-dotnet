@@ -1,4 +1,4 @@
-# Getting Started With Metrics
+# Getting Started with Metrics
 
 Then show how to add each of the 4 instruments available:
 1. Counter
@@ -7,6 +7,9 @@ Then show how to add each of the 4 instruments available:
 1. Gauge
 
 Extract common code related to adding metrics to a program.
+
+## Setup
+
 1. `Counter`
 1. Update `Program.cs` with the following
     ```c#

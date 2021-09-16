@@ -1,5 +1,5 @@
-Getting help
-------------
+Getting Help
+============
 
 -  Refer to `opentelemetry.io <https://opentelemetry.io/>`__ for general
    information about OpenTelemetry.

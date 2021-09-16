@@ -1,4 +1,6 @@
-# Getting Started With Logs
+# Getting Started with Logs
+
+## Setup
 
 1. Install the `Microsoft.Extensions.Logging` package
     ```sh

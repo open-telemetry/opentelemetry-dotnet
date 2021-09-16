@@ -1,5 +1,5 @@
-Opentelmetry Dotnet SDK
-=======================
+OpenTelemetry Dotnet SDK
+========================
 
 .. toctree::
    :maxdepth: 1
