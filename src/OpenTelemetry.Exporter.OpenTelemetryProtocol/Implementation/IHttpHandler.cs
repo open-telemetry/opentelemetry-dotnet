@@ -21,7 +21,7 @@ using System.Threading;
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     /// <summary>
-    /// Interface partialy exposing <see cref="HttpClient"/> methods.
+    /// Interface partially exposing <see cref="HttpClient"/> methods.
     /// </summary>
     public interface IHttpHandler
     {

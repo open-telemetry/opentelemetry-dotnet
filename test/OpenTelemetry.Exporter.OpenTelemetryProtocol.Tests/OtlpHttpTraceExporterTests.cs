@@ -86,7 +86,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public async Task Export_ActivityBatch_SendsCorrectHttpRequest(bool includeServiceNameInResource)
+        public void Export_ActivityBatch_SendsCorrectHttpRequest(bool includeServiceNameInResource)
         {
             // Arrange
             var activitySourceName = nameof(this.Export_ActivityBatch_SendsCorrectHttpRequest);
@@ -111,6 +111,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 .Callback<HttpRequestMessage, CancellationToken>(async (r, ct) =>
                 {
                     httpRequest = r;
+
                     // We have to capture content as it can't be accessed when request is disposed inside of Export method
                     httpRequestContent = await r.Content.ReadAsByteArrayAsync();
                 });
