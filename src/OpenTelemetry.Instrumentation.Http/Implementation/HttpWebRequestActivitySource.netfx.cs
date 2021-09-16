@@ -291,9 +291,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, Activity activity, object result, bool forceResponseCopy)
         {
-            // We could be executing on a different thread now so set the activity.
-            Debug.Assert(Activity.Current == null || Activity.Current == activity, "There was an unexpected active Activity on the result thread.");
-            if (Activity.Current == null)
+            // We could be executing on a different thread now so restore the activity if needed.
+            if (Activity.Current != activity)
             {
                 Activity.Current = activity;
             }
