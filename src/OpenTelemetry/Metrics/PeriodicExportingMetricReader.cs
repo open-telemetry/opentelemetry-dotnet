@@ -62,7 +62,7 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && !this.disposed)
+            if (disposing)
             {
                 try
                 {

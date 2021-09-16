@@ -21,7 +21,6 @@ namespace OpenTelemetry.Metrics
     public class BaseExportingMetricReader : MetricReader
     {
         protected readonly BaseExporter<Metric> exporter;
-        protected bool disposed;
 
         private readonly ExportModes supportedExportModes = ExportModes.Push | ExportModes.Pull;
 
@@ -62,9 +61,7 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
-
-            if (disposing && !this.disposed)
+            if (disposing)
             {
                 try
                 {
@@ -74,9 +71,9 @@ namespace OpenTelemetry.Metrics
                 {
                     // TODO: Log
                 }
-
-                this.disposed = true;
             }
+
+            base.Dispose(disposing);
         }
     }
 }
