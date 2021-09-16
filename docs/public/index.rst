@@ -18,4 +18,4 @@ OpenTelemetry Dotnet API
    :caption: Further Reading
 
    Source code <https://github.com/open-telemetry/opentelemetry-dotnet>
-   GettingHelp.rst
+   GettingHelp
