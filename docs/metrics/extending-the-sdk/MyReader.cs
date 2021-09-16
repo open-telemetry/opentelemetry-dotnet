@@ -1,4 +1,4 @@
-// <copyright file="InMemoryExporterOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="MyReader.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,26 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Exporter
+internal class MyReader : MetricReader
 {
-    public class InMemoryExporterOptions
-    {
-        /// <summary>
-        /// Gets or sets the metric export interval in milliseconds. The default value is 1000 milliseconds.
-        /// </summary>
-        public int MetricExportIntervalMilliseconds { get; set; } = 1000;
+    private readonly string name;
 
-        /// <summary>
-        /// Gets or sets the AggregationTemporality used for Histogram
-        /// and Sum metrics.
-        /// </summary>
-        public AggregationTemporality AggregationTemporality { get; set; } = AggregationTemporality.Delta;
+    public MyReader(string name = "MyReader")
+    {
+        this.name = name;
+    }
+
+    public override void OnCollect(Batch<Metric> metrics)
+    {
+        Console.WriteLine($"{this.name}.OnCollect({metrics})");
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        Console.WriteLine($"{this.name}.Dispose({disposing})");
     }
 }

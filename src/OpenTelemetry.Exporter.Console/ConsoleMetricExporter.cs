@@ -23,6 +23,7 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
 {
+    [AggregationTemporality(AggregationTemporality.Both, AggregationTemporality.Cumulative)]
     public class ConsoleMetricExporter : ConsoleExporter<Metric>
     {
         private Resource resource;
@@ -80,83 +81,66 @@ namespace OpenTelemetry.Exporter
                 {
                     string valueDisplay = string.Empty;
                     StringBuilder tagsBuilder = new StringBuilder();
-                    for (int i = 0; i < metricPoint.Keys.Length; i++)
+                    if (metricPoint.Keys != null)
                     {
-                        tagsBuilder.Append(metricPoint.Keys[i]);
-                        tagsBuilder.Append(":");
-                        tagsBuilder.Append(metricPoint.Values[i]);
+                        for (int i = 0; i < metricPoint.Keys.Length; i++)
+                        {
+                            tagsBuilder.Append(metricPoint.Keys[i]);
+                            tagsBuilder.Append(":");
+                            tagsBuilder.Append(metricPoint.Values[i]);
+                        }
                     }
 
                     var tags = tagsBuilder.ToString();
 
-                    // Switch would be faster than the if.else ladder
-                    // of try and cast.
-                    switch (metric.MetricType)
+                    var metricType = metric.MetricType;
+
+                    if (metricType.IsHistogram())
                     {
-                        case MetricType.LongSum:
+                        var bucketsBuilder = new StringBuilder();
+                        bucketsBuilder.Append($"Sum: {metricPoint.DoubleValue} Count: {metricPoint.LongValue} \n");
+                        for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
+                        {
+                            if (i == 0)
                             {
-                                valueDisplay = metricPoint.LongValue.ToString(CultureInfo.InvariantCulture);
-                                break;
+                                bucketsBuilder.Append("(-Infinity,");
+                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
+                                bucketsBuilder.Append("]");
+                                bucketsBuilder.Append(":");
+                                bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                            }
+                            else if (i == metricPoint.ExplicitBounds.Length)
+                            {
+                                bucketsBuilder.Append("(");
+                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
+                                bucketsBuilder.Append(",");
+                                bucketsBuilder.Append("+Infinity]");
+                                bucketsBuilder.Append(":");
+                                bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                            }
+                            else
+                            {
+                                bucketsBuilder.Append("(");
+                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
+                                bucketsBuilder.Append(",");
+                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
+                                bucketsBuilder.Append("]");
+                                bucketsBuilder.Append(":");
+                                bucketsBuilder.Append(metricPoint.BucketCounts[i]);
                             }
 
-                        case MetricType.DoubleSum:
-                            {
-                                valueDisplay = metricPoint.DoubleValue.ToString(CultureInfo.InvariantCulture);
-                                break;
-                            }
+                            bucketsBuilder.AppendLine();
+                        }
 
-                        case MetricType.LongGauge:
-                            {
-                                valueDisplay = metricPoint.LongValue.ToString(CultureInfo.InvariantCulture);
-                                break;
-                            }
-
-                        case MetricType.DoubleGauge:
-                            {
-                                valueDisplay = metricPoint.DoubleValue.ToString(CultureInfo.InvariantCulture);
-                                break;
-                            }
-
-                        case MetricType.Histogram:
-                            {
-                                var bucketsBuilder = new StringBuilder();
-                                bucketsBuilder.Append($"Sum: {metricPoint.DoubleValue} Count: {metricPoint.LongValue} \n");
-                                for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
-                                {
-                                    if (i == 0)
-                                    {
-                                        bucketsBuilder.Append("(-Infinity,");
-                                        bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
-                                        bucketsBuilder.Append("]");
-                                        bucketsBuilder.Append(":");
-                                        bucketsBuilder.Append(metricPoint.BucketCounts[i]);
-                                    }
-                                    else if (i == metricPoint.ExplicitBounds.Length)
-                                    {
-                                        bucketsBuilder.Append("(");
-                                        bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
-                                        bucketsBuilder.Append(",");
-                                        bucketsBuilder.Append("+Infinity]");
-                                        bucketsBuilder.Append(":");
-                                        bucketsBuilder.Append(metricPoint.BucketCounts[i]);
-                                    }
-                                    else
-                                    {
-                                        bucketsBuilder.Append("(");
-                                        bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
-                                        bucketsBuilder.Append(",");
-                                        bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
-                                        bucketsBuilder.Append("]");
-                                        bucketsBuilder.Append(":");
-                                        bucketsBuilder.Append(metricPoint.BucketCounts[i]);
-                                    }
-
-                                    bucketsBuilder.AppendLine();
-                                }
-
-                                valueDisplay = bucketsBuilder.ToString();
-                                break;
-                            }
+                        valueDisplay = bucketsBuilder.ToString();
+                    }
+                    else if (metricType.IsDouble())
+                    {
+                        valueDisplay = metricPoint.DoubleValue.ToString(CultureInfo.InvariantCulture);
+                    }
+                    else if (metricType.IsLong())
+                    {
+                        valueDisplay = metricPoint.LongValue.ToString(CultureInfo.InvariantCulture);
                     }
 
                     msg = new StringBuilder();

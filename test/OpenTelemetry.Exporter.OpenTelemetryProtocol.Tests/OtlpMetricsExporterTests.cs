@@ -59,7 +59,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new KeyValuePair<string, object>("key2", "value2"),
             };
 
-            var metricReader = new BaseExportingMetricReader(new TestExporter<Metric>(RunTest, AggregationTemporality.Delta));
+            var metricReader = new BaseExportingMetricReader(new TestExporter<Metric>(RunTest))
+            {
+                PreferredAggregationTemporality = AggregationTemporality.Delta,
+            };
 
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
