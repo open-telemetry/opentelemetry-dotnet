@@ -453,7 +453,47 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             Hashtable originalTable = servicePointTableField.GetValue(null) as Hashtable;
             ServicePointHashtable newTable = new ServicePointHashtable(originalTable ?? new Hashtable());
 
+            foreach (DictionaryEntry existingServicePoint in originalTable)
+            {
+                HookServicePoint(existingServicePoint.Value);
+            }
+
             servicePointTableField.SetValue(null, newTable);
+        }
+
+        private static void HookServicePoint(object value)
+        {
+            if (value is WeakReference weakRef
+                && weakRef.IsAlive
+                && weakRef.Target is ServicePoint servicePoint)
+            {
+                // Replace the ConnectionGroup hashtable inside this ServicePoint object,
+                // which allows us to intercept each new ConnectionGroup object added under
+                // this ServicePoint.
+                Hashtable originalTable = connectionGroupListField.GetValue(servicePoint) as Hashtable;
+                ConnectionGroupHashtable newTable = new ConnectionGroupHashtable(originalTable ?? new Hashtable());
+
+                foreach (DictionaryEntry existingConnectionGroup in originalTable)
+                {
+                    HookConnectionGroup(existingConnectionGroup.Value);
+                }
+
+                connectionGroupListField.SetValue(servicePoint, newTable);
+            }
+        }
+
+        private static void HookConnectionGroup(object value)
+        {
+            if (connectionGroupType.IsInstanceOfType(value))
+            {
+                // Replace the Connection arraylist inside this ConnectionGroup object,
+                // which allows us to intercept each new Connection object added under
+                // this ConnectionGroup.
+                ArrayList originalArrayList = connectionListField.GetValue(value) as ArrayList;
+                ConnectionArrayList newArrayList = new ConnectionArrayList(originalArrayList ?? new ArrayList());
+
+                connectionListField.SetValue(value, newArrayList);
+            }
         }
 
         private static Func<TClass, TField> CreateFieldGetter<TClass, TField>(string fieldName, BindingFlags flags)
@@ -675,20 +715,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 get => base[key];
                 set
                 {
-                    if (value is WeakReference weakRef && weakRef.IsAlive)
-                    {
-                        if (weakRef.Target is ServicePoint servicePoint)
-                        {
-                            // Replace the ConnectionGroup hashtable inside this ServicePoint object,
-                            // which allows us to intercept each new ConnectionGroup object added under
-                            // this ServicePoint.
-                            Hashtable originalTable = connectionGroupListField.GetValue(servicePoint) as Hashtable;
-                            ConnectionGroupHashtable newTable = new ConnectionGroupHashtable(originalTable ?? new Hashtable());
-
-                            connectionGroupListField.SetValue(servicePoint, newTable);
-                        }
-                    }
-
+                    HookServicePoint(value);
                     base[key] = value;
                 }
             }
@@ -711,17 +738,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 get => base[key];
                 set
                 {
-                    if (connectionGroupType.IsInstanceOfType(value))
-                    {
-                        // Replace the Connection arraylist inside this ConnectionGroup object,
-                        // which allows us to intercept each new Connection object added under
-                        // this ConnectionGroup.
-                        ArrayList originalArrayList = connectionListField.GetValue(value) as ArrayList;
-                        ConnectionArrayList newArrayList = new ConnectionArrayList(originalArrayList ?? new ArrayList());
-
-                        connectionListField.SetValue(value, newArrayList);
-                    }
-
+                    HookConnectionGroup(value);
                     base[key] = value;
                 }
             }
