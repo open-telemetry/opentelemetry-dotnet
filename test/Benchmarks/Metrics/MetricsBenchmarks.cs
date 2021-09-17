@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
@@ -56,7 +57,7 @@ namespace Benchmarks.Metrics
         private Random random = new Random();
         private string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
 
-        [Params(false, true)]
+        [Params(true)]
         public bool WithSDK { get; set; }
 
         [GlobalSetup]
@@ -80,20 +81,20 @@ namespace Benchmarks.Metrics
             this.provider?.Dispose();
         }
 
-        [Benchmark]
+        // [Benchmark]
         public void CounterHotPath()
         {
             this.counter?.Add(100);
         }
 
-        [Benchmark]
+        // [Benchmark]
         public void CounterWith1LabelsHotPath()
         {
             var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 2)]);
             this.counter?.Add(100, tag1);
         }
 
-        [Benchmark]
+        // [Benchmark]
         public void CounterWith3LabelsHotPath()
         {
             var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
@@ -105,37 +106,46 @@ namespace Benchmarks.Metrics
         [Benchmark]
         public void CounterWith5LabelsHotPath()
         {
-            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 2)]);
-            var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[this.random.Next(0, 2)]);
-            var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[this.random.Next(0, 5)]);
-            var tag4 = new KeyValuePair<string, object>("DimName4", this.dimensionValues[this.random.Next(0, 5)]);
-            var tag5 = new KeyValuePair<string, object>("DimName5", this.dimensionValues[this.random.Next(0, 10)]);
-            this.counter?.Add(100, tag1, tag2, tag3, tag4, tag5);
+            var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[this.random.Next(0, 10)] },
+            };
+            this.counter?.Add(100, tags);
         }
 
         [Benchmark]
         public void CounterWith6LabelsHotPath()
         {
-            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 2)]);
-            var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[this.random.Next(0, 2)]);
-            var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[this.random.Next(0, 5)]);
-            var tag4 = new KeyValuePair<string, object>("DimName4", this.dimensionValues[this.random.Next(0, 5)]);
-            var tag5 = new KeyValuePair<string, object>("DimName5", this.dimensionValues[this.random.Next(0, 5)]);
-            var tag6 = new KeyValuePair<string, object>("DimName6", this.dimensionValues[this.random.Next(0, 2)]);
-            this.counter?.Add(100, tag1, tag2, tag3, tag4, tag5, tag6);
+            var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
+            };
+            this.counter?.Add(100, tags);
         }
 
         [Benchmark]
         public void CounterWith7LabelsHotPath()
         {
-            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 2)]);
-            var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[this.random.Next(0, 2)]);
-            var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[this.random.Next(0, 5)]);
-            var tag4 = new KeyValuePair<string, object>("DimName4", this.dimensionValues[this.random.Next(0, 5)]);
-            var tag5 = new KeyValuePair<string, object>("DimName5", this.dimensionValues[this.random.Next(0, 5)]);
-            var tag6 = new KeyValuePair<string, object>("DimName6", this.dimensionValues[this.random.Next(0, 2)]);
-            var tag7 = new KeyValuePair<string, object>("DimName7", this.dimensionValues[this.random.Next(0, 1)]);
-            this.counter?.Add(100, tag1, tag2, tag3, tag4, tag5, tag6, tag7);
+            var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName7", this.dimensionValues[this.random.Next(0, 1)] },
+            };
+            this.counter?.Add(100, tags);
         }
     }
 }
