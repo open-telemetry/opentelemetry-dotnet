@@ -81,20 +81,17 @@ namespace Benchmarks.Metrics
             this.provider?.Dispose();
         }
 
-        // [Benchmark]
         public void CounterHotPath()
         {
             this.counter?.Add(100);
         }
 
-        // [Benchmark]
         public void CounterWith1LabelsHotPath()
         {
             var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 2)]);
             this.counter?.Add(100, tag1);
         }
 
-        // [Benchmark]
         public void CounterWith3LabelsHotPath()
         {
             var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
@@ -114,7 +111,7 @@ namespace Benchmarks.Metrics
                 { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
                 { "DimName5", this.dimensionValues[this.random.Next(0, 10)] },
             };
-            this.counter?.Add(100, tags);
+            this.counter?.Add(100,tags);
         }
 
         [Benchmark]
