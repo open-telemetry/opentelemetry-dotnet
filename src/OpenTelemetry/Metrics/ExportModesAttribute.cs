@@ -1,4 +1,4 @@
-// <copyright file="AggregationTemporality.cs" company="OpenTelemetry Authors">
+// <copyright file="ExportModesAttribute.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,17 +18,16 @@ using System;
 
 namespace OpenTelemetry.Metrics
 {
-    [Flags]
-    public enum AggregationTemporality : byte
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    public sealed class ExportModesAttribute : Attribute
     {
-        /// <summary>
-        /// Cumulative.
-        /// </summary>
-        Cumulative = 0b1,
+        private ExportModes supportedExportModes;
 
-        /// <summary>
-        /// Delta.
-        /// </summary>
-        Delta = 0b10,
+        public ExportModesAttribute(ExportModes supported)
+        {
+            this.supportedExportModes = supported;
+        }
+
+        public ExportModes Supported => this.supportedExportModes;
     }
 }

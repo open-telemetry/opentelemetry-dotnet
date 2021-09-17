@@ -1,4 +1,4 @@
-// <copyright file="AggregationTemporality.cs" company="OpenTelemetry Authors">
+// <copyright file="MyReader.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,20 +15,25 @@
 // </copyright>
 
 using System;
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Metrics
+internal class MyReader : MetricReader
 {
-    [Flags]
-    public enum AggregationTemporality : byte
-    {
-        /// <summary>
-        /// Cumulative.
-        /// </summary>
-        Cumulative = 0b1,
+    private readonly string name;
 
-        /// <summary>
-        /// Delta.
-        /// </summary>
-        Delta = 0b10,
+    public MyReader(string name = "MyReader")
+    {
+        this.name = name;
+    }
+
+    public override void OnCollect(Batch<Metric> metrics)
+    {
+        Console.WriteLine($"{this.name}.OnCollect({metrics})");
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        Console.WriteLine($"{this.name}.Dispose({disposing})");
     }
 }
