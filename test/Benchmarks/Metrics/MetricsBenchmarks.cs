@@ -29,16 +29,20 @@ Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical c
   DefaultJob : .NET Core 3.1.17 (CoreCLR 4.700.21.31506, CoreFX 4.700.21.31502), X64 RyuJIT
 
 
-|                    Method | WithSDK |      Mean |     Error |     StdDev |    Median |  Gen 0 | Gen 1 | Gen 2 | Allocated |
-|-------------------------- |-------- |----------:|----------:|-----------:|----------:|-------:|------:|------:|----------:|
-|            CounterHotPath |   False |  18.48 ns |  0.366 ns |   0.570 ns |  18.52 ns |      - |     - |     - |         - |
-| CounterWith1LabelsHotPath |   False |  30.25 ns |  1.274 ns |   3.530 ns |  29.14 ns |      - |     - |     - |         - |
-| CounterWith3LabelsHotPath |   False |  82.93 ns |  2.586 ns |   7.124 ns |  81.79 ns |      - |     - |     - |         - |
-| CounterWith5LabelsHotPath |   False | 134.94 ns |  4.756 ns |  13.491 ns | 132.45 ns | 0.0248 |     - |     - |     104 B |
-|            CounterHotPath |    True |  68.58 ns |  1.417 ns |   3.228 ns |  68.40 ns |      - |     - |     - |         - |
-| CounterWith1LabelsHotPath |    True | 192.19 ns |  8.114 ns |  23.151 ns | 184.06 ns |      - |     - |     - |         - |
-| CounterWith3LabelsHotPath |    True | 799.33 ns | 47.442 ns | 136.882 ns | 757.73 ns |      - |     - |     - |         - |
-| CounterWith5LabelsHotPath |    True | 972.16 ns | 45.809 ns | 133.626 ns | 939.95 ns | 0.0553 |     - |     - |     232 B |
+|                    Method | WithSDK |        Mean |     Error |    StdDev |      Median |  Gen 0 | Gen 1 | Gen 2 | Allocated |
+|-------------------------- |-------- |------------:|----------:|----------:|------------:|-------:|------:|------:|----------:|
+|            CounterHotPath |   False |    21.16 ns |  1.807 ns |  5.037 ns |    19.55 ns |      - |     - |     - |         - |
+| CounterWith1LabelsHotPath |   False |    32.33 ns |  1.596 ns |  4.501 ns |    30.53 ns |      - |     - |     - |         - |
+| CounterWith3LabelsHotPath |   False |    88.70 ns |  3.963 ns | 11.497 ns |    86.24 ns |      - |     - |     - |         - |
+| CounterWith5LabelsHotPath |   False |   122.19 ns |  4.101 ns | 11.898 ns |   120.32 ns | 0.0248 |     - |     - |     104 B |
+| CounterWith6LabelsHotPath |   False |   151.19 ns |  5.875 ns | 17.324 ns |   146.80 ns | 0.0286 |     - |     - |     120 B |
+| CounterWith7LabelsHotPath |   False |   170.32 ns |  4.907 ns | 14.392 ns |   165.91 ns | 0.0324 |     - |     - |     136 B |
+|            CounterHotPath |    True |    52.47 ns |  1.080 ns |  2.481 ns |    51.89 ns |      - |     - |     - |         - |
+| CounterWith1LabelsHotPath |    True |   142.46 ns |  2.118 ns |  1.769 ns |   142.51 ns |      - |     - |     - |         - |
+| CounterWith3LabelsHotPath |    True |   594.14 ns | 11.827 ns | 21.326 ns |   591.94 ns |      - |     - |     - |         - |
+| CounterWith5LabelsHotPath |    True |   843.52 ns | 16.612 ns | 17.775 ns |   835.77 ns | 0.0553 |     - |     - |     232 B |
+| CounterWith6LabelsHotPath |    True |   957.71 ns | 18.017 ns | 19.278 ns |   953.99 ns | 0.0629 |     - |     - |     264 B |
+| CounterWith7LabelsHotPath |    True | 1,112.38 ns | 21.805 ns | 27.576 ns | 1,104.74 ns | 0.0706 |     - |     - |     296 B |
 */
 
 namespace Benchmarks.Metrics
