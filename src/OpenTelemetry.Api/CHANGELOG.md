@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-alpha3
+
+Released 2021-Sep-13
+
 * Static Baggage operations (`SetBaggage`, `RemoveBaggage`, & `ClearBaggage`)
   are now thread-safe. Instance-based Baggage operations no longer mutate
   `Baggage.Current` (breaking behavior change). For details see:

@@ -1,4 +1,4 @@
-// <copyright file="InMemoryMetricExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="ExportModesAttribute.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,24 +14,20 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-using OpenTelemetry.Metrics;
+using System;
 
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Metrics
 {
-    public class InMemoryMetricExporter : InMemoryExporter<Metric>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    public sealed class ExportModesAttribute : Attribute
     {
-        private InMemoryExporterOptions options;
+        private ExportModes supportedExportModes;
 
-        public InMemoryMetricExporter(ICollection<Metric> exportedItems, InMemoryExporterOptions options)
-            : base(exportedItems)
+        public ExportModesAttribute(ExportModes supported)
         {
-            this.options = options;
+            this.supportedExportModes = supported;
         }
 
-        public override AggregationTemporality GetAggregationTemporality()
-        {
-            return this.options.AggregationTemporality;
-        }
+        public ExportModes Supported => this.supportedExportModes;
     }
 }

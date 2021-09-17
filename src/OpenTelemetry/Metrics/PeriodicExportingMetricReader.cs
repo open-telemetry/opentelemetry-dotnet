@@ -20,16 +20,25 @@ using System.Threading.Tasks;
 
 namespace OpenTelemetry.Metrics
 {
-    public class PeriodicExportingMetricReader : MetricReader
+    public class PeriodicExportingMetricReader : BaseExportingMetricReader
     {
-        private readonly BaseExporter<Metric> exporter;
+        internal const int DefaultExportIntervalMilliseconds = 60000;
+        internal const int DefaultExportTimeoutMilliseconds = 30000;
+
         private readonly Task exportTask;
         private readonly CancellationTokenSource token;
-        private bool disposed;
 
-        public PeriodicExportingMetricReader(BaseExporter<Metric> exporter, int exportIntervalMs)
+        public PeriodicExportingMetricReader(
+            BaseExporter<Metric> exporter,
+            int exportIntervalMilliseconds = DefaultExportIntervalMilliseconds,
+            int exportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
+            : base(exporter)
         {
-            this.exporter = exporter;
+            if ((this.SupportedExportModes & ExportModes.Push) != ExportModes.Push)
+            {
+                throw new InvalidOperationException("The exporter does not support push mode.");
+            }
+
             this.token = new CancellationTokenSource();
 
             // TODO: Use dedicated thread.
@@ -37,7 +46,7 @@ namespace OpenTelemetry.Metrics
             {
                 while (!this.token.IsCancellationRequested)
                 {
-                    Task.Delay(exportIntervalMs).Wait();
+                    Task.Delay(exportIntervalMilliseconds).Wait();
                     this.Collect();
                 }
             });
@@ -50,38 +59,24 @@ namespace OpenTelemetry.Metrics
             this.exporter.Export(metrics);
         }
 
-        public override AggregationTemporality GetAggregationTemporality()
-        {
-            return this.exporter.GetAggregationTemporality();
-        }
-
-        internal override void SetParentProvider(BaseProvider parentProvider)
-        {
-            base.SetParentProvider(parentProvider);
-            this.exporter.ParentProvider = parentProvider;
-        }
-
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
-
             if (disposing && !this.disposed)
             {
                 try
                 {
                     this.token.Cancel();
-                    this.token.Dispose();
                     this.exportTask.Wait();
-                    this.exporter.Dispose();
+                    this.token.Dispose();
                 }
                 catch (Exception)
                 {
                     // TODO: Log
                 }
-
-                this.disposed = true;
             }
+
+            base.Dispose(disposing);
         }
     }
 }

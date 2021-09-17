@@ -86,7 +86,10 @@ namespace Benchmarks.Metrics
                 }
             }
 
-            this.reader = new BaseExportingMetricReader(metricExporter);
+            this.reader = new BaseExportingMetricReader(metricExporter)
+            {
+                PreferredAggregationTemporality = AggregationTemporality.Cumulative,
+            };
             this.provider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
                 .AddMetricReader(this.reader)

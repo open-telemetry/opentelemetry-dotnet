@@ -14,38 +14,56 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Metrics
 {
-    public enum MetricType
+    [Flags]
+    public enum MetricType : byte
     {
+        /*
+        Type:
+            0x10: Sum
+            0x20: Gauge
+            0x30: Histogram
+            0x40: Summary (reserved)
+
+        Point kind:
+            0x04: I1 (signed 1-byte integer)
+            0x05: U1 (unsigned 1-byte integer)
+            0x06: I2 (signed 2-byte integer)
+            0x07: U2 (unsigned 2-byte integer)
+            0x08: I4 (signed 4-byte integer)
+            0x09: U4 (unsigned 4-byte integer)
+            0x0a: I8 (signed 8-byte integer)
+            0x0b: U8 (unsigned 8-byte integer)
+            0x0c: R4 (4-byte floating point)
+            0x0d: R8 (8-byte floating point)
+        */
+
         /// <summary>
         /// Sum of Long type.
         /// </summary>
-        LongSum = 0,
+        LongSum = 0x1a,
 
         /// <summary>
         /// Sum of Double type.
         /// </summary>
-        DoubleSum = 1,
+        DoubleSum = 0x1d,
 
         /// <summary>
         /// Gauge of Long type.
         /// </summary>
-        LongGauge = 2,
+        LongGauge = 0x2a,
 
         /// <summary>
         /// Gauge of Double type.
         /// </summary>
-        DoubleGauge = 3,
+        DoubleGauge = 0x2d,
 
         /// <summary>
         /// Histogram.
         /// </summary>
-        Histogram = 4,
-
-        /// <summary>
-        /// Summary.
-        /// </summary>
-        Summary = 5,
+        Histogram = 0x30,
     }
 }
