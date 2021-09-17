@@ -5,8 +5,8 @@
 1. Create a new console application and run it
 
     ```sh
-    dotnet new console -o myApp
-    cd myApp
+    dotnet new console -o getting-started
+    cd getting-started
     dotnet run
     ```
 

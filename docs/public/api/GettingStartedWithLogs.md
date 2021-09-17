@@ -59,7 +59,5 @@ The program uses the
 [`ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
 API to log a formatted string with a severity level of `Information`. Click
 [here](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.loglevel)
-for more information on the different logs levels. Opentelemetry captures this
-and sends it to `ConsoleExporter`. `ConsoleExporter` simply displays it on the
-console.
-<!-- TODO extract this common explanation of what ConsoleExporter does -->
+for more information on the different logs levels. OpenTelemetry captures this
+and sends it to `ConsoleExporter`.
