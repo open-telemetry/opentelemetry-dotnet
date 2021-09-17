@@ -4,32 +4,9 @@
 
 1. Update `Program.cs` with the following
 
-    ```c#
-    using System.Diagnostics;
-    using OpenTelemetry;
-    using OpenTelemetry.Trace;
-
-    public class Program
-    {
-        private static readonly ActivitySource MyActivitySource = new ActivitySource(
-            "MyCompany.MyProduct.MyLibrary");
-
-        public static void Main()
-        {
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .SetSampler(new AlwaysOnSampler())
-                .AddSource("MyCompany.MyProduct.MyLibrary")
-                .AddConsoleExporter()
-                .Build();
-
-            using (var activity = MyActivitySource.StartActivity("SayHello"))
-            {
-                activity?.SetTag("foo", 1);
-                activity?.SetTag("bar", "Hello, World!");
-                activity?.SetTag("baz", new int[] { 1, 2, 3 });
-            }
-        }
-    }
+    ```{literalinclude} ../../trace/getting-started/Program.cs
+    :language: c#
+    :lines: 17-
     ```
 
 1. Run the application
@@ -41,18 +18,18 @@
 1. You should see the following output
 
     ```text
-    Activity.Id:          00-8389584945550f40820b96ce1ceb9299-745239d26e408342-01
+    Activity.Id:          00-1fdeb99ef467c11bc19cefebcb6671ba-0d974d9e9dbafe19-01
+    Activity.ActivitySourceName: MyCompany.MyProduct.MyLibrary
     Activity.DisplayName: SayHello
     Activity.Kind:        Internal
-    Activity.StartTime:   2020-08-12T15:59:10.4461835Z
-    Activity.Duration:    00:00:00.0066039
+    Activity.StartTime:   2021-09-17T18:13:52.0162925Z
+    Activity.Duration:    00:00:00.0327858
     Activity.TagObjects:
         foo: 1
         bar: Hello, World!
         baz: [1, 2, 3]
     Resource associated with Activity:
         service.name: unknown_service:getting-started
-
     ```
 
 Congratulations! You are now collecting traces using OpenTelemetry.

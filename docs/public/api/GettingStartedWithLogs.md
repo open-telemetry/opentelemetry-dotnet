@@ -10,24 +10,9 @@
 
 1. Update `Program.cs` with the following
 
-    ```c#
-    using Microsoft.Extensions.Logging;
-    using OpenTelemetry.Logs;
-
-    public class Program
-    {
-        public static void Main()
-        {
-            using var loggerFactory = LoggerFactory.Create(builder =>
-            {
-                builder.AddOpenTelemetry(options => options
-                    .AddConsoleExporter());
-            });
-
-            var logger = loggerFactory.CreateLogger<Program>();
-            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
-        }
-    }
+    ```{literalinclude} ../../logs/getting-started/Program.cs
+    :language: c#
+    :lines: 17-
     ```
 
 1. Run the application
@@ -41,17 +26,17 @@
     ```text
     LogRecord.TraceId:            00000000000000000000000000000000
     LogRecord.SpanId:             0000000000000000
-    LogRecord.Timestamp:          2020-11-13T23:50:33.5764463Z
+    LogRecord.Timestamp:          2021-09-17T18:11:02.8111180Z
     LogRecord.EventId:            0
     LogRecord.CategoryName:       Program
     LogRecord.LogLevel:           Information
     LogRecord.TraceFlags:         None
     LogRecord.State:              Hello from tomato 2.99.
+    Resource associated with LogRecord:
+        service.name: unknown_service:getting-started
     ```
 
 Congratulations! You are now collecting logs using OpenTelemetry.
-
-<!-- TODO Can we just import the Program.cs file (skip copyright would be nice too) -->
 
 ## What does the above program do?
 
