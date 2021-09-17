@@ -3,7 +3,7 @@
 - Refer to [opentelemetry.io](https://opentelemetry.io/) for general
   information about OpenTelemetry.
 - Refer to the
-  [OpenTelemetry Dotnet GitHub repository](https://github.com/open-telemetry/opentelemetry-dotnet)
+  [OpenTelemetry .NET GitHub repository](https://github.com/open-telemetry/opentelemetry-dotnet)
   for further information and resources related to OpenTelemetry Dotnet.
 - Feel free to join the
   [CNCF OpenTelemetry Dotnet Slack channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q).
