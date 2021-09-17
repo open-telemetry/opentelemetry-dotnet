@@ -26,14 +26,14 @@ Extract common code related to adding metrics to a program.
     ```
 
 1. You should see the following output
-<!-- markdownlint-disable -->
+    <!-- markdownlint-disable -->
     ```text
     Export MyCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
     2021-09-17T18:12:32.5817665Z, 2021-09-17T18:12:42.7306718Z] tag1:value1tag2:value2 LongSum
     Value: 20000000
     Instrument MyCompany.MyProduct.MyLibrary:MyCounter completed.
     ```
-<!-- markdownlint-enable -->
+    <!-- markdownlint-enable -->
 
 Congratulations! You are now collecting metrics using OpenTelemetry.
 
