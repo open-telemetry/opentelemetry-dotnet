@@ -23,7 +23,6 @@ namespace OpenTelemetry.Metrics
         private const AggregationTemporality CumulativeAndDelta = AggregationTemporality.Cumulative | AggregationTemporality.Delta;
         private AggregationTemporality preferredAggregationTemporality = CumulativeAndDelta;
         private AggregationTemporality supportedAggregationTemporality = CumulativeAndDelta;
-        private bool disposed;
 
         public BaseProvider ParentProvider { get; private set; }
 
@@ -61,12 +60,8 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc/>
         public void Dispose()
         {
-            if (!this.disposed)
-            {
-                this.Dispose(true);
-                GC.SuppressFinalize(this);
-                this.disposed = true;
-            }
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         internal virtual void SetParentProvider(BaseProvider parentProvider)
