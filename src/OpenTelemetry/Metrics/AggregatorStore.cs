@@ -23,6 +23,7 @@ namespace OpenTelemetry.Metrics
     internal class AggregatorStore
     {
         internal const int MaxMetricPoints = 2000;
+        private static readonly ObjectArrayEqualityComparer ObjectArrayComparer = new ObjectArrayEqualityComparer();
         private readonly object lockZeroTags = new object();
 
         // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
@@ -91,7 +92,7 @@ namespace OpenTelemetry.Metrics
                         seqKey = new string[len];
                         tagKey.CopyTo(seqKey, 0);
 
-                        value2metrics = new ConcurrentDictionary<object[], int>(new ObjectArrayEqualityComparer());
+                        value2metrics = new ConcurrentDictionary<object[], int>(ObjectArrayComparer);
                         this.keyValue2MetricAggs.TryAdd(seqKey, value2metrics);
                     }
                 }
