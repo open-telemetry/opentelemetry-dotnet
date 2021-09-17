@@ -1,3 +1,4 @@
+System.Net.Http.DiagnosticsHandler
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.Enrich.get -> System.Action<System.Diagnostics.Activity, string, object>
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.Enrich.set -> void

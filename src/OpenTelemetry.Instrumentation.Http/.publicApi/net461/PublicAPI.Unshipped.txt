@@ -1,3 +1,4 @@
+System.Net.Http.DiagnosticsHandler
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.Enrich.get -> System.Action<System.Diagnostics.Activity, string, object>
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.Enrich.set -> void
@@ -20,3 +21,4 @@ OpenTelemetry.Instrumentation.Http.HttpWebRequestInstrumentationOptions.SetHttpF
 OpenTelemetry.Instrumentation.Http.HttpWebRequestInstrumentationOptions.SetHttpFlavor.set -> void
 OpenTelemetry.Trace.TracerProviderBuilderExtensions
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddHttpClientInstrumentation(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Instrumentation.Http.HttpWebRequestInstrumentationOptions> configureHttpWebRequestInstrumentationOptions = null) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddHttpClientInstrumentation(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Instrumentation.Http.HttpWebRequestInstrumentationOptions> configureHttpWebRequestInstrumentationOptions = null, System.Action<OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions = null) -> OpenTelemetry.Trace.TracerProviderBuilder
