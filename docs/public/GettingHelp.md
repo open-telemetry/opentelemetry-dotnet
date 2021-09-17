@@ -12,4 +12,4 @@
   .NET that are not covered by the existing documentation, in the
   `otel-dotnet` channel.
 - For bugs and feature requests, write a
-  [GitHub issue](https://github.com/open-telemetry/opentelemetry-dotnet/issues).
+  [GitHub issue](https://github.com/open-telemetry/opentelemetry-dotnet/issues/new/choose).
