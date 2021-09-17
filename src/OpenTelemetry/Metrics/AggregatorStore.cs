@@ -84,17 +84,14 @@ namespace OpenTelemetry.Metrics
             // Get back a Dictionary of [ Values x Metrics[] ].
             if (!this.keyValue2MetricAggs.TryGetValue(tagKey, out var value2metrics))
             {
-                lock (this.keyValue2MetricAggs)
-                {
-                    if (!this.keyValue2MetricAggs.TryGetValue(tagKey, out value2metrics))
-                    {
-                        // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                        seqKey = new string[len];
-                        tagKey.CopyTo(seqKey, 0);
+                // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                seqKey = new string[len];
+                tagKey.CopyTo(seqKey, 0);
 
-                        value2metrics = new ConcurrentDictionary<object[], int>(ObjectArrayComparer);
-                        this.keyValue2MetricAggs.TryAdd(seqKey, value2metrics);
-                    }
+                value2metrics = new ConcurrentDictionary<object[], int>(ObjectArrayComparer);
+                if (!this.keyValue2MetricAggs.TryAdd(seqKey, value2metrics))
+                {
+                    this.keyValue2MetricAggs.TryGetValue(seqKey, out value2metrics);
                 }
             }
 
