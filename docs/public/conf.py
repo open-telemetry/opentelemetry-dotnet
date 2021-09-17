@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'OpenTelemetry Dotnet'
+project = 'OpenTelemetry .NET'
 copyright = '2021, OpenTelemetry authors'
 author = 'OpenTelemetry authors'
 

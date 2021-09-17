@@ -9,7 +9,7 @@
   [CNCF OpenTelemetry .NET Slack channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q).
   If you are new, you can create a CNCF Slack account
   [here](http://slack.cncf.io/). Ask any questions related to OpenTelemetry
-  Dotnet that are not covered by the existing documentation, in the
+  .NET that are not covered by the existing documentation, in the
   `otel-dotnet` channel.
 - For bugs and feature requests, write a
   [GitHub issue](https://github.com/open-telemetry/opentelemetry-dotnet/issues).

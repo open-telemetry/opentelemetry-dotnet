@@ -1,15 +1,15 @@
-OpenTelemetry Dotnet
-====================
+OpenTelemetry .NET
+==================
 
 .. toctree::
    :maxdepth: 2
-   :caption: OpenTelemetry Dotnet API
+   :caption: OpenTelemetry .NET API
 
    api/api
 
 .. toctree::
    :maxdepth: 2
-   :caption: OpenTelemetry Dotnet SDK
+   :caption: OpenTelemetry .NET SDK
 
    sdk/sdk
 

@@ -1,4 +1,4 @@
-OpenTelemetry Dotnet API
+OpenTelemetry .NET API
 ========================
 
 .. toctree::

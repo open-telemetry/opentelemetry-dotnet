@@ -22,5 +22,5 @@
     dotnet add package --prerelease OpenTelemetry.Exporter.Console
     ```
 
-Now that you have a working dotnet console application you can follow the next
+Now that you have a working .NET console application you can follow the next
 steps for the kind of telemetry you wish to add: logs, metrics, traces.
