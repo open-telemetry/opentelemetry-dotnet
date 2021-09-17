@@ -59,8 +59,8 @@ A demo exporter which simply writes activity name to the console is shown
 [here](./MyExporter.cs).
 
 Apart from the exporter itself, you should also provide extension methods as
-shown [here](./MyExporterHelperExtensions.cs). This allows users to add the
-Exporter to the `TracerProvider` as shown in the example [here](./Program.cs).
+shown [here](./MyExporterExtensions.cs). This allows users to add the Exporter
+to the `TracerProvider` as shown in the example [here](./Program.cs).
 
 ## Instrumentation Library
 

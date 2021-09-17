@@ -1,4 +1,4 @@
-// <copyright file="OtlpMetricExporterHelperExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpMetricExporterExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// Extension methods to simplify registering of the OpenTelemetry Protocol (OTLP) exporter.
     /// </summary>
-    public static class OtlpMetricExporterHelperExtensions
+    public static class OtlpMetricExporterExtensions
     {
         /// <summary>
         /// Adds OpenTelemetry Protocol (OTLP) exporter to the MeterProvider.
