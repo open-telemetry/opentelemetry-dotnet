@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace OpenTelemetry.Metrics
 {
@@ -49,18 +50,15 @@ namespace OpenTelemetry.Metrics
         internal int FindMetricAggregators(ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
             int len = tags.Length;
-            if (len == 0)
+            if (len == 0 && !this.zeroTagMetricPointInitialized)
             {
-                if (!this.zeroTagMetricPointInitialized)
+                lock (this.lockZeroTags)
                 {
-                    lock (this.lockZeroTags)
+                    if (!this.zeroTagMetricPointInitialized)
                     {
-                        if (!this.zeroTagMetricPointInitialized)
-                        {
-                            var dt = DateTimeOffset.UtcNow;
-                            this.metrics[0] = new MetricPoint(this.aggType, dt, null, null);
-                            this.zeroTagMetricPointInitialized = true;
-                        }
+                        var dt = DateTimeOffset.UtcNow;
+                        this.metrics[0] = new MetricPoint(this.aggType, dt, null, null);
+                        this.zeroTagMetricPointInitialized = true;
                     }
                 }
 
@@ -114,7 +112,7 @@ namespace OpenTelemetry.Metrics
                     // check again after acquiring lock.
                     if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex))
                     {
-                        this.metricPointIndex++;
+                        Interlocked.Increment(ref this.metricPointIndex);
                         aggregatorIndex = this.metricPointIndex;
                         if (aggregatorIndex >= MaxMetricPoints)
                         {
