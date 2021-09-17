@@ -1,4 +1,4 @@
-# Getting Started with Logs
+# Logs
 
 ## Setup
 

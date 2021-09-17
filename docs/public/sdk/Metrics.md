@@ -1,4 +1,4 @@
-# Getting Started with Metrics
+# Metrics
 
 Then show how to add each of the 4 instruments available
 

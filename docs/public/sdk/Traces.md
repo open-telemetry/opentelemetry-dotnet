@@ -1,4 +1,4 @@
-# Getting Started with Traces
+# Traces
 
 ## Setup
 

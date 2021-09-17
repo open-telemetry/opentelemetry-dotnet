@@ -7,8 +7,8 @@ All getting started projects start with the same setup: logs, metrics, traces.
 .. toctree::
    :maxdepth: 1
  
-   Prerequisites
-   GettingStartedWithLogs
-   GettingStartedWithMetrics
-   GettingStartedWithTraces
-   LearnMore
+   sdk/Prerequisites
+   sdk/Logs
+   sdk/Metrics
+   sdk/Traces
+   sdk/LearnMore
