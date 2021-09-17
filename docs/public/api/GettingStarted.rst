@@ -1,7 +1,7 @@
 Getting Started
 ===============
 
-All getting started projects start with the same setup: logs, traces, metrics.
+All getting started projects start with the same setup: logs, metrics, traces.
 `ConsoleExporter` simply displays collected telemetry to the console.
 
 .. toctree::
