@@ -18,6 +18,7 @@ using System;
 
 namespace OpenTelemetry.Metrics
 {
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
     public sealed class AggregationTemporalityAttribute : Attribute
     {
         private AggregationTemporality preferredAggregationTemporality;
