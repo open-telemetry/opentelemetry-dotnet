@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Threading;
 
 namespace OpenTelemetry.Metrics
@@ -48,11 +49,30 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public virtual void Collect()
+        public virtual bool Collect(int timeoutMilliseconds = Timeout.Infinite)
         {
+            var sw = Stopwatch.StartNew();
+
             var collectMetric = this.ParentProvider.GetMetricCollect();
             var metricsCollected = collectMetric();
-            this.OnCollect(metricsCollected);
+
+            if (timeoutMilliseconds == Timeout.Infinite)
+            {
+                this.OnCollect(metricsCollected, Timeout.Infinite);
+            }
+            else
+            {
+                var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+
+                if (timeout <= 0)
+                {
+                    return false;
+                }
+
+                return this.OnCollect(metricsCollected, (int)timeout);
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -138,14 +158,12 @@ namespace OpenTelemetry.Metrics
             GC.SuppressFinalize(this);
         }
 
-        public virtual void OnCollect(Batch<Metric> metrics)
-        {
-        }
-
         internal virtual void SetParentProvider(BaseProvider parentProvider)
         {
             this.ParentProvider = parentProvider;
         }
+
+        protected abstract bool OnCollect(Batch<Metric> metrics, int timeoutMilliseconds);
 
         /// <summary>
         /// Called by <c>ForceFlush</c>. This function should block the current

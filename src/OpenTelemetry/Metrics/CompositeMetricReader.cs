@@ -22,7 +22,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
-    public class CompositeMetricReader : MetricReader
+    internal class CompositeMetricReader : MetricReader
     {
         private readonly DoublyLinkedListNode head;
         private DoublyLinkedListNode tail;
@@ -69,22 +69,41 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc/>
-        public override void OnCollect(Batch<Metric> metrics)
+        public override bool Collect(int timeoutMilliseconds = Timeout.Infinite)
         {
             var cur = this.head;
+            var result = true;
+            var sw = Stopwatch.StartNew();
 
             while (cur != null)
             {
-                cur.Value.OnCollect(metrics);
+                if (timeoutMilliseconds == Timeout.Infinite)
+                {
+                    result = cur.Value.Collect(Timeout.Infinite) && result;
+                }
+                else
+                {
+                    var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+
+                    // notify all the readers, even if we run overtime
+                    result = cur.Value.Collect((int)Math.Max(timeout, 0)) && result;
+                }
+
                 cur = cur.Next;
             }
+
+            return result;
+        }
+
+        protected override bool OnCollect(Batch<Metric> metrics, int timeoutMilliseconds)
+        {
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
         protected override bool OnForceFlush(int timeoutMilliseconds)
         {
             var cur = this.head;
-
             var sw = Stopwatch.StartNew();
 
             while (cur != null)
@@ -133,7 +152,7 @@ namespace OpenTelemetry.Metrics
                 {
                     var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
 
-                    // notify all the processors, even if we run overtime
+                    // notify all the readers, even if we run overtime
                     result = cur.Value.Shutdown((int)Math.Max(timeout, 0)) && result;
                 }
 

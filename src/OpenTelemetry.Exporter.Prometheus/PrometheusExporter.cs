@@ -39,7 +39,7 @@ namespace OpenTelemetry.Exporter
             this.Options = options;
         }
 
-        internal Action CollectMetric { get; set; }
+        internal Func<int, bool> CollectMetric { get; set; }
 
         public override ExportResult Export(in Batch<Metric> metrics)
         {
