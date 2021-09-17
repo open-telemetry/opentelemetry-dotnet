@@ -19,6 +19,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Threading;
+using System.Threading.Tasks;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -139,10 +141,14 @@ namespace OpenTelemetry.Metrics
                         var seqVal = new object[len];
                         tagValue.CopyTo(seqVal, 0);
 
-                        value2metrics.TryAdd(seqVal, aggregatorIndex);
                         ref var metricPoint = ref this.metrics[aggregatorIndex];
                         var dt = DateTimeOffset.UtcNow;
                         metricPoint = new MetricPoint(this.aggType, dt, seqKey, seqVal);
+
+                        // Add to dictionary *after* initializing MetricPoint
+                        // as other threads can start writing to the
+                        // MetricPoint, if dictionary entry found.
+                        value2metrics.TryAdd(seqVal, aggregatorIndex);
                     }
                 }
             }
