@@ -61,7 +61,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             var meter = new Meter("TestMeter");
             var counterLong = meter.CreateCounter<long>("mycounter");
-            var meterProvider = Sdk.CreateMeterProviderBuilder()
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
                 .AddMetricReader(metricReader)
                 .Build();
@@ -146,7 +146,7 @@ namespace OpenTelemetry.Metrics.Tests
                     new Measurement<long>(i++ * 10),
                 };
             });
-            var meterProvider = Sdk.CreateMeterProviderBuilder()
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource(meterName)
                 .AddMetricReader(metricReader)
                 .Build();
@@ -193,7 +193,7 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 foreach (var metric in batch)
                 {
-                    foreach (var metricPoint in metric.GetMetricPoints())
+                    foreach (ref var metricPoint in metric.GetMetricPoints())
                     {
                         metricPointCount++;
                     }
@@ -204,10 +204,10 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 PreferredAggregationTemporality = temporality,
             };
-            var meter = new Meter("TestMeter");
-            var counterLong = meter.CreateCounter<long>("mycounter");
-            var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestMeter")
+            var meter = new Meter("TestPointCapMeter");
+            var counterLong = meter.CreateCounter<long>("mycounterCapTest");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource("TestPointCapMeter")
                 .AddMetricReader(metricReader)
                 .Build();
 
@@ -256,10 +256,10 @@ namespace OpenTelemetry.Metrics.Tests
                 PreferredAggregationTemporality = AggregationTemporality.Cumulative,
             };
 
-            var meter = new Meter("TestMeter");
+            var meter = new Meter("TestLongCounterMeter");
             var counterLong = meter.CreateCounter<long>("mycounter");
-            var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestMeter")
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource("TestLongCounterMeter")
                 .AddMetricReader(metricReader)
                 .Build();
 
@@ -300,7 +300,6 @@ namespace OpenTelemetry.Metrics.Tests
             var timeTakenInMilliseconds = sw.ElapsedMilliseconds;
             this.output.WriteLine($"Took {timeTakenInMilliseconds} msecs. Total threads: {numberOfThreads}, each thread doing {numberOfMetricUpdateByEachThread} recordings.");
 
-            meterProvider.Dispose();
             metricReader.Collect();
 
             var sumReceived = GetLongSum(metricItems);
@@ -327,10 +326,10 @@ namespace OpenTelemetry.Metrics.Tests
                 PreferredAggregationTemporality = AggregationTemporality.Cumulative,
             };
 
-            var meter = new Meter("TestMeter");
+            var meter = new Meter("TestDoubleCounterMeter");
             var counterDouble = meter.CreateCounter<double>("mycounter");
-            var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestMeter")
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource("TestDoubleCounterMeter")
                 .AddMetricReader(metricReader)
                 .Build();
 
@@ -371,7 +370,6 @@ namespace OpenTelemetry.Metrics.Tests
             var timeTakenInMilliseconds = sw.ElapsedMilliseconds;
             this.output.WriteLine($"Took {timeTakenInMilliseconds} msecs. Total threads: {numberOfThreads}, each thread doing {numberOfMetricUpdateByEachThread} recordings.");
 
-            meterProvider.Dispose();
             metricReader.Collect();
 
             var sumReceived = GetDoubleSum(metricItems);
@@ -385,7 +383,7 @@ namespace OpenTelemetry.Metrics.Tests
             long sum = 0;
             foreach (var metric in metrics)
             {
-                foreach (var metricPoint in metric.GetMetricPoints())
+                foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
                     sum += metricPoint.LongValue;
                 }
@@ -399,7 +397,7 @@ namespace OpenTelemetry.Metrics.Tests
             double sum = 0;
             foreach (var metric in metrics)
             {
-                foreach (var metricPoint in metric.GetMetricPoints())
+                foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
                     sum += metricPoint.DoubleValue;
                 }
@@ -420,7 +418,7 @@ namespace OpenTelemetry.Metrics.Tests
             var mre = arguments.MreToBlockUpdateThread;
             var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
             var counter = arguments.Counter;
-
+            var valueToUpdate = arguments.DeltaValueUpdatedByEachCall;
             if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == numberOfThreads)
             {
                 mreToEnsureAllThreadsStart.Set();
@@ -431,7 +429,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             for (int i = 0; i < numberOfMetricUpdateByEachThread; i++)
             {
-                counter.Add(arguments.DeltaValueUpdatedByEachCall, new KeyValuePair<string, object>("verb", "GET"));
+                counter.Add(valueToUpdate, new KeyValuePair<string, object>("verb", "GET"));
             }
         }
 
