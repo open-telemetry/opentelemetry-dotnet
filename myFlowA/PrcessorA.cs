@@ -19,11 +19,11 @@ using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 
-internal class MyProcessor : BaseProcessor<LogRecord>
+internal class MyProcessorA : BaseProcessor<LogRecord>
 {
     private readonly string name;
 
-    public MyProcessor(string name = "MyProcessor")
+    public MyProcessorA(string name = "MyProcessor")
     {
         this.name = name;
     }

@@ -28,26 +28,13 @@ public class Program
 
         using var loggerFactory = LoggerFactory.Create(builder => builder
                 .AddOpenTelemetry(options =>
-                    options.AddProcessor(new MyProcessor("MyProcessorA")
-        )));
-
+                {
+                    options.AddProcessor(new MyProcessorA("my Processor A"));
+                    options.AddMyLogExporter();
+                }));
 
         var logger = loggerFactory.CreateLogger<Program>();
         logger.LogInformation("amazing");
 
-        //using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-        //    .AddSource("OTel.Demo")
-        //    .AddProcessor(new MyProcessor("ProcessorA"))
-        //    .Build();
-
-        //using (var foo = DemoSource.StartActivity("Foo"))
-        //{
-        //    using (var bar = DemoSource.StartActivity("Bar"))
-        //    {
-        //        using (var baz = DemoSource.StartActivity("Baz"))
-        //        {
-        //        }
-        //    }
-        //}
     }
 }
