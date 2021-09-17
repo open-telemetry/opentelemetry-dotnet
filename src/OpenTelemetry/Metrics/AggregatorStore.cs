@@ -115,8 +115,7 @@ namespace OpenTelemetry.Metrics
                     // check again after acquiring lock.
                     if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex))
                     {
-                        Interlocked.Increment(ref this.metricPointIndex);
-                        aggregatorIndex = this.metricPointIndex;
+                        aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
                         if (aggregatorIndex >= MaxMetricPoints)
                         {
                             // sorry! out of data points.
