@@ -34,8 +34,26 @@ namespace OpenTelemetry.Trace
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddHttpClientInstrumentation(
             this TracerProviderBuilder builder,
-            Action<HttpWebRequestInstrumentationOptions> configureHttpWebRequestInstrumentationOptions = null)
+            Action<HttpWebRequestInstrumentationOptions> configureHttpWebRequestInstrumentationOptions) =>
+            AddHttpClientInstrumentation(builder, configureHttpWebRequestInstrumentationOptions, null);
+
+        /// <summary>
+        /// Enables HttpClient and HttpWebRequest instrumentation.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
+        /// <param name="configureHttpWebRequestInstrumentationOptions">HttpWebRequest configuration options.</param>
+        /// <param name="configureHttpClientInstrumentationOptions">HttpClient configuration options.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddHttpClientInstrumentation(
+            this TracerProviderBuilder builder,
+            Action<HttpWebRequestInstrumentationOptions> configureHttpWebRequestInstrumentationOptions = null,
+            Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions = null)
         {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
             HttpWebRequestInstrumentationOptions options = new HttpWebRequestInstrumentationOptions();
 
             configureHttpWebRequestInstrumentationOptions?.Invoke(options);
@@ -43,10 +61,6 @@ namespace OpenTelemetry.Trace
             HttpWebRequestActivitySource.Options = options;
 
             builder.AddSource(HttpWebRequestActivitySource.ActivitySourceName);
-
-            return builder;
-        }
-
 #else
         /// <summary>
         /// Enables HttpClient instrumentation.
@@ -62,7 +76,7 @@ namespace OpenTelemetry.Trace
             {
                 throw new ArgumentNullException(nameof(builder));
             }
-
+#endif
             var httpClientOptions = new HttpClientInstrumentationOptions();
 
             configureHttpClientInstrumentationOptions?.Invoke(httpClientOptions);
@@ -73,6 +87,5 @@ namespace OpenTelemetry.Trace
 
             return builder;
         }
-#endif
     }
 }
