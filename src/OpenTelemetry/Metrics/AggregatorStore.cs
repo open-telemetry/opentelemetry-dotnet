@@ -17,10 +17,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-using System.Threading;
-using System.Threading.Tasks;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
