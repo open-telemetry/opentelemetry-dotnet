@@ -17,6 +17,7 @@
 using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
+using Microsoft.Extensions.Logging;
 
 public class Program
 {
@@ -24,19 +25,29 @@ public class Program
 
     public static void Main()
     {
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddSource("OTel.Demo")
-            .AddProcessor(new MyProcessor("ProcessorA"))
-            .Build();
 
-        using (var foo = DemoSource.StartActivity("Foo"))
-        {
-            using (var bar = DemoSource.StartActivity("Bar"))
-            {
-                using (var baz = DemoSource.StartActivity("Baz"))
-                {
-                }
-            }
-        }
+        using var loggerFactory = LoggerFactory.Create(builder => builder
+                .AddOpenTelemetry(options =>
+                    options.AddProcessor(new MyProcessor("MyProcessorA")
+        )));
+
+
+        var logger = loggerFactory.CreateLogger<Program>();
+        logger.LogInformation("amazing");
+
+        //using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+        //    .AddSource("OTel.Demo")
+        //    .AddProcessor(new MyProcessor("ProcessorA"))
+        //    .Build();
+
+        //using (var foo = DemoSource.StartActivity("Foo"))
+        //{
+        //    using (var bar = DemoSource.StartActivity("Bar"))
+        //    {
+        //        using (var baz = DemoSource.StartActivity("Baz"))
+        //        {
+        //        }
+        //    }
+        //}
     }
 }

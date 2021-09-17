@@ -17,8 +17,9 @@
 using System;
 using System.Diagnostics;
 using OpenTelemetry;
+using OpenTelemetry.Logs;
 
-internal class MyProcessor : BaseProcessor<Activity>
+internal class MyProcessor : BaseProcessor<LogRecord>
 {
     private readonly string name;
 
@@ -27,30 +28,14 @@ internal class MyProcessor : BaseProcessor<Activity>
         this.name = name;
     }
 
-    public override void OnStart(Activity activity)
+    public override void OnStart(LogRecord logRecord)
     {
-        Console.WriteLine($"{this.name}.OnStart({activity.DisplayName})");
+        Console.WriteLine($"{this.name}.OnStart({logRecord})");
     }
 
-    public override void OnEnd(Activity activity)
+    public override void OnEnd(LogRecord logRecord)
     {
-        Console.WriteLine($"{this.name}.OnEnd({activity.DisplayName})");
-    }
-
-    protected override bool OnForceFlush(int timeoutMilliseconds)
-    {
-        Console.WriteLine($"{this.name}.OnForceFlush({timeoutMilliseconds})");
-        return true;
-    }
-
-    protected override bool OnShutdown(int timeoutMilliseconds)
-    {
-        Console.WriteLine($"{this.name}.OnShutdown({timeoutMilliseconds})");
-        return true;
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        Console.WriteLine($"{this.name}.Dispose({disposing})");
+        Console.WriteLine("hello!");
+        Console.WriteLine($"{this.name}.OnEnd({logRecord})");
     }
 }
