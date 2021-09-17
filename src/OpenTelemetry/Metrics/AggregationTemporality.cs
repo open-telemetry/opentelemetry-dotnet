@@ -30,15 +30,5 @@ namespace OpenTelemetry.Metrics
         /// Delta.
         /// </summary>
         Delta = 0b10,
-
-        /// <summary>
-        /// Neither.
-        /// </summary>
-        Neither = 0b0,
-
-        /// <summary>
-        /// Both.
-        /// </summary>
-        Both = 0b11,
     }
 }
