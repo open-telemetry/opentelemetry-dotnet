@@ -6,7 +6,7 @@
   [OpenTelemetry .NET GitHub repository](https://github.com/open-telemetry/opentelemetry-dotnet)
   for further information and resources related to OpenTelemetry .NET.
 - Feel free to join the
-  [CNCF OpenTelemetry Dotnet Slack channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q).
+  [CNCF OpenTelemetry .NET Slack channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q).
   If you are new, you can create a CNCF Slack account
   [here](http://slack.cncf.io/). Ask any questions related to OpenTelemetry
   Dotnet that are not covered by the existing documentation, in the
