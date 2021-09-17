@@ -32,28 +32,45 @@ namespace OpenTelemetry.Metrics
         private readonly List<object> instrumentations = new List<object>();
         private readonly object collectLock = new object();
         private readonly MeterListener listener;
-        private readonly List<MetricReader> metricReaders = new List<MetricReader>();
+        private readonly MetricReader reader;
         private int metricIndex = -1;
 
         internal MeterProviderSdk(
             Resource resource,
             IEnumerable<string> meterSources,
             List<MeterProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
-            MetricReader[] metricReaders)
+            IEnumerable<MetricReader> readers)
         {
             this.Resource = resource;
             this.metrics = new Metric[MaxMetrics];
 
-            // TODO: Replace with single CompositeReader.
-            this.metricReaders.AddRange(metricReaders);
             AggregationTemporality temporality = AggregationTemporality.Cumulative;
 
-            // TODO: Actually support multiple readers.
-            // Currently the last reader's temporality wins.
-            foreach (var reader in this.metricReaders)
+            foreach (var reader in readers)
             {
+                if (reader == null)
+                {
+                    throw new ArgumentException("A null value was found.", nameof(readers));
+                }
+
                 reader.SetParentProvider(this);
+
+                // TODO: Actually support multiple readers.
+                // Currently the last reader's temporality wins.
                 temporality = reader.PreferredAggregationTemporality;
+
+                if (this.reader == null)
+                {
+                    this.reader = reader;
+                }
+                else if (this.reader is CompositeMetricReader compositeReader)
+                {
+                    compositeReader.AddReader(reader);
+                }
+                else
+                {
+                    this.reader = new CompositeMetricReader(new[] { this.reader, reader });
+                }
             }
 
             if (instrumentationFactories.Any())
@@ -165,6 +182,48 @@ namespace OpenTelemetry.Metrics
             }
         }
 
+        /// <summary>
+        /// Called by <c>ForceFlush</c>. This function should block the current
+        /// thread until flush completed or timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
+        /// wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>
+        /// This function is called synchronously on the thread which made the
+        /// first call to <c>ForceFlush</c>. This function should not throw
+        /// exceptions.
+        /// </remarks>
+        internal bool OnForceFlush(int timeoutMilliseconds)
+        {
+            return this.reader?.ForceFlush(timeoutMilliseconds) ?? true;
+        }
+
+        /// <summary>
+        /// Called by <c>Shutdown</c>. This function should block the current
+        /// thread until shutdown completed or timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
+        /// wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>
+        /// This function is called synchronously on the thread which made the
+        /// first call to <c>Shutdown</c>. This function should not throw
+        /// exceptions.
+        /// </remarks>
+        internal bool OnShutdown(int timeoutMilliseconds)
+        {
+            return this.reader?.Shutdown(timeoutMilliseconds) ?? true;
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (this.instrumentations != null)
@@ -177,10 +236,9 @@ namespace OpenTelemetry.Metrics
                 this.instrumentations.Clear();
             }
 
-            foreach (var reader in this.metricReaders)
-            {
-                reader.Dispose();
-            }
+            // Wait for up to 5 seconds grace period
+            this.reader?.Shutdown(5000);
+            this.reader?.Dispose();
 
             this.listener.Dispose();
         }
