@@ -34,7 +34,7 @@ public class Program
                 }));
 
         var logger = loggerFactory.CreateLogger<Program>();
-        logger.LogInformation("amazing");
+        logger.LogInformation("HTTP POST {url}.", "https://test.core.windows.net/foo/bar?sig=abcdefghijklmnopqrstuvwxyz0123456789%2F%2BABCDE%3D");
 
     }
 }
