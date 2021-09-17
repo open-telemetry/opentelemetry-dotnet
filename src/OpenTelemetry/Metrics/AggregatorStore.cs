@@ -50,15 +50,18 @@ namespace OpenTelemetry.Metrics
         internal int FindMetricAggregators(ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
             int len = tags.Length;
-            if (len == 0 && !this.zeroTagMetricPointInitialized)
+            if (len == 0)
             {
-                lock (this.lockZeroTags)
+                if (!this.zeroTagMetricPointInitialized)
                 {
-                    if (!this.zeroTagMetricPointInitialized)
+                    lock (this.lockZeroTags)
                     {
-                        var dt = DateTimeOffset.UtcNow;
-                        this.metrics[0] = new MetricPoint(this.aggType, dt, null, null);
-                        this.zeroTagMetricPointInitialized = true;
+                        if (!this.zeroTagMetricPointInitialized)
+                        {
+                            var dt = DateTimeOffset.UtcNow;
+                            this.metrics[0] = new MetricPoint(this.aggType, dt, null, null);
+                            this.zeroTagMetricPointInitialized = true;
+                        }
                     }
                 }
 
