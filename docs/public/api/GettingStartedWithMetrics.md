@@ -2,7 +2,7 @@
 
 Then show how to add each of the 4 instruments available
 
-1. Counter
+* Counter
 1. ObservableCounter
 1. Histogram
 1. Gauge
