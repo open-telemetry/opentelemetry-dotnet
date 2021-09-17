@@ -20,8 +20,9 @@ namespace OpenTelemetry.Metrics
 {
     public abstract class MetricReader : IDisposable
     {
-        private AggregationTemporality preferredAggregationTemporality = AggregationTemporality.Both;
-        private AggregationTemporality supportedAggregationTemporality = AggregationTemporality.Both;
+        private const AggregationTemporality CumulativeAndDelta = AggregationTemporality.Cumulative | AggregationTemporality.Delta;
+        private AggregationTemporality preferredAggregationTemporality = CumulativeAndDelta;
+        private AggregationTemporality supportedAggregationTemporality = CumulativeAndDelta;
 
         public BaseProvider ParentProvider { get; private set; }
 
@@ -74,12 +75,12 @@ namespace OpenTelemetry.Metrics
 
         private static void ValidateAggregationTemporality(AggregationTemporality preferred, AggregationTemporality supported)
         {
-            if ((int)(preferred & AggregationTemporality.Both) == 0)
+            if ((int)(preferred & CumulativeAndDelta) == 0)
             {
                 throw new ArgumentException($"PreferredAggregationTemporality has an invalid value {preferred}.", nameof(preferred));
             }
 
-            if ((int)(supported & AggregationTemporality.Both) == 0)
+            if ((int)(supported & CumulativeAndDelta) == 0)
             {
                 throw new ArgumentException($"SupportedAggregationTemporality has an invalid value {supported}.", nameof(supported));
             }

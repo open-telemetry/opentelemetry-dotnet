@@ -23,7 +23,7 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
 {
-    [AggregationTemporality(AggregationTemporality.Both, AggregationTemporality.Cumulative)]
+    [AggregationTemporality(AggregationTemporality.Cumulative | AggregationTemporality.Delta, AggregationTemporality.Cumulative)]
     public class ConsoleMetricExporter : ConsoleExporter<Metric>
     {
         private Resource resource;
