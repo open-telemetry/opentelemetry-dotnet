@@ -1,4 +1,4 @@
-// <copyright file="TracerProviderExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="MeterProviderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,35 +19,15 @@ using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry.Metrics
 {
-    public static class TracerProviderExtensions
+    public static class MeterProviderExtensions
     {
-        public static TracerProvider AddProcessor(this TracerProvider provider, BaseProcessor<Activity> processor)
-        {
-            if (provider == null)
-            {
-                throw new ArgumentNullException(nameof(provider));
-            }
-
-            if (processor == null)
-            {
-                throw new ArgumentNullException(nameof(processor));
-            }
-
-            if (provider is TracerProviderSdk tracerProviderSdk)
-            {
-                tracerProviderSdk.AddProcessor(processor);
-            }
-
-            return provider;
-        }
-
         /// <summary>
-        /// Flushes all the processors registered under TracerProviderSdk, blocks the current thread
+        /// Flushes all the readers registered under MeterProviderSdk, blocks the current thread
         /// until flush completed, shutdown signaled or timed out.
         /// </summary>
-        /// <param name="provider">TracerProviderSdk instance on which ForceFlush will be called.</param>
+        /// <param name="provider">MeterProviderSdk instance on which ForceFlush will be called.</param>
         /// <param name="timeoutMilliseconds">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
         /// wait indefinitely.
@@ -61,14 +41,14 @@ namespace OpenTelemetry.Trace
         /// <remarks>
         /// This function guarantees thread-safety.
         /// </remarks>
-        public static bool ForceFlush(this TracerProvider provider, int timeoutMilliseconds = Timeout.Infinite)
+        public static bool ForceFlush(this MeterProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
             if (provider == null)
             {
                 throw new ArgumentNullException(nameof(provider));
             }
 
-            if (provider is TracerProviderSdk tracerProviderSdk)
+            if (provider is MeterProviderSdk meterProviderSdk)
             {
                 if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
                 {
@@ -77,11 +57,12 @@ namespace OpenTelemetry.Trace
 
                 try
                 {
-                    return tracerProviderSdk.OnForceFlush(timeoutMilliseconds);
+                    return meterProviderSdk.OnForceFlush(timeoutMilliseconds);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    OpenTelemetrySdkEventSource.Log.TracerProviderException(nameof(tracerProviderSdk.OnForceFlush), ex);
+                    // TODO: what event source do we use?
+                    // OpenTelemetrySdkEventSource.Log.MeterProviderException(nameof(meterProviderSdk.OnForceFlush), ex);
                     return false;
                 }
             }
@@ -90,10 +71,10 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Attempts to shutdown the TracerProviderSdk, blocks the current thread until
+        /// Attempts to shutdown the MeterProviderSdk, blocks the current thread until
         /// shutdown completed or timed out.
         /// </summary>
-        /// <param name="provider">TracerProviderSdk instance on which Shutdown will be called.</param>
+        /// <param name="provider">MeterProviderSdk instance on which Shutdown will be called.</param>
         /// <param name="timeoutMilliseconds">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
         /// wait indefinitely.
@@ -108,32 +89,33 @@ namespace OpenTelemetry.Trace
         /// This function guarantees thread-safety. Only the first call will
         /// win, subsequent calls will be no-op.
         /// </remarks>
-        public static bool Shutdown(this TracerProvider provider, int timeoutMilliseconds = Timeout.Infinite)
+        public static bool Shutdown(this MeterProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
             if (provider == null)
             {
                 throw new ArgumentNullException(nameof(provider));
             }
 
-            if (provider is TracerProviderSdk tracerProviderSdk)
+            if (provider is MeterProviderSdk meterProviderSdk)
             {
                 if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
                 {
                     throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative.");
                 }
 
-                if (Interlocked.Increment(ref tracerProviderSdk.ShutdownCount) > 1)
+                if (Interlocked.Increment(ref meterProviderSdk.ShutdownCount) > 1)
                 {
                     return false; // shutdown already called
                 }
 
                 try
                 {
-                    return tracerProviderSdk.OnShutdown(timeoutMilliseconds);
+                    return meterProviderSdk.OnShutdown(timeoutMilliseconds);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    OpenTelemetrySdkEventSource.Log.TracerProviderException(nameof(tracerProviderSdk.OnShutdown), ex);
+                    // TODO: what event source do we use?
+                    // OpenTelemetrySdkEventSource.Log.MeterProviderException(nameof(meterProviderSdk.OnShutdown), ex);
                     return false;
                 }
             }
