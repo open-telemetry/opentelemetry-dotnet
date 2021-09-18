@@ -24,10 +24,10 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MeterProviderSdk
-        : MeterProvider
+    internal sealed class MeterProviderSdk : MeterProvider
     {
         internal const int MaxMetrics = 1000;
+        internal int ShutdownCount;
         private readonly Dictionary<string, string[]> viewConfig = new Dictionary<string, string[]>();
         private readonly Metric[] metrics;
         private readonly List<object> instrumentations = new List<object>();
