@@ -32,7 +32,8 @@ namespace OpenTelemetry.Metrics
             AggregationType aggType,
             DateTimeOffset startTime,
             string[] keys,
-            object[] values)
+            object[] values,
+            double[] histogramBounds)
         {
             this.AggType = aggType;
             this.StartTime = startTime;
@@ -48,7 +49,7 @@ namespace OpenTelemetry.Metrics
 
             if (this.AggType == AggregationType.Histogram)
             {
-                this.ExplicitBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 };
+                this.ExplicitBounds = histogramBounds ?? new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 };
                 this.BucketCounts = new long[this.ExplicitBounds.Length + 1];
                 this.bucketCounts = new long[this.ExplicitBounds.Length + 1];
                 this.lockObject = new object();

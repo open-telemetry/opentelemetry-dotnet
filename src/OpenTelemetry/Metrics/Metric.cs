@@ -24,11 +24,11 @@ namespace OpenTelemetry.Metrics
     {
         private AggregatorStore aggStore;
 
-        internal Metric(Instrument instrument, AggregationTemporality temporality, string name = null)
+        internal Metric(Instrument instrument, AggregationTemporality temporality, MetricSteamConfig metricSteamConfig = null)
         {
             // TODO: Also accept Aggregation overrides, params.
-            this.Name = name ?? instrument.Name;
-            this.Description = instrument.Description;
+            this.Name = metricSteamConfig?.Name ?? instrument.Name;
+            this.Description = metricSteamConfig?.Description ?? instrument.Description;
             this.Unit = instrument.Unit;
             this.Meter = instrument.Meter;
             AggregationType aggType = default;
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Metrics
                 // TODO: Log and assign some invalid Enum.
             }
 
-            this.aggStore = new AggregatorStore(aggType, temporality);
+            this.aggStore = new AggregatorStore(aggType, temporality, metricSteamConfig);
             this.Temporality = temporality;
         }
 
