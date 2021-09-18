@@ -152,9 +152,10 @@ namespace OpenTelemetry.Metrics
 
         /// <summary>
         /// Called by <c>Collect</c>. This function should block the current
-        /// thread until metrics collection completed, shutdown signaled or
+        /// thread until metrics consumption completed, shutdown signaled or
         /// timed out.
         /// </summary>
+        /// <param name="metrics">Batch of metrics to be consumed.</param>
         /// <param name="timeoutMilliseconds">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
         /// wait indefinitely.
