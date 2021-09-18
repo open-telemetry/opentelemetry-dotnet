@@ -55,11 +55,6 @@ namespace OpenTelemetry.Metrics
             this.exportTask.Start();
         }
 
-        public override void OnCollect(Batch<Metric> metrics)
-        {
-            this.exporter.Export(metrics);
-        }
-
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {

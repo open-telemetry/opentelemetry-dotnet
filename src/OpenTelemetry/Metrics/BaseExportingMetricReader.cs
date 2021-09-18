@@ -47,15 +47,29 @@ namespace OpenTelemetry.Metrics
 
         protected ExportModes SupportedExportModes => this.supportedExportModes;
 
-        public override void OnCollect(Batch<Metric> metrics)
-        {
-            this.exporter.Export(metrics);
-        }
-
         internal override void SetParentProvider(BaseProvider parentProvider)
         {
             base.SetParentProvider(parentProvider);
             this.exporter.ParentProvider = parentProvider;
+        }
+
+        /// <inheritdoc/>
+        protected override bool OnCollect(Batch<Metric> metrics, int timeoutMilliseconds)
+        {
+            return this.exporter.Export(metrics) == ExportResult.Success;
+        }
+
+        /// <inheritdoc/>
+        protected override bool OnForceFlush(int timeoutMilliseconds)
+        {
+            // TODO: need to hammer this out
+            return true;
+        }
+
+        /// <inheritdoc />
+        protected override bool OnShutdown(int timeoutMilliseconds)
+        {
+            return this.exporter.Shutdown(timeoutMilliseconds);
         }
 
         /// <inheritdoc/>
