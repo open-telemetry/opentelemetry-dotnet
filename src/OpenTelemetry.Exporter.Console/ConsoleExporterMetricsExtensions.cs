@@ -39,7 +39,7 @@ namespace OpenTelemetry.Metrics
             configure?.Invoke(options);
 
             var exporter = new ConsoleMetricExporter(options);
-            return builder.AddMetricReader(new BaseExportingMetricReader(exporter));
+            return builder.AddMetricReader(new PeriodicExportingMetricReader(exporter, options.MetricExportIntervalMilliseconds));
         }
     }
 }

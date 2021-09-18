@@ -35,7 +35,5 @@ public class Program
         {
             counter.Add(1, new("tag1", "value1"), new("tag2", "value2"));
         }
-
-        meterProvider.ForceFlush();
     }
 }
