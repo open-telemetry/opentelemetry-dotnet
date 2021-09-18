@@ -27,13 +27,13 @@ namespace OpenTelemetry.Metrics
         [ThreadStatic]
         private static ThreadStaticStorage storage;
 
-        private readonly TagStorage[] tagStorage = new TagStorage[MaxTagCacheSize + 1];
+        private readonly TagStorage[] tagStorage = new TagStorage[MaxTagCacheSize];
 
         private ThreadStaticStorage()
         {
-            for (int i = 0; i <= MaxTagCacheSize; i++)
+            for (int i = 0; i < MaxTagCacheSize; i++)
             {
-                this.tagStorage[i] = new TagStorage(i);
+                this.tagStorage[i] = new TagStorage(i + 1);
             }
         }
 
@@ -53,10 +53,15 @@ namespace OpenTelemetry.Metrics
         {
             var len = tags.Length;
 
+            if (len == 0)
+            {
+                throw new InvalidOperationException("There must be atleast one tag to use ThreadStaticStorage.");
+            }
+
             if (len <= MaxTagCacheSize)
             {
-                tagKeys = this.tagStorage[len].TagKey;
-                tagValues = this.tagStorage[len].TagValue;
+                tagKeys = this.tagStorage[len - 1].TagKey;
+                tagValues = this.tagStorage[len - 1].TagValue;
             }
             else
             {
@@ -73,17 +78,12 @@ namespace OpenTelemetry.Metrics
 
         internal class TagStorage
         {
-            // Used to copy ReadOnlySpan from API
-            internal readonly KeyValuePair<string, object>[] Tags;
-
-            // Used to split into Key sequence, Value sequence, and KVPs for Aggregator Processor
+            // Used to split into Key sequence, Value sequence.
             internal readonly string[] TagKey;
             internal readonly object[] TagValue;
 
             internal TagStorage(int n)
             {
-                this.Tags = new KeyValuePair<string, object>[n];
-
                 this.TagKey = new string[n];
                 this.TagValue = new object[n];
             }
