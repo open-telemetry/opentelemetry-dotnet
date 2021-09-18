@@ -28,6 +28,7 @@ namespace OpenTelemetry.Metrics
         : MeterProvider
     {
         internal const int MaxMetrics = 1000;
+        private readonly Dictionary<string, string[]> viewConfig = new Dictionary<string, string[]>();
         private readonly Metric[] metrics;
         private readonly List<object> instrumentations = new List<object>();
         private readonly object collectLock = new object();
@@ -43,6 +44,7 @@ namespace OpenTelemetry.Metrics
         {
             this.Resource = resource;
             this.metrics = new Metric[MaxMetrics];
+            this.viewConfig["MyCounter"] = new string[] { "view1", "view2" };
 
             AggregationTemporality temporality = AggregationTemporality.Cumulative;
 
@@ -94,17 +96,26 @@ namespace OpenTelemetry.Metrics
                 {
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
-                        var index = Interlocked.Increment(ref this.metricIndex);
-                        if (index >= MaxMetrics)
+                        // lookup views for this instrument (and meter,type etc).
+                        var viewNames = this.viewConfig[instrument.Name];
+                        var countMetricsToBeCreated = viewNames.Length;
+                        var metrics = new Metric[countMetricsToBeCreated];
+                        for (int i = 0; i < countMetricsToBeCreated; i++)
                         {
-                            // Log that all measurements are dropped from this instrument.
+                            var index = Interlocked.Increment(ref this.metricIndex);
+                            if (index >= MaxMetrics)
+                            {
+                                // Log that all measurements are dropped from this instrument.
+                            }
+                            else
+                            {
+                                var metric = new Metric(instrument, temporality, viewNames[i]);
+                                this.metrics[index] = metric;
+                                metrics[i] = metric;
+                            }
                         }
-                        else
-                        {
-                            var metric = new Metric(instrument, temporality);
-                            this.metrics[index] = metric;
-                            listener.EnableMeasurementEvents(instrument, metric);
-                        }
+
+                        listener.EnableMeasurementEvents(instrument, metrics);
                     }
                 },
                 MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state),
@@ -147,15 +158,18 @@ namespace OpenTelemetry.Metrics
         internal void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
             // Get Instrument State
-            var metric = state as Metric;
+            var metrics = state as Metric[];
 
-            if (instrument == null || metric == null)
+            if (instrument == null || metrics == null)
             {
                 // TODO: log
                 return;
             }
 
-            metric.UpdateLong(value, tagsRos);
+            for (int i = 0; i < metrics.Length; i++)
+            {
+                metrics[i].UpdateLong(value, tagsRos);
+            }
         }
 
         internal Batch<Metric> Collect()

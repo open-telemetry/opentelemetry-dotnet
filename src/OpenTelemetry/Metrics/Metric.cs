@@ -24,9 +24,10 @@ namespace OpenTelemetry.Metrics
     {
         private AggregatorStore aggStore;
 
-        internal Metric(Instrument instrument, AggregationTemporality temporality)
+        internal Metric(Instrument instrument, AggregationTemporality temporality, string name = null)
         {
-            this.Name = instrument.Name;
+            // TODO: Also accept Aggregation overrides, params.
+            this.Name = name ?? instrument.Name;
             this.Description = instrument.Description;
             this.Unit = instrument.Unit;
             this.Meter = instrument.Meter;
