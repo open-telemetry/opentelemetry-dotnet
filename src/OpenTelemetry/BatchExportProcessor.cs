@@ -114,6 +114,7 @@ namespace OpenTelemetry
             {
                 if (this.circularBuffer.Count >= this.maxExportBatchSize)
                 {
+                    // <action here!!>
                     this.exportTrigger.Set();
                 }
 

@@ -24,7 +24,6 @@ namespace OpenTelemetry
         internal const int DefaultScheduledDelayMilliseconds = 5000;
         internal const int DefaultExporterTimeoutMilliseconds = 30000;
         internal const int DefaultMaxExportBatchSize = 512;
-
         public BatchLogExportProcessor(
             BaseExporter<LogRecord> exporter,
             int maxQueueSize = DefaultMaxQueueSize,
@@ -47,7 +46,7 @@ namespace OpenTelemetry
             {
                 return;
             }
-
+            
             this.OnExport(data);
         }
     }
