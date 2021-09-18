@@ -24,8 +24,8 @@ namespace OpenTelemetry.Metrics
     public static class MeterProviderExtensions
     {
         /// <summary>
-        /// Flushes the all the processors at MeterProviderSdk, blocks the current thread until flush
-        /// completed, shutdown signaled or timed out.
+        /// Flushes all the readers registered under MeterProviderSdk, blocks the current thread
+        /// until flush completed, shutdown signaled or timed out.
         /// </summary>
         /// <param name="provider">MeterProviderSdk instance on which ForceFlush will be called.</param>
         /// <param name="timeoutMilliseconds">
