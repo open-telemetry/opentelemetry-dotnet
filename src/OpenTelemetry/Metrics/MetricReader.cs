@@ -49,8 +49,30 @@ namespace OpenTelemetry.Metrics
             }
         }
 
+        /// <summary>
+        /// Attempts to collect the metrics, blocks the current thread until
+        /// metrics collection completed or timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
+        /// wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when metrics collection succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
+        /// </exception>
+        /// <remarks>
+        /// This function guarantees thread-safety.
+        /// </remarks>
         public virtual bool Collect(int timeoutMilliseconds = Timeout.Infinite)
         {
+            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
+            {
+                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative.");
+            }
+
             var sw = Stopwatch.StartNew();
 
             var collectMetric = this.ParentProvider.GetMetricCollect();
@@ -73,41 +95,6 @@ namespace OpenTelemetry.Metrics
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// Flushes the processor, blocks the current thread until flush
-        /// completed, shutdown signaled or timed out.
-        /// </summary>
-        /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
-        /// </param>
-        /// <returns>
-        /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
-        /// </returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">
-        /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
-        /// </exception>
-        /// <remarks>
-        /// This function guarantees thread-safety.
-        /// </remarks>
-        public bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
-        {
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative.");
-            }
-
-            try
-            {
-                return this.OnForceFlush(timeoutMilliseconds);
-            }
-            catch (Exception)
-            {
-                // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.ForceFlush), ex);
-                return false;
-            }
         }
 
         /// <summary>
@@ -163,28 +150,25 @@ namespace OpenTelemetry.Metrics
             this.ParentProvider = parentProvider;
         }
 
-        protected abstract bool OnCollect(Batch<Metric> metrics, int timeoutMilliseconds);
-
         /// <summary>
-        /// Called by <c>ForceFlush</c>. This function should block the current
-        /// thread until flush completed, shutdown signaled or timed out.
+        /// Called by <c>Collect</c>. This function should block the current
+        /// thread until metrics collection completed, shutdown signaled or
+        /// timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
         /// wait indefinitely.
         /// </param>
         /// <returns>
-        /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
+        /// Returns <c>true</c> when metrics collection succeeded; otherwise,
+        /// <c>false</c>.
         /// </returns>
         /// <remarks>
         /// This function is called synchronously on the thread which called
-        /// <c>ForceFlush</c>. This function should be thread-safe, and should
+        /// <c>Collect</c>. This function should be thread-safe, and should
         /// not throw exceptions.
         /// </remarks>
-        protected virtual bool OnForceFlush(int timeoutMilliseconds)
-        {
-            return true;
-        }
+        protected abstract bool OnCollect(Batch<Metric> metrics, int timeoutMilliseconds);
 
         /// <summary>
         /// Called by <c>Shutdown</c>. This function should block the current

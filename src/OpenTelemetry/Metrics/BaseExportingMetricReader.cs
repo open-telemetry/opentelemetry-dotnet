@@ -59,13 +59,6 @@ namespace OpenTelemetry.Metrics
             return this.exporter.Export(metrics) == ExportResult.Success;
         }
 
-        /// <inheritdoc/>
-        protected override bool OnForceFlush(int timeoutMilliseconds)
-        {
-            // TODO: need to hammer this out
-            return true;
-        }
-
         /// <inheritdoc />
         protected override bool OnShutdown(int timeoutMilliseconds)
         {

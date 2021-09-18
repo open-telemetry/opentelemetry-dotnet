@@ -33,12 +33,6 @@ internal class MyReader : MetricReader
         return true;
     }
 
-    protected override bool OnForceFlush(int timeoutMilliseconds)
-    {
-        Console.WriteLine($"{this.name}.OnForceFlush(timeoutMilliseconds={timeoutMilliseconds})");
-        return true;
-    }
-
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
         Console.WriteLine($"{this.name}.OnShutdown(timeoutMilliseconds={timeoutMilliseconds})");
