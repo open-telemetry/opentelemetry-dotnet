@@ -69,7 +69,15 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc/>
-        public override bool Collect(int timeoutMilliseconds = Timeout.Infinite)
+        protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
+        {
+            // CompositeMetricReader delegates the work to its underlying readers,
+            // so CompositeMetricReader.ProcessMetrics should never be called.
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        protected override bool OnCollect(int timeoutMilliseconds = Timeout.Infinite)
         {
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
@@ -98,13 +106,6 @@ namespace OpenTelemetry.Metrics
             }
 
             return result;
-        }
-
-        protected override bool OnCollect(Batch<Metric> metrics, int timeoutMilliseconds)
-        {
-            // CompositeMetricReader delegates the work to its underlying readers,
-            // so CompositeMetricReader.OnCollect should never be called.
-            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
