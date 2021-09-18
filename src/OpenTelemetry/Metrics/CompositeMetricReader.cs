@@ -97,6 +97,8 @@ namespace OpenTelemetry.Metrics
 
         protected override bool OnCollect(Batch<Metric> metrics, int timeoutMilliseconds)
         {
+            // CompositeMetricReader delegates the work to its underlying readers,
+            // so CompositeMetricReader.OnCollect should never be called.
             throw new NotImplementedException();
         }
 
