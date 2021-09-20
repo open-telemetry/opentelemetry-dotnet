@@ -68,8 +68,8 @@ namespace OpenTelemetry
         /// completed, shutdown signaled or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
         /// </param>
         /// <returns>
         /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
@@ -103,8 +103,8 @@ namespace OpenTelemetry
         /// shutdown completed or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
         /// </param>
         /// <returns>
         /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
@@ -156,8 +156,8 @@ namespace OpenTelemetry
         /// thread until flush completed, shutdown signaled or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
         /// </param>
         /// <returns>
         /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
@@ -177,8 +177,8 @@ namespace OpenTelemetry
         /// thread until shutdown completed or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
         /// </param>
         /// <returns>
         /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
