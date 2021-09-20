@@ -14,29 +14,33 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Diagnostics;
 using OpenTelemetry.Logs;
 
 namespace OpenTelemetry
 {
-    public class BatchLogExportProcessor : BatchExportProcessor<LogRecord>
+    internal class BatchLogFilteringProcessor : BatchExportProcessor<LogRecord>
     {
-        internal const int DefaultMaxQueueSize = 2048;
-        internal const int DefaultScheduledDelayMilliseconds = 5000;
-        internal const int DefaultExporterTimeoutMilliseconds = 30000;
-        internal const int DefaultMaxExportBatchSize = 512;
-        public BatchLogExportProcessor(
-            BaseExporter<LogRecord> exporter,
-            int maxQueueSize = DefaultMaxQueueSize,
-            int scheduledDelayMilliseconds = DefaultScheduledDelayMilliseconds,
-            int exporterTimeoutMilliseconds = DefaultExporterTimeoutMilliseconds,
-            int maxExportBatchSize = DefaultMaxExportBatchSize)
-            : base(
-                exporter,
-                maxQueueSize,
-                scheduledDelayMilliseconds,
-                exporterTimeoutMilliseconds,
-                maxExportBatchSize)
+        private readonly Func<string, string> filter;
+        private readonly BaseExporter<LogRecord> processor;
+
+        public BatchLogFilteringProcessor(
+            BaseExporter<LogRecord> processor, Func<string, string> filter) :
+            base(processor)
         {
+            if (filter == null)
+            {
+                throw new ArgumentNullException(nameof(filter));
+            }
+
+            if (processor == null)
+            {
+                throw new ArgumentNullException(nameof(processor));
+            }
+
+            this.filter = filter;
+            this.processor = processor;
         }
 
         /// <inheritdoc />
@@ -46,7 +50,11 @@ namespace OpenTelemetry
             {
                 return;
             }
-            
+
+            string a = "a";
+            this.filter(a);
+            Console.WriteLine(a);
+
             this.OnExport(data);
         }
     }

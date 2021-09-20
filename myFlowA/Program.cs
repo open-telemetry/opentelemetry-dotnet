@@ -25,16 +25,20 @@ public class Program
 
     public static void Main()
     {
-
         using var loggerFactory = LoggerFactory.Create(builder => builder
                 .AddOpenTelemetry(options =>
                 {
-                    options.AddProcessor(new MyProcessorA("my Processor A"));
                     options.AddMyLogExporter();
+                    //options.AddProcessor(new BatchLogExportProcessor<LogRecord>());
+                    /* what the extension is doing:
+                     * AddProcessor(new BatchProcessor<LogRecord>(new FilterExporter(rules, new GenevaExporter(...))))
+                     * */
+
                 }));
 
         var logger = loggerFactory.CreateLogger<Program>();
-        logger.LogInformation("HTTP POST {url}.", "https://test.core.windows.net/foo/bar?sig=abcdefghijklmnopqrstuvwxyz0123456789%2F%2BABCDE%3D");
+        logger.LogInformation("HTTP POST {url}.",
+            "https://test.core.windows.net/foo/bar?sig=abcdefghijklmnopqrstuvwxyz0123456789%2F%2BABCDE%3D");
 
     }
 }
