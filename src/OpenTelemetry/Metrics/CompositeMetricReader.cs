@@ -79,11 +79,6 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc/>
         protected override bool OnCollect(int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative.");
-            }
-
             var result = true;
             var cur = this.head;
             var sw = Stopwatch.StartNew();
