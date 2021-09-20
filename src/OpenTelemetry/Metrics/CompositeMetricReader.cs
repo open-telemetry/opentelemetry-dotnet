@@ -69,10 +69,23 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc/>
-        public override bool Collect(int timeoutMilliseconds = Timeout.Infinite)
+        protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
         {
-            var cur = this.head;
+            // CompositeMetricReader delegates the work to its underlying readers,
+            // so CompositeMetricReader.ProcessMetrics should never be called.
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        protected override bool OnCollect(int timeoutMilliseconds = Timeout.Infinite)
+        {
+            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
+            {
+                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative.");
+            }
+
             var result = true;
+            var cur = this.head;
             var sw = Stopwatch.StartNew();
 
             while (cur != null)
@@ -93,48 +106,6 @@ namespace OpenTelemetry.Metrics
             }
 
             return result;
-        }
-
-        protected override bool OnCollect(Batch<Metric> metrics, int timeoutMilliseconds)
-        {
-            // CompositeMetricReader delegates the work to its underlying readers,
-            // so CompositeMetricReader.OnCollect should never be called.
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc/>
-        protected override bool OnForceFlush(int timeoutMilliseconds)
-        {
-            var cur = this.head;
-            var sw = Stopwatch.StartNew();
-
-            while (cur != null)
-            {
-                if (timeoutMilliseconds == Timeout.Infinite)
-                {
-                    _ = cur.Value.ForceFlush(Timeout.Infinite);
-                }
-                else
-                {
-                    var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-
-                    if (timeout <= 0)
-                    {
-                        return false;
-                    }
-
-                    var succeeded = cur.Value.ForceFlush((int)timeout);
-
-                    if (!succeeded)
-                    {
-                        return false;
-                    }
-                }
-
-                cur = cur.Next;
-            }
-
-            return true;
         }
 
         /// <inheritdoc/>

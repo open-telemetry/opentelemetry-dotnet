@@ -200,7 +200,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         internal bool OnForceFlush(int timeoutMilliseconds)
         {
-            return this.reader?.ForceFlush(timeoutMilliseconds) ?? true;
+            return this.reader?.Collect(timeoutMilliseconds) ?? true;
         }
 
         /// <summary>
