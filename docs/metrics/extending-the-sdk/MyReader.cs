@@ -27,15 +27,9 @@ internal class MyReader : MetricReader
         this.name = name;
     }
 
-    protected override bool OnCollect(Batch<Metric> metrics, int timeoutMilliseconds)
+    protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
     {
-        Console.WriteLine($"{this.name}.OnCollect(metrics={metrics}, timeoutMilliseconds={timeoutMilliseconds})");
-        return true;
-    }
-
-    protected override bool OnForceFlush(int timeoutMilliseconds)
-    {
-        Console.WriteLine($"{this.name}.OnForceFlush(timeoutMilliseconds={timeoutMilliseconds})");
+        Console.WriteLine($"{this.name}.ProcessMetrics(metrics={metrics}, timeoutMilliseconds={timeoutMilliseconds})");
         return true;
     }
 
