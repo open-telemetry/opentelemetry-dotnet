@@ -1,4 +1,4 @@
-// <copyright file="AggregationTemporality.cs" company="OpenTelemetry Authors">
+// <copyright file="ExportModes.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,16 +19,29 @@ using System;
 namespace OpenTelemetry.Metrics
 {
     [Flags]
-    public enum AggregationTemporality : byte
+    public enum ExportModes : byte
     {
-        /// <summary>
-        /// Cumulative.
-        /// </summary>
-        Cumulative = 0b1,
+        /*
+        0 0 0 0 0 0 0 0
+        | | | | | | | |
+        | | | | | | | +--- Push
+        | | | | | | +----- Pull
+        | | | | | +------- (reserved)
+        | | | | +--------- (reserved)
+        | | | +----------- (reserved)
+        | | +------------- (reserved)
+        | +--------------- (reserved)
+        +----------------- (reserved)
+        */
 
         /// <summary>
-        /// Delta.
+        /// Push.
         /// </summary>
-        Delta = 0b10,
+        Push = 0b1,
+
+        /// <summary>
+        /// Pull.
+        /// </summary>
+        Pull = 0b10,
     }
 }

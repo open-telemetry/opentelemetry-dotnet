@@ -1,4 +1,4 @@
-// <copyright file="AggregationTemporality.cs" company="OpenTelemetry Authors">
+// <copyright file="MyExporterExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,20 +15,18 @@
 // </copyright>
 
 using System;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
 
-namespace OpenTelemetry.Metrics
+internal static class MyExporterExtensions
 {
-    [Flags]
-    public enum AggregationTemporality : byte
+    public static TracerProviderBuilder AddMyExporter(this TracerProviderBuilder builder)
     {
-        /// <summary>
-        /// Cumulative.
-        /// </summary>
-        Cumulative = 0b1,
+        if (builder == null)
+        {
+            throw new ArgumentNullException(nameof(builder));
+        }
 
-        /// <summary>
-        /// Delta.
-        /// </summary>
-        Delta = 0b10,
+        return builder.AddProcessor(new BatchActivityExportProcessor(new MyExporter()));
     }
 }

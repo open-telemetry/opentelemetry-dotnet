@@ -264,6 +264,24 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 })
                 .Build();
         }
+
+        [Fact]
+        public async Task HttpWebRequestInstrumentationOnExistingInstance()
+        {
+            using HttpClient client = new HttpClient();
+
+            await client.GetAsync(this.url).ConfigureAwait(false);
+
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddHttpClientInstrumentation()
+                .Build();
+
+            await client.GetAsync(this.url).ConfigureAwait(false);
+
+            Assert.Equal(3, activityProcessor.Invocations.Count);  // SetParentProvider/Begin/End called
+        }
     }
 }
 #endif

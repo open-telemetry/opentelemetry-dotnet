@@ -177,7 +177,7 @@ namespace OpenTelemetry.Trace
 
                 if (wildcardMode)
                 {
-                    var pattern = "^(" + string.Join("|", from name in sources select '(' + Regex.Escape(name).Replace("\\*", ".*") + ')') + ")$";
+                    var pattern = '^' + string.Join("|", from name in sources select "(?:" + Regex.Escape(name).Replace("\\*", ".*") + ')') + '$';
                     var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
@@ -265,8 +265,8 @@ namespace OpenTelemetry.Trace
         /// thread until shutdown completed or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
         /// </param>
         /// <returns>
         /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.

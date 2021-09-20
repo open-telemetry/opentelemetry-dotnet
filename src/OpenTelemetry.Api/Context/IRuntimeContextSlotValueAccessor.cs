@@ -1,4 +1,4 @@
-// <copyright file="AggregationTemporality.cs" company="OpenTelemetry Authors">
+// <copyright file="IRuntimeContextSlotValueAccessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Context
 {
-    [Flags]
-    public enum AggregationTemporality : byte
+    /// <summary>
+    /// Describes a type of <see cref="RuntimeContextSlot{T}"/> which can expose its value as an <see cref="object"/>.
+    /// </summary>
+    public interface IRuntimeContextSlotValueAccessor
     {
         /// <summary>
-        /// Cumulative.
+        /// Gets or sets the value of the slot as an <see cref="object"/>.
         /// </summary>
-        Cumulative = 0b1,
-
-        /// <summary>
-        /// Delta.
-        /// </summary>
-        Delta = 0b10,
+        object Value { get; set; }
     }
 }

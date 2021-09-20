@@ -1,4 +1,4 @@
-// <copyright file="CompositeProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="CompositeMetricReader.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,26 +20,26 @@ using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry
+namespace OpenTelemetry.Metrics
 {
-    public class CompositeProcessor<T> : BaseProcessor<T>
+    internal class CompositeMetricReader : MetricReader
     {
         private readonly DoublyLinkedListNode head;
         private DoublyLinkedListNode tail;
         private bool disposed;
 
-        public CompositeProcessor(IEnumerable<BaseProcessor<T>> processors)
+        public CompositeMetricReader(IEnumerable<MetricReader> readers)
         {
-            if (processors == null)
+            if (readers == null)
             {
-                throw new ArgumentNullException(nameof(processors));
+                throw new ArgumentNullException(nameof(readers));
             }
 
-            using var iter = processors.GetEnumerator();
+            using var iter = readers.GetEnumerator();
 
             if (!iter.MoveNext())
             {
-                throw new ArgumentException($"{nameof(processors)} collection is empty");
+                throw new ArgumentException($"{nameof(readers)} collection is empty");
             }
 
             this.head = new DoublyLinkedListNode(iter.Current);
@@ -47,18 +47,18 @@ namespace OpenTelemetry
 
             while (iter.MoveNext())
             {
-                this.AddProcessor(iter.Current);
+                this.AddReader(iter.Current);
             }
         }
 
-        public CompositeProcessor<T> AddProcessor(BaseProcessor<T> processor)
+        public CompositeMetricReader AddReader(MetricReader reader)
         {
-            if (processor == null)
+            if (reader == null)
             {
-                throw new ArgumentNullException(nameof(processor));
+                throw new ArgumentNullException(nameof(reader));
             }
 
-            var node = new DoublyLinkedListNode(processor)
+            var node = new DoublyLinkedListNode(reader)
             {
                 Previous = this.tail,
             };
@@ -69,31 +69,15 @@ namespace OpenTelemetry
         }
 
         /// <inheritdoc/>
-        public override void OnEnd(T data)
+        protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
         {
-            var cur = this.head;
-
-            while (cur != null)
-            {
-                cur.Value.OnEnd(data);
-                cur = cur.Next;
-            }
+            // CompositeMetricReader delegates the work to its underlying readers,
+            // so CompositeMetricReader.ProcessMetrics should never be called.
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        public override void OnStart(T data)
-        {
-            var cur = this.head;
-
-            while (cur != null)
-            {
-                cur.Value.OnStart(data);
-                cur = cur.Next;
-            }
-        }
-
-        /// <inheritdoc/>
-        protected override bool OnForceFlush(int timeoutMilliseconds)
+        protected override bool OnCollect(int timeoutMilliseconds = Timeout.Infinite)
         {
             var result = true;
             var cur = this.head;
@@ -103,14 +87,14 @@ namespace OpenTelemetry
             {
                 if (timeoutMilliseconds == Timeout.Infinite)
                 {
-                    result = cur.Value.ForceFlush(Timeout.Infinite) && result;
+                    result = cur.Value.Collect(Timeout.Infinite) && result;
                 }
                 else
                 {
                     var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
 
-                    // notify all the processors, even if we run overtime
-                    result = cur.Value.ForceFlush((int)Math.Max(timeout, 0)) && result;
+                    // notify all the readers, even if we run overtime
+                    result = cur.Value.Collect((int)Math.Max(timeout, 0)) && result;
                 }
 
                 cur = cur.Next;
@@ -136,7 +120,7 @@ namespace OpenTelemetry
                 {
                     var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
 
-                    // notify all the processors, even if we run overtime
+                    // notify all the readers, even if we run overtime
                     result = cur.Value.Shutdown((int)Math.Max(timeout, 0)) && result;
                 }
 
@@ -163,9 +147,10 @@ namespace OpenTelemetry
                     {
                         cur.Value?.Dispose();
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+                        // TODO: which event source do we use?
+                        // OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
                     }
 
                     cur = cur.Next;
@@ -177,9 +162,9 @@ namespace OpenTelemetry
 
         private class DoublyLinkedListNode
         {
-            public readonly BaseProcessor<T> Value;
+            public readonly MetricReader Value;
 
-            public DoublyLinkedListNode(BaseProcessor<T> value)
+            public DoublyLinkedListNode(MetricReader value)
             {
                 this.Value = value;
             }
