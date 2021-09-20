@@ -492,7 +492,26 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 ArrayList originalArrayList = connectionListField.GetValue(value) as ArrayList;
                 ConnectionArrayList newArrayList = new ConnectionArrayList(originalArrayList ?? new ArrayList());
 
+                foreach (object connection in originalArrayList)
+                {
+                    HookConnection(connection);
+                }
+
                 connectionListField.SetValue(value, newArrayList);
+            }
+        }
+
+        private static void HookConnection(object value)
+        {
+            if (connectionType.IsInstanceOfType(value))
+            {
+                // Replace the HttpWebRequest arraylist inside this Connection object,
+                // which allows us to intercept each new HttpWebRequest object added under
+                // this Connection.
+                ArrayList originalArrayList = writeListField.GetValue(value) as ArrayList;
+                HttpWebRequestArrayList newArrayList = new HttpWebRequestArrayList(originalArrayList ?? new ArrayList());
+
+                writeListField.SetValue(value, newArrayList);
             }
         }
 
@@ -968,17 +987,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             public override int Add(object value)
             {
-                if (connectionType.IsInstanceOfType(value))
-                {
-                    // Replace the HttpWebRequest arraylist inside this Connection object,
-                    // which allows us to intercept each new HttpWebRequest object added under
-                    // this Connection.
-                    ArrayList originalArrayList = writeListField.GetValue(value) as ArrayList;
-                    HttpWebRequestArrayList newArrayList = new HttpWebRequestArrayList(originalArrayList ?? new ArrayList());
-
-                    writeListField.SetValue(value, newArrayList);
-                }
-
+                HookConnection(value);
                 return base.Add(value);
             }
         }
