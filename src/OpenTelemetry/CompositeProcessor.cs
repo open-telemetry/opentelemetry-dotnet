@@ -95,37 +95,28 @@ namespace OpenTelemetry
         /// <inheritdoc/>
         protected override bool OnForceFlush(int timeoutMilliseconds)
         {
+            var result = true;
             var cur = this.head;
-
             var sw = Stopwatch.StartNew();
 
             while (cur != null)
             {
                 if (timeoutMilliseconds == Timeout.Infinite)
                 {
-                    _ = cur.Value.ForceFlush(Timeout.Infinite);
+                    result = cur.Value.ForceFlush(Timeout.Infinite) && result;
                 }
                 else
                 {
                     var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
 
-                    if (timeout <= 0)
-                    {
-                        return false;
-                    }
-
-                    var succeeded = cur.Value.ForceFlush((int)timeout);
-
-                    if (!succeeded)
-                    {
-                        return false;
-                    }
+                    // notify all the processors, even if we run overtime
+                    result = cur.Value.ForceFlush((int)Math.Max(timeout, 0)) && result;
                 }
 
                 cur = cur.Next;
             }
 
-            return true;
+            return result;
         }
 
         /// <inheritdoc/>

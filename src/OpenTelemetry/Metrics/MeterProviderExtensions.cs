@@ -29,8 +29,8 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         /// <param name="provider">MeterProviderSdk instance on which ForceFlush will be called.</param>
         /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
         /// </param>
         /// <returns>
         /// Returns <c>true</c> when force flush succeeded; otherwise, <c>false</c>.
@@ -48,13 +48,13 @@ namespace OpenTelemetry.Metrics
                 throw new ArgumentNullException(nameof(provider));
             }
 
+            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
+            {
+                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
+            }
+
             if (provider is MeterProviderSdk meterProviderSdk)
             {
-                if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative.");
-                }
-
                 try
                 {
                     return meterProviderSdk.OnForceFlush(timeoutMilliseconds);
@@ -76,8 +76,8 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         /// <param name="provider">MeterProviderSdk instance on which Shutdown will be called.</param>
         /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
         /// </param>
         /// <returns>
         /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
@@ -96,13 +96,13 @@ namespace OpenTelemetry.Metrics
                 throw new ArgumentNullException(nameof(provider));
             }
 
+            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
+            {
+                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
+            }
+
             if (provider is MeterProviderSdk meterProviderSdk)
             {
-                if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative.");
-                }
-
                 if (Interlocked.Increment(ref meterProviderSdk.ShutdownCount) > 1)
                 {
                     return false; // shutdown already called

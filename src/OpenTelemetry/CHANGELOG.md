@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Changed `CompositeProcessor<T>.OnForceFlush` to meet with the spec
+  requirement. Now the SDK will invoke `ForceFlush` on all registered
+  processors, even if there is a timeout.
+  ([#2388](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2388))
+
 ## 1.2.0-alpha3
 
 Released 2021-Sep-13
