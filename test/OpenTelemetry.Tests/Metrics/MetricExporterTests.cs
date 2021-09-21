@@ -33,15 +33,15 @@ namespace OpenTelemetry.Metrics.Tests
 
             switch (mode)
             {
-            case ExportModes.Push:
-                exporter = new PushOnlyMetricExporter();
-                break;
-            case ExportModes.Pull:
-                exporter = new PullOnlyMetricExporter();
-                break;
-            case ExportModes.Pull | ExportModes.Push:
-                exporter = new PushPullMetricExporter();
-                break;
+                case ExportModes.Push:
+                    exporter = new PushOnlyMetricExporter();
+                    break;
+                case ExportModes.Pull:
+                    exporter = new PullOnlyMetricExporter();
+                    break;
+                case ExportModes.Pull | ExportModes.Push:
+                    exporter = new PushPullMetricExporter();
+                    break;
             }
 
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -52,15 +52,15 @@ namespace OpenTelemetry.Metrics.Tests
 
             switch (mode)
             {
-            case ExportModes.Push:
-                Assert.True(result);
-                break;
-            case ExportModes.Pull:
-                Assert.False(result);
-                break;
-            case ExportModes.Pull | ExportModes.Push:
-                Assert.True(result);
-                break;
+                case ExportModes.Push:
+                    Assert.True(result);
+                    break;
+                case ExportModes.Pull:
+                    Assert.False(result);
+                    break;
+                case ExportModes.Pull | ExportModes.Push:
+                    Assert.True(result);
+                    break;
             }
         }
 
