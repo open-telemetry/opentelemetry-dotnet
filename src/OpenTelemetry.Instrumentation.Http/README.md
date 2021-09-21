@@ -54,6 +54,33 @@ the `ConfigureServices` of your `Startup` class. Refer to documentation for
 For an ASP.NET application, adding instrumentation is typically done in the
 `Global.asax.cs`. Refer to documentation for [OpenTelemetry.Instrumentation.AspNet](../OpenTelemetry.Instrumentation.AspNet/README.md).
 
+## Support non-HttpClientHandler
+
+If you want use non-HttpClientHandler, like WinHttpHandler or SocketsHttpHandler(.net core 2.1+, net 5.0+), implicit HTTP instrumentation will not be work, yout need wrap with DiagnosticsHandler.
+
+```csharp
+new HttpClient(new DiagnosticsHandler { InnerHandler = new WinHttpHandler() });
+```
+
+Or with special HttpClientFactory
+
+```csharp
+IHttpClientBuilder builder = ....;
+
+builder.AddHttpMessageHandler(() => new DiagnosticsHandler());
+```
+
+Or with all HttpClientFactory
+
+```csharp
+IServiceCollection services = ....;
+
+services.ConfigureAll<HttpClientFactoryOptions>(options => options.HttpMessageHandlerBuilderActions
+    .Add(builder => builder.AdditionalHandlers.Add(new DiagnosticsHandler())));
+```
+
+> Don't worry, if you use HttpClientHandler, DiagnosticsHandler will not work.
+
 ## Advanced configuration
 
 This instrumentation can be configured to change the default behavior by using
