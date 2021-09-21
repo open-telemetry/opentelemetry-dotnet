@@ -39,13 +39,13 @@ namespace OpenTelemetry.Metrics
             configure?.Invoke(options);
 
             var exporter = new PrometheusExporter(options);
+            var reader = new BaseExportingMetricReader(exporter);
 
-            var metricReader = new BaseExportingMetricReader(exporter);
-            exporter.CollectMetric = metricReader.Collect;
+            exporter.CollectMetric = timeout => exporter.Collect(reader, timeout);
 
             var metricsHttpServer = new PrometheusExporterMetricsHttpServer(exporter);
             metricsHttpServer.Start();
-            return builder.AddMetricReader(metricReader);
+            return builder.AddMetricReader(reader);
         }
     }
 }
