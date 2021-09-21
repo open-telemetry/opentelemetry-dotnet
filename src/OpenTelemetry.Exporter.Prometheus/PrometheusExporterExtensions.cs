@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter
             foreach (var metric in exporter.Metrics)
             {
                 var builder = new PrometheusMetricBuilder()
-                    .WithName(metric.Name)
+                    .WithName(metric.Meter.Name + metric.Name)
                     .WithDescription(metric.Description);
 
                 switch (metric.MetricType)

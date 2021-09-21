@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics
         private readonly List<object> instrumentations = new List<object>();
         private readonly object collectLock = new object();
         private readonly object instrumentCreationLock = new object();
-        private readonly Dictionary<string, bool> metricStreamNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<Meter, Dictionary<string, bool>> metricStreamNamesByMeter = new Dictionary<Meter, Dictionary<string, bool>>();
         private readonly MeterListener listener;
         private readonly MetricReader reader;
         private int metricIndex = -1;
@@ -98,10 +98,18 @@ namespace OpenTelemetry.Metrics
                     {
                         lock (this.instrumentCreationLock)
                         {
-                            if (this.metricStreamNames.ContainsKey(instrument.Name))
+                            if (this.metricStreamNamesByMeter.TryGetValue(instrument.Meter, out var metricStreamNames))
                             {
-                                // log and ignore this instrument.
-                                return;
+                                if (metricStreamNames.ContainsKey(instrument.Name))
+                                {
+                                    // log and ignore this instrument.
+                                    return;
+                                }
+                            }
+                            else
+                            {
+                                metricStreamNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+                                this.metricStreamNamesByMeter.Add(instrument.Meter, metricStreamNames);
                             }
 
                             var index = Interlocked.Increment(ref this.metricIndex);
@@ -113,7 +121,7 @@ namespace OpenTelemetry.Metrics
                             {
                                 var metric = new Metric(instrument, temporality);
                                 this.metrics[index] = metric;
-                                this.metricStreamNames.Add(instrument.Name, true);
+                                metricStreamNames.Add(instrument.Name, true);
                                 listener.EnableMeasurementEvents(instrument, metric);
                             }
                         }

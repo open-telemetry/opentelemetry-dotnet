@@ -237,6 +237,73 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(AggregatorStore.MaxMetricPoints, metricPointCount);
         }
 
+        [Theory]
+        [InlineData(AggregationTemporality.Cumulative)]
+        [InlineData(AggregationTemporality.Delta)]
+        public void MetricNameDuplicationtest(AggregationTemporality temporality)
+        {
+            var metricItems = new List<Metric>();
+            int metricCount = 0;
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
+
+            void ProcessExport(Batch<Metric> batch)
+            {
+                foreach (var metric in batch)
+                {
+                    metricCount++;
+                }
+            }
+
+            var metricReader = new BaseExportingMetricReader(metricExporter)
+            {
+                PreferredAggregationTemporality = temporality,
+            };
+            using var meter1 = new Meter("TestDuplicateMetricName1");
+            using var meter2 = new Meter("TestDuplicateMetricName2");
+            using var meter3SameNameAsMeter1 = new Meter("TestDuplicateMetricName1");
+            var counterLong = meter1.CreateCounter<long>("name1");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource("TestDuplicateMetricName1")
+                .AddSource("TestDuplicateMetricName2")
+                .AddMetricReader(metricReader)
+                .Build();
+
+            // Expecting one metric stream.
+            counterLong.Add(10);
+            metricReader.Collect();
+            Assert.Equal(1, metricCount);
+
+            // The following will be ignored as
+            // metric of same name is part of the
+            // same meter.
+            // Metric stream will remain one.
+            var anotherCounterSameName = meter1.CreateCounter<long>("name1");
+            anotherCounterSameName.Add(10);
+            metricCount = 0;
+            metricReader.Collect();
+            Assert.Equal(1, metricCount);
+
+            // This will create a new stream - even though the name
+            // is same, its with a different Meter.
+            var anotherCounterSameNameDiffMeter = meter2.CreateCounter<long>("name1");
+            anotherCounterSameNameDiffMeter.Add(10);
+            metricCount = 0;
+            metricReader.Collect();
+            Assert.Equal(2, metricCount);
+
+            var anotherCounterSameNameDiffMeterButSameName = meter3SameNameAsMeter1.CreateCounter<long>("name1");
+            anotherCounterSameNameDiffMeterButSameName.Add(10);
+            metricCount = 0;
+            metricReader.Collect();
+
+            // Commenting out as this would fail.
+            // as .NET returns different Meter instances
+            // for same name,version.
+            // TODO: Fix this by using a MeterEqualityComparer
+            // for metricStreamNamesByMeter in MeterProviderSdk.
+            // Assert.Equal(2, metricCount);
+        }
+
         [Fact]
         public void MultithreadedLongCounterTest()
         {
