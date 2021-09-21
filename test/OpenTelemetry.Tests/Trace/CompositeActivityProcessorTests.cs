@@ -101,16 +101,8 @@ namespace OpenTelemetry.Trace.Tests
             {
                 processor.ForceFlush(timeout);
 
-                if (timeout != 0)
-                {
-                    Assert.True(p1.ForceFlushCalled);
-                    Assert.True(p2.ForceFlushCalled);
-                }
-                else
-                {
-                    Assert.False(p1.ForceFlushCalled);
-                    Assert.False(p2.ForceFlushCalled);
-                }
+                Assert.True(p1.ForceFlushCalled);
+                Assert.True(p2.ForceFlushCalled);
             }
         }
     }
