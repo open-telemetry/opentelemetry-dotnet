@@ -135,6 +135,25 @@ namespace OpenTelemetry.Internal
             }
         }
 
+        [NonEvent]
+        public void DroppedExportProcessorItems(string exportProcessorName, string exporterName, long droppedCount)
+        {
+            if (droppedCount > 0)
+            {
+                if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+                {
+                    this.ExistsDroppedExportProcessorItems(exportProcessorName, exporterName, droppedCount);
+                }
+            }
+            else
+            {
+                if (this.IsEnabled(EventLevel.Informational, EventKeywords.All))
+                {
+                    this.NoDroppedExportProcessorItems(exportProcessorName, exporterName);
+                }
+            }
+        }
+
         [Event(1, Message = "Span processor queue size reached maximum. Throttling spans.", Level = EventLevel.Warning)]
         public void SpanProcessorQueueIsExhausted()
         {
@@ -307,6 +326,18 @@ namespace OpenTelemetry.Internal
         public void MissingPermissionsToReadEnvironmentVariable(string exception)
         {
             this.WriteEvent(30, exception);
+        }
+
+        [Event(31, Message = "'{0}' exporting to '{1}' dropped '0' items.", Level = EventLevel.Informational)]
+        public void NoDroppedExportProcessorItems(string exportProcessorName, string exporterName)
+        {
+            this.WriteEvent(31, exportProcessorName, exporterName);
+        }
+
+        [Event(32, Message = "'{0}' exporting to '{1}' dropped '{2}' item(s) due to buffer full.", Level = EventLevel.Warning)]
+        public void ExistsDroppedExportProcessorItems(string exportProcessorName, string exporterName, long droppedCount)
+        {
+            this.WriteEvent(32, exportProcessorName, exporterName, droppedCount);
         }
 
 #if DEBUG

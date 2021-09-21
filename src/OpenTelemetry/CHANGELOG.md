@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* `BatchExportProcessor.OnShutdown` will now log the count of dropped telemetry items.
+  ([#2331](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2331))
 * Changed `CompositeProcessor<T>.OnForceFlush` to meet with the spec
   requirement. Now the SDK will invoke `ForceFlush` on all registered
   processors, even if there is a timeout.

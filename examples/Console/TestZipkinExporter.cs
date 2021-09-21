@@ -50,7 +50,7 @@ namespace Examples.Console
             {
                 sample.Start();
 
-                System.Console.WriteLine("Traces are being created and exported" +
+                System.Console.WriteLine("Traces are being created and exported " +
                     "to Zipkin in the background. Use Zipkin to view them. " +
                     "Press ENTER to stop.");
                 System.Console.ReadLine();
