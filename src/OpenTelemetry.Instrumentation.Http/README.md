@@ -56,7 +56,7 @@ For an ASP.NET application, adding instrumentation is typically done in the
 
 ## Support non-HttpClientHandler
 
-If you want use non-HttpClientHandler, like WinHttpHandler or SocketsHttpHandler(.net core 2.1+, net 5.0+), implicit HTTP instrumentation will not be work, yout need wrap with DiagnosticsHandler.
+If you want use non-HttpClientHandler, like WinHttpHandler or SocketsHttpHandler(.net core 2.1+, net 5.0+), implicit HTTP instrumentation will not be work, you need wrap with DiagnosticsHandler.
 
 ```csharp
 new HttpClient(new DiagnosticsHandler { InnerHandler = new WinHttpHandler() });
