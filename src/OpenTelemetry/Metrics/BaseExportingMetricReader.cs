@@ -60,6 +60,23 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc />
+        protected override bool OnCollect(int timeoutMilliseconds)
+        {
+            if (this.supportedExportModes.HasFlag(ExportModes.Push))
+            {
+                return base.OnCollect(timeoutMilliseconds);
+            }
+
+            if (this.supportedExportModes.HasFlag(ExportModes.Pull) && PullMetricScope.IsPullAllowed)
+            {
+                return base.OnCollect(timeoutMilliseconds);
+            }
+
+            // TODO: add some error log
+            return false;
+        }
+
+        /// <inheritdoc />
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
             return this.exporter.Shutdown(timeoutMilliseconds);
