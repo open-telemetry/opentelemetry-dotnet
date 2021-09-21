@@ -20,11 +20,11 @@ using System.Text.RegularExpressions;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 
-internal class MyExporter : BaseExporter<LogRecord>
+internal class CredScanExporter : BaseExporter<LogRecord>
 {
     private readonly string name;
 
-    public MyExporter(string name = "MyExporter")
+    public CredScanExporter(string name = "MyExporter")
     {
         this.name = name;
     }
@@ -34,28 +34,32 @@ internal class MyExporter : BaseExporter<LogRecord>
         // SuppressInstrumentationScope should be used to prevent exporter
         // code from generating telemetry and causing live-loop.
         using var scope = SuppressInstrumentationScope.Begin();
-
         foreach (var logRecord in batch)
         {
             var listKvp = logRecord.State as IReadOnlyList<KeyValuePair<string, object>>;
 
-            Regex rule = new Regex(@"(?i)sig=[a-z0-9%]{43,63}%3d");
-            for (int i = 0; i < listKvp.Count; i++)
+            for (int i = 0; i < listKvp.Count; ++i)
             {
                 var entry = listKvp[i];
+
+                if (entry.Key == "{OriginalFormat}")
+                {
+                    continue;
+                }
+
                 var str = entry.Value as string; // if the value is not a string, we don't attempt to call ToString
 
                 if (str != null)
                 {
                     Console.WriteLine(str);
-                    if (rule.IsMatch(str))
-                    {
-                        Console.WriteLine("such a sad story!");
-                    }
-                    else
-                    {
-                        Console.WriteLine("happy ending!");
-                    }
+                    //if (rule.IsMatch(str))
+                    //{
+                    //    Console.WriteLine("such a sad story!");
+                    //}
+                    //else
+                    //{
+                    //    Console.WriteLine("happy ending!");
+                    //}
                 }
             }
         }

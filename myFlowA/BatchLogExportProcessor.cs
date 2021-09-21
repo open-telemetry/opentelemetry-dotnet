@@ -14,34 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Diagnostics;
 using OpenTelemetry.Logs;
 
 namespace OpenTelemetry
 {
     internal class BatchLogFilteringProcessor : BatchExportProcessor<LogRecord>
     {
-        private readonly Func<string, string> filter;
-        private readonly BaseExporter<LogRecord> processor;
-
         public BatchLogFilteringProcessor(
-            BaseExporter<LogRecord> processor, Func<string, string> filter) :
-            base(processor)
-        {
-            if (filter == null)
-            {
-                throw new ArgumentNullException(nameof(filter));
-            }
-
-            if (processor == null)
-            {
-                throw new ArgumentNullException(nameof(processor));
-            }
-
-            this.filter = filter;
-            this.processor = processor;
-        }
+            BaseExporter<LogRecord> exporter) :
+            base(exporter)
+        {}
 
         /// <inheritdoc />
         public override void OnEnd(LogRecord data)
@@ -50,10 +32,6 @@ namespace OpenTelemetry
             {
                 return;
             }
-
-            string a = "a";
-            this.filter(a);
-            Console.WriteLine(a);
 
             this.OnExport(data);
         }

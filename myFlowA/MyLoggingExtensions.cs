@@ -12,11 +12,9 @@ namespace Microsoft.Extensions.Logging
             {
                 throw new ArgumentNullException(nameof(options));
             }
-
-            Func<string, string> filter = str => str.ToUpper();
             
-            var filteringExporter = new MyExporter("myExporter");
-            return options.AddProcessor(new BatchLogFilteringProcessor(filteringExporter, filter));
+            var credScanExporter = new CredScanExporter("myExporter");
+            return options.AddProcessor(new BatchLogFilteringProcessor(credScanExporter));
         }
     }
 }

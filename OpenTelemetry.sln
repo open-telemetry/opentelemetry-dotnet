@@ -224,7 +224,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "extending-the-sdk", "docs\m
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StressTestMetrics", "test\StressTestMetrics\StressTestMetrics.csproj", "{A885DBE2-4B82-432C-A77B-19844D7BBC96}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "myFlows", "myFlowA\myFlows.csproj", "{84CCC1A7-17B0-43EA-8F1A-CE2E38211906}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CredScanExporter", "myFlowA\CredScanExporter.csproj", "{84CCC1A7-17B0-43EA-8F1A-CE2E38211906}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
