@@ -24,8 +24,7 @@ public class CredScanExporter : BaseExporter<LogRecord>
 {
     private readonly Regex m_rules = new Regex(@"(?i)sig=[a-z0-9%]{43,63}%3d");
 
-    public CredScanExporter()
-    {}
+    public CredScanExporter() {}
 
     public override ExportResult Export(in Batch<LogRecord> batch)
     {
