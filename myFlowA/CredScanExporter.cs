@@ -20,9 +20,10 @@ using System.Text.RegularExpressions;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 
-internal class CredScanExporter : BaseExporter<LogRecord>
+public class CredScanExporter : BaseExporter<LogRecord>
 {
     private readonly string name;
+    private readonly Regex m_rules = new Regex(@"(?i)sig=[a-z0-9%]{43,63}%3d");
 
     public CredScanExporter(string name = "MyExporter")
     {
@@ -52,14 +53,14 @@ internal class CredScanExporter : BaseExporter<LogRecord>
                 if (str != null)
                 {
                     Console.WriteLine(str);
-                    //if (rule.IsMatch(str))
-                    //{
-                    //    Console.WriteLine("such a sad story!");
-                    //}
-                    //else
-                    //{
-                    //    Console.WriteLine("happy ending!");
-                    //}
+                    if (m_rules.IsMatch(str))
+                    {
+                        Console.WriteLine("such a sad story!");
+                    }
+                    else
+                    {
+                        Console.WriteLine("happy ending!");
+                    }
                 }
             }
         }
