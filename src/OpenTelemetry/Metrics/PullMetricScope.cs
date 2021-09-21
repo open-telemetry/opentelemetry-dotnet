@@ -15,10 +15,9 @@
 // </copyright>
 
 using System;
-using System.Runtime.CompilerServices;
 using OpenTelemetry.Context;
 
-namespace OpenTelemetry
+namespace OpenTelemetry.Metrics
 {
     internal sealed class PullMetricScope : IDisposable
     {
