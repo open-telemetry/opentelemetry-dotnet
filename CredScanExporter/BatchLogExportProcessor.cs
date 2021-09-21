@@ -21,9 +21,8 @@ namespace OpenTelemetry
     internal class BatchLogFilteringProcessor : BatchExportProcessor<LogRecord>
     {
         public BatchLogFilteringProcessor(
-            BaseExporter<LogRecord> exporter) :
-            base(exporter)
-        {}
+            BaseExporter<LogRecord> exporter)
+            : base(exporter) {}
 
         /// <inheritdoc />
         public override void OnEnd(LogRecord data)
