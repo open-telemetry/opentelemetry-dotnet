@@ -44,22 +44,25 @@ namespace OpenTelemetry.Metrics.Tests
                     break;
             }
 
+            var reader = new BaseExportingMetricReader(exporter);
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMetricReader(new BaseExportingMetricReader(exporter))
+                .AddMetricReader(reader)
                 .Build();
-
-            var result = meterProvider.ForceFlush();
 
             switch (mode)
             {
                 case ExportModes.Push:
-                    Assert.True(result);
+                    Assert.True(reader.Collect());
+                    Assert.True(meterProvider.ForceFlush());
                     break;
                 case ExportModes.Pull:
-                    Assert.False(result);
+                    Assert.False(reader.Collect());
+                    Assert.False(meterProvider.ForceFlush());
+                    Assert.True(exporter.Collect(reader));
                     break;
                 case ExportModes.Pull | ExportModes.Push:
-                    Assert.True(result);
+                    Assert.True(reader.Collect());
+                    Assert.True(meterProvider.ForceFlush());
                     break;
             }
         }
