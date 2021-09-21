@@ -78,13 +78,7 @@ namespace OpenTelemetry.Trace
                 return false;
             }
 
-            if (!int.TryParse(value, out var parsedValue))
-            {
-                OpenTelemetrySdkEventSource.Log.FailedToParseEnvironmentVariable(envVarKey, value);
-                return false;
-            }
-
-            result = parsedValue;
+            result = int.Parse(value); // throws FormatException or OverflowException for bad input
             return true;
         }
     }
