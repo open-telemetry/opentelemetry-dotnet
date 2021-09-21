@@ -31,6 +31,8 @@ namespace OpenTelemetry.Metrics
         private readonly Metric[] metrics;
         private readonly List<object> instrumentations = new List<object>();
         private readonly object collectLock = new object();
+        private readonly object instrumentCreationLock = new object();
+        private readonly Dictionary<string, bool> metricStreamNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         private readonly MeterListener listener;
         private readonly MetricReader reader;
         private int metricIndex = -1;
@@ -94,16 +96,26 @@ namespace OpenTelemetry.Metrics
                 {
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
-                        var index = Interlocked.Increment(ref this.metricIndex);
-                        if (index >= MaxMetrics)
+                        lock (this.instrumentCreationLock)
                         {
-                            // Log that all measurements are dropped from this instrument.
-                        }
-                        else
-                        {
-                            var metric = new Metric(instrument, temporality);
-                            this.metrics[index] = metric;
-                            listener.EnableMeasurementEvents(instrument, metric);
+                            if (this.metricStreamNames.ContainsKey(instrument.Name))
+                            {
+                                // log and ignore this instrument.
+                                return;
+                            }
+
+                            var index = Interlocked.Increment(ref this.metricIndex);
+                            if (index >= MaxMetrics)
+                            {
+                                // Log that all measurements are dropped from this instrument.
+                            }
+                            else
+                            {
+                                var metric = new Metric(instrument, temporality);
+                                this.metrics[index] = metric;
+                                this.metricStreamNames.Add(instrument.Name, true);
+                                listener.EnableMeasurementEvents(instrument, metric);
+                            }
                         }
                     }
                 },
@@ -173,7 +185,7 @@ namespace OpenTelemetry.Metrics
                         this.metrics[i].SnapShot();
                     }
 
-                    return (target > 0) ? new Batch<Metric>(this.metrics, indexSnapShot + 1) : default;
+                    return (target > 0) ? new Batch<Metric>(this.metrics, target) : default;
                 }
                 catch (Exception)
                 {
