@@ -167,12 +167,13 @@ namespace OpenTelemetry.Metrics
                     // Record all observable instruments
                     this.listener.RecordObservableInstruments();
                     var indexSnapShot = Math.Min(this.metricIndex, MaxMetrics - 1);
-                    for (int i = 0; i < indexSnapShot + 1; i++)
+                    var target = indexSnapShot + 1;
+                    for (int i = 0; i < target; i++)
                     {
                         this.metrics[i].SnapShot();
                     }
 
-                    return new Batch<Metric>(this.metrics, indexSnapShot + 1);
+                    return (target > 0) ? new Batch<Metric>(this.metrics, indexSnapShot + 1) : default;
                 }
                 catch (Exception)
                 {
