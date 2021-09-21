@@ -43,7 +43,6 @@ internal class MyExporter : BaseExporter<Metric>
             }
 
             sb.Append($"{record}");
-            sb.Append(')');
         }
 
         Console.WriteLine($"{this.name}.Export([{sb.ToString()}])");
