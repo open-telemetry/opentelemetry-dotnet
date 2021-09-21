@@ -24,36 +24,55 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MeterProviderSdk
-        : MeterProvider
+    internal sealed class MeterProviderSdk : MeterProvider
     {
         internal const int MaxMetrics = 1000;
+        internal int ShutdownCount;
         private readonly Metric[] metrics;
         private readonly List<object> instrumentations = new List<object>();
         private readonly object collectLock = new object();
+        private readonly object instrumentCreationLock = new object();
+        private readonly Dictionary<string, bool> metricStreamNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         private readonly MeterListener listener;
-        private readonly List<MetricReader> metricReaders = new List<MetricReader>();
+        private readonly MetricReader reader;
         private int metricIndex = -1;
 
         internal MeterProviderSdk(
             Resource resource,
             IEnumerable<string> meterSources,
             List<MeterProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
-            MetricReader[] metricReaders)
+            IEnumerable<MetricReader> readers)
         {
             this.Resource = resource;
             this.metrics = new Metric[MaxMetrics];
 
-            // TODO: Replace with single CompositeReader.
-            this.metricReaders.AddRange(metricReaders);
             AggregationTemporality temporality = AggregationTemporality.Cumulative;
 
-            // TODO: Actually support multiple readers.
-            // Currently the last reader's temporality wins.
-            foreach (var reader in this.metricReaders)
+            foreach (var reader in readers)
             {
+                if (reader == null)
+                {
+                    throw new ArgumentException("A null value was found.", nameof(readers));
+                }
+
                 reader.SetParentProvider(this);
+
+                // TODO: Actually support multiple readers.
+                // Currently the last reader's temporality wins.
                 temporality = reader.PreferredAggregationTemporality;
+
+                if (this.reader == null)
+                {
+                    this.reader = reader;
+                }
+                else if (this.reader is CompositeMetricReader compositeReader)
+                {
+                    compositeReader.AddReader(reader);
+                }
+                else
+                {
+                    this.reader = new CompositeMetricReader(new[] { this.reader, reader });
+                }
             }
 
             if (instrumentationFactories.Any())
@@ -77,16 +96,26 @@ namespace OpenTelemetry.Metrics
                 {
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
-                        var index = Interlocked.Increment(ref this.metricIndex);
-                        if (index >= MaxMetrics)
+                        lock (this.instrumentCreationLock)
                         {
-                            // Log that all measurements are dropped from this instrument.
-                        }
-                        else
-                        {
-                            var metric = new Metric(instrument, temporality);
-                            this.metrics[index] = metric;
-                            listener.EnableMeasurementEvents(instrument, metric);
+                            if (this.metricStreamNames.ContainsKey(instrument.Name))
+                            {
+                                // log and ignore this instrument.
+                                return;
+                            }
+
+                            var index = Interlocked.Increment(ref this.metricIndex);
+                            if (index >= MaxMetrics)
+                            {
+                                // Log that all measurements are dropped from this instrument.
+                            }
+                            else
+                            {
+                                var metric = new Metric(instrument, temporality);
+                                this.metrics[index] = metric;
+                                this.metricStreamNames.Add(instrument.Name, true);
+                                listener.EnableMeasurementEvents(instrument, metric);
+                            }
                         }
                     }
                 },
@@ -150,12 +179,13 @@ namespace OpenTelemetry.Metrics
                     // Record all observable instruments
                     this.listener.RecordObservableInstruments();
                     var indexSnapShot = Math.Min(this.metricIndex, MaxMetrics - 1);
-                    for (int i = 0; i < indexSnapShot + 1; i++)
+                    var target = indexSnapShot + 1;
+                    for (int i = 0; i < target; i++)
                     {
                         this.metrics[i].SnapShot();
                     }
 
-                    return new Batch<Metric>(this.metrics, indexSnapShot + 1);
+                    return (target > 0) ? new Batch<Metric>(this.metrics, target) : default;
                 }
                 catch (Exception)
                 {
@@ -163,6 +193,48 @@ namespace OpenTelemetry.Metrics
                     return default;
                 }
             }
+        }
+
+        /// <summary>
+        /// Called by <c>ForceFlush</c>. This function should block the current
+        /// thread until flush completed or timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>
+        /// This function is called synchronously on the thread which made the
+        /// first call to <c>ForceFlush</c>. This function should not throw
+        /// exceptions.
+        /// </remarks>
+        internal bool OnForceFlush(int timeoutMilliseconds)
+        {
+            return this.reader?.Collect(timeoutMilliseconds) ?? true;
+        }
+
+        /// <summary>
+        /// Called by <c>Shutdown</c>. This function should block the current
+        /// thread until shutdown completed or timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>
+        /// This function is called synchronously on the thread which made the
+        /// first call to <c>Shutdown</c>. This function should not throw
+        /// exceptions.
+        /// </remarks>
+        internal bool OnShutdown(int timeoutMilliseconds)
+        {
+            return this.reader?.Shutdown(timeoutMilliseconds) ?? true;
         }
 
         protected override void Dispose(bool disposing)
@@ -177,10 +249,9 @@ namespace OpenTelemetry.Metrics
                 this.instrumentations.Clear();
             }
 
-            foreach (var reader in this.metricReaders)
-            {
-                reader.Dispose();
-            }
+            // Wait for up to 5 seconds grace period
+            this.reader?.Shutdown(5000);
+            this.reader?.Dispose();
 
             this.listener.Dispose();
         }
