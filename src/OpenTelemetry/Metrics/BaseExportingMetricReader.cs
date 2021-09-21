@@ -21,25 +21,31 @@ namespace OpenTelemetry.Metrics
     public class BaseExportingMetricReader : MetricReader
     {
         protected readonly BaseExporter<Metric> exporter;
-        protected bool disposed;
+        private readonly ExportModes supportedExportModes = ExportModes.Push | ExportModes.Pull;
+        private bool disposed;
 
         public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
 
-            var attributes = exporter.GetType().GetCustomAttributes(typeof(AggregationTemporalityAttribute), true);
+            var exportorType = exporter.GetType();
+            var attributes = exportorType.GetCustomAttributes(typeof(AggregationTemporalityAttribute), true);
             if (attributes.Length > 0)
             {
-                AggregationTemporalityAttribute aggregationTemporality = (AggregationTemporalityAttribute)attributes[attributes.Length - 1];
-                this.PreferredAggregationTemporality = aggregationTemporality.Preferred;
-                this.SupportedAggregationTemporality = aggregationTemporality.Supported;
+                var attr = (AggregationTemporalityAttribute)attributes[attributes.Length - 1];
+                this.PreferredAggregationTemporality = attr.Preferred;
+                this.SupportedAggregationTemporality = attr.Supported;
+            }
+
+            attributes = exportorType.GetCustomAttributes(typeof(ExportModesAttribute), true);
+            if (attributes.Length > 0)
+            {
+                var attr = (ExportModesAttribute)attributes[attributes.Length - 1];
+                this.supportedExportModes = attr.Supported;
             }
         }
 
-        public override void OnCollect(Batch<Metric> metrics)
-        {
-            this.exporter.Export(metrics);
-        }
+        protected ExportModes SupportedExportModes => this.supportedExportModes;
 
         internal override void SetParentProvider(BaseProvider parentProvider)
         {
@@ -48,11 +54,26 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc/>
+        protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
+        {
+            return this.exporter.Export(metrics) == ExportResult.Success;
+        }
+
+        /// <inheritdoc />
+        protected override bool OnShutdown(int timeoutMilliseconds)
+        {
+            return this.exporter.Shutdown(timeoutMilliseconds);
+        }
+
+        /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
+            if (this.disposed)
+            {
+                return;
+            }
 
-            if (disposing && !this.disposed)
+            if (disposing)
             {
                 try
                 {
@@ -62,9 +83,11 @@ namespace OpenTelemetry.Metrics
                 {
                     // TODO: Log
                 }
-
-                this.disposed = true;
             }
+
+            this.disposed = true;
+
+            base.Dispose(disposing);
         }
     }
 }
