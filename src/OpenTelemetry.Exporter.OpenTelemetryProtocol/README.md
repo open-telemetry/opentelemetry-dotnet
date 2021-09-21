@@ -50,6 +50,7 @@ values of the `OtlpExporterOptions`
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | `Endpoint`                     |
 | `OTEL_EXPORTER_OTLP_HEADERS`  | `Headers`                      |
 | `OTEL_EXPORTER_OTLP_TIMEOUT`  | `TimeoutMilliseconds`          |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `Protocol`          |
 
 ## Special case when using insecure channel
 

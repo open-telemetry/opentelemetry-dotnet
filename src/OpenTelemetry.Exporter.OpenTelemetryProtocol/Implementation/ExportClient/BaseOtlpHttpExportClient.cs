@@ -1,4 +1,4 @@
-// <copyright file="BaseOtlpHttpExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="BaseOtlpHttpExportClient.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,47 +16,39 @@
 
 using System;
 using System.Collections.Generic;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OtlpResource = Opentelemetry.Proto.Resource.V1;
+using System.Threading;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
 {
-    /// <summary>
-    /// Implements exporter that exports telemetry objects over OTLP/HTTP.
-    /// </summary>
-    /// <typeparam name="T">The type of telemetry object to be exported.</typeparam>
-    public abstract class BaseOtlpHttpExporter<T> : BaseExporter<T>
-        where T : class
+    /// <summary>Base class for sending OTLP export request over HTTP.</summary>
+    /// <typeparam name="TRequest">Type of export request.</typeparam>
+    internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequest>
     {
-        private OtlpResource.Resource processResource;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="BaseOtlpHttpExporter{T}"/> class.
-        /// </summary>
-        /// <param name="options">The <see cref="OtlpExporterOptions"/> for configuring the exporter.</param>
-        /// <param name="httpHandler">The <see cref="IHttpHandler"/> used http requests.</param>
-        protected BaseOtlpHttpExporter(OtlpExporterOptions options, IHttpHandler httpHandler = null)
+        protected BaseOtlpHttpExportClient(OtlpExporterOptions options, IHttpHandler httpHandler = null)
         {
             this.Options = options ?? throw new ArgumentNullException(nameof(options));
-            this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+
             if (this.Options.TimeoutMilliseconds <= 0)
             {
                 throw new ArgumentException("Timeout value provided is not a positive number.", nameof(this.Options.TimeoutMilliseconds));
             }
 
+            this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+
             this.HttpHandler = httpHandler ?? new HttpHandler(TimeSpan.FromMilliseconds(this.Options.TimeoutMilliseconds));
         }
 
-        internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
-
         internal OtlpExporterOptions Options { get; }
-
-        internal IReadOnlyDictionary<string, string> Headers { get; }
 
         internal IHttpHandler HttpHandler { get; }
 
+        internal IReadOnlyDictionary<string, string> Headers { get; }
+
         /// <inheritdoc/>
-        protected override bool OnShutdown(int timeoutMilliseconds)
+        public abstract bool SendExportRequest(TRequest request, CancellationToken cancellationToken = default);
+
+        /// <inheritdoc/>
+        public virtual bool CancelExportRequest(int timeoutMilliseconds)
         {
             try
             {

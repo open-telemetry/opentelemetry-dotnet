@@ -1,4 +1,4 @@
-// <copyright file="OtlpExporterOptionsGrpcExtensionsTests.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpExporterOptionsExtensionsTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +15,14 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using Xunit;
 using Xunit.Sdk;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
-    public class OtlpExporterOptionsGrpcExtensionsTests
+    public class OtlpExporterOptionsExtensionsTests
     {
         [Theory]
         [InlineData("key=value", new string[] { "key" }, new string[] { "value" })]
@@ -62,6 +64,47 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
 
             throw new XunitException("GetMetadataFromHeaders did not throw an exception for invalid input headers");
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(null)]
+        public void GetHeaders_NoOptionHeaders_ReturnsEmptyHeadres(string optionHeaders)
+        {
+            var options = new OtlpExporterOptions
+            {
+                Headers = optionHeaders,
+            };
+
+            var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+
+            Assert.Empty(headers);
+        }
+
+        [Theory]
+        [InlineData(ExportProtocol.Grpc, typeof(OtlpGrpcTraceExportClient))]
+        [InlineData(ExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient))]
+        public void GetTraceExportClient_SupportedProtocol_ReturnsCorrectExportClient(string protocol, Type expectedExportClientType)
+        {
+            var options = new OtlpExporterOptions
+            {
+                Protocol = protocol,
+            };
+
+            var exportClient = options.GetTraceExportClient();
+
+            Assert.Equal(expectedExportClientType, exportClient.GetType());
+        }
+
+        [Fact]
+        public void GetTraceExportClient_UnsupportedProtocol_Throws()
+        {
+            var options = new OtlpExporterOptions
+            {
+                Protocol = "test",
+            };
+
+            Assert.Throws<NotSupportedException>(() => options.GetTraceExportClient());
         }
     }
 }

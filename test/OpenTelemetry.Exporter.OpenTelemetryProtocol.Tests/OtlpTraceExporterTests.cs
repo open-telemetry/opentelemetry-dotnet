@@ -19,7 +19,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using Moq;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -68,9 +70,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new ActivitySource("odd", "1.3.5"),
             };
 
+            var options = new OtlpExporterOptions();
             using var exporter = new OtlpTraceExporter(
-                new OtlpExporterOptions(),
-                new NoopTraceServiceClient());
+                options,
+                new OtlpGrpcTraceExportClient(options, new NoopTraceServiceClient()));
 
             var resourceBuilder = ResourceBuilder.CreateEmpty();
             if (includeServiceNameInResource)
@@ -336,6 +339,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.True(startCalled);
             Assert.True(endCalled);
+        }
+
+        [Fact]
+        public void Shutdown_ExportRequestCancelled()
+        {
+            var exportClientMock = new Mock<IExportClient<OtlpCollector.ExportTraceServiceRequest>>();
+
+            var exporter = new OtlpTraceExporter(new OtlpExporterOptions(), exportClientMock.Object);
+
+            var result = exporter.Shutdown();
+
+            exportClientMock.Verify(m => m.CancelExportRequest(It.IsAny<int>()), Times.Once());
         }
 
         private class NoopTraceServiceClient : OtlpCollector.TraceService.ITraceServiceClient

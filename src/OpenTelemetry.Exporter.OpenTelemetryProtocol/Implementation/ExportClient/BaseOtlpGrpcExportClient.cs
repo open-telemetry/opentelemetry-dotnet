@@ -1,4 +1,4 @@
-// <copyright file="BaseOtlpExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="BaseOtlpGrpcExportClient.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,41 +15,32 @@
 // </copyright>
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 #if NETSTANDARD2_1
 using Grpc.Net.Client;
 #endif
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OtlpResource = Opentelemetry.Proto.Resource.V1;
 
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
 {
-    /// <summary>
-    /// Implements exporter that exports telemetry objects over OTLP/gRPC.
-    /// </summary>
-    /// <typeparam name="T">The type of telemetry object to be exported.</typeparam>
-    public abstract class BaseOtlpExporter<T> : BaseExporter<T>
-        where T : class
+    /// <summary>Base class for sending OTLP export request over gRPC.</summary>
+    /// <typeparam name="TRequest">Type of export request.</typeparam>
+    internal abstract class BaseOtlpGrpcExportClient<TRequest> : IExportClient<TRequest>
     {
-        private OtlpResource.Resource processResource;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="BaseOtlpExporter{T}"/> class.
-        /// </summary>
-        /// <param name="options">The <see cref="OtlpExporterOptions"/> for configuring the exporter.</param>
-        protected BaseOtlpExporter(OtlpExporterOptions options)
+        protected BaseOtlpGrpcExportClient(OtlpExporterOptions options)
         {
             this.Options = options ?? throw new ArgumentNullException(nameof(options));
-            this.Headers = options.GetMetadataFromHeaders();
-            if (this.Options.TimeoutMilliseconds <= 0)
+
+            if (options.TimeoutMilliseconds <= 0)
             {
-                throw new ArgumentException("Timeout value provided is not a positive number.", nameof(this.Options.TimeoutMilliseconds));
+                throw new ArgumentException("Timeout value provided is not a positive number.", nameof(options.TimeoutMilliseconds));
             }
+
+            this.Headers = options.GetMetadataFromHeaders();
         }
 
-        internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
+        internal OtlpExporterOptions Options { get; }
 
 #if NETSTANDARD2_1
         internal GrpcChannel Channel { get; set; }
@@ -57,12 +48,13 @@ namespace OpenTelemetry.Exporter
         internal Channel Channel { get; set; }
 #endif
 
-        internal OtlpExporterOptions Options { get; }
-
         internal Metadata Headers { get; }
 
         /// <inheritdoc/>
-        protected override bool OnShutdown(int timeoutMilliseconds)
+        public abstract bool SendExportRequest(TRequest request, CancellationToken cancellationToken = default);
+
+        /// <inheritdoc/>
+        public virtual bool CancelExportRequest(int timeoutMilliseconds)
         {
             if (this.Channel == null)
             {

@@ -16,13 +16,15 @@
 
 using System;
 using Grpc.Core;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 #if NETSTANDARD2_1
 using Grpc.Net.Client;
 #endif
+using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
+namespace OpenTelemetry.Exporter
 {
-    internal static class OtlpExporterOptionsGrpcExtensions
+    internal static class OtlpExporterOptionsExtensions
     {
 #if NETSTANDARD2_1
         public static GrpcChannel CreateChannel(this OtlpExporterOptions options)
@@ -56,5 +58,41 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         {
             return options.GetHeaders<Metadata>((m, k, v) => m.Add(k, v));
         }
+
+        public static THeaders GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
+            where THeaders : new()
+        {
+            var optionHeaders = options.Headers;
+            var headers = new THeaders();
+            if (!string.IsNullOrEmpty(optionHeaders))
+            {
+                Array.ForEach(
+                    optionHeaders.Split(','),
+                    (pair) =>
+                    {
+                        // Specify the maximum number of substrings to return to 2
+                        // This treats everything that follows the first `=` in the string as the value to be added for the metadata key
+                        var keyValueData = pair.Split(new char[] { '=' }, 2);
+                        if (keyValueData.Length != 2)
+                        {
+                            throw new ArgumentException("Headers provided in an invalid format.");
+                        }
+
+                        var key = keyValueData[0].Trim();
+                        var value = keyValueData[1].Trim();
+                        addHeader(headers, key, value);
+                    });
+            }
+
+            return headers;
+        }
+
+        public static IExportClient<OtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options) =>
+            options.Protocol switch
+            {
+                ExportProtocol.Grpc => new OtlpGrpcTraceExportClient(options),
+                ExportProtocol.HttpProtobuf => new OtlpHttpTraceExportClient(options),
+                _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported")
+            };
     }
 }

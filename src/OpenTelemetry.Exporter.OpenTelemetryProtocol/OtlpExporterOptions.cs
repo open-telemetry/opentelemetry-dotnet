@@ -31,6 +31,7 @@ namespace OpenTelemetry.Exporter
         internal const string EndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
         internal const string HeadersEnvVarName = "OTEL_EXPORTER_OTLP_HEADERS";
         internal const string TimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TIMEOUT";
+        internal const string ProtocolEnvVarName = "OTEL_EXPORTER_OTLP_PROTOCOL";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
@@ -70,6 +71,12 @@ namespace OpenTelemetry.Exporter
                         OpenTelemetryProtocolExporterEventSource.Log.FailedToParseEnvironmentVariable(TimeoutEnvVarName, timeoutEnvVar);
                     }
                 }
+
+                string protocolEnvVar = Environment.GetEnvironmentVariable(ProtocolEnvVarName);
+                if (!string.IsNullOrEmpty(protocolEnvVar))
+                {
+                    this.Protocol = protocolEnvVar;
+                }
             }
             catch (SecurityException ex)
             {
@@ -97,6 +104,11 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets the max waiting time (in milliseconds) for the backend to process each span batch. The default value is 10000.
         /// </summary>
         public int TimeoutMilliseconds { get; set; } = 10000;
+
+        /// <summary>
+        /// Gets or sets the the OTLP transport protocol. grpc and http/protobuf values are supported.
+        /// </summary>
+        public string Protocol { get; set; } = ExportProtocol.Grpc;
 
         /// <summary>
         /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.

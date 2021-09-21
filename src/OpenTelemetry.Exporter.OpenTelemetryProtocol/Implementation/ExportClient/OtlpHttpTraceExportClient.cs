@@ -1,4 +1,4 @@
-// <copyright file="OtlpHttpTraceExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpHttpTraceExportClient.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,66 +15,44 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Threading.Tasks;
+using System.Threading;
 using Google.Protobuf;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
 {
-    /// <summary>
-    /// Exporter consuming <see cref="Activity"/> and exporting the data using
-    /// the OpenTelemetry protocol (OTLP) over HTTP.
-    /// </summary>
-    public class OtlpHttpTraceExporter : BaseOtlpHttpExporter<Activity>
+    /// <summary>Class for sending OTLP trace export request over HTTP.</summary>
+    internal sealed class OtlpHttpTraceExportClient : BaseOtlpHttpExportClient<OtlpCollector.ExportTraceServiceRequest>
     {
         internal const string MediaContentType = "application/x-protobuf";
 
-        internal OtlpHttpTraceExporter(OtlpExporterOptions options, IHttpHandler httpHandler = null)
+        public OtlpHttpTraceExportClient(OtlpExporterOptions options, IHttpHandler httpHandler = null)
             : base(options, httpHandler)
         {
         }
 
         /// <inheritdoc/>
-        public override ExportResult Export(in Batch<Activity> activityBatch)
+        public override bool SendExportRequest(OtlpCollector.ExportTraceServiceRequest request, CancellationToken cancellationToken = default)
         {
-            // Prevents the exporter's gRPC and HTTP operations from being instrumented.
-            using var scope = SuppressInstrumentationScope.Begin();
-
-            var exportRequest = new OtlpCollector.ExportTraceServiceRequest();
-            exportRequest.AddBatch(this.ProcessResource, activityBatch);
-
             try
             {
-                using var request = this.CreateHttpRequest(exportRequest);
+                using var httpRequest = this.CreateHttpRequest(request);
 
-                using var response = this.HttpHandler.Send(request);
+                using var httpResponse = this.HttpHandler.Send(httpRequest);
 
-                response?.EnsureSuccessStatusCode();
+                httpResponse?.EnsureSuccessStatusCode();
             }
             catch (HttpRequestException ex)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(ex);
 
-                return ExportResult.Failure;
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
-
-                return ExportResult.Failure;
-            }
-            finally
-            {
-                exportRequest.Return();
+                return false;
             }
 
-            return ExportResult.Success;
+            return true;
         }
 
         private HttpRequestMessage CreateHttpRequest(OtlpCollector.ExportTraceServiceRequest exportRequest)

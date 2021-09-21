@@ -15,13 +15,8 @@
 // </copyright>
 
 using System;
-using System.Threading.Tasks;
-using Grpc.Core;
-#if NETSTANDARD2_1
-using Grpc.Net.Client;
-#endif
-using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Metrics;
 using OtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
 using OtlpResource = Opentelemetry.Proto.Resource.V1;
@@ -33,14 +28,16 @@ namespace OpenTelemetry.Exporter
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
     [AggregationTemporality(AggregationTemporality.Both, AggregationTemporality.Cumulative)]
-    public class OtlpMetricsExporter : BaseOtlpExporter<Metric>
+    public class OtlpMetricsExporter : BaseExporter<Metric>
     {
-        private readonly OtlpCollector.MetricsService.IMetricsServiceClient metricsClient;
+        private readonly IExportClient<OtlpCollector.ExportMetricsServiceRequest> exportClient;
+
+        private OtlpResource.Resource processResource;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpMetricsExporter"/> class.
         /// </summary>
-        /// <param name="options">Configuration options for the exporter.</param>
+        /// <param name="options">Configuration options for the export.</param>
         public OtlpMetricsExporter(OtlpExporterOptions options)
             : this(options, null)
         {
@@ -49,21 +46,22 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpMetricsExporter"/> class.
         /// </summary>
-        /// <param name="options">Configuration options for the exporter.</param>
-        /// <param name="metricsServiceClient"><see cref="OtlpCollector.MetricsService.IMetricsServiceClient"/>.</param>
-        internal OtlpMetricsExporter(OtlpExporterOptions options, OtlpCollector.MetricsService.IMetricsServiceClient metricsServiceClient = null)
-            : base(options)
+        /// <param name="options">Configuration options for the export.</param>
+        /// <param name="exportClient">Client used for sending export request.</param>
+        internal OtlpMetricsExporter(OtlpExporterOptions options, IExportClient<OtlpCollector.ExportMetricsServiceRequest> exportClient = null)
         {
-            if (metricsServiceClient != null)
+            if (exportClient != null)
             {
-                this.metricsClient = metricsServiceClient;
+                this.exportClient = exportClient;
             }
             else
             {
-                this.Channel = options.CreateChannel();
-                this.metricsClient = new OtlpCollector.MetricsService.MetricsServiceClient(this.Channel);
+                // TODO: this instantiation should be aligned with the protocol option (grpc or http/protobuf) when OtlpHttpMetricsExportClient will be implemented.
+                this.exportClient = new OtlpGrpcMetricsExportClient(options);
             }
         }
+
+        internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
 
         /// <inheritdoc />
         public override ExportResult Export(in Batch<Metric> metrics)
@@ -74,16 +72,13 @@ namespace OpenTelemetry.Exporter
             var request = new OtlpCollector.ExportMetricsServiceRequest();
 
             request.AddMetrics(this.ProcessResource, metrics);
-            var deadline = DateTime.UtcNow.AddMilliseconds(this.Options.TimeoutMilliseconds);
 
             try
             {
-                this.metricsClient.Export(request, headers: this.Headers, deadline: deadline);
-            }
-            catch (RpcException ex)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(ex);
-                return ExportResult.Failure;
+                if (!this.exportClient.SendExportRequest(request))
+                {
+                    return ExportResult.Failure;
+                }
             }
             catch (Exception ex)
             {
@@ -101,20 +96,7 @@ namespace OpenTelemetry.Exporter
         /// <inheritdoc />
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
-            if (this.Channel == null)
-            {
-                return true;
-            }
-
-            if (timeoutMilliseconds == -1)
-            {
-                this.Channel.ShutdownAsync().Wait();
-                return true;
-            }
-            else
-            {
-                return Task.WaitAny(new Task[] { this.Channel.ShutdownAsync(), Task.Delay(timeoutMilliseconds) }) == 0;
-            }
+            return this.exportClient?.CancelExportRequest(timeoutMilliseconds) ?? true;
         }
     }
 }

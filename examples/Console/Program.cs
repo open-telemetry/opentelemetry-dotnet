@@ -43,7 +43,7 @@ namespace Examples.Console
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, OtlpHttpOptions, InMemoryOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
@@ -56,8 +56,7 @@ namespace Examples.Console
                     (ConsoleOptions options) => TestConsoleExporter.Run(options),
                     (OpenTelemetryShimOptions options) => TestOTelShimWithConsoleExporter.Run(options),
                     (OpenTracingShimOptions options) => TestOpenTracingShim.Run(options),
-                    (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
-                    (OtlpHttpOptions options) => TestOtlpHttpExporter.Run(options.Endpoint),
+                    (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint, options.Protocol),
                     (InMemoryOptions options) => TestInMemoryExporter.Run(options),
                     errs => 1);
         }
@@ -165,13 +164,9 @@ namespace Examples.Console
     {
         [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "http://localhost:4317")]
         public string Endpoint { get; set; }
-    }
 
-    [Verb("otlphttp", HelpText = "Specify the options required to test OpenTelemetry Protocol (OTLP) over HTTP")]
-    internal class OtlpHttpOptions
-    {
-        [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "http://localhost:4318")]
-        public string Endpoint { get; set; }
+        [Option('p', "protocol", HelpText = "Transport protocol used by exporter. Supported values: 'grpc', 'http/protobuf'., ", Default = "grpc")]
+        public string Protocol { get; set; }
     }
 
     [Verb("inmemory", HelpText = "Specify the options required to test InMemory Exporter")]

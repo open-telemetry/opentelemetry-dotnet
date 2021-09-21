@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -23,7 +24,7 @@ namespace Examples.Console
 {
     internal static class TestOtlpExporter
     {
-        internal static object Run(string endpoint)
+        internal static object Run(string endpoint, string protocol = ExportProtocol.Grpc)
         {
             /*
              * Prerequisite to run this example:
@@ -49,10 +50,10 @@ namespace Examples.Console
              * For more information about the OpenTelemetry Collector go to https://github.com/open-telemetry/opentelemetry-collector
              *
              */
-            return RunWithActivitySource(endpoint);
+            return RunWithActivitySource(endpoint, protocol);
         }
 
-        private static object RunWithActivitySource(string endpoint)
+        private static object RunWithActivitySource(string endpoint, string protocol)
         {
             // Adding the OtlpExporter creates a GrpcChannel.
             // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
@@ -64,7 +65,11 @@ namespace Examples.Console
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("otlp-test"))
-                    .AddOtlpExporter(opt => opt.Endpoint = new Uri(endpoint))
+                    .AddOtlpExporter(opt =>
+                    {
+                        opt.Endpoint = new Uri(endpoint);
+                        opt.Protocol = protocol;
+                    })
                     .Build();
 
             // The above line is required only in Applications
@@ -74,7 +79,7 @@ namespace Examples.Console
                 sample.Start();
 
                 System.Console.WriteLine("Traces are being created and exported" +
-                    "to the OpenTelemetry Collector in the background. " +
+                    $"to the OpenTelemetry Collector or Backend in the background. Protocol={protocol}. " +
                     "Press ENTER to stop.");
                 System.Console.ReadLine();
             }
