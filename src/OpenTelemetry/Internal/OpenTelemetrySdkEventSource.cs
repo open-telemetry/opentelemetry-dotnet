@@ -329,7 +329,7 @@ namespace OpenTelemetry.Internal
         }
 
         [Event(31, Message = "'{0}' exporting to '{1}' dropped '0' items.", Level = EventLevel.Informational)]
-        public void NoDroppedExportProcessorItems(string exportProcessorName, string itemName, string exporterName)
+        public void NoDroppedExportProcessorItems(string exportProcessorName, string exporterName)
         {
             this.WriteEvent(31, exportProcessorName, exporterName);
         }
