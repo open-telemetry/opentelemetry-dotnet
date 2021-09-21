@@ -22,7 +22,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
-    public class CompositeMetricReader : MetricReader
+    internal class CompositeMetricReader : MetricReader
     {
         private readonly DoublyLinkedListNode head;
         private DoublyLinkedListNode tail;
@@ -69,51 +69,38 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc/>
-        public override void OnCollect(Batch<Metric> metrics)
+        protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
         {
-            var cur = this.head;
-
-            while (cur != null)
-            {
-                cur.Value.OnCollect(metrics);
-                cur = cur.Next;
-            }
+            // CompositeMetricReader delegates the work to its underlying readers,
+            // so CompositeMetricReader.ProcessMetrics should never be called.
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
-        protected override bool OnForceFlush(int timeoutMilliseconds)
+        protected override bool OnCollect(int timeoutMilliseconds = Timeout.Infinite)
         {
+            var result = true;
             var cur = this.head;
-
             var sw = Stopwatch.StartNew();
 
             while (cur != null)
             {
                 if (timeoutMilliseconds == Timeout.Infinite)
                 {
-                    _ = cur.Value.ForceFlush(Timeout.Infinite);
+                    result = cur.Value.Collect(Timeout.Infinite) && result;
                 }
                 else
                 {
                     var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
 
-                    if (timeout <= 0)
-                    {
-                        return false;
-                    }
-
-                    var succeeded = cur.Value.ForceFlush((int)timeout);
-
-                    if (!succeeded)
-                    {
-                        return false;
-                    }
+                    // notify all the readers, even if we run overtime
+                    result = cur.Value.Collect((int)Math.Max(timeout, 0)) && result;
                 }
 
                 cur = cur.Next;
             }
 
-            return true;
+            return result;
         }
 
         /// <inheritdoc/>
@@ -133,7 +120,7 @@ namespace OpenTelemetry.Metrics
                 {
                     var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
 
-                    // notify all the processors, even if we run overtime
+                    // notify all the readers, even if we run overtime
                     result = cur.Value.Shutdown((int)Math.Max(timeout, 0)) && result;
                 }
 

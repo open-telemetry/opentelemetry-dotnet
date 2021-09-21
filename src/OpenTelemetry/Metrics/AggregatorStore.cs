@@ -152,28 +152,40 @@ namespace OpenTelemetry.Metrics
 
         internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            var index = this.FindMetricAggregators(tags);
-            if (index < 0)
+            try
             {
-                // Log that measurement is dropped as max MetricPoints reached
-                // for this instrument.
-                return;
-            }
+                var index = this.FindMetricAggregators(tags);
+                if (index < 0)
+                {
+                    // TODO: Measurement dropped due to MemoryPoint cap hit.
+                    return;
+                }
 
-            this.metrics[index].Update(value);
+                this.metrics[index].Update(value);
+            }
+            catch (Exception)
+            {
+                // TODO: Measurement dropped due to internal exception.
+            }
         }
 
         internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            var index = this.FindMetricAggregators(tags);
-            if (index < 0)
+            try
             {
-                // Log that measurement is dropped as max MetricPoints reached
-                // for this instrument.
-                return;
-            }
+                var index = this.FindMetricAggregators(tags);
+                if (index < 0)
+                {
+                    // TODO: Measurement dropped due to MemoryPoint cap hit.
+                    return;
+                }
 
-            this.metrics[index].Update(value);
+                this.metrics[index].Update(value);
+            }
+            catch (Exception)
+            {
+                // TODO: Measurement dropped due to internal exception.
+            }
         }
 
         internal void SnapShot()

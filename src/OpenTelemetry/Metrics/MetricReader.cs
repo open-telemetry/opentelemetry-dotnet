@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Threading;
 
 namespace OpenTelemetry.Metrics
@@ -48,23 +49,16 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public virtual void Collect()
-        {
-            var collectMetric = this.ParentProvider.GetMetricCollect();
-            var metricsCollected = collectMetric();
-            this.OnCollect(metricsCollected);
-        }
-
         /// <summary>
-        /// Flushes the processor, blocks the current thread until flush
-        /// completed, shutdown signaled or timed out.
+        /// Attempts to collect the metrics, blocks the current thread until
+        /// metrics collection completed or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
         /// </param>
         /// <returns>
-        /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
+        /// Returns <c>true</c> when metrics collection succeeded; otherwise, <c>false</c>.
         /// </returns>
         /// <exception cref="System.ArgumentOutOfRangeException">
         /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
@@ -72,20 +66,20 @@ namespace OpenTelemetry.Metrics
         /// <remarks>
         /// This function guarantees thread-safety.
         /// </remarks>
-        public bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
+        public bool Collect(int timeoutMilliseconds = Timeout.Infinite)
         {
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative.");
+                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
             }
 
             try
             {
-                return this.OnForceFlush(timeoutMilliseconds);
+                return this.OnCollect(timeoutMilliseconds);
             }
             catch (Exception)
             {
-                // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.ForceFlush), ex);
+                // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Collect), ex);
                 return false;
             }
         }
@@ -95,8 +89,8 @@ namespace OpenTelemetry.Metrics
         /// shutdown completed or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
         /// </param>
         /// <returns>
         /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
@@ -112,7 +106,7 @@ namespace OpenTelemetry.Metrics
         {
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative.");
+                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
             }
 
             if (Interlocked.Increment(ref this.shutdownCount) > 1)
@@ -138,34 +132,65 @@ namespace OpenTelemetry.Metrics
             GC.SuppressFinalize(this);
         }
 
-        public virtual void OnCollect(Batch<Metric> metrics)
-        {
-        }
-
         internal virtual void SetParentProvider(BaseProvider parentProvider)
         {
             this.ParentProvider = parentProvider;
         }
 
         /// <summary>
-        /// Called by <c>ForceFlush</c>. This function should block the current
-        /// thread until flush completed, shutdown signaled or timed out.
+        /// Processes a batch of metrics.
         /// </summary>
+        /// <param name="metrics">Batch of metrics to be processed.</param>
         /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
         /// </param>
         /// <returns>
-        /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
+        /// Returns <c>true</c> when metrics processing succeeded; otherwise,
+        /// <c>false</c>.
+        /// </returns>
+        protected abstract bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds);
+
+        /// <summary>
+        /// Called by <c>Collect</c>. This function should block the current
+        /// thread until metrics collection completed, shutdown signaled or
+        /// timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when metrics collection succeeded; otherwise,
+        /// <c>false</c>.
         /// </returns>
         /// <remarks>
         /// This function is called synchronously on the thread which called
-        /// <c>ForceFlush</c>. This function should be thread-safe, and should
+        /// <c>Collect</c>. This function should be thread-safe, and should
         /// not throw exceptions.
         /// </remarks>
-        protected virtual bool OnForceFlush(int timeoutMilliseconds)
+        protected virtual bool OnCollect(int timeoutMilliseconds)
         {
-            return true;
+            var sw = Stopwatch.StartNew();
+
+            var collectMetric = this.ParentProvider.GetMetricCollect();
+            var metrics = collectMetric();
+
+            if (timeoutMilliseconds == Timeout.Infinite)
+            {
+                return this.ProcessMetrics(metrics, Timeout.Infinite);
+            }
+            else
+            {
+                var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+
+                if (timeout <= 0)
+                {
+                    return false;
+                }
+
+                return this.ProcessMetrics(metrics, (int)timeout);
+            }
         }
 
         /// <summary>
@@ -173,8 +198,8 @@ namespace OpenTelemetry.Metrics
         /// thread until shutdown completed or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
         /// </param>
         /// <returns>
         /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.

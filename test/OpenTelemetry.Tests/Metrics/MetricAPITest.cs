@@ -59,7 +59,7 @@ namespace OpenTelemetry.Metrics.Tests
                 PreferredAggregationTemporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
             };
 
-            var meter = new Meter("TestMeter");
+            using var meter = new Meter("TestMeter");
             var counterLong = meter.CreateCounter<long>("mycounter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
@@ -135,7 +135,7 @@ namespace OpenTelemetry.Metrics.Tests
                 PreferredAggregationTemporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
             };
 
-            var meter = new Meter(meterName);
+            using var meter = new Meter(meterName);
             int i = 1;
             var counterLong = meter.CreateObservableCounter<long>(
             "observable-counter",
@@ -204,7 +204,7 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 PreferredAggregationTemporality = temporality,
             };
-            var meter = new Meter("TestPointCapMeter");
+            using var meter = new Meter("TestPointCapMeter");
             var counterLong = meter.CreateCounter<long>("mycounterCapTest");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestPointCapMeter")
@@ -256,7 +256,7 @@ namespace OpenTelemetry.Metrics.Tests
                 PreferredAggregationTemporality = AggregationTemporality.Cumulative,
             };
 
-            var meter = new Meter("TestLongCounterMeter");
+            using var meter = new Meter("TestLongCounterMeter");
             var counterLong = meter.CreateCounter<long>("mycounter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestLongCounterMeter")
@@ -326,7 +326,7 @@ namespace OpenTelemetry.Metrics.Tests
                 PreferredAggregationTemporality = AggregationTemporality.Cumulative,
             };
 
-            var meter = new Meter("TestDoubleCounterMeter");
+            using var meter = new Meter("TestDoubleCounterMeter");
             var counterDouble = meter.CreateCounter<double>("mycounter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestDoubleCounterMeter")
