@@ -27,6 +27,7 @@ namespace OpenTelemetry.Metrics
 
         private readonly Task exportTask;
         private readonly CancellationTokenSource token;
+        private bool disposed;
 
         public PeriodicExportingMetricReader(
             BaseExporter<Metric> exporter,
@@ -54,15 +55,15 @@ namespace OpenTelemetry.Metrics
             this.exportTask.Start();
         }
 
-        public override void OnCollect(Batch<Metric> metrics)
-        {
-            this.exporter.Export(metrics);
-        }
-
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && !this.disposed)
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
             {
                 try
                 {
@@ -75,6 +76,8 @@ namespace OpenTelemetry.Metrics
                     // TODO: Log
                 }
             }
+
+            this.disposed = true;
 
             base.Dispose(disposing);
         }

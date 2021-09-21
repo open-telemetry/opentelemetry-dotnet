@@ -21,9 +21,8 @@ namespace OpenTelemetry.Metrics
     public class BaseExportingMetricReader : MetricReader
     {
         protected readonly BaseExporter<Metric> exporter;
-        protected bool disposed;
-
         private readonly ExportModes supportedExportModes = ExportModes.Push | ExportModes.Pull;
+        private bool disposed;
 
         public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
@@ -48,11 +47,6 @@ namespace OpenTelemetry.Metrics
 
         protected ExportModes SupportedExportModes => this.supportedExportModes;
 
-        public override void OnCollect(Batch<Metric> metrics)
-        {
-            this.exporter.Export(metrics);
-        }
-
         internal override void SetParentProvider(BaseProvider parentProvider)
         {
             base.SetParentProvider(parentProvider);
@@ -60,11 +54,26 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc/>
+        protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
+        {
+            return this.exporter.Export(metrics) == ExportResult.Success;
+        }
+
+        /// <inheritdoc />
+        protected override bool OnShutdown(int timeoutMilliseconds)
+        {
+            return this.exporter.Shutdown(timeoutMilliseconds);
+        }
+
+        /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
+            if (this.disposed)
+            {
+                return;
+            }
 
-            if (disposing && !this.disposed)
+            if (disposing)
             {
                 try
                 {
@@ -74,9 +83,11 @@ namespace OpenTelemetry.Metrics
                 {
                     // TODO: Log
                 }
-
-                this.disposed = true;
             }
+
+            this.disposed = true;
+
+            base.Dispose(disposing);
         }
     }
 }
