@@ -62,7 +62,7 @@ namespace System.Net.Http
                 throw new ArgumentNullException(nameof(request));
             }
 
-            if (HashHttpClientHandler(this.InnerHandler))
+            if (HasDiagnosticsHandler(this.InnerHandler))
             {
                 return
 #if NET5_0_OR_GREATER
@@ -349,12 +349,15 @@ namespace System.Net.Http
 
         #endregion
 
-        private static bool HashHttpClientHandler(HttpMessageHandler handler)
+        private static bool HasDiagnosticsHandler(HttpMessageHandler handler)
         {
             while (handler != null)
             {
                 switch (handler)
                 {
+                    // https://github.com/grpc/grpc-dotnet/blob/master/src/Shared/TelemetryHeaderHandler.cs
+                    case DelegatingHandler dh when dh.GetType().FullName == "Grpc.Shared.TelemetryHeaderHandler":
+                        return true;
                     case DelegatingHandler dh:
                         handler = dh.InnerHandler;
                         break;
