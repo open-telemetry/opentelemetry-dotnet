@@ -185,7 +185,7 @@ namespace OpenTelemetry.Metrics
                         this.metrics[i].SnapShot();
                     }
 
-                    return (target > 0) ? new Batch<Metric>(this.metrics, indexSnapShot + 1) : default;
+                    return (target > 0) ? new Batch<Metric>(this.metrics, target) : default;
                 }
                 catch (Exception)
                 {
