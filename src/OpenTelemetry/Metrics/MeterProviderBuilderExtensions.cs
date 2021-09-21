@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Diagnostics.Metrics;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -34,6 +36,22 @@ namespace OpenTelemetry.Metrics
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
                 return meterProviderBuilderSdk.AddMetricReader(metricReader);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Add metric view.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="viewCallback">Call back for view.</param>
+        /// <returns><see cref="MeterProvider"/>.</returns>
+        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, MetricStreamConfig> viewCallback)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+            {
+                return meterProviderBuilderSdk.AddViewCallback(viewCallback);
             }
 
             return meterProviderBuilder;
