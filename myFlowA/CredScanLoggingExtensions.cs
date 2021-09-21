@@ -13,7 +13,7 @@ namespace Microsoft.Extensions.Logging
                 throw new ArgumentNullException(nameof(options));
             }
             
-            var credScanExporter = new CredScanExporter("myExporter");
+            var credScanExporter = new CredScanExporter();
             return options.AddProcessor(new BatchLogFilteringProcessor(credScanExporter));
         }
     }

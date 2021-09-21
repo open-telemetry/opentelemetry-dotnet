@@ -22,19 +22,17 @@ using OpenTelemetry.Logs;
 
 public class CredScanExporter : BaseExporter<LogRecord>
 {
-    private readonly string name;
     private readonly Regex m_rules = new Regex(@"(?i)sig=[a-z0-9%]{43,63}%3d");
 
-    public CredScanExporter(string name = "MyExporter")
-    {
-        this.name = name;
-    }
+    public CredScanExporter()
+    {}
 
     public override ExportResult Export(in Batch<LogRecord> batch)
     {
         // SuppressInstrumentationScope should be used to prevent exporter
         // code from generating telemetry and causing live-loop.
         using var scope = SuppressInstrumentationScope.Begin();
+
         foreach (var logRecord in batch)
         {
             var listKvp = logRecord.State as IReadOnlyList<KeyValuePair<string, object>>;
@@ -52,30 +50,15 @@ public class CredScanExporter : BaseExporter<LogRecord>
 
                 if (str != null)
                 {
-                    Console.WriteLine(str);
                     if (m_rules.IsMatch(str))
                     {
-                        Console.WriteLine("such a sad story!");
-                    }
-                    else
-                    {
-                        Console.WriteLine("happy ending!");
+                        string message = "Credential detected: " + str;
+                        Console.WriteLine(message);
                     }
                 }
             }
         }
 
         return ExportResult.Success;
-    }
-
-    protected override bool OnShutdown(int timeoutMilliseconds)
-    {
-        Console.WriteLine($"{this.name}.OnShutdown(timeoutMilliseconds={timeoutMilliseconds})");
-        return true;
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        Console.WriteLine($"{this.name}.Dispose({disposing})");
     }
 }
