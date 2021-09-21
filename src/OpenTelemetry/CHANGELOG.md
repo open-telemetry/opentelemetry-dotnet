@@ -2,7 +2,6 @@
 
 ## Unreleased
 
-
 * `BatchExportActivityProcessorOptions` is made internal. ([#2350](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2350))
 
 * Changed `CompositeProcessor<T>.OnForceFlush` to meet with the spec
