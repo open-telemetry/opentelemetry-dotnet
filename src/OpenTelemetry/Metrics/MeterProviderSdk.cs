@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics
         private readonly List<object> instrumentations = new List<object>();
         private readonly object collectLock = new object();
         private readonly object instrumentCreationLock = new object();
-        private readonly Dictionary<string, byte> metricStreamNames = new Dictionary<string, byte>();
+        private readonly Dictionary<string, bool> metricStreamNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         private readonly MeterListener listener;
         private readonly MetricReader reader;
         private int metricIndex = -1;
@@ -100,7 +100,7 @@ namespace OpenTelemetry.Metrics
                         {
                             if (this.metricStreamNames.ContainsKey(instrument.Name))
                             {
-                                // log and return.
+                                // log and ignore this instrument.
                                 return;
                             }
 
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Metrics
                             {
                                 var metric = new Metric(instrument, temporality);
                                 this.metrics[index] = metric;
-                                this.metricStreamNames.Add(instrument.Name, 0);
+                                this.metricStreamNames.Add(instrument.Name, true);
                                 listener.EnableMeasurementEvents(instrument, metric);
                             }
                         }
