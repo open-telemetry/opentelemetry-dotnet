@@ -43,6 +43,24 @@ namespace OpenTelemetry.Metrics
                 var attr = (ExportModesAttribute)attributes[attributes.Length - 1];
                 this.supportedExportModes = attr.Supported;
             }
+
+            if (exporter is IPullMetricExporter pullExporter)
+            {
+                if (this.supportedExportModes.HasFlag(ExportModes.Push))
+                {
+                    pullExporter.Collect = this.Collect;
+                }
+                else
+                {
+                    pullExporter.Collect = (timeoutMilliseconds) =>
+                    {
+                        using (PullMetricScope.Begin())
+                        {
+                            return this.Collect(timeoutMilliseconds);
+                        }
+                    };
+                }
+            }
         }
 
         protected ExportModes SupportedExportModes => this.supportedExportModes;
@@ -57,6 +75,23 @@ namespace OpenTelemetry.Metrics
         protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
         {
             return this.exporter.Export(metrics) == ExportResult.Success;
+        }
+
+        /// <inheritdoc />
+        protected override bool OnCollect(int timeoutMilliseconds)
+        {
+            if (this.supportedExportModes.HasFlag(ExportModes.Push))
+            {
+                return base.OnCollect(timeoutMilliseconds);
+            }
+
+            if (this.supportedExportModes.HasFlag(ExportModes.Pull) && PullMetricScope.IsPullAllowed)
+            {
+                return base.OnCollect(timeoutMilliseconds);
+            }
+
+            // TODO: add some error log
+            return false;
         }
 
         /// <inheritdoc />
@@ -77,6 +112,11 @@ namespace OpenTelemetry.Metrics
             {
                 try
                 {
+                    if (this.exporter is IPullMetricExporter pullExporter)
+                    {
+                        pullExporter.Collect = null;
+                    }
+
                     this.exporter.Dispose();
                 }
                 catch (Exception)
