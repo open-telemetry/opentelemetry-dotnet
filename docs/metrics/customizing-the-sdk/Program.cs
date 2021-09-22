@@ -27,55 +27,10 @@ public class Program
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddSource(MyMeter.Name)
-            .AddView((instrument) =>
-            {
-                if (instrument.GetType().Name.Contains("Histogram"))
-                {
-                    var metricConfig = new MetricStreamConfig();
-                    metricConfig.HistogramBounds = new double[] { 0, 10, 20 };
-                    return metricConfig;
-                }
-
-                // Null to indicate this View doesn't
-                // have any say on if or how the instrument
-                // gets processed. SDK will do the default here.
-                return null;
-            })
-            .AddView((instrument) =>
-            {
-                if (instrument.GetType().Name.Contains("Histogram"))
-                {
-                    var metricConfig = new MetricStreamConfig();
-                    metricConfig.HistogramBounds = new double[] { 100, 1000 };
-                    metricConfig.Name = "customBucketHistogram";
-                    return metricConfig;
-                }
-
-                return null;
-            })
-            .AddView((instrument) =>
-            {
-                if (instrument.Name.Equals("MyCounter"))
-                {
-                    var metricConfig = new MetricStreamConfig();
-                    metricConfig.Name = "MyCounterRenamed";
-                    return metricConfig;
-                }
-
-                return null;
-            })
-            .AddView((instrument) =>
-            {
-                if (instrument.Name.Equals("MyCounterDrop"))
-                {
-                    var metricConfig = new MetricStreamConfig();
-                    metricConfig.Aggregation = Aggregation.None;
-                    return metricConfig;
-                }
-
-                return null;
-            })
-
+            .AddView(instrumentName: "MyCounter") // MyCounter will be reported with defaults. This is done to ensure that any other wildcard Views for the same isntrument does not affect this instrument.
+            .AddView(instrumentName: "MyHistogram") // MyHistogram will be aggregated using defaults.
+            .AddView(name: "MyHistogramCustom", instrumentName: "MyHistogram", histogramBounds : new double[] { 10, 20 }) // MyHistogram will be aggregated using custom bounds and will be outputted as "MyHistogramCustom"
+            .AddView(instrumentName: "My", tagKeys: new string[] { "tag1" }) // All instruments whose name starts with My, will be aggregated with a single tag - tag1. MyCounter, MyHistogram will get excluded from this, as their name is already taken.
             .AddConsoleExporter()
             .Build();
 

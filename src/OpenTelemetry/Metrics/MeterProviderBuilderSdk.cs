@@ -87,6 +87,36 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
+        internal MeterProviderBuilderSdk AddViewCallback(string name = "", string meterName = "", string instrumentName = "", string[] tagKeys = null, Aggregation aggregation = Aggregation.Default, double[] histogramBounds = null)
+        {
+            Func<Instrument, MetricStreamConfig> callBack = (instrument) =>
+            {
+                if (string.IsNullOrWhiteSpace(meterName) && string.IsNullOrWhiteSpace(instrumentName))
+                {
+                    throw new ArgumentException("Atleast one instrumentation criteria should be provided.");
+                }
+
+                // TODO: Do regex instead of simple StartsWith.
+                if (instrument.Meter.Name.StartsWith(meterName)
+                     && instrument.Name.StartsWith(instrumentName))
+                {
+                    var metricStreamConfig = new MetricStreamConfig();
+                    metricStreamConfig.Name = string.IsNullOrWhiteSpace(name) ? instrument.Name : name;
+                    metricStreamConfig.Aggregation = aggregation;
+                    metricStreamConfig.TagKeys = tagKeys;
+                    metricStreamConfig.HistogramBounds = histogramBounds;
+                    return metricStreamConfig;
+                }
+                else
+                {
+                    return null;
+                }
+            };
+
+            this.viewCallBacks.Add(callBack);
+            return this;
+        }
+
         internal MeterProviderBuilderSdk SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
             this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));

@@ -42,16 +42,22 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
-        /// Add metric view.
+        /// Add metric view, which can be used to customize the Metrics outputed
+        /// from the SDK. The views are applied in the order they are added.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="viewCallback">Call back for view.</param>
+        /// <param name="name">Name of the view. This will be used as name of resulting metrics stream.</param>
+        /// <param name="meterName">Name of the meter, to be used as part of Instrument selection criteria.</param>
+        /// <param name="instrumentName">Name of the instrument, to be used as part of Instrument selection criteria.</param>
+        /// <param name="tagKeys">List of tag keys to be used in aggregation to produce the metrics stream.</param>
+        /// <param name="aggregation">The aggregation to be applied on the measurements to produce the metrics stream.</param>
+        /// <param name="histogramBounds">The explicit histogram bounds for Histogram aggregation used to produce the metrics stream. Ignored unless the aggregation specific is Histogram.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, MetricStreamConfig> viewCallback)
+        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string name = "", string meterName = "", string instrumentName = "", string[] tagKeys = null, Aggregation aggregation = Aggregation.Default, double[] histogramBounds = null)
         {
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                return meterProviderBuilderSdk.AddViewCallback(viewCallback);
+                return meterProviderBuilderSdk.AddViewCallback(name, meterName, instrumentName, tagKeys, aggregation, histogramBounds);
             }
 
             return meterProviderBuilder;
