@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics
 #pragma warning restore SA1602 // Enumeration items should be documented
     }
 
-    public class MetricStreamConfig
+    internal class MetricStreamConfig
     {
         public string Name;
         public string Description;
