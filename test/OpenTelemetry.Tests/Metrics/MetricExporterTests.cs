@@ -58,7 +58,7 @@ namespace OpenTelemetry.Metrics.Tests
                 case ExportModes.Pull:
                     Assert.False(reader.Collect());
                     Assert.False(meterProvider.ForceFlush());
-                    Assert.True(exporter.Collect(reader));
+                    Assert.True((exporter as IPullMetricExporter).Collect(-1));
                     break;
                 case ExportModes.Pull | ExportModes.Push:
                     Assert.True(reader.Collect());
@@ -77,8 +77,16 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [ExportModes(ExportModes.Pull)]
-        private class PullOnlyMetricExporter : BaseExporter<Metric>
+        private class PullOnlyMetricExporter : BaseExporter<Metric>, IPullMetricExporter
         {
+            private Func<int, bool> funcCollect;
+
+            public Func<int, bool> Collect
+            {
+                get => this.funcCollect;
+                set { this.funcCollect = value; }
+            }
+
             public override ExportResult Export(in Batch<Metric> batch)
             {
                 return ExportResult.Success;

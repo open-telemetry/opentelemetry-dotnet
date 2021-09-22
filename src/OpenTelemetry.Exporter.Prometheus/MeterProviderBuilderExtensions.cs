@@ -41,8 +41,6 @@ namespace OpenTelemetry.Metrics
             var exporter = new PrometheusExporter(options);
             var reader = new BaseExportingMetricReader(exporter);
 
-            exporter.CollectMetric = timeout => exporter.Collect(reader, timeout);
-
             var metricsHttpServer = new PrometheusExporterMetricsHttpServer(exporter);
             metricsHttpServer.Start();
             return builder.AddMetricReader(reader);
