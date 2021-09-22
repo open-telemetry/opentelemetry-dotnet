@@ -57,7 +57,7 @@ namespace OpenTelemetry.Metrics
         {
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                return meterProviderBuilderSdk.AddViewCallback(name, meterName, instrumentName, tagKeys, aggregation, histogramBounds);
+                return meterProviderBuilderSdk.AddView(name, meterName, instrumentName, tagKeys, aggregation, histogramBounds);
             }
 
             return meterProviderBuilder;

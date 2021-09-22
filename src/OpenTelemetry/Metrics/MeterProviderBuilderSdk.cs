@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics
     {
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private readonly List<string> meterSources = new List<string>();
-        private readonly List<Func<Instrument, MetricStreamConfig>> viewCallBacks = new List<Func<Instrument, MetricStreamConfig>>();
+        private readonly List<Func<Instrument, MetricStreamConfig>> viewConfigs = new List<Func<Instrument, MetricStreamConfig>>();
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
 
         internal MeterProviderBuilderSdk()
@@ -83,17 +83,17 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilderSdk AddViewCallback(Func<Instrument, MetricStreamConfig> callback)
         {
-            this.viewCallBacks.Add(callback);
+            this.viewConfigs.Add(callback);
             return this;
         }
 
-        internal MeterProviderBuilderSdk AddViewCallback(string name = "", string meterName = "", string instrumentName = "", string[] tagKeys = null, Aggregation aggregation = Aggregation.Default, double[] histogramBounds = null)
+        internal MeterProviderBuilderSdk AddView(string name = "", string meterName = "", string instrumentName = "", string[] tagKeys = null, Aggregation aggregation = Aggregation.Default, double[] histogramBounds = null)
         {
             Func<Instrument, MetricStreamConfig> callBack = (instrument) =>
             {
                 if (string.IsNullOrWhiteSpace(meterName) && string.IsNullOrWhiteSpace(instrumentName))
                 {
-                    throw new ArgumentException("Atleast one instrumentation criteria should be provided.");
+                    throw new ArgumentException("Atleast one instrument selection criteria should be provided.");
                 }
 
                 // TODO: Do regex instead of simple StartsWith.
@@ -113,7 +113,7 @@ namespace OpenTelemetry.Metrics
                 }
             };
 
-            this.viewCallBacks.Add(callBack);
+            this.viewConfigs.Add(callBack);
             return this;
         }
 
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Metrics
                 this.resourceBuilder.Build(),
                 this.meterSources,
                 this.instrumentationFactories,
-                this.viewCallBacks,
+                this.viewConfigs,
                 this.MetricReaders.ToArray());
         }
 
