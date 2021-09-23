@@ -33,11 +33,11 @@ output from the console, similar to shown below:
 <!-- markdownlint-disable MD013 -->
 ```text
 Export MyFruitCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
-2021-09-23T03:17:30.6198292Z, 2021-09-23T03:17:30.6356517Z] color:redname:apple LongSum
+(2021-09-23T22:00:08.4399776Z, 2021-09-23T22:00:08.4510115Z] color:red name:apple LongSum
 Value: 6
-2021-09-23T03:17:30.6198292Z, 2021-09-23T03:17:30.6356517Z] color:yellowname:lemon LongSum
+(2021-09-23T22:00:08.4399776Z, 2021-09-23T22:00:08.4510115Z] color:yellow name:lemon LongSum
 Value: 7
-2021-09-23T03:17:30.6198292Z, 2021-09-23T03:17:30.6356517Z] color:greenname:apple LongSum
+(2021-09-23T22:00:08.4399776Z, 2021-09-23T22:00:08.4510115Z] color:green name:apple LongSum
 Value: 2
 ```
 <!-- markdownlint-enable MD013 -->
