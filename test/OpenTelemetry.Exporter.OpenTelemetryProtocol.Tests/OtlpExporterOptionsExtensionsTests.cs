@@ -84,7 +84,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData(ExportProtocol.Grpc, typeof(OtlpGrpcTraceExportClient))]
         [InlineData(ExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient))]
-        public void GetTraceExportClient_SupportedProtocol_ReturnsCorrectExportClient(string protocol, Type expectedExportClientType)
+        public void GetTraceExportClient_SupportedProtocol_ReturnsCorrectExportClient(ExportProtocol protocol, Type expectedExportClientType)
         {
             var options = new OtlpExporterOptions
             {
@@ -101,10 +101,21 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             var options = new OtlpExporterOptions
             {
-                Protocol = "test",
+                Protocol = (ExportProtocol)123,
             };
 
             Assert.Throws<NotSupportedException>(() => options.GetTraceExportClient());
+        }
+
+        [Theory]
+        [InlineData("grpc", ExportProtocol.Grpc)]
+        [InlineData("http/protobuf", ExportProtocol.HttpProtobuf)]
+        [InlineData("unsupported", null)]
+        public void ToExportProtocol_Protocol_MapsToCorrectExportProtocol(string protocol, ExportProtocol? expectedExportProtocol)
+        {
+            var exportProtocol = protocol.ToExportProtocol();
+
+            Assert.Equal(expectedExportProtocol, exportProtocol);
         }
     }
 }

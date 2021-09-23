@@ -75,7 +75,15 @@ namespace OpenTelemetry.Exporter
                 string protocolEnvVar = Environment.GetEnvironmentVariable(ProtocolEnvVarName);
                 if (!string.IsNullOrEmpty(protocolEnvVar))
                 {
-                    this.Protocol = protocolEnvVar;
+                    var protocol = protocolEnvVar.ToExportProtocol();
+                    if (protocol.HasValue)
+                    {
+                        this.Protocol = protocol.Value;
+                    }
+                    else
+                    {
+                        OpenTelemetryProtocolExporterEventSource.Log.UnsupportedProtocol(protocolEnvVar);
+                    }
                 }
             }
             catch (SecurityException ex)
@@ -106,9 +114,9 @@ namespace OpenTelemetry.Exporter
         public int TimeoutMilliseconds { get; set; } = 10000;
 
         /// <summary>
-        /// Gets or sets the the OTLP transport protocol. grpc and http/protobuf values are supported.
+        /// Gets or sets the the OTLP transport protocol. Supported values: grpc, http/protobuf.
         /// </summary>
-        public string Protocol { get; set; } = ExportProtocol.Grpc;
+        public ExportProtocol Protocol { get; set; } = ExportProtocol.Grpc;
 
         /// <summary>
         /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.

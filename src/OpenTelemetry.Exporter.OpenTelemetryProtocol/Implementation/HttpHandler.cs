@@ -43,9 +43,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         public HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
         {
 #if NET5_0
-            return this.HttpClient.Send(request);
+            return this.HttpClient.Send(request, cancellationToken);
 #else
-            return AsyncHelper.RunSync(() => this.HttpClient.SendAsync(request));
+            return this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();
 #endif
         }
     }

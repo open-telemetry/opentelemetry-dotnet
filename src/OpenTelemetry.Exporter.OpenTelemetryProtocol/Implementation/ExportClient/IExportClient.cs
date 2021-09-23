@@ -14,14 +14,13 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Threading;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
 {
     /// <summary>Export client interface.</summary>
     /// <typeparam name="TRequest">Type of export request.</typeparam>
-    public interface IExportClient<in TRequest>
+    internal interface IExportClient<in TRequest>
     {
         /// <summary>
         /// Method for sending export request to the server.

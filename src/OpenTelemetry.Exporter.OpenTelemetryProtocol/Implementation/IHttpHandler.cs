@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Net.Http;
 using System.Threading;
 
@@ -23,7 +22,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
     /// <summary>
     /// Interface partially exposing <see cref="HttpClient"/> methods.
     /// </summary>
-    public interface IHttpHandler
+    internal interface IHttpHandler
     {
         /// <summary>
         /// Cancel all pending requests on this instance.

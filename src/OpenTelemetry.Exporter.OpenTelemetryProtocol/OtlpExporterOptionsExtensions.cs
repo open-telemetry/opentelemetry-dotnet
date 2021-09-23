@@ -1,4 +1,4 @@
-// <copyright file="OtlpExporterOptionsGrpcExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpExporterOptionsExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -92,7 +92,15 @@ namespace OpenTelemetry.Exporter
             {
                 ExportProtocol.Grpc => new OtlpGrpcTraceExportClient(options),
                 ExportProtocol.HttpProtobuf => new OtlpHttpTraceExportClient(options),
-                _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported")
+                _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported.")
+            };
+
+        public static ExportProtocol? ToExportProtocol(this string protocol) =>
+            protocol.Trim() switch
+            {
+                "grpc" => ExportProtocol.Grpc,
+                "http/protobuf" => ExportProtocol.HttpProtobuf,
+                _ => null
             };
     }
 }

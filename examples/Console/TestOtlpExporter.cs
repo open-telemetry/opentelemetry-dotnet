@@ -24,7 +24,7 @@ namespace Examples.Console
 {
     internal static class TestOtlpExporter
     {
-        internal static object Run(string endpoint, string protocol = ExportProtocol.Grpc)
+        internal static object Run(string endpoint, string protocol = "grpc")
         {
             /*
              * Prerequisite to run this example:
@@ -68,7 +68,9 @@ namespace Examples.Console
                     .AddOtlpExporter(opt =>
                     {
                         opt.Endpoint = new Uri(endpoint);
-                        opt.Protocol = protocol;
+
+                        // Use grpc as default for unmapped protocols.
+                        opt.Protocol = protocol.ToExportProtocol() ?? ExportProtocol.Grpc;
                     })
                     .Build();
 
@@ -79,7 +81,7 @@ namespace Examples.Console
                 sample.Start();
 
                 System.Console.WriteLine("Traces are being created and exported" +
-                    $"to the OpenTelemetry Collector or Backend in the background. Protocol={protocol}. " +
+                    $"to the OpenTelemetry Collector or Backend in the background. " +
                     "Press ENTER to stop.");
                 System.Console.ReadLine();
             }
