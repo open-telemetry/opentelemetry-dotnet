@@ -27,7 +27,7 @@ guide and reference documentation at [opentelemetry-dotnet.readthedocs.io](https
 If you are new here, please read the getting started docs:
 
 * [logs](./docs/logs/getting-started/README.md)
-* [metrics](./docs/metrics/README.md) (experimental)
+* [metrics](./docs/metrics/getting-started/README.md) (experimental)
 * [trace](./docs/trace/getting-started/README.md)
 
 This repository includes multiple installable components, available on

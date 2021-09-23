@@ -38,8 +38,7 @@ namespace OpenTelemetry.Metrics.Tests.Stress
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
                 .Build();
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
+            Stopwatch sw = Stopwatch.StartNew();
 
             Parallel.Invoke(
                 () =>

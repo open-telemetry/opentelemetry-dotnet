@@ -211,7 +211,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         protected virtual bool OnShutdown(int timeoutMilliseconds)
         {
-            return true;
+            return this.Collect(timeoutMilliseconds);
         }
 
         /// <summary>

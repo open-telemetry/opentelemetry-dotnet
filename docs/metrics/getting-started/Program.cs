@@ -29,11 +29,13 @@ public class Program
             .AddConsoleExporter()
             .Build();
 
-        var counter = MyMeter.CreateCounter<long>("MyCounter");
+        var counter = MyMeter.CreateCounter<long>("MyFruitCounter");
 
-        for (int i = 0; i < 20000000; i++)
-        {
-            counter.Add(1, new("tag1", "value1"), new("tag2", "value2"));
-        }
+        counter.Add(1, new("name", "apple"), new("color", "red"));
+        counter.Add(2, new("name", "lemon"), new("color", "yellow"));
+        counter.Add(1, new("name", "lemon"), new("color", "yellow"));
+        counter.Add(2, new("name", "apple"), new("color", "green"));
+        counter.Add(5, new("name", "apple"), new("color", "red"));
+        counter.Add(4, new("name", "lemon"), new("color", "yellow"));
     }
 }
