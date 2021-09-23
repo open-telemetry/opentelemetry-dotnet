@@ -31,11 +31,11 @@ public class Program
 
         var counter = MyMeter.CreateCounter<long>("MyCounter");
 
-        counter.Add(1, new("name", "orange"), new("color", "orange"));
-        counter.Add(2, new("name", "lemon"),  new("color", "yellow"));
-        counter.Add(3, new("name", "lime"),   new("color", "green"));
-        counter.Add(2, new("name", "orange"), new("color", "green"));
-        counter.Add(5, new("name", "orange"), new("color", "orange"));
-        counter.Add(8, new("name", "lime"),   new("color", "green"));
+        counter.Add(1, new("name", "apple"), new("color", "red"));
+        counter.Add(2, new("name", "lemon"), new("color", "yellow"));
+        counter.Add(1, new("name", "lemon"), new("color", "yellow"));
+        counter.Add(2, new("name", "apple"), new("color", "green"));
+        counter.Add(5, new("name", "apple"), new("color", "red"));
+        counter.Add(4, new("name", "lemon"), new("color", "yellow"));
     }
 }
