@@ -25,10 +25,11 @@ namespace OpenTelemetry.Exporter
     /// </summary>
     [AggregationTemporality(AggregationTemporality.Cumulative)]
     [ExportModes(ExportModes.Pull)]
-    public class PrometheusExporter : BaseExporter<Metric>
+    public class PrometheusExporter : BaseExporter<Metric>, IPullMetricExporter
     {
         internal readonly PrometheusExporterOptions Options;
         internal Batch<Metric> Metrics;
+        private Func<int, bool> funcCollect;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
@@ -39,7 +40,11 @@ namespace OpenTelemetry.Exporter
             this.Options = options;
         }
 
-        internal Func<int, bool> CollectMetric { get; set; }
+        public Func<int, bool> Collect
+        {
+            get => this.funcCollect;
+            set { this.funcCollect = value; }
+        }
 
         public override ExportResult Export(in Batch<Metric> metrics)
         {
