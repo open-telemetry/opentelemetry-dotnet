@@ -36,11 +36,12 @@ internal class MyReader : MetricReader
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
         Console.WriteLine($"{this.name}.OnShutdown(timeoutMilliseconds={timeoutMilliseconds})");
-        return true;
+        return base.OnShutdown(timeoutMilliseconds);
     }
 
     protected override void Dispose(bool disposing)
     {
         Console.WriteLine($"{this.name}.Dispose({disposing})");
+        base.Dispose(disposing);
     }
 }

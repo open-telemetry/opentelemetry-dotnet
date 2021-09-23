@@ -112,9 +112,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 }
             }
 
-            // Invokes the TestExporter which will invoke ProcessExport
-            metricReader.Collect();
-
             meterProvider.Dispose();
 
             var requestMetrics = metricItems

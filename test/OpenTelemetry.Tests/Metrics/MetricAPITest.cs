@@ -284,8 +284,7 @@ namespace OpenTelemetry.Metrics.Tests
             // Block until all threads started.
             mreToEnsureAllThreadsStarted.WaitOne();
 
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
+            Stopwatch sw = Stopwatch.StartNew();
 
             // unblock all the threads.
             // (i.e let them start counter.Add)
@@ -354,8 +353,7 @@ namespace OpenTelemetry.Metrics.Tests
             // Block until all threads started.
             mreToEnsureAllThreadsStarted.WaitOne();
 
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
+            Stopwatch sw = Stopwatch.StartNew();
 
             // unblock all the threads.
             // (i.e let them start counter.Add)
