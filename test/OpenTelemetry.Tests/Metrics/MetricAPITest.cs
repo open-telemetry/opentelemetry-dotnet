@@ -39,6 +39,60 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
+        [InlineData(AggregationTemporality.Cumulative)]
+        [InlineData(AggregationTemporality.Delta)]
+        public void StreamNamesDuplicatesAreNotAllowedTest(AggregationTemporality temporality)
+        {
+            var metricItems = new List<Metric>();
+            int metricCount = 0;
+            var metricExporter = new TestExporter<Metric>(ProcessExport);
+
+            void ProcessExport(Batch<Metric> batch)
+            {
+                foreach (var metric in batch)
+                {
+                    metricCount++;
+                }
+            }
+
+            var metricReader = new BaseExportingMetricReader(metricExporter)
+            {
+                PreferredAggregationTemporality = temporality,
+            };
+            using var meter1 = new Meter("TestDuplicateMetricName1");
+            using var meter2 = new Meter("TestDuplicateMetricName2");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource("TestDuplicateMetricName1")
+                .AddSource("TestDuplicateMetricName2")
+                .AddMetricReader(metricReader)
+                .Build();
+
+            // Expecting one metric stream.
+            var counterLong = meter1.CreateCounter<long>("name1");
+            counterLong.Add(10);
+            metricReader.Collect();
+            Assert.Equal(1, metricCount);
+
+            // The following will be ignored as
+            // metric of same name exists.
+            // Metric stream will remain one.
+            var anotherCounterSameName = meter1.CreateCounter<long>("name1");
+            anotherCounterSameName.Add(10);
+            metricCount = 0;
+            metricReader.Collect();
+            Assert.Equal(1, metricCount);
+
+            // The following will also be ignored
+            // as the name is same.
+            // (the Meter name is not part of stream name)
+            var anotherCounterSameNameDiffMeter = meter2.CreateCounter<long>("name1");
+            anotherCounterSameNameDiffMeter.Add(10);
+            metricCount = 0;
+            metricReader.Collect();
+            Assert.Equal(1, metricCount);
+        }
+
+        [Theory]
         [InlineData(true)]
         [InlineData(false)]
         public void CounterAggregationTest(bool exportDelta)
