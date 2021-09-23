@@ -20,6 +20,7 @@ using System.Text;
 
 namespace OpenTelemetry.Metrics
 {
+    // TODO: can be optimized like MetricType
     public enum Aggregation
     {
 #pragma warning disable SA1602 // Enumeration items should be documented
@@ -31,6 +32,7 @@ namespace OpenTelemetry.Metrics
 #pragma warning restore SA1602 // Enumeration items should be documented
     }
 
+    // TODO: can be optimized like MetricType
     public enum InstrumentType
     {
 #pragma warning disable SA1602 // Enumeration items should be documented

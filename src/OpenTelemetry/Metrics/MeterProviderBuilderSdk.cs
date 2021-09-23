@@ -107,25 +107,28 @@ namespace OpenTelemetry.Metrics
 
             Func<Instrument, MetricStreamConfig> viewConfig = (instrument) =>
             {
-                bool selectInstrument = false;
+                bool selectCriteriaMeterName = false;
                 if (!string.IsNullOrWhiteSpace(meterName)
                 && instrument.Meter.Name.StartsWith(meterName, StringComparison.OrdinalIgnoreCase))
                 {
-                    selectInstrument &= true;
+                    selectCriteriaMeterName = true;
                 }
 
+                bool selectCriteriaMeterVersion = false;
                 if (!string.IsNullOrWhiteSpace(meterVersion)
                 && instrument.Meter.Version.StartsWith(meterVersion, StringComparison.OrdinalIgnoreCase))
                 {
-                    selectInstrument &= true;
+                    selectCriteriaMeterVersion = true;
                 }
 
+                bool selectCriteriaInstrumentName = false;
                 if (!string.IsNullOrWhiteSpace(instrumentName)
                 && instrument.Name.StartsWith(instrumentName, StringComparison.OrdinalIgnoreCase))
                 {
-                    selectInstrument &= true;
+                    selectCriteriaInstrumentName = true;
                 }
 
+                bool selectCriteriaInstrumentType = false;
                 if (instrumentType != InstrumentType.Invalid)
                 {
                     var instrumentGenericType = instrument.GetType().GetGenericTypeDefinition();
@@ -149,9 +152,12 @@ namespace OpenTelemetry.Metrics
 
                     if (incomingInstrumentType == instrumentType)
                     {
-                        selectInstrument &= true;
+                        selectCriteriaInstrumentType = true;
                     }
                 }
+
+                // All criteria must be met.
+                var selectInstrument = selectCriteriaMeterName & selectCriteriaMeterVersion & selectCriteriaInstrumentName & selectCriteriaInstrumentType;
 
                 if (selectInstrument)
                 {
