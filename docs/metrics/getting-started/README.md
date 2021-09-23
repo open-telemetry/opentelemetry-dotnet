@@ -32,7 +32,7 @@ output from the console, similar to shown below:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-Export MyCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
+Export MyFruitCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
 2021-09-23T03:17:30.6198292Z, 2021-09-23T03:17:30.6356517Z] color:redname:apple LongSum
 Value: 6
 2021-09-23T03:17:30.6198292Z, 2021-09-23T03:17:30.6356517Z] color:yellowname:lemon LongSum
