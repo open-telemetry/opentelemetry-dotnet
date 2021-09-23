@@ -4,6 +4,8 @@
     <Description>Zipkin exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);Zipkin;distributed-tracing</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
+    <!-- TODO: Remove this once a version targeting net5.0 is released -->
+    <RunApiCompat Condition="$(TargetFramework) == 'net5.0'">false</RunApiCompat>
   </PropertyGroup>
 
   <ItemGroup>
