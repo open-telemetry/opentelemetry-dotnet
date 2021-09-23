@@ -87,18 +87,69 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        internal MeterProviderBuilderSdk AddView(string name = "", string meterName = "", string instrumentName = "", string[] tagKeys = null, Aggregation aggregation = Aggregation.Default, double[] histogramBounds = null)
+        internal MeterProviderBuilderSdk AddView(string name, string meterName, string meterVersion, string instrumentName, InstrumentType instrumentType, string[] tagKeys, Aggregation aggregation, double[] histogramBounds)
         {
-            Func<Instrument, MetricStreamConfig> callBack = (instrument) =>
+            if (string.IsNullOrWhiteSpace(meterVersion)
+                && string.IsNullOrWhiteSpace(meterName)
+                && string.IsNullOrWhiteSpace(instrumentName))
             {
-                if (string.IsNullOrWhiteSpace(meterName) && string.IsNullOrWhiteSpace(instrumentName))
+                throw new ArgumentException("Atleast one instrument selection criteria should be provided.");
+            }
+
+            if (histogramBounds != null && aggregation != Aggregation.Histogram)
+            {
+                throw new ArgumentException("Histogram bounds are only applicable if Aggregation is Histogram.");
+            }
+
+            Func<Instrument, MetricStreamConfig> viewConfig = (instrument) =>
+            {
+                bool selectInstrument = false;
+                if (!string.IsNullOrWhiteSpace(meterName)
+                && instrument.Meter.Name.StartsWith(meterName, StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new ArgumentException("Atleast one instrument selection criteria should be provided.");
+                    selectInstrument &= true;
                 }
 
-                // TODO: Do regex instead of simple StartsWith.
-                if (instrument.Meter.Name.StartsWith(meterName)
-                     && instrument.Name.StartsWith(instrumentName))
+                if (!string.IsNullOrWhiteSpace(meterVersion)
+                && instrument.Meter.Version.StartsWith(meterVersion, StringComparison.OrdinalIgnoreCase))
+                {
+                    selectInstrument &= true;
+                }
+
+                if (!string.IsNullOrWhiteSpace(instrumentName)
+                && instrument.Name.StartsWith(instrumentName, StringComparison.OrdinalIgnoreCase))
+                {
+                    selectInstrument &= true;
+                }
+
+                if (instrumentType != InstrumentType.Invalid)
+                {
+                    var instrumentGenericType = instrument.GetType().GetGenericTypeDefinition();
+                    var incomingInstrumentType = InstrumentType.Invalid;
+                    if (instrumentGenericType == typeof(Counter<>))
+                    {
+                        incomingInstrumentType = InstrumentType.Counter;
+                    }
+                    else if (instrumentGenericType == typeof(ObservableCounter<>))
+                    {
+                        incomingInstrumentType = InstrumentType.ObservableCounter;
+                    }
+                    else if (instrumentGenericType == typeof(ObservableGauge<>))
+                    {
+                        incomingInstrumentType = InstrumentType.ObservableGauge;
+                    }
+                    else if (instrumentGenericType == typeof(Histogram<>))
+                    {
+                        incomingInstrumentType = InstrumentType.Histogram;
+                    }
+
+                    if (incomingInstrumentType == instrumentType)
+                    {
+                        selectInstrument &= true;
+                    }
+                }
+
+                if (selectInstrument)
                 {
                     var metricStreamConfig = new MetricStreamConfig();
                     metricStreamConfig.Name = string.IsNullOrWhiteSpace(name) ? instrument.Name : name;
@@ -113,7 +164,7 @@ namespace OpenTelemetry.Metrics
                 }
             };
 
-            this.viewConfigs.Add(callBack);
+            this.viewConfigs.Add(viewConfig);
             return this;
         }
 

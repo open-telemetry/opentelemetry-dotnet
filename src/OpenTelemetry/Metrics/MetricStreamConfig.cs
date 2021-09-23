@@ -32,6 +32,17 @@ namespace OpenTelemetry.Metrics
 #pragma warning restore SA1602 // Enumeration items should be documented
     }
 
+    public enum InstrumentType
+    {
+#pragma warning disable SA1602 // Enumeration items should be documented
+        Invalid,
+        Counter,
+        ObservableCounter,
+        ObservableGauge,
+        Histogram,
+#pragma warning restore SA1602 // Enumeration items should be documented
+    }
+
     internal class MetricStreamConfig
     {
         public string Name;
