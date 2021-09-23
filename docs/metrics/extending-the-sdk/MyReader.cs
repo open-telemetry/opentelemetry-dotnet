@@ -27,26 +27,21 @@ internal class MyReader : MetricReader
         this.name = name;
     }
 
-    protected override bool OnCollect(Batch<Metric> metrics, int timeoutMilliseconds)
+    protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
     {
-        Console.WriteLine($"{this.name}.OnCollect(metrics={metrics}, timeoutMilliseconds={timeoutMilliseconds})");
-        return true;
-    }
-
-    protected override bool OnForceFlush(int timeoutMilliseconds)
-    {
-        Console.WriteLine($"{this.name}.OnForceFlush(timeoutMilliseconds={timeoutMilliseconds})");
+        Console.WriteLine($"{this.name}.ProcessMetrics(metrics={metrics}, timeoutMilliseconds={timeoutMilliseconds})");
         return true;
     }
 
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
         Console.WriteLine($"{this.name}.OnShutdown(timeoutMilliseconds={timeoutMilliseconds})");
-        return true;
+        return base.OnShutdown(timeoutMilliseconds);
     }
 
     protected override void Dispose(bool disposing)
     {
         Console.WriteLine($"{this.name}.Dispose({disposing})");
+        base.Dispose(disposing);
     }
 }

@@ -6,8 +6,8 @@ SDK](https://dotnet.microsoft.com/download) on your computer.
 Create a new console application and run it:
 
 ```sh
-dotnet new console --output getting-started-counter
-cd getting-started-counter
+dotnet new console --output getting-started
+cd getting-started
 dotnet run
 ```
 
@@ -32,29 +32,13 @@ output from the console, similar to shown below:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-Export MyCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
-(2021-09-03T04:29:37.1096398Z, 2021-09-03T04:29:38.0649233Z] tag1:value1tag2:value2 LongSum
-Value: 460
-
-Export MyCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
-(2021-09-03T04:29:38.0649233Z, 2021-09-03T04:29:39.1483639Z] tag1:value1tag2:value2 LongSum
-Value: 640
-
-Export MyCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
-(2021-09-03T04:29:39.1483639Z, 2021-09-03T04:29:40.1679696Z] tag1:value1tag2:value2 LongSum
-Value: 420
-
-Export MyCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
-(2021-09-03T04:29:40.1679696Z, 2021-09-03T04:29:41.1774527Z] tag1:value1tag2:value2 LongSum
-Value: 560
-
-Export MyCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
-(2021-09-03T04:29:41.1774527Z, 2021-09-03T04:29:42.1791523Z] tag1:value1tag2:value2 LongSum
-Value: 650
-
-Export MyCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
-(2021-09-03T04:29:42.1791523Z, 2021-09-03T04:29:43.1875033Z] tag1:value1tag2:value2 LongSum
-Value: 620
+Export MyFruitCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
+2021-09-23T03:17:30.6198292Z, 2021-09-23T03:17:30.6356517Z] color:redname:apple LongSum
+Value: 6
+2021-09-23T03:17:30.6198292Z, 2021-09-23T03:17:30.6356517Z] color:yellowname:lemon LongSum
+Value: 7
+2021-09-23T03:17:30.6198292Z, 2021-09-23T03:17:30.6356517Z] color:greenname:apple LongSum
+Value: 2
 ```
 <!-- markdownlint-enable MD013 -->
 
@@ -66,12 +50,10 @@ The program creates a
 [Meter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meter)
 instance named "MyCompany.MyProduct.MyLibrary" and then creates a
 [Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#counter)
-instrument from it. This counter is used to repeatedly report metric
-measurements until it reaches a certain number of loops.
+instrument from it. This counter is used to report several metric measurements.
 
 An OpenTelemetry
 [MeterProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meterprovider)
 is configured to subscribe to instruments from the Meter
 `MyCompany.MyProduct.MyLibrary`, and aggregate the measurements in-memory. The
-pre-aggregated metrics are exported every 1 second to a `ConsoleExporter`.
-`ConsoleExporter` simply displays it on the console.
+pre-aggregated metrics are exported to a `ConsoleExporter`.
