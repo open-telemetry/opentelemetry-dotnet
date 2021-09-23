@@ -17,7 +17,7 @@ exposes various methods which configures the provider it is going to build. Thes
 includes methods like `AddSource`, `AddView` etc, and are explained in
 subsequent sections of this document. Once configuration is done, calling
 `Build()` on the `MeterProviderBuilder` builds the `MeterProvider` instance.
-Once built, changes to its configuration is not allowed. In most cases, 
+Once built, changes to its configuration is not allowed. In most cases,
 a single `MeterProvider` is created at the application startup,
 and is disposed when application shuts down.
 
@@ -46,7 +46,7 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder().Build();
 4. The
    [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
    associated with the metrics.
-5. The list of 
+5. The list of
    [Views](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view)
    to be used.
 
@@ -69,4 +69,3 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder().Build();
 ### Resource
 
 // TODO
-
