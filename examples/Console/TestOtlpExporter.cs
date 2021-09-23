@@ -80,8 +80,8 @@ namespace Examples.Console
             {
                 sample.Start();
 
-                System.Console.WriteLine("Traces are being created and exported" +
-                    $"to the OpenTelemetry Collector or Backend in the background. " +
+                System.Console.WriteLine("Traces are being created and exported " +
+                    "to the OpenTelemetry Collector in the background. " +
                     "Press ENTER to stop.");
                 System.Console.ReadLine();
             }
