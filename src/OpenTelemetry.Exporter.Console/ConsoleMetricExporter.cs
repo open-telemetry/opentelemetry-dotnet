@@ -145,6 +145,7 @@ namespace OpenTelemetry.Exporter
                     }
 
                     msg = new StringBuilder();
+                    msg.Append('(');
                     msg.Append(metricPoint.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                     msg.Append(", ");
                     msg.Append(metricPoint.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
