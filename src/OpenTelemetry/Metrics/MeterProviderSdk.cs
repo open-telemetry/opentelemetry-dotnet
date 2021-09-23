@@ -31,6 +31,8 @@ namespace OpenTelemetry.Metrics
         private readonly Metric[] metrics;
         private readonly List<object> instrumentations = new List<object>();
         private readonly object collectLock = new object();
+        private readonly object instrumentCreationLock = new object();
+        private readonly Dictionary<string, bool> metricStreamNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         private readonly MeterListener listener;
         private readonly MetricReader reader;
         private int metricIndex = -1;
@@ -94,16 +96,26 @@ namespace OpenTelemetry.Metrics
                 {
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
-                        var index = Interlocked.Increment(ref this.metricIndex);
-                        if (index >= MaxMetrics)
+                        lock (this.instrumentCreationLock)
                         {
-                            // Log that all measurements are dropped from this instrument.
-                        }
-                        else
-                        {
-                            var metric = new Metric(instrument, temporality);
-                            this.metrics[index] = metric;
-                            listener.EnableMeasurementEvents(instrument, metric);
+                            if (this.metricStreamNames.ContainsKey(instrument.Name))
+                            {
+                                // log and ignore this instrument.
+                                return;
+                            }
+
+                            var index = Interlocked.Increment(ref this.metricIndex);
+                            if (index >= MaxMetrics)
+                            {
+                                // Log that all measurements are dropped from this instrument.
+                            }
+                            else
+                            {
+                                var metric = new Metric(instrument, temporality);
+                                this.metrics[index] = metric;
+                                this.metricStreamNames.Add(instrument.Name, true);
+                                listener.EnableMeasurementEvents(instrument, metric);
+                            }
                         }
                     }
                 },
@@ -167,12 +179,13 @@ namespace OpenTelemetry.Metrics
                     // Record all observable instruments
                     this.listener.RecordObservableInstruments();
                     var indexSnapShot = Math.Min(this.metricIndex, MaxMetrics - 1);
-                    for (int i = 0; i < indexSnapShot + 1; i++)
+                    var target = indexSnapShot + 1;
+                    for (int i = 0; i < target; i++)
                     {
                         this.metrics[i].SnapShot();
                     }
 
-                    return new Batch<Metric>(this.metrics, indexSnapShot + 1);
+                    return (target > 0) ? new Batch<Metric>(this.metrics, target) : default;
                 }
                 catch (Exception)
                 {
@@ -187,8 +200,8 @@ namespace OpenTelemetry.Metrics
         /// thread until flush completed or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
         /// </param>
         /// <returns>
         /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
@@ -200,7 +213,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         internal bool OnForceFlush(int timeoutMilliseconds)
         {
-            return this.reader?.ForceFlush(timeoutMilliseconds) ?? true;
+            return this.reader?.Collect(timeoutMilliseconds) ?? true;
         }
 
         /// <summary>
@@ -208,8 +221,8 @@ namespace OpenTelemetry.Metrics
         /// thread until shutdown completed or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
         /// </param>
         /// <returns>
         /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
