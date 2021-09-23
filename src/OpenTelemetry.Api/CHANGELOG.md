@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-alpha4
+
+Released 2021-Sep-23
+
 * Updated System.Diagnostics.DiagnosticSource to version 6.0.0-rc.1.21451.13
 
 ## 1.2.0-alpha3
