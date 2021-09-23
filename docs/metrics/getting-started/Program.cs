@@ -29,7 +29,7 @@ public class Program
             .AddConsoleExporter()
             .Build();
 
-        var counter = MyMeter.CreateCounter<long>("MyCounter");
+        var counter = MyMeter.CreateCounter<long>("MyFruitCounter");
 
         counter.Add(1, new("name", "apple"), new("color", "red"));
         counter.Add(2, new("name", "lemon"), new("color", "yellow"));
