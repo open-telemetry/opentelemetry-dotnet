@@ -84,9 +84,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // giving some breezing room for the End callback to complete
             await Task.Delay(TimeSpan.FromSeconds(1));
 
-            // Invokes the TestExporter which will invoke ProcessExport
-            metricReader.Collect();
-
             this.meterProvider.Dispose();
 
             var requestMetrics = metricItems

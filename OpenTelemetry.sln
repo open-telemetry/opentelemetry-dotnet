@@ -218,7 +218,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-observable-
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-observable-counter", "docs\metrics\getting-started-observable-counter\getting-started-observable-counter.csproj", "{43005998-0247-4620-AF88-27DACD48712E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-counter", "docs\metrics\getting-started-counter\getting-started-counter.csproj", "{EA60B549-F712-4ABE-8E44-FCA83B78C06E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started", "docs\metrics\getting-started\getting-started.csproj", "{EA60B549-F712-4ABE-8E44-FCA83B78C06E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "extending-the-sdk", "docs\metrics\extending-the-sdk\extending-the-sdk.csproj", "{1F9D7748-D099-4E25-97F5-9C969D6FF969}"
 EndProject
