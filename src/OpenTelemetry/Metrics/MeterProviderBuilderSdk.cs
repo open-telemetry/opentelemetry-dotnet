@@ -89,16 +89,20 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilderSdk AddView(string name, string meterName, string meterVersion, string instrumentName, InstrumentType instrumentType, string[] tagKeys, Aggregation aggregation, double[] histogramBounds)
         {
-            if (string.IsNullOrWhiteSpace(meterVersion)
-                && string.IsNullOrWhiteSpace(meterName)
-                && string.IsNullOrWhiteSpace(instrumentName))
+            if (string.IsNullOrWhiteSpace(meterName)
+                && string.IsNullOrWhiteSpace(meterVersion)
+                && string.IsNullOrWhiteSpace(instrumentName)
+                && instrumentType == InstrumentType.Invalid)
             {
-                throw new ArgumentException("Atleast one instrument selection criteria should be provided.");
+                throw new ArgumentException("Atleast one instrument selection criteria should be specified.");
             }
 
-            if (histogramBounds != null && aggregation != Aggregation.Histogram)
+            if (histogramBounds != null)
             {
-                throw new ArgumentException("Histogram bounds are only applicable if Aggregation is Histogram.");
+                if (aggregation != Aggregation.Default && aggregation != Aggregation.Histogram)
+                {
+                    throw new ArgumentException("Histogram bounds are only applicable if Aggregation is Histogram.");
+                }
             }
 
             Func<Instrument, MetricStreamConfig> viewConfig = (instrument) =>

@@ -23,9 +23,8 @@ namespace OpenTelemetry.Metrics
     public enum Aggregation
     {
 #pragma warning disable SA1602 // Enumeration items should be documented
-        Invalid,
-        None,
         Default,
+        None,
         Sum,
         LastValue,
         Histogram,

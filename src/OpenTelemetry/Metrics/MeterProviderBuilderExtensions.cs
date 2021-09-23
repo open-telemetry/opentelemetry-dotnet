@@ -51,10 +51,11 @@ namespace OpenTelemetry.Metrics
         /// <param name="meterVersion">Version of the meter, to be used as part of Instrument selection criteria.</param>
         /// <param name="instrumentName">Name of the instrument, to be used as part of Instrument selection criteria.</param>
         /// <param name="instrumentType">Type of the instrument, to be used as part of Instrument selection criteria.</param>
-        /// <param name="tagKeys">List of tag keys to be used in aggregation to produce the metrics stream.</param>
-        /// <param name="aggregation">The aggregation to be applied on the measurements to produce the metrics stream.</param>
-        /// <param name="histogramBounds">The explicit histogram bounds for Histogram aggregation used to produce the metrics stream. Invalid unless the aggregation is Histogram.</param>
+        /// <param name="tagKeys">List of tag keys that should be used for aggregation. This is part of the configuration of resulting metrics stream.</param>
+        /// <param name="aggregation">The aggregation to be used. This is part of the configuration of resulting metrics stream.</param>
+        /// <param name="histogramBounds">The explicit histogram bounds for Histogram aggregation. Invalid unless the aggregation is Histogram. This is part of the configuration of resulting metrics stream.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
+        /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
         public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string name = "", string meterName = "", string meterVersion = "", string instrumentName = "", InstrumentType instrumentType = InstrumentType.Invalid, string[] tagKeys = null, Aggregation aggregation = Aggregation.Default, double[] histogramBounds = null)
         {
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
