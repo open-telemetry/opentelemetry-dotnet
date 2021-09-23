@@ -42,7 +42,7 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
-        /// Add metric view, which can be used to customize the Metrics outputed
+        /// Add metric view, which can be used to customize the Metrics outputted
         /// from the SDK. The views are applied in the order they are added.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
