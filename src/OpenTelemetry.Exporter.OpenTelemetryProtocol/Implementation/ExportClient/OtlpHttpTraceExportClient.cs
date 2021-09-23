@@ -57,7 +57,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
         private HttpRequestMessage CreateHttpRequest(OtlpCollector.ExportTraceServiceRequest exportRequest)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, this.Options.Endpoint);
+            var request = new HttpRequestMessage(HttpMethod.Post, this.Options.TracesEndpoint);
             foreach (var header in this.Headers)
             {
                 request.Headers.Add(header.Key, header.Value);
