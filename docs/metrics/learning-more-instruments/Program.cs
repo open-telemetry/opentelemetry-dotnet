@@ -16,8 +16,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
@@ -25,21 +25,40 @@ public class Program
 {
     private static readonly Meter MyMeter = new Meter("MyCompany.MyProduct.MyLibrary", "1.0");
 
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddSource("MyCompany.MyProduct.MyLibrary")
             .AddConsoleExporter()
             .Build();
 
-        var random = new Random();
-        MyMeter.CreateObservableGauge<long>(
-            "MyGauge",
-            () => new List<Measurement<long>>()
-            {
-                new(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2")),
-            });
+        var process = Process.GetCurrentProcess();
 
-        await Task.Delay(10000);
+        MyMeter.CreateObservableCounter<double>("Thread.CpuTime", () => GetThreadCpuTime(process), "seconds");
+
+        MyMeter.CreateObservableGauge<int>("Thread.State", () => GetThreadState(process));
+
+        var random = new Random();
+        var histogram = MyMeter.CreateHistogram<long>("MyHistogram");
+        for (int i = 0; i < 1000; i++)
+        {
+            histogram.Record(random.Next(1, 1000));
+        }
+    }
+
+    private static IEnumerable<Measurement<double>> GetThreadCpuTime(Process process)
+    {
+        foreach (ProcessThread thread in process.Threads)
+        {
+            yield return new(thread.TotalProcessorTime.TotalMilliseconds, new("ProcessId", process.Id), new("ThreadId", thread.Id));
+        }
+    }
+
+    private static IEnumerable<Measurement<int>> GetThreadState(Process process)
+    {
+        foreach (ProcessThread thread in process.Threads)
+        {
+            yield return new((int)thread.ThreadState, new("ProcessId", process.Id), new("ThreadId", thread.Id));
+        }
     }
 }
