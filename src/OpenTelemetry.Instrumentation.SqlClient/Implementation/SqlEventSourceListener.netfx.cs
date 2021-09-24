@@ -38,7 +38,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
     ///
     /// "Microsoft.Data.SqlClient.EventSource" doesn't have that issue.
     /// </remarks>
-    internal class SqlEventSourceListener : EventListener
+    internal sealed class SqlEventSourceListener : EventListener
     {
         internal const string AdoNetEventSourceName = "Microsoft-AdoNet-SystemData";
         internal const string MdsEventSourceName = "Microsoft.Data.SqlClient.EventSource";
@@ -75,12 +75,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
             if (eventSource?.Name.StartsWith(AdoNetEventSourceName, StringComparison.Ordinal) == true)
             {
                 this.adoNetEventSource = eventSource;
-                this.EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)1);
+                this.EnableEvents(eventSource, EventLevel.Informational, EventKeywords.All);
             }
             else if (eventSource?.Name.StartsWith(MdsEventSourceName, StringComparison.Ordinal) == true)
             {
                 this.mdsEventSource = eventSource;
-                this.EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)1);
+                this.EnableEvents(eventSource, EventLevel.Informational, EventKeywords.All);
             }
 
             base.OnEventSourceCreated(eventSource);
@@ -125,7 +125,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 return;
             }
 
-            var activity = SqlActivitySourceHelper.ActivitySource.StartActivity(SqlActivitySourceHelper.ActivityName, ActivityKind.Client);
+            var activity = SqlActivitySourceHelper.ActivitySource.StartActivity(
+                SqlActivitySourceHelper.ActivityName,
+                ActivityKind.Client,
+                default(ActivityContext),
+                SqlActivitySourceHelper.CreationTags);
+
             if (activity == null)
             {
                 // There is no listener or it decided not to sample the current request.
@@ -138,7 +143,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
             if (activity.IsAllDataRequested)
             {
-                activity.SetTag(SemanticConventions.AttributeDbSystem, SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName);
                 activity.SetTag(SemanticConventions.AttributeDbName, databaseName);
 
                 this.options.AddConnectionLevelDetailsToActivity((string)eventData.Payload[1], activity);

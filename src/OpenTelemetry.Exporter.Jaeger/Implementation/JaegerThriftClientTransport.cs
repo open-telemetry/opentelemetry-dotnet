@@ -20,7 +20,7 @@ using Thrift.Transport;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    internal class JaegerThriftClientTransport : TTransport
+    internal sealed class JaegerThriftClientTransport : TTransport
     {
         private readonly IJaegerClient client;
         private readonly MemoryStream byteStream;

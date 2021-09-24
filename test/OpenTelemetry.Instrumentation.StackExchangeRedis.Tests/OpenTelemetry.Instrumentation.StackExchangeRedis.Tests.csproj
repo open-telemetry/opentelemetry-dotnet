@@ -1,18 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry StackExchangeRedis instrumentation</Description>
-    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == ''">netcoreapp2.1;netcoreapp3.1;net5.0</TargetFrameworks>
+    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == ''">netcoreapp3.1;net5.0</TargetFrameworks>
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == '' and $(OS) == 'Windows_NT'">$(TargetFrameworks);net461</TargetFrameworks>
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) != ''">$(TARGET_FRAMEWORK)</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\SkipUnlessEnvVarFoundTheoryAttribute.cs" Link="Implementation\SkipUnlessEnvVarFoundTheoryAttribute.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestSampler.cs" Link="TestSampler.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.StackExchangeRedis\OpenTelemetry.Instrumentation.StackExchangeRedis.csproj" />
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.Hosting\OpenTelemetry.Extensions.Hosting.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,6 +24,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsHostingPkgVer)" />
     <DotNetCliToolReference Include="dotnet-xunit" Version="$(DotNetXUnitCliVer)" />
   </ItemGroup>
 </Project>

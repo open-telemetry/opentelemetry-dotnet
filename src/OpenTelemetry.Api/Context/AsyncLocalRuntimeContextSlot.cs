@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if !NET452
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -24,7 +23,7 @@ namespace OpenTelemetry.Context
     /// The async local implementation of context slot.
     /// </summary>
     /// <typeparam name="T">The type of the underlying value.</typeparam>
-    public class AsyncLocalRuntimeContextSlot<T> : RuntimeContextSlot<T>
+    public class AsyncLocalRuntimeContextSlot<T> : RuntimeContextSlot<T>, IRuntimeContextSlotValueAccessor
     {
         private readonly AsyncLocal<T> slot;
 
@@ -36,6 +35,13 @@ namespace OpenTelemetry.Context
             : base(name)
         {
             this.slot = new AsyncLocal<T>();
+        }
+
+        /// <inheritdoc/>
+        public object Value
+        {
+            get => this.slot.Value;
+            set => this.slot.Value = (T)value;
         }
 
         /// <inheritdoc/>
@@ -53,4 +59,3 @@ namespace OpenTelemetry.Context
         }
     }
 }
-#endif

@@ -25,17 +25,16 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
 {
-    internal class TracerProviderSdk : TracerProvider
+    internal sealed class TracerProviderSdk : TracerProvider
     {
         internal int ShutdownCount;
 
         private readonly List<object> instrumentations = new List<object>();
         private readonly ActivityListener listener;
         private readonly Sampler sampler;
-        private readonly Dictionary<string, bool> legacyActivityOperationNames;
+        private readonly Action<Activity> getRequestedDataAction;
+        private readonly bool supportLegacyActivity;
         private BaseProcessor<Activity> processor;
-        private Action<Activity> getRequestedDataAction;
-        private bool supportLegacyActivity;
 
         internal TracerProviderSdk(
             Resource resource,
@@ -47,7 +46,6 @@ namespace OpenTelemetry.Trace
         {
             this.Resource = resource;
             this.sampler = sampler;
-            this.legacyActivityOperationNames = legacyActivityOperationNames;
             this.supportLegacyActivity = legacyActivityOperationNames.Count > 0;
 
             foreach (var processor in processors)
@@ -179,7 +177,7 @@ namespace OpenTelemetry.Trace
 
                 if (wildcardMode)
                 {
-                    var pattern = "^(" + string.Join("|", from name in sources select '(' + Regex.Escape(name).Replace("\\*", ".*") + ')') + ")$";
+                    var pattern = '^' + string.Join("|", from name in sources select "(?:" + Regex.Escape(name).Replace("\\*", ".*") + ')') + '$';
                     var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
@@ -222,6 +220,12 @@ namespace OpenTelemetry.Trace
 
         internal Resource Resource { get; }
 
+        internal List<object> Instrumentations => this.instrumentations;
+
+        internal BaseProcessor<Activity> Processor => this.processor;
+
+        internal Sampler Sampler => this.sampler;
+
         internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
         {
             if (processor == null)
@@ -261,8 +265,8 @@ namespace OpenTelemetry.Trace
         /// thread until shutdown completed or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
-        /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
-        /// wait indefinitely.
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
         /// </param>
         /// <returns>
         /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.

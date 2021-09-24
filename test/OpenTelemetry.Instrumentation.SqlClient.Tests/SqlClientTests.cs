@@ -18,11 +18,7 @@ using System;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
-#if NET452
-using System.Data.SqlClient;
-#else
 using Microsoft.Data.SqlClient;
-#endif
 using Moq;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Tests;
@@ -86,8 +82,11 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             bool shouldEnrich = true)
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            activityProcessor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
+            var sampler = new TestSampler();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
+                .SetSampler(sampler)
                 .AddSqlClientInstrumentation(options =>
                 {
 #if !NETFRAMEWORK
@@ -134,7 +133,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
-            VerifyActivityData(commandType, commandText, captureStoredProcedureCommandName, captureTextCommandContent, isFailure, recordException, dataSource, activity);
+            VerifyActivityData(commandType, commandText, captureStoredProcedureCommandName, captureTextCommandContent, isFailure, recordException, shouldEnrich, dataSource, activity);
+            VerifySamplingParameters(sampler.LatestSamplingParameters);
         }
 
         // DiagnosticListener-based instrumentation is only available on .NET Core
@@ -161,6 +161,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var sqlCommand = sqlConnection.CreateCommand();
 
             var processor = new Mock<BaseProcessor<Activity>>();
+            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
             using (Sdk.CreateTracerProviderBuilder()
                     .AddSqlClientInstrumentation(
                         (opt) =>
@@ -211,6 +212,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 captureTextCommandContent,
                 false,
                 false,
+                shouldEnrich,
                 sqlConnection.DataSource,
                 (Activity)processor.Invocations[2].Arguments[0]);
         }
@@ -228,6 +230,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var sqlCommand = sqlConnection.CreateCommand();
 
             var processor = new Mock<BaseProcessor<Activity>>();
+            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
             using (Sdk.CreateTracerProviderBuilder()
                 .AddSqlClientInstrumentation(options =>
                 {
@@ -277,8 +280,33 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 false,
                 true,
                 recordException,
+                shouldEnrich,
                 sqlConnection.DataSource,
                 (Activity)processor.Invocations[2].Arguments[0]);
+        }
+
+        [Theory]
+        [InlineData(SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand)]
+        [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand)]
+        public void SqlClientCreatesActivityWithDbSystem(
+            string beforeCommand)
+        {
+            using var sqlConnection = new SqlConnection(TestConnectionString);
+            using var sqlCommand = sqlConnection.CreateCommand();
+
+            var sampler = new TestSampler
+            {
+                SamplingAction = _ => new SamplingResult(SamplingDecision.Drop),
+            };
+            using (Sdk.CreateTracerProviderBuilder()
+                .AddSqlClientInstrumentation()
+                .SetSampler(sampler)
+                .Build())
+            {
+                this.fakeSqlClientDiagnosticSource.Write(beforeCommand, new { });
+            }
+
+            VerifySamplingParameters(sampler.LatestSamplingParameters);
         }
 #endif
 
@@ -289,6 +317,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             bool captureTextCommandContent,
             bool isFailure,
             bool recordException,
+            bool shouldEnrich,
             string dataSource,
             Activity activity)
         {
@@ -317,6 +346,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     Assert.Empty(activity.Events);
                 }
             }
+
+            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
 
             Assert.Equal(SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName, activity.GetTagValue(SemanticConventions.AttributeDbSystem));
             Assert.Equal("master", activity.GetTagValue(SemanticConventions.AttributeDbName));
@@ -351,8 +383,21 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             Assert.Equal(dataSource, activity.GetTagValue(SemanticConventions.AttributePeerService));
         }
 
+        private static void VerifySamplingParameters(SamplingParameters samplingParameters)
+        {
+            Assert.NotNull(samplingParameters.Tags);
+            Assert.Contains(
+                samplingParameters.Tags,
+                kvp => kvp.Key == SemanticConventions.AttributeDbSystem
+                       && (string)kvp.Value == SqlActivitySourceHelper.MicrosoftSqlServerDatabaseSystemName);
+        }
+
         private static void ActivityEnrichment(Activity activity, string method, object obj)
         {
+            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
+            Assert.Equal("no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
+            activity.SetTag("enriched", "yes");
+
             switch (method)
             {
                 case "OnCustom":

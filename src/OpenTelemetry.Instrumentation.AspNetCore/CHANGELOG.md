@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+* Replaced `http.path` tag on activity with `http.target`.
+  ([#2266](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2266))
+
+## 1.0.0-rc7
+
+Released 2021-Jul-12
+
+## 1.0.0-rc6
+
+Released 2021-Jun-25
+
+## 1.0.0-rc5
+
+Released 2021-Jun-09
+
+* Fixes bug
+  [#1740](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1740):
+  Instrumentation.AspNetCore for gRPC services omits ALL rpc.* attributes under
+  certain conditions
+  ([#1879](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1879))
+
+## 1.0.0-rc4
+
+Released 2021-Apr-23
+
+* When using OpenTelemetry.Extensions.Hosting you can now bind
+  `AspNetCoreInstrumentationOptions` from DI.
+  ([#1997](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1997))
+
 ## 1.0.0-rc3
 
 Released 2021-Mar-19

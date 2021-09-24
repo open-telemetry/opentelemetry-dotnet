@@ -23,7 +23,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Instrumentation.AspNetCore;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -31,6 +34,8 @@ namespace Examples.AspNetCore
 {
     public class Startup
     {
+        private MeterProvider meterProvider;
+
         public Startup(IConfiguration configuration)
         {
             this.Configuration = configuration;
@@ -69,6 +74,7 @@ namespace Examples.AspNetCore
                     break;
                 case "zipkin":
                     services.AddOpenTelemetryTracing((builder) => builder
+                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(this.Configuration.GetValue<string>("Zipkin:ServiceName")))
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddZipkinExporter());
@@ -95,8 +101,31 @@ namespace Examples.AspNetCore
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddConsoleExporter());
+
+                    // For options which can be bound from IConfiguration.
+                    services.Configure<AspNetCoreInstrumentationOptions>(this.Configuration.GetSection("AspNetCoreInstrumentation"));
+
+                    // For options which can be configured from code only.
+                    services.Configure<AspNetCoreInstrumentationOptions>(options =>
+                    {
+                        options.Filter = (req) =>
+                        {
+                            return req.Request.Host != null;
+                        };
+                    });
+
                     break;
             }
+
+            // TODO: Add IServiceCollection.AddOpenTelemetryMetrics extension method
+            var providerBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddAspNetCoreInstrumentation();
+
+            // TODO: Add configuration switch for Prometheus and OTLP export
+            providerBuilder
+                .AddConsoleExporter();
+
+            this.meterProvider = providerBuilder.Build();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

@@ -31,9 +31,7 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
-#if NETCOREAPP2_1
-using TestApp.AspNetCore._2._1;
-#elif NETCOREAPP3_1
+#if NETCOREAPP3_1
 using TestApp.AspNetCore._3._1;
 #else
 using TestApp.AspNetCore._5._0;
@@ -43,7 +41,7 @@ using Xunit;
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
     // See https://github.com/aspnet/Docs/tree/master/aspnetcore/test/integration-tests/samples/2.x/IntegrationTestsSample
-    public class BasicTests
+    public sealed class BasicTests
         : IClassFixture<WebApplicationFactory<Startup>>, IDisposable
     {
         private readonly WebApplicationFactory<Startup> factory;
@@ -108,6 +106,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         public async Task SuccessfulTemplateControllerCallGeneratesASpan(bool shouldEnrich)
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            activityProcessor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
@@ -139,6 +138,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             Assert.Equal(3, activityProcessor.Invocations.Count); // begin and end was called
             var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+
+            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
 
             ValidateAspNetCoreActivity(activity, "/api/values");
         }
@@ -177,22 +179,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // List of invocations
             // 1. SetParentProvider for TracerProviderSdk
             // 2. OnStart for the activity created by AspNetCore with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
-            // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: ActivityCreatedByHttpInListener
-            // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: ActivityCreatedByHttpInListener
+            // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the first tag that is added is (IsCreatedByInstrumentation, bool.TrueString)
+            // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the first tag that is added is (IsCreatedByInstrumentation, bool.TrueString)
 
-            // we should only call Processor.OnEnd once for the sibling activity with the OperationName ActivityCreatedByHttpInListener
+            // we should only call Processor.OnEnd once for the sibling activity
             Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
             var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
 
-#if !NETCOREAPP2_1
-            // ASP.NET Core after 2.x is W3C aware and hence Activity created by it
-            // must be used.
             Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
-#else
-            // ASP.NET Core before 3.x is not W3C aware and hence Activity created by it
-            // is always ignored and new one is created by the Instrumentation
-            Assert.Equal("ActivityCreatedByHttpInListener", activity.OperationName);
-#endif
             Assert.Equal("api/Values/{id}", activity.DisplayName);
 
             Assert.Equal(expectedTraceId, activity.Context.TraceId);
@@ -242,8 +236,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // List of invocations on the processor
                 // 1. SetParentProvider for TracerProviderSdk
                 // 2. OnStart for the activity created by AspNetCore with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
-                // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: ActivityCreatedByHttpInListener
-                // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: ActivityCreatedByHttpInListener
+                // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the first tag that is added is (IsCreatedByInstrumentation, bool.TrueString)
+                // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the first tag that is added is (IsCreatedByInstrumentation, bool.TrueString)
                 Assert.Equal(4, activityProcessor.Invocations.Count);
 
                 var startedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnStart");
@@ -252,24 +246,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 Assert.Single(stoppedActivities);
 
                 // The activity created by the framework and the sibling activity are both sent to Processor.OnStart
-                Assert.Contains(startedActivities, item =>
+                Assert.Equal(2, startedActivities.Count(item =>
                 {
                     var startedActivity = item.Arguments[0] as Activity;
                     return startedActivity.OperationName == HttpInListener.ActivityOperationName;
-                });
+                }));
 
-                Assert.Contains(startedActivities, item =>
-                {
-                    var startedActivity = item.Arguments[0] as Activity;
-                    return startedActivity.OperationName == HttpInListener.ActivityNameByHttpInListener;
-                });
-
-                // Only the sibling activity is sent to Processor.OnEnd
-                Assert.Contains(stoppedActivities, item =>
-                {
-                    var stoppedActivity = item.Arguments[0] as Activity;
-                    return stoppedActivity.OperationName == HttpInListener.ActivityNameByHttpInListener;
-                });
+                // we should only call Processor.OnEnd once for the sibling activity
+                Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
 
                 var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
                 Assert.True(activity.Duration != TimeSpan.Zero);
@@ -524,6 +508,55 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
         }
 
+        [Fact]
+        public async Task BaggageClearedWhenActivityStopped()
+        {
+            int? baggageCountAfterStart = null;
+            int? baggageCountAfterStop = null;
+            using EventWaitHandle stopSignal = new EventWaitHandle(false, EventResetMode.ManualReset);
+
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
+                        new TestHttpInListener(new AspNetCoreInstrumentationOptions())
+                        {
+                            OnStartActivityCallback = (activity, payload) =>
+                            {
+                                baggageCountAfterStart = Baggage.Current.Count;
+                            },
+                            OnStopActivityCallback = (activity, payload) =>
+                            {
+                                baggageCountAfterStop = Baggage.Current.Count;
+                                stopSignal.Set();
+                            },
+                        }))
+                    .Build();
+            }
+
+            // Arrange
+            using (var client = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices))
+                .CreateClient())
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
+
+                request.Headers.TryAddWithoutValidation("baggage", "TestKey1=123,TestKey2=456");
+
+                // Act
+                using var response = await client.SendAsync(request);
+            }
+
+            stopSignal.WaitOne(5000);
+
+            // Assert
+            Assert.NotNull(baggageCountAfterStart);
+            Assert.Equal(2, baggageCountAfterStart);
+            Assert.NotNull(baggageCountAfterStop);
+            Assert.Equal(0, baggageCountAfterStop);
+        }
+
         [Theory]
         [InlineData(SamplingDecision.Drop, false, false)]
         [InlineData(SamplingDecision.RecordOnly, true, true)]
@@ -589,7 +622,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(ActivityKind.Server, activityToValidate.Kind);
             Assert.Equal(HttpInListener.ActivitySourceName, activityToValidate.Source.Name);
             Assert.Equal(HttpInListener.Version.ToString(), activityToValidate.Source.Version);
-            Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
+            Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SemanticConventions.AttributeHttpTarget) as string);
         }
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)
@@ -608,6 +641,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 default:
                     break;
             }
+
+            activity.SetTag("enriched", "yes");
         }
 
         private class ExtractOnlyPropagator : TextMapPropagator
@@ -636,7 +671,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
         private class TestSampler : Sampler
         {
-            private SamplingDecision samplingDecision;
+            private readonly SamplingDecision samplingDecision;
 
             public TestSampler(SamplingDecision samplingDecision)
             {
@@ -646,6 +681,32 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
             {
                 return new SamplingResult(this.samplingDecision);
+            }
+        }
+
+        private class TestHttpInListener : HttpInListener
+        {
+            public Action<Activity, object> OnStartActivityCallback;
+
+            public Action<Activity, object> OnStopActivityCallback;
+
+            public TestHttpInListener(AspNetCoreInstrumentationOptions options)
+                : base(options)
+            {
+            }
+
+            public override void OnStartActivity(Activity activity, object payload)
+            {
+                base.OnStartActivity(activity, payload);
+
+                this.OnStartActivityCallback?.Invoke(activity, payload);
+            }
+
+            public override void OnStopActivity(Activity activity, object payload)
+            {
+                base.OnStopActivity(activity, payload);
+
+                this.OnStopActivityCallback?.Invoke(activity, payload);
             }
         }
     }

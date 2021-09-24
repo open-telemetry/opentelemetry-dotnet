@@ -1,6 +1,10 @@
 name: Linux
 
 on:
+  push:
+    branches: [ main, metrics ]
+    paths-ignore:
+    - '**.md'
   pull_request:
     branches: [ main, metrics ]
     paths-ignore:
@@ -12,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        version: [netcoreapp2.1,netcoreapp3.1,net5.0]
+        version: [netcoreapp3.1,net5.0]
 
     steps:
     - uses: actions/checkout@v2

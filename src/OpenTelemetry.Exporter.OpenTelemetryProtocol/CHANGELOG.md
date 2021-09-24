@@ -1,13 +1,63 @@
 # Changelog
 
-## Experimental - Metrics
-
-Note: the metrics work is happening in the [metrics feature
-branch](https://github.com/open-telemetry/opentelemetry-dotnet/tree/metrics),
-please check the latest changes
-[here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/CHANGELOG.md#experimental---metrics).
-
 ## Unreleased
+
+## 1.2.0-alpha4
+
+Released 2021-Sep-23
+
+## 1.2.0-alpha3
+
+Released 2021-Sep-13
+
+* `OtlpExporterOptions.BatchExportProcessorOptions` is initialized with
+  `BatchExportActivityProcessorOptions` which supports field value overriding
+  using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
+  `OTEL_BSP_MAX_QUEUE_SIZE`, `OTEL_BSP_MAX_EXPORT_BATCH_SIZE`
+  envionmental variables as defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/sdk-environment-variables.md#batch-span-processor).
+  ([#2219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2219))
+
+## 1.2.0-alpha2
+
+Released 2021-Aug-24
+
+* The `OtlpExporterOptions` defaults can be overridden using
+  `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` and `OTEL_EXPORTER_OTLP_TIMEOUT`
+  envionmental variables as defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md).
+  ([#2188](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2188))
+
+* Changed default temporality for Metrics to be cumulative.
+
+## 1.2.0-alpha1
+
+Released 2021-Jul-23
+
+* Removes .NET Framework 4.5.2, .NET 4.6 support. The minimum .NET Framework
+  version supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
+
+* Add Metrics support.([#2174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2174))
+
+## 1.1.0
+
+Released 2021-Jul-12
+
+## 1.1.0-rc1
+
+Released 2021-Jun-25
+
+## 1.1.0-beta4
+
+Released 2021-Jun-09
+
+## 1.1.0-beta3
+
+Released 2021-May-11
+
+## 1.1.0-beta2
+
+Released 2021-Apr-23
 
 * Resolves `System.TypeInitializationException` exception when using the
   exporter with an application that references Google.Protobuf 3.15. The OTLP

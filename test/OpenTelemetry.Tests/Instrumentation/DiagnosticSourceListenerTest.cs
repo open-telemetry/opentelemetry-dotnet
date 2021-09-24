@@ -15,16 +15,15 @@
 // </copyright>
 
 using System.Diagnostics;
-using Xunit;
 
 namespace OpenTelemetry.Instrumentation.Tests
 {
     public class DiagnosticSourceListenerTest
     {
         private const string TestSourceName = "TestSourceName";
-        private DiagnosticSource diagnosticSource;
-        private TestListenerHandler testListenerHandler;
-        private DiagnosticSourceSubscriber testDiagnosticSourceSubscriber;
+        private readonly DiagnosticSource diagnosticSource;
+        private readonly TestListenerHandler testListenerHandler;
+        private readonly DiagnosticSourceSubscriber testDiagnosticSourceSubscriber;
 
         public DiagnosticSourceListenerTest()
         {

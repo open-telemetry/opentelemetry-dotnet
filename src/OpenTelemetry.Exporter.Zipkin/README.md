@@ -13,12 +13,18 @@
 dotnet add package OpenTelemetry.Exporter.Zipkin
 ```
 
+## Enable/Add Zipkin as a tracing exporter
+
+You can enable the the `ZipkinExporter` with the `AddZipkinExporter()` extension
+method on `TracerProviderBuilder`.
+
 ## Configuration
 
-You can enable the the `ZipkinExporter` with the `AddZipkinExporter()`.
+You can configure the `ZipkinExporter` through `ZipkinExporterOptions`
+and environment variables. The `ZipkinExporterOptions` setters
+take precedence over the environment variables.
 
-You can configure the `ZipkinExporter` through
-`ZipkinExporterOptions` properties:
+### Configuration using Properties
 
 * `ServiceName`: Name of the service reporting telemetry. If the `Resource`
    associated with the telemetry has "service.name" defined, then it'll be
@@ -37,6 +43,24 @@ You can configure the `ZipkinExporter` through
 See
 [`TestZipkinExporter.cs`](../../examples/Console/TestZipkinExporter.cs)
 for example use.
+
+### Configuration using Dependency Injection
+
+This exporter allows easy configuration of `ZipkinExporterOptions` from
+dependency injection container, when used in conjunction with
+[`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md).
+
+See the [Startup](../../examples/AspNetCore/Startup.cs) class of the ASP.NET
+Core application for example use.
+
+### Configuration using Environment Variables
+
+The following environment variables can be used to override the default
+values of the `ZipkinExporterOptions`.
+
+| Environment variable            | `ZipkinExporterOptions` property |
+| --------------------------------| -------------------------------- |
+| `OTEL_EXPORTER_ZIPKIN_ENDPOINT` | `Endpoint`                       |
 
 ## References
 

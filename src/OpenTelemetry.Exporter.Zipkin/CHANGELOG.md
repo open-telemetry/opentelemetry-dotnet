@@ -2,8 +2,59 @@
 
 ## Unreleased
 
+## 1.2.0-alpha4
+
+Released 2021-Sep-23
+
+## 1.2.0-alpha3
+
+Released 2021-Sep-13
+
+* `ZipkinExporterOptions.BatchExportProcessorOptions` is initialized with
+  `BatchExportActivityProcessorOptions` which supports field value overriding
+  using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
+  `OTEL_BSP_MAX_QUEUE_SIZE`, `OTEL_BSP_MAX_EXPORT_BATCH_SIZE`
+  envionmental variables as defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/sdk-environment-variables.md#batch-span-processor).
+  ([#2219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2219))
+
+## 1.2.0-alpha2
+
+Released 2021-Aug-24
+
+* Enabling endpoint configuration in ZipkinExporterOptions via
+  `OTEL_EXPORTER_ZIPKIN_ENDPOINT` environment variable.
+  ([#1453](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1453))
+
+## 1.2.0-alpha1
+
+Released 2021-Jul-23
+
+* Removes .NET Framework 4.5.2, .NET 4.6 support. The minimum .NET Framework
+  version supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
+
+## 1.1.0
+
+Released 2021-Jul-12
+
+## 1.1.0-rc1
+
+Released 2021-Jun-25
+
+## 1.1.0-beta4
+
+Released 2021-Jun-09
+
+## 1.1.0-beta3
+
+Released 2021-May-11
+
+## 1.1.0-beta2
+
+Released 2021-Apr-23
+
 * When using OpenTelemetry.Extensions.Hosting you can now bind
-  `JaegerExporterOptions` to `IConfiguration` using the `Configure` extension
+  `ZipkinExporterOptions` to `IConfiguration` using the `Configure` extension
   (ex:
   `services.Configure<ZipkinExporterOptions>(this.Configuration.GetSection("Zipkin"));`).
   ([#1889](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1889))

@@ -16,6 +16,10 @@
 
 using System;
 using System.Diagnostics;
+using System.Security;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
 {
@@ -24,6 +28,57 @@ namespace OpenTelemetry.Exporter
     /// </summary>
     public class OtlpExporterOptions
     {
+        internal const string EndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
+        internal const string HeadersEnvVarName = "OTEL_EXPORTER_OTLP_HEADERS";
+        internal const string TimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TIMEOUT";
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
+        /// </summary>
+        public OtlpExporterOptions()
+        {
+            try
+            {
+                string endpointEnvVar = Environment.GetEnvironmentVariable(EndpointEnvVarName);
+                if (!string.IsNullOrEmpty(endpointEnvVar))
+                {
+                    if (Uri.TryCreate(endpointEnvVar, UriKind.Absolute, out var endpoint))
+                    {
+                        this.Endpoint = endpoint;
+                    }
+                    else
+                    {
+                        OpenTelemetryProtocolExporterEventSource.Log.FailedToParseEnvironmentVariable(EndpointEnvVarName, endpointEnvVar);
+                    }
+                }
+
+                string headersEnvVar = Environment.GetEnvironmentVariable(HeadersEnvVarName);
+                if (!string.IsNullOrEmpty(headersEnvVar))
+                {
+                    this.Headers = headersEnvVar;
+                }
+
+                string timeoutEnvVar = Environment.GetEnvironmentVariable(TimeoutEnvVarName);
+                if (!string.IsNullOrEmpty(timeoutEnvVar))
+                {
+                    if (int.TryParse(timeoutEnvVar, out var timeout))
+                    {
+                        this.TimeoutMilliseconds = timeout;
+                    }
+                    else
+                    {
+                        OpenTelemetryProtocolExporterEventSource.Log.FailedToParseEnvironmentVariable(TimeoutEnvVarName, timeoutEnvVar);
+                    }
+                }
+            }
+            catch (SecurityException ex)
+            {
+                // The caller does not have the required permission to
+                // retrieve the value of an environment variable from the current process.
+                OpenTelemetryProtocolExporterEventSource.Log.MissingPermissionsToReadEnvironmentVariable(ex);
+            }
+        }
+
         /// <summary>
         /// Gets or sets the target to which the exporter is going to send traces.
         /// Must be a valid Uri with scheme (http) and host, and
@@ -44,13 +99,24 @@ namespace OpenTelemetry.Exporter
         public int TimeoutMilliseconds { get; set; } = 10000;
 
         /// <summary>
-        /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter.
+        /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
         /// </summary>
         public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
 
         /// <summary>
         /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
         /// </summary>
-        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportProcessorOptions<Activity>();
+        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
+
+        /// <summary>
+        /// Gets or sets the metric export interval in milliseconds. The default value is 1000 milliseconds.
+        /// </summary>
+        public int MetricExportIntervalMilliseconds { get; set; } = 1000;
+
+        /// <summary>
+        /// Gets or sets the AggregationTemporality used for Histogram
+        /// and Sum metrics.
+        /// </summary>
+        public AggregationTemporality AggregationTemporality { get; set; } = AggregationTemporality.Cumulative;
     }
 }

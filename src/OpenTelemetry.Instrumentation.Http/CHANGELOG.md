@@ -2,6 +2,38 @@
 
 ## Unreleased
 
+* Removes .NET Framework 4.5.2 support. The minimum .NET Framework
+  version supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
+
+* `HttpClient` instances created before `AddHttpClientInstrumentation` is called
+  on .NET Framework will now also be instrumented
+  ([#2364](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2364))
+
+## 1.0.0-rc7
+
+Released 2021-Jul-12
+
+## 1.0.0-rc6
+
+Released 2021-Jun-25
+
+## 1.0.0-rc5
+
+Released 2021-Jun-09
+
+## 1.0.0-rc4
+
+Released 2021-Apr-23
+
+* Sanitize `http.url` attribute.
+  ([#1961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1961))
+* Added `RecordException` to HttpClientInstrumentationOptions and
+  HttpWebRequestInstrumentationOptions which allows Exception to be reported as
+  ActivityEvent.
+* Update `AddHttpClientInstrumentation` extension method for .NET Framework to
+  use only use `HttpWebRequestInstrumentationOptions`
+  ([#1982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1982))
+
 ## 1.0.0-rc3
 
 Released 2021-Mar-19
@@ -12,7 +44,7 @@ Released 2021-Mar-19
   ([#1836](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1836))
 * Performance optimization by leveraging sampling decision and short circuiting
   activity enrichment.
-  ([#1903](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1894))
+  ([#1894](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1894))
 
 ## 1.0.0-rc2
 

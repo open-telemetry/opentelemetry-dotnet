@@ -59,8 +59,8 @@ A demo exporter which simply writes activity name to the console is shown
 [here](./MyExporter.cs).
 
 Apart from the exporter itself, you should also provide extension methods as
-shown [here](./MyExporterHelperExtensions.cs). This allows users to add the
-Exporter to the `TracerProvider` as shown in the example [here](./Program.cs).
+shown [here](./MyExporterExtensions.cs). This allows users to add the Exporter
+to the `TracerProvider` as shown in the example [here](./Program.cs).
 
 ## Instrumentation Library
 
@@ -126,7 +126,7 @@ Writing an instrumentation library typically involves 3 steps.
    .NET Framework, which publishes events using `EventSource`. The [SqlClient
    instrumentation
    library](../../../src/OpenTelemetry.Instrumentation.SqlClient/Implementation/SqlEventSourceListener.netfx.cs),
-   in this case subscribes to the `EventSource` callbacks
+   in this case subscribes to the `EventSource` callbacks.
 
 2. Second step is to emit activities using the [ActivitySource
    API](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api).
@@ -137,6 +137,18 @@ Writing an instrumentation library typically involves 3 steps.
    instrumentation library (eg:
    "OpenTelemetry.Instrumentation.StackExchangeRedis") and *not* the
    instrumented library (eg: "StackExchange.Redis")
+      1. [Context Propagation](../../../src/OpenTelemetry.Api/README.md#context-propagation):
+      If your library initiates out of process requests or
+      accepts them, the library needs to
+      [inject the `PropagationContext`](../../../examples/MicroserviceExample/Utils/Messaging/MessageSender.cs)
+      to outgoing requests and
+      [extract the context](../../../examples/MicroserviceExample/Utils/Messaging/MessageReceiver.cs)
+      and hydrate the Activity/Baggage upon receiving incoming requests.
+      This is only required if you're using your own protocol to
+      communicate over the wire.
+      (i.e. If you're using an already instrumented HttpClient or GrpcClient,
+      this is already provided to you and **do not require**
+      injecting/extracting `PropagationContext` explicitly again.)
 
 3. Third step is an optional step, and involves providing extension methods on
    `TracerProviderBuilder`, to enable the instrumentation. This is optional, and
@@ -172,16 +184,19 @@ but using the
 method. These are referred to as "legacy Activity" in this repo. These libraries
 already create activities but they do so by using the `Activity` constructor
 directly, rather than using `ActivitySource.StartActivity` method. These
-activities does not by default runs though the samplers, and will have their
+activities does not by default runs through the sampler, and will have their
 `Kind` set to internal and they'll have empty ActivitySource name associated
 with it.
 
-Some common examples of such libraries include ASP.NET, ASP.NET Core, HttpClient
-(.NET Core). Instrumentation libraries for these are already provided in this
-repo. The OpenTelemetry .NET Contrib Repo also has instrumentations for
-libraries like
-[ElasticSearch](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Contrib.Instrumentation.Elasticsearch),
-[EntityFramework](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Contrib.Instrumentation.EntityFrameworkCore)
+Some common examples of such libraries include
+[ASP.NET](../../../src/OpenTelemetry.Instrumentation.AspNet/README.md), [ASP.NET
+Core](../../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md), [HTTP
+client .NET Core](../../../src/OpenTelemetry.Instrumentation.Http/README.md) .
+Instrumentation libraries for these are already provided in this repo. The
+[OpenTelemetry .NET
+Contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
+repostory also has instrumentations for libraries like
+[ElasticSearchClient](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Contrib.Instrumentation.ElasticsearchClient)
 etc. which fall in this category.
 
 If you are writing instrumentation for such library, it is recommended to refer

@@ -6,4 +6,5 @@ static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddInstrumentation<T>
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddProcessor<T>(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProviderBuilder
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.Build(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, System.IServiceProvider serviceProvider) -> OpenTelemetry.Trace.TracerProvider
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.Configure(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, System.Action<System.IServiceProvider, OpenTelemetry.Trace.TracerProviderBuilder> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.GetServices(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder) -> Microsoft.Extensions.DependencyInjection.IServiceCollection
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetSampler<T>(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProviderBuilder
