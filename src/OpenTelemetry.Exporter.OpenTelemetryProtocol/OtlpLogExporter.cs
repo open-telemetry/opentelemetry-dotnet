@@ -135,10 +135,6 @@ namespace OpenTelemetry.Exporter
 
                 return ExportResult.Failure;
             }
-            finally
-            {
-                request.Return();
-            }
 
             return ExportResult.Success;
         }
