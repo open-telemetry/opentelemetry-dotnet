@@ -25,6 +25,8 @@ public class Program
 
     public static void Main(string[] args)
     {
+        // TODO: Document views with several examples
+        // in the increasing order of complexity.
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddSource(MyMeter.Name)
             .AddView(instrumentName: "MyCounter") // MyCounter will be reported with defaults. This is done to ensure that any other wildcard Views for the same instrument does not affect this instrument.
@@ -32,7 +34,6 @@ public class Program
             .AddView(instrumentName: "MyCounterDrop", aggregation: Aggregation.None) // The intention is to drop MyCounterDrop instrument. Due to the wildcard "My", this gets pickup.. TODO: find the right expectation.
             .AddView(name: "MyHistogramCustom", instrumentName: "MyHistogram", histogramBounds: new double[] { 10, 20 }) // MyHistogram will be aggregated using custom bounds and will be outputted as "MyHistogramCustom"
             .AddView(instrumentName: "My", tagKeys: new string[] { "tag1" }) // All instruments whose name starts with My, will be aggregated with a single tag - tag1. MyCounter, MyHistogram will get excluded from this, as their name is already taken.
-            .AddView(meterName: "SpecialMeter", instrumentType: InstrumentType.Histogram, histogramBounds: new double[] { 100, 200 }) // for all histograms from the meter SpecialMeter, use custom bounds 100,200.
             .AddConsoleExporter()
             .Build();
 
