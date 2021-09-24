@@ -104,79 +104,31 @@ namespace OpenTelemetry.Exporter
                 _ => null
             };
 
-        public static void InitializeEndpoints(this OtlpExporterOptions options, ExportProtocol protocol)
+        public static Uri AppendPathIfNotPresent(this Uri uri, string path)
         {
-            switch (protocol)
-            {
-                case ExportProtocol.Grpc:
-                    InitializeGrpcEndpoints(options);
-                    break;
-                case ExportProtocol.HttpProtobuf:
-                    InitializeHttpProtobufEndpoints(options);
-                    break;
-                default:
-                    throw new NotSupportedException($"Export protocol {protocol} is not supported.");
-            }
-        }
+            var absoluteUri = uri.AbsoluteUri;
+            var separator = string.Empty;
 
-        private static void InitializeGrpcEndpoints(OtlpExporterOptions options)
-        {
-            if (TryCreateUriFromEndpointEnvVar(OtlpExporterOptions.EndpointEnvVarName, out var endpoint))
+            if (absoluteUri.EndsWith("/"))
             {
-                options.Endpoint = endpoint;
-            }
-        }
-
-        private static void InitializeHttpProtobufEndpoints(OtlpExporterOptions options)
-        {
-            if (TryCreateUriFromEndpointEnvVar(OtlpExporterOptions.EndpointEnvVarName, out var endpoint))
-            {
-                options.Endpoint = endpoint;
-
-                if (Uri.TryCreate(endpoint.AbsoluteUri.AppendPath(OtlpExporterOptions.TraceExportPath), UriKind.Absolute, out var traceEndpointUri))
+                // Endpoint already ends with 'path/'
+                if (absoluteUri.EndsWith(string.Concat(path, "/"), StringComparison.OrdinalIgnoreCase))
                 {
-                    options.TracesEndpoint = traceEndpointUri;
-                }
-
-                if (Uri.TryCreate(endpoint.AbsoluteUri.AppendPath(OtlpExporterOptions.MetricsExportPath), UriKind.Absolute, out var metricsEndpointUri))
-                {
-                    options.MetricsEndpoint = metricsEndpointUri;
+                    return uri;
                 }
             }
-
-            if (TryCreateUriFromEndpointEnvVar(OtlpExporterOptions.TracesEndpointEnvVarName, out var tracesEndpoint))
+            else
             {
-                options.TracesEndpoint = tracesEndpoint;
-            }
-
-            if (TryCreateUriFromEndpointEnvVar(OtlpExporterOptions.MetricsEndpointEnvVarName, out var metricsEndpoint))
-            {
-                options.MetricsEndpoint = metricsEndpoint;
-            }
-        }
-
-        private static string AppendPath(this string endpoint, string path)
-        {
-            var separator = endpoint.EndsWith("/") ? string.Empty : "/";
-            return string.Concat(endpoint, separator, path);
-        }
-
-        private static bool TryCreateUriFromEndpointEnvVar(string endpointEnvVarName, out Uri uri)
-        {
-            uri = null;
-            var uriCreated = false;
-            var endpointEnvVar = Environment.GetEnvironmentVariable(endpointEnvVarName);
-
-            if (!string.IsNullOrEmpty(endpointEnvVar))
-            {
-                uriCreated = Uri.TryCreate(endpointEnvVar, UriKind.Absolute, out uri);
-                if (!uriCreated)
+                // Endpoint already ends with 'path'
+                if (absoluteUri.EndsWith(path, StringComparison.OrdinalIgnoreCase))
                 {
-                    OpenTelemetryProtocolExporterEventSource.Log.FailedToParseEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, endpointEnvVar);
+                    return uri;
                 }
+
+                separator = "/";
             }
 
-            return uriCreated;
+            return new Uri(string.Concat(uri.AbsoluteUri, separator, path));
         }
     }
 }

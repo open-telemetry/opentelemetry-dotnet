@@ -118,65 +118,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(expectedExportProtocol, exportProtocol);
         }
 
-        [Fact]
-        public void InitializeEndpoints_Grpc_OptionsHasCorrectEndpoints()
+        [Theory]
+        [InlineData("http://test:8888", "http://test:8888/v1/traces")]
+        [InlineData("http://test:8888/", "http://test:8888/v1/traces")]
+        [InlineData("http://test:8888/v1/traces", "http://test:8888/v1/traces")]
+        [InlineData("http://test:8888/v1/traces/", "http://test:8888/v1/traces/")]
+        public void AppendPathIfNotPresent_TracesPath_AppendsCorrectly(string inputUri, string expectedUri)
         {
-            Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
+            var uri = new Uri(inputUri, UriKind.Absolute);
 
-            var options = new OtlpExporterOptions
-            {
-                Endpoint = new Uri("https://test.com"),
-            };
+            var resultUri = uri.AppendPathIfNotPresent(OtlpExporterOptions.TracesExportPath);
 
-            options.InitializeEndpoints(ExportProtocol.Grpc);
-
-            Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
-            Assert.Equal(new Uri("http://localhost:4317"), options.TracesEndpoint);
-            Assert.Equal(new Uri("http://localhost:4317"), options.MetricsEndpoint);
-
-            Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, null);
-        }
-
-        [Fact]
-        public void InitializeEndpoints_HttpProtobuf_SignalSpecificEndpointEnvVarsNotDefined_OptionsHasCorrectEndpoints()
-        {
-            Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
-
-            var options = new OtlpExporterOptions
-            {
-                Endpoint = new Uri("https://test.com"),
-            };
-
-            options.InitializeEndpoints(ExportProtocol.HttpProtobuf);
-
-            Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
-            Assert.Equal(new Uri($"http://test:8888/{OtlpExporterOptions.TraceExportPath}"), options.TracesEndpoint);
-            Assert.Equal(new Uri($"http://test:8888/{OtlpExporterOptions.MetricsExportPath}"), options.MetricsEndpoint);
-
-            Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, null);
-        }
-
-        [Fact]
-        public void InitializeEndpoints_HttpProtobuf_SignalSpecificEndpointEnvVarsDefined_OptionsHasCorrectEndpoints()
-        {
-            Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
-            Environment.SetEnvironmentVariable(OtlpExporterOptions.TracesEndpointEnvVarName, "http://test/mytraces");
-            Environment.SetEnvironmentVariable(OtlpExporterOptions.MetricsEndpointEnvVarName, "http://test/somemetrics");
-
-            var options = new OtlpExporterOptions
-            {
-                Endpoint = new Uri("https://test.com"),
-            };
-
-            options.InitializeEndpoints(ExportProtocol.HttpProtobuf);
-
-            Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
-            Assert.Equal(new Uri("http://test/mytraces"), options.TracesEndpoint);
-            Assert.Equal(new Uri("http://test/somemetrics"), options.MetricsEndpoint);
-
-            Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, null);
-            Environment.SetEnvironmentVariable(OtlpExporterOptions.TracesEndpointEnvVarName, null);
-            Environment.SetEnvironmentVariable(OtlpExporterOptions.MetricsEndpointEnvVarName, null);
+            Assert.Equal(expectedUri, resultUri.AbsoluteUri);
         }
     }
 }

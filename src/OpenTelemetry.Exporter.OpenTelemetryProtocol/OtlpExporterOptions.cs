@@ -29,13 +29,11 @@ namespace OpenTelemetry.Exporter
     public class OtlpExporterOptions
     {
         internal const string EndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
-        internal const string TracesEndpointEnvVarName = "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT";
-        internal const string MetricsEndpointEnvVarName = "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT";
         internal const string HeadersEnvVarName = "OTEL_EXPORTER_OTLP_HEADERS";
         internal const string TimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TIMEOUT";
         internal const string ProtocolEnvVarName = "OTEL_EXPORTER_OTLP_PROTOCOL";
 
-        internal const string TraceExportPath = "v1/traces";
+        internal const string TracesExportPath = "v1/traces";
         internal const string MetricsExportPath = "v1/metrics";
 
         /// <summary>
@@ -45,22 +43,18 @@ namespace OpenTelemetry.Exporter
         {
             try
             {
-                // Protocol initialization should come before endpoints as it's initialization logic depends on the protocol.
-                var protocolEnvVar = Environment.GetEnvironmentVariable(ProtocolEnvVarName);
-                if (!string.IsNullOrEmpty(protocolEnvVar))
+                string endpointEnvVar = Environment.GetEnvironmentVariable(EndpointEnvVarName);
+                if (!string.IsNullOrEmpty(endpointEnvVar))
                 {
-                    var protocol = protocolEnvVar.ToExportProtocol();
-                    if (protocol.HasValue)
+                    if (Uri.TryCreate(endpointEnvVar, UriKind.Absolute, out var endpoint))
                     {
-                        this.Protocol = protocol.Value;
+                        this.Endpoint = endpoint;
                     }
                     else
                     {
-                        OpenTelemetryProtocolExporterEventSource.Log.UnsupportedProtocol(protocolEnvVar);
+                        OpenTelemetryProtocolExporterEventSource.Log.FailedToParseEnvironmentVariable(EndpointEnvVarName, endpointEnvVar);
                     }
                 }
-
-                this.InitializeEndpoints(this.Protocol);
 
                 string headersEnvVar = Environment.GetEnvironmentVariable(HeadersEnvVarName);
                 if (!string.IsNullOrEmpty(headersEnvVar))
@@ -80,6 +74,20 @@ namespace OpenTelemetry.Exporter
                         OpenTelemetryProtocolExporterEventSource.Log.FailedToParseEnvironmentVariable(TimeoutEnvVarName, timeoutEnvVar);
                     }
                 }
+
+                string protocolEnvVar = Environment.GetEnvironmentVariable(ProtocolEnvVarName);
+                if (!string.IsNullOrEmpty(protocolEnvVar))
+                {
+                    var protocol = protocolEnvVar.ToExportProtocol();
+                    if (protocol.HasValue)
+                    {
+                        this.Protocol = protocol.Value;
+                    }
+                    else
+                    {
+                        OpenTelemetryProtocolExporterEventSource.Log.UnsupportedProtocol(protocolEnvVar);
+                    }
+                }
             }
             catch (SecurityException ex)
             {
@@ -90,28 +98,12 @@ namespace OpenTelemetry.Exporter
         }
 
         /// <summary>
-        /// Gets or sets the target to which the exporter is going to send traces or metrics.
-        /// Must be a valid Uri with scheme (http) and host, and
-        /// may contain a port and path. Secure connection(https) is not
-        /// supported.
-        /// </summary>
-        public Uri Endpoint { get; set; } = new Uri("http://localhost:4317");
-
-        /// <summary>
         /// Gets or sets the target to which the exporter is going to send traces.
         /// Must be a valid Uri with scheme (http) and host, and
         /// may contain a port and path. Secure connection(https) is not
         /// supported.
         /// </summary>
-        public Uri TracesEndpoint { get; set; } = new Uri("http://localhost:4317");
-
-        /// <summary>
-        /// Gets or sets the target to which the exporter is going to send metrics.
-        /// Must be a valid Uri with scheme (http) and host, and
-        /// may contain a port and path. Secure connection(https) is not
-        /// supported.
-        /// </summary>
-        public Uri MetricsEndpoint { get; set; } = new Uri("http://localhost:4317");
+        public Uri Endpoint { get; set; } = new Uri("http://localhost:4317");
 
         /// <summary>
         /// Gets or sets optional headers for the connection. Refer to the <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables">
