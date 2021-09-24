@@ -21,6 +21,7 @@ using System.Linq;
 #endif
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
+using System.Security;
 
 namespace OpenTelemetry.Internal
 {
@@ -122,6 +123,34 @@ namespace OpenTelemetry.Internal
             if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.TracerProviderException(evnt, ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
+        public void MissingPermissionsToReadEnvironmentVariable(SecurityException ex)
+        {
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+            {
+                this.MissingPermissionsToReadEnvironmentVariable(ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
+        public void DroppedExportProcessorItems(string exportProcessorName, string exporterName, long droppedCount)
+        {
+            if (droppedCount > 0)
+            {
+                if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+                {
+                    this.ExistsDroppedExportProcessorItems(exportProcessorName, exporterName, droppedCount);
+                }
+            }
+            else
+            {
+                if (this.IsEnabled(EventLevel.Informational, EventKeywords.All))
+                {
+                    this.NoDroppedExportProcessorItems(exportProcessorName, exporterName);
+                }
             }
         }
 
@@ -285,6 +314,30 @@ namespace OpenTelemetry.Internal
         public void TracerProviderException(string evnt, string ex)
         {
             this.WriteEvent(28, evnt, ex);
+        }
+
+        [Event(29, Message = "Failed to parse environment variable: '{0}', value: '{1}'.", Level = EventLevel.Warning)]
+        public void FailedToParseEnvironmentVariable(string name, string value)
+        {
+            this.WriteEvent(29, name, value);
+        }
+
+        [Event(30, Message = "Missing permissions to read environment variable: '{0}'", Level = EventLevel.Warning)]
+        public void MissingPermissionsToReadEnvironmentVariable(string exception)
+        {
+            this.WriteEvent(30, exception);
+        }
+
+        [Event(31, Message = "'{0}' exporting to '{1}' dropped '0' items.", Level = EventLevel.Informational)]
+        public void NoDroppedExportProcessorItems(string exportProcessorName, string exporterName)
+        {
+            this.WriteEvent(31, exportProcessorName, exporterName);
+        }
+
+        [Event(32, Message = "'{0}' exporting to '{1}' dropped '{2}' item(s) due to buffer full.", Level = EventLevel.Warning)]
+        public void ExistsDroppedExportProcessorItems(string exportProcessorName, string exporterName, long droppedCount)
+        {
+            this.WriteEvent(32, exportProcessorName, exporterName, droppedCount);
         }
 
 #if DEBUG

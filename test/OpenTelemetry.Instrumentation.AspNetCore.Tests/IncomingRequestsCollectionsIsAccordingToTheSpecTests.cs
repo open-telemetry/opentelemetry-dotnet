@@ -25,9 +25,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Trace;
-#if NETCOREAPP2_1
-using TestApp.AspNetCore._2._1;
-#elif NETCOREAPP3_1
+#if NETCOREAPP3_1
 using TestApp.AspNetCore._3._1;
 #else
 using TestApp.AspNetCore._5._0;
@@ -106,7 +104,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
             Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
-            Assert.Equal(urlPath, activity.GetTagValue(SpanAttributeConstants.HttpPathKey));
+            Assert.Equal(urlPath, activity.GetTagValue(SemanticConventions.AttributeHttpTarget));
             Assert.Equal($"http://localhost{urlPath}", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
             Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
 

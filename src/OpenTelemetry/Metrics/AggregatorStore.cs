@@ -15,74 +15,57 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
+using System.Threading;
 
 namespace OpenTelemetry.Metrics
 {
     internal class AggregatorStore
     {
-        private static readonly string[] EmptySeqKey = new string[0];
-        private static readonly object[] EmptySeqValue = new object[0];
-        private readonly Instrument instrument;
-        private readonly object lockKeyValue2MetricAggs = new object();
+        internal const int MaxMetricPoints = 2000;
+        private static readonly ObjectArrayEqualityComparer ObjectArrayComparer = new ObjectArrayEqualityComparer();
+        private readonly object lockZeroTags = new object();
 
         // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
-        private readonly Dictionary<string[], Dictionary<object[], IAggregator[]>> keyValue2MetricAggs =
-            new Dictionary<string[], Dictionary<object[], IAggregator[]>>(new StringArrayEqualityComparer());
+        private readonly ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>> keyValue2MetricAggs =
+            new ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>>(new StringArrayEqualityComparer());
 
-        private IAggregator[] tag0Metrics = null;
+        private AggregationTemporality temporality;
+        private MetricPoint[] metrics;
+        private int metricPointIndex = 0;
+        private bool zeroTagMetricPointInitialized;
+        private AggregationType aggType;
+        private DateTimeOffset startTimeExclusive;
+        private DateTimeOffset endTimeInclusive;
 
-        internal AggregatorStore(Instrument instrument)
+        internal AggregatorStore(AggregationType aggType, AggregationTemporality temporality)
         {
-            this.instrument = instrument;
+            this.metrics = new MetricPoint[MaxMetricPoints];
+            this.aggType = aggType;
+            this.temporality = temporality;
+            this.startTimeExclusive = DateTimeOffset.UtcNow;
         }
 
-        internal IAggregator[] MapToMetrics(string[] seqKey, object[] seqVal)
-        {
-            var aggregators = new List<IAggregator>();
-
-            var tags = new KeyValuePair<string, object>[seqKey.Length];
-            for (int i = 0; i < seqKey.Length; i++)
-            {
-                tags[i] = new KeyValuePair<string, object>(seqKey[i], seqVal[i]);
-            }
-
-            var dt = DateTimeOffset.UtcNow;
-
-            // TODO: Need to map each instrument to metrics (based on View API)
-            if (this.instrument.GetType().Name.Contains("Counter"))
-            {
-                aggregators.Add(new SumMetricAggregator(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
-            }
-            else if (this.instrument.GetType().Name.Contains("Gauge"))
-            {
-                aggregators.Add(new GaugeMetricAggregator(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
-            }
-            else if (this.instrument.GetType().Name.Contains("Histogram"))
-            {
-                aggregators.Add(new HistogramMetricAggregator(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags));
-            }
-            else
-            {
-                aggregators.Add(new SummaryMetricAggregator(this.instrument.Name, this.instrument.Description, this.instrument.Unit, this.instrument.Meter, dt, tags, false));
-            }
-
-            return aggregators.ToArray();
-        }
-
-        internal IAggregator[] FindMetricAggregators(ReadOnlySpan<KeyValuePair<string, object>> tags)
+        internal int FindMetricAggregators(ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
             int len = tags.Length;
-
             if (len == 0)
             {
-                if (this.tag0Metrics == null)
+                if (!this.zeroTagMetricPointInitialized)
                 {
-                    this.tag0Metrics = this.MapToMetrics(AggregatorStore.EmptySeqKey, AggregatorStore.EmptySeqValue);
+                    lock (this.lockZeroTags)
+                    {
+                        if (!this.zeroTagMetricPointInitialized)
+                        {
+                            var dt = DateTimeOffset.UtcNow;
+                            this.metrics[0] = new MetricPoint(this.aggType, dt, null, null);
+                            this.zeroTagMetricPointInitialized = true;
+                        }
+                    }
                 }
 
-                return this.tag0Metrics;
+                return 0;
             }
 
             var storage = ThreadStaticStorage.GetStorage();
@@ -94,90 +77,148 @@ namespace OpenTelemetry.Metrics
                 Array.Sort<string, object>(tagKey, tagValue);
             }
 
-            IAggregator[] metrics;
+            int aggregatorIndex;
 
-            lock (this.lockKeyValue2MetricAggs)
+            string[] seqKey = null;
+
+            // GetOrAdd by TagKey at 1st Level of 2-level dictionary structure.
+            // Get back a Dictionary of [ Values x Metrics[] ].
+            if (!this.keyValue2MetricAggs.TryGetValue(tagKey, out var value2metrics))
             {
-                string[] seqKey = null;
+                // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                seqKey = new string[len];
+                tagKey.CopyTo(seqKey, 0);
 
-                // GetOrAdd by TagKey at 1st Level of 2-level dictionary structure.
-                // Get back a Dictionary of [ Values x Metrics[] ].
-                if (!this.keyValue2MetricAggs.TryGetValue(tagKey, out var value2metrics))
+                value2metrics = new ConcurrentDictionary<object[], int>(ObjectArrayComparer);
+                if (!this.keyValue2MetricAggs.TryAdd(seqKey, value2metrics))
                 {
-                    // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-
-                    seqKey = new string[len];
-                    tagKey.CopyTo(seqKey, 0);
-
-                    value2metrics = new Dictionary<object[], IAggregator[]>(new ObjectArrayEqualityComparer());
-                    this.keyValue2MetricAggs.Add(seqKey, value2metrics);
-                }
-
-                // GetOrAdd by TagValue at 2st Level of 2-level dictionary structure.
-                // Get back Metrics[].
-                if (!value2metrics.TryGetValue(tagValue, out metrics))
-                {
-                    // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-
-                    if (seqKey == null)
-                    {
-                        seqKey = new string[len];
-                        tagKey.CopyTo(seqKey, 0);
-                    }
-
-                    var seqVal = new object[len];
-                    tagValue.CopyTo(seqVal, 0);
-
-                    metrics = this.MapToMetrics(seqKey, seqVal);
-
-                    value2metrics.Add(seqVal, metrics);
+                    this.keyValue2MetricAggs.TryGetValue(seqKey, out value2metrics);
                 }
             }
 
-            return metrics;
-        }
-
-        internal void Update<T>(T value, ReadOnlySpan<KeyValuePair<string, object>> tags)
-            where T : struct
-        {
-            // TODO: We can isolate the cost of each user-added aggregator in
-            // the hot path by queuing the DataPoint, and doing the Update as
-            // part of the Collect() instead. Thus, we only pay for the price
-            // of queueing a DataPoint in the Hot Path
-
-            var metricAggregators = this.FindMetricAggregators(tags);
-
-            foreach (var metricAggregator in metricAggregators)
+            // GetOrAdd by TagValue at 2st Level of 2-level dictionary structure.
+            // Get back Metrics[].
+            if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex))
             {
-                metricAggregator.Update(value);
-            }
-        }
-
-        internal List<IMetric> Collect(bool isDelta, DateTimeOffset dt)
-        {
-            var collectedMetrics = new List<IMetric>();
-
-            // Lock to prevent new time series from being added
-            // until collect is done.
-            lock (this.lockKeyValue2MetricAggs)
-            {
-                foreach (var keys in this.keyValue2MetricAggs)
+                aggregatorIndex = this.metricPointIndex;
+                if (aggregatorIndex >= MaxMetricPoints)
                 {
-                    foreach (var values in keys.Value)
+                    // sorry! out of data points.
+                    // TODO: Once we support cleanup of
+                    // unused points (typically with delta)
+                    // we can re-claim them here.
+                    return -1;
+                }
+
+                lock (value2metrics)
+                {
+                    // check again after acquiring lock.
+                    if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex))
                     {
-                        foreach (var metric in values.Value)
+                        aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
+                        if (aggregatorIndex >= MaxMetricPoints)
                         {
-                            var m = metric.Collect(dt, isDelta);
-                            if (m != null)
-                            {
-                                collectedMetrics.Add(m);
-                            }
+                            // sorry! out of data points.
+                            // TODO: Once we support cleanup of
+                            // unused points (typically with delta)
+                            // we can re-claim them here.
+                            return -1;
                         }
+
+                        // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                        if (seqKey == null)
+                        {
+                            seqKey = new string[len];
+                            tagKey.CopyTo(seqKey, 0);
+                        }
+
+                        var seqVal = new object[len];
+                        tagValue.CopyTo(seqVal, 0);
+
+                        ref var metricPoint = ref this.metrics[aggregatorIndex];
+                        var dt = DateTimeOffset.UtcNow;
+                        metricPoint = new MetricPoint(this.aggType, dt, seqKey, seqVal);
+
+                        // Add to dictionary *after* initializing MetricPoint
+                        // as other threads can start writing to the
+                        // MetricPoint, if dictionary entry found.
+                        value2metrics.TryAdd(seqVal, aggregatorIndex);
                     }
                 }
             }
 
-            return collectedMetrics;
+            return aggregatorIndex;
+        }
+
+        internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            try
+            {
+                var index = this.FindMetricAggregators(tags);
+                if (index < 0)
+                {
+                    // TODO: Measurement dropped due to MemoryPoint cap hit.
+                    return;
+                }
+
+                this.metrics[index].Update(value);
+            }
+            catch (Exception)
+            {
+                // TODO: Measurement dropped due to internal exception.
+            }
+        }
+
+        internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            try
+            {
+                var index = this.FindMetricAggregators(tags);
+                if (index < 0)
+                {
+                    // TODO: Measurement dropped due to MemoryPoint cap hit.
+                    return;
+                }
+
+                this.metrics[index].Update(value);
+            }
+            catch (Exception)
+            {
+                // TODO: Measurement dropped due to internal exception.
+            }
+        }
+
+        internal void SnapShot()
+        {
+            var indexSnapShot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
+
+            for (int i = 0; i <= indexSnapShot; i++)
+            {
+                ref var metricPoint = ref this.metrics[i];
+                if (metricPoint.StartTime == default)
+                {
+                    continue;
+                }
+
+                metricPoint.TakeSnapShot(this.temporality == AggregationTemporality.Delta ? true : false);
+            }
+
+            if (this.temporality == AggregationTemporality.Delta)
+            {
+                if (this.endTimeInclusive != default)
+                {
+                    this.startTimeExclusive = this.endTimeInclusive;
+                }
+            }
+
+            DateTimeOffset dt = DateTimeOffset.UtcNow;
+            this.endTimeInclusive = dt;
+        }
+
+        internal BatchMetricPoint GetMetricPoints()
+        {
+            var indexSnapShot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
+            return new BatchMetricPoint(this.metrics, indexSnapShot + 1, this.startTimeExclusive, this.endTimeInclusive);
         }
     }
 }

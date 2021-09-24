@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 1.2.0-alpha4
+
+Released 2021-Sep-23
+
+* Updated System.Diagnostics.DiagnosticSource to version 6.0.0-rc.1.21451.13
+
+## 1.2.0-alpha3
+
+Released 2021-Sep-13
+
+* Static Baggage operations (`SetBaggage`, `RemoveBaggage`, & `ClearBaggage`)
+  are now thread-safe. Instance-based Baggage operations no longer mutate
+  `Baggage.Current` (breaking behavior change). For details see:
+  ([#2298](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2298))
+
+## 1.2.0-alpha2
+
+Released 2021-Aug-24
+
 ## 1.2.0-alpha1
 
 Released 2021-Jul-23

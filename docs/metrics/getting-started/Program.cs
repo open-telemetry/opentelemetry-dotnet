@@ -14,41 +14,28 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
 public class Program
 {
-    private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
-    private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("counter");
+    private static readonly Meter MyMeter = new Meter("MyCompany.MyProduct.MyLibrary", "1.0");
 
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestMeter")
-                .AddConsoleExporter()
-                .Build();
+            .AddSource("MyCompany.MyProduct.MyLibrary")
+            .AddConsoleExporter()
+            .Build();
 
-        using var token = new CancellationTokenSource();
-        Task writeMetricTask = new Task(() =>
-        {
-            while (!token.IsCancellationRequested)
-            {
-                Counter.Add(
-                            10,
-                            new KeyValuePair<string, object>("tag1", "value1"),
-                            new KeyValuePair<string, object>("tag2", "value2"));
-                Task.Delay(10).Wait();
-            }
-        });
-        writeMetricTask.Start();
+        var counter = MyMeter.CreateCounter<long>("MyFruitCounter");
 
-        token.CancelAfter(10000);
-        await writeMetricTask;
+        counter.Add(1, new("name", "apple"), new("color", "red"));
+        counter.Add(2, new("name", "lemon"), new("color", "yellow"));
+        counter.Add(1, new("name", "lemon"), new("color", "yellow"));
+        counter.Add(2, new("name", "apple"), new("color", "green"));
+        counter.Add(5, new("name", "apple"), new("color", "red"));
+        counter.Add(4, new("name", "lemon"), new("color", "yellow"));
     }
 }

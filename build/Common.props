@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>9.0</LangVersion>
     <SignAssembly>true</SignAssembly>
     <RepoRoot>$([System.IO.Directory]::GetParent($(MSBuildThisFileDirectory)).Parent.FullName)</RepoRoot>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)debug.snk</AssemblyOriginatorKeyFile>
@@ -19,7 +19,7 @@
   <PropertyGroup Label="Package versions used in this repository">
     <!--
       Please sort alphabetically.
-      Refer to https://docs.microsoft.com/en-us/nuget/concepts/package-versioning for semver syntax.
+      Refer to https://docs.microsoft.com/nuget/concepts/package-versioning for semver syntax.
     -->
     <MinVerPkgVer>[2.3.0,3.0)</MinVerPkgVer>
     <GoogleProtobufPkgVer>[3.15.5,4.0)</GoogleProtobufPkgVer>
@@ -28,7 +28,6 @@
     <GrpcToolsPkgVer>[2.25.0,3.0)</GrpcToolsPkgVer>
     <MicrosoftAspNetCoreHttpAbstractionsPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpAbstractionsPkgVer>
     <MicrosoftAspNetCoreHttpFeaturesPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpFeaturesPkgVer>
-    <MicrosoftAspNetTelemetryCorrelationPkgVer>[1.0.7,2.0)</MicrosoftAspNetTelemetryCorrelationPkgVer>
     <MicrosoftCodeAnalysisAnalyzersPkgVer>[3.3.1]</MicrosoftCodeAnalysisAnalyzersPkgVer>
     <MicrosoftCodeCoveragePkgVer>[16.10.0]</MicrosoftCodeCoveragePkgVer>
     <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,)</MicrosoftExtensionsHostingAbstractionsPkgVer>
@@ -42,7 +41,7 @@
     <StackExchangeRedisPkgVer>[2.1.58,3.0)</StackExchangeRedisPkgVer>
     <StyleCopAnalyzersPkgVer>[1.1.118,2.0)</StyleCopAnalyzersPkgVer>
     <SystemCollectionsImmutablePkgVer>1.4.0</SystemCollectionsImmutablePkgVer>
-    <SystemDiagnosticSourcePkgVer>6.0.0-preview.6.21352.12</SystemDiagnosticSourcePkgVer>
+    <SystemDiagnosticSourcePkgVer>6.0.0-rc.1.21451.13</SystemDiagnosticSourcePkgVer>
     <SystemReflectionEmitLightweightPkgVer>4.7.0</SystemReflectionEmitLightweightPkgVer>
     <SystemTextJsonPkgVer>4.7.0</SystemTextJsonPkgVer>
     <SystemThreadingTasksExtensionsPkgVer>4.5.3</SystemThreadingTasksExtensionsPkgVer>
@@ -57,7 +56,7 @@
     <PackageReference Include="StyleCop.Analyzers" Version="$(StyleCopAnalyzersPkgVer)" Condition="'$(SkipAnalysis)'!='true'">
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.CodeCoverage" Version="$(MicrosoftCodeCoveragePkgVer)" Condition="'$(Configuration)'=='Release'"/>
+    <PackageReference Include="Microsoft.CodeCoverage" Version="$(MicrosoftCodeCoveragePkgVer)" PrivateAssets="All" Condition="'$(Configuration)'=='Release'" />
     <!--<PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersPkgVer)" Condition="'$(SkipAnalysis)'!='true'">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>-->

@@ -27,22 +27,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly PropertyFetcher<HttpContext> stopContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
         private readonly Meter meter;
 
-        private Counter<long> httpServerRequestCount;
+        private Histogram<double> httpServerDuration;
 
         public HttpInMetricsListener(string name, Meter meter)
             : base(name)
         {
             this.meter = meter;
-
-            // TODO:
-            //   In the future, this instrumentation should produce the http.server.duration metric which will likely be represented as a histogram.
-            //   See: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#http-server
-            //
-            //   Histograms are not yet supported by the SDK.
-            //
-            //   For now we produce a count metric called http.server.request_count just for demonstration purposes.
-            //   This metric is not defined by the in the semantic conventions.
-            this.httpServerRequestCount = meter.CreateCounter<long>("http.server.request_count", null, "The number of HTTP requests processed.");
+            this.httpServerDuration = meter.CreateHistogram<double>("http.server.duration", "ms", "measures the duration of the inbound HTTP request");
         }
 
         public override void OnStopActivity(Activity activity, object payload)
@@ -72,7 +63,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, context.Request.Protocol),
             };
 
-            this.httpServerRequestCount.Add(1, tags);
+            this.httpServerDuration.Record(activity.Duration.TotalMilliseconds, tags);
         }
     }
 }

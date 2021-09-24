@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System.Threading;
+using OpenTelemetry.Metrics;
+
 namespace OpenTelemetry.Exporter
 {
     public class ConsoleExporterOptions
@@ -24,14 +27,14 @@ namespace OpenTelemetry.Exporter
         public ConsoleExporterOutputTargets Targets { get; set; } = ConsoleExporterOutputTargets.Console;
 
         /// <summary>
-        /// Gets or sets the metric export interval in milliseconds. The default value is 1000 milliseconds.
+        /// Gets or sets the metric export interval in milliseconds. The default value is <c>Timeout.Infinite</c>.
         /// </summary>
-        public int MetricExportIntervalMilliseconds { get; set; } = 1000;
+        public int MetricExportIntervalMilliseconds { get; set; } = Timeout.Infinite;
 
         /// <summary>
-        /// Gets or sets a value indicating whether to export Delta
-        /// values or not (Cumulative).
+        /// Gets or sets the AggregationTemporality used for Histogram
+        /// and Sum metrics.
         /// </summary>
-        public bool IsDelta { get; set; } = true;
+        public AggregationTemporality AggregationTemporality { get; set; } = AggregationTemporality.Delta;
     }
 }

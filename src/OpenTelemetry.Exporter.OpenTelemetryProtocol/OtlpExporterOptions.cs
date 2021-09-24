@@ -18,6 +18,8 @@ using System;
 using System.Diagnostics;
 using System.Security;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
 {
@@ -104,7 +106,7 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
         /// </summary>
-        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportProcessorOptions<Activity>();
+        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
 
         /// <summary>
         /// Gets or sets the metric export interval in milliseconds. The default value is 1000 milliseconds.
@@ -112,9 +114,9 @@ namespace OpenTelemetry.Exporter
         public int MetricExportIntervalMilliseconds { get; set; } = 1000;
 
         /// <summary>
-        /// Gets or sets a value indicating whether to export Delta
-        /// values or not (Cumulative).
+        /// Gets or sets the AggregationTemporality used for Histogram
+        /// and Sum metrics.
         /// </summary>
-        public bool IsDelta { get; set; } = true;
+        public AggregationTemporality AggregationTemporality { get; set; } = AggregationTemporality.Cumulative;
     }
 }

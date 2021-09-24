@@ -19,35 +19,60 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
+using System.Threading;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
 {
-    public class MeterProviderSdk
-        : MeterProvider
+    internal sealed class MeterProviderSdk : MeterProvider
     {
-        internal readonly ConcurrentDictionary<AggregatorStore, bool> AggregatorStores = new ConcurrentDictionary<AggregatorStore, bool>();
-
+        internal const int MaxMetrics = 1000;
+        internal int ShutdownCount;
+        private readonly Metric[] metrics;
         private readonly List<object> instrumentations = new List<object>();
         private readonly object collectLock = new object();
+        private readonly object instrumentCreationLock = new object();
+        private readonly Dictionary<string, bool> metricStreamNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         private readonly MeterListener listener;
-        private readonly List<MetricProcessor> metricProcessors = new List<MetricProcessor>();
+        private readonly MetricReader reader;
+        private int metricIndex = -1;
 
         internal MeterProviderSdk(
             Resource resource,
             IEnumerable<string> meterSources,
             List<MeterProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
-            MetricProcessor[] metricProcessors)
+            IEnumerable<MetricReader> readers)
         {
             this.Resource = resource;
+            this.metrics = new Metric[MaxMetrics];
 
-            // TODO: Replace with single CompositeProcessor.
-            this.metricProcessors.AddRange(metricProcessors);
+            AggregationTemporality temporality = AggregationTemporality.Cumulative;
 
-            foreach (var processor in this.metricProcessors)
+            foreach (var reader in readers)
             {
-                processor.SetGetMetricFunction(this.Collect);
-                processor.SetParentProvider(this);
+                if (reader == null)
+                {
+                    throw new ArgumentException("A null value was found.", nameof(readers));
+                }
+
+                reader.SetParentProvider(this);
+
+                // TODO: Actually support multiple readers.
+                // Currently the last reader's temporality wins.
+                temporality = reader.PreferredAggregationTemporality;
+
+                if (this.reader == null)
+                {
+                    this.reader = reader;
+                }
+                else if (this.reader is CompositeMetricReader compositeReader)
+                {
+                    compositeReader.AddReader(reader);
+                }
+                else
+                {
+                    this.reader = new CompositeMetricReader(new[] { this.reader, reader });
+                }
             }
 
             if (instrumentationFactories.Any())
@@ -71,14 +96,26 @@ namespace OpenTelemetry.Metrics
                 {
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
-                        var aggregatorStore = new AggregatorStore(instrument);
-
-                        // Lock to prevent new instrument (aggregatorstore)
-                        // from being added while Collect is going on.
-                        lock (this.collectLock)
+                        lock (this.instrumentCreationLock)
                         {
-                            this.AggregatorStores.TryAdd(aggregatorStore, true);
-                            listener.EnableMeasurementEvents(instrument, aggregatorStore);
+                            if (this.metricStreamNames.ContainsKey(instrument.Name))
+                            {
+                                // log and ignore this instrument.
+                                return;
+                            }
+
+                            var index = Interlocked.Increment(ref this.metricIndex);
+                            if (index >= MaxMetrics)
+                            {
+                                // Log that all measurements are dropped from this instrument.
+                            }
+                            else
+                            {
+                                var metric = new Metric(instrument, temporality);
+                                this.metrics[index] = metric;
+                                this.metricStreamNames.Add(instrument.Name, true);
+                                listener.EnableMeasurementEvents(instrument, metric);
+                            }
                         }
                     }
                 },
@@ -86,14 +123,14 @@ namespace OpenTelemetry.Metrics
             };
 
             // Everything double
-            this.listener.SetMeasurementEventCallback<double>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
-            this.listener.SetMeasurementEventCallback<float>((i, m, l, c) => this.MeasurementRecorded(i, (double)m, l, c));
+            this.listener.SetMeasurementEventCallback<double>((instrument, value, tags, state) => this.MeasurementRecordedDouble(instrument, value, tags, state));
+            this.listener.SetMeasurementEventCallback<float>((instrument, value, tags, state) => this.MeasurementRecordedDouble(instrument, value, tags, state));
 
             // Everything long
-            this.listener.SetMeasurementEventCallback<long>((i, m, l, c) => this.MeasurementRecorded(i, m, l, c));
-            this.listener.SetMeasurementEventCallback<int>((i, m, l, c) => this.MeasurementRecorded(i, (long)m, l, c));
-            this.listener.SetMeasurementEventCallback<short>((i, m, l, c) => this.MeasurementRecorded(i, (long)m, l, c));
-            this.listener.SetMeasurementEventCallback<byte>((i, m, l, c) => this.MeasurementRecorded(i, (long)m, l, c));
+            this.listener.SetMeasurementEventCallback<long>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
+            this.listener.SetMeasurementEventCallback<int>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
+            this.listener.SetMeasurementEventCallback<short>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
+            this.listener.SetMeasurementEventCallback<byte>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
 
             this.listener.Start();
         }
@@ -105,19 +142,99 @@ namespace OpenTelemetry.Metrics
             Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
         }
 
-        internal void MeasurementRecorded<T>(Instrument instrument, T value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
-            where T : struct
+        internal void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
             // Get Instrument State
-            var aggregatorStore = state as AggregatorStore;
+            var metric = state as Metric;
 
-            if (instrument == null || aggregatorStore == null)
+            if (instrument == null || metric == null)
             {
                 // TODO: log
                 return;
             }
 
-            aggregatorStore.Update(value, tagsRos);
+            metric.UpdateDouble(value, tagsRos);
+        }
+
+        internal void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
+        {
+            // Get Instrument State
+            var metric = state as Metric;
+
+            if (instrument == null || metric == null)
+            {
+                // TODO: log
+                return;
+            }
+
+            metric.UpdateLong(value, tagsRos);
+        }
+
+        internal Batch<Metric> Collect()
+        {
+            lock (this.collectLock)
+            {
+                try
+                {
+                    // Record all observable instruments
+                    this.listener.RecordObservableInstruments();
+                    var indexSnapShot = Math.Min(this.metricIndex, MaxMetrics - 1);
+                    var target = indexSnapShot + 1;
+                    for (int i = 0; i < target; i++)
+                    {
+                        this.metrics[i].SnapShot();
+                    }
+
+                    return (target > 0) ? new Batch<Metric>(this.metrics, target) : default;
+                }
+                catch (Exception)
+                {
+                    // TODO: Log
+                    return default;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Called by <c>ForceFlush</c>. This function should block the current
+        /// thread until flush completed or timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>
+        /// This function is called synchronously on the thread which made the
+        /// first call to <c>ForceFlush</c>. This function should not throw
+        /// exceptions.
+        /// </remarks>
+        internal bool OnForceFlush(int timeoutMilliseconds)
+        {
+            return this.reader?.Collect(timeoutMilliseconds) ?? true;
+        }
+
+        /// <summary>
+        /// Called by <c>Shutdown</c>. This function should block the current
+        /// thread until shutdown completed or timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>
+        /// This function is called synchronously on the thread which made the
+        /// first call to <c>Shutdown</c>. This function should not throw
+        /// exceptions.
+        /// </remarks>
+        internal bool OnShutdown(int timeoutMilliseconds)
+        {
+            return this.reader?.Shutdown(timeoutMilliseconds) ?? true;
         }
 
         protected override void Dispose(bool disposing)
@@ -132,38 +249,11 @@ namespace OpenTelemetry.Metrics
                 this.instrumentations.Clear();
             }
 
-            foreach (var processor in this.metricProcessors)
-            {
-                processor.Dispose();
-            }
+            // Wait for up to 5 seconds grace period
+            this.reader?.Shutdown(5000);
+            this.reader?.Dispose();
 
             this.listener.Dispose();
-        }
-
-        private MetricItem Collect(bool isDelta)
-        {
-            lock (this.collectLock)
-            {
-                MetricItem metricItem = null;
-                try
-                {
-                    // Record all observable instruments
-                    this.listener.RecordObservableInstruments();
-                    var dt = DateTimeOffset.UtcNow;
-                    metricItem = new MetricItem();
-                    foreach (var kv in this.AggregatorStores)
-                    {
-                        var metrics = kv.Key.Collect(isDelta, dt);
-                        metricItem.Metrics.AddRange(metrics);
-                    }
-                }
-                catch (Exception)
-                {
-                    // TODO: Log
-                }
-
-                return metricItem;
-            }
         }
     }
 }

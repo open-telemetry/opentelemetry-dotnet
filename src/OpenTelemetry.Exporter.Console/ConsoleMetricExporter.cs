@@ -23,7 +23,8 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
 {
-    public class ConsoleMetricExporter : ConsoleExporter<MetricItem>
+    [AggregationTemporality(AggregationTemporality.Cumulative | AggregationTemporality.Delta, AggregationTemporality.Cumulative)]
+    public class ConsoleMetricExporter : ConsoleExporter<Metric>
     {
         private Resource resource;
 
@@ -32,7 +33,7 @@ namespace OpenTelemetry.Exporter
         {
         }
 
-        public override ExportResult Export(in Batch<MetricItem> batch)
+        public override ExportResult Export(in Batch<Metric> batch)
         {
             if (this.resource == null)
             {
@@ -49,72 +50,115 @@ namespace OpenTelemetry.Exporter
                 }
             }
 
-            foreach (var metricItem in batch)
+            foreach (var metric in batch)
             {
-                foreach (var metric in metricItem.Metrics)
+                var msg = new StringBuilder($"\nExport ");
+                msg.Append(metric.Name);
+                if (!string.IsNullOrEmpty(metric.Description))
                 {
-                    var tags = metric.Attributes.ToArray().Select(k => $"{k.Key}={k.Value?.ToString()}");
+                    msg.Append(' ');
+                    msg.Append(metric.Description);
+                }
 
+                if (!string.IsNullOrEmpty(metric.Unit))
+                {
+                    msg.Append($", Unit: {metric.Unit}");
+                }
+
+                if (!string.IsNullOrEmpty(metric.Meter.Name))
+                {
+                    msg.Append($", Meter: {metric.Meter.Name}");
+
+                    if (!string.IsNullOrEmpty(metric.Meter.Version))
+                    {
+                        msg.Append($"/{metric.Meter.Version}");
+                    }
+                }
+
+                Console.WriteLine(msg.ToString());
+
+                foreach (ref var metricPoint in metric.GetMetricPoints())
+                {
                     string valueDisplay = string.Empty;
-                    if (metric is ISumMetric sumMetric)
+                    StringBuilder tagsBuilder = new StringBuilder();
+                    if (metricPoint.Keys != null)
                     {
-                        if (sumMetric.Sum.Value is double doubleSum)
+                        for (int i = 0; i < metricPoint.Keys.Length; i++)
                         {
-                            valueDisplay = ((double)doubleSum).ToString(CultureInfo.InvariantCulture);
-                        }
-                        else if (sumMetric.Sum.Value is long longSum)
-                        {
-                            valueDisplay = ((long)longSum).ToString();
-                        }
-                    }
-                    else if (metric is IGaugeMetric gaugeMetric)
-                    {
-                        if (gaugeMetric.LastValue.Value is double doubleValue)
-                        {
-                            valueDisplay = ((double)doubleValue).ToString();
-                        }
-                        else if (gaugeMetric.LastValue.Value is long longValue)
-                        {
-                            valueDisplay = ((long)longValue).ToString();
-                        }
-
-                        // Qn: tags again ? gaugeMetric.LastValue.Tags
-                    }
-                    else if (metric is ISummaryMetric summaryMetric)
-                    {
-                        valueDisplay = string.Format("Sum: {0} Count: {1}", summaryMetric.PopulationSum, summaryMetric.PopulationCount);
-                    }
-                    else if (metric is IHistogramMetric histogramMetric)
-                    {
-                        valueDisplay = string.Format("Sum: {0} Count: {1}", histogramMetric.PopulationSum, histogramMetric.PopulationCount);
-                    }
-
-                    var kind = metric.GetType().Name;
-
-                    string time = $"{metric.StartTimeExclusive.ToLocalTime().ToString("HH:mm:ss.fff")} {metric.EndTimeInclusive.ToLocalTime().ToString("HH:mm:ss.fff")}";
-
-                    var msg = new StringBuilder($"Export {time} {metric.Name} [{string.Join(";", tags)}] {kind} Value: {valueDisplay}");
-
-                    if (!string.IsNullOrEmpty(metric.Description))
-                    {
-                        msg.Append($", Description: {metric.Description}");
-                    }
-
-                    if (!string.IsNullOrEmpty(metric.Unit))
-                    {
-                        msg.Append($", Unit: {metric.Unit}");
-                    }
-
-                    if (!string.IsNullOrEmpty(metric.Meter.Name))
-                    {
-                        msg.Append($", Meter: {metric.Meter.Name}");
-
-                        if (!string.IsNullOrEmpty(metric.Meter.Version))
-                        {
-                            msg.Append($"/{metric.Meter.Version}");
+                            tagsBuilder.Append(metricPoint.Keys[i]);
+                            tagsBuilder.Append(':');
+                            tagsBuilder.Append(metricPoint.Values[i]);
+                            tagsBuilder.Append(' ');
                         }
                     }
 
+                    var tags = tagsBuilder.ToString().TrimEnd();
+
+                    var metricType = metric.MetricType;
+
+                    if (metricType.IsHistogram())
+                    {
+                        var bucketsBuilder = new StringBuilder();
+                        bucketsBuilder.Append($"Sum: {metricPoint.DoubleValue} Count: {metricPoint.LongValue} \n");
+                        for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
+                        {
+                            if (i == 0)
+                            {
+                                bucketsBuilder.Append("(-Infinity,");
+                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
+                                bucketsBuilder.Append(']');
+                                bucketsBuilder.Append(':');
+                                bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                            }
+                            else if (i == metricPoint.ExplicitBounds.Length)
+                            {
+                                bucketsBuilder.Append('(');
+                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
+                                bucketsBuilder.Append(',');
+                                bucketsBuilder.Append("+Infinity]");
+                                bucketsBuilder.Append(':');
+                                bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                            }
+                            else
+                            {
+                                bucketsBuilder.Append('(');
+                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
+                                bucketsBuilder.Append(',');
+                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
+                                bucketsBuilder.Append(']');
+                                bucketsBuilder.Append(':');
+                                bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                            }
+
+                            bucketsBuilder.AppendLine();
+                        }
+
+                        valueDisplay = bucketsBuilder.ToString();
+                    }
+                    else if (metricType.IsDouble())
+                    {
+                        valueDisplay = metricPoint.DoubleValue.ToString(CultureInfo.InvariantCulture);
+                    }
+                    else if (metricType.IsLong())
+                    {
+                        valueDisplay = metricPoint.LongValue.ToString(CultureInfo.InvariantCulture);
+                    }
+
+                    msg = new StringBuilder();
+                    msg.Append('(');
+                    msg.Append(metricPoint.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                    msg.Append(", ");
+                    msg.Append(metricPoint.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                    msg.Append("] ");
+                    msg.Append(tags);
+                    if (tags != string.Empty)
+                    {
+                        msg.Append(' ');
+                    }
+
+                    msg.Append(metric.MetricType);
+                    msg.AppendLine();
+                    msg.Append($"Value: {valueDisplay}");
                     Console.WriteLine(msg);
                 }
             }

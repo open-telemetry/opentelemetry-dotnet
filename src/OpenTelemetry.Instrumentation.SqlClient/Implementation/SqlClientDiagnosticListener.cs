@@ -21,7 +21,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 {
-    internal class SqlClientDiagnosticListener : ListenerHandler
+    internal sealed class SqlClientDiagnosticListener : ListenerHandler
     {
         public const string SqlDataBeforeExecuteCommand = "System.Data.SqlClient.WriteCommandBefore";
         public const string SqlMicrosoftBeforeExecuteCommand = "Microsoft.Data.SqlClient.WriteCommandBefore";

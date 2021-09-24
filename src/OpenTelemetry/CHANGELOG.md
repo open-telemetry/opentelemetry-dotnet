@@ -2,8 +2,51 @@
 
 ## Unreleased
 
+## 1.2.0-alpha4
+
+Released 2021-Sep-23
+
+* `BatchExportProcessor.OnShutdown` will now log the count of dropped telemetry items.
+  ([#2331](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2331))
+* Changed `CompositeProcessor<T>.OnForceFlush` to meet with the spec
+  requirement. Now the SDK will invoke `ForceFlush` on all registered
+  processors, even if there is a timeout.
+  ([#2388](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2388))
+
+## 1.2.0-alpha3
+
+Released 2021-Sep-13
+
+* Metrics perf improvements, bug fixes.
+  Replace MetricProcessor with MetricReader.
+  ([#2306](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2306))
+
+* Add `BatchExportActivityProcessorOptions` which supports field value overriding
+  using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
+  `OTEL_BSP_MAX_QUEUE_SIZE`, `OTEL_BSP_MAX_EXPORT_BATCH_SIZE`
+  envionmental variables as defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/sdk-environment-variables.md#batch-span-processor).
+  ([#2219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2219))
+
+## 1.2.0-alpha2
+
+Released 2021-Aug-24
+
+* More Metrics features. All instrument types, push/pull
+  exporters, Delta/Cumulative temporality supported.
+
+* `ResourceBuilder.CreateDefault` has detectors for
+  `OTEL_RESOURCE_ATTRIBUTES`, `OTEL_SERVICE_NAME` environment variables
+  so that explicit `AddEnvironmentVariableDetector` call is not needed. ([#2247](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2247))
+
+* `ResourceBuilder.AddEnvironmentVariableDetector` handles `OTEL_SERVICE_NAME`
+   environmental variable. ([#2209](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2209))
+
 * Removes upper constraint for Microsoft.Extensions.Logging
   dependencies. ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
+
+* OpenTelemetryLogger modified to not throw, when the
+  formatter supplied in ILogger.Log call is null. ([#2200](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2200))
 
 ## 1.2.0-alpha1
 

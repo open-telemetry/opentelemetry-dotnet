@@ -3,7 +3,7 @@ name: markdownlint
 on:
   push:
     branches: [ main, metrics ]
-    paths-ignore:
+    paths:
     - '**.md'
   pull_request:
     branches: [ main, metrics ]

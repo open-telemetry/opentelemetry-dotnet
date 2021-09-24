@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## 1.2.0-alpha4
+
+Released 2021-Sep-23
+
+## 1.2.0-alpha3
+
+Released 2021-Sep-13
+
+* `JaegerExporterOptions.BatchExportProcessorOptions` is initialized with
+  `BatchExportActivityProcessorOptions` which supports field value overriding
+  using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
+  `OTEL_BSP_MAX_QUEUE_SIZE`, `OTEL_BSP_MAX_EXPORT_BATCH_SIZE`
+  envionmental variables as defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/sdk-environment-variables.md#batch-span-processor).
+  ([#2219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2219))
+
+## 1.2.0-alpha2
+
+Released 2021-Aug-24
+
 ## 1.2.0-alpha1
 
 Released 2021-Jul-23

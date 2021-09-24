@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace OpenTelemetry.Tests
@@ -47,7 +48,8 @@ namespace OpenTelemetry.Tests
             };
 
             Baggage.SetBaggage(K1, V1);
-            Baggage.Current.SetBaggage(K2, V2);
+            var baggage = Baggage.Current.SetBaggage(K2, V2);
+            Baggage.Current = baggage;
 
             Assert.NotEmpty(Baggage.GetBaggage());
             Assert.Equal(list, Baggage.GetBaggage(Baggage.Current));
@@ -145,6 +147,7 @@ namespace OpenTelemetry.Tests
         {
             var baggage = Baggage.SetBaggage(K1, V1);
             var baggage2 = Baggage.Current.SetBaggage(K2, V2);
+            Baggage.Current = baggage2;
             var baggage3 = Baggage.SetBaggage(K3, V3);
 
             Assert.Equal(1, baggage.Count);
@@ -268,6 +271,46 @@ namespace OpenTelemetry.Tests
             var expectedBaggage = Baggage.Create(new Dictionary<string, string> { [K1] = V1 });
 
             Assert.Equal(expectedBaggage.GetHashCode(), baggage.GetHashCode());
+        }
+
+        [Fact]
+        public async Task AsyncLocalTests()
+        {
+            Baggage.SetBaggage("key1", "value1");
+
+            await InnerTask().ConfigureAwait(false);
+
+            Baggage.SetBaggage("key4", "value4");
+
+            Assert.Equal(4, Baggage.Current.Count);
+            Assert.Equal("value1", Baggage.GetBaggage("key1"));
+            Assert.Equal("value2", Baggage.GetBaggage("key2"));
+            Assert.Equal("value3", Baggage.GetBaggage("key3"));
+            Assert.Equal("value4", Baggage.GetBaggage("key4"));
+
+            static async Task InnerTask()
+            {
+                Baggage.SetBaggage("key2", "value2");
+
+                await Task.Yield();
+
+                Baggage.SetBaggage("key3", "value3");
+
+                // key2 & key3 changes don't flow backward automatically
+            }
+        }
+
+        [Fact]
+        public void ThreadSafetyTest()
+        {
+            Baggage.SetBaggage("rootKey", "rootValue"); // Note: Required to establish a root ExecutionContext containing the BaggageHolder we use as a lock
+
+            Parallel.For(0, 100, (i) =>
+            {
+                Baggage.SetBaggage($"key{i}", $"value{i}");
+            });
+
+            Assert.Equal(101, Baggage.Current.Count);
         }
     }
 }
