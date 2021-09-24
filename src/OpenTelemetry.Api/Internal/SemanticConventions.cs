@@ -25,7 +25,6 @@ namespace OpenTelemetry.Trace
         // The set of constants matches the specification as of this commit.
         // https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions
         // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public const string AttributeNetTransport = "net.transport";
         public const string AttributeNetPeerIp = "net.peer.ip";
         public const string AttributeNetPeerPort = "net.peer.port";
@@ -108,6 +107,5 @@ namespace OpenTelemetry.Trace
         public const string AttributeExceptionType = "exception.type";
         public const string AttributeExceptionMessage = "exception.message";
         public const string AttributeExceptionStacktrace = "exception.stacktrace";
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
