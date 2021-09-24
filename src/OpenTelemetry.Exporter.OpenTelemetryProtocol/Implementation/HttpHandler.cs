@@ -42,7 +42,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
         public HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-#if NET5_0
+#if NET5_0_OR_GREATER
             return this.HttpClient.Send(request, cancellationToken);
 #else
             return this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();

@@ -24,7 +24,7 @@ namespace Examples.Console
 {
     internal static class TestOtlpExporter
     {
-        internal static object Run(string endpoint, string protocol = "grpc")
+        internal static object Run(string endpoint, ExportProtocol protocol = ExportProtocol.Grpc)
         {
             /*
              * Prerequisite to run this example:
@@ -53,7 +53,7 @@ namespace Examples.Console
             return RunWithActivitySource(endpoint, protocol);
         }
 
-        private static object RunWithActivitySource(string endpoint, string protocol)
+        private static object RunWithActivitySource(string endpoint, ExportProtocol protocol)
         {
             // Adding the OtlpExporter creates a GrpcChannel.
             // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
@@ -68,9 +68,7 @@ namespace Examples.Console
                     .AddOtlpExporter(opt =>
                     {
                         opt.Endpoint = new Uri(endpoint);
-
-                        // Use grpc as default for unmapped protocols.
-                        opt.Protocol = protocol.ToExportProtocol() ?? ExportProtocol.Grpc;
+                        opt.Protocol = protocol;
                     })
                     .Build();
 
