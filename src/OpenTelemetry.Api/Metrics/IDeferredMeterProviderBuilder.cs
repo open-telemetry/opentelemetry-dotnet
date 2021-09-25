@@ -19,9 +19,8 @@ using System;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Describes a tracer provider builder that supports deferred
-    /// initialization using an <see cref="IServiceProvider"/> to perform
-    /// dependency injection.
+    /// Describes a meter provider builder that supports deferred initialization
+    /// using an <see cref="IServiceProvider"/> to perform dependency injection.
     /// </summary>
     public interface IDeferredMeterProviderBuilder
     {
