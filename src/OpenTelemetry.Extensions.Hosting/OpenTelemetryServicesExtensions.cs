@@ -18,6 +18,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Extensions.Hosting.Implementation;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -56,6 +57,34 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
         /// <summary>
+        /// Adds OpenTelemetry MeterProvider to the specified <see cref="IServiceCollection" />.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
+        public static IServiceCollection AddOpenTelemetryMetrics(this IServiceCollection services)
+        {
+            return services.AddOpenTelemetryMetrics(builder => { });
+        }
+
+        /// <summary>
+        /// Adds OpenTelemetry MeterProvider to the specified <see cref="IServiceCollection" />.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+        /// <param name="configure">Callback action to configure the <see cref="MeterProviderBuilder"/>.</param>
+        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
+        public static IServiceCollection AddOpenTelemetryMetrics(this IServiceCollection services, Action<MeterProviderBuilder> configure)
+        {
+            if (configure is null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
+            var builder = new MeterProviderBuilderHosting(services);
+            configure(builder);
+            return services.AddOpenTelemetryMetrics(sp => builder.Build(sp));
+        }
+
+        /// <summary>
         /// Adds OpenTelemetry TracerProvider to the specified <see cref="IServiceCollection" />.
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
@@ -77,6 +106,37 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
                 return services.AddSingleton(s => createTracerProvider(s));
+            }
+            catch (Exception ex)
+            {
+                HostingExtensionsEventSource.Log.FailedInitialize(ex);
+            }
+
+            return services;
+        }
+
+        /// <summary>
+        /// Adds OpenTelemetry MeterProvider to the specified <see cref="IServiceCollection" />.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+        /// <param name="createMeterProvider">A delegate that provides the tracer provider to be registered.</param>
+        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
+        private static IServiceCollection AddOpenTelemetryMetrics(this IServiceCollection services, Func<IServiceProvider, MeterProvider> createMeterProvider)
+        {
+            if (services is null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            if (createMeterProvider is null)
+            {
+                throw new ArgumentNullException(nameof(createMeterProvider));
+            }
+
+            try
+            {
+                services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
+                return services.AddSingleton(s => createMeterProvider(s));
             }
             catch (Exception ex)
             {

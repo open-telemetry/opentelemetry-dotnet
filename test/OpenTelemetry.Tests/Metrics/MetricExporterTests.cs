@@ -46,7 +46,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             var reader = new BaseExportingMetricReader(exporter);
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMetricReader(reader)
+                .AddReader(reader)
                 .Build();
 
             switch (mode)

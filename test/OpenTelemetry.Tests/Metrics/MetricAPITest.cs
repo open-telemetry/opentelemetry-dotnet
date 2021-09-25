@@ -64,7 +64,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestDuplicateMetricName1")
                 .AddSource("TestDuplicateMetricName2")
-                .AddMetricReader(metricReader)
+                .AddReader(metricReader)
                 .Build();
 
             // Expecting one metric stream.
@@ -117,7 +117,7 @@ namespace OpenTelemetry.Metrics.Tests
             var counterLong = meter.CreateCounter<long>("mycounter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
-                .AddMetricReader(metricReader)
+                .AddReader(metricReader)
                 .Build();
 
             counterLong.Add(10);
@@ -202,7 +202,7 @@ namespace OpenTelemetry.Metrics.Tests
             });
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource(meterName)
-                .AddMetricReader(metricReader)
+                .AddReader(metricReader)
                 .Build();
 
             metricReader.Collect();
@@ -262,7 +262,7 @@ namespace OpenTelemetry.Metrics.Tests
             var counterLong = meter.CreateCounter<long>("mycounterCapTest");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestPointCapMeter")
-                .AddMetricReader(metricReader)
+                .AddReader(metricReader)
                 .Build();
 
             // Make one Add with no tags.
@@ -314,7 +314,7 @@ namespace OpenTelemetry.Metrics.Tests
             var counterLong = meter.CreateCounter<long>("mycounter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestLongCounterMeter")
-                .AddMetricReader(metricReader)
+                .AddReader(metricReader)
                 .Build();
 
             // setup args to threads.
@@ -383,7 +383,7 @@ namespace OpenTelemetry.Metrics.Tests
             var counterDouble = meter.CreateCounter<double>("mycounter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestDoubleCounterMeter")
-                .AddMetricReader(metricReader)
+                .AddReader(metricReader)
                 .Build();
 
             // setup args to threads.

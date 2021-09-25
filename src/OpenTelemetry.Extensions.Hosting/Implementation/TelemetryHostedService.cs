@@ -19,6 +19,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Extensions.Hosting.Implementation
@@ -36,12 +37,18 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
         {
             try
             {
-                // The sole purpose of this HostedService is to ensure
-                // all instrumentations are created and started.
-                // This method is invoked when host starts, and
-                // by requesting the TracerProvider from DI
-                // it ensures all instrumentations gets started.
-                this.serviceProvider.GetRequiredService<TracerProvider>();
+                // The sole purpose of this HostedService is to ensure all
+                // instrumentations are created and started. This method is
+                // invoked when host starts, and by requesting the
+                // TracerProvider & MeterProvider from DI it ensures all
+                // instrumentations gets started.
+                var tracerProvider = this.serviceProvider.GetService<TracerProvider>();
+                var meterProvider = this.serviceProvider.GetService<MeterProvider>();
+
+                if (tracerProvider == null && meterProvider == null)
+                {
+                    throw new InvalidOperationException("Could not resolve TracerProvider or MeterProvider through ServiceProvider.");
+                }
             }
             catch (Exception ex)
             {

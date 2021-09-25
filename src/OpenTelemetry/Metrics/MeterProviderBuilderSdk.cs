@@ -14,99 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using OpenTelemetry.Resources;
-
 namespace OpenTelemetry.Metrics
 {
-    internal class MeterProviderBuilderSdk : MeterProviderBuilder
+    internal class MeterProviderBuilderSdk : MeterProviderBuilderBase
     {
-        private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
-        private readonly List<string> meterSources = new List<string>();
-        private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
-
-        internal MeterProviderBuilderSdk()
-        {
-        }
-
-        internal List<MetricReader> MetricReaders { get; } = new List<MetricReader>();
-
-        public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
-        {
-            if (instrumentationFactory == null)
-            {
-                throw new ArgumentNullException(nameof(instrumentationFactory));
-            }
-
-            this.instrumentationFactories.Add(
-                new InstrumentationFactory(
-                    typeof(TInstrumentation).Name,
-                    "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
-                    instrumentationFactory));
-
-            return this;
-        }
-
-        public override MeterProviderBuilder AddSource(params string[] names)
-        {
-            if (names == null)
-            {
-                throw new ArgumentNullException(nameof(names));
-            }
-
-            foreach (var name in names)
-            {
-                if (string.IsNullOrWhiteSpace(name))
-                {
-                    throw new ArgumentException($"{nameof(names)} contains null or whitespace string.");
-                }
-
-                this.meterSources.Add(name);
-            }
-
-            return this;
-        }
-
-        internal MeterProviderBuilderSdk AddMetricReader(MetricReader metricReader)
-        {
-            if (this.MetricReaders.Count >= 1)
-            {
-                throw new InvalidOperationException("Only one Metricreader is allowed.");
-            }
-
-            this.MetricReaders.Add(metricReader);
-            return this;
-        }
-
-        internal MeterProviderBuilderSdk SetResourceBuilder(ResourceBuilder resourceBuilder)
-        {
-            this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
-            return this;
-        }
-
-        internal MeterProvider Build()
-        {
-            return new MeterProviderSdk(
-                this.resourceBuilder.Build(),
-                this.meterSources,
-                this.instrumentationFactories,
-                this.MetricReaders.ToArray());
-        }
-
-        // TODO: This is copied from TracerProviderBuilderSdk. Move to common location.
-        internal readonly struct InstrumentationFactory
-        {
-            public readonly string Name;
-            public readonly string Version;
-            public readonly Func<object> Factory;
-
-            internal InstrumentationFactory(string name, string version, Func<object> factory)
-            {
-                this.Name = name;
-                this.Version = version;
-                this.Factory = factory;
-            }
-        }
+        internal MeterProvider BuildSdk() => this.Build();
     }
 }

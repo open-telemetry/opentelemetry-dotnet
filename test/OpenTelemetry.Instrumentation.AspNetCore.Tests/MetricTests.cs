@@ -70,7 +70,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             };
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddAspNetCoreInstrumentation()
-                .AddMetricReader(metricReader)
+                .AddReader(metricReader)
                 .Build();
 
             using (var client = this.factory.CreateClient())
