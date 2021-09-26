@@ -38,16 +38,13 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
             try
             {
                 // The sole purpose of this HostedService is to ensure all
-                // instrumentations are created and started. This method is
-                // invoked when host starts, and by requesting the
-                // TracerProvider & MeterProvider from DI it ensures all
-                // instrumentations gets started.
-                var tracerProvider = this.serviceProvider.GetService<TracerProvider>();
+                // instrumentations, exporters, etc., are created and started.
                 var meterProvider = this.serviceProvider.GetService<MeterProvider>();
+                var tracerProvider = this.serviceProvider.GetService<TracerProvider>();
 
-                if (tracerProvider == null && meterProvider == null)
+                if (meterProvider == null && tracerProvider == null)
                 {
-                    throw new InvalidOperationException("Could not resolve TracerProvider or MeterProvider through ServiceProvider.");
+                    throw new InvalidOperationException("Could not resolve either MeterProvider or TracerProvider through application ServiceProvider, OpenTelemetry SDK has not been initialized.");
                 }
             }
             catch (Exception ex)

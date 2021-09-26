@@ -47,10 +47,11 @@ namespace OpenTelemetry.Metrics
 
         public MeterProvider Build(IServiceProvider serviceProvider)
         {
-            int i = 0;
-            while (i < this.configurationActions.Count)
+            // Note: Not using a foreach loop because additional actions can be
+            // added during each call.
+            for (int i = 0; i < this.configurationActions.Count; i++)
             {
-                this.configurationActions[i++](serviceProvider, this);
+                this.configurationActions[i](serviceProvider, this);
             }
 
             return this.Build();

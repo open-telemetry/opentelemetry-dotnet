@@ -5,10 +5,10 @@
 * Removes upper constraint for Microsoft.Extensions.Hosting.Abstractions
   dependency. ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
 
-* Added `AddOpenTelemetryMetrics` `IServiceCollection` extensions and added
-  `AddInstrumentation<T>`, `AddReader<T>`, & `Configure` extensions to support
-  dependency injection through the OpenTelemetry.Extensions.Hosting
-  `MeterProviderBuilder`.
+* Added `AddOpenTelemetryMetrics` extensions on `IServiceCollection` to register
+  OpenTelemetry `MeterProvider` with application services. Added
+  `AddInstrumentation<T>`, `AddReader<T>`, & `Configure` extensions on
+  `MeterProviderBuilder` to support dependency injection scenarios.
   ([#2412](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2412))
 
 ## 1.0.0-rc7
