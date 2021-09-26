@@ -16,7 +16,9 @@
 
 using System;
 using System.Runtime.CompilerServices;
+#if DEBUG
 using System.Threading;
+#endif
 using OpenTelemetry.Trace;
 using OpenTracing;
 
