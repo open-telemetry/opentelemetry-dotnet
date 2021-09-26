@@ -14,9 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Threading.Tasks;
-
 #if NETSTANDARD2_0
 using Microsoft.AspNetCore.Http;
 

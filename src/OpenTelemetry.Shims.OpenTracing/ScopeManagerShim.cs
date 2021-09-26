@@ -17,8 +17,8 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using global::OpenTracing;
 using OpenTelemetry.Trace;
+using OpenTracing;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {

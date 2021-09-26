@@ -17,9 +17,6 @@
 using System;
 using System.Threading.Tasks;
 using Grpc.Core;
-#if NETSTANDARD2_1
-using Grpc.Net.Client;
-#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Metrics;
