@@ -69,9 +69,9 @@ namespace OpenTelemetry.Metrics
                 throw new NotSupportedException("DeferredMeterProviderBuilder requires a ServiceProvider to build.");
             }
 
-            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                return meterProviderBuilderBase.Build();
+                return meterProviderBuilderSdk.BuildSdk();
             }
 
             return null;
