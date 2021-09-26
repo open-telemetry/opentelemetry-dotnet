@@ -15,6 +15,9 @@
 // </copyright>
 
 #if NETSTANDARD2_0
+
+using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
 namespace OpenTelemetry.Exporter
