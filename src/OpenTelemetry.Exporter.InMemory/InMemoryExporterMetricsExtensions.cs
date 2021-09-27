@@ -1,4 +1,4 @@
-// <copyright file="OtlpMetricExporterHelperExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="InMemoryExporterMetricsExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,34 +15,32 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using OpenTelemetry.Exporter;
 
 namespace OpenTelemetry.Metrics
 {
-    /// <summary>
-    /// Extension methods to simplify registering of the OpenTelemetry Protocol (OTLP) exporter.
-    /// </summary>
-    public static class OtlpMetricExporterHelperExtensions
+    public static class InMemoryExporterMetricsExtensions
     {
         /// <summary>
-        /// Adds OpenTelemetry Protocol (OTLP) exporter to the MeterProvider.
+        /// Adds InMemory exporter to the TracerProvider.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
+        /// <param name="exportedItems">Collection which will be populated with the exported MetricItem.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
-        public static MeterProviderBuilder AddOtlpExporter(this MeterProviderBuilder builder, Action<OtlpExporterOptions> configure = null)
+        public static MeterProviderBuilder AddInMemoryExporter(this MeterProviderBuilder builder, ICollection<Metric> exportedItems)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var options = new OtlpExporterOptions();
-            configure?.Invoke(options);
+            if (exportedItems == null)
+            {
+                throw new ArgumentNullException(nameof(exportedItems));
+            }
 
-            var metricExporter = new OtlpMetricsExporter(options);
-            var metricReader = new PeriodicExportingMetricReader(metricExporter, options.MetricExportIntervalMilliseconds);
-            return builder.AddMetricReader(metricReader);
+            return builder.AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems)));
         }
     }
 }

@@ -1,4 +1,4 @@
-// <copyright file="MyExporterHelperExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="IPullMetricExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,18 +15,14 @@
 // </copyright>
 
 using System;
-using OpenTelemetry;
-using OpenTelemetry.Trace;
 
-internal static class MyExporterHelperExtensions
+namespace OpenTelemetry.Metrics
 {
-    public static TracerProviderBuilder AddMyExporter(this TracerProviderBuilder builder)
+    /// <summary>
+    /// Describes a type of <see cref="BaseExporter{Metric}"/> which supports <see cref="ExportModes.Pull"/>.
+    /// </summary>
+    public interface IPullMetricExporter
     {
-        if (builder == null)
-        {
-            throw new ArgumentNullException(nameof(builder));
-        }
-
-        return builder.AddProcessor(new BatchActivityExportProcessor(new MyExporter()));
+        Func<int, bool> Collect { get; set; }
     }
 }

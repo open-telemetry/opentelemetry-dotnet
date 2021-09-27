@@ -1,4 +1,4 @@
-// <copyright file="Program.cs" company="OpenTelemetry Authors">
+// <copyright file="MyExporterExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,26 +14,19 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics.Metrics;
+using System;
 using OpenTelemetry;
-using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 
-public class Program
+internal static class MyExporterExtensions
 {
-    private static readonly Meter MyMeter = new Meter("MyCompany.MyProduct.MyLibrary", "1.0");
-
-    public static void Main(string[] args)
+    public static TracerProviderBuilder AddMyExporter(this TracerProviderBuilder builder)
     {
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddSource("MyCompany.MyProduct.MyLibrary")
-            .AddConsoleExporter()
-            .Build();
-
-        var counter = MyMeter.CreateCounter<long>("MyCounter");
-
-        for (int i = 0; i < 20000000; i++)
+        if (builder == null)
         {
-            counter.Add(1, new("tag1", "value1"), new("tag2", "value2"));
+            throw new ArgumentNullException(nameof(builder));
         }
+
+        return builder.AddProcessor(new BatchActivityExportProcessor(new MyExporter()));
     }
 }

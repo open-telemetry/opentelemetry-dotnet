@@ -1,4 +1,4 @@
-// <copyright file="ConsoleExporterMetricHelperExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpMetricExporterExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,27 +19,30 @@ using OpenTelemetry.Exporter;
 
 namespace OpenTelemetry.Metrics
 {
-    public static class ConsoleExporterMetricHelperExtensions
+    /// <summary>
+    /// Extension methods to simplify registering of the OpenTelemetry Protocol (OTLP) exporter.
+    /// </summary>
+    public static class OtlpMetricExporterExtensions
     {
         /// <summary>
-        /// Adds Console exporter to the TracerProvider.
+        /// Adds OpenTelemetry Protocol (OTLP) exporter to the MeterProvider.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
-        public static MeterProviderBuilder AddConsoleExporter(this MeterProviderBuilder builder, Action<ConsoleExporterOptions> configure = null)
+        public static MeterProviderBuilder AddOtlpExporter(this MeterProviderBuilder builder, Action<OtlpExporterOptions> configure = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var options = new ConsoleExporterOptions();
+            var options = new OtlpExporterOptions();
             configure?.Invoke(options);
 
-            var exporter = new ConsoleMetricExporter(options);
-            return builder.AddMetricReader(new PeriodicExportingMetricReader(exporter, options.MetricExportIntervalMilliseconds));
+            var metricExporter = new OtlpMetricsExporter(options);
+            var metricReader = new PeriodicExportingMetricReader(metricExporter, options.MetricExportIntervalMilliseconds);
+            return builder.AddReader(metricReader);
         }
     }
 }
