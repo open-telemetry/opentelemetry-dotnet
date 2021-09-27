@@ -117,7 +117,7 @@ namespace OpenTelemetry.Exporter
         public int TimeoutMilliseconds { get; set; } = 10000;
 
         /// <summary>
-        /// Gets or sets the the OTLP transport protocol. Supported values: grpc, http/protobuf.
+        /// Gets or sets the the OTLP transport protocol. Supported values: Grpc and HttpProtobuf.
         /// </summary>
         public ExportProtocol Protocol { get; set; } = ExportProtocol.Grpc;
 
