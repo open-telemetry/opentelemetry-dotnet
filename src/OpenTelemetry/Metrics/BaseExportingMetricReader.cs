@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
+using System.Threading;
 
 namespace OpenTelemetry.Metrics
 {
@@ -97,7 +99,22 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc />
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
-            return this.exporter.Shutdown(timeoutMilliseconds);
+            var result = true;
+
+            if (timeoutMilliseconds == Timeout.Infinite)
+            {
+                result = this.Collect(Timeout.Infinite) && result;
+                result = this.exporter.Shutdown(Timeout.Infinite) && result;
+            }
+            else
+            {
+                var sw = Stopwatch.StartNew();
+                result = this.Collect(timeoutMilliseconds) && result;
+                var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+                result = this.exporter.Shutdown((int)Math.Max(timeout, 0)) && result;
+            }
+
+            return result;
         }
 
         /// <inheritdoc/>

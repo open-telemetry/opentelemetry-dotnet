@@ -14,10 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
@@ -25,21 +22,20 @@ public class Program
 {
     private static readonly Meter MyMeter = new Meter("MyCompany.MyProduct.MyLibrary", "1.0");
 
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddSource("MyCompany.MyProduct.MyLibrary")
             .AddConsoleExporter()
             .Build();
 
-        var process = Process.GetCurrentProcess();
-        MyMeter.CreateObservableCounter<double>(
-            "ProcessCpuTime",
-            () => new List<Measurement<double>>()
-            {
-                new(process.TotalProcessorTime.TotalMilliseconds, new("tag1", "value1"), new("tag2", "value2")),
-            });
+        var counter = MyMeter.CreateCounter<long>("MyFruitCounter");
 
-        await Task.Delay(10000);
+        counter.Add(1, new("name", "apple"), new("color", "red"));
+        counter.Add(2, new("name", "lemon"), new("color", "yellow"));
+        counter.Add(1, new("name", "lemon"), new("color", "yellow"));
+        counter.Add(2, new("name", "apple"), new("color", "green"));
+        counter.Add(5, new("name", "apple"), new("color", "red"));
+        counter.Add(4, new("name", "lemon"), new("color", "yellow"));
     }
 }
