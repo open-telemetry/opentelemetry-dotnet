@@ -63,6 +63,9 @@ dotnet_naming_symbols.constant_fields.required_modifiers          = const
 [*.cs] 
 dotnet_diagnostic.CA1031.severity = none
 dotnet_diagnostic.CA1303.severity = none
+dotnet_diagnostic.IDE0001.severity = warning
+dotnet_diagnostic.IDE0002.severity = warning
+dotnet_diagnostic.IDE0005.severity = warning
 # var preferences 
 csharp_style_var_for_built_in_types = true:silent 
 csharp_style_var_when_type_is_apparent = true:silent 
