@@ -18,6 +18,6 @@ namespace OpenTelemetry.Metrics
 {
     public class DropAggregationConfig : AggregationConfig
     {
-        public override Aggregation Aggregation { get; set; } = Aggregation.Drop;
+        internal override Aggregation Aggregation { get; set; } = Aggregation.Drop;
     }
 }

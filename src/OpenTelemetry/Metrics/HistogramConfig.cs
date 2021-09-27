@@ -20,6 +20,6 @@ namespace OpenTelemetry.Metrics
     {
         public double[] HistogramBounds { get; set; }
 
-        public override Aggregation Aggregation { get; set; } = Aggregation.Histogram;
+        internal override Aggregation Aggregation { get; set; } = Aggregation.Histogram;
     }
 }

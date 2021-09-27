@@ -40,7 +40,7 @@ namespace OpenTelemetry.Metrics
         internal MeterProviderSdk(
             Resource resource,
             IEnumerable<string> meterSources,
-            List<MeterProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
+            List<MeterProviderBuilderBase.InstrumentationFactory> instrumentationFactories,
             List<Func<Instrument, AggregationConfig>> viewConfigs,
             IEnumerable<MetricReader> readers)
         {
