@@ -7,7 +7,7 @@
 
 * Added `AddOpenTelemetryMetrics` extensions on `IServiceCollection` to register
   OpenTelemetry `MeterProvider` with application services. Added
-  `AddInstrumentation<T>`, `AddReader<T>`, & `Configure` extensions on
+  `AddInstrumentation<T>`, `AddReader<T>`, and `Configure` extensions on
   `MeterProviderBuilder` to support dependency injection scenarios.
   ([#2412](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2412))
 
