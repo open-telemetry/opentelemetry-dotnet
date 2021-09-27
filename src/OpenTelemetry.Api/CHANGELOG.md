@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Added `IDeferredMeterProviderBuilder`
+  ([#2412](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2412))
+
 ## 1.2.0-alpha4
 
 Released 2021-Sep-23

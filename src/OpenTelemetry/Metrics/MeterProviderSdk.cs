@@ -136,6 +136,10 @@ namespace OpenTelemetry.Metrics
 
         internal Resource Resource { get; }
 
+        internal List<object> Instrumentations => this.instrumentations;
+
+        internal MetricReader Reader => this.reader;
+
         internal void MeasurementsCompleted(Instrument instrument, object state)
         {
             Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
