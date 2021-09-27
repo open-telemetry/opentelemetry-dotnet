@@ -1,4 +1,4 @@
-// <copyright file="AggregationConfig.cs" company="OpenTelemetry Authors">
+// <copyright file="AggregationConfiguration.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@
 namespace OpenTelemetry.Metrics
 {
     // TODO: can be optimized like MetricType
-    internal enum Aggregation
+    public enum Aggregation
     {
 #pragma warning disable SA1602 // Enumeration items should be documented
         Default,
@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics
 #pragma warning restore SA1602 // Enumeration items should be documented
     }
 
-    public class AggregationConfig
+    public class AggregationConfiguration
     {
         public string Name { get; set; }
 
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Metrics
 
         public string[] TagKeys { get; set; }
 
-        internal virtual Aggregation Aggregation { get; set; }
+        public virtual Aggregation Aggregation { get; set; }
 
         // TODO: MetricPoints caps can be configured here
     }

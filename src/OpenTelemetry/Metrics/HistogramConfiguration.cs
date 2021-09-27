@@ -1,4 +1,4 @@
-// <copyright file="DropAggregationConfig.cs" company="OpenTelemetry Authors">
+// <copyright file="HistogramConfiguration.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +16,10 @@
 
 namespace OpenTelemetry.Metrics
 {
-    public class DropAggregationConfig : AggregationConfig
+    public class HistogramConfiguration : AggregationConfiguration
     {
-        internal override Aggregation Aggregation { get; set; } = Aggregation.Drop;
+        public double[] BucketBounds { get; set; }
+
+        public override Aggregation Aggregation { get; set; } = Aggregation.Histogram;
     }
 }

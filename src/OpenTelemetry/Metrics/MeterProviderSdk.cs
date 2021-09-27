@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics
         internal int ShutdownCount;
         private readonly Metric[] metrics;
         private readonly List<object> instrumentations = new List<object>();
-        private readonly List<Func<Instrument, AggregationConfig>> viewConfigs;
+        private readonly List<Func<Instrument, AggregationConfiguration>> viewConfigs;
         private readonly object collectLock = new object();
         private readonly object instrumentCreationLock = new object();
         private readonly Dictionary<string, bool> metricStreamNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Metrics
             Resource resource,
             IEnumerable<string> meterSources,
             List<MeterProviderBuilderBase.InstrumentationFactory> instrumentationFactories,
-            List<Func<Instrument, AggregationConfig>> viewConfigs,
+            List<Func<Instrument, AggregationConfiguration>> viewConfigs,
             IEnumerable<MetricReader> readers)
         {
             this.Resource = resource;

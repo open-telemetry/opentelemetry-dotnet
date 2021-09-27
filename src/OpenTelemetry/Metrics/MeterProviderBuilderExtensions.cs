@@ -69,7 +69,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="aggregationConfig">Aggregation configuration used to produce metrics stream.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
         /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
-        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, AggregationConfig aggregationConfig)
+        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, AggregationConfiguration aggregationConfig)
         {
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Metrics
         /// <param name="viewConfig">Function to configure aggregation based on the instrument.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
         /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
-        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, AggregationConfig> viewConfig)
+        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, AggregationConfiguration> viewConfig)
         {
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
