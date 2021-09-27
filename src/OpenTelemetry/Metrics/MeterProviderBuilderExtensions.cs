@@ -84,14 +84,7 @@ namespace OpenTelemetry.Metrics
         /// from the SDK. The views are applied in the order they are added.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="name">Name of the view. This will be used as name of resulting metrics stream.</param>
-        /// <param name="meterName">Name of the meter, to be used as part of Instrument selection criteria.</param>
-        /// <param name="meterVersion">Version of the meter, to be used as part of Instrument selection criteria.</param>
-        /// <param name="instrumentName">Name of the instrument, to be used as part of Instrument selection criteria.</param>
-        /// <param name="instrumentType">Type of the instrument, to be used as part of Instrument selection criteria.</param>
-        /// <param name="tagKeys">List of tag keys that should be used for aggregation. This is part of the configuration of resulting metrics stream.</param>
-        /// <param name="aggregation">The aggregation to be used. This is part of the configuration of resulting metrics stream.</param>
-        /// <param name="histogramBounds">The explicit histogram bounds for Histogram aggregation. Invalid unless the aggregation is Histogram. This is part of the configuration of resulting metrics stream.</param>
+        /// <param name="viewConfig">Function to configure aggregation based on the instrument.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
         /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
         public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, AggregationConfig> viewConfig)
