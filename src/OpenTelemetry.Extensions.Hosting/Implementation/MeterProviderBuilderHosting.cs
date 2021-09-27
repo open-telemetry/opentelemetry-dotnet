@@ -1,4 +1,4 @@
-// <copyright file="TracerProviderBuilderHosting.cs" company="OpenTelemetry Authors">
+// <copyright file="MeterProviderBuilderHosting.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,23 +18,23 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace OpenTelemetry.Trace
+namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// A <see cref="TracerProviderBuilderBase"/> with support for deferred initialization using <see cref="IServiceProvider"/> for dependency injection.
+    /// A <see cref="MeterProviderBuilderBase"/> with support for deferred initialization using <see cref="IServiceProvider"/> for dependency injection.
     /// </summary>
-    internal sealed class TracerProviderBuilderHosting : TracerProviderBuilderBase, IDeferredTracerProviderBuilder
+    internal sealed class MeterProviderBuilderHosting : MeterProviderBuilderBase, IDeferredMeterProviderBuilder
     {
-        private readonly List<Action<IServiceProvider, TracerProviderBuilder>> configurationActions = new List<Action<IServiceProvider, TracerProviderBuilder>>();
+        private readonly List<Action<IServiceProvider, MeterProviderBuilder>> configurationActions = new List<Action<IServiceProvider, MeterProviderBuilder>>();
 
-        public TracerProviderBuilderHosting(IServiceCollection services)
+        public MeterProviderBuilderHosting(IServiceCollection services)
         {
             this.Services = services ?? throw new ArgumentNullException(nameof(services));
         }
 
         public IServiceCollection Services { get; }
 
-        public TracerProviderBuilder Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
+        public MeterProviderBuilder Configure(Action<IServiceProvider, MeterProviderBuilder> configure)
         {
             if (configure == null)
             {
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
-        public TracerProvider Build(IServiceProvider serviceProvider)
+        public MeterProvider Build(IServiceProvider serviceProvider)
         {
             if (serviceProvider == null)
             {

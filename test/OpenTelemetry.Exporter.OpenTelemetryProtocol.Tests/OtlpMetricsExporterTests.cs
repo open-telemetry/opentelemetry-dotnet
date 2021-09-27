@@ -67,7 +67,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddSource("TestMeter")
-                .AddMetricReader(metricReader)
+                .AddReader(metricReader)
                 .Build();
 
             exporter.ParentProvider = provider;

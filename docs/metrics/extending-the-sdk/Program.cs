@@ -29,10 +29,10 @@ public class Program
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddSource("MyCompany.MyProduct.MyLibrary")
-            .AddMetricReader(new MyReader())
+            .AddReader(new MyReader())
             /** /
             TODO: revisit once this exception is removed "System.InvalidOperationException: Only one Metricreader is allowed.".
-            .AddMetricReader(new BaseExportingMetricReader(new MyExporter()))
+            .AddReader(new BaseExportingMetricReader(new MyExporter()))
             /**/
             .Build();
 

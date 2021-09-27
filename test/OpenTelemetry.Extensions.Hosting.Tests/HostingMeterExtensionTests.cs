@@ -1,4 +1,4 @@
-// <copyright file="HostingExtensionsTests.cs" company="OpenTelemetry Authors">
+// <copyright file="HostingMeterExtensionTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,22 +20,22 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
 using Xunit;
 
 namespace OpenTelemetry.Extensions.Hosting.Tests
 {
-    public class HostingExtensionsTests
+    public class HostingMeterExtensionTests
     {
         [Fact]
-        public async Task AddOpenTelemetryTracerProviderInstrumentationCreationAndDisposal()
+        public async Task AddOpenTelemetryMeterProviderInstrumentationCreationAndDisposal()
         {
             var testInstrumentation = new TestInstrumentation();
             var callbackRun = false;
 
             var builder = new HostBuilder().ConfigureServices(services =>
             {
-                services.AddOpenTelemetryTracing(builder =>
+                services.AddOpenTelemetryMetrics(builder =>
                 {
                     builder.AddInstrumentation(() =>
                     {
@@ -67,29 +67,29 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
         }
 
         [Fact]
-        public void AddOpenTelemetryTracerProvider_HostBuilt_OpenTelemetrySdk_RegisteredAsSingleton()
+        public void AddOpenTelemetryMeterProvider_HostBuilt_OpenTelemetrySdk_RegisteredAsSingleton()
         {
             var builder = new HostBuilder().ConfigureServices(services =>
             {
-                services.AddOpenTelemetryTracing();
+                services.AddOpenTelemetryMetrics();
             });
 
             var host = builder.Build();
 
-            var tracerProvider1 = host.Services.GetRequiredService<TracerProvider>();
-            var tracerProvider2 = host.Services.GetRequiredService<TracerProvider>();
+            var meterProvider1 = host.Services.GetRequiredService<MeterProvider>();
+            var meterProvider2 = host.Services.GetRequiredService<MeterProvider>();
 
-            Assert.Same(tracerProvider1, tracerProvider2);
+            Assert.Same(meterProvider1, meterProvider2);
         }
 
         [Fact]
-        public void AddOpenTelemetryTracerProvider_ServiceProviderArgument_ServicesRegistered()
+        public void AddOpenTelemetryMeterProvider_ServiceProviderArgument_ServicesRegistered()
         {
             var testInstrumentation = new TestInstrumentation();
 
             var services = new ServiceCollection();
             services.AddSingleton(testInstrumentation);
-            services.AddOpenTelemetryTracing(builder =>
+            services.AddOpenTelemetryMetrics(builder =>
             {
                 builder.Configure(
                     (sp, b) => b.AddInstrumentation(() => sp.GetRequiredService<TestInstrumentation>()));
@@ -97,8 +97,8 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
 
             var serviceProvider = services.BuildServiceProvider();
 
-            var tracerFactory = serviceProvider.GetRequiredService<TracerProvider>();
-            Assert.NotNull(tracerFactory);
+            var meterFactory = serviceProvider.GetRequiredService<MeterProvider>();
+            Assert.NotNull(meterFactory);
 
             Assert.False(testInstrumentation.Disposed);
 
@@ -108,12 +108,12 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
         }
 
         [Fact]
-        public void AddOpenTelemetryTracerProvider_BadArgs_NullServiceCollection()
+        public void AddOpenTelemetryMeterProvider_BadArgs_NullServiceCollection()
         {
             ServiceCollection services = null;
-            Assert.Throws<ArgumentNullException>(() => services.AddOpenTelemetryTracing(null));
+            Assert.Throws<ArgumentNullException>(() => services.AddOpenTelemetryMetrics(null));
             Assert.Throws<ArgumentNullException>(() =>
-                services.AddOpenTelemetryTracing(builder =>
+                services.AddOpenTelemetryMetrics(builder =>
                 {
                     builder.Configure(
                         (sp, b) => b.AddInstrumentation(() => sp.GetRequiredService<TestInstrumentation>()));
@@ -121,24 +121,24 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
         }
 
         [Fact]
-        public void AddOpenTelemetryTracerProvider_GetServicesExtension()
+        public void AddOpenTelemetryMeterProvider_GetServicesExtension()
         {
             var services = new ServiceCollection();
-            services.AddOpenTelemetryTracing(builder => AddMyFeature(builder));
+            services.AddOpenTelemetryMetrics(builder => AddMyFeature(builder));
 
             using var serviceProvider = services.BuildServiceProvider();
 
-            var tracerProvider = (TracerProviderSdk)serviceProvider.GetRequiredService<TracerProvider>();
+            var meterProvider = (MeterProviderSdk)serviceProvider.GetRequiredService<MeterProvider>();
 
-            Assert.True(tracerProvider.Sampler is TestSampler);
+            Assert.True(meterProvider.Reader is TestReader);
         }
 
         [Fact]
-        public void AddOpenTelemetryTracerProvider_NestedConfigureCallbacks()
+        public void AddOpenTelemetryMeterProvider_NestedConfigureCallbacks()
         {
             int configureCalls = 0;
             var services = new ServiceCollection();
-            services.AddOpenTelemetryTracing(builder => builder
+            services.AddOpenTelemetryMetrics(builder => builder
                 .Configure((sp1, builder1) =>
                 {
                     configureCalls++;
@@ -150,60 +150,57 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
 
             using var serviceProvider = services.BuildServiceProvider();
 
-            var tracerFactory = serviceProvider.GetRequiredService<TracerProvider>();
+            var meterFactory = serviceProvider.GetRequiredService<MeterProvider>();
 
             Assert.Equal(2, configureCalls);
         }
 
         [Fact]
-        public void AddOpenTelemetryTracerProvider_ConfigureCallbacksUsingExtensions()
+        public void AddOpenTelemetryMeterProvider_ConfigureCallbacksUsingExtensions()
         {
             var services = new ServiceCollection();
 
             services.AddSingleton<TestInstrumentation>();
-            services.AddSingleton<TestProcessor>();
-            services.AddSingleton<TestSampler>();
+            services.AddSingleton<TestReader>();
 
-            services.AddOpenTelemetryTracing(builder => builder
+            services.AddOpenTelemetryMetrics(builder => builder
                 .Configure((sp1, builder1) =>
                 {
                     builder1
                         .AddInstrumentation<TestInstrumentation>()
-                        .AddProcessor<TestProcessor>()
-                        .SetSampler<TestSampler>();
+                        .AddReader<TestReader>();
                 }));
 
             using var serviceProvider = services.BuildServiceProvider();
 
-            var tracerProvider = (TracerProviderSdk)serviceProvider.GetRequiredService<TracerProvider>();
+            var meterProvider = (MeterProviderSdk)serviceProvider.GetRequiredService<MeterProvider>();
 
-            Assert.True(tracerProvider.Instrumentations.FirstOrDefault() is TestInstrumentation);
-            Assert.True(tracerProvider.Processor is TestProcessor);
-            Assert.True(tracerProvider.Sampler is TestSampler);
+            Assert.True(meterProvider.Instrumentations.FirstOrDefault() is TestInstrumentation);
+            Assert.True(meterProvider.Reader is TestReader);
         }
 
         [Fact(Skip = "Known limitation. See issue 1215.")]
-        public void AddOpenTelemetryTracerProvider_Idempotent()
+        public void AddOpenTelemetryMeterProvider_Idempotent()
         {
             var testInstrumentation1 = new TestInstrumentation();
             var testInstrumentation2 = new TestInstrumentation();
 
             var services = new ServiceCollection();
             services.AddSingleton(testInstrumentation1);
-            services.AddOpenTelemetryTracing(builder =>
+            services.AddOpenTelemetryMetrics(builder =>
             {
                 builder.AddInstrumentation(() => testInstrumentation1);
             });
 
-            services.AddOpenTelemetryTracing(builder =>
+            services.AddOpenTelemetryMetrics(builder =>
             {
                 builder.AddInstrumentation(() => testInstrumentation2);
             });
 
             var serviceProvider = services.BuildServiceProvider();
 
-            var tracerFactory = serviceProvider.GetRequiredService<TracerProvider>();
-            Assert.NotNull(tracerFactory);
+            var meterFactory = serviceProvider.GetRequiredService<MeterProvider>();
+            Assert.NotNull(meterFactory);
 
             Assert.False(testInstrumentation1.Disposed);
             Assert.False(testInstrumentation2.Disposed);
@@ -212,12 +209,12 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             Assert.True(testInstrumentation2.Disposed);
         }
 
-        private static TracerProviderBuilder AddMyFeature(TracerProviderBuilder tracerProviderBuilder)
+        private static MeterProviderBuilder AddMyFeature(MeterProviderBuilder meterProviderBuilder)
         {
-            (tracerProviderBuilder.GetServices() ?? throw new NotSupportedException("MyFeature requires a hosting TracerProviderBuilder instance."))
-                .AddSingleton<TestSampler>();
+            (meterProviderBuilder.GetServices() ?? throw new NotSupportedException("MyFeature requires a hosting MeterProviderBuilder instance."))
+                .AddSingleton<TestReader>();
 
-            return tracerProviderBuilder.SetSampler<TestSampler>();
+            return meterProviderBuilder.AddReader<TestReader>();
         }
 
         internal class TestInstrumentation : IDisposable
@@ -230,15 +227,11 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             }
         }
 
-        internal class TestProcessor : BaseProcessor<Activity>
+        internal class TestReader : MetricReader
         {
-        }
-
-        internal class TestSampler : Sampler
-        {
-            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+            protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
             {
-                return new SamplingResult(SamplingDecision.RecordAndSample);
+                return true;
             }
         }
     }

@@ -42,7 +42,7 @@ namespace OpenTelemetry.Metrics
 
             var metricExporter = new OtlpMetricsExporter(options);
             var metricReader = new PeriodicExportingMetricReader(metricExporter, options.MetricExportIntervalMilliseconds);
-            return builder.AddMetricReader(metricReader);
+            return builder.AddReader(metricReader);
         }
     }
 }

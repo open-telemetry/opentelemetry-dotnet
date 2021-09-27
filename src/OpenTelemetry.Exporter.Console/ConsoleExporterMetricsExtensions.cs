@@ -43,10 +43,10 @@ namespace OpenTelemetry.Metrics
 
             if (options.MetricExportIntervalMilliseconds == Timeout.Infinite)
             {
-                return builder.AddMetricReader(new BaseExportingMetricReader(exporter));
+                return builder.AddReader(new BaseExportingMetricReader(exporter));
             }
 
-            return builder.AddMetricReader(new PeriodicExportingMetricReader(exporter, options.MetricExportIntervalMilliseconds));
+            return builder.AddReader(new PeriodicExportingMetricReader(exporter, options.MetricExportIntervalMilliseconds));
         }
     }
 }

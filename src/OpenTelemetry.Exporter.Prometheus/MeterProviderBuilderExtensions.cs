@@ -43,7 +43,7 @@ namespace OpenTelemetry.Metrics
 
             var metricsHttpServer = new PrometheusExporterMetricsHttpServer(exporter);
             metricsHttpServer.Start();
-            return builder.AddMetricReader(reader);
+            return builder.AddReader(reader);
         }
     }
 }
