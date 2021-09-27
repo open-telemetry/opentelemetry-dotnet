@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Threading;
 using OpenTelemetry.Exporter;
 
 namespace OpenTelemetry.Metrics
@@ -39,7 +40,13 @@ namespace OpenTelemetry.Metrics
             configure?.Invoke(options);
 
             var exporter = new ConsoleMetricExporter(options);
-            return builder.AddMetricReader(new PeriodicExportingMetricReader(exporter, options.MetricExportIntervalMilliseconds));
+
+            if (options.MetricExportIntervalMilliseconds == Timeout.Infinite)
+            {
+                return builder.AddReader(new BaseExportingMetricReader(exporter));
+            }
+
+            return builder.AddReader(new PeriodicExportingMetricReader(exporter, options.MetricExportIntervalMilliseconds));
         }
     }
 }

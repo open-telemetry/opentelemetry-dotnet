@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
@@ -136,6 +135,10 @@ namespace OpenTelemetry.Metrics
         }
 
         internal Resource Resource { get; }
+
+        internal List<object> Instrumentations => this.instrumentations;
+
+        internal MetricReader Reader => this.reader;
 
         internal void MeasurementsCompleted(Instrument instrument, object state)
         {

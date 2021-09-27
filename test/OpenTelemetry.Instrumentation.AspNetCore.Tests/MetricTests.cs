@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
 using OpenTelemetry.Metrics;
@@ -70,7 +69,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             };
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddAspNetCoreInstrumentation()
-                .AddMetricReader(metricReader)
+                .AddReader(metricReader)
                 .Build();
 
             using (var client = this.factory.CreateClient())
@@ -83,9 +82,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // In unit tests environment there may be a lot of parallel unit tests executed, so
             // giving some breezing room for the End callback to complete
             await Task.Delay(TimeSpan.FromSeconds(1));
-
-            // Invokes the TestExporter which will invoke ProcessExport
-            metricReader.Collect();
 
             this.meterProvider.Dispose();
 

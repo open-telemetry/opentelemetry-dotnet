@@ -1,4 +1,4 @@
-// <copyright file="MeterProviderBuilderSdk.cs" company="OpenTelemetry Authors">
+// <copyright file="IPullMetricExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,10 +14,15 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Metrics
 {
-    internal class MeterProviderBuilderSdk : MeterProviderBuilderBase
+    /// <summary>
+    /// Describes a type of <see cref="BaseExporter{Metric}"/> which supports <see cref="ExportModes.Pull"/>.
+    /// </summary>
+    public interface IPullMetricExporter
     {
-        internal MeterProvider BuildSdk() => this.Build();
+        Func<int, bool> Collect { get; set; }
     }
 }

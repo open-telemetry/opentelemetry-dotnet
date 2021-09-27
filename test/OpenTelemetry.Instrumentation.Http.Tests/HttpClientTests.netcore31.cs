@@ -71,7 +71,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             };
             var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddHttpClientInstrumentation()
-                .AddMetricReader(metricReader)
+                .AddReader(metricReader)
                 .Build();
 
             using (serverLifeTime)
@@ -111,9 +111,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     // test case can intentionally send request that will result in exception
                 }
             }
-
-            // Invokes the TestExporter which will invoke ProcessExport
-            metricReader.Collect();
 
             meterProvider.Dispose();
 
