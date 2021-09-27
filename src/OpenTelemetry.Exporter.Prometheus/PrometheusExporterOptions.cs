@@ -15,9 +15,6 @@
 // </copyright>
 
 using System.Collections.Generic;
-#if NETCOREAPP3_1_OR_GREATER
-using Microsoft.AspNetCore.Builder;
-#endif
 
 namespace OpenTelemetry.Exporter
 {
