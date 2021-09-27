@@ -21,12 +21,14 @@ using OpenTelemetry.Metrics;
 
 public class Program
 {
-    private static readonly Meter MyMeter = new Meter("MyCompany.MyProduct.MyLibrary", "1.0");
+    private static readonly Meter Meter1 = new Meter("CompanyA.ProductA.Library1", "1.0");
+    private static readonly Meter Meter2 = new Meter("CompanyA.ProductB.Library2", "1.0");
 
     public static void Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddSource(MyMeter.Name)
+            .AddSource(Meter1.Name)
+            .AddSource(Meter2.)
 
             // Rename an instrument to new name.
             .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
@@ -34,16 +36,16 @@ public class Program
             // Change Histogram bounds
             .AddView(instrumentName: "MyHistogram", new HistogramConfig() { HistogramBounds = new double[] { 10, 20 } })
 
-            // For the instrument "http.request", aggregate with only the keys "http.verb", "http.statusCode".
-            .AddView(instrumentName: "http.requests", new AggregationConfig() { TagKeys = new string[] { "http.verb", "http.statusCode" } })
+            // For the instrument "MyCounterCustomTags", aggregate with only the keys "tag1", "tag2".
+            .AddView(instrumentName: "MyCounterCustomTags", new AggregationConfig() { TagKeys = new string[] { "tag1", "tag2" } })
 
-            // Drop the instrument "http.requestsInQueue".
-            .AddView(instrumentName: "http.requestsInQueue", new DropAggregationConfig())
+            // Drop the instrument "MyCounterDrop".
+            .AddView(instrumentName: "MyCounterDrop", new DropAggregationConfig())
 
             // Advanced selection criteria and config via Func<Instrument, AggregationConfig>
             .AddView((instrument) =>
              {
-                 if (instrument.Meter.Name.StartsWith("CompanyA.ProductB") &&
+                 if (instrument.Meter.Name.Equals("CompanyA.ProductB.Library2") &&
                      instrument.GetType().Name.StartsWith("Histogram"))
                  {
                      return new HistogramConfig() { HistogramBounds = new double[] { 10, 20 } };
@@ -58,25 +60,35 @@ public class Program
             .Build();
 
         var random = new Random();
-        var histogram = MyMeter.CreateHistogram<long>("MyHistogram");
 
-        for (int i = 0; i < 20000; i++)
-        {
-            histogram.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
-        }
-
-        var counter = MyMeter.CreateCounter<long>("MyCounter");
-
+        var counter = Meter1.CreateCounter<long>("MyCounter");
         for (int i = 0; i < 20000; i++)
         {
             counter.Add(1, new("tag1", "value1"), new("tag2", "value2"));
         }
 
-        var counterDrop = MyMeter.CreateCounter<long>("MyCounterDrop");
+        var histogram = Meter1.CreateHistogram<long>("MyHistogram");
+        for (int i = 0; i < 20000; i++)
+        {
+            histogram.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
+        }
 
+        var counterCustomTags = Meter1.CreateCounter<long>("MyCounterCustomTags");
+        for (int i = 0; i < 20000; i++)
+        {
+            counterCustomTags.Add(1, new("tag1", "value1"), new("tag2", "value2"), new("tag3", "value4"));
+        }
+
+        var counterDrop = Meter1.CreateCounter<long>("MyCounterDrop");
         for (int i = 0; i < 20000; i++)
         {
             counterDrop.Add(1, new("tag1", "value1"), new("tag2", "value2"));
+        }
+
+        var histogram2 = Meter2.CreateHistogram<long>("MyHistogram2");
+        for (int i = 0; i < 20000; i++)
+        {
+            histogram2.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
         }
     }
 }

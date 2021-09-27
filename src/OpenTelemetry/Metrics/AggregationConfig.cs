@@ -29,26 +29,18 @@ namespace OpenTelemetry.Metrics
 #pragma warning restore SA1602 // Enumeration items should be documented
     }
 
-    // TODO: can be optimized like MetricType
-    public enum InstrumentType
-    {
-#pragma warning disable SA1602 // Enumeration items should be documented
-        Invalid,
-        Counter,
-        ObservableCounter,
-        ObservableGauge,
-        Histogram,
-#pragma warning restore SA1602 // Enumeration items should be documented
-    }
-
     public class AggregationConfig
     {
         public string Name { get; set; }
 
         public string Description { get; set; }
 
+        public string Unit { get; set; }
+
         public string[] TagKeys { get; set; }
 
         public virtual Aggregation Aggregation { get; set; }
+
+        // TODO: MetricPoints caps can be configured here
     }
 }
