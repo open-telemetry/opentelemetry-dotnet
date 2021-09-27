@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Diagnostics.Metrics;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -26,16 +25,16 @@ namespace OpenTelemetry.Metrics
     public static class MeterProviderBuilderExtensions
     {
         /// <summary>
-        /// Add metric reader.
+        /// Adds a reader to the provider.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="metricReader">Metricreader.</param>
+        /// <param name="reader"><see cref="MetricReader"/>.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder AddMetricReader(this MeterProviderBuilder meterProviderBuilder, MetricReader metricReader)
+        public static MeterProviderBuilder AddReader(this MeterProviderBuilder meterProviderBuilder, MetricReader reader)
         {
-            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                return meterProviderBuilderSdk.AddMetricReader(metricReader);
+                return meterProviderBuilderBase.AddReader(reader);
             }
 
             return meterProviderBuilder;
@@ -75,9 +74,9 @@ namespace OpenTelemetry.Metrics
         /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
         public static MeterProviderBuilder SetResourceBuilder(this MeterProviderBuilder meterProviderBuilder, ResourceBuilder resourceBuilder)
         {
-            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                meterProviderBuilderSdk.SetResourceBuilder(resourceBuilder);
+                meterProviderBuilderBase.SetResourceBuilder(resourceBuilder);
             }
 
             return meterProviderBuilder;
@@ -90,9 +89,14 @@ namespace OpenTelemetry.Metrics
         /// <returns><see cref="MeterProvider"/>.</returns>
         public static MeterProvider Build(this MeterProviderBuilder meterProviderBuilder)
         {
+            if (meterProviderBuilder is IDeferredMeterProviderBuilder)
+            {
+                throw new NotSupportedException("DeferredMeterProviderBuilder requires a ServiceProvider to build.");
+            }
+
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                return meterProviderBuilderSdk.Build();
+                return meterProviderBuilderSdk.BuildSdk();
             }
 
             return null;
