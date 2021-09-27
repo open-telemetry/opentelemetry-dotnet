@@ -19,14 +19,13 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Exporter.Prometheus.Implementation;
 
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
     /// A HTTP listener used to expose Prometheus metrics.
     /// </summary>
-    public class PrometheusExporterMetricsHttpServer : IDisposable
+    internal sealed class PrometheusExporterMetricsHttpServer : IDisposable
     {
         private readonly PrometheusExporter exporter;
         private readonly HttpListener httpListener = new HttpListener();
@@ -42,7 +41,22 @@ namespace OpenTelemetry.Exporter
         public PrometheusExporterMetricsHttpServer(PrometheusExporter exporter)
         {
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
-            this.httpListener.Prefixes.Add(exporter.Options.Url);
+
+            if ((exporter.Options.HttpListenerPrefixes?.Count ?? 0) <= 0)
+            {
+                throw new ArgumentException("No HttpListenerPrefixes were specified on PrometheusExporterOptions.");
+            }
+
+            string path = exporter.Options.ScrapeEndpointPath ?? PrometheusExporterOptions.DefaultScrapeEndpointPath;
+            if (!path.StartsWith("/"))
+            {
+                path = $"/{path}";
+            }
+
+            foreach (string prefix in exporter.Options.HttpListenerPrefixes)
+            {
+                this.httpListener.Prefixes.Add($"{prefix.TrimEnd('/')}{path}");
+            }
         }
 
         /// <summary>
@@ -88,16 +102,6 @@ namespace OpenTelemetry.Exporter
         /// <inheritdoc/>
         public void Dispose()
         {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        /// <summary>
-        /// Releases the unmanaged resources used by this class and optionally releases the managed resources.
-        /// </summary>
-        /// <param name="disposing"><see langword="true"/> to release both managed and unmanaged resources; <see langword="false"/> to release only unmanaged resources.</param>
-        protected virtual void Dispose(bool disposing)
-        {
             if (this.httpListener != null && this.httpListener.IsListening)
             {
                 this.Stop();
@@ -116,25 +120,20 @@ namespace OpenTelemetry.Exporter
                 {
                     var ctxTask = this.httpListener.GetContextAsync();
                     ctxTask.Wait(this.tokenSource.Token);
-
                     var ctx = ctxTask.Result;
 
-                    ctx.Response.StatusCode = 200;
-                    ctx.Response.ContentType = PrometheusMetricBuilder.ContentType;
+                    if (!this.exporter.TryEnterSemaphore())
+                    {
+                        ctx.Response.StatusCode = 429;
+                        ctx.Response.Close();
+                    }
 
-                    using var output = ctx.Response.OutputStream;
-                    using var writer = new StreamWriter(output);
-                    this.exporter.Collect(Timeout.Infinite);
-                    this.exporter.WriteMetricsCollection(writer);
+                    Task.Run(() => this.ProcessExportRequest(ctx));
                 }
             }
             catch (OperationCanceledException ex)
             {
                 PrometheusExporterEventSource.Log.CanceledExport(ex);
-            }
-            catch (Exception ex)
-            {
-                PrometheusExporterEventSource.Log.FailedExport(ex);
             }
             finally
             {
@@ -147,6 +146,32 @@ namespace OpenTelemetry.Exporter
                 {
                     PrometheusExporterEventSource.Log.FailedShutdown(exFromFinally);
                 }
+            }
+        }
+
+        private async Task ProcessExportRequest(HttpListenerContext context)
+        {
+            try
+            {
+                using var writer = new StreamWriter(context.Response.OutputStream);
+                try
+                {
+                    this.exporter.Collect(Timeout.Infinite);
+
+                    await this.exporter.WriteMetricsCollection(writer).ConfigureAwait(false);
+                }
+                finally
+                {
+                    await writer.FlushAsync().ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                PrometheusExporterEventSource.Log.FailedExport(ex);
+            }
+            finally
+            {
+                this.exporter.ReleaseSemaphore();
             }
         }
     }

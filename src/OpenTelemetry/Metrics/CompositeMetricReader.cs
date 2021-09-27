@@ -67,6 +67,8 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
+        public Enumerator GetEnumerator() => new Enumerator(this.head);
+
         /// <inheritdoc/>
         protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
         {
@@ -159,7 +161,32 @@ namespace OpenTelemetry.Metrics
             this.disposed = true;
         }
 
-        private class DoublyLinkedListNode
+        public struct Enumerator
+        {
+            private DoublyLinkedListNode node;
+
+            internal Enumerator(DoublyLinkedListNode node)
+            {
+                this.node = node;
+                this.Current = null;
+            }
+
+            public MetricReader Current { get; private set; }
+
+            public bool MoveNext()
+            {
+                if (this.node != null)
+                {
+                    this.Current = this.node.Value;
+                    this.node = this.node.Next;
+                    return true;
+                }
+
+                return false;
+            }
+        }
+
+        internal class DoublyLinkedListNode
         {
             public readonly MetricReader Value;
 
