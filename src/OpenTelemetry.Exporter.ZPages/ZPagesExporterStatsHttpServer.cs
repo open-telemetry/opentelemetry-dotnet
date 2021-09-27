@@ -41,6 +41,7 @@ namespace OpenTelemetry.Exporter.ZPages
         /// <param name="exporter">The <see cref="ZPagesExporterStatsHttpServer"/> instance.</param>
         public ZPagesExporterStatsHttpServer(ZPagesExporter exporter)
         {
+            // TODO: Review exception
             this.httpListener.Prefixes.Add(exporter?.Options?.Url ?? throw new ArgumentNullException(nameof(exporter)));
         }
 

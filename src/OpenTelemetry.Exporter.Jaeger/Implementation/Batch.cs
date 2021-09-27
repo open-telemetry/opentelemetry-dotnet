@@ -29,6 +29,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public Batch(Process process)
         {
+            // TODO: Review exception
             this.Process = process ?? throw new ArgumentNullException(nameof(process));
             this.spanMessages = PooledList<BufferWriterMemory>.Create();
         }

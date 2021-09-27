@@ -57,6 +57,7 @@ namespace OpenTelemetry.Resources
 
             if (string.IsNullOrEmpty(serviceName))
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(serviceName));
             }
 

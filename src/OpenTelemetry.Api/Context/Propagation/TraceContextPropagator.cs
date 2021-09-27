@@ -330,6 +330,7 @@ namespace OpenTelemetry.Context.Propagation
                 return (byte)(c - 'a' + 10);
             }
 
+            // TODO: Review exception
             throw new ArgumentOutOfRangeException(nameof(c), c, $"Invalid character: {c}.");
         }
 

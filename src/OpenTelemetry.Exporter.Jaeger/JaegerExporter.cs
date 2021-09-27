@@ -47,6 +47,7 @@ namespace OpenTelemetry.Exporter
         {
             if (options is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(options));
             }
 
@@ -97,6 +98,7 @@ namespace OpenTelemetry.Exporter
         {
             if (resource is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(resource));
             }
 

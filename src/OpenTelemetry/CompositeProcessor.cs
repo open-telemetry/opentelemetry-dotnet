@@ -32,6 +32,7 @@ namespace OpenTelemetry
         {
             if (processors == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(processors));
             }
 
@@ -39,6 +40,7 @@ namespace OpenTelemetry
 
             if (!iter.MoveNext())
             {
+                // TODO: Review exception
                 throw new ArgumentException($"{nameof(processors)} collection is empty");
             }
 
@@ -55,6 +57,7 @@ namespace OpenTelemetry
         {
             if (processor == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(processor));
             }
 

@@ -37,6 +37,7 @@ namespace Thrift
 
         protected TBaseClient(TProtocol outputProtocol)
         {
+            // TODO: Review exception
             _outputProtocol = outputProtocol ?? throw new ArgumentNullException(nameof(outputProtocol));
         }
 

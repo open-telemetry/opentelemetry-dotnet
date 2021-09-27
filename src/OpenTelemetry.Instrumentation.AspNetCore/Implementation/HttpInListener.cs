@@ -53,6 +53,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         public HttpInListener(AspNetCoreInstrumentationOptions options)
             : base(DiagnosticSourceName)
         {
+            // TODO: Review exception
             this.options = options ?? throw new ArgumentNullException(nameof(options));
         }
 

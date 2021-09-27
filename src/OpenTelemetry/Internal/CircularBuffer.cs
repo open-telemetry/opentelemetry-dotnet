@@ -39,6 +39,7 @@ namespace OpenTelemetry.Internal
         {
             if (capacity <= 0)
             {
+                // TODO: Review exception
                 throw new ArgumentOutOfRangeException(nameof(capacity), capacity, "capacity should be greater than zero.");
             }
 
@@ -85,6 +86,7 @@ namespace OpenTelemetry.Internal
         {
             if (value == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(value));
             }
 
@@ -128,6 +130,7 @@ namespace OpenTelemetry.Internal
 
             if (value == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(value));
             }
 

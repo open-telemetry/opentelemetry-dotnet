@@ -45,10 +45,12 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public SpanShim(TelemetrySpan span)
         {
+            // TODO: Review exception
             this.Span = span ?? throw new ArgumentNullException(nameof(span), "Parameter cannot be null");
 
             if (!this.Span.Context.IsValid)
             {
+                // TODO: Review exception
                 throw new ArgumentException("Passed span's context is not valid", nameof(this.Span.Context));
             }
 
@@ -80,6 +82,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (fields is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(fields), "Parameter cannot be null");
             }
 
@@ -144,6 +147,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (@event is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(@event), "Parameter cannot be null");
             }
 
@@ -156,6 +160,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (@event is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(@event), "Parameter cannot be null");
             }
 
@@ -175,6 +180,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (operationName is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(operationName), "Parameter cannot be null");
             }
 
@@ -187,6 +193,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (key is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(key), "Parameter cannot be null");
             }
 
@@ -199,6 +206,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (key is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(key), "Parameter cannot be null");
             }
 
@@ -221,6 +229,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (key is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(key), "Parameter cannot be null");
             }
 
@@ -233,6 +242,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (key is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(key), "Parameter cannot be null");
             }
 

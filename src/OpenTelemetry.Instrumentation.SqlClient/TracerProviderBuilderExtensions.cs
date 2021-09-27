@@ -37,6 +37,7 @@ namespace OpenTelemetry.Trace
         {
             if (builder == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(builder));
             }
 

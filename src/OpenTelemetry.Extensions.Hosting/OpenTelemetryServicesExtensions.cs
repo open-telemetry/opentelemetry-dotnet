@@ -47,6 +47,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             if (configure is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(configure));
             }
 
@@ -65,11 +66,13 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             if (services is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(services));
             }
 
             if (createTracerProvider is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(createTracerProvider));
             }
 

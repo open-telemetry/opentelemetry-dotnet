@@ -92,6 +92,7 @@ namespace OpenTelemetry.Logs
             }
 
             public void Reset()
+                // TODO: Review exception
                 => throw new NotSupportedException();
         }
     }

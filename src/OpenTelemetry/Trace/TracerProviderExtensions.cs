@@ -27,11 +27,13 @@ namespace OpenTelemetry.Trace
         {
             if (provider == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(provider));
             }
 
             if (processor == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(processor));
             }
 
@@ -65,11 +67,13 @@ namespace OpenTelemetry.Trace
         {
             if (provider == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(provider));
             }
 
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
+                // TODO: Review exception
                 throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
             }
 
@@ -112,11 +116,13 @@ namespace OpenTelemetry.Trace
         {
             if (provider == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(provider));
             }
 
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
+                // TODO: Review exception
                 throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
             }
 

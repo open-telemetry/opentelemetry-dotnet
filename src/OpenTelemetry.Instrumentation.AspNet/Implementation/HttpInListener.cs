@@ -31,6 +31,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
         public HttpInListener(AspNetInstrumentationOptions options)
         {
+            // TODO: Review exception
             this.options = options ?? throw new ArgumentNullException(nameof(options));
 
             TelemetryHttpModule.Options.TextMapPropagator = Propagators.DefaultTextMapPropagator;

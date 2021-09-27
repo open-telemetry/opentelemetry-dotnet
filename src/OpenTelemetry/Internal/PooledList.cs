@@ -56,6 +56,7 @@ namespace OpenTelemetry.Internal
 
             if (buffer == null)
             {
+                // TODO: Review exception
                 throw new InvalidOperationException("Items cannot be added to an empty pool instance.");
             }
 

@@ -43,6 +43,7 @@ namespace OpenTelemetry.Trace
         {
             if (attributes == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(attributes));
             }
 
@@ -138,6 +139,7 @@ namespace OpenTelemetry.Trace
         {
             if (key == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(key);
             }
 

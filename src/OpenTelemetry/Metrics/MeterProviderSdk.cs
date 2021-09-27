@@ -52,6 +52,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (reader == null)
                 {
+                    // TODO: Review exception
                     throw new ArgumentException("A null value was found.", nameof(readers));
                 }
 

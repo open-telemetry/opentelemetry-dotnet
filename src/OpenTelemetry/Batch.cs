@@ -37,6 +37,7 @@ namespace OpenTelemetry
 
         internal Batch(T item)
         {
+            // TODO: Review exception
             this.item = item ?? throw new ArgumentNullException(nameof(item));
             this.circularBuffer = null;
             this.metrics = null;
@@ -49,6 +50,7 @@ namespace OpenTelemetry
 
             this.item = null;
             this.metrics = null;
+            // TODO: Review exception
             this.circularBuffer = circularBuffer ?? throw new ArgumentNullException(nameof(circularBuffer));
             this.targetCount = circularBuffer.RemovedCount + Math.Min(maxSize, circularBuffer.Count);
         }
@@ -59,6 +61,7 @@ namespace OpenTelemetry
 
             this.item = null;
             this.circularBuffer = null;
+            // TODO: Review exception
             this.metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
             this.targetCount = maxSize;
         }
@@ -184,6 +187,7 @@ namespace OpenTelemetry
 
             /// <inheritdoc/>
             public void Reset()
+                // TODO: Review exception
                 => throw new NotSupportedException();
         }
     }

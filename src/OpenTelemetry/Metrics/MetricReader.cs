@@ -70,6 +70,7 @@ namespace OpenTelemetry.Metrics
         {
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
+                // TODO: Review exception
                 throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
             }
 
@@ -106,6 +107,7 @@ namespace OpenTelemetry.Metrics
         {
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
+                // TODO: Review exception
                 throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
             }
 
@@ -230,11 +232,13 @@ namespace OpenTelemetry.Metrics
         {
             if ((int)(preferred & CumulativeAndDelta) == 0)
             {
+                // TODO: Review exception
                 throw new ArgumentException($"PreferredAggregationTemporality has an invalid value {preferred}.", nameof(preferred));
             }
 
             if ((int)(supported & CumulativeAndDelta) == 0)
             {
+                // TODO: Review exception
                 throw new ArgumentException($"SupportedAggregationTemporality has an invalid value {supported}.", nameof(supported));
             }
 
@@ -253,6 +257,7 @@ namespace OpenTelemetry.Metrics
             */
             if ((int)(preferred & supported) == 0 || preferred > supported)
             {
+                // TODO: Review exception
                 throw new ArgumentException($"PreferredAggregationTemporality {preferred} and SupportedAggregationTemporality {supported} are incompatible.");
             }
         }

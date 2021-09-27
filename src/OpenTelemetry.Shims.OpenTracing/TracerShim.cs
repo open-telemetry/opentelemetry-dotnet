@@ -28,7 +28,9 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public TracerShim(Trace.Tracer tracer, TextMapPropagator textFormat)
         {
+            // TODO: Review exception
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer), "Parameter cannot be null");
+            // TODO: Review exception
             this.propagator = textFormat ?? throw new ArgumentNullException(nameof(textFormat), "Parameter cannot be null");
 
             this.ScopeManager = new ScopeManagerShim(this.tracer);
@@ -51,11 +53,13 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (format is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(format), "Parameter cannot be null");
             }
 
             if (carrier == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(carrier), "Parameter cannot be null");
             }
 
@@ -99,21 +103,25 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (spanContext is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(spanContext), "Parameter cannot be null");
             }
 
             if (!(spanContext is SpanContextShim shim))
             {
+                // TODO: Review exception
                 throw new ArgumentException("Context is not a valid SpanContextShim object", nameof(shim));
             }
 
             if (format is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(format), "Parameter cannot be null");
             }
 
             if (carrier == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(carrier), "Parameter cannot be null");
             }
 

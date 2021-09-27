@@ -36,6 +36,7 @@ namespace OpenTelemetry.Metrics
         {
             if (instrumentationFactory == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(instrumentationFactory));
             }
 
@@ -52,6 +53,7 @@ namespace OpenTelemetry.Metrics
         {
             if (names == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(names));
             }
 
@@ -59,6 +61,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (string.IsNullOrWhiteSpace(name))
                 {
+                    // TODO: Review exception
                     throw new ArgumentException($"{nameof(names)} contains null or whitespace string.");
                 }
 
@@ -72,6 +75,7 @@ namespace OpenTelemetry.Metrics
         {
             if (this.MetricReaders.Count >= 1)
             {
+                // TODO: Review exception
                 throw new InvalidOperationException("Only one Metricreader is allowed.");
             }
 
@@ -81,6 +85,7 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilderSdk SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
+            // TODO: Review exception
             this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
             return this;
         }

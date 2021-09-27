@@ -60,6 +60,7 @@ namespace OpenTelemetry.Logs
         {
             if (processor == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(processor));
             }
 
@@ -76,6 +77,7 @@ namespace OpenTelemetry.Logs
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
+            // TODO: Review exception
             this.ResourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
 
             return this;

@@ -36,6 +36,7 @@ namespace OpenTelemetry.Exporter
         /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
         public PrometheusExporterMiddleware(RequestDelegate next, PrometheusExporter exporter)
         {
+            // TODO: Review exception
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         }
 
@@ -48,6 +49,7 @@ namespace OpenTelemetry.Exporter
         {
             if (httpContext is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(httpContext));
             }
 

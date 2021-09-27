@@ -25,6 +25,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             if (initialCapacity < 0)
             {
+                // TODO: Review exception
                 throw new ArgumentOutOfRangeException(nameof(initialCapacity), initialCapacity, "initialCapacity should be non-negative.");
             }
 

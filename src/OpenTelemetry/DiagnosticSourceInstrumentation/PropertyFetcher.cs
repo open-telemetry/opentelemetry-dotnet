@@ -47,6 +47,7 @@ namespace OpenTelemetry.Instrumentation
         {
             if (!this.TryFetch(obj, out T value))
             {
+                // TODO: Review exception
                 throw new ArgumentException("Supplied object was null or did not match the expected type.", nameof(obj));
             }
 

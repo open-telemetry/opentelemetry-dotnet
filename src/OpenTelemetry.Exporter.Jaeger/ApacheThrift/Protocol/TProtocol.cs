@@ -58,6 +58,7 @@ namespace Thrift.Protocol
             }
             else
             {
+                // TODO: Review exception
                 throw new TProtocolException(TProtocolException.DEPTH_LIMIT, "Depth limit exceeded");
             }
         }

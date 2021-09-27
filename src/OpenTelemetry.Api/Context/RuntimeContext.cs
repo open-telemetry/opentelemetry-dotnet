@@ -42,6 +42,7 @@ namespace OpenTelemetry.Context
         {
             if (string.IsNullOrEmpty(slotName))
             {
+                // TODO: Review exception
                 throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
             }
 
@@ -49,6 +50,7 @@ namespace OpenTelemetry.Context
             {
                 if (Slots.ContainsKey(slotName))
                 {
+                    // TODO: Review exception
                     throw new InvalidOperationException($"The context slot {slotName} is already registered.");
                 }
 
@@ -70,14 +72,17 @@ namespace OpenTelemetry.Context
         {
             if (string.IsNullOrEmpty(slotName))
             {
+                // TODO: Review exception
                 throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
             }
 
             if (!Slots.TryGetValue(slotName, out var slot))
             {
+                // TODO: Review exception
                 throw new ArgumentException($"The context slot {slotName} could not be found.");
             }
 
+            // TODO: Review exception
             return slot as RuntimeContextSlot<T> ?? throw new ArgumentException($"The context slot {slotName} cannot be cast as {typeof(RuntimeContextSlot<T>)}.");
         }
 
@@ -138,11 +143,13 @@ namespace OpenTelemetry.Context
         {
             if (string.IsNullOrEmpty(slotName))
             {
+                // TODO: Review exception
                 throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
             }
 
             if (!Slots.TryGetValue(slotName, out var slot))
             {
+                // TODO: Review exception
                 throw new ArgumentException($"The context slot {slotName} could not be found.");
             }
 
@@ -152,6 +159,7 @@ namespace OpenTelemetry.Context
                 return;
             }
 
+            // TODO: Review exception
             throw new NotSupportedException($"The context slot {slotName} value cannot be accessed as an object.");
         }
 
@@ -164,11 +172,13 @@ namespace OpenTelemetry.Context
         {
             if (string.IsNullOrEmpty(slotName))
             {
+                // TODO: Review exception
                 throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
             }
 
             if (!Slots.TryGetValue(slotName, out var slot))
             {
+                // TODO: Review exception
                 throw new ArgumentException($"The context slot {slotName} could not be found.");
             }
 
@@ -177,6 +187,7 @@ namespace OpenTelemetry.Context
                 return runtimeContextSlotValueAccessor.Value;
             }
 
+            // TODO: Review exception
             throw new NotSupportedException($"The context slot {slotName} value cannot be accessed as an object.");
         }
 

@@ -29,6 +29,7 @@ namespace OpenTelemetry.Trace
 
         public TracerProviderBuilderHosting(IServiceCollection services)
         {
+            // TODO: Review exception
             this.Services = services ?? throw new ArgumentNullException(nameof(services));
         }
 
@@ -38,6 +39,7 @@ namespace OpenTelemetry.Trace
         {
             if (configure == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(configure));
             }
 

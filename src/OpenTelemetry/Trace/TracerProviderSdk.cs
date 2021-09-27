@@ -230,6 +230,7 @@ namespace OpenTelemetry.Trace
         {
             if (processor == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(processor));
             }
 

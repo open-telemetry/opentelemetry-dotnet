@@ -26,11 +26,13 @@ namespace OpenTelemetry.Logs
         {
             if (loggerOptions == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(loggerOptions));
             }
 
             if (exportedItems == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(exportedItems));
             }
 

@@ -46,6 +46,7 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options)
         {
+            // TODO: Review exception
             this.Options = options ?? throw new ArgumentNullException(nameof(options));
 
             this.Resource = options.ResourceBuilder.Build();
@@ -98,6 +99,7 @@ namespace OpenTelemetry.Logs
         {
             if (processor == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(processor));
             }
 

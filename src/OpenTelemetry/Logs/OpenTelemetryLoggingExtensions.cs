@@ -29,6 +29,7 @@ namespace Microsoft.Extensions.Logging
         {
             if (builder == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(builder));
             }
 

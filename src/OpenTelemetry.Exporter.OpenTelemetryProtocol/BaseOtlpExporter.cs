@@ -41,10 +41,12 @@ namespace OpenTelemetry.Exporter
         /// <param name="options">The <see cref="OtlpExporterOptions"/> for configuring the exporter.</param>
         protected BaseOtlpExporter(OtlpExporterOptions options)
         {
+            // TODO: Review exception
             this.Options = options ?? throw new ArgumentNullException(nameof(options));
             this.Headers = options.GetMetadataFromHeaders();
             if (this.Options.TimeoutMilliseconds <= 0)
             {
+                // TODO: Review exception
                 throw new ArgumentException("Timeout value provided is not a positive number.", nameof(this.Options.TimeoutMilliseconds));
             }
         }

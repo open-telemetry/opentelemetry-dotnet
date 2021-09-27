@@ -44,6 +44,7 @@ namespace OpenTelemetry.Internal
         public SelfDiagnosticsEventListener(EventLevel logLevel, SelfDiagnosticsConfigRefresher configRefresher)
         {
             this.logLevel = logLevel;
+            // TODO: Review exception
             this.configRefresher = configRefresher ?? throw new ArgumentNullException(nameof(configRefresher));
 
             List<EventSource> eventSources;

@@ -64,10 +64,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
             catch (SocketException se)
             {
+                // TODO: Review exception
                 throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush because of socket exception. UDP Packet size was {buffer.Count}. Exception message: {se.Message}");
             }
             catch (Exception e)
             {
+                // TODO: Review exception
                 throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush closed transport. {e.Message}");
             }
             finally

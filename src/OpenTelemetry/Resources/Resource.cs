@@ -155,9 +155,11 @@ namespace OpenTelemetry.Resources
                     return convertedArr;
                 }
 
+                // TODO: Review exception
                 throw new System.ArgumentException("Attribute value type is not an accepted primitive", keyName);
             }
 
+            // TODO: Review exception
             throw new System.ArgumentException("Attribute value is null", keyName);
         }
     }

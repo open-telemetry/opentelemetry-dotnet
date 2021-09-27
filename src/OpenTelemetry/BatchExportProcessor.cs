@@ -62,21 +62,25 @@ namespace OpenTelemetry
         {
             if (maxQueueSize <= 0)
             {
+                // TODO: Review exception
                 throw new ArgumentOutOfRangeException(nameof(maxQueueSize), maxQueueSize, "maxQueueSize should be greater than zero.");
             }
 
             if (maxExportBatchSize <= 0 || maxExportBatchSize > maxQueueSize)
             {
+                // TODO: Review exception
                 throw new ArgumentOutOfRangeException(nameof(maxExportBatchSize), maxExportBatchSize, "maxExportBatchSize should be greater than zero and less than maxQueueSize.");
             }
 
             if (scheduledDelayMilliseconds <= 0)
             {
+                // TODO: Review exception
                 throw new ArgumentOutOfRangeException(nameof(scheduledDelayMilliseconds), scheduledDelayMilliseconds, "scheduledDelayMilliseconds should be greater than zero.");
             }
 
             if (exporterTimeoutMilliseconds < 0)
             {
+                // TODO: Review exception
                 throw new ArgumentOutOfRangeException(nameof(exporterTimeoutMilliseconds), exporterTimeoutMilliseconds, "exporterTimeoutMilliseconds should be non-negative.");
             }
 

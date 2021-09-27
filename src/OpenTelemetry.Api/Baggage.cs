@@ -240,6 +240,7 @@ namespace OpenTelemetry
         {
             if (string.IsNullOrEmpty(name))
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(name));
             }
 

@@ -28,7 +28,9 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLogger(string categoryName, OpenTelemetryLoggerProvider provider)
         {
+            // TODO: Review exception
             this.categoryName = categoryName ?? throw new ArgumentNullException(nameof(categoryName));
+            // TODO: Review exception
             this.provider = provider ?? throw new ArgumentNullException(nameof(provider));
         }
 

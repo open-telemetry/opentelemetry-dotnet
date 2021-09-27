@@ -37,6 +37,7 @@ namespace OpenTelemetry.Metrics
         {
             if ((this.SupportedExportModes & ExportModes.Push) != ExportModes.Push)
             {
+                // TODO: Review exception
                 throw new InvalidOperationException("The exporter does not support push mode.");
             }
 

@@ -44,11 +44,13 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         {
             if (string.IsNullOrWhiteSpace(traceId))
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(traceId));
             }
 
             if (string.IsNullOrWhiteSpace(id))
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(id));
             }
 

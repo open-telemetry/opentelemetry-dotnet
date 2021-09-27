@@ -32,6 +32,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         {
             if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
             {
+                // TODO: Review exception
                 throw new NotSupportedException($"Endpoint URI scheme ({options.Endpoint.Scheme}) is not supported. Currently only \"http\" and \"https\" are supported.");
             }
 
@@ -67,6 +68,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
                         var keyValueData = pair.Split(new char[] { '=' }, 2);
                         if (keyValueData.Length != 2)
                         {
+                            // TODO: Review exception
                             throw new ArgumentException("Headers provided in an invalid format.");
                         }
 

@@ -92,6 +92,7 @@ namespace OpenTelemetry.Resources
         {
             if (resourceDetector == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(resourceDetector));
             }
 
@@ -109,6 +110,7 @@ namespace OpenTelemetry.Resources
         {
             if (resource == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(resource));
             }
 

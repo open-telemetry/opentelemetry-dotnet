@@ -44,6 +44,7 @@ namespace OpenTelemetry.Trace
         {
             if (builder == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(builder));
             }
 
@@ -56,6 +57,7 @@ namespace OpenTelemetry.Trace
                         connection = (IConnectionMultiplexer)sp.GetService(typeof(IConnectionMultiplexer));
                         if (connection == null)
                         {
+                            // TODO: Review exception
                             throw new InvalidOperationException("StackExchange.Redis IConnectionMultiplexer could not be resolved through application IServiceProvider.");
                         }
                     }
@@ -70,6 +72,7 @@ namespace OpenTelemetry.Trace
 
             if (connection == null)
             {
+                // TODO: Review exception
                 throw new NotSupportedException("StackExchange.Redis IConnectionMultiplexer must be supplied when dependency injection is unavailable. To enable dependency injection use the OpenTelemetry.Extensions.Hosting package.");
             }
 

@@ -26,6 +26,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (!spanContext.IsValid)
             {
+                // TODO: Review exception
                 throw new ArgumentException(nameof(spanContext));
             }
 

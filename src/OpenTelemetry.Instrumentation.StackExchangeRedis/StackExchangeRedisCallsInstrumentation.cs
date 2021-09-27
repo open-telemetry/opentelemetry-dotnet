@@ -60,6 +60,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
         {
             if (connection == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(connection));
             }
 

@@ -84,6 +84,7 @@ namespace OpenTelemetry
         {
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
+                // TODO: Review exception
                 throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
             }
 
@@ -120,6 +121,7 @@ namespace OpenTelemetry
         {
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
+                // TODO: Review exception
                 throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
             }
 

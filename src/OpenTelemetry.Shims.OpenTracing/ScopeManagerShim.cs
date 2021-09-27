@@ -34,6 +34,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public ScopeManagerShim(Trace.Tracer tracer)
         {
+            // TODO: Review exception
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
         }
 
@@ -66,6 +67,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (!(span is SpanShim shim))
             {
+                // TODO: Review exception
                 throw new ArgumentException("span is not a valid SpanShim object");
             }
 

@@ -55,6 +55,7 @@ namespace OpenTelemetry.Metrics
 
             if (len == 0)
             {
+                // TODO: Review exception
                 throw new InvalidOperationException("There must be atleast one tag to use ThreadStaticStorage.");
             }
 

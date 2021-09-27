@@ -28,6 +28,7 @@ namespace OpenTelemetry.Metrics
 
         public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
+            // TODO: Review exception
             this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
 
             var exportorType = exporter.GetType();

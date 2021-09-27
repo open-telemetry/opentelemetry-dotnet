@@ -44,6 +44,7 @@ namespace OpenTelemetry.Trace
         {
             if (instrumentationFactory == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(instrumentationFactory));
             }
 
@@ -61,6 +62,7 @@ namespace OpenTelemetry.Trace
         {
             if (names == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(names));
             }
 
@@ -68,6 +70,7 @@ namespace OpenTelemetry.Trace
             {
                 if (string.IsNullOrWhiteSpace(name))
                 {
+                    // TODO: Review exception
                     throw new ArgumentException($"{nameof(names)} contains null or whitespace string.");
                 }
 
@@ -84,6 +87,7 @@ namespace OpenTelemetry.Trace
         {
             if (string.IsNullOrWhiteSpace(operationName))
             {
+                // TODO: Review exception
                 throw new ArgumentException($"{nameof(operationName)} contains null or whitespace string.");
             }
 
@@ -117,6 +121,7 @@ namespace OpenTelemetry.Trace
                     }
                     catch (Exception ex)
                     {
+                        // TODO: Review exception
                         throw new NotSupportedException("SetErrorStatusOnException is not supported on this platform.", ex);
                     }
                 }
@@ -140,6 +145,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetSampler(Sampler sampler)
         {
+            // TODO: Review exception
             this.sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
             return this;
         }
@@ -152,6 +158,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
+            // TODO: Review exception
             this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
             return this;
         }
@@ -165,6 +172,7 @@ namespace OpenTelemetry.Trace
         {
             if (processor == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(processor));
             }
 

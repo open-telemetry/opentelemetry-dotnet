@@ -95,6 +95,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
 
             if (string.IsNullOrEmpty(this.name))
             {
+                // TODO: Review exception
                 throw new InvalidOperationException("Metric name should not be empty");
             }
 

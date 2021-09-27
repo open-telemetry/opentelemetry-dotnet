@@ -26,6 +26,7 @@ namespace OpenTelemetry.Instrumentation
 
         public DiagnosticSourceListener(ListenerHandler handler)
         {
+            // TODO: Review exception
             this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
         }
 

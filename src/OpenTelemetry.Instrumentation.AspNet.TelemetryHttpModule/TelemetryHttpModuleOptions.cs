@@ -39,6 +39,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         public TextMapPropagator TextMapPropagator
         {
             get => this.textMapPropagator;
+            // TODO: Review exception
             set => this.textMapPropagator = value ?? throw new ArgumentNullException(nameof(value));
         }
 

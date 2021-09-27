@@ -100,6 +100,7 @@ namespace OpenTelemetry.Trace
         {
             if (tracerProviderBuilder is IDeferredTracerProviderBuilder)
             {
+                // TODO: Review exception
                 throw new NotSupportedException("DeferredTracerBuilder requires a ServiceProvider to build.");
             }
 

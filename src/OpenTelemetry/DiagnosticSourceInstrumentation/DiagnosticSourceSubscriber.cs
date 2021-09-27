@@ -42,6 +42,7 @@ namespace OpenTelemetry.Instrumentation
             Func<string, object, object, bool> isEnabledFilter)
         {
             this.listenerSubscriptions = new List<IDisposable>();
+            // TODO: Review exception
             this.handlerFactory = handlerFactory ?? throw new ArgumentNullException(nameof(handlerFactory));
             this.diagnosticSourceFilter = diagnosticSourceFilter;
             this.isEnabledFilter = isEnabledFilter;

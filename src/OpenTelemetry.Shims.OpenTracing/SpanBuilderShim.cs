@@ -80,7 +80,9 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public SpanBuilderShim(Trace.Tracer tracer, string spanName, IList<string> rootOperationNamesForActivityBasedAutoInstrumentations = null)
         {
+            // TODO: Review exception
             this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
+            // TODO: Review exception
             this.spanName = spanName ?? throw new ArgumentNullException(nameof(spanName));
             this.ScopeManager = new ScopeManagerShim(this.tracer);
             this.rootOperationNamesForActivityBasedAutoInstrumentations = rootOperationNamesForActivityBasedAutoInstrumentations ?? this.rootOperationNamesForActivityBasedAutoInstrumentations;
@@ -128,6 +130,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if (referenceType is null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(referenceType));
             }
 
@@ -280,6 +283,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (tag == null || tag.Key == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(tag));
             }
 
@@ -291,6 +295,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (tag == null || tag.Key == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(tag));
             }
 
@@ -307,6 +312,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (tag == null || tag.Key == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(tag));
             }
 
@@ -318,6 +324,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (tag == null || tag.Key == null)
             {
+                // TODO: Review exception
                 throw new ArgumentNullException(nameof(tag));
             }
 
@@ -334,6 +341,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (!(span is SpanShim shim))
             {
+                // TODO: Review exception
                 throw new ArgumentException("span is not a valid SpanShim object");
             }
 
@@ -350,6 +358,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (!(spanContext is SpanContextShim shim))
             {
+                // TODO: Review exception
                 throw new ArgumentException("context is not a valid SpanContextShim object");
             }
 
