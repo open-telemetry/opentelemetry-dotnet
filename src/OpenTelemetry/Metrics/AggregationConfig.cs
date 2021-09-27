@@ -45,12 +45,14 @@ namespace OpenTelemetry.Metrics
 #pragma warning restore SA1602 // Enumeration items should be documented
     }
 
-    internal class MetricStreamConfig
+    public class AggregationConfig
     {
-        public string Name;
-        public string Description;
-        public string[] TagKeys;
-        public Aggregation Aggregation;
-        public double[] HistogramBounds;
+        public string Name { get; set; }
+
+        public string Description { get; set; }
+
+        public string[] TagKeys { get; set; }
+
+        public virtual Aggregation Aggregation { get; set; }
     }
 }

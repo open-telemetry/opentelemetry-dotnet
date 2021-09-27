@@ -25,15 +25,35 @@ public class Program
 
     public static void Main(string[] args)
     {
-        // TODO: Document views with several examples
-        // in the increasing order of complexity.
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddSource(MyMeter.Name)
-            .AddView(instrumentName: "MyCounter") // MyCounter will be reported with defaults. This is done to ensure that any other wildcard Views for the same instrument does not affect this instrument.
-            .AddView(instrumentName: "MyHistogram") // MyHistogram will be aggregated using defaults.
-            .AddView(instrumentName: "MyCounterDrop", aggregation: Aggregation.None) // The intention is to drop MyCounterDrop instrument. Due to the wildcard "My", this gets pickup.. TODO: find the right expectation.
-            .AddView(name: "MyHistogramCustom", instrumentName: "MyHistogram", histogramBounds: new double[] { 10, 20 }) // MyHistogram will be aggregated using custom bounds and will be outputted as "MyHistogramCustom"
-            .AddView(instrumentName: "My", tagKeys: new string[] { "tag1" }) // All instruments whose name starts with My, will be aggregated with a single tag - tag1. MyCounter, MyHistogram will get excluded from this, as their name is already taken.
+
+            // Rename an instrument to new name.
+            .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
+
+            // Change Histogram bounds
+            .AddView(instrumentName: "MyHistogram", new HistogramConfig() { HistogramBounds = new double[] { 10, 20 } })
+
+            // For the instrument "http.request", aggregate with only the keys "http.verb", "http.statusCode".
+            .AddView(instrumentName: "http.requests", new AggregationConfig() { TagKeys = new string[] { "http.verb", "http.statusCode" } })
+
+            // Drop the instrument "http.requestsInQueue".
+            .AddView(instrumentName: "http.requestsInQueue", new DropAggregationConfig())
+
+            // Advanced selection criteria and config via Func<Instrument, AggregationConfig>
+            .AddView((instrument) =>
+             {
+                 if (instrument.Meter.Name.StartsWith("CompanyA.ProductB") &&
+                     instrument.GetType().Name.StartsWith("Histogram"))
+                 {
+                     return new HistogramConfig() { HistogramBounds = new double[] { 10, 20 } };
+                 }
+
+                 return null;
+             })
+
+            // Any instrument not explicitly added above gets dropped.
+            .AddView(instrumentName: "*", new DropAggregationConfig())
             .AddConsoleExporter()
             .Build();
 

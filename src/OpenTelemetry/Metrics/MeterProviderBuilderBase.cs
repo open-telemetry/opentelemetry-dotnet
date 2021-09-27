@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -27,6 +28,7 @@ namespace OpenTelemetry.Metrics
     {
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private readonly List<string> meterSources = new List<string>();
+        private readonly List<Func<Instrument, AggregationConfig>> viewConfigs = new List<Func<Instrument, AggregationConfig>>();
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
 
         protected MeterProviderBuilderBase()
@@ -84,6 +86,115 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
+        internal MeterProviderBuilder AddView(string instrumentName, string name)
+        {
+            return this;
+        }
+
+        internal MeterProviderBuilder AddView(string instrumentName, AggregationConfig aggregationConfig)
+        {
+            return this;
+        }
+
+        internal MeterProviderBuilder AddView(Func<Instrument, AggregationConfig> viewConfig)
+        {
+            return this;
+        }
+
+        internal MeterProviderBuilder AddView(string name, string meterName, string meterVersion, string instrumentName, InstrumentType instrumentType, string[] tagKeys, Aggregation aggregation, double[] histogramBounds)
+        {
+            return this;
+            /*
+            if (string.IsNullOrWhiteSpace(meterName)
+                && string.IsNullOrWhiteSpace(meterVersion)
+                && string.IsNullOrWhiteSpace(instrumentName)
+                && instrumentType == InstrumentType.Invalid)
+            {
+                throw new ArgumentException("Atleast one instrument selection criteria should be specified.");
+            }
+
+            if (histogramBounds != null)
+            {
+                if (aggregation != Aggregation.Default && aggregation != Aggregation.Histogram)
+                {
+                    throw new ArgumentException("Histogram bounds are only applicable if Aggregation is Histogram.");
+                }
+            }
+
+            Func<Instrument, AggregationConfig> viewConfig = (instrument) =>
+            {
+                bool selectCriteriaMeterName = false;
+                if (!string.IsNullOrWhiteSpace(meterName)
+                && instrument.Meter.Name.StartsWith(meterName, StringComparison.OrdinalIgnoreCase))
+                {
+                    selectCriteriaMeterName = true;
+                }
+
+                bool selectCriteriaMeterVersion = false;
+                if (!string.IsNullOrWhiteSpace(meterVersion)
+                && instrument.Meter.Version.StartsWith(meterVersion, StringComparison.OrdinalIgnoreCase))
+                {
+                    selectCriteriaMeterVersion = true;
+                }
+
+                bool selectCriteriaInstrumentName = false;
+                if (!string.IsNullOrWhiteSpace(instrumentName)
+                && instrument.Name.StartsWith(instrumentName, StringComparison.OrdinalIgnoreCase))
+                {
+                    selectCriteriaInstrumentName = true;
+                }
+
+                bool selectCriteriaInstrumentType = false;
+                if (instrumentType != InstrumentType.Invalid)
+                {
+                    var instrumentGenericType = instrument.GetType().GetGenericTypeDefinition();
+                    var incomingInstrumentType = InstrumentType.Invalid;
+                    if (instrumentGenericType == typeof(Counter<>))
+                    {
+                        incomingInstrumentType = InstrumentType.Counter;
+                    }
+                    else if (instrumentGenericType == typeof(ObservableCounter<>))
+                    {
+                        incomingInstrumentType = InstrumentType.ObservableCounter;
+                    }
+                    else if (instrumentGenericType == typeof(ObservableGauge<>))
+                    {
+                        incomingInstrumentType = InstrumentType.ObservableGauge;
+                    }
+                    else if (instrumentGenericType == typeof(Histogram<>))
+                    {
+                        incomingInstrumentType = InstrumentType.Histogram;
+                    }
+
+                    if (incomingInstrumentType == instrumentType)
+                    {
+                        selectCriteriaInstrumentType = true;
+                    }
+                }
+
+                // All criteria must be met.
+                var selectInstrument = selectCriteriaMeterName & selectCriteriaMeterVersion & selectCriteriaInstrumentName & selectCriteriaInstrumentType;
+
+                if (selectInstrument)
+                {
+                    var metricStreamConfig = new AggregationConfig();
+                    metricStreamConfig.Name = string.IsNullOrWhiteSpace(name) ? instrument.Name : name;
+                    metricStreamConfig.Aggregation = aggregation;
+                    metricStreamConfig.TagKeys = tagKeys;
+                    metricStreamConfig.HistogramBounds = histogramBounds;
+                    return metricStreamConfig;
+                }
+                else
+                {
+                    return null;
+                }
+            };
+
+            this.viewConfigs.Add(viewConfig);
+            return this;
+            */
+        }
+
         internal MeterProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
             this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
@@ -100,6 +211,7 @@ namespace OpenTelemetry.Metrics
                 this.resourceBuilder.Build(),
                 this.meterSources,
                 this.instrumentationFactories,
+                this.viewConfigs,
                 this.MetricReaders.ToArray());
         }
 
