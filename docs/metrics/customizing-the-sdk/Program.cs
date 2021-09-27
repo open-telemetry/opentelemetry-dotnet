@@ -28,7 +28,7 @@ public class Program
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddSource(Meter1.Name)
-            .AddSource(Meter2.)
+            .AddSource(Meter2.Name)
 
             // Rename an instrument to new name.
             .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
@@ -54,8 +54,13 @@ public class Program
                  return null;
              })
 
-            // Any instrument not explicitly added above gets dropped.
-            .AddView(instrumentName: "*", new DropAggregationConfig())
+            // An instrument which does not match any views
+            // gets processed with default behavior. (SDK default)
+            // Uncommenting the following line will
+            // turn off the above default. i.e any
+            // instrument which does not match any views
+            // gets dropped.
+            // .AddView(instrumentName: "*", new DropAggregationConfig())
             .AddConsoleExporter()
             .Build();
 
