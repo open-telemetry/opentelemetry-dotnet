@@ -47,6 +47,11 @@ namespace OpenTelemetry.Metrics
 
         public MeterProvider Build(IServiceProvider serviceProvider)
         {
+            if (serviceProvider == null)
+            {
+                throw new ArgumentNullException(nameof(serviceProvider));
+            }
+
             // Note: Not using a foreach loop because additional actions can be
             // added during each call.
             for (int i = 0; i < this.configurationActions.Count; i++)
