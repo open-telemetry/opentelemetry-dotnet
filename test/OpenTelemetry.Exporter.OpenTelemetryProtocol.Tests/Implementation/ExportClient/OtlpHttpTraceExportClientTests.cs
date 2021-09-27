@@ -22,6 +22,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
+using Moq.Protected;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Resources;
@@ -48,15 +49,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Expo
         }
 
         [Fact]
-        public void NewOtlpHttpTraceExportClient_DefaultOtlpExporterOptions_ExportClientHasDefaulProperties()
-        {
-            var client = new OtlpHttpTraceExportClient(new OtlpExporterOptions());
-
-            Assert.NotNull(client.HttpHandler);
-            Assert.IsType<HttpHandler>(client.HttpHandler);
-        }
-
-        [Fact]
         public void NewOtlpHttpTraceExportClient_OtlpExporterOptions_ExporterHasCorrectProperties()
         {
             var header1 = new { Name = "hdr1", Value = "val1" };
@@ -67,10 +59,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Expo
                 Headers = $"{header1.Name}={header1.Value}, {header2.Name} = {header2.Value}",
             };
 
-            var client = new OtlpHttpTraceExportClient(options, new NoopHttpHandler());
+            var client = new OtlpHttpTraceExportClient(options);
 
-            Assert.NotNull(client.HttpHandler);
-            Assert.IsType<NoopHttpHandler>(client.HttpHandler);
+            Assert.NotNull(client.HttpClient);
 
             Assert.Equal(2, client.Headers.Count);
             Assert.Contains(client.Headers, kvp => kvp.Key == header1.Name && kvp.Value == header1.Value);
@@ -98,21 +89,42 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Expo
                 Headers = $"{header1.Name}={header1.Value}, {header2.Name} = {header2.Value}",
             };
 
-            var httpHandlerMock = new Mock<IHttpHandler>();
+            var httpHandlerMock = new Mock<HttpMessageHandler>();
 
             HttpRequestMessage httpRequest = null;
             var httpRequestContent = Array.Empty<byte>();
 
-            httpHandlerMock.Setup(h => h.Send(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
+            httpHandlerMock.Protected()
+#if NET5_0_OR_GREATER
+                .Setup<HttpResponseMessage>("Send", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+                .Returns((HttpRequestMessage request, CancellationToken token) =>
+                {
+                    return new HttpResponseMessage();
+                })
+                .Callback<HttpRequestMessage, CancellationToken>((r, ct) =>
+                {
+                    httpRequest = r;
+
+                    // We have to capture content as it can't be accessed after request is disposed inside of SendExportRequest method
+                    httpRequestContent = r.Content.ReadAsByteArrayAsync()?.Result;
+                })
+#else
+                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
+                {
+                    return new HttpResponseMessage();
+                })
                 .Callback<HttpRequestMessage, CancellationToken>(async (r, ct) =>
                 {
                     httpRequest = r;
 
                     // We have to capture content as it can't be accessed after request is disposed inside of SendExportRequest method
                     httpRequestContent = await r.Content.ReadAsByteArrayAsync();
-                });
+                })
+#endif
+                .Verifiable();
 
-            var exportClient = new OtlpHttpTraceExportClient(options, httpHandlerMock.Object);
+            var exportClient = new OtlpHttpTraceExportClient(options, new HttpClient(httpHandlerMock.Object));
 
             var exporter = new OtlpTraceExporter(options, exportClient);
 
@@ -141,8 +153,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Expo
             var result = exportClient.SendExportRequest(request);
 
             // Assert
-            httpHandlerMock.Verify(m => m.Send(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()), Times.Once());
-
             Assert.True(result);
             Assert.NotNull(httpRequest);
             Assert.Equal(HttpMethod.Post, httpRequest.Method);
@@ -172,30 +182,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Expo
             }
 
             Assert.Single(resourceSpan.InstrumentationLibrarySpans);
-        }
-
-        [Fact]
-        public void CancelExportRequest_PendingHttpRequestsCancelled()
-        {
-            var httpHandlerMock = new Mock<IHttpHandler>();
-
-            var client = new OtlpHttpTraceExportClient(new OtlpExporterOptions(), httpHandlerMock.Object);
-
-            var result = client.CancelExportRequest(10);
-
-            httpHandlerMock.Verify(m => m.CancelPendingRequests(), Times.Once());
-        }
-
-        private class NoopHttpHandler : IHttpHandler
-        {
-            public void CancelPendingRequests()
-            {
-            }
-
-            public HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken = default)
-            {
-                return null;
-            }
         }
     }
 }

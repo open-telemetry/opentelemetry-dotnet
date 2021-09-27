@@ -18,7 +18,6 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Threading;
 using Google.Protobuf;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
@@ -30,34 +29,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         internal const string MediaContentType = "application/x-protobuf";
         private readonly Uri exportTracesUri;
 
-        public OtlpHttpTraceExportClient(OtlpExporterOptions options, IHttpHandler httpHandler = null)
-            : base(options, httpHandler)
+        public OtlpHttpTraceExportClient(OtlpExporterOptions options, HttpClient httpClient = null)
+            : base(options, httpClient)
         {
             this.exportTracesUri = this.Options.Endpoint.AppendPathIfNotPresent(OtlpExporterOptions.TracesExportPath);
         }
 
-        /// <inheritdoc/>
-        public override bool SendExportRequest(OtlpCollector.ExportTraceServiceRequest request, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                using var httpRequest = this.CreateHttpRequest(request);
-
-                using var httpResponse = this.HttpHandler.Send(httpRequest);
-
-                httpResponse?.EnsureSuccessStatusCode();
-            }
-            catch (HttpRequestException ex)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(ex);
-
-                return false;
-            }
-
-            return true;
-        }
-
-        private HttpRequestMessage CreateHttpRequest(OtlpCollector.ExportTraceServiceRequest exportRequest)
+        protected override HttpRequestMessage CreateHttpRequest(OtlpCollector.ExportTraceServiceRequest exportRequest)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, this.exportTracesUri);
             foreach (var header in this.Headers)

@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
@@ -24,7 +25,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     /// <typeparam name="TRequest">Type of export request.</typeparam>
     internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequest>
     {
-        protected BaseOtlpHttpExportClient(OtlpExporterOptions options, IHttpHandler httpHandler = null)
+        protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient = null)
         {
             this.Options = options ?? throw new ArgumentNullException(nameof(options));
 
@@ -35,24 +36,42 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
             this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
 
-            this.HttpHandler = httpHandler ?? new HttpHandler(TimeSpan.FromMilliseconds(this.Options.TimeoutMilliseconds));
+            this.HttpClient = httpClient ?? new HttpClient { Timeout = TimeSpan.FromMilliseconds(this.Options.TimeoutMilliseconds) };
         }
 
         internal OtlpExporterOptions Options { get; }
 
-        internal IHttpHandler HttpHandler { get; }
+        internal HttpClient HttpClient { get; }
 
         internal IReadOnlyDictionary<string, string> Headers { get; }
 
         /// <inheritdoc/>
-        public abstract bool SendExportRequest(TRequest request, CancellationToken cancellationToken = default);
-
-        /// <inheritdoc/>
-        public virtual bool CancelExportRequest(int timeoutMilliseconds)
+        public bool SendExportRequest(TRequest request, CancellationToken cancellationToken = default)
         {
             try
             {
-                this.HttpHandler.CancelPendingRequests();
+                using var httpRequest = this.CreateHttpRequest(request);
+
+                using var httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
+
+                httpResponse?.EnsureSuccessStatusCode();
+            }
+            catch (HttpRequestException ex)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(ex);
+
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <inheritdoc/>
+        public bool CancelExportRequest(int timeoutMilliseconds)
+        {
+            try
+            {
+                this.HttpClient.CancelPendingRequests();
                 return true;
             }
             catch (Exception ex)
@@ -60,6 +79,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
                 OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
                 return false;
             }
+        }
+
+        protected abstract HttpRequestMessage CreateHttpRequest(TRequest request);
+
+        protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+#if NET5_0_OR_GREATER
+            return this.HttpClient.Send(request, cancellationToken);
+#else
+            return this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();
+#endif
         }
     }
 }
