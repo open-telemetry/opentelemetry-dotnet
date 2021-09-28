@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* SDK is allocation-free on recording of measurements with
+  upto 8 tags.
+
 ## 1.2.0-alpha4
 
 Released 2021-Sep-23
