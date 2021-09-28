@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -27,6 +28,7 @@ namespace OpenTelemetry.Metrics
     {
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private readonly List<string> meterSources = new List<string>();
+        private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs = new List<Func<Instrument, MetricStreamConfiguration>>();
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
 
         protected MeterProviderBuilderBase()
@@ -84,6 +86,24 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
+        internal MeterProviderBuilder AddView(string instrumentName, string name)
+        {
+            // TODO: Actually implement view.
+            return this;
+        }
+
+        internal MeterProviderBuilder AddView(string instrumentName, MetricStreamConfiguration aggregationConfig)
+        {
+            // TODO: Actually implement view.
+            return this;
+        }
+
+        internal MeterProviderBuilder AddView(Func<Instrument, MetricStreamConfiguration> viewConfig)
+        {
+            // TODO: Actually implement view.
+            return this;
+        }
+
         internal MeterProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
             this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
@@ -100,6 +120,7 @@ namespace OpenTelemetry.Metrics
                 this.resourceBuilder.Build(),
                 this.meterSources,
                 this.instrumentationFactories,
+                this.viewConfigs,
                 this.MetricReaders.ToArray());
         }
 
