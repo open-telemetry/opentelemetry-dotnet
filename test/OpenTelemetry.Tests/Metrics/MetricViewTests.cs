@@ -25,6 +25,7 @@ namespace OpenTelemetry.Metrics.Tests
     public class MetricViewTests
     {
         private readonly ITestOutputHelper output;
+        private const int MaxTimeToAllowForFlush = 10000;
 
         public MetricViewTests(ITestOutputHelper output)
         {
@@ -34,20 +35,18 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewToRenameMetric()
         {
+            using var meter1 = new Meter("ViewToRenameMetricTest");
             var exportedItems = new List<Metric>();
-            var inMemoryReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems));
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddSource("TestMeter1")
-            .AddReader(inMemoryReader)
-            .AddView("name1", "renamed")
-            .Build();
-
-            using var meter1 = new Meter("TestMeter1");
+                .AddSource(meter1.Name)
+                .AddInMemoryExporter(exportedItems)
+                .AddView("name1", "renamed")
+                .Build();
 
             // Expecting one metric stream.
             var counterLong = meter1.CreateCounter<long>("name1");
             counterLong.Add(10);
-            inMemoryReader.Collect();
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Single(exportedItems);
             var metric = exportedItems[0];
             Assert.Equal("renamed", metric.Name);
@@ -56,21 +55,19 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewToProduceMultipleStreamsFromInstrument()
         {
+            using var meter1 = new Meter("ViewToProduceMultipleStreamsFromInstrumentTest");
             var exportedItems = new List<Metric>();
-            var inMemoryReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems));
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddSource("TestMeter1")
-            .AddReader(inMemoryReader)
-            .AddView("name1", "renamedStream1")
-            .AddView("name1", "renamedStream2")
-            .Build();
-
-            using var meter1 = new Meter("TestMeter1");
+                .AddSource(meter1.Name)
+                .AddInMemoryExporter(exportedItems)
+                .AddView("name1", "renamedStream1")
+                .AddView("name1", "renamedStream2")
+                .Build();
 
             // Expecting two metric stream.
             var counterLong = meter1.CreateCounter<long>("name1");
             counterLong.Add(10);
-            inMemoryReader.Collect();
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Equal(2, exportedItems.Count);
             Assert.Equal("renamedStream1", exportedItems[0].Name);
             Assert.Equal("renamedStream2", exportedItems[1].Name);
@@ -79,17 +76,15 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewToProduceMultipleStreamsWithDuplicatesFromInstrument()
         {
+            using var meter1 = new Meter("ViewToProduceMultipleStreamsWithDuplicatesFromInstrumentTest");
             var exportedItems = new List<Metric>();
-            var inMemoryReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems));
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddSource("TestMeter1")
-            .AddReader(inMemoryReader)
-            .AddView("name1", "renamedStream1")
-            .AddView("name1", "renamedStream2")
-            .AddView("name1", "renamedStream2")
-            .Build();
-
-            using var meter1 = new Meter("TestMeter1");
+                .AddSource(meter1.Name)
+                .AddInMemoryExporter(exportedItems)
+                .AddView("name1", "renamedStream1")
+                .AddView("name1", "renamedStream2")
+                .AddView("name1", "renamedStream2")
+                .Build();
 
             // Expecting two metric stream.
             // the .AddView("name1", "renamedStream2")
@@ -97,7 +92,7 @@ namespace OpenTelemetry.Metrics.Tests
             // conflicts.
             var counterLong = meter1.CreateCounter<long>("name1");
             counterLong.Add(10);
-            inMemoryReader.Collect();
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Equal(2, exportedItems.Count);
             Assert.Equal("renamedStream1", exportedItems[0].Name);
             Assert.Equal("renamedStream2", exportedItems[1].Name);
