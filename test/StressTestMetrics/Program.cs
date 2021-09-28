@@ -26,13 +26,19 @@ using OpenTelemetry.Metrics;
 
 public partial class Program
 {
+    private const int ArraySize = 10;
     private static readonly Meter TestMeter = new Meter("TestMeter", "1.0.0");
     private static readonly Counter<long> TestCounter = TestMeter.CreateCounter<long>("TestCounter");
-    private static readonly string[] DimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
-    private static readonly ThreadLocal<Random> TlsRandom = new ThreadLocal<Random>(() => new Random());
+    private static readonly string[] DimensionValues = new string[ArraySize];
+    private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());
 
     public static void Main()
     {
+        for (int i = 0; i < ArraySize; i++)
+        {
+            DimensionValues[i] = $"DimValue{i}";
+        }
+
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddSource("TestMeter")
             .Build();
@@ -42,11 +48,11 @@ public partial class Program
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected static void Run()
     {
-        var random = TlsRandom.Value;
+        var random = ThreadLocalRandom.Value;
         TestCounter.Add(
             100,
-            new ("DimName1", DimensionValues[random.Next(0, 10)]),
-            new ("DimName2", DimensionValues[random.Next(0, 10)]),
-            new ("DimName3", DimensionValues[random.Next(0, 10)]));
+            new ("DimName1", DimensionValues[random.Next(0, ArraySize)]),
+            new ("DimName2", DimensionValues[random.Next(0, ArraySize)]),
+            new ("DimName3", DimensionValues[random.Next(0, ArraySize)]));
     }
 }
