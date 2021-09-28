@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Resources
 {
@@ -90,11 +91,7 @@ namespace OpenTelemetry.Resources
         // https://github.com/open-telemetry/oteps/blob/master/text/0111-auto-resource-detection.md
         internal ResourceBuilder AddDetector(IResourceDetector resourceDetector)
         {
-            if (resourceDetector == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(resourceDetector));
-            }
+            Guard.IsNotNull(resourceDetector, nameof(resourceDetector));
 
             Resource resource = resourceDetector.Detect();
 
@@ -108,11 +105,7 @@ namespace OpenTelemetry.Resources
 
         internal ResourceBuilder AddResource(Resource resource)
         {
-            if (resource == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(resource));
-            }
+            Guard.IsNotNull(resource, nameof(resource));
 
             this.resources.Add(resource);
 

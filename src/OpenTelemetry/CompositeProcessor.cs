@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry
 {
@@ -30,11 +31,7 @@ namespace OpenTelemetry
 
         public CompositeProcessor(IEnumerable<BaseProcessor<T>> processors)
         {
-            if (processors == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(processors));
-            }
+            Guard.IsNotNull(processors, nameof(processors));
 
             using var iter = processors.GetEnumerator();
 
@@ -55,11 +52,7 @@ namespace OpenTelemetry
 
         public CompositeProcessor<T> AddProcessor(BaseProcessor<T> processor)
         {
-            if (processor == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(processor));
-            }
+            Guard.IsNotNull(processor, nameof(processor));
 
             var node = new DoublyLinkedListNode(processor)
             {

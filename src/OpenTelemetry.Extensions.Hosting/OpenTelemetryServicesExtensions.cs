@@ -18,6 +18,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Extensions.Hosting.Implementation;
+using OpenTelemetry.Shared;
 using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -45,11 +46,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Action<TracerProviderBuilder> configure)
         {
-            if (configure is null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(configure));
-            }
+            Guard.IsNotNull(configure, nameof(configure));
 
             var builder = new TracerProviderBuilderHosting(services);
             configure(builder);
@@ -64,17 +61,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         private static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Func<IServiceProvider, TracerProvider> createTracerProvider)
         {
-            if (services is null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            if (createTracerProvider is null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(createTracerProvider));
-            }
+            Guard.IsNotNull(services, nameof(services));
+            Guard.IsNotNull(createTracerProvider, nameof(createTracerProvider));
 
             try
             {

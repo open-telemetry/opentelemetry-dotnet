@@ -17,6 +17,7 @@
 using System;
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Instrumentation.Http.Implementation;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Trace
 {
@@ -58,11 +59,7 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions = null)
         {
-            if (builder == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.IsNotNull(builder, nameof(builder));
 
             var httpClientOptions = new HttpClientInstrumentationOptions();
 

@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Trace
 {
@@ -33,11 +34,7 @@ namespace OpenTelemetry.Trace
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public static TracerProviderBuilder AddJaegerExporter(this TracerProviderBuilder builder, Action<JaegerExporterOptions> configure = null)
         {
-            if (builder == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.IsNotNull(builder, nameof(builder));
 
             if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
             {

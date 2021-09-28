@@ -18,6 +18,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Trace
 {
@@ -25,17 +26,8 @@ namespace OpenTelemetry.Trace
     {
         public static TracerProvider AddProcessor(this TracerProvider provider, BaseProcessor<Activity> processor)
         {
-            if (provider == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(provider));
-            }
-
-            if (processor == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(processor));
-            }
+            Guard.IsNotNull(provider, nameof(provider));
+            Guard.IsNotNull(processor, nameof(processor));
 
             if (provider is TracerProviderSdk tracerProviderSdk)
             {
@@ -65,11 +57,7 @@ namespace OpenTelemetry.Trace
         /// </remarks>
         public static bool ForceFlush(this TracerProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (provider == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(provider));
-            }
+            Guard.IsNotNull(provider, nameof(provider));
 
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {
@@ -114,11 +102,7 @@ namespace OpenTelemetry.Trace
         /// </remarks>
         public static bool Shutdown(this TracerProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (provider == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(provider));
-            }
+            Guard.IsNotNull(provider, nameof(provider));
 
             if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
             {

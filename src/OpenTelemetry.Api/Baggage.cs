@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTelemetry.Context;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry
 {
@@ -238,11 +239,7 @@ namespace OpenTelemetry
         /// <returns>Baggage item or <see langword="null"/> if nothing was found.</returns>
         public string GetBaggage(string name)
         {
-            if (string.IsNullOrEmpty(name))
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(name));
-            }
+            Guard.IsNotNullOrEmpty(name, nameof(name));
 
             return this.baggage != null && this.baggage.TryGetValue(name, out string value)
                 ? value

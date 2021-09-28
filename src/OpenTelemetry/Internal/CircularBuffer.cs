@@ -17,6 +17,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Internal
 {
@@ -84,11 +85,7 @@ namespace OpenTelemetry.Internal
         /// </returns>
         public bool Add(T value)
         {
-            if (value == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(value));
-            }
+            Guard.IsNotNull(value, nameof(value));
 
             while (true)
             {
@@ -128,11 +125,7 @@ namespace OpenTelemetry.Internal
                 return this.Add(value);
             }
 
-            if (value == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(value));
-            }
+            Guard.IsNotNull(value, nameof(value));
 
             var spinCountDown = maxSpinCount;
 

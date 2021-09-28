@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using global::OpenTracing;
+using OpenTelemetry.Shared;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing
@@ -80,11 +81,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
         {
-            if (fields is null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(fields), "Parameter cannot be null");
-            }
+            Guard.IsNotNull(fields, nameof(fields));
 
             var payload = ConvertToEventPayload(fields);
             var eventName = payload.Item1;
@@ -178,11 +175,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.ISpan SetOperationName(string operationName)
         {
-            if (operationName is null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(operationName), "Parameter cannot be null");
-            }
+            Guard.IsNotNull(operationName, nameof(operationName));
 
             this.Span.UpdateName(operationName);
             return this;
@@ -191,11 +184,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.ISpan SetTag(string key, string value)
         {
-            if (key is null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(key), "Parameter cannot be null");
-            }
+            Guard.IsNotNull(key, nameof(key));
 
             this.Span.SetAttribute(key, value);
             return this;
@@ -204,11 +193,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.ISpan SetTag(string key, bool value)
         {
-            if (key is null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(key), "Parameter cannot be null");
-            }
+            Guard.IsNotNull(key, nameof(key));
 
             // Special case the OpenTracing Error Tag
             // see https://opentracing.io/specification/conventions/
@@ -227,11 +212,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.ISpan SetTag(string key, int value)
         {
-            if (key is null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(key), "Parameter cannot be null");
-            }
+            Guard.IsNotNull(key, nameof(key));
 
             this.Span.SetAttribute(key, value);
             return this;
@@ -240,11 +221,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.ISpan SetTag(string key, double value)
         {
-            if (key is null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(key), "Parameter cannot be null");
-            }
+            Guard.IsNotNull(key, nameof(key));
 
             this.Span.SetAttribute(key, value);
             return this;

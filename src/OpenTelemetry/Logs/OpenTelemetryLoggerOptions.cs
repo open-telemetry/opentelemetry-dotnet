@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Logs
 {
@@ -58,11 +59,7 @@ namespace OpenTelemetry.Logs
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions AddProcessor(BaseProcessor<LogRecord> processor)
         {
-            if (processor == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(processor));
-            }
+            Guard.IsNotNull(processor, nameof(processor));
 
             this.Processors.Add(processor);
 

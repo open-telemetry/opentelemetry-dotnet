@@ -22,6 +22,7 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Trace
 {
@@ -228,11 +229,7 @@ namespace OpenTelemetry.Trace
 
         internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
         {
-            if (processor == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(processor));
-            }
+            Guard.IsNotNull(processor, nameof(processor));
 
             processor.SetParentProvider(this);
 

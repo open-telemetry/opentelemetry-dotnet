@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Trace
 {
@@ -42,11 +43,7 @@ namespace OpenTelemetry.Trace
             Func<TInstrumentation> instrumentationFactory)
             where TInstrumentation : class
         {
-            if (instrumentationFactory == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(instrumentationFactory));
-            }
+            Guard.IsNotNull(instrumentationFactory, nameof(instrumentationFactory));
 
             this.instrumentationFactories.Add(
                 new InstrumentationFactory(
@@ -60,11 +57,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public override TracerProviderBuilder AddSource(params string[] names)
         {
-            if (names == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(names));
-            }
+            Guard.IsNotNull(names, nameof(names));
 
             foreach (var name in names)
             {
@@ -170,11 +163,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder AddProcessor(BaseProcessor<Activity> processor)
         {
-            if (processor == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(processor));
-            }
+            Guard.IsNotNull(processor, nameof(processor));
 
             this.processors.Add(processor);
 

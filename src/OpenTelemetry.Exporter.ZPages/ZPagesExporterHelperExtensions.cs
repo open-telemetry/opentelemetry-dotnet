@@ -17,6 +17,7 @@
 using System;
 
 using OpenTelemetry.Exporter.ZPages;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Trace
 {
@@ -36,11 +37,7 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             Action<ZPagesExporterOptions> configure = null)
         {
-            if (builder == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.IsNotNull(builder, nameof(builder));
 
             var exporterOptions = new ZPagesExporterOptions();
             configure?.Invoke(exporterOptions);

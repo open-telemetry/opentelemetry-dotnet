@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Trace
 {
@@ -37,11 +38,7 @@ namespace OpenTelemetry.Trace
 
         public TracerProviderBuilder Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
         {
-            if (configure == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(configure));
-            }
+            Guard.IsNotNull(configure, nameof(configure));
 
             this.configurationActions.Add(configure);
             return this;

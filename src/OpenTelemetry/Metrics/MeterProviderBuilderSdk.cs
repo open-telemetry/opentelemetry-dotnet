@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Metrics
 {
@@ -34,11 +35,7 @@ namespace OpenTelemetry.Metrics
 
         public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
         {
-            if (instrumentationFactory == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(instrumentationFactory));
-            }
+            Guard.IsNotNull(instrumentationFactory, nameof(instrumentationFactory));
 
             this.instrumentationFactories.Add(
                 new InstrumentationFactory(
@@ -51,11 +48,7 @@ namespace OpenTelemetry.Metrics
 
         public override MeterProviderBuilder AddSource(params string[] names)
         {
-            if (names == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(names));
-            }
+            Guard.IsNotNull(names, nameof(names));
 
             foreach (var name in names)
             {

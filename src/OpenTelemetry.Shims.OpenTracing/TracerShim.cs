@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using global::OpenTracing.Propagation;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
@@ -51,17 +52,8 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.ISpanContext Extract<TCarrier>(global::OpenTracing.Propagation.IFormat<TCarrier> format, TCarrier carrier)
         {
-            if (format is null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(format), "Parameter cannot be null");
-            }
-
-            if (carrier == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(carrier), "Parameter cannot be null");
-            }
+            Guard.IsNotNull(format, nameof(format));
+            Guard.IsNotNull(carrier, nameof(carrier));
 
             PropagationContext propagationContext = default;
 
@@ -101,11 +93,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             global::OpenTracing.Propagation.IFormat<TCarrier> format,
             TCarrier carrier)
         {
-            if (spanContext is null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(spanContext), "Parameter cannot be null");
-            }
+            Guard.IsNotNull(spanContext, nameof(spanContext));
 
             if (!(spanContext is SpanContextShim shim))
             {
@@ -113,17 +101,8 @@ namespace OpenTelemetry.Shims.OpenTracing
                 throw new ArgumentException("Context is not a valid SpanContextShim object", nameof(shim));
             }
 
-            if (format is null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(format), "Parameter cannot be null");
-            }
-
-            if (carrier == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(carrier), "Parameter cannot be null");
-            }
+            Guard.IsNotNull(format, nameof(format));
+            Guard.IsNotNull(carrier, nameof(carrier));
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {

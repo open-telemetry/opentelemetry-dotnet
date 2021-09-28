@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Logs
 {
@@ -24,17 +25,8 @@ namespace OpenTelemetry.Logs
     {
         public static OpenTelemetryLoggerOptions AddInMemoryExporter(this OpenTelemetryLoggerOptions loggerOptions, ICollection<LogRecord> exportedItems)
         {
-            if (loggerOptions == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(loggerOptions));
-            }
-
-            if (exportedItems == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(exportedItems));
-            }
+            Guard.IsNotNull(loggerOptions, nameof(loggerOptions));
+            Guard.IsNotNull(exportedItems, nameof(exportedItems));
 
             return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems)));
         }

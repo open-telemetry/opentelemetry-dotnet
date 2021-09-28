@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry.Instrumentation.StackExchangeRedis;
+using OpenTelemetry.Shared;
 using StackExchange.Redis;
 
 namespace OpenTelemetry.Trace
@@ -42,11 +43,7 @@ namespace OpenTelemetry.Trace
             IConnectionMultiplexer connection = null,
             Action<StackExchangeRedisCallsInstrumentationOptions> configure = null)
         {
-            if (builder == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.IsNotNull(builder, nameof(builder));
 
             if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
             {

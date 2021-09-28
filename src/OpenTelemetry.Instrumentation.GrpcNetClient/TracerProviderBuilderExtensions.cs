@@ -17,6 +17,7 @@
 using System;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Trace
 {
@@ -36,11 +37,7 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             Action<GrpcClientInstrumentationOptions> configure = null)
         {
-            if (builder == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.IsNotNull(builder, nameof(builder));
 
             var grpcOptions = new GrpcClientInstrumentationOptions();
             configure?.Invoke(grpcOptions);

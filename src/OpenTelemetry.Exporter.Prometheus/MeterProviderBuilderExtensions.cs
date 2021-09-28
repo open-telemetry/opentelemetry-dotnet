@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Metrics
 {
@@ -30,11 +31,7 @@ namespace OpenTelemetry.Metrics
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public static MeterProviderBuilder AddPrometheusExporter(this MeterProviderBuilder builder, Action<PrometheusExporterOptions> configure = null)
         {
-            if (builder == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.IsNotNull(builder, nameof(builder));
 
             var options = new PrometheusExporterOptions();
             configure?.Invoke(options);

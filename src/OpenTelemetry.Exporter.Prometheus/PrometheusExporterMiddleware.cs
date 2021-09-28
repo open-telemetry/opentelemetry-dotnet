@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 
 #if NETSTANDARD2_0
 using Microsoft.AspNetCore.Http;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Exporter
 {
@@ -47,11 +48,7 @@ namespace OpenTelemetry.Exporter
         /// <returns>Task. </returns>
         public Task InvokeAsync(HttpContext httpContext)
         {
-            if (httpContext is null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(httpContext));
-            }
+            Guard.IsNotNull(httpContext, nameof(httpContext));
 
             var result = this.exporter.GetMetricsCollection();
 

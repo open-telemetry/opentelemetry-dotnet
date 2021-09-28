@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Trace
 {
@@ -32,17 +33,8 @@ namespace OpenTelemetry.Trace
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public static TracerProviderBuilder AddInMemoryExporter(this TracerProviderBuilder builder, ICollection<Activity> exportedItems)
         {
-            if (builder == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(builder));
-            }
-
-            if (exportedItems == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(exportedItems));
-            }
+            Guard.IsNotNull(builder, nameof(builder));
+            Guard.IsNotNull(exportedItems, nameof(exportedItems));
 
             if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
             {

@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry.Instrumentation.AspNet;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Trace
 {
@@ -34,11 +35,7 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             Action<AspNetInstrumentationOptions> configureAspNetInstrumentationOptions = null)
         {
-            if (builder == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.IsNotNull(builder, nameof(builder));
 
             var aspnetOptions = new AspNetInstrumentationOptions();
             configureAspNetInstrumentationOptions?.Invoke(aspnetOptions);

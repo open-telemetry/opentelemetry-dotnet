@@ -19,6 +19,7 @@ using System.Collections;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Logs
 {
@@ -97,11 +98,7 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
         {
-            if (processor == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(processor));
-            }
+            Guard.IsNotNull(processor, nameof(processor));
 
             processor.SetParentProvider(this);
 
