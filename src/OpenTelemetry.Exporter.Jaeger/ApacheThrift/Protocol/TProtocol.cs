@@ -52,15 +52,13 @@ namespace Thrift.Protocol
 
         public void IncrementRecursionDepth()
         {
-            if (RecursionDepth < RecursionLimit)
-            {
-                ++RecursionDepth;
-            }
-            else
+            if (RecursionDepth >= RecursionLimit)
             {
                 // TODO: Review exception
                 throw new TProtocolException(TProtocolException.DEPTH_LIMIT, "Depth limit exceeded");
             }
+
+            ++RecursionDepth;
         }
 
         public void DecrementRecursionDepth()
