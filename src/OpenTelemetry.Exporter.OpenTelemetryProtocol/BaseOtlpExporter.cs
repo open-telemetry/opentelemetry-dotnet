@@ -43,12 +43,10 @@ namespace OpenTelemetry.Exporter
         protected BaseOtlpExporter(OtlpExporterOptions options)
         {
             Guard.IsNotNull(options, nameof(options));
+            Guard.IsNotValidTimeout(options.TimeoutMilliseconds, nameof(options.TimeoutMilliseconds));
 
             this.Options = options;
             this.Headers = options.GetMetadataFromHeaders();
-            // TODO: Review exception - throw new ArgumentException("Timeout value provided is not a positive number.", nameof(this.Options.TimeoutMilliseconds));
-            //             if (this.Options.TimeoutMilliseconds <= 0)
-            Guard.IsNotValidTimeout(this.Options.TimeoutMilliseconds, nameof(this.Options.TimeoutMilliseconds));
         }
 
         internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();

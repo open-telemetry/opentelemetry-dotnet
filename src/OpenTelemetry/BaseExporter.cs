@@ -17,6 +17,7 @@
 using System;
 using System.Threading;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry
 {
@@ -77,7 +78,7 @@ namespace OpenTelemetry
         /// </remarks>
         public bool Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
-            Guard.IsNotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds))
+            Guard.IsNotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             if (Interlocked.Increment(ref this.shutdownCount) > 1)
             {

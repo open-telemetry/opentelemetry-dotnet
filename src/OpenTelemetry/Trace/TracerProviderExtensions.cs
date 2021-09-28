@@ -58,12 +58,7 @@ namespace OpenTelemetry.Trace
         public static bool ForceFlush(this TracerProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
             Guard.IsNotNull(provider, nameof(provider));
-
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                // TODO: Review exception
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
-            }
+            Guard.IsNotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             if (provider is TracerProviderSdk tracerProviderSdk)
             {
@@ -103,12 +98,7 @@ namespace OpenTelemetry.Trace
         public static bool Shutdown(this TracerProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
             Guard.IsNotNull(provider, nameof(provider));
-
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                // TODO: Review exception
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
-            }
+            Guard.IsNotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             if (provider is TracerProviderSdk tracerProviderSdk)
             {

@@ -69,11 +69,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         public bool Collect(int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                // TODO: Review exception
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
-            }
+            Guard.IsNotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             try
             {
@@ -106,11 +102,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         public bool Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                // TODO: Review exception
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
-            }
+            Guard.IsNotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             if (Interlocked.Increment(ref this.shutdownCount) > 1)
             {
@@ -248,13 +240,8 @@ namespace OpenTelemetry.Metrics
             | Delta      | Delta      | true  |
             */
             string message = $"PreferredAggregationTemporality {preferred} and SupportedAggregationTemporality {supported} are incompatible";
-            // TODO: below nameof(preferred) is actually contigent on two variables: preferred and supported. how can I do this?
             Guard.IsNotZero((int)(preferred & supported), nameof(preferred), message);
-            if (preferred > supported)
-            {
-                // TODO: Review exception
-                throw new ArgumentException(message);
-            }
+            Guard.IsNotInRange((int)preferred, nameof(preferred), min: (int)(supported + 1), minName: $"{nameof(supported) + 1}", message: message);
         }
     }
 }

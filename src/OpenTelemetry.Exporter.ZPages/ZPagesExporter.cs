@@ -18,6 +18,7 @@ using System;
 using System.Diagnostics;
 using System.Timers;
 using OpenTelemetry.Exporter.ZPages.Implementation;
+using OpenTelemetry.Shared;
 using Timer = System.Timers.Timer;
 
 namespace OpenTelemetry.Exporter.ZPages
@@ -37,8 +38,9 @@ namespace OpenTelemetry.Exporter.ZPages
         /// <param name="options">Options for the exporter.</param>
         public ZPagesExporter(ZPagesExporterOptions options)
         {
-            // TODO: Review exception
-            ZPagesActivityTracker.RetentionTime = options?.RetentionTime ?? throw new ArgumentNullException(nameof(options));
+            Guard.IsNotNull(options?.RetentionTime, nameof(options?.RetentionTime));
+
+            ZPagesActivityTracker.RetentionTime = options.RetentionTime;
 
             this.Options = options;
 

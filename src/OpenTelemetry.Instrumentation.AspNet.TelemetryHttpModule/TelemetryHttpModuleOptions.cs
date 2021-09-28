@@ -18,6 +18,7 @@ using System;
 using System.Diagnostics;
 using System.Web;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Instrumentation.AspNet
 {
@@ -39,8 +40,12 @@ namespace OpenTelemetry.Instrumentation.AspNet
         public TextMapPropagator TextMapPropagator
         {
             get => this.textMapPropagator;
-            // TODO: Review exception
-            set => this.textMapPropagator = value ?? throw new ArgumentNullException(nameof(value));
+            set
+            {
+                Guard.IsNotNull(value, nameof(value));
+
+                this.textMapPropagator = value;
+            }
         }
 
         /// <summary>

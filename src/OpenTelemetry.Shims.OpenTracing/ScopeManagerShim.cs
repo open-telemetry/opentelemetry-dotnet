@@ -67,11 +67,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.IScope Activate(ISpan span, bool finishSpanOnDispose)
         {
-            if (span is not SpanShim shim)
-            {
-                // TODO: Review exception
-                throw new ArgumentException("span is not a valid SpanShim object");
-            }
+            var shim = Guard.IsNotOfType<SpanShim>(span, nameof(span));
 
             var scope = Tracer.WithSpan(shim.Span);
 

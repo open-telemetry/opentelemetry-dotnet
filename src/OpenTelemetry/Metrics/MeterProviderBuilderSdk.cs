@@ -52,9 +52,6 @@ namespace OpenTelemetry.Metrics
 
             foreach (var name in names)
             {
-
-                // TODO: Review exception - $"{nameof(names)} contains null or whitespace string."
-                // it also used an ArgumentException instead of null exception..
                 Guard.IsNotNullOrWhitespace(name, nameof(name));
 
                 this.meterSources.Add(name);
@@ -65,11 +62,7 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilderSdk AddMetricReader(MetricReader metricReader)
         {
-            if (this.MetricReaders.Count >= 1)
-            {
-                // TODO: Review exception
-                throw new InvalidOperationException("Only one Metricreader is allowed.");
-            }
+            Guard.IsNotInRange(this.MetricReaders.Count, nameof(this.MetricReaders.Count), max: 1);
 
             this.MetricReaders.Add(metricReader);
             return this;

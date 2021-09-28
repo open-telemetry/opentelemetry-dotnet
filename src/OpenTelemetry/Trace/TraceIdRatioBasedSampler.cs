@@ -36,10 +36,10 @@ namespace OpenTelemetry.Trace
         /// </param>
         public TraceIdRatioBasedSampler(double probability)
         {
+            // TODO: add a double or templated Guard.IsNotInRange function
             if (probability < 0.0 || probability > 1.0)
             {
-                // TODO: Review exception
-                throw new ArgumentOutOfRangeException(nameof(probability), probability, "Probability must be in range [0.0, 1.0]");
+                throw new ArgumentOutOfRangeException(nameof(probability), probability, "Must be in the range: [0.0, 1.0]");
             }
 
             this.probability = probability;

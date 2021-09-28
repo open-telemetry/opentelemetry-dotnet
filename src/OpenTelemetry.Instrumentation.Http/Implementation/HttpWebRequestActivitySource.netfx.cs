@@ -365,7 +365,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 !PrepareHttpWebResponseReflectionObjects(systemNetHttpAssembly))
             {
                 // If anything went wrong here, just return false. There is nothing we can do.
-                // TODO: Review exception
                 throw new InvalidOperationException("Unable to initialize all required reflection objects");
             }
         }
@@ -448,7 +447,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             if (servicePointTableField == null)
             {
                 // If anything went wrong here, just return false. There is nothing we can do.
-                // TODO: Review exception
                 throw new InvalidOperationException("Unable to access the ServicePointTable field");
             }
 

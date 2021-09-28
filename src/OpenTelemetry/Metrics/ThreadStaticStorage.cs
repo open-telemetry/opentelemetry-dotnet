@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Metrics
 {
@@ -51,13 +52,9 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, out string[] tagKeys, out object[] tagValues)
         {
-            var len = tags.Length;
+            Guard.IsNotZero(tags.Length, nameof(tags.Length), $"There must be at least one tag to use {nameof(ThreadStaticStorage)}");
 
-            if (len == 0)
-            {
-                // TODO: Review exception
-                throw new InvalidOperationException("There must be atleast one tag to use ThreadStaticStorage.");
-            }
+            var len = tags.Length;
 
             if (len <= MaxTagCacheSize)
             {

@@ -65,7 +65,9 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
 
         public PrometheusMetricBuilder WithName(string name)
         {
-            this.name = name;
+            Guard.IsNotNullOrEmpty(name, nameof(name));
+
+            this.name = GetSafeMetricName(name);
             return this;
         }
 
@@ -93,11 +95,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
         public void Write(StreamWriter writer)
         {
             // https://prometheus.io/docs/instrumenting/exposition_formats/
-
-            // TODO: Review exception - throw new InvalidOperationException("Metric name should not be empty");
-            Guard.IsNotNullOrEmpty(this.name, nameof(this.name));
-
-            this.name = GetSafeMetricName(this.name);
 
             if (!string.IsNullOrEmpty(this.description))
             {

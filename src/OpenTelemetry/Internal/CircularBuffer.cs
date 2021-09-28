@@ -38,11 +38,7 @@ namespace OpenTelemetry.Internal
         /// <param name="capacity">The capacity of the circular buffer, must be a positive integer.</param>
         public CircularBuffer(int capacity)
         {
-            if (capacity <= 0)
-            {
-                // TODO: Review exception
-                throw new ArgumentOutOfRangeException(nameof(capacity), capacity, "capacity should be greater than zero.");
-            }
+            Guard.IsNotInRange(capacity, nameof(capacity), min: 1);
 
             this.Capacity = capacity;
             this.trait = new T[capacity];

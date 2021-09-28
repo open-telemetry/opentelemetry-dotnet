@@ -47,8 +47,7 @@ namespace OpenTelemetry.Context
             {
                 if (Slots.ContainsKey(slotName))
                 {
-                    // TODO: Review exception
-                    throw new InvalidOperationException($"The context slot {slotName} is already registered.");
+                    throw new InvalidOperationException($"Context slot already registered: {slotName}");
                 }
 
                 var type = ContextSlotType.MakeGenericType(typeof(T));
@@ -71,12 +70,12 @@ namespace OpenTelemetry.Context
 
             if (!Slots.TryGetValue(slotName, out var slot))
             {
-                // TODO: Review exception
-                throw new ArgumentException($"The context slot {slotName} could not be found.");
+                throw new ArgumentException($"Context slot not found: {slotName}");
             }
 
-            // TODO: Review exception
-            return slot as RuntimeContextSlot<T> ?? throw new ArgumentException($"The context slot {slotName} cannot be cast as {typeof(RuntimeContextSlot<T>)}.");
+            var contextSlot = Guard.IsNotOfType<RuntimeContextSlot<T>>(slot, nameof(slot));
+
+            return contextSlot;
         }
 
         /*
@@ -138,18 +137,12 @@ namespace OpenTelemetry.Context
 
             if (!Slots.TryGetValue(slotName, out var slot))
             {
-                // TODO: Review exception
-                throw new ArgumentException($"The context slot {slotName} could not be found.");
+                throw new ArgumentException($"Context slot not found: {slotName}");
             }
 
-            if (slot is IRuntimeContextSlotValueAccessor runtimeContextSlotValueAccessor)
-            {
-                runtimeContextSlotValueAccessor.Value = value;
-                return;
-            }
+            var runtimeContextSlotValueAccessor = Guard.IsNotOfType<IRuntimeContextSlotValueAccessor>(slot, nameof(slot));
 
-            // TODO: Review exception
-            throw new NotSupportedException($"The context slot {slotName} value cannot be accessed as an object.");
+            runtimeContextSlotValueAccessor.Value = value;
         }
 
         /// <summary>
@@ -163,17 +156,12 @@ namespace OpenTelemetry.Context
 
             if (!Slots.TryGetValue(slotName, out var slot))
             {
-                // TODO: Review exception
-                throw new ArgumentException($"The context slot {slotName} could not be found.");
+                throw new ArgumentException($"Context slot not found: {slotName}");
             }
 
-            if (slot is IRuntimeContextSlotValueAccessor runtimeContextSlotValueAccessor)
-            {
-                return runtimeContextSlotValueAccessor.Value;
-            }
+            var runtimeContextSlotValueAccessor = Guard.IsNotOfType<IRuntimeContextSlotValueAccessor>(slot, nameof(slot));
 
-            // TODO: Review exception
-            throw new NotSupportedException($"The context slot {slotName} value cannot be accessed as an object.");
+            return runtimeContextSlotValueAccessor.Value;
         }
 
         // For testing purpose

@@ -83,7 +83,7 @@ namespace OpenTelemetry
         /// </remarks>
         public bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
         {
-            Guard.IsNotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds);
+            Guard.IsNotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             try
             {

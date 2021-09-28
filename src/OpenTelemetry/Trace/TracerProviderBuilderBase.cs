@@ -61,8 +61,6 @@ namespace OpenTelemetry.Trace
 
             foreach (var name in names)
             {
-                // TODO: Review exception
-                // throw new ArgumentException($"{nameof(names)} contains null or whitespace string.");
                 Guard.IsNotNullOrWhitespace(name, nameof(name));
 
                 // TODO: We need to fix the listening model.
@@ -108,8 +106,7 @@ namespace OpenTelemetry.Trace
                     }
                     catch (Exception ex)
                     {
-                        // TODO: Review exception
-                        throw new NotSupportedException("SetErrorStatusOnException is not supported on this platform.", ex);
+                        throw new NotSupportedException($"{nameof(this.SetErrorStatusOnException)} is not supported on this platform", ex);
                     }
                 }
             }

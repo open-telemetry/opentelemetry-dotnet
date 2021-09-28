@@ -52,13 +52,12 @@ namespace OpenTelemetry.Internal
 
         public static void Add(ref PooledList<T> list, T item)
         {
-            var buffer = list.buffer;
-
-            if (buffer == null)
+            if (list.buffer == null)
             {
-                // TODO: Review exception
-                throw new InvalidOperationException("Items cannot be added to an empty pool instance.");
+                throw new InvalidOperationException($"Items cannot be added to an empty {nameof(PooledList<T>)} instance");
             }
+
+            var buffer = list.buffer;
 
             if (list.Count >= buffer.Length)
             {

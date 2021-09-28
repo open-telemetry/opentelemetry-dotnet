@@ -94,13 +94,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             TCarrier carrier)
         {
             Guard.IsNotNull(spanContext, nameof(spanContext));
-
-            if (spanContext is not SpanContextShim shim)
-            {
-                // TODO: Review exception
-                throw new ArgumentException("Context is not a valid SpanContextShim object", nameof(shim));
-            }
-
+            var shim = Guard.IsNotOfType<SpanContextShim>(spanContext, nameof(spanContext));
             Guard.IsNotNull(format, nameof(format));
             Guard.IsNotNull(carrier, nameof(carrier));
 
