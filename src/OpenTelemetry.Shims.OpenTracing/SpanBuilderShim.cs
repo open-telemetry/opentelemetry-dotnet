@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using global::OpenTracing;
+using OpenTelemetry.Shared;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing
@@ -128,11 +129,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 return this;
             }
 
-            if (referenceType is null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(referenceType));
-            }
+            Guard.IsNotNull(referenceType, nameof(referenceType));
 
             // TODO There is no relation between OpenTracing.References (referenceType) and OpenTelemetry Link
             var actualContext = GetOpenTelemetrySpanContext(referencedContext);
@@ -281,11 +278,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.BooleanTag tag, bool value)
         {
-            if (tag == null || tag.Key == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(tag));
-            }
+            Guard.IsNotNull(tag?.Key, nameof(tag));
 
             return this.WithTag(tag.Key, value);
         }
@@ -293,11 +286,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.IntOrStringTag tag, string value)
         {
-            if (tag == null || tag.Key == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(tag));
-            }
+            Guard.IsNotNull(tag?.Key, nameof(tag));
 
             if (int.TryParse(value, out var result))
             {
@@ -310,11 +299,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.IntTag tag, int value)
         {
-            if (tag == null || tag.Key == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(tag));
-            }
+            Guard.IsNotNull(tag?.Key, nameof(tag));
 
             return this.WithTag(tag.Key, value);
         }
@@ -322,11 +307,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.StringTag tag, string value)
         {
-            if (tag == null || tag.Key == null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(tag));
-            }
+            Guard.IsNotNull(tag?.Key, nameof(tag));
 
             return this.WithTag(tag.Key, value);
         }

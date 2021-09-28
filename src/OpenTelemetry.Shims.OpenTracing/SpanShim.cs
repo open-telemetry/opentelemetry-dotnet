@@ -142,11 +142,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.ISpan Log(string @event)
         {
-            if (@event is null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(@event), "Parameter cannot be null");
-            }
+            Guard.IsNotNull(@event, nameof(@event));
 
             this.Span.AddEvent(@event);
             return this;
@@ -155,11 +151,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.ISpan Log(DateTimeOffset timestamp, string @event)
         {
-            if (@event is null)
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(@event), "Parameter cannot be null");
-            }
+            Guard.IsNotNull(@event, nameof(@event));
 
             this.Span.AddEvent(@event, timestamp);
             return this;

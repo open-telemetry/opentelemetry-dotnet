@@ -22,6 +22,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
@@ -42,17 +43,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             bool? debug,
             bool? shared)
         {
-            if (string.IsNullOrWhiteSpace(traceId))
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(traceId));
-            }
-
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(id));
-            }
+            Guard.IsNotNullOrWhitespace(traceId, nameof(traceId));
+            Guard.IsNotNullOrWhitespace(id, nameof(id));
 
             this.TraceId = traceId;
             this.ParentId = parentId;

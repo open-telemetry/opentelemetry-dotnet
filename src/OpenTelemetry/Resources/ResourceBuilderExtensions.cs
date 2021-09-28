@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Resources
 {
@@ -55,11 +56,7 @@ namespace OpenTelemetry.Resources
         {
             Dictionary<string, object> resourceAttributes = new Dictionary<string, object>();
 
-            if (string.IsNullOrEmpty(serviceName))
-            {
-                // TODO: Review exception
-                throw new ArgumentNullException(nameof(serviceName));
-            }
+            Guard.IsNotNullOrEmpty(serviceName, nameof(serviceName));
 
             resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceName, serviceName);
 

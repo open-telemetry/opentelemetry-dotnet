@@ -52,11 +52,10 @@ namespace OpenTelemetry.Metrics
 
             foreach (var name in names)
             {
-                if (string.IsNullOrWhiteSpace(name))
-                {
-                    // TODO: Review exception
-                    throw new ArgumentException($"{nameof(names)} contains null or whitespace string.");
-                }
+
+                // TODO: Review exception - $"{nameof(names)} contains null or whitespace string."
+                // it also used an ArgumentException instead of null exception..
+                Guard.IsNotNullOrWhitespace(name, nameof(name));
 
                 this.meterSources.Add(name);
             }

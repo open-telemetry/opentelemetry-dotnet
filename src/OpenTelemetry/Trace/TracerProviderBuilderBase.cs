@@ -61,11 +61,9 @@ namespace OpenTelemetry.Trace
 
             foreach (var name in names)
             {
-                if (string.IsNullOrWhiteSpace(name))
-                {
-                    // TODO: Review exception
-                    throw new ArgumentException($"{nameof(names)} contains null or whitespace string.");
-                }
+                // TODO: Review exception
+                // throw new ArgumentException($"{nameof(names)} contains null or whitespace string.");
+                Guard.IsNotNullOrWhitespace(name, nameof(name));
 
                 // TODO: We need to fix the listening model.
                 // Today it ignores version.
@@ -78,11 +76,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public override TracerProviderBuilder AddLegacySource(string operationName)
         {
-            if (string.IsNullOrWhiteSpace(operationName))
-            {
-                // TODO: Review exception
-                throw new ArgumentException($"{nameof(operationName)} contains null or whitespace string.");
-            }
+            Guard.IsNotNullOrWhitespace(operationName, nameof(operationName));
 
             this.legacyActivityOperationNames[operationName] = true;
 

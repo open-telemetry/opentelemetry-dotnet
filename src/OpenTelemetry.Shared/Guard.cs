@@ -49,5 +49,14 @@ namespace OpenTelemetry.Shared
                 throw new ArgumentNullException(paramName);
             }
         }
+
+        [DebuggerHidden]
+        public static void IsNotZero(int value, string paramName, string message)
+        {
+            if (value == 0)
+            {
+                throw new ArgumentException(message, paramName);
+            }
+        }
     }
 }

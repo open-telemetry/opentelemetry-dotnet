@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Metrics
 {
@@ -230,17 +231,8 @@ namespace OpenTelemetry.Metrics
 
         private static void ValidateAggregationTemporality(AggregationTemporality preferred, AggregationTemporality supported)
         {
-            if ((int)(preferred & CumulativeAndDelta) == 0)
-            {
-                // TODO: Review exception
-                throw new ArgumentException($"PreferredAggregationTemporality has an invalid value {preferred}.", nameof(preferred));
-            }
-
-            if ((int)(supported & CumulativeAndDelta) == 0)
-            {
-                // TODO: Review exception
-                throw new ArgumentException($"SupportedAggregationTemporality has an invalid value {supported}.", nameof(supported));
-            }
+            Guard.IsNotZero((int)(preferred & CumulativeAndDelta), nameof(preferred), $"PreferredAggregationTemporality has an invalid value {preferred}");
+            Guard.IsNotZero((int)(supported & CumulativeAndDelta), nameof(supported), $"SupportedAggregationTemporality has an invalid value {supported}");
 
             /*
             | Preferred  | Supported  | Valid |
@@ -255,10 +247,13 @@ namespace OpenTelemetry.Metrics
             | Delta      | Cumulative | false |
             | Delta      | Delta      | true  |
             */
-            if ((int)(preferred & supported) == 0 || preferred > supported)
+            string message = $"PreferredAggregationTemporality {preferred} and SupportedAggregationTemporality {supported} are incompatible";
+            // TODO: below nameof(preferred) is actually contigent on two variables: preferred and supported. how can I do this?
+            Guard.IsNotZero((int)(preferred & supported), nameof(preferred), message);
+            if (preferred > supported)
             {
                 // TODO: Review exception
-                throw new ArgumentException($"PreferredAggregationTemporality {preferred} and SupportedAggregationTemporality {supported} are incompatible.");
+                throw new ArgumentException(message);
             }
         }
     }

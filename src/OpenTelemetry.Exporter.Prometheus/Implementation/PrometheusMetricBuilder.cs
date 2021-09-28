@@ -19,6 +19,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Exporter.Prometheus.Implementation
 {
@@ -93,11 +94,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
         {
             // https://prometheus.io/docs/instrumenting/exposition_formats/
 
-            if (string.IsNullOrEmpty(this.name))
-            {
-                // TODO: Review exception
-                throw new InvalidOperationException("Metric name should not be empty");
-            }
+            // TODO: Review exception - throw new InvalidOperationException("Metric name should not be empty");
+            Guard.IsNotNullOrEmpty(this.name, nameof(this.name));
 
             this.name = GetSafeMetricName(this.name);
 

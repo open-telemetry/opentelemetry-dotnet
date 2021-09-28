@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Context
 {
@@ -40,11 +41,7 @@ namespace OpenTelemetry.Context
         /// <returns>The slot registered.</returns>
         public static RuntimeContextSlot<T> RegisterSlot<T>(string slotName)
         {
-            if (string.IsNullOrEmpty(slotName))
-            {
-                // TODO: Review exception
-                throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
-            }
+            Guard.IsNotNullOrEmpty(slotName, nameof(slotName));
 
             lock (Slots)
             {
@@ -70,11 +67,7 @@ namespace OpenTelemetry.Context
         /// <returns>The slot previously registered.</returns>
         public static RuntimeContextSlot<T> GetSlot<T>(string slotName)
         {
-            if (string.IsNullOrEmpty(slotName))
-            {
-                // TODO: Review exception
-                throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
-            }
+            Guard.IsNotNullOrEmpty(slotName, nameof(slotName));
 
             if (!Slots.TryGetValue(slotName, out var slot))
             {
@@ -141,11 +134,7 @@ namespace OpenTelemetry.Context
         /// <param name="value">The value to be set.</param>
         public static void SetValue(string slotName, object value)
         {
-            if (string.IsNullOrEmpty(slotName))
-            {
-                // TODO: Review exception
-                throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
-            }
+            Guard.IsNotNullOrEmpty(slotName, nameof(slotName));
 
             if (!Slots.TryGetValue(slotName, out var slot))
             {
@@ -170,11 +159,7 @@ namespace OpenTelemetry.Context
         /// <returns>The value retrieved from the context slot.</returns>
         public static object GetValue(string slotName)
         {
-            if (string.IsNullOrEmpty(slotName))
-            {
-                // TODO: Review exception
-                throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
-            }
+            Guard.IsNotNullOrEmpty(slotName, nameof(slotName));
 
             if (!Slots.TryGetValue(slotName, out var slot))
             {
