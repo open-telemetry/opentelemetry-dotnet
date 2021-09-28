@@ -101,8 +101,8 @@ public partial class Program
                     statistics[i] = 0;
                     while (bContinue)
                     {
-                        statistics[i]++;
                         Run();
+                        statistics[i]++;
                     }
                 });
             });

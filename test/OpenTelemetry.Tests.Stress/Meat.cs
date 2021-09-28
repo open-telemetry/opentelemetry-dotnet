@@ -22,7 +22,7 @@ public partial class Program
 {
     public static void Main()
     {
-        Stress(1);
+        Stress(concurrency: 1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
