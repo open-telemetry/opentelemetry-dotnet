@@ -36,8 +36,7 @@ namespace OpenTelemetry.Shared
         {
             if (string.IsNullOrEmpty(value))
             {
-                // TODO: say it is null or empty?
-                throw new ArgumentNullException(paramName);
+                throw new ArgumentNullException(paramName, "Value is null or empty");
             }
         }
 
@@ -46,15 +45,20 @@ namespace OpenTelemetry.Shared
         {
             if (string.IsNullOrWhiteSpace(value))
             {
-                // TODO: say it is null or whitespace?
-                throw new ArgumentNullException(paramName);
+                throw new ArgumentNullException(paramName, "Value is null or whitespace");
             }
         }
 
         [DebuggerHidden]
         public static void IsNotZero(int value, string paramName, string message)
         {
-            if (value == 0)
+            IsNotEqual(value, 0, paramName, message);
+        }
+
+        [DebuggerHidden]
+        public static void IsNotEqual(int value, int compare, string paramName, string message)
+        {
+            if (value == compare)
             {
                 throw new ArgumentException(message, paramName);
             }
@@ -63,11 +67,48 @@ namespace OpenTelemetry.Shared
         [DebuggerHidden]
         public static void IsNotValidTimeout(int value, string paramName)
         {
-            if (value < 0 && value != Timeout.Infinite)
+            IsNotInRange(value, paramName, min: Timeout.Infinite, message: $"Must be non-negative or {nameof(Timeout.Infinite)}");
+        }
+
+        [DebuggerHidden]
+        public static void IsNotInRange(int value, string paramName, int min = int.MinValue, int max = int.MaxValue, string minName = null, string maxName = null, string message = null)
+        {
+            Debug.Assert(min != max, $"Please supply a non-default value for either '{nameof(min)}' or '{nameof(max)}'");
+
+            var invalid = false;
+            var exMessage = message ?? $"{paramName} must be within: [{min}, {max}]";
+
+            if (min != int.MinValue && max != int.MaxValue)
             {
-                throw new ArgumentOutOfRangeException(paramName, value, $"{paramName} must be non-negative or Timeout.Infinite");
+                // check both bounds
+                invalid |= min <= value && value <= max;
+            }
+            else if (min != int.MinValue)
+            {
+                // check lower bound
+                invalid |= min <= value;
+            }
+            else
+            {
+                // check upper bound
+                invalid |= value <= max;
+            }
+
+            if (invalid)
+            {
+                throw new ArgumentOutOfRangeException(paramName, value, exMessage);
             }
         }
 
+        [DebuggerHidden]
+        public static T IsNotOfType<T>(object value, string paramName)
+        {
+            if (value is not T result)
+            {
+                throw new InvalidCastException($"Cannot cast {paramName} to type {nameof(T)}");
+            }
+
+            return result;
+        }
     }
 }
