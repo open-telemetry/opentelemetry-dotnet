@@ -52,5 +52,55 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0];
             Assert.Equal("renamed", metric.Name);
         }
+
+        [Fact]
+        public void ViewToProduceMultipleStreamsFromInstrument()
+        {
+            var exportedItems = new List<Metric>();
+            var inMemoryReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems));
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddSource("TestMeter1")
+            .AddReader(inMemoryReader)
+            .AddView("name1", "renamedStream1")
+            .AddView("name1", "renamedStream2")
+            .Build();
+
+            using var meter1 = new Meter("TestMeter1");
+
+            // Expecting two metric stream.
+            var counterLong = meter1.CreateCounter<long>("name1");
+            counterLong.Add(10);
+            inMemoryReader.Collect();
+            Assert.Equal(2, exportedItems.Count);
+            Assert.Equal("renamedStream1", exportedItems[0].Name);
+            Assert.Equal("renamedStream2", exportedItems[1].Name);
+        }
+
+        [Fact]
+        public void ViewToProduceMultipleStreamsWithDuplicatesFromInstrument()
+        {
+            var exportedItems = new List<Metric>();
+            var inMemoryReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems));
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddSource("TestMeter1")
+            .AddReader(inMemoryReader)
+            .AddView("name1", "renamedStream1")
+            .AddView("name1", "renamedStream2")
+            .AddView("name1", "renamedStream2")
+            .Build();
+
+            using var meter1 = new Meter("TestMeter1");
+
+            // Expecting two metric stream.
+            // the .AddView("name1", "renamedStream2")
+            // won't produce new Metric as the name
+            // conflicts.
+            var counterLong = meter1.CreateCounter<long>("name1");
+            counterLong.Add(10);
+            inMemoryReader.Collect();
+            Assert.Equal(2, exportedItems.Count);
+            Assert.Equal("renamedStream1", exportedItems[0].Name);
+            Assert.Equal("renamedStream2", exportedItems[1].Name);
+        }
     }
 }
