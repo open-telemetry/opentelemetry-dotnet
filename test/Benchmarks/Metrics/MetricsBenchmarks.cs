@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
@@ -136,6 +137,73 @@ namespace Benchmarks.Metrics
             var tag6 = new KeyValuePair<string, object>("DimName6", this.dimensionValues[this.random.Next(0, 2)]);
             var tag7 = new KeyValuePair<string, object>("DimName7", this.dimensionValues[this.random.Next(0, 1)]);
             this.counter?.Add(100, tag1, tag2, tag3, tag4, tag5, tag6, tag7);
+        }
+
+        [Benchmark]
+        public void CounterWith1LabelsHotPathUsingTagList()
+        {
+            var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+            };
+            this.counter?.Add(100, tags);
+        }
+
+        [Benchmark]
+        public void CounterWith3LabelsHotPathUsingTagList()
+        {
+            var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 10)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 10)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 10)] },
+            };
+            this.counter?.Add(100, tags);
+        }
+
+        [Benchmark]
+        public void CounterWith5LabelsHotPathUsingTagList()
+        {
+            var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[this.random.Next(0, 10)] },
+            };
+            this.counter?.Add(100, tags);
+        }
+
+        [Benchmark]
+        public void CounterWith6LabelsHotPathUsingTagList()
+        {
+            var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
+            };
+            this.counter?.Add(100, tags);
+        }
+
+        [Benchmark]
+        public void CounterWith7LabelsHotPathUsingTagList()
+        {
+            var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName7", this.dimensionValues[this.random.Next(0, 1)] },
+            };
+            this.counter?.Add(100, tags);
         }
     }
 }
