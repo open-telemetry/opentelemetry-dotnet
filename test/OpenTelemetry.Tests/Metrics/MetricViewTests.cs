@@ -16,7 +16,6 @@
 
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using OpenTelemetry.Exporter;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -24,8 +23,8 @@ namespace OpenTelemetry.Metrics.Tests
 {
     public class MetricViewTests
     {
-        private readonly ITestOutputHelper output;
         private const int MaxTimeToAllowForFlush = 10000;
+        private readonly ITestOutputHelper output;
 
         public MetricViewTests(ITestOutputHelper output)
         {
@@ -47,6 +46,33 @@ namespace OpenTelemetry.Metrics.Tests
             var counterLong = meter1.CreateCounter<long>("name1");
             counterLong.Add(10);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("renamed", metric.Name);
+        }
+
+        [Fact]
+        public void ViewToRenameMetricWildCardMatch()
+        {
+            using var meter1 = new Meter("ViewToRenameMetricWildCardMatchTest");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource(meter1.Name)
+                .AddInMemoryExporter(exportedItems)
+                .AddView("counter*", "renamed")
+                .Build();
+
+            // Expecting one metric stream.
+            var counter1 = meter1.CreateCounter<long>("counterA");
+            counter1.Add(10);
+            var counter2 = meter1.CreateCounter<long>("counterB");
+            counter2.Add(10);
+            var counter3 = meter1.CreateCounter<long>("counterC");
+            counter3.Add(10);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            // counter* matches all 3 instruments which all
+            // becomes "renamed" and only 1st one is exported.
             Assert.Single(exportedItems);
             var metric = exportedItems[0];
             Assert.Equal("renamed", metric.Name);

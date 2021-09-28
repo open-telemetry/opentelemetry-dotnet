@@ -95,6 +95,9 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilder AddView(string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
         {
+            var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*");
+            var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
             Func<Instrument, MetricStreamConfiguration> viewConfig = (instrument) =>
             {
                 var needRegex = false;
@@ -105,8 +108,7 @@ namespace OpenTelemetry.Metrics
 
                 if (needRegex)
                 {
-                    var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*");
-                    if (Regex.IsMatch(instrument.Name, pattern, RegexOptions.IgnoreCase))
+                    if (regex.IsMatch(instrument.Name))
                     {
                         return metricStreamConfiguration;
                     }
