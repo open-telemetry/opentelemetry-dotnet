@@ -51,8 +51,8 @@ public partial class Program
         var random = ThreadLocalRandom.Value;
         TestCounter.Add(
             100,
-            new ("DimName1", DimensionValues[random.Next(0, ArraySize)]),
-            new ("DimName2", DimensionValues[random.Next(0, ArraySize)]),
-            new ("DimName3", DimensionValues[random.Next(0, ArraySize)]));
+            new("DimName1", DimensionValues[random.Next(0, ArraySize)]),
+            new("DimName2", DimensionValues[random.Next(0, ArraySize)]),
+            new("DimName3", DimensionValues[random.Next(0, ArraySize)]));
     }
 }
