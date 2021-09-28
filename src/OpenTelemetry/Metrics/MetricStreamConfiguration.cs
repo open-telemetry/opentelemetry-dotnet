@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics
 #pragma warning restore SA1602 // Enumeration items should be documented
     }
 
-    public class AggregationConfiguration
+    public class MetricStreamConfiguration
     {
         public string Name { get; set; }
 

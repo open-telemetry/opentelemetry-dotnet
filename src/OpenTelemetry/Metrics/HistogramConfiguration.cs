@@ -14,12 +14,29 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Metrics
 {
-    public class HistogramConfiguration : AggregationConfiguration
+    public class HistogramConfiguration : MetricStreamConfiguration
     {
+        private Aggregation aggregation = Aggregation.Histogram;
+
         public double[] BucketBounds { get; set; }
 
-        public override Aggregation Aggregation { get; set; } = Aggregation.Histogram;
+        public override Aggregation Aggregation
+        {
+            get => this.aggregation;
+
+            set
+            {
+                if (value != Aggregation.Histogram)
+                {
+                    throw new ArgumentException($"Aggregation must be Histogram.");
+                }
+
+                this.aggregation = value;
+            }
+        }
     }
 }

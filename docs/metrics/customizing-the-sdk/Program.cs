@@ -34,19 +34,19 @@ public class Program
             .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
 
             // Change Histogram bounds
-            .AddView(instrumentName: "MyHistogram", new HistogramConfiguration() { BucketBounds = new double[] { 10, 20 } })
+            .AddView(instrumentName: "MyHistogram", new HistogramConfiguration() { BucketBounds = new double[] { 10, 20 }, Aggregation = Aggregation.LastValue })
 
             // For the instrument "MyCounterCustomTags", aggregate with only the keys "tag1", "tag2".
-            .AddView(instrumentName: "MyCounterCustomTags", new AggregationConfiguration() { TagKeys = new string[] { "tag1", "tag2" } })
+            .AddView(instrumentName: "MyCounterCustomTags", new MetricStreamConfiguration() { TagKeys = new string[] { "tag1", "tag2" } })
 
             // Drop the instrument "MyCounterDrop".
-            .AddView(instrumentName: "MyCounterDrop", new AggregationConfiguration() { Aggregation = Aggregation.Drop })
+            .AddView(instrumentName: "MyCounterDrop", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
 
             // Advanced selection criteria and config via Func<Instrument, AggregationConfig>
             .AddView((instrument) =>
              {
                  if (instrument.Meter.Name.Equals("CompanyA.ProductB.Library2") &&
-                     instrument.GetType().Name.StartsWith("Histogram"))
+                     instrument.GetType().Name.Contains("Histogram"))
                  {
                      return new HistogramConfiguration() { BucketBounds = new double[] { 10, 20 } };
                  }

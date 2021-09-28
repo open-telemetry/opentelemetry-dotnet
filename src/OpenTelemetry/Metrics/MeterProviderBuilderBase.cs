@@ -28,7 +28,7 @@ namespace OpenTelemetry.Metrics
     {
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private readonly List<string> meterSources = new List<string>();
-        private readonly List<Func<Instrument, AggregationConfiguration>> viewConfigs = new List<Func<Instrument, AggregationConfiguration>>();
+        private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs = new List<Func<Instrument, MetricStreamConfiguration>>();
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
 
         protected MeterProviderBuilderBase()
@@ -91,12 +91,12 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        internal MeterProviderBuilder AddView(string instrumentName, AggregationConfiguration aggregationConfig)
+        internal MeterProviderBuilder AddView(string instrumentName, MetricStreamConfiguration aggregationConfig)
         {
             return this;
         }
 
-        internal MeterProviderBuilder AddView(Func<Instrument, AggregationConfiguration> viewConfig)
+        internal MeterProviderBuilder AddView(Func<Instrument, MetricStreamConfiguration> viewConfig)
         {
             return this;
         }
