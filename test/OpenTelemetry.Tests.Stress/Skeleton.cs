@@ -116,7 +116,11 @@ public partial class Program
 
     private static ulong GetCpuCycles()
     {
+#if NET462
+        if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+#else
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+#endif
         {
             return 0;
         }
