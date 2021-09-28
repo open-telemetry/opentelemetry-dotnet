@@ -1,4 +1,4 @@
-// <copyright file="MeterProviderBuilderSdk.cs" company="OpenTelemetry Authors">
+// <copyright file="HistogramConfiguration.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,10 +14,29 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Metrics
 {
-    internal class MeterProviderBuilderSdk : MeterProviderBuilderBase
+    public class HistogramConfiguration : MetricStreamConfiguration
     {
-        internal MeterProvider BuildSdk() => this.Build();
+        private Aggregation aggregation = Aggregation.Histogram;
+
+        public double[] BucketBounds { get; set; }
+
+        public override Aggregation Aggregation
+        {
+            get => this.aggregation;
+
+            set
+            {
+                if (value != Aggregation.Histogram)
+                {
+                    throw new ArgumentException($"Aggregation must be Histogram.");
+                }
+
+                this.aggregation = value;
+            }
+        }
     }
 }

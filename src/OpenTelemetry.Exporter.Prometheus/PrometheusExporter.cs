@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter

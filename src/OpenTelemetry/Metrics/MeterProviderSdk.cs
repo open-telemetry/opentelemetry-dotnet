@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
@@ -30,6 +29,7 @@ namespace OpenTelemetry.Metrics
         internal int ShutdownCount;
         private readonly Metric[] metrics;
         private readonly List<object> instrumentations = new List<object>();
+        private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs;
         private readonly object collectLock = new object();
         private readonly object instrumentCreationLock = new object();
         private readonly Dictionary<string, bool> metricStreamNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
@@ -40,10 +40,12 @@ namespace OpenTelemetry.Metrics
         internal MeterProviderSdk(
             Resource resource,
             IEnumerable<string> meterSources,
-            List<MeterProviderBuilderSdk.InstrumentationFactory> instrumentationFactories,
+            List<MeterProviderBuilderBase.InstrumentationFactory> instrumentationFactories,
+            List<Func<Instrument, MetricStreamConfiguration>> viewConfigs,
             IEnumerable<MetricReader> readers)
         {
             this.Resource = resource;
+            this.viewConfigs = viewConfigs;
             this.metrics = new Metric[MaxMetrics];
 
             AggregationTemporality temporality = AggregationTemporality.Cumulative;
@@ -98,6 +100,8 @@ namespace OpenTelemetry.Metrics
                     {
                         lock (this.instrumentCreationLock)
                         {
+                            // TODO: This is where view config will be looked up
+                            // and zero, one or more Metric streams will be created.
                             if (this.metricStreamNames.ContainsKey(instrument.Name))
                             {
                                 // log and ignore this instrument.
@@ -136,6 +140,10 @@ namespace OpenTelemetry.Metrics
         }
 
         internal Resource Resource { get; }
+
+        internal List<object> Instrumentations => this.instrumentations;
+
+        internal MetricReader Reader => this.reader;
 
         internal void MeasurementsCompleted(Instrument instrument, object state)
         {

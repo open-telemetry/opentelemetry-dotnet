@@ -71,7 +71,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             };
             var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddHttpClientInstrumentation()
-                .AddMetricReader(metricReader)
+                .AddReader(metricReader)
                 .Build();
 
             using (serverLifeTime)
