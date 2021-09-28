@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using System.Text.RegularExpressions;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -88,19 +89,51 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilder AddView(string instrumentName, string name)
         {
-            // TODO: Actually implement view.
-            return this;
+            var metricConfig = new MetricStreamConfiguration() { Name = name };
+            return this.AddView(instrumentName, metricConfig);
         }
 
-        internal MeterProviderBuilder AddView(string instrumentName, MetricStreamConfiguration aggregationConfig)
+        internal MeterProviderBuilder AddView(string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
         {
-            // TODO: Actually implement view.
-            return this;
+            Func<Instrument, MetricStreamConfiguration> viewConfig = (instrument) =>
+            {
+                var needRegex = false;
+                if (instrumentName.IndexOf('*') != -1)
+                {
+                    needRegex = true;
+                }
+
+                if (needRegex)
+                {
+                    var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*");
+                    if (Regex.IsMatch(instrument.Name, pattern, RegexOptions.IgnoreCase))
+                    {
+                        return metricStreamConfiguration;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                else
+                {
+                    if (instrument.Name.Equals(instrumentName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return metricStreamConfiguration;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+            };
+
+            return this.AddView(viewConfig);
         }
 
         internal MeterProviderBuilder AddView(Func<Instrument, MetricStreamConfiguration> viewConfig)
         {
-            // TODO: Actually implement view.
+            this.viewConfigs.Add(viewConfig);
             return this;
         }
 

@@ -98,27 +98,78 @@ namespace OpenTelemetry.Metrics
                 {
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
-                        lock (this.instrumentCreationLock)
+                        var viewConfigCount = this.viewConfigs.Count;
+                        if (viewConfigCount > 0)
                         {
-                            // TODO: This is where view config will be looked up
-                            // and zero, one or more Metric streams will be created.
-                            if (this.metricStreamNames.ContainsKey(instrument.Name))
+                            var metricStreamConfigs = new List<MetricStreamConfiguration>();
+                            foreach (var viewConfig in this.viewConfigs)
                             {
-                                // log and ignore this instrument.
-                                return;
+                                var metricStreamConfig = viewConfig(instrument);
+                                if (metricStreamConfig != null)
+                                {
+                                    metricStreamConfigs.Add(metricStreamConfig);
+                                }
                             }
 
-                            var index = Interlocked.Increment(ref this.metricIndex);
-                            if (index >= MaxMetrics)
+                            if (metricStreamConfigs.Count == 0)
                             {
-                                // Log that all measurements are dropped from this instrument.
+                                metricStreamConfigs.Add(null);
                             }
-                            else
+
+                            lock (this.instrumentCreationLock)
                             {
-                                var metric = new Metric(instrument, temporality);
-                                this.metrics[index] = metric;
-                                this.metricStreamNames.Add(instrument.Name, true);
-                                listener.EnableMeasurementEvents(instrument, metric);
+                                var countMetricsToBeCreated = metricStreamConfigs.Count;
+                                var metrics = new List<Metric>();
+                                for (int i = 0; i < countMetricsToBeCreated; i++)
+                                {
+                                    var metricStreamName = metricStreamConfigs[i]?.Name ?? instrument.Name;
+                                    if (this.metricStreamNames.ContainsKey(metricStreamName))
+                                    {
+                                        // log and ignore this instrument.
+                                        continue;
+                                    }
+
+                                    var index = Interlocked.Increment(ref this.metricIndex);
+                                    if (index >= MaxMetrics)
+                                    {
+                                        // Log that all measurements are dropped from this instrument.
+                                    }
+                                    else
+                                    {
+                                        var metric = new Metric(instrument, temporality, metricStreamName);
+                                        this.metrics[index] = metric;
+                                        metrics.Add(metric);
+                                        this.metricStreamNames.Add(metricStreamName, true);
+                                    }
+                                }
+
+                                listener.EnableMeasurementEvents(instrument, metrics.ToArray());
+                            }
+                        }
+                        else
+                        {
+                            lock (this.instrumentCreationLock)
+                            {
+                                if (this.metricStreamNames.ContainsKey(instrument.Name))
+                                {
+                                    // log and ignore this instrument.
+                                    return;
+                                }
+
+                                var index = Interlocked.Increment(ref this.metricIndex);
+                                if (index >= MaxMetrics)
+                                {
+                                    // Log that all measurements are dropped from this instrument.
+                                }
+                                else
+                                {
+                                    var metrics = new Metric[1];
+                                    var metric = new Metric(instrument, temporality);
+                                    this.metrics[index] = metric;
+                                    metrics[0] = metric;
+                                    this.metricStreamNames.Add(instrument.Name, true);
+                                    listener.EnableMeasurementEvents(instrument, metrics);
+                                }
                             }
                         }
                     }
@@ -153,29 +204,35 @@ namespace OpenTelemetry.Metrics
         internal void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
             // Get Instrument State
-            var metric = state as Metric;
+            var metrics = state as Metric[];
 
-            if (instrument == null || metric == null)
+            if (instrument == null || metrics == null)
             {
                 // TODO: log
                 return;
             }
 
-            metric.UpdateDouble(value, tagsRos);
+            for (int i = 0; i < metrics.Length; i++)
+            {
+                metrics[i].UpdateDouble(value, tagsRos);
+            }
         }
 
         internal void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
             // Get Instrument State
-            var metric = state as Metric;
+            var metrics = state as Metric[];
 
-            if (instrument == null || metric == null)
+            if (instrument == null || metrics == null)
             {
                 // TODO: log
                 return;
             }
 
-            metric.UpdateLong(value, tagsRos);
+            for (int i = 0; i < metrics.Length; i++)
+            {
+                metrics[i].UpdateLong(value, tagsRos);
+            }
         }
 
         internal Batch<Metric> Collect()
