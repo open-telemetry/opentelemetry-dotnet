@@ -15,7 +15,7 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
     <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" />
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
     <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" />
   </ItemGroup>
@@ -23,7 +23,7 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="Grpc" Version="$(GrpcPkgVer)" />
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
     <PackageReference Include="Grpc" Version="$(GrpcPkgVer)" />
   </ItemGroup>
