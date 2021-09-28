@@ -49,7 +49,11 @@ namespace Examples.Console
             */
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
-                .AddPrometheusExporter(opt => opt.Url = $"http://localhost:{port}/metrics/")
+                .AddPrometheusExporter(opt =>
+                {
+                    opt.StartHttpListener = true;
+                    opt.HttpListenerPrefixes = new string[] { $"http://*:{port}/" };
+                })
                 .Build();
 
             ObservableGauge<long> gauge = MyMeter.CreateObservableGauge<long>(
