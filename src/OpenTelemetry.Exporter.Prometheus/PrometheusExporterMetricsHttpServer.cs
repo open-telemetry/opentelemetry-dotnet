@@ -20,6 +20,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Prometheus.Implementation;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Exporter
 {
@@ -41,8 +42,9 @@ namespace OpenTelemetry.Exporter
         /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
         public PrometheusExporterMetricsHttpServer(PrometheusExporter exporter)
         {
-            // TODO: Review exception
-            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+            Guard.IsNotNull(exporter, nameof(exporter));
+
+            this.exporter = exporter;
             this.httpListener.Prefixes.Add(exporter.Options.Url);
         }
 

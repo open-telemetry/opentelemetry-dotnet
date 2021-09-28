@@ -21,6 +21,7 @@ using System.Diagnostics.Tracing;
 using System.IO;
 using System.Text;
 using System.Threading;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Internal
 {
@@ -43,9 +44,10 @@ namespace OpenTelemetry.Internal
 
         public SelfDiagnosticsEventListener(EventLevel logLevel, SelfDiagnosticsConfigRefresher configRefresher)
         {
+            Guard.IsNotNull(configRefresher, nameof(configRefresher));
+
             this.logLevel = logLevel;
-            // TODO: Review exception
-            this.configRefresher = configRefresher ?? throw new ArgumentNullException(nameof(configRefresher));
+            this.configRefresher = configRefresher;
 
             List<EventSource> eventSources;
             lock (this.lockObj)

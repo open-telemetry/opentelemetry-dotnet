@@ -22,6 +22,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using Grpc.Net.Client;
 #endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Shared;
 using OtlpResource = Opentelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter
@@ -41,14 +42,13 @@ namespace OpenTelemetry.Exporter
         /// <param name="options">The <see cref="OtlpExporterOptions"/> for configuring the exporter.</param>
         protected BaseOtlpExporter(OtlpExporterOptions options)
         {
-            // TODO: Review exception
-            this.Options = options ?? throw new ArgumentNullException(nameof(options));
+            Guard.IsNotNull(options, nameof(options));
+
+            this.Options = options;
             this.Headers = options.GetMetadataFromHeaders();
-            if (this.Options.TimeoutMilliseconds <= 0)
-            {
-                // TODO: Review exception
-                throw new ArgumentException("Timeout value provided is not a positive number.", nameof(this.Options.TimeoutMilliseconds));
-            }
+            // TODO: Review exception - throw new ArgumentException("Timeout value provided is not a positive number.", nameof(this.Options.TimeoutMilliseconds));
+            //             if (this.Options.TimeoutMilliseconds <= 0)
+            Guard.IsNotValidTimeout(this.Options.TimeoutMilliseconds, nameof(this.Options.TimeoutMilliseconds));
         }
 
         internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();

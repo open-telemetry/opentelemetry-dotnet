@@ -18,6 +18,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Metrics
 {
@@ -43,15 +44,8 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         public static bool ForceFlush(this MeterProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (provider == null)
-            {
-                throw new ArgumentNullException(nameof(provider));
-            }
-
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
-            }
+            Guard.IsNotNull(provider, nameof(provider));
+            Guard.IsNotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             if (provider is MeterProviderSdk meterProviderSdk)
             {
@@ -91,15 +85,8 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         public static bool Shutdown(this MeterProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (provider == null)
-            {
-                throw new ArgumentNullException(nameof(provider));
-            }
-
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
-            }
+            Guard.IsNotNull(provider, nameof(provider));
+            Guard.IsNotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             if (provider is MeterProviderSdk meterProviderSdk)
             {

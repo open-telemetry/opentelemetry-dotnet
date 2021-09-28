@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Metrics
 {
@@ -30,10 +31,7 @@ namespace OpenTelemetry.Metrics
 
         public CompositeMetricReader(IEnumerable<MetricReader> readers)
         {
-            if (readers == null)
-            {
-                throw new ArgumentNullException(nameof(readers));
-            }
+            Guard.IsNotNull(readers, nameof(readers));
 
             using var iter = readers.GetEnumerator();
 
@@ -53,10 +51,7 @@ namespace OpenTelemetry.Metrics
 
         public CompositeMetricReader AddReader(MetricReader reader)
         {
-            if (reader == null)
-            {
-                throw new ArgumentNullException(nameof(reader));
-            }
+            Guard.IsNotNull(reader, nameof(reader));
 
             var node = new DoublyLinkedListNode(reader)
             {

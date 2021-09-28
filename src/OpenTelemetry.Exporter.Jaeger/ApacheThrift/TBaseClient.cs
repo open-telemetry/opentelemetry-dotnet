@@ -18,6 +18,7 @@
 // under the License.
 
 using System;
+using OpenTelemetry.Shared;
 using Thrift.Protocol;
 
 namespace Thrift
@@ -37,8 +38,9 @@ namespace Thrift
 
         protected TBaseClient(TProtocol outputProtocol)
         {
-            // TODO: Review exception
-            _outputProtocol = outputProtocol ?? throw new ArgumentNullException(nameof(outputProtocol));
+            Guard.IsNotNull(outputProtocol, nameof(outputProtocol));
+
+            _outputProtocol = outputProtocol;
         }
 
         public TProtocol OutputProtocol => _outputProtocol;

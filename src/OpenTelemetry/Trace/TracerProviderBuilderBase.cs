@@ -132,8 +132,9 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetSampler(Sampler sampler)
         {
-            // TODO: Review exception
-            this.sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
+            Guard.IsNotNull(sampler, nameof(sampler));
+
+            this.sampler = sampler;
             return this;
         }
 
@@ -145,8 +146,9 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
-            // TODO: Review exception
-            this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
+            Guard.IsNotNull(resourceBuilder, nameof(resourceBuilder));
+
+            this.resourceBuilder = resourceBuilder;
             return this;
         }
 

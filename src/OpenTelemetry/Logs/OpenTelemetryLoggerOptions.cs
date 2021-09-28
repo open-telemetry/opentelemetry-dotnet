@@ -74,9 +74,9 @@ namespace OpenTelemetry.Logs
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
-            // TODO: Review exception
-            this.ResourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
+            Guard.IsNotNull(resourceBuilder, nameof(resourceBuilder));
 
+            this.ResourceBuilder = resourceBuilder;
             return this;
         }
     }

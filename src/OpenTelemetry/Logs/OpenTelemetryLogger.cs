@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Logs
 {
@@ -28,10 +29,11 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLogger(string categoryName, OpenTelemetryLoggerProvider provider)
         {
-            // TODO: Review exception
-            this.categoryName = categoryName ?? throw new ArgumentNullException(nameof(categoryName));
-            // TODO: Review exception
-            this.provider = provider ?? throw new ArgumentNullException(nameof(provider));
+            Guard.IsNotNull(categoryName, nameof(categoryName));
+            Guard.IsNotNull(provider, nameof(provider));
+
+            this.categoryName = categoryName;
+            this.provider = provider;
         }
 
         internal IExternalScopeProvider ScopeProvider { get; set; }

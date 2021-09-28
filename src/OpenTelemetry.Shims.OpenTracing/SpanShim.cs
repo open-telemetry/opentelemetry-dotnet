@@ -46,8 +46,9 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public SpanShim(TelemetrySpan span)
         {
-            // TODO: Review exception
-            this.Span = span ?? throw new ArgumentNullException(nameof(span), "Parameter cannot be null");
+            Guard.IsNotNull(span, nameof(span));
+
+            this.Span = span;
 
             if (!this.Span.Context.IsValid)
             {

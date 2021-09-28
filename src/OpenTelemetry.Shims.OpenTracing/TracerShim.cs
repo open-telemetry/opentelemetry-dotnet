@@ -29,11 +29,11 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public TracerShim(Trace.Tracer tracer, TextMapPropagator textFormat)
         {
-            // TODO: Review exception
-            this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer), "Parameter cannot be null");
-            // TODO: Review exception
-            this.propagator = textFormat ?? throw new ArgumentNullException(nameof(textFormat), "Parameter cannot be null");
+            Guard.IsNotNull(tracer, nameof(tracer));
+            Guard.IsNotNull(textFormat, nameof(textFormat));
 
+            this.tracer = tracer;
+            this.propagator = textFormat;
             this.ScopeManager = new ScopeManagerShim(this.tracer);
         }
 

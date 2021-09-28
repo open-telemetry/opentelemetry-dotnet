@@ -47,9 +47,9 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options)
         {
-            // TODO: Review exception
-            this.Options = options ?? throw new ArgumentNullException(nameof(options));
+            Guard.IsNotNull(options, nameof(options));
 
+            this.Options = options;
             this.Resource = options.ResourceBuilder.Build();
 
             foreach (var processor in options.Processors)

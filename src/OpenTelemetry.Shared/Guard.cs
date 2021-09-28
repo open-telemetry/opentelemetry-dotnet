@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading;
 
 namespace OpenTelemetry.Shared
 {
@@ -58,5 +59,15 @@ namespace OpenTelemetry.Shared
                 throw new ArgumentException(message, paramName);
             }
         }
+
+        [DebuggerHidden]
+        public static void IsNotValidTimeout(int value, string paramName)
+        {
+            if (value < 0 && value != Timeout.Infinite)
+            {
+                throw new ArgumentOutOfRangeException(paramName, value, $"{paramName} must be non-negative or Timeout.Infinite");
+            }
+        }
+
     }
 }

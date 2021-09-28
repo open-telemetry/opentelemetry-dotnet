@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Metrics
 {
@@ -28,8 +29,9 @@ namespace OpenTelemetry.Metrics
 
         public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
-            // TODO: Review exception
-            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+            Guard.IsNotNull(exporter, nameof(exporter));
+
+            this.exporter = exporter;
 
             var exportorType = exporter.GetType();
             var attributes = exportorType.GetCustomAttributes(typeof(AggregationTemporalityAttribute), true);

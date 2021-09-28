@@ -18,6 +18,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using global::OpenTracing;
+using OpenTelemetry.Shared;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Shims.OpenTracing
@@ -34,8 +35,9 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public ScopeManagerShim(Trace.Tracer tracer)
         {
-            // TODO: Review exception
-            this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
+            Guard.IsNotNull(tracer, nameof(tracer));
+
+            this.tracer = tracer;
         }
 
 #if DEBUG

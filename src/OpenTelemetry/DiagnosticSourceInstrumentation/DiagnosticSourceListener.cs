@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Instrumentation
 {
@@ -26,8 +27,9 @@ namespace OpenTelemetry.Instrumentation
 
         public DiagnosticSourceListener(ListenerHandler handler)
         {
-            // TODO: Review exception
-            this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
+            Guard.IsNotNull(handler, nameof(handler));
+
+            this.handler = handler;
         }
 
         public void OnCompleted()

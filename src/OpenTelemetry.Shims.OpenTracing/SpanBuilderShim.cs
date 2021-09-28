@@ -81,10 +81,11 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public SpanBuilderShim(Trace.Tracer tracer, string spanName, IList<string> rootOperationNamesForActivityBasedAutoInstrumentations = null)
         {
-            // TODO: Review exception
-            this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
-            // TODO: Review exception
-            this.spanName = spanName ?? throw new ArgumentNullException(nameof(spanName));
+            Guard.IsNotNull(tracer, nameof(tracer));
+            Guard.IsNotNull(spanName, nameof(spanName));
+
+            this.tracer = tracer;
+            this.spanName = spanName;
             this.ScopeManager = new ScopeManagerShim(this.tracer);
             this.rootOperationNamesForActivityBasedAutoInstrumentations = rootOperationNamesForActivityBasedAutoInstrumentations ?? this.rootOperationNamesForActivityBasedAutoInstrumentations;
         }

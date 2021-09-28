@@ -18,6 +18,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Text;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Shared;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 
@@ -29,8 +30,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public Batch(Process process)
         {
-            // TODO: Review exception
-            this.Process = process ?? throw new ArgumentNullException(nameof(process));
+            Guard.IsNotNull(process, nameof(process));
+
+            this.Process = process;
             this.spanMessages = PooledList<BufferWriterMemory>.Create();
         }
 

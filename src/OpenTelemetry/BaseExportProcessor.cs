@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry
 {
@@ -35,8 +36,9 @@ namespace OpenTelemetry
         /// <param name="exporter">Exporter instance.</param>
         protected BaseExportProcessor(BaseExporter<T> exporter)
         {
-            // TODO: Review exception
-            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+            Guard.IsNotNull(exporter, nameof(exporter));
+
+            this.exporter = exporter;
         }
 
         /// <inheritdoc />

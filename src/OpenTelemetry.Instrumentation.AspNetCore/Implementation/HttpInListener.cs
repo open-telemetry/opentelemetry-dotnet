@@ -25,6 +25,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Shared;
 #if !NETSTANDARD2_0
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 #endif
@@ -53,8 +54,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         public HttpInListener(AspNetCoreInstrumentationOptions options)
             : base(DiagnosticSourceName)
         {
-            // TODO: Review exception
-            this.options = options ?? throw new ArgumentNullException(nameof(options));
+            Guard.IsNotNull(options, nameof(options));
+
+            this.options = options;
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]

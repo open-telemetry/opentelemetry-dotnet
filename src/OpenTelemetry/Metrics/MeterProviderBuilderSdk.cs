@@ -77,8 +77,9 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilderSdk SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
-            // TODO: Review exception
-            this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
+            Guard.IsNotNull(resourceBuilder, nameof(resourceBuilder));
+
+            this.resourceBuilder = resourceBuilder;
             return this;
         }
 
