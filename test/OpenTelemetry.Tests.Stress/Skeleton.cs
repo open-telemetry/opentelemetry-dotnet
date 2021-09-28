@@ -46,6 +46,7 @@ public partial class Program
             () =>
             {
                 Console.WriteLine($"Running (concurrency = {concurrency}), press <Esc> to stop...");
+                var bOutput = false;
                 var watch = new Stopwatch();
                 while (true)
                 {
@@ -56,15 +57,22 @@ public partial class Program
                         switch (key)
                         {
                             case ConsoleKey.Enter:
-                            case ConsoleKey.Spacebar:
-                                Console.WriteLine(output);
+                                Console.WriteLine(string.Format("{0} {1}", DateTime.UtcNow.ToString("O"), output));
                                 break;
                             case ConsoleKey.Escape:
                                 bContinue = false;
                                 return;
+                            case ConsoleKey.Spacebar:
+                                bOutput = !bOutput;
+                                break;
                         }
 
                         continue;
+                    }
+
+                    if (bOutput)
+                    {
+                        Console.WriteLine(string.Format("{0} {1}", DateTime.UtcNow.ToString("O"), output));
                     }
 
                     var cntLoopsOld = (ulong)statistics.Sum();
