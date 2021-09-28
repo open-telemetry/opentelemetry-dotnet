@@ -45,35 +45,33 @@ namespace OpenTelemetry.Trace
         {
             Guard.IsNotNull(builder, nameof(builder));
 
-            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            if (builder is not IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
             {
-                return deferredTracerProviderBuilder.Configure((sp, builder) =>
+                if (connection == null)
                 {
+                    throw new NotSupportedException($"StackExchange.Redis {nameof(IConnectionMultiplexer)} must be supplied when dependency injection is unavailable - to enable dependency injection use the OpenTelemetry.Extensions.Hosting package");
+                }
+
+                return AddRedisInstrumentation(builder, connection, new StackExchangeRedisCallsInstrumentationOptions(), configure);
+            }
+
+            return deferredTracerProviderBuilder.Configure((sp, builder) =>
+            {
+                if (connection == null)
+                {
+                    connection = (IConnectionMultiplexer)sp.GetService(typeof(IConnectionMultiplexer));
                     if (connection == null)
                     {
-                        connection = (IConnectionMultiplexer)sp.GetService(typeof(IConnectionMultiplexer));
-                        if (connection == null)
-                        {
-                            // TODO: Review exception
-                            throw new InvalidOperationException("StackExchange.Redis IConnectionMultiplexer could not be resolved through application IServiceProvider.");
-                        }
+                        throw new InvalidOperationException($"StackExchange.Redis {nameof(IConnectionMultiplexer)} could not be resolved through application {nameof(IServiceProvider)}");
                     }
+                }
 
-                    AddRedisInstrumentation(
-                        builder,
-                        connection,
-                        sp.GetOptions<StackExchangeRedisCallsInstrumentationOptions>(),
-                        configure);
-                });
-            }
-
-            if (connection == null)
-            {
-                // TODO: Review exception
-                throw new NotSupportedException("StackExchange.Redis IConnectionMultiplexer must be supplied when dependency injection is unavailable. To enable dependency injection use the OpenTelemetry.Extensions.Hosting package.");
-            }
-
-            return AddRedisInstrumentation(builder, connection, new StackExchangeRedisCallsInstrumentationOptions(), configure);
+                AddRedisInstrumentation(
+                    builder,
+                    connection,
+                    sp.GetOptions<StackExchangeRedisCallsInstrumentationOptions>(),
+                    configure);
+            });
         }
 
         private static TracerProviderBuilder AddRedisInstrumentation(
