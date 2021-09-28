@@ -65,6 +65,8 @@ namespace OpenTelemetry.Metrics
             }
         }
 
+        internal BaseExporter<Metric> Exporter => this.exporter;
+
         protected ExportModes SupportedExportModes => this.supportedExportModes;
 
         internal override void SetParentProvider(BaseProvider parentProvider)

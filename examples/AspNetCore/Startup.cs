@@ -23,7 +23,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Metrics;
@@ -34,8 +33,6 @@ namespace Examples.AspNetCore
 {
     public class Startup
     {
-        private MeterProvider meterProvider;
-
         public Startup(IConfiguration configuration)
         {
             this.Configuration = configuration;
@@ -59,9 +56,9 @@ namespace Examples.AspNetCore
                 }
             });
 
-            // Switch between Zipkin/Jaeger by setting UseExporter in appsettings.json.
-            var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
-            switch (exporter)
+            // Switch between Zipkin/Jaeger/OTLP by setting UseExporter in appsettings.json.
+            var tracingExporter = this.Configuration.GetValue<string>("UseTracingExporter").ToLowerInvariant();
+            switch (tracingExporter)
             {
                 case "jaeger":
                     services.AddOpenTelemetryTracing((builder) => builder
@@ -117,15 +114,24 @@ namespace Examples.AspNetCore
                     break;
             }
 
-            // TODO: Add IServiceCollection.AddOpenTelemetryMetrics extension method
-            var providerBuilder = Sdk.CreateMeterProviderBuilder()
-                .AddAspNetCoreInstrumentation();
+            var metricsExporter = this.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
+            services.AddOpenTelemetryMetrics(builder =>
+            {
+                builder.AddAspNetCoreInstrumentation();
 
-            // TODO: Add configuration switch for Prometheus and OTLP export
-            providerBuilder
-                .AddConsoleExporter();
-
-            this.meterProvider = providerBuilder.Build();
+                switch (metricsExporter)
+                {
+                    case "prometheus":
+                        builder.AddPrometheusExporter();
+                        break;
+                    case "otlp":
+                        builder.AddOtlpExporter();
+                        break;
+                    default:
+                        builder.AddConsoleExporter();
+                        break;
+                }
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -145,6 +151,12 @@ namespace Examples.AspNetCore
             });
 
             app.UseRouting();
+
+            var metricsExporter = this.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
+            if (metricsExporter == "prometheus")
+            {
+                app.UseOpenTelemetryPrometheusScrapingEndpoint();
+            }
 
             app.UseEndpoints(endpoints =>
             {

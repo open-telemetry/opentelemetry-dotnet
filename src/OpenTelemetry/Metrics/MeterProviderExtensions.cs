@@ -120,5 +120,40 @@ namespace OpenTelemetry.Metrics
 
             return true;
         }
+
+        public static bool TryFindExporter<T>(this MeterProvider provider, out T exporter)
+            where T : BaseExporter<Metric>
+        {
+            if (provider is MeterProviderSdk meterProviderSdk)
+            {
+                return TryFindExporter(meterProviderSdk.Reader, out exporter);
+            }
+
+            exporter = null;
+            return false;
+
+            static bool TryFindExporter(MetricReader reader, out T exporter)
+            {
+                if (reader is BaseExportingMetricReader exportingMetricReader)
+                {
+                    exporter = exportingMetricReader.Exporter as T;
+                    return exporter != null;
+                }
+
+                if (reader is CompositeMetricReader compositeMetricReader)
+                {
+                    foreach (MetricReader childReader in compositeMetricReader)
+                    {
+                        if (TryFindExporter(childReader, out exporter))
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                exporter = null;
+                return false;
+            }
+        }
     }
 }
