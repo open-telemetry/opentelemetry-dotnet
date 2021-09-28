@@ -88,16 +88,19 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilder AddView(string instrumentName, string name)
         {
+            // TODO: Actually implement view.
             return this;
         }
 
         internal MeterProviderBuilder AddView(string instrumentName, MetricStreamConfiguration aggregationConfig)
         {
+            // TODO: Actually implement view.
             return this;
         }
 
         internal MeterProviderBuilder AddView(Func<Instrument, MetricStreamConfiguration> viewConfig)
         {
+            // TODO: Actually implement view.
             return this;
         }
 
