@@ -340,6 +340,24 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(32, exportProcessorName, exporterName, droppedCount);
         }
 
+        [Event(33, Message = "Measurements from instrument '{0}' is ignored as maximum metric streams limit reached.", Level = EventLevel.Warning)]
+        public void InstrumentIgnoredAsMaxMetricStreamReached(string instrumentName)
+        {
+            this.WriteEvent(33, instrumentName);
+        }
+
+        [Event(34, Message = "Measurements from instrument '{0}' is ignored due to conflicting metric stream name.", Level = EventLevel.Warning)]
+        public void InstrumentIgnoredMetricStreamNameConflict(string instrumentName)
+        {
+            this.WriteEvent(34, instrumentName);
+        }
+
+        [Event(35, Message = "Measurements from instrument '{0}' (configured to be reported as '{1}') is ignored due to conflicting metric stream name.", Level = EventLevel.Warning)]
+        public void InstrumentIgnoredMetricStreamNameConflictWithRename(string instrumentName, string metricName)
+        {
+            this.WriteEvent(35, instrumentName, metricName);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {

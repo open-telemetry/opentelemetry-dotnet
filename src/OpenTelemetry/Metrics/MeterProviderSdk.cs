@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Threading;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -113,6 +114,11 @@ namespace OpenTelemetry.Metrics
 
                             if (metricStreamConfigs.Count == 0)
                             {
+                                // No views matched. Add null
+                                // which will apply defaults.
+                                // Users can turn off this default
+                                // by adding a view like below as the last view.
+                                // .AddView(instrumentName: "*", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
                                 metricStreamConfigs.Add(null);
                             }
 
@@ -125,14 +131,14 @@ namespace OpenTelemetry.Metrics
                                     var metricStreamName = metricStreamConfigs[i]?.Name ?? instrument.Name;
                                     if (this.metricStreamNames.ContainsKey(metricStreamName))
                                     {
-                                        // log and ignore this instrument.
+                                        OpenTelemetrySdkEventSource.Log.InstrumentIgnoredMetricStreamNameConflictWithRename(instrument.Name, metricStreamName);
                                         continue;
                                     }
 
                                     var index = Interlocked.Increment(ref this.metricIndex);
                                     if (index >= MaxMetrics)
                                     {
-                                        // Log that all measurements are dropped from this instrument.
+                                        OpenTelemetrySdkEventSource.Log.InstrumentIgnoredAsMaxMetricStreamReached(instrument.Name);
                                     }
                                     else
                                     {
@@ -150,16 +156,17 @@ namespace OpenTelemetry.Metrics
                         {
                             lock (this.instrumentCreationLock)
                             {
-                                if (this.metricStreamNames.ContainsKey(instrument.Name))
+                                var metricName = instrument.Name;
+                                if (this.metricStreamNames.ContainsKey(metricName))
                                 {
-                                    // log and ignore this instrument.
+                                    OpenTelemetrySdkEventSource.Log.InstrumentIgnoredMetricStreamNameConflict(metricName);
                                     return;
                                 }
 
                                 var index = Interlocked.Increment(ref this.metricIndex);
                                 if (index >= MaxMetrics)
                                 {
-                                    // Log that all measurements are dropped from this instrument.
+                                    OpenTelemetrySdkEventSource.Log.InstrumentIgnoredAsMaxMetricStreamReached(metricName);
                                 }
                                 else
                                 {
@@ -167,7 +174,7 @@ namespace OpenTelemetry.Metrics
                                     var metric = new Metric(instrument, temporality);
                                     this.metrics[index] = metric;
                                     metrics[0] = metric;
-                                    this.metricStreamNames.Add(instrument.Name, true);
+                                    this.metricStreamNames.Add(metricName, true);
                                     listener.EnableMeasurementEvents(instrument, metrics);
                                 }
                             }
