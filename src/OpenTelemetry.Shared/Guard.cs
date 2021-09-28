@@ -73,7 +73,7 @@ namespace OpenTelemetry.Shared
         [DebuggerHidden]
         public static void IsNotInRange(int value, string paramName, int min = int.MinValue, int max = int.MaxValue, string minName = null, string maxName = null, string message = null)
         {
-            Debug.Assert(min != max, $"Please supply a non-default value for either '{nameof(min)}' or '{nameof(max)}'");
+            Debug.Assert(min != max, $"Both '{nameof(min)}' and '{nameof(max)}' should not use their default values");
 
             var invalid = false;
             var exMessage = message ?? $"{paramName} must be within: [{min}, {max}]";
