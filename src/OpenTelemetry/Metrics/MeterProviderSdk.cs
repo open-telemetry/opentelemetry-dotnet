@@ -21,6 +21,7 @@ using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Threading;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Metrics
 {
@@ -50,11 +51,8 @@ namespace OpenTelemetry.Metrics
 
             foreach (var reader in readers)
             {
-                if (reader == null)
-                {
-                    // TODO: Review exception
-                    throw new ArgumentException("A null value was found.", nameof(readers));
-                }
+                // TODO: Review exception - throw new ArgumentException("A null value was found.", nameof(readers));
+                Guard.IsNotNull(reader, nameof(reader));
 
                 reader.SetParentProvider(this);
 
