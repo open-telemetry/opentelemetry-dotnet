@@ -95,7 +95,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             Guard.IsNotNull(spanContext, nameof(spanContext));
 
-            if (!(spanContext is SpanContextShim shim))
+            if (spanContext is not SpanContextShim shim)
             {
                 // TODO: Review exception
                 throw new ArgumentException("Context is not a valid SpanContextShim object", nameof(shim));
