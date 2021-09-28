@@ -76,12 +76,12 @@ Now you are ready to run your own stress test.
 
 Some useful notes:
 
-* You can change the concurrency using `Stress(concurrency)`, the default value
+* You can specify the concurrency using `Stress(concurrency)`, the default value
   is the number of CPU cores. Keep in mind that concurrency level does not equal
   to the number of threads.
-* You would want to put `[MethodImpl(MethodImplOptions.AggressiveInlining)]` on
+* You want to put `[MethodImpl(MethodImplOptions.AggressiveInlining)]` on
   `Run()`, this helps to reduce extra flushes on the CPU instruction cache.
-* You would want to run the stress test under `Release` mode rather than `Debug`
+* You might want to run the stress test under `Release` mode rather than `Debug`
   mode.
 
 ## Understanding the results
