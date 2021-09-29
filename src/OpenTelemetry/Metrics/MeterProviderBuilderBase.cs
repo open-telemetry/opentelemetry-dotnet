@@ -95,38 +95,26 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilder AddView(string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
         {
-            var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*");
-            var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            Regex regex = null;
+            if (instrumentName.IndexOf('*') != -1)
+            {
+                var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*");
+                regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            }
 
             Func<Instrument, MetricStreamConfiguration> viewConfig = (instrument) =>
             {
-                var needRegex = false;
-                if (instrumentName.IndexOf('*') != -1)
+                if (regex != null && regex.IsMatch(instrument.Name))
                 {
-                    needRegex = true;
+                    return metricStreamConfiguration;
                 }
-
-                if (needRegex)
+                else if (instrument.Name.Equals(instrumentName, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (regex.IsMatch(instrument.Name))
-                    {
-                        return metricStreamConfiguration;
-                    }
-                    else
-                    {
-                        return null;
-                    }
+                    return metricStreamConfiguration;
                 }
                 else
                 {
-                    if (instrument.Name.Equals(instrumentName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return metricStreamConfiguration;
-                    }
-                    else
-                    {
-                        return null;
-                    }
+                    return null;
                 }
             };
 

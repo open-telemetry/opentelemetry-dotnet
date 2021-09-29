@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using Xunit;
@@ -49,6 +50,43 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Single(exportedItems);
             var metric = exportedItems[0];
             Assert.Equal("renamed", metric.Name);
+        }
+
+        [Fact]
+        public void ViewToRenameMetricConditionally()
+        {
+            using var meter1 = new Meter("ViewToRenameMetricConditionallyTest");
+            using var meter2 = new Meter("ViewToRenameMetricConditionallyTest2");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource(meter1.Name)
+                .AddSource(meter2.Name)
+                .AddInMemoryExporter(exportedItems)
+                .AddView((instrument) => {
+                    if (instrument.Meter.Name.Equals(meter2.Name, StringComparison.OrdinalIgnoreCase)
+                    && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return new MetricStreamConfiguration() { Name = "name1_Renamed"};
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                })
+                .Build();
+
+            // Without views only 1 stream would be
+            // exported (the 2nd one gets dropped due to
+            // name conflict). Due to renaming with Views,
+            // we expect 2 metric streams here.
+            var counter1 = meter1.CreateCounter<long>("name1");
+            var counter2 = meter2.CreateCounter<long>("name1");
+            counter1.Add(10);
+            counter2.Add(10);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Equal(2, exportedItems.Count);
+            Assert.Equal("name1", exportedItems[0].Name);
+            Assert.Equal("name1_Renamed", exportedItems[1].Name);
         }
 
         [Fact]

@@ -97,6 +97,12 @@ namespace OpenTelemetry.Metrics
             {
                 InstrumentPublished = (instrument, listener) =>
                 {
+                    // TODO: Add benchmark for instrument creation.
+                    // While instrument creation is not a hot path
+                    // like measurement recording, we need to be
+                    // optimizing Instrument creation path as well,
+                    // as it can affect application startup time,
+                    // if there are many instruments and views.
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
                         var viewConfigCount = this.viewConfigs.Count;
@@ -131,14 +137,17 @@ namespace OpenTelemetry.Metrics
                                     var metricStreamName = metricStreamConfigs[i]?.Name ?? instrument.Name;
                                     if (this.metricStreamNames.ContainsKey(metricStreamName))
                                     {
-                                        OpenTelemetrySdkEventSource.Log.InstrumentIgnoredMetricStreamNameConflictWithRename(instrument.Name, metricStreamName);
+                                        // TODO: Log that instrument is ignored
+                                        // as the resulting Metric name is conflicting
+                                        // with existing name.
                                         continue;
                                     }
 
                                     var index = Interlocked.Increment(ref this.metricIndex);
                                     if (index >= MaxMetrics)
                                     {
-                                        OpenTelemetrySdkEventSource.Log.InstrumentIgnoredAsMaxMetricStreamReached(instrument.Name);
+                                        // TODO: Log that instrument is ignored
+                                        // as max number of Metrics have reached.
                                     }
                                     else
                                     {
@@ -159,14 +168,17 @@ namespace OpenTelemetry.Metrics
                                 var metricName = instrument.Name;
                                 if (this.metricStreamNames.ContainsKey(metricName))
                                 {
-                                    OpenTelemetrySdkEventSource.Log.InstrumentIgnoredMetricStreamNameConflict(metricName);
+                                    // TODO: Log that instrument is ignored
+                                    // as the resulting Metric name is conflicting
+                                    // with existing name.
                                     return;
                                 }
 
                                 var index = Interlocked.Increment(ref this.metricIndex);
                                 if (index >= MaxMetrics)
                                 {
-                                    OpenTelemetrySdkEventSource.Log.InstrumentIgnoredAsMaxMetricStreamReached(metricName);
+                                    // TODO: Log that instrument is ignored
+                                    // as max number of Metrics have reached.
                                 }
                                 else
                                 {
@@ -179,6 +191,12 @@ namespace OpenTelemetry.Metrics
                                 }
                             }
                         }
+                    }
+                    else
+                    {
+                        // TODO: Log that instrument is ignored
+                        // as it is from a Meter which is not
+                        // added as a Source.
                     }
                 },
                 MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state),
