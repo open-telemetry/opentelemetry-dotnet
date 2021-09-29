@@ -1,4 +1,4 @@
-# Exception Reporting
+# Reporting Exceptions
 
 The following doc describes how to report Exceptions to OpenTelemetry tracing
 when user is manually creating Activities. If the user is using one of the
