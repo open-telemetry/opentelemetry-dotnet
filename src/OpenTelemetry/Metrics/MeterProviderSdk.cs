@@ -100,7 +100,11 @@ namespace OpenTelemetry.Metrics
                 {
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
-                        var metricStreamConfigs = new List<MetricStreamConfiguration>();
+                        // Creating list with initial capacity as the maximum
+                        // possible size, to avoid any array resize/copy internally.
+                        // There may be excess space wasted, but it'll eligible for
+                        // GC right after this method.
+                        var metricStreamConfigs = new List<MetricStreamConfiguration>(viewConfigCount);
                         foreach (var viewConfig in this.viewConfigs)
                         {
                             var metricStreamConfig = viewConfig(instrument);
@@ -120,11 +124,16 @@ namespace OpenTelemetry.Metrics
                             metricStreamConfigs.Add(null);
                         }
 
-                        var countMetricsToBeCreated = metricStreamConfigs.Count;
-                        var metrics = new List<Metric>(countMetricsToBeCreated);
+                        var maxCountMetricsToBeCreated = metricStreamConfigs.Count;
+
+                        // Create list with initial capacity as the max metric count.
+                        // Due to duplicate/max limit, we may not end up using them
+                        // all, and that memory is wasted until Meter disposed.
+                        // TODO: Revisit to see if we need to do metrics.TrimExcess()
+                        var metrics = new List<Metric>(maxCountMetricsToBeCreated);
                         lock (this.instrumentCreationLock)
                         {
-                            for (int i = 0; i < countMetricsToBeCreated; i++)
+                            for (int i = 0; i < maxCountMetricsToBeCreated; i++)
                             {
                                 var metricStreamName = metricStreamConfigs[i]?.Name ?? instrument.Name;
                                 if (this.metricStreamNames.ContainsKey(metricStreamName))
