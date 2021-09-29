@@ -135,7 +135,7 @@ namespace OpenTelemetry.Metrics
                                     continue;
                                 }
 
-                                var index = Interlocked.Increment(ref this.metricIndex);
+                                var index = ++this.metricIndex;
                                 if (index >= MaxMetrics)
                                 {
                                     // TODO: Log that instrument is ignored
@@ -176,7 +176,7 @@ namespace OpenTelemetry.Metrics
                                 return;
                             }
 
-                            var index = Interlocked.Increment(ref this.metricIndex);
+                            var index = ++this.metricIndex;
                             if (index >= MaxMetrics)
                             {
                                 // TODO: Log that instrument is ignored
