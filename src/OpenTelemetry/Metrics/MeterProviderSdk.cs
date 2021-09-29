@@ -92,85 +92,47 @@ namespace OpenTelemetry.Metrics
                 meterSourcesToSubscribe[name] = true;
             }
 
-            this.listener = new MeterListener()
+            this.listener = new MeterListener();
+            var viewConfigCount = this.viewConfigs.Count;
+            if (viewConfigCount > 0)
             {
-                InstrumentPublished = (instrument, listener) =>
+                this.listener.InstrumentPublished = (instrument, listener) =>
                 {
-                    // TODO: Add benchmark for instrument creation.
-                    // While instrument creation is not a hot path
-                    // like measurement recording, we need to be
-                    // optimizing Instrument creation path as well,
-                    // as it can affect application startup time,
-                    // if there are many instruments and views.
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
-                        var viewConfigCount = this.viewConfigs.Count;
-                        if (viewConfigCount > 0)
+                        var metricStreamConfigs = new List<MetricStreamConfiguration>();
+                        foreach (var viewConfig in this.viewConfigs)
                         {
-                            var metricStreamConfigs = new List<MetricStreamConfiguration>();
-                            foreach (var viewConfig in this.viewConfigs)
+                            var metricStreamConfig = viewConfig(instrument);
+                            if (metricStreamConfig != null)
                             {
-                                var metricStreamConfig = viewConfig(instrument);
-                                if (metricStreamConfig != null)
-                                {
-                                    metricStreamConfigs.Add(metricStreamConfig);
-                                }
-                            }
-
-                            if (metricStreamConfigs.Count == 0)
-                            {
-                                // No views matched. Add null
-                                // which will apply defaults.
-                                // Users can turn off this default
-                                // by adding a view like below as the last view.
-                                // .AddView(instrumentName: "*", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
-                                metricStreamConfigs.Add(null);
-                            }
-
-                            lock (this.instrumentCreationLock)
-                            {
-                                var countMetricsToBeCreated = metricStreamConfigs.Count;
-                                var metrics = new List<Metric>();
-                                for (int i = 0; i < countMetricsToBeCreated; i++)
-                                {
-                                    var metricStreamName = metricStreamConfigs[i]?.Name ?? instrument.Name;
-                                    if (this.metricStreamNames.ContainsKey(metricStreamName))
-                                    {
-                                        // TODO: Log that instrument is ignored
-                                        // as the resulting Metric name is conflicting
-                                        // with existing name.
-                                        continue;
-                                    }
-
-                                    var index = Interlocked.Increment(ref this.metricIndex);
-                                    if (index >= MaxMetrics)
-                                    {
-                                        // TODO: Log that instrument is ignored
-                                        // as max number of Metrics have reached.
-                                    }
-                                    else
-                                    {
-                                        var metric = new Metric(instrument, temporality, metricStreamName);
-                                        this.metrics[index] = metric;
-                                        metrics.Add(metric);
-                                        this.metricStreamNames.Add(metricStreamName, true);
-                                    }
-                                }
-
-                                listener.EnableMeasurementEvents(instrument, metrics.ToArray());
+                                metricStreamConfigs.Add(metricStreamConfig);
                             }
                         }
-                        else
+
+                        if (metricStreamConfigs.Count == 0)
                         {
-                            lock (this.instrumentCreationLock)
+                            // No views matched. Add null
+                            // which will apply defaults.
+                            // Users can turn off this default
+                            // by adding a view like below as the last view.
+                            // .AddView(instrumentName: "*", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+                            metricStreamConfigs.Add(null);
+                        }
+
+                        lock (this.instrumentCreationLock)
+                        {
+                            var countMetricsToBeCreated = metricStreamConfigs.Count;
+                            var metrics = new List<Metric>();
+                            for (int i = 0; i < countMetricsToBeCreated; i++)
                             {
-                                var metricName = instrument.Name;
-                                if (this.metricStreamNames.ContainsKey(metricName))
+                                var metricStreamName = metricStreamConfigs[i]?.Name ?? instrument.Name;
+                                if (this.metricStreamNames.ContainsKey(metricStreamName))
                                 {
                                     // TODO: Log that instrument is ignored
                                     // as the resulting Metric name is conflicting
                                     // with existing name.
-                                    return;
+                                    continue;
                                 }
 
                                 var index = Interlocked.Increment(ref this.metricIndex);
@@ -181,25 +143,59 @@ namespace OpenTelemetry.Metrics
                                 }
                                 else
                                 {
-                                    var metrics = new Metric[1];
-                                    var metric = new Metric(instrument, temporality);
+                                    var metric = new Metric(instrument, temporality, metricStreamName);
                                     this.metrics[index] = metric;
-                                    metrics[0] = metric;
-                                    this.metricStreamNames.Add(metricName, true);
-                                    listener.EnableMeasurementEvents(instrument, metrics);
+                                    metrics.Add(metric);
+                                    this.metricStreamNames.Add(metricStreamName, true);
                                 }
                             }
+
+                            listener.EnableMeasurementEvents(instrument, metrics.ToArray());
                         }
                     }
-                    else
+                };
+            }
+            else
+            {
+                this.listener.InstrumentPublished = (instrument, listener) =>
+                {
+                    if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
-                        // TODO: Log that instrument is ignored
-                        // as it is from a Meter which is not
-                        // added as a Source.
+                        var metricName = instrument.Name;
+                        Metric[] metrics = null;
+                        lock (this.instrumentCreationLock)
+                        {
+                            if (this.metricStreamNames.ContainsKey(metricName))
+                            {
+                                // TODO: Log that instrument is ignored
+                                // as the resulting Metric name is conflicting
+                                // with existing name.
+                                return;
+                            }
+
+                            var index = Interlocked.Increment(ref this.metricIndex);
+                            if (index >= MaxMetrics)
+                            {
+                                // TODO: Log that instrument is ignored
+                                // as max number of Metrics have reached.
+                                return;
+                            }
+                            else
+                            {
+                                metrics = new Metric[1];
+                                var metric = new Metric(instrument, temporality);
+                                this.metrics[index] = metric;
+                                metrics[0] = metric;
+                                this.metricStreamNames.Add(metricName, true);
+                            }
+                        }
+
+                        listener.EnableMeasurementEvents(instrument, metrics);
                     }
-                },
-                MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state),
-            };
+                };
+            }
+
+            this.listener.MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state);
 
             // Everything double
             this.listener.SetMeasurementEventCallback<double>((instrument, value, tags, state) => this.MeasurementRecordedDouble(instrument, value, tags, state));
@@ -343,6 +339,11 @@ namespace OpenTelemetry.Metrics
             this.reader?.Dispose();
 
             this.listener.Dispose();
+        }
+
+        private void InstrumentPublishedNoViews(Instrument instrument, MeterListener listener)
+        {
+
         }
     }
 }

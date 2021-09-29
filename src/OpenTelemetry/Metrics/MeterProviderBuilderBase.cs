@@ -95,28 +95,37 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilder AddView(string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
         {
-            Regex regex = null;
+            Func<Instrument, MetricStreamConfiguration> viewConfig;
             if (instrumentName.IndexOf('*') != -1)
             {
                 var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*");
-                regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                viewConfig = (instrument) =>
+                {
+                    if (regex.IsMatch(instrument.Name))
+                    {
+                        return metricStreamConfiguration;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                };
             }
-
-            Func<Instrument, MetricStreamConfiguration> viewConfig = (instrument) =>
+            else
             {
-                if (regex != null && regex.IsMatch(instrument.Name))
+                viewConfig = (instrument) =>
                 {
-                    return metricStreamConfiguration;
-                }
-                else if (instrument.Name.Equals(instrumentName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return metricStreamConfiguration;
-                }
-                else
-                {
-                    return null;
-                }
-            };
+                    if (instrument.Name.Equals(instrumentName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return metricStreamConfiguration;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                };
+            }
 
             return this.AddView(viewConfig);
         }
