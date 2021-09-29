@@ -39,8 +39,8 @@ namespace OpenTelemetry.Metrics.Tests
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource(meter1.Name)
-                .AddInMemoryExporter(exportedItems)
                 .AddView("name1", "renamed")
+                .AddInMemoryExporter(exportedItems)
                 .Build();
 
             // Expecting one metric stream.
@@ -61,11 +61,10 @@ namespace OpenTelemetry.Metrics.Tests
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource(meter1.Name)
                 .AddSource(meter2.Name)
-                .AddInMemoryExporter(exportedItems)
                 .AddView((instrument) =>
                 {
                     if (instrument.Meter.Name.Equals(meter2.Name, StringComparison.OrdinalIgnoreCase)
-                    && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
+                        && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
                     {
                         return new MetricStreamConfiguration() { Name = "name1_Renamed" };
                     }
@@ -74,6 +73,7 @@ namespace OpenTelemetry.Metrics.Tests
                         return null;
                     }
                 })
+                .AddInMemoryExporter(exportedItems)
                 .Build();
 
             // Without views only 1 stream would be
@@ -97,8 +97,8 @@ namespace OpenTelemetry.Metrics.Tests
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource(meter1.Name)
-                .AddInMemoryExporter(exportedItems)
                 .AddView("counter*", "renamed")
+                .AddInMemoryExporter(exportedItems)
                 .Build();
 
             // Expecting one metric stream.
@@ -124,9 +124,9 @@ namespace OpenTelemetry.Metrics.Tests
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource(meter1.Name)
-                .AddInMemoryExporter(exportedItems)
                 .AddView("name1", "renamedStream1")
                 .AddView("name1", "renamedStream2")
+                .AddInMemoryExporter(exportedItems)
                 .Build();
 
             // Expecting two metric stream.
@@ -145,10 +145,10 @@ namespace OpenTelemetry.Metrics.Tests
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource(meter1.Name)
-                .AddInMemoryExporter(exportedItems)
                 .AddView("name1", "renamedStream1")
                 .AddView("name1", "renamedStream2")
                 .AddView("name1", "renamedStream2")
+                .AddInMemoryExporter(exportedItems)
                 .Build();
 
             // Expecting two metric stream.
