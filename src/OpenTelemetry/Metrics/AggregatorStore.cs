@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace OpenTelemetry.Metrics
@@ -26,6 +27,8 @@ namespace OpenTelemetry.Metrics
         internal const int MaxMetricPoints = 2000;
         private static readonly ObjectArrayEqualityComparer ObjectArrayComparer = new ObjectArrayEqualityComparer();
         private readonly object lockZeroTags = new object();
+        private readonly HashSet<string> tagKeysInteresting;
+        private readonly bool dropAllTags;
 
         // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
         private readonly ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>> keyValue2MetricAggs =
@@ -39,40 +42,53 @@ namespace OpenTelemetry.Metrics
         private DateTimeOffset startTimeExclusive;
         private DateTimeOffset endTimeInclusive;
 
-        internal AggregatorStore(AggregationType aggType, AggregationTemporality temporality)
+        internal AggregatorStore(
+            AggregationType aggType,
+            AggregationTemporality temporality,
+            string[] tagKeysInteresting = null)
         {
             this.metrics = new MetricPoint[MaxMetricPoints];
             this.aggType = aggType;
             this.temporality = temporality;
             this.startTimeExclusive = DateTimeOffset.UtcNow;
+            if (tagKeysInteresting != null)
+            {
+                var hs = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var key in tagKeysInteresting)
+                {
+                    hs.Add(key);
+                }
+
+                this.tagKeysInteresting = hs;
+            }
+
+            this.dropAllTags = tagKeysInteresting != null && tagKeysInteresting.Length == 0;
         }
 
         internal int FindMetricAggregators(ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            int len = tags.Length;
-            if (len == 0)
+            int maxLength = tags.Length;
+            if (maxLength == 0 || this.dropAllTags)
             {
-                if (!this.zeroTagMetricPointInitialized)
-                {
-                    lock (this.lockZeroTags)
-                    {
-                        if (!this.zeroTagMetricPointInitialized)
-                        {
-                            var dt = DateTimeOffset.UtcNow;
-                            this.metrics[0] = new MetricPoint(this.aggType, dt, null, null);
-                            this.zeroTagMetricPointInitialized = true;
-                        }
-                    }
-                }
-
-                return 0;
+                return this.GetInitializedZeroTagPoint();
             }
 
             var storage = ThreadStaticStorage.GetStorage();
 
-            storage.SplitToKeysAndValues(tags, out var tagKey, out var tagValue);
+            if (this.tagKeysInteresting != null
+                    && this.tagKeysInteresting.Count < maxLength)
+            {
+                maxLength = this.tagKeysInteresting.Count;
+            }
 
-            if (len > 1)
+            storage.SplitToKeysAndValues(tags, maxLength, this.tagKeysInteresting, out var tagKey, out var tagValue, out var actualLength);
+
+            if (actualLength == 0)
+            {
+                return this.GetInitializedZeroTagPoint();
+            }
+
+            if (actualLength > 1)
             {
                 Array.Sort<string, object>(tagKey, tagValue);
             }
@@ -86,7 +102,7 @@ namespace OpenTelemetry.Metrics
             if (!this.keyValue2MetricAggs.TryGetValue(tagKey, out var value2metrics))
             {
                 // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                seqKey = new string[len];
+                seqKey = new string[actualLength];
                 tagKey.CopyTo(seqKey, 0);
 
                 value2metrics = new ConcurrentDictionary<object[], int>(ObjectArrayComparer);
@@ -128,11 +144,11 @@ namespace OpenTelemetry.Metrics
                         // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
                         if (seqKey == null)
                         {
-                            seqKey = new string[len];
+                            seqKey = new string[actualLength];
                             tagKey.CopyTo(seqKey, 0);
                         }
 
-                        var seqVal = new object[len];
+                        var seqVal = new object[actualLength];
                         tagValue.CopyTo(seqVal, 0);
 
                         ref var metricPoint = ref this.metrics[aggregatorIndex];
@@ -219,6 +235,25 @@ namespace OpenTelemetry.Metrics
         {
             var indexSnapShot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
             return new BatchMetricPoint(this.metrics, indexSnapShot + 1, this.startTimeExclusive, this.endTimeInclusive);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int GetInitializedZeroTagPoint()
+        {
+            if (!this.zeroTagMetricPointInitialized)
+            {
+                lock (this.lockZeroTags)
+                {
+                    if (!this.zeroTagMetricPointInitialized)
+                    {
+                        var dt = DateTimeOffset.UtcNow;
+                        this.metrics[0] = new MetricPoint(this.aggType, dt, null, null);
+                        this.zeroTagMetricPointInitialized = true;
+                    }
+                }
+            }
+
+            return 0;
         }
     }
 }

@@ -134,7 +134,8 @@ namespace OpenTelemetry.Metrics
                         {
                             for (int i = 0; i < maxCountMetricsToBeCreated; i++)
                             {
-                                var metricStreamName = metricStreamConfigs[i]?.Name ?? instrument.Name;
+                                var metricStreamConfig = metricStreamConfigs[i];
+                                var metricStreamName = metricStreamConfig?.Name ?? instrument.Name;
                                 if (this.metricStreamNames.ContainsKey(metricStreamName))
                                 {
                                     // TODO: Log that instrument is ignored
@@ -151,7 +152,7 @@ namespace OpenTelemetry.Metrics
                                 }
                                 else
                                 {
-                                    var metric = new Metric(instrument, temporality, metricStreamName);
+                                    var metric = new Metric(instrument, temporality, metricStreamName, metricStreamConfig?.TagKeys);
                                     this.metrics[index] = metric;
                                     metrics.Add(metric);
                                     this.metricStreamNames.Add(metricStreamName, true);
@@ -194,7 +195,7 @@ namespace OpenTelemetry.Metrics
                             else
                             {
                                 metrics = new List<Metric>(1);
-                                var metric = new Metric(instrument, temporality);
+                                var metric = new Metric(instrument, temporality, metricName);
                                 this.metrics[index] = metric;
                                 metrics.Add(metric);
                                 this.metricStreamNames.Add(metricName, true);

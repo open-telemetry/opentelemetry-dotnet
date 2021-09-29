@@ -49,30 +49,44 @@ namespace OpenTelemetry.Metrics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, out string[] tagKeys, out object[] tagValues)
+        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, int maxLength, HashSet<string> tagKeysInteresting, out string[] tagKeys, out object[] tagValues, out int actualLength)
         {
-            var len = tags.Length;
-
-            if (len == 0)
+            if (maxLength <= MaxTagCacheSize)
             {
-                throw new InvalidOperationException("There must be atleast one tag to use ThreadStaticStorage.");
-            }
-
-            if (len <= MaxTagCacheSize)
-            {
-                tagKeys = this.tagStorage[len - 1].TagKey;
-                tagValues = this.tagStorage[len - 1].TagValue;
+                tagKeys = this.tagStorage[maxLength - 1].TagKey;
+                tagValues = this.tagStorage[maxLength - 1].TagValue;
             }
             else
             {
-                tagKeys = new string[len];
-                tagValues = new object[len];
+                tagKeys = new string[maxLength];
+                tagValues = new object[maxLength];
             }
 
-            for (var n = 0; n < len; n++)
+            if (tagKeysInteresting != null)
             {
-                tagKeys[n] = tags[n].Key;
-                tagValues[n] = tags[n].Value;
+                int i = 0;
+                for (var n = 0; n < tags.Length; n++)
+                {
+                    var tag = tags[n];
+                    if (tagKeysInteresting.Contains(tag.Key))
+                    {
+                        tagKeys[i] = tag.Key;
+                        tagValues[i] = tag.Value;
+                        i++;
+                    }
+                }
+
+                actualLength = i;
+            }
+            else
+            {
+                for (var n = 0; n < maxLength; n++)
+                {
+                    tagKeys[n] = tags[n].Key;
+                    tagValues[n] = tags[n].Value;
+                }
+
+                actualLength = maxLength;
             }
         }
 
