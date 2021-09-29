@@ -89,45 +89,21 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilder AddView(string instrumentName, string name)
         {
-            var metricConfig = new MetricStreamConfiguration() { Name = name };
-            return this.AddView(instrumentName, metricConfig);
+            return this.AddView(instrumentName, new MetricStreamConfiguration() { Name = name });
         }
 
         internal MeterProviderBuilder AddView(string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
         {
-            Func<Instrument, MetricStreamConfiguration> viewConfig;
             if (instrumentName.IndexOf('*') != -1)
             {
                 var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*");
                 var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-                viewConfig = (instrument) =>
-                {
-                    if (regex.IsMatch(instrument.Name))
-                    {
-                        return metricStreamConfiguration;
-                    }
-                    else
-                    {
-                        return null;
-                    }
-                };
+                return this.AddView(instrument => regex.IsMatch(instrument.Name) ? metricStreamConfiguration : null);
             }
             else
             {
-                viewConfig = (instrument) =>
-                {
-                    if (instrument.Name.Equals(instrumentName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return metricStreamConfiguration;
-                    }
-                    else
-                    {
-                        return null;
-                    }
-                };
+                return this.AddView(instrument => instrument.Name.Equals(instrumentName, StringComparison.OrdinalIgnoreCase) ? metricStreamConfiguration : null);
             }
-
-            return this.AddView(viewConfig);
         }
 
         internal MeterProviderBuilder AddView(Func<Instrument, MetricStreamConfiguration> viewConfig)
