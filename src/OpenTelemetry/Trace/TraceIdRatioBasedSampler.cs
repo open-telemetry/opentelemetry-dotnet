@@ -16,6 +16,7 @@
 
 using System;
 using System.Globalization;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Trace
 {
@@ -36,11 +37,7 @@ namespace OpenTelemetry.Trace
         /// </param>
         public TraceIdRatioBasedSampler(double probability)
         {
-            // TODO: add a double or templated Guard.IsNotInRange function
-            if (probability < 0.0 || probability > 1.0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(probability), probability, "Must be in the range: [0.0, 1.0]");
-            }
+            Guard.NotInRange(probability, nameof(probability), min: 0.0, max: 1.0);
 
             this.probability = probability;
 

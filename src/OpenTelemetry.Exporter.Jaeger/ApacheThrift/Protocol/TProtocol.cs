@@ -54,7 +54,7 @@ namespace Thrift.Protocol
         {
             if (RecursionDepth >= RecursionLimit)
             {
-                throw new TProtocolException(TProtocolException.DEPTH_LIMIT, "Depth limit exceeded");
+                throw new TProtocolException(TProtocolException.DEPTH_LIMIT, $"Depth of recursion exceeded the limit: {RecursionLimit}");
             }
 
             ++RecursionDepth;

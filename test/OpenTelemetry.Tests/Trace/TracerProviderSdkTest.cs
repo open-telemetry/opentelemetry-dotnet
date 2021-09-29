@@ -903,7 +903,7 @@ namespace OpenTelemetry.Trace.Tests
         public void AddLegacyOperationName_BadArgs(string operationName)
         {
             var builder = Sdk.CreateTracerProviderBuilder();
-            Assert.Throws<ArgumentException>(() => builder.AddLegacySource(operationName));
+            Assert.Throws<ArgumentNullException>(() => builder.AddLegacySource(operationName));
         }
 
         [Fact]

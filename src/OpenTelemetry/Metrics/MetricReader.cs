@@ -69,7 +69,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         public bool Collect(int timeoutMilliseconds = Timeout.Infinite)
         {
-            Guard.IsNotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
+            Guard.NotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             try
             {
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         public bool Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
-            Guard.IsNotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
+            Guard.NotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             if (Interlocked.Increment(ref this.shutdownCount) > 1)
             {
@@ -223,8 +223,8 @@ namespace OpenTelemetry.Metrics
 
         private static void ValidateAggregationTemporality(AggregationTemporality preferred, AggregationTemporality supported)
         {
-            Guard.IsNotZero((int)(preferred & CumulativeAndDelta), nameof(preferred), $"PreferredAggregationTemporality has an invalid value {preferred}");
-            Guard.IsNotZero((int)(supported & CumulativeAndDelta), nameof(supported), $"SupportedAggregationTemporality has an invalid value {supported}");
+            Guard.NotZero((int)(preferred & CumulativeAndDelta), nameof(preferred), $"PreferredAggregationTemporality has an invalid value {preferred}");
+            Guard.NotZero((int)(supported & CumulativeAndDelta), nameof(supported), $"SupportedAggregationTemporality has an invalid value {supported}");
 
             /*
             | Preferred  | Supported  | Valid |
@@ -240,8 +240,8 @@ namespace OpenTelemetry.Metrics
             | Delta      | Delta      | true  |
             */
             string message = $"PreferredAggregationTemporality {preferred} and SupportedAggregationTemporality {supported} are incompatible";
-            Guard.IsNotZero((int)(preferred & supported), nameof(preferred), message);
-            Guard.IsNotInRange((int)preferred, nameof(preferred), min: (int)(supported + 1), minName: $"{nameof(supported) + 1}", message: message);
+            Guard.NotZero((int)(preferred & supported), nameof(preferred), message);
+            Guard.NotInRange((int)preferred, nameof(preferred), max: (int)supported, maxName: nameof(supported), message: message);
         }
     }
 }

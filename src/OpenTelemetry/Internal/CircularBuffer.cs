@@ -38,7 +38,7 @@ namespace OpenTelemetry.Internal
         /// <param name="capacity">The capacity of the circular buffer, must be a positive integer.</param>
         public CircularBuffer(int capacity)
         {
-            Guard.IsNotInRange(capacity, nameof(capacity), min: 1);
+            Guard.NotInRange(capacity, nameof(capacity), min: 1);
 
             this.Capacity = capacity;
             this.trait = new T[capacity];
@@ -81,7 +81,7 @@ namespace OpenTelemetry.Internal
         /// </returns>
         public bool Add(T value)
         {
-            Guard.IsNotNull(value, nameof(value));
+            Guard.NotNull(value, nameof(value));
 
             while (true)
             {
@@ -121,7 +121,7 @@ namespace OpenTelemetry.Internal
                 return this.Add(value);
             }
 
-            Guard.IsNotNull(value, nameof(value));
+            Guard.NotNull(value, nameof(value));
 
             var spinCountDown = maxSpinCount;
 

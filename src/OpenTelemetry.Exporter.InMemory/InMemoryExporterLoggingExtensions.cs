@@ -25,8 +25,8 @@ namespace OpenTelemetry.Logs
     {
         public static OpenTelemetryLoggerOptions AddInMemoryExporter(this OpenTelemetryLoggerOptions loggerOptions, ICollection<LogRecord> exportedItems)
         {
-            Guard.IsNotNull(loggerOptions, nameof(loggerOptions));
-            Guard.IsNotNull(exportedItems, nameof(exportedItems));
+            Guard.NotNull(loggerOptions, nameof(loggerOptions));
+            Guard.NotNull(exportedItems, nameof(exportedItems));
 
             return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems)));
         }

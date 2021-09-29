@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics
 
         public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
-            Guard.IsNotNull(exporter, nameof(exporter));
+            Guard.NotNull(exporter, nameof(exporter));
 
             this.exporter = exporter;
 

@@ -33,7 +33,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
         {
             if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
             {
-                throw new NotSupportedException($"Endpoint URI scheme '{options.Endpoint.Scheme}' must be either: '{Uri.UriSchemeHttp} or '{Uri.UriSchemeHttps}'");
+                throw new NotSupportedException($"Endpoint URI scheme '{options.Endpoint.Scheme}' must be either: '{Uri.UriSchemeHttp}' or '{Uri.UriSchemeHttps}'");
             }
 
 #if NETSTANDARD2_1
@@ -65,8 +65,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol
                     {
                         // Specify the maximum number of substrings to return to 2
                         // This treats everything that follows the first `=` in the string as the value to be added for the metadata key
-                        var keyValueData = pair.Split(new char[] { '=' }, 2); // TODO: use `StringSplitOptions.TrimEntries` instead of below the two `.Trim()` calls below
-                        Guard.IsNotEqual(keyValueData.Length, 2, nameof(keyValueData), "Headers must contain at least 1 '=' character");
+                        var keyValueData = pair.Split(new char[] { '=' }, 2);
+                        if (keyValueData.Length != 2)
+                        {
+                            throw new ArgumentException("Headers must contain at least 1 '=' character");
+                        }
 
                         var key = keyValueData[0].Trim();
                         var value = keyValueData[1].Trim();

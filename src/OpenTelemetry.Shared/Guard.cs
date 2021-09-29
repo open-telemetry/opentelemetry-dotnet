@@ -15,7 +15,9 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace OpenTelemetry.Shared
@@ -23,89 +25,85 @@ namespace OpenTelemetry.Shared
     public static class Guard
     {
         [DebuggerHidden]
-        public static void IsNotNull(object value, string paramName)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void NotNull(object value, string paramName)
         {
             if (value is null)
             {
-                throw new ArgumentNullException(paramName);
+                throw new ArgumentNullException(paramName, $"'{paramName}' is null");
             }
         }
 
         [DebuggerHidden]
-        public static void IsNotNullOrEmpty(string value, string paramName)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void NotNullOrEmpty(string value, string paramName)
         {
             if (string.IsNullOrEmpty(value))
             {
-                throw new ArgumentNullException(paramName, "Value is null or empty");
+                throw new ArgumentNullException(paramName, $"'{paramName}' is null or empty");
             }
         }
 
         [DebuggerHidden]
-        public static void IsNotNullOrWhitespace(string value, string paramName)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void NotNullOrWhitespace(string value, string paramName)
         {
             if (string.IsNullOrWhiteSpace(value))
             {
-                throw new ArgumentNullException(paramName, "Value is null or whitespace");
+                throw new ArgumentNullException(paramName, $"'{paramName}' is null or whitespace");
             }
         }
 
         [DebuggerHidden]
-        public static void IsNotZero(int value, string paramName, string message)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void NotZero(int value, string paramName, string message)
         {
-            IsNotEqual(value, 0, paramName, message);
-        }
-
-        [DebuggerHidden]
-        public static void IsNotEqual(int value, int compare, string paramName, string message)
-        {
-            if (value == compare)
+            if (value == 0)
             {
                 throw new ArgumentException(message, paramName);
             }
         }
 
         [DebuggerHidden]
-        public static void IsNotValidTimeout(int value, string paramName)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void NotValidTimeout(int value, string paramName)
         {
-            IsNotInRange(value, paramName, min: Timeout.Infinite, message: $"Must be non-negative or {nameof(Timeout.Infinite)}");
+            NotInRange(value, paramName, min: Timeout.Infinite, message: $"'{paramName}' must be non-negative or '{nameof(Timeout)}.{nameof(Timeout.Infinite)}'");
         }
 
         [DebuggerHidden]
-        public static void IsNotInRange(int value, string paramName, int min = int.MinValue, int max = int.MaxValue, string minName = null, string maxName = null, string message = null)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void NotInRange(int value, string paramName, int min = int.MinValue, int max = int.MaxValue, string minName = null, string maxName = null, string message = null)
         {
-            Debug.Assert(min != max, $"Both '{nameof(min)}' and '{nameof(max)}' should not use their default values");
-
-            var invalid = false;
-            var exMessage = message ?? $"{paramName} must be within: [{min}, {max}]";
-
-            if (min != int.MinValue && max != int.MaxValue)
+            if (value < min || value > max)
             {
-                // check both bounds
-                invalid |= min <= value && value <= max;
-            }
-            else if (min != int.MinValue)
-            {
-                // check lower bound
-                invalid |= min <= value;
-            }
-            else
-            {
-                // check upper bound
-                invalid |= value <= max;
-            }
-
-            if (invalid)
-            {
+                var minMessage = minName != null ? $": {minName}" : string.Empty;
+                var maxMessage = maxName != null ? $": {maxName}" : string.Empty;
+                var exMessage = message ?? $"'{paramName}' must be in the range: [{min}{minMessage}, {max}{maxMessage}]";
                 throw new ArgumentOutOfRangeException(paramName, value, exMessage);
             }
         }
 
         [DebuggerHidden]
-        public static T IsNotOfType<T>(object value, string paramName)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void NotInRange(double value, string paramName, double min = double.MinValue, double max = double.MaxValue, string minName = null, string maxName = null, string message = null)
+        {
+            if (value < min || value > max)
+            {
+                var minMessage = minName != null ? $": {minName}" : string.Empty;
+                var maxMessage = maxName != null ? $": {maxName}" : string.Empty;
+                var exMessage = message ?? $"'{paramName}' must be in the range: [{min}{minMessage}, {max}{maxMessage}]";
+                throw new ArgumentOutOfRangeException(paramName, value, exMessage);
+            }
+        }
+
+        [DebuggerHidden]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T NotOfType<T>(object value, string paramName)
         {
             if (value is not T result)
             {
-                throw new InvalidCastException($"Cannot cast {paramName} to type {nameof(T)}");
+                throw new InvalidCastException($"Cannot cast '{paramName}' to type '{typeof(T).Name}'");
             }
 
             return result;

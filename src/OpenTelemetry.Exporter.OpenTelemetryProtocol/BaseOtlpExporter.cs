@@ -42,8 +42,8 @@ namespace OpenTelemetry.Exporter
         /// <param name="options">The <see cref="OtlpExporterOptions"/> for configuring the exporter.</param>
         protected BaseOtlpExporter(OtlpExporterOptions options)
         {
-            Guard.IsNotNull(options, nameof(options));
-            Guard.IsNotValidTimeout(options.TimeoutMilliseconds, nameof(options.TimeoutMilliseconds));
+            Guard.NotNull(options, nameof(options));
+            Guard.NotValidTimeout(options.TimeoutMilliseconds, nameof(options.TimeoutMilliseconds));
 
             this.Options = options;
             this.Headers = options.GetMetadataFromHeaders();

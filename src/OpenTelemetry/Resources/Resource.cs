@@ -109,7 +109,7 @@ namespace OpenTelemetry.Resources
 
         private static object SanitizeValue(object value, string keyName)
         {
-            Guard.IsNotNull(keyName, nameof(keyName));
+            Guard.NotNull(keyName, nameof(keyName));
 
             if (value is string || value is bool || value is double || value is long)
             {

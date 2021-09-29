@@ -29,8 +29,8 @@ namespace OpenTelemetry.Context.Tests
         [Fact]
         public static void RegisterSlotWithInvalidNameThrows()
         {
-            Assert.Throws<ArgumentException>(() => RuntimeContext.RegisterSlot<bool>(string.Empty));
-            Assert.Throws<ArgumentException>(() => RuntimeContext.RegisterSlot<bool>(null));
+            Assert.Throws<ArgumentNullException>(() => RuntimeContext.RegisterSlot<bool>(string.Empty));
+            Assert.Throws<ArgumentNullException>(() => RuntimeContext.RegisterSlot<bool>(null));
         }
 
         [Fact]
@@ -44,8 +44,8 @@ namespace OpenTelemetry.Context.Tests
         [Fact]
         public static void GetSlotWithInvalidNameThrows()
         {
-            Assert.Throws<ArgumentException>(() => RuntimeContext.GetSlot<bool>(string.Empty));
-            Assert.Throws<ArgumentException>(() => RuntimeContext.GetSlot<bool>(null));
+            Assert.Throws<ArgumentNullException>(() => RuntimeContext.GetSlot<bool>(string.Empty));
+            Assert.Throws<ArgumentNullException>(() => RuntimeContext.GetSlot<bool>(null));
         }
 
         [Fact]
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Context.Tests
         public void GetSlotReturnsNullWhenTypeNotMatchingExistingSlot()
         {
             RuntimeContext.RegisterSlot<bool>("testslot");
-            Assert.Throws<ArgumentException>(() => RuntimeContext.GetSlot<int>("testslot"));
+            Assert.Throws<InvalidCastException>(() => RuntimeContext.GetSlot<int>("testslot"));
         }
 
         [Fact]

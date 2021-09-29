@@ -46,7 +46,7 @@ namespace OpenTelemetry.Exporter
 
         internal JaegerExporter(JaegerExporterOptions options, TTransport clientTransport = null)
         {
-            Guard.IsNotNull(options, nameof(options));
+            Guard.NotNull(options, nameof(options));
 
             this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? JaegerExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
             this.protocolFactory = new TCompactProtocol.Factory();
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Exporter
 
         internal void SetResourceAndInitializeBatch(Resource resource)
         {
-            Guard.IsNotNull(resource, nameof(resource));
+            Guard.NotNull(resource, nameof(resource));
 
             var process = this.Process;
 

@@ -33,7 +33,7 @@ namespace OpenTelemetry.Metrics
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddOtlpExporter(this MeterProviderBuilder builder, Action<OtlpExporterOptions> configure = null)
         {
-            Guard.IsNotNull(builder, nameof(builder));
+            Guard.NotNull(builder, nameof(builder));
 
             var options = new OtlpExporterOptions();
             configure?.Invoke(options);

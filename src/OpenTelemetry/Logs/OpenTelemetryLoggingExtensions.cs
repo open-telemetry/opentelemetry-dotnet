@@ -28,7 +28,7 @@ namespace Microsoft.Extensions.Logging
     {
         public static ILoggingBuilder AddOpenTelemetry(this ILoggingBuilder builder, Action<OpenTelemetryLoggerOptions> configure = null)
         {
-            Guard.IsNotNull(builder, nameof(builder));
+            Guard.NotNull(builder, nameof(builder));
 
             builder.AddConfiguration();
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>());

@@ -83,7 +83,7 @@ namespace OpenTelemetry
         /// </remarks>
         public bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
         {
-            Guard.IsNotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
+            Guard.NotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             try
             {
@@ -116,7 +116,7 @@ namespace OpenTelemetry
         /// </remarks>
         public bool Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
-            Guard.IsNotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
+            Guard.NotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             if (Interlocked.Increment(ref this.shutdownCount) > 1)
             {

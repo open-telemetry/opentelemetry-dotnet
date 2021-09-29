@@ -46,7 +46,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Action<TracerProviderBuilder> configure)
         {
-            Guard.IsNotNull(configure, nameof(configure));
+            Guard.NotNull(configure, nameof(configure));
 
             var builder = new TracerProviderBuilderHosting(services);
             configure(builder);
@@ -61,8 +61,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         private static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Func<IServiceProvider, TracerProvider> createTracerProvider)
         {
-            Guard.IsNotNull(services, nameof(services));
-            Guard.IsNotNull(createTracerProvider, nameof(createTracerProvider));
+            Guard.NotNull(services, nameof(services));
+            Guard.NotNull(createTracerProvider, nameof(createTracerProvider));
 
             try
             {

@@ -38,7 +38,7 @@ namespace OpenTelemetry
 
         internal Batch(T item)
         {
-            Guard.IsNotNull(item, nameof(item));
+            Guard.NotNull(item, nameof(item));
 
             this.item = item;
             this.circularBuffer = null;
@@ -49,7 +49,7 @@ namespace OpenTelemetry
         internal Batch(CircularBuffer<T> circularBuffer, int maxSize)
         {
             Debug.Assert(maxSize > 0, $"{nameof(maxSize)} should be a positive number.");
-            Guard.IsNotNull(circularBuffer, nameof(circularBuffer));
+            Guard.NotNull(circularBuffer, nameof(circularBuffer));
 
             this.item = null;
             this.metrics = null;
@@ -60,7 +60,7 @@ namespace OpenTelemetry
         internal Batch(T[] metrics, int maxSize)
         {
             Debug.Assert(maxSize > 0, $"{nameof(maxSize)} should be a positive number.");
-            Guard.IsNotNull(metrics, nameof(metrics));
+            Guard.NotNull(metrics, nameof(metrics));
 
             this.item = null;
             this.circularBuffer = null;

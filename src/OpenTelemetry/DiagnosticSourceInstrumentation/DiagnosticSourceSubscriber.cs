@@ -42,7 +42,7 @@ namespace OpenTelemetry.Instrumentation
             Func<DiagnosticListener, bool> diagnosticSourceFilter,
             Func<string, object, object, bool> isEnabledFilter)
         {
-            Guard.IsNotNull(handlerFactory, nameof(handlerFactory));
+            Guard.NotNull(handlerFactory, nameof(handlerFactory));
 
             this.listenerSubscriptions = new List<IDisposable>();
             this.handlerFactory = handlerFactory;

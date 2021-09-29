@@ -33,8 +33,8 @@ namespace OpenTelemetry.Trace
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public static TracerProviderBuilder AddInMemoryExporter(this TracerProviderBuilder builder, ICollection<Activity> exportedItems)
         {
-            Guard.IsNotNull(builder, nameof(builder));
-            Guard.IsNotNull(exportedItems, nameof(exportedItems));
+            Guard.NotNull(builder, nameof(builder));
+            Guard.NotNull(exportedItems, nameof(exportedItems));
 
             if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
             {

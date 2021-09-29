@@ -57,7 +57,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             catch (Exception ex)
             {
                 Assert.IsType<ArgumentException>(ex);
-                Assert.Equal("Headers provided in an invalid format.", ex.Message);
+                Assert.Equal("Headers must contain at least 1 '=' character", ex.Message);
                 return;
             }
 

@@ -37,7 +37,7 @@ namespace OpenTelemetry.Metrics
         {
             if ((this.SupportedExportModes & ExportModes.Push) != ExportModes.Push)
             {
-                throw new InvalidOperationException($"The {nameof(exporter)} does not support {nameof(ExportModes.Push)}");
+                throw new InvalidOperationException($"The '{nameof(exporter)}' does not support '{nameof(ExportModes)}.{nameof(ExportModes.Push)}'");
             }
 
             this.token = new CancellationTokenSource();

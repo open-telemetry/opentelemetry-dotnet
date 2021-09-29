@@ -35,7 +35,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public ScopeManagerShim(Trace.Tracer tracer)
         {
-            Guard.IsNotNull(tracer, nameof(tracer));
+            Guard.NotNull(tracer, nameof(tracer));
 
             this.tracer = tracer;
         }
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.IScope Activate(ISpan span, bool finishSpanOnDispose)
         {
-            var shim = Guard.IsNotOfType<SpanShim>(span, nameof(span));
+            var shim = Guard.NotOfType<SpanShim>(span, nameof(span));
 
             var scope = Tracer.WithSpan(shim.Span);
 

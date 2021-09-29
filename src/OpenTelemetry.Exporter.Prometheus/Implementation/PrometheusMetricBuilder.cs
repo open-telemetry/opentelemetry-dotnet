@@ -65,7 +65,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
 
         public PrometheusMetricBuilder WithName(string name)
         {
-            Guard.IsNotNullOrEmpty(name, nameof(name));
+            Guard.NotNullOrEmpty(name, nameof(name));
 
             this.name = GetSafeMetricName(name);
             return this;

@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace
         /// <param name="rootSampler">The <see cref="Sampler"/> to be called for root span/activity.</param>
         public ParentBasedSampler(Sampler rootSampler)
         {
-            Guard.IsNotNull(rootSampler, nameof(rootSampler));
+            Guard.NotNull(rootSampler, nameof(rootSampler));
 
             this.rootSampler = rootSampler;
             this.Description = $"ParentBased{{{rootSampler.Description}}}";

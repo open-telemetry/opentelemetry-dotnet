@@ -17,6 +17,7 @@ using System;
 using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
+using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Internal
 {
@@ -52,10 +53,7 @@ namespace OpenTelemetry.Internal
 
         public static void Add(ref PooledList<T> list, T item)
         {
-            if (list.buffer == null)
-            {
-                throw new InvalidOperationException($"Items cannot be added to an empty {nameof(PooledList<T>)} instance");
-            }
+            Guard.NotNull(list.buffer, nameof(list.buffer));
 
             var buffer = list.buffer;
 

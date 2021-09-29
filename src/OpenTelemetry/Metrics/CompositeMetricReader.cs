@@ -31,13 +31,12 @@ namespace OpenTelemetry.Metrics
 
         public CompositeMetricReader(IEnumerable<MetricReader> readers)
         {
-            Guard.IsNotNull(readers, nameof(readers));
+            Guard.NotNull(readers, nameof(readers));
 
             using var iter = readers.GetEnumerator();
-
             if (!iter.MoveNext())
             {
-                throw new ArgumentException($"{nameof(readers)} collection is empty");
+                throw new ArgumentException($"'{iter}' is null or empty", nameof(iter));
             }
 
             this.head = new DoublyLinkedListNode(iter.Current);
@@ -51,7 +50,7 @@ namespace OpenTelemetry.Metrics
 
         public CompositeMetricReader AddReader(MetricReader reader)
         {
-            Guard.IsNotNull(reader, nameof(reader));
+            Guard.NotNull(reader, nameof(reader));
 
             var node = new DoublyLinkedListNode(reader)
             {

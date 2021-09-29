@@ -64,7 +64,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
             catch (SocketException se)
             {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush due to a {nameof(SocketException)} - UDP Packet size: {buffer.Count}", se);
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush due to a '{nameof(SocketException)}' - UDP Packet size: '{buffer.Count}'", se);
             }
             catch (Exception e)
             {

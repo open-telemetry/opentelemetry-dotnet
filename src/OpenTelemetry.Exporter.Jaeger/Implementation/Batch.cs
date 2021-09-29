@@ -30,7 +30,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public Batch(Process process)
         {
-            Guard.IsNotNull(process, nameof(process));
+            Guard.NotNull(process, nameof(process));
 
             this.Process = process;
             this.spanMessages = PooledList<BufferWriterMemory>.Create();

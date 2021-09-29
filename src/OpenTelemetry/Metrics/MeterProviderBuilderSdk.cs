@@ -35,7 +35,7 @@ namespace OpenTelemetry.Metrics
 
         public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
         {
-            Guard.IsNotNull(instrumentationFactory, nameof(instrumentationFactory));
+            Guard.NotNull(instrumentationFactory, nameof(instrumentationFactory));
 
             this.instrumentationFactories.Add(
                 new InstrumentationFactory(
@@ -48,11 +48,11 @@ namespace OpenTelemetry.Metrics
 
         public override MeterProviderBuilder AddSource(params string[] names)
         {
-            Guard.IsNotNull(names, nameof(names));
+            Guard.NotNull(names, nameof(names));
 
             foreach (var name in names)
             {
-                Guard.IsNotNullOrWhitespace(name, nameof(name));
+                Guard.NotNullOrWhitespace(name, nameof(name));
 
                 this.meterSources.Add(name);
             }
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilderSdk AddMetricReader(MetricReader metricReader)
         {
-            Guard.IsNotInRange(this.MetricReaders.Count, nameof(this.MetricReaders.Count), max: 1);
+            Guard.NotInRange(this.MetricReaders.Count, nameof(this.MetricReaders.Count), max: 1);
 
             this.MetricReaders.Add(metricReader);
             return this;
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilderSdk SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
-            Guard.IsNotNull(resourceBuilder, nameof(resourceBuilder));
+            Guard.NotNull(resourceBuilder, nameof(resourceBuilder));
 
             this.resourceBuilder = resourceBuilder;
             return this;

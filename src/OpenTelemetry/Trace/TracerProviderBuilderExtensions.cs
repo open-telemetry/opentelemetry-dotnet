@@ -100,7 +100,7 @@ namespace OpenTelemetry.Trace
         {
             if (tracerProviderBuilder is IDeferredTracerProviderBuilder)
             {
-                throw new NotSupportedException($"{nameof(TracerProviderBuilder)} requires a {nameof(IServiceProvider)} to build");
+                throw new NotSupportedException($"'{nameof(TracerProviderBuilder)}' requires a '{nameof(IServiceProvider)}' to build");
             }
 
             if (tracerProviderBuilder is TracerProviderBuilderSdk tracerProviderBuilderSdk)

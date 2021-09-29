@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             Action<ZPagesExporterOptions> configure = null)
         {
-            Guard.IsNotNull(builder, nameof(builder));
+            Guard.NotNull(builder, nameof(builder));
 
             var exporterOptions = new ZPagesExporterOptions();
             configure?.Invoke(exporterOptions);

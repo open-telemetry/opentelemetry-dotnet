@@ -27,7 +27,7 @@ namespace OpenTelemetry.Instrumentation
 
         public DiagnosticSourceListener(ListenerHandler handler)
         {
-            Guard.IsNotNull(handler, nameof(handler));
+            Guard.NotNull(handler, nameof(handler));
 
             this.handler = handler;
         }

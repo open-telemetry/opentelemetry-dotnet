@@ -33,7 +33,7 @@ namespace OpenTelemetry.Metrics
         public static MeterProviderBuilder AddHttpClientInstrumentation(
             this MeterProviderBuilder builder)
         {
-            Guard.IsNotNull(builder, nameof(builder));
+            Guard.NotNull(builder, nameof(builder));
 
             // TODO: Implement an IDeferredMeterProviderBuilder
 

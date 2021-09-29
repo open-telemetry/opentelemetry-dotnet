@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter
         /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
         public PrometheusExporterMiddleware(RequestDelegate next, PrometheusExporter exporter)
         {
-            Guard.IsNotNull(exporter, nameof(exporter));
+            Guard.NotNull(exporter, nameof(exporter));
 
             this.exporter = exporter;
         }
@@ -49,7 +49,7 @@ namespace OpenTelemetry.Exporter
         /// <returns>Task. </returns>
         public Task InvokeAsync(HttpContext httpContext)
         {
-            Guard.IsNotNull(httpContext, nameof(httpContext));
+            Guard.NotNull(httpContext, nameof(httpContext));
 
             var result = this.exporter.GetMetricsCollection();
 

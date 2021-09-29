@@ -46,11 +46,11 @@ namespace OpenTelemetry.Instrumentation
         /// <returns>Property fetched.</returns>
         public T Fetch(object obj)
         {
-            Guard.IsNotNull(obj, nameof(obj));
+            Guard.NotNull(obj, nameof(obj));
 
             if (!this.TryFetch(obj, out T value))
             {
-                throw new ArgumentException($"Not of type {nameof(T)}", nameof(obj));
+                throw new ArgumentException($"Unable to fetch property: '{nameof(obj)}'", nameof(obj));
             }
 
             return value;
