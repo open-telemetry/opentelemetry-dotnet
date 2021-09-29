@@ -24,9 +24,9 @@ namespace OpenTelemetry.Metrics
     {
         private AggregatorStore aggStore;
 
-        internal Metric(Instrument instrument, AggregationTemporality temporality)
+        internal Metric(Instrument instrument, AggregationTemporality temporality, string metricName = "")
         {
-            this.Name = instrument.Name;
+            this.Name = string.IsNullOrWhiteSpace(metricName) ? instrument.Name : metricName;
             this.Description = instrument.Description;
             this.Unit = instrument.Unit;
             this.Meter = instrument.Meter;

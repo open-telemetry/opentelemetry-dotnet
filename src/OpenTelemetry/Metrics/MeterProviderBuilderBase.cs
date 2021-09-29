@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using System.Text.RegularExpressions;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -88,19 +89,26 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilder AddView(string instrumentName, string name)
         {
-            // TODO: Actually implement view.
-            return this;
+            return this.AddView(instrumentName, new MetricStreamConfiguration() { Name = name });
         }
 
-        internal MeterProviderBuilder AddView(string instrumentName, MetricStreamConfiguration aggregationConfig)
+        internal MeterProviderBuilder AddView(string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
         {
-            // TODO: Actually implement view.
-            return this;
+            if (instrumentName.IndexOf('*') != -1)
+            {
+                var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*");
+                var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                return this.AddView(instrument => regex.IsMatch(instrument.Name) ? metricStreamConfiguration : null);
+            }
+            else
+            {
+                return this.AddView(instrument => instrument.Name.Equals(instrumentName, StringComparison.OrdinalIgnoreCase) ? metricStreamConfiguration : null);
+            }
         }
 
         internal MeterProviderBuilder AddView(Func<Instrument, MetricStreamConfiguration> viewConfig)
         {
-            // TODO: Actually implement view.
+            this.viewConfigs.Add(viewConfig);
             return this;
         }
 
