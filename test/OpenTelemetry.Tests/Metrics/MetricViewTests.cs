@@ -62,11 +62,12 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddSource(meter1.Name)
                 .AddSource(meter2.Name)
                 .AddInMemoryExporter(exportedItems)
-                .AddView((instrument) => {
+                .AddView((instrument) =>
+                {
                     if (instrument.Meter.Name.Equals(meter2.Name, StringComparison.OrdinalIgnoreCase)
                     && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
                     {
-                        return new MetricStreamConfiguration() { Name = "name1_Renamed"};
+                        return new MetricStreamConfiguration() { Name = "name1_Renamed" };
                     }
                     else
                     {
