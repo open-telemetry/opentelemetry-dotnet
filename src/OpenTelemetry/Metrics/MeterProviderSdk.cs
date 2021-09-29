@@ -120,10 +120,10 @@ namespace OpenTelemetry.Metrics
                             metricStreamConfigs.Add(null);
                         }
 
+                        var countMetricsToBeCreated = metricStreamConfigs.Count;
+                        var metrics = new List<Metric>(countMetricsToBeCreated);
                         lock (this.instrumentCreationLock)
                         {
-                            var countMetricsToBeCreated = metricStreamConfigs.Count;
-                            var metrics = new List<Metric>();
                             for (int i = 0; i < countMetricsToBeCreated; i++)
                             {
                                 var metricStreamName = metricStreamConfigs[i]?.Name ?? instrument.Name;
@@ -149,8 +149,11 @@ namespace OpenTelemetry.Metrics
                                     this.metricStreamNames.Add(metricStreamName, true);
                                 }
                             }
+                        }
 
-                            listener.EnableMeasurementEvents(instrument, metrics.ToArray());
+                        if (metrics.Count > 0)
+                        {
+                            listener.EnableMeasurementEvents(instrument, metrics);
                         }
                     }
                 };
@@ -162,7 +165,7 @@ namespace OpenTelemetry.Metrics
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
                         var metricName = instrument.Name;
-                        Metric[] metrics = null;
+                        List<Metric> metrics = null;
                         lock (this.instrumentCreationLock)
                         {
                             if (this.metricStreamNames.ContainsKey(metricName))
@@ -182,10 +185,10 @@ namespace OpenTelemetry.Metrics
                             }
                             else
                             {
-                                metrics = new Metric[1];
+                                metrics = new List<Metric>(1);
                                 var metric = new Metric(instrument, temporality);
                                 this.metrics[index] = metric;
-                                metrics[0] = metric;
+                                metrics.Add(metric);
                                 this.metricStreamNames.Add(metricName, true);
                             }
                         }
@@ -224,7 +227,13 @@ namespace OpenTelemetry.Metrics
         internal void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
             // Get Instrument State
-            var metrics = state as Metric[];
+            // TODO: Benchmark and see if it makes
+            // sense to use a different state
+            // when there are no views registered.
+            // In that case, storing Metric as state
+            // might be faster than storing List<Metric>
+            // of size one as state.
+            var metrics = state as List<Metric>;
 
             if (instrument == null || metrics == null)
             {
@@ -232,16 +241,16 @@ namespace OpenTelemetry.Metrics
                 return;
             }
 
-            for (int i = 0; i < metrics.Length; i++)
+            foreach (var metric in metrics)
             {
-                metrics[i].UpdateDouble(value, tagsRos);
+                metric.UpdateDouble(value, tagsRos);
             }
         }
 
         internal void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
             // Get Instrument State
-            var metrics = state as Metric[];
+            var metrics = state as List<Metric>;
 
             if (instrument == null || metrics == null)
             {
@@ -249,9 +258,9 @@ namespace OpenTelemetry.Metrics
                 return;
             }
 
-            for (int i = 0; i < metrics.Length; i++)
+            foreach (var metric in metrics)
             {
-                metrics[i].UpdateLong(value, tagsRos);
+                metric.UpdateLong(value, tagsRos);
             }
         }
 
@@ -339,11 +348,6 @@ namespace OpenTelemetry.Metrics
             this.reader?.Dispose();
 
             this.listener.Dispose();
-        }
-
-        private void InstrumentPublishedNoViews(Instrument instrument, MeterListener listener)
-        {
-
         }
     }
 }
