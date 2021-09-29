@@ -16,7 +16,6 @@
 
 using System;
 using System.Diagnostics;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;

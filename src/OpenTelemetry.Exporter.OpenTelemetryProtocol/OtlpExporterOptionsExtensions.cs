@@ -16,7 +16,6 @@
 
 using System;
 using Grpc.Core;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 #if NETSTANDARD2_1 || NET5_0_OR_GREATER
 using Grpc.Net.Client;
