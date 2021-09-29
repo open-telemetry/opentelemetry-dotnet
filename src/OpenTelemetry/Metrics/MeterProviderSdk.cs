@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
-using System.Threading;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -92,39 +91,122 @@ namespace OpenTelemetry.Metrics
                 meterSourcesToSubscribe[name] = true;
             }
 
-            this.listener = new MeterListener()
+            this.listener = new MeterListener();
+            var viewConfigCount = this.viewConfigs.Count;
+            if (viewConfigCount > 0)
             {
-                InstrumentPublished = (instrument, listener) =>
+                this.listener.InstrumentPublished = (instrument, listener) =>
                 {
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
+                        // Creating list with initial capacity as the maximum
+                        // possible size, to avoid any array resize/copy internally.
+                        // There may be excess space wasted, but it'll eligible for
+                        // GC right after this method.
+                        var metricStreamConfigs = new List<MetricStreamConfiguration>(viewConfigCount);
+                        foreach (var viewConfig in this.viewConfigs)
+                        {
+                            var metricStreamConfig = viewConfig(instrument);
+                            if (metricStreamConfig != null)
+                            {
+                                metricStreamConfigs.Add(metricStreamConfig);
+                            }
+                        }
+
+                        if (metricStreamConfigs.Count == 0)
+                        {
+                            // No views matched. Add null
+                            // which will apply defaults.
+                            // Users can turn off this default
+                            // by adding a view like below as the last view.
+                            // .AddView(instrumentName: "*", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+                            metricStreamConfigs.Add(null);
+                        }
+
+                        var maxCountMetricsToBeCreated = metricStreamConfigs.Count;
+
+                        // Create list with initial capacity as the max metric count.
+                        // Due to duplicate/max limit, we may not end up using them
+                        // all, and that memory is wasted until Meter disposed.
+                        // TODO: Revisit to see if we need to do metrics.TrimExcess()
+                        var metrics = new List<Metric>(maxCountMetricsToBeCreated);
                         lock (this.instrumentCreationLock)
                         {
-                            // TODO: This is where view config will be looked up
-                            // and zero, one or more Metric streams will be created.
-                            if (this.metricStreamNames.ContainsKey(instrument.Name))
+                            for (int i = 0; i < maxCountMetricsToBeCreated; i++)
                             {
-                                // log and ignore this instrument.
+                                var metricStreamName = metricStreamConfigs[i]?.Name ?? instrument.Name;
+                                if (this.metricStreamNames.ContainsKey(metricStreamName))
+                                {
+                                    // TODO: Log that instrument is ignored
+                                    // as the resulting Metric name is conflicting
+                                    // with existing name.
+                                    continue;
+                                }
+
+                                var index = ++this.metricIndex;
+                                if (index >= MaxMetrics)
+                                {
+                                    // TODO: Log that instrument is ignored
+                                    // as max number of Metrics have reached.
+                                }
+                                else
+                                {
+                                    var metric = new Metric(instrument, temporality, metricStreamName);
+                                    this.metrics[index] = metric;
+                                    metrics.Add(metric);
+                                    this.metricStreamNames.Add(metricStreamName, true);
+                                }
+                            }
+                        }
+
+                        if (metrics.Count > 0)
+                        {
+                            listener.EnableMeasurementEvents(instrument, metrics);
+                        }
+                    }
+                };
+            }
+            else
+            {
+                this.listener.InstrumentPublished = (instrument, listener) =>
+                {
+                    if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
+                    {
+                        var metricName = instrument.Name;
+                        List<Metric> metrics = null;
+                        lock (this.instrumentCreationLock)
+                        {
+                            if (this.metricStreamNames.ContainsKey(metricName))
+                            {
+                                // TODO: Log that instrument is ignored
+                                // as the resulting Metric name is conflicting
+                                // with existing name.
                                 return;
                             }
 
-                            var index = Interlocked.Increment(ref this.metricIndex);
+                            var index = ++this.metricIndex;
                             if (index >= MaxMetrics)
                             {
-                                // Log that all measurements are dropped from this instrument.
+                                // TODO: Log that instrument is ignored
+                                // as max number of Metrics have reached.
+                                return;
                             }
                             else
                             {
+                                metrics = new List<Metric>(1);
                                 var metric = new Metric(instrument, temporality);
                                 this.metrics[index] = metric;
-                                this.metricStreamNames.Add(instrument.Name, true);
-                                listener.EnableMeasurementEvents(instrument, metric);
+                                metrics.Add(metric);
+                                this.metricStreamNames.Add(metricName, true);
                             }
                         }
+
+                        listener.EnableMeasurementEvents(instrument, metrics);
                     }
-                },
-                MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state),
-            };
+                };
+            }
+
+            this.listener.MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state);
 
             // Everything double
             this.listener.SetMeasurementEventCallback<double>((instrument, value, tags, state) => this.MeasurementRecordedDouble(instrument, value, tags, state));
@@ -153,29 +235,41 @@ namespace OpenTelemetry.Metrics
         internal void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
             // Get Instrument State
-            var metric = state as Metric;
+            // TODO: Benchmark and see if it makes
+            // sense to use a different state
+            // when there are no views registered.
+            // In that case, storing Metric as state
+            // might be faster than storing List<Metric>
+            // of size one as state.
+            var metrics = state as List<Metric>;
 
-            if (instrument == null || metric == null)
+            if (instrument == null || metrics == null)
             {
                 // TODO: log
                 return;
             }
 
-            metric.UpdateDouble(value, tagsRos);
+            foreach (var metric in metrics)
+            {
+                metric.UpdateDouble(value, tagsRos);
+            }
         }
 
         internal void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
             // Get Instrument State
-            var metric = state as Metric;
+            var metrics = state as List<Metric>;
 
-            if (instrument == null || metric == null)
+            if (instrument == null || metrics == null)
             {
                 // TODO: log
                 return;
             }
 
-            metric.UpdateLong(value, tagsRos);
+            foreach (var metric in metrics)
+            {
+                metric.UpdateLong(value, tagsRos);
+            }
         }
 
         internal Batch<Metric> Collect()
