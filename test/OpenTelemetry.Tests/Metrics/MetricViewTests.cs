@@ -177,14 +177,14 @@ namespace OpenTelemetry.Metrics.Tests
                 .Build();
 
             var counter = meter1.CreateCounter<long>("FruitCounter");
-            counter.Add(10, new ("name", "apple"), new ("color", "red"), new ("size", "small"));
-            counter.Add(10, new ("name", "apple"), new ("color", "red"), new ("size", "small"));
+            counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "small"));
+            counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "small"));
 
-            counter.Add(10, new ("name", "apple"), new ("color", "red"), new ("size", "medium"));
-            counter.Add(10, new ("name", "apple"), new ("color", "red"), new ("size", "medium"));
+            counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "medium"));
+            counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "medium"));
 
-            counter.Add(10, new ("name", "apple"), new ("color", "red"), new ("size", "large"));
-            counter.Add(10, new ("name", "apple"), new ("color", "red"), new ("size", "large"));
+            counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "large"));
+            counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "large"));
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Single(exportedItems);
