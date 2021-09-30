@@ -49,44 +49,63 @@ namespace OpenTelemetry.Metrics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, int maxLength, HashSet<string> tagKeysInteresting, out string[] tagKeys, out object[] tagValues, out int actualLength)
+        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, int tagLength, out string[] tagKeys, out object[] tagValues)
         {
-            if (maxLength <= MaxTagCacheSize)
+            if (tagLength <= MaxTagCacheSize)
             {
-                tagKeys = this.tagStorage[maxLength - 1].TagKey;
-                tagValues = this.tagStorage[maxLength - 1].TagValue;
+                tagKeys = this.tagStorage[tagLength - 1].TagKey;
+                tagValues = this.tagStorage[tagLength - 1].TagValue;
             }
             else
             {
-                tagKeys = new string[maxLength];
-                tagValues = new object[maxLength];
+                tagKeys = new string[tagLength];
+                tagValues = new object[tagLength];
             }
 
-            if (tagKeysInteresting != null)
+            for (var n = 0; n < tagLength; n++)
             {
-                int i = 0;
-                for (var n = 0; n < tags.Length; n++)
-                {
-                    var tag = tags[n];
-                    if (tagKeysInteresting.Contains(tag.Key))
-                    {
-                        tagKeys[i] = tag.Key;
-                        tagValues[i] = tag.Value;
-                        i++;
-                    }
-                }
+                tagKeys[n] = tags[n].Key;
+                tagValues[n] = tags[n].Value;
+            }
+        }
 
-                actualLength = i;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, int tagLength, HashSet<string> tagKeysInteresting, out string[] tagKeys, out object[] tagValues)
+        {
+            // Iterate over tags to find the exact length.
+            int i = 0;
+            for (var n = 0; n < tagLength; n++)
+            {
+                if (tagKeysInteresting.Contains(tags[n].Key))
+                {
+                    i++;
+                }
+            }
+
+            int actualLength = i;
+
+            if (actualLength <= MaxTagCacheSize)
+            {
+                tagKeys = this.tagStorage[actualLength - 1].TagKey;
+                tagValues = this.tagStorage[actualLength - 1].TagValue;
             }
             else
             {
-                for (var n = 0; n < maxLength; n++)
-                {
-                    tagKeys[n] = tags[n].Key;
-                    tagValues[n] = tags[n].Value;
-                }
+                tagKeys = new string[actualLength];
+                tagValues = new object[actualLength];
+            }
 
-                actualLength = maxLength;
+            // Iterate again (!) to assign the actual value.
+            i = 0;
+            for (var n = 0; n < tags.Length; n++)
+            {
+                var tag = tags[n];
+                if (tagKeysInteresting.Contains(tag.Key))
+                {
+                    tagKeys[i] = tag.Key;
+                    tagValues[i] = tag.Value;
+                    i++;
+                }
             }
         }
 
