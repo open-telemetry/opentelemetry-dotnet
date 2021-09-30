@@ -25,15 +25,24 @@ namespace OpenTelemetry.Metrics
         internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 };
         private AggregatorStore aggStore;
 
-        internal Metric(Instrument instrument, AggregationTemporality temporality, string metricName = "")
-            : this(instrument, temporality, DefaultHistogramBounds, metricName)
+        internal Metric(
+            Instrument instrument,
+            AggregationTemporality temporality,
+            string metricName,
+            string metricDescription)
+            : this(instrument, temporality, DefaultHistogramBounds, metricName, metricDescription)
         {
         }
 
-        internal Metric(Instrument instrument, AggregationTemporality temporality, double[] histogramBounds, string metricName = "")
+        internal Metric(
+            Instrument instrument,
+            AggregationTemporality temporality,
+            double[] histogramBounds,
+            string metricName,
+            string metricDescription)
         {
-            this.Name = string.IsNullOrWhiteSpace(metricName) ? instrument.Name : metricName;
-            this.Description = instrument.Description;
+            this.Name = metricName;
+            this.Description = metricDescription;
             this.Unit = instrument.Unit;
             this.Meter = instrument.Meter;
             AggregationType aggType = default;
