@@ -13,16 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
-namespace OpenTelemetry.Exporter.Prometheus.Implementation
+namespace OpenTelemetry.Exporter.Prometheus
 {
-    internal class PrometheusMetricBuilder
+    internal sealed class PrometheusMetricBuilder
     {
         public const string ContentType = "text/plain; version = 0.0.4";
 
@@ -89,7 +91,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             return val;
         }
 
-        public void Write(StreamWriter writer)
+        public async Task Write(StreamWriter writer)
         {
             // https://prometheus.io/docs/instrumenting/exposition_formats/
 
@@ -111,10 +113,10 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                 // and the line feed characters have to be escaped as \\ and \n, respectively.
                 // Only one HELP line may exist for any given metric name.
 
-                writer.Write("# HELP ");
-                writer.Write(this.name);
-                writer.Write(GetSafeMetricDescription(this.description));
-                writer.Write("\n");
+                await writer.WriteAsync("# HELP ").ConfigureAwait(false);
+                await writer.WriteAsync(this.name).ConfigureAwait(false);
+                await writer.WriteAsync(GetSafeMetricDescription(this.description)).ConfigureAwait(false);
+                await writer.WriteAsync("\n").ConfigureAwait(false);
             }
 
             if (!string.IsNullOrEmpty(this.type))
@@ -126,11 +128,11 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
                 // before the first sample is reported for that metric name. If there is no TYPE
                 // line for a metric name, the type is set to untyped.
 
-                writer.Write("# TYPE ");
-                writer.Write(this.name);
-                writer.Write(" ");
-                writer.Write(this.type);
-                writer.Write("\n");
+                await writer.WriteAsync("# TYPE ").ConfigureAwait(false);
+                await writer.WriteAsync(this.name).ConfigureAwait(false);
+                await writer.WriteAsync(" ").ConfigureAwait(false);
+                await writer.WriteAsync(this.type).ConfigureAwait(false);
+                await writer.WriteAsync("\n").ConfigureAwait(false);
             }
 
             // The remaining lines describe samples (one per line) using the following syntax (EBNF):
@@ -144,7 +146,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             foreach (var m in this.values)
             {
                 // metric_name and label_name carry the usual Prometheus expression language restrictions.
-                writer.Write(m.Name != null ? GetSafeMetricName(m.Name) : this.name);
+                await writer.WriteAsync(m.Name != null ? GetSafeMetricName(m.Name) : this.name).ConfigureAwait(false);
 
                 // label_value can be any sequence of UTF-8 characters, but the backslash
                 // (\, double-quote ("}, and line feed (\n) characters have to be escaped
@@ -152,26 +154,26 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
 
                 if (m.Labels.Count > 0)
                 {
-                    writer.Write(@"{");
-                    writer.Write(string.Join(",", m.Labels.Select(x => GetLabelAndValue(x.Item1, x.Item2))));
-                    writer.Write(@"}");
+                    await writer.WriteAsync(@"{").ConfigureAwait(false);
+                    await writer.WriteAsync(string.Join(",", m.Labels.Select(x => GetLabelAndValue(x.Item1, x.Item2)))).ConfigureAwait(false);
+                    await writer.WriteAsync(@"}").ConfigureAwait(false);
                 }
 
                 // value is a float represented as required by Go's ParseFloat() function. In addition to
                 // standard numerical values, Nan, +Inf, and -Inf are valid values representing not a number,
                 // positive infinity, and negative infinity, respectively.
-                writer.Write(" ");
-                writer.Write(m.Value.ToString(CultureInfo.InvariantCulture));
-                writer.Write(" ");
+                await writer.WriteAsync(" ").ConfigureAwait(false);
+                await writer.WriteAsync(m.Value.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
+                await writer.WriteAsync(" ").ConfigureAwait(false);
 
                 // The timestamp is an int64 (milliseconds since epoch, i.e. 1970-01-01 00:00:00 UTC, excluding
                 // leap seconds), represented as required by Go's ParseInt() function.
-                writer.Write(now);
+                await writer.WriteAsync(now).ConfigureAwait(false);
 
                 // Prometheus' text-based format is line oriented. Lines are separated
                 // by a line feed character (\n). The last line must end with a line
                 // feed character. Empty lines are ignored.
-                writer.Write("\n");
+                await writer.WriteAsync("\n").ConfigureAwait(false);
             }
 
             static string GetLabelAndValue(string label, string value)
@@ -239,7 +241,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Implementation
             return result;
         }
 
-        internal class PrometheusMetricValueBuilder
+        internal sealed class PrometheusMetricValueBuilder
         {
             public readonly ICollection<Tuple<string, string>> Labels = new List<Tuple<string, string>>();
             public double Value;
