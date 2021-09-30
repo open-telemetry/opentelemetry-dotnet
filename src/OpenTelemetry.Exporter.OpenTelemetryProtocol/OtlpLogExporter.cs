@@ -36,7 +36,7 @@ namespace OpenTelemetry.Exporter
     /// Exporter consuming <see cref="LogRecord"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    public class OtlpLogExporter : BaseExporter<LogRecord>
+    internal class OtlpLogExporter : BaseExporter<LogRecord>
     {
         private readonly OtlpExporterOptions options;
 #if NETSTANDARD2_1
