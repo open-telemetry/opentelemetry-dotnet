@@ -172,7 +172,11 @@ namespace OpenTelemetry.Metrics.Tests
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource(meter1.Name)
                 .AddView("FruitCounter", new MetricStreamConfiguration()
-                { TagKeys = new string[] { "name" } })
+                { TagKeys = new string[] { "name" }, Name = "NameOnly" })
+                .AddView("FruitCounter", new MetricStreamConfiguration()
+                { TagKeys = new string[] { "size" }, Name = "SizeOnly" })
+                .AddView("FruitCounter", new MetricStreamConfiguration()
+                { TagKeys = new string[] { }, Name = "NoTags" })
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
@@ -187,16 +191,38 @@ namespace OpenTelemetry.Metrics.Tests
             counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "large"));
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-            Assert.Single(exportedItems);
+            Assert.Equal(3, exportedItems.Count);
             var metric = exportedItems[0];
-            Assert.Equal("FruitCounter", metric.Name);
+            Assert.Equal("NameOnly", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
             foreach (ref var mp in metric.GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }
 
-            // Only one point expected
+            // Only one point expected "apple"
+            Assert.Single(metricPoints);
+
+            metric = exportedItems[1];
+            Assert.Equal("SizeOnly", metric.Name);
+            metricPoints.Clear();
+            foreach (ref var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            // 3 points small,medium,large expected
+            Assert.Equal(3, metricPoints.Count);
+
+            metric = exportedItems[2];
+            Assert.Equal("NoTags", metric.Name);
+            metricPoints.Clear();
+            foreach (ref var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            // Single point expected.
             Assert.Single(metricPoints);
         }
     }
