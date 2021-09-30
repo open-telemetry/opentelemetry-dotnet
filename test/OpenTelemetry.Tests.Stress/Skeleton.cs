@@ -31,7 +31,7 @@ public partial class Program
     public static void Stress(int concurrency = 0)
     {
 #if DEBUG
-        Console.WriteLine("***WARNING*** The current build is DEBUG which may affect timing!\n");
+        Console.WriteLine($"***WARNING*** The current build is DEBUG which may affect timing!{Environment.NewLine}");
 #endif
 
         if (concurrency < 0)
