@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using OpenTelemetry.Resources;
@@ -255,7 +256,8 @@ namespace OpenTelemetry.Metrics
             // of size one as state.
             var metrics = state as List<Metric>;
 
-            if (instrument == null || metrics == null)
+            Debug.Assert(instrument != null, "instrument must be non-null.");
+            if (metrics == null)
             {
                 // TODO: log
                 return;
@@ -272,7 +274,8 @@ namespace OpenTelemetry.Metrics
             // Get Instrument State
             var metrics = state as List<Metric>;
 
-            if (instrument == null || metrics == null)
+            Debug.Assert(instrument != null, "instrument must be non-null.");
+            if (metrics == null)
             {
                 // TODO: log
                 return;
