@@ -53,6 +53,11 @@ namespace OpenTelemetry.Exporter.Prometheus
                 path = $"/{path}";
             }
 
+            if (!path.EndsWith("/"))
+            {
+                path = $"{path}/";
+            }
+
             foreach (string prefix in exporter.Options.HttpListenerPrefixes)
             {
                 this.httpListener.Prefixes.Add($"{prefix.TrimEnd('/')}{path}");
@@ -77,7 +82,8 @@ namespace OpenTelemetry.Exporter.Prometheus
                     new CancellationTokenSource() :
                     CancellationTokenSource.CreateLinkedTokenSource(token);
 
-                this.workerThread = Task.Factory.StartNew(this.WorkerThread, default, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+                this.workerThread = Task.Factory.StartNew(this.WorkerThread, default, TaskCreationOptions.LongRunning, TaskScheduler.Default)
+                    .ContinueWith(task => task.Exception, TaskContinuationOptions.OnlyOnFaulted);
             }
         }
 
@@ -111,7 +117,15 @@ namespace OpenTelemetry.Exporter.Prometheus
 
         private void WorkerThread()
         {
-            this.httpListener.Start();
+            try
+            {
+                this.httpListener.Start();
+            }
+            catch (Exception ex)
+            {
+                var s = ex.Message;
+                return;
+            }
 
             try
             {
