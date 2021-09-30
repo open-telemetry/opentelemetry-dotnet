@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace OpenTelemetry.Metrics
@@ -51,105 +52,23 @@ namespace OpenTelemetry.Metrics
 
         internal int FindMetricAggregators(ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            int len = tags.Length;
-            if (len == 0)
+            int tagLength = tags.Length;
+            if (tagLength == 0)
             {
-                if (!this.zeroTagMetricPointInitialized)
-                {
-                    lock (this.lockZeroTags)
-                    {
-                        if (!this.zeroTagMetricPointInitialized)
-                        {
-                            var dt = DateTimeOffset.UtcNow;
-                            this.metrics[0] = new MetricPoint(this.aggType, dt, null, null, this.histogramBounds);
-                            this.zeroTagMetricPointInitialized = true;
-                        }
-                    }
-                }
-
+                this.InitializeZeroTagPointIfNotInitialized();
                 return 0;
             }
 
             var storage = ThreadStaticStorage.GetStorage();
 
-            storage.SplitToKeysAndValues(tags, out var tagKey, out var tagValue);
+            storage.SplitToKeysAndValues(tags, tagLength, out var tagKey, out var tagValue);
 
-            if (len > 1)
+            if (tagLength > 1)
             {
                 Array.Sort<string, object>(tagKey, tagValue);
             }
 
-            int aggregatorIndex;
-
-            string[] seqKey = null;
-
-            // GetOrAdd by TagKey at 1st Level of 2-level dictionary structure.
-            // Get back a Dictionary of [ Values x Metrics[] ].
-            if (!this.keyValue2MetricAggs.TryGetValue(tagKey, out var value2metrics))
-            {
-                // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                seqKey = new string[len];
-                tagKey.CopyTo(seqKey, 0);
-
-                value2metrics = new ConcurrentDictionary<object[], int>(ObjectArrayComparer);
-                if (!this.keyValue2MetricAggs.TryAdd(seqKey, value2metrics))
-                {
-                    this.keyValue2MetricAggs.TryGetValue(seqKey, out value2metrics);
-                }
-            }
-
-            // GetOrAdd by TagValue at 2st Level of 2-level dictionary structure.
-            // Get back Metrics[].
-            if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex))
-            {
-                aggregatorIndex = this.metricPointIndex;
-                if (aggregatorIndex >= MaxMetricPoints)
-                {
-                    // sorry! out of data points.
-                    // TODO: Once we support cleanup of
-                    // unused points (typically with delta)
-                    // we can re-claim them here.
-                    return -1;
-                }
-
-                lock (value2metrics)
-                {
-                    // check again after acquiring lock.
-                    if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex))
-                    {
-                        aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
-                        if (aggregatorIndex >= MaxMetricPoints)
-                        {
-                            // sorry! out of data points.
-                            // TODO: Once we support cleanup of
-                            // unused points (typically with delta)
-                            // we can re-claim them here.
-                            return -1;
-                        }
-
-                        // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                        if (seqKey == null)
-                        {
-                            seqKey = new string[len];
-                            tagKey.CopyTo(seqKey, 0);
-                        }
-
-                        var seqVal = new object[len];
-                        tagValue.CopyTo(seqVal, 0);
-
-                        ref var metricPoint = ref this.metrics[aggregatorIndex];
-                        var dt = DateTimeOffset.UtcNow;
-                        metricPoint = new MetricPoint(this.aggType, dt, seqKey, seqVal, this.histogramBounds);
-
-                        // Add to dictionary *after* initializing MetricPoint
-                        // as other threads can start writing to the
-                        // MetricPoint, if dictionary entry found.
-                        value2metrics.TryAdd(seqVal, aggregatorIndex);
-                    }
-                }
-            }
-
-            return aggregatorIndex;
+            return this.LookupAggregatorStore(tagKey, tagValue, tagLength);
         }
 
         internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
@@ -221,6 +140,98 @@ namespace OpenTelemetry.Metrics
         {
             var indexSnapShot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
             return new BatchMetricPoint(this.metrics, indexSnapShot + 1, this.startTimeExclusive, this.endTimeInclusive);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void InitializeZeroTagPointIfNotInitialized()
+        {
+            if (!this.zeroTagMetricPointInitialized)
+            {
+                lock (this.lockZeroTags)
+                {
+                    if (!this.zeroTagMetricPointInitialized)
+                    {
+                        var dt = DateTimeOffset.UtcNow;
+                        this.metrics[0] = new MetricPoint(this.aggType, dt, null, null, this.histogramBounds);
+                        this.zeroTagMetricPointInitialized = true;
+                    }
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int LookupAggregatorStore(string[] tagKey, object[] tagValue, int length)
+        {
+            int aggregatorIndex;
+            string[] seqKey = null;
+
+            // GetOrAdd by TagKey at 1st Level of 2-level dictionary structure.
+            // Get back a Dictionary of [ Values x Metrics[] ].
+            if (!this.keyValue2MetricAggs.TryGetValue(tagKey, out var value2metrics))
+            {
+                // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                seqKey = new string[length];
+                tagKey.CopyTo(seqKey, 0);
+
+                value2metrics = new ConcurrentDictionary<object[], int>(ObjectArrayComparer);
+                if (!this.keyValue2MetricAggs.TryAdd(seqKey, value2metrics))
+                {
+                    this.keyValue2MetricAggs.TryGetValue(seqKey, out value2metrics);
+                }
+            }
+
+            // GetOrAdd by TagValue at 2st Level of 2-level dictionary structure.
+            // Get back Metrics[].
+            if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex))
+            {
+                aggregatorIndex = this.metricPointIndex;
+                if (aggregatorIndex >= MaxMetricPoints)
+                {
+                    // sorry! out of data points.
+                    // TODO: Once we support cleanup of
+                    // unused points (typically with delta)
+                    // we can re-claim them here.
+                    return -1;
+                }
+
+                lock (value2metrics)
+                {
+                    // check again after acquiring lock.
+                    if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex))
+                    {
+                        aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
+                        if (aggregatorIndex >= MaxMetricPoints)
+                        {
+                            // sorry! out of data points.
+                            // TODO: Once we support cleanup of
+                            // unused points (typically with delta)
+                            // we can re-claim them here.
+                            return -1;
+                        }
+
+                        // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                        if (seqKey == null)
+                        {
+                            seqKey = new string[length];
+                            tagKey.CopyTo(seqKey, 0);
+                        }
+
+                        var seqVal = new object[length];
+                        tagValue.CopyTo(seqVal, 0);
+
+                        ref var metricPoint = ref this.metrics[aggregatorIndex];
+                        var dt = DateTimeOffset.UtcNow;
+                        metricPoint = new MetricPoint(this.aggType, dt, seqKey, seqVal, this.histogramBounds);
+
+                        // Add to dictionary *after* initializing MetricPoint
+                        // as other threads can start writing to the
+                        // MetricPoint, if dictionary entry found.
+                        value2metrics.TryAdd(seqVal, aggregatorIndex);
+                    }
+                }
+            }
+
+            return aggregatorIndex;
         }
     }
 }
