@@ -70,7 +70,8 @@ namespace OpenTelemetry.Metrics
             int maxLength = tags.Length;
             if (maxLength == 0 || this.dropAllTags)
             {
-                return this.GetInitializedZeroTagPoint();
+                this.InitializeZeroTagPointIfNotInitialized();
+                return 0;
             }
 
             var storage = ThreadStaticStorage.GetStorage();
@@ -85,7 +86,8 @@ namespace OpenTelemetry.Metrics
 
             if (actualLength == 0)
             {
-                return this.GetInitializedZeroTagPoint();
+                this.InitializeZeroTagPointIfNotInitialized();
+                return 0;
             }
 
             if (actualLength > 1)
@@ -238,7 +240,7 @@ namespace OpenTelemetry.Metrics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int GetInitializedZeroTagPoint()
+        private void InitializeZeroTagPointIfNotInitialized()
         {
             if (!this.zeroTagMetricPointInitialized)
             {
@@ -252,8 +254,6 @@ namespace OpenTelemetry.Metrics
                     }
                 }
             }
-
-            return 0;
         }
     }
 }

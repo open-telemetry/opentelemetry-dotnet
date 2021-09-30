@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using System.Linq;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -161,6 +162,42 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(2, exportedItems.Count);
             Assert.Equal("renamedStream1", exportedItems[0].Name);
             Assert.Equal("renamedStream2", exportedItems[1].Name);
+        }
+
+        [Fact]
+        public void ViewToSelectTagKeys()
+        {
+            using var meter1 = new Meter("ViewToSelectTagKeysTest");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource(meter1.Name)
+                .AddView("FruitCounter", new MetricStreamConfiguration()
+                { TagKeys = new string[] { "name" } })
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var counter = meter1.CreateCounter<long>("FruitCounter");
+            counter.Add(10, new ("name", "apple"), new ("color", "red"), new ("size", "small"));
+            counter.Add(10, new ("name", "apple"), new ("color", "red"), new ("size", "small"));
+
+            counter.Add(10, new ("name", "apple"), new ("color", "red"), new ("size", "medium"));
+            counter.Add(10, new ("name", "apple"), new ("color", "red"), new ("size", "medium"));
+
+            counter.Add(10, new ("name", "apple"), new ("color", "red"), new ("size", "large"));
+            counter.Add(10, new ("name", "apple"), new ("color", "red"), new ("size", "large"));
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("FruitCounter", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            // Only one point expected
+            Assert.Single(metricPoints);
         }
     }
 }
