@@ -1,4 +1,4 @@
-// <copyright file="OtlpLogExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpLogsExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,7 @@ namespace OpenTelemetry.Exporter
     /// Exporter consuming <see cref="LogRecord"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    internal class OtlpLogExporter : BaseExporter<LogRecord>
+    internal class OtlpLogsExporter : BaseExporter<LogRecord>
     {
         private readonly OtlpExporterOptions options;
 #if NETSTANDARD2_1
@@ -48,20 +48,20 @@ namespace OpenTelemetry.Exporter
         private readonly Metadata headers;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OtlpLogExporter"/> class.
+        /// Initializes a new instance of the <see cref="OtlpLogsExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
-        public OtlpLogExporter(OtlpExporterOptions options)
+        public OtlpLogsExporter(OtlpExporterOptions options)
             : this(options, null)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OtlpLogExporter"/> class.
+        /// Initializes a new instance of the <see cref="OtlpLogsExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
         /// <param name="traceServiceClient"><see cref="OtlpCollector.LogsService.LogsServiceClient"/>.</param>
-        internal OtlpLogExporter(OtlpExporterOptions options, OtlpCollector.LogsService.ILogsServiceClient traceServiceClient = null)
+        internal OtlpLogsExporter(OtlpExporterOptions options, OtlpCollector.LogsService.ILogsServiceClient traceServiceClient = null)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
             this.headers = GetMetadataFromHeaders(options.Headers);
