@@ -22,7 +22,7 @@ namespace OpenTelemetry.Metrics
 {
     internal class ThreadStaticStorage
     {
-        private const int MaxTagCacheSize = 3;
+        private const int MaxTagCacheSize = 8;
 
         [ThreadStatic]
         private static ThreadStaticStorage storage;

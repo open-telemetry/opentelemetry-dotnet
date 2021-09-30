@@ -92,7 +92,7 @@ namespace Benchmarks.Metrics
             };
             this.provider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
-                .AddMetricReader(this.reader)
+                .AddReader(this.reader)
                 .Build();
 
             this.meter = new Meter("TestMeter");

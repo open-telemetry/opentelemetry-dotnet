@@ -15,8 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests
@@ -46,7 +44,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             var reader = new BaseExportingMetricReader(exporter);
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMetricReader(reader)
+                .AddReader(reader)
                 .Build();
 
             switch (mode)
