@@ -187,6 +187,9 @@ namespace OpenTelemetry.Metrics
 
             storage.SplitToKeysAndValues(tags, length, this.tagKeysInteresting, out var tagKey, out var tagValue);
 
+            // Actual number of tags depend on how many
+            // of the incoming tags has user opted to
+            // select.
             var actualLength = tagKey.Length;
             if (actualLength == 0)
             {
