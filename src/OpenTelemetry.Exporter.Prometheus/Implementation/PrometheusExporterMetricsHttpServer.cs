@@ -82,8 +82,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     new CancellationTokenSource() :
                     CancellationTokenSource.CreateLinkedTokenSource(token);
 
-                this.workerThread = Task.Factory.StartNew(this.WorkerThread, default, TaskCreationOptions.LongRunning, TaskScheduler.Default)
-                    .ContinueWith(task => task.Exception, TaskContinuationOptions.OnlyOnFaulted);
+                this.workerThread = Task.Factory.StartNew(this.WorkerThread, default, TaskCreationOptions.LongRunning, TaskScheduler.Default);
             }
         }
 
@@ -117,15 +116,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
         private void WorkerThread()
         {
-            try
-            {
-                this.httpListener.Start();
-            }
-            catch (Exception ex)
-            {
-                var s = ex.Message;
-                return;
-            }
+            this.httpListener.Start();
 
             try
             {
