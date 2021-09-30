@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics.Metrics;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -26,16 +27,15 @@ public class Program
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddSource("MyCompany.MyProduct.MyLibrary")
+            .AddView("MyHistogram", new HistogramConfiguration() { BucketBounds = new double[] { } })
             .AddConsoleExporter()
             .Build();
 
-        var counter = MyMeter.CreateCounter<long>("MyFruitCounter");
-
-        counter.Add(1, new("name", "apple"), new("color", "red"));
-        counter.Add(2, new("name", "lemon"), new("color", "yellow"));
-        counter.Add(1, new("name", "lemon"), new("color", "yellow"));
-        counter.Add(2, new("name", "apple"), new("color", "green"));
-        counter.Add(5, new("name", "apple"), new("color", "red"));
-        counter.Add(4, new("name", "lemon"), new("color", "yellow"));
+        var random = new Random();
+        var histogram = MyMeter.CreateHistogram<long>("MyHistogram");
+        for (int i = 0; i < 1000; i++)
+        {
+            histogram.Record(random.Next(1, 1000));
+        }
     }
 }

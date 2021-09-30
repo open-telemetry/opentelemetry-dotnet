@@ -57,5 +57,10 @@ namespace OpenTelemetry.Metrics
         /// Histogram.
         /// </summary>
         Histogram = 6,
+
+        /// <summary>
+        /// Histogram with no sum,count only.
+        /// </summary>
+        HistogramSumCount = 7,
     }
 }
