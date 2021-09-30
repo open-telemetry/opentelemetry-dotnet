@@ -43,7 +43,7 @@ namespace OpenTelemetry.Logs
         private static OpenTelemetryLoggerOptions AddOtlpExporter(OpenTelemetryLoggerOptions builder, OtlpExporterOptions exporterOptions, Action<OtlpExporterOptions> configure = null)
         {
             configure?.Invoke(exporterOptions);
-            var otlpExporter = new OtlpLogExporter(exporterOptions);
+            var otlpExporter = new OtlpLogsExporter(exporterOptions);
 
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
