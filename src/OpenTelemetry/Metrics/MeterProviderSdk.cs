@@ -134,7 +134,8 @@ namespace OpenTelemetry.Metrics
                         {
                             for (int i = 0; i < maxCountMetricsToBeCreated; i++)
                             {
-                                var metricStreamName = metricStreamConfigs[i]?.Name ?? instrument.Name;
+                                var metricStreamConfig = metricStreamConfigs[i];
+                                var metricStreamName = metricStreamConfig?.Name ?? instrument.Name;
                                 if (this.metricStreamNames.ContainsKey(metricStreamName))
                                 {
                                     // TODO: Log that instrument is ignored
@@ -151,7 +152,17 @@ namespace OpenTelemetry.Metrics
                                 }
                                 else
                                 {
-                                    var metric = new Metric(instrument, temporality, metricStreamName);
+                                    Metric metric;
+                                    if (metricStreamConfig is HistogramConfiguration histogramConfig
+                                        && histogramConfig.BucketBounds != null)
+                                    {
+                                        metric = new Metric(instrument, temporality, histogramConfig.BucketBounds, metricStreamName);
+                                    }
+                                    else
+                                    {
+                                        metric = new Metric(instrument, temporality, metricStreamName);
+                                    }
+
                                     this.metrics[index] = metric;
                                     metrics.Add(metric);
                                     this.metricStreamNames.Add(metricStreamName, true);

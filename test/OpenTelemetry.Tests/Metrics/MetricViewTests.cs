@@ -162,5 +162,70 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("renamedStream1", exportedItems[0].Name);
             Assert.Equal("renamedStream2", exportedItems[1].Name);
         }
+
+        [Fact]
+        public void ViewToProduceCustomHistogramBound()
+        {
+            using var meter1 = new Meter("ViewToProduceCustomHistogramBoundTest");
+            var exportedItems = new List<Metric>();
+            var bounds = new double[] { 10, 20 };
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource(meter1.Name)
+                .AddView("MyHistogram", new HistogramConfiguration() { Name = "MyHistogramDefaultBound" })
+                .AddView("MyHistogram", new HistogramConfiguration() { BucketBounds = bounds })
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var histogram = meter1.CreateHistogram<long>("MyHistogram");
+            histogram.Record(-10);
+            histogram.Record(0);
+            histogram.Record(1);
+            histogram.Record(9);
+            histogram.Record(10);
+            histogram.Record(11);
+            histogram.Record(19);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Equal(2, exportedItems.Count);
+            var metricDefault = exportedItems[0];
+            var metricCustom = exportedItems[1];
+
+            Assert.Equal("MyHistogramDefaultBound", metricDefault.Name);
+            Assert.Equal("MyHistogram", metricCustom.Name);
+
+            List<MetricPoint> metricPointsDefault = new List<MetricPoint>();
+            foreach (ref var mp in metricDefault.GetMetricPoints())
+            {
+                metricPointsDefault.Add(mp);
+            }
+
+            Assert.Single(metricPointsDefault);
+            var histogramPoint = metricPointsDefault[0];
+
+            Assert.Equal(40, histogramPoint.DoubleValue);
+            Assert.Equal(7, histogramPoint.LongValue);
+            Assert.Equal(Metric.DefaultHistogramBounds.Length + 1, histogramPoint.BucketCounts.Length);
+            Assert.Equal(2, histogramPoint.BucketCounts[0]);
+            Assert.Equal(1, histogramPoint.BucketCounts[1]);
+            Assert.Equal(2, histogramPoint.BucketCounts[2]);
+            Assert.Equal(2, histogramPoint.BucketCounts[3]);
+            Assert.Equal(0, histogramPoint.BucketCounts[4]);
+            Assert.Equal(0, histogramPoint.BucketCounts[5]);
+
+            List<MetricPoint> metricPointsCustom = new List<MetricPoint>();
+            foreach (ref var mp in metricCustom.GetMetricPoints())
+            {
+                metricPointsCustom.Add(mp);
+            }
+
+            Assert.Single(metricPointsCustom);
+            histogramPoint = metricPointsCustom[0];
+
+            Assert.Equal(40, histogramPoint.DoubleValue);
+            Assert.Equal(7, histogramPoint.LongValue);
+            Assert.Equal(bounds.Length + 1, histogramPoint.BucketCounts.Length);
+            Assert.Equal(5, histogramPoint.BucketCounts[0]);
+            Assert.Equal(2, histogramPoint.BucketCounts[1]);
+            Assert.Equal(0, histogramPoint.BucketCounts[2]);
+        }
     }
 }

@@ -164,18 +164,21 @@ namespace OpenTelemetry.Exporter.Prometheus
                 metricValueBuilderCount = metricValueBuilderCount.WithValue(metricPoint.LongValue);
                 metricValueBuilderCount.AddLabels(metricPoint.Keys, metricPoint.Values);
 
-                long totalCount = 0;
-                for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
+                if (metricPoint.ExplicitBounds != null)
                 {
-                    totalCount += metricPoint.BucketCounts[i];
-                    var metricValueBuilderBuckets = builder.AddValue();
-                    metricValueBuilderBuckets.WithName(metric.Name + PrometheusHistogramBucketPostFix);
-                    metricValueBuilderBuckets = metricValueBuilderBuckets.WithValue(totalCount);
-                    metricValueBuilderBuckets.AddLabels(metricPoint.Keys, metricPoint.Values);
+                    long totalCount = 0;
+                    for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
+                    {
+                        totalCount += metricPoint.BucketCounts[i];
+                        var metricValueBuilderBuckets = builder.AddValue();
+                        metricValueBuilderBuckets.WithName(metric.Name + PrometheusHistogramBucketPostFix);
+                        metricValueBuilderBuckets = metricValueBuilderBuckets.WithValue(totalCount);
+                        metricValueBuilderBuckets.AddLabels(metricPoint.Keys, metricPoint.Values);
 
-                    var bucketName = i == metricPoint.ExplicitBounds.Length ?
-                    PrometheusHistogramBucketLabelPositiveInfinity : metricPoint.ExplicitBounds[i].ToString(CultureInfo.InvariantCulture);
-                    metricValueBuilderBuckets.WithLabel(PrometheusHistogramBucketLabelLessThan, bucketName);
+                        var bucketName = i == metricPoint.ExplicitBounds.Length ?
+                        PrometheusHistogramBucketLabelPositiveInfinity : metricPoint.ExplicitBounds[i].ToString(CultureInfo.InvariantCulture);
+                        metricValueBuilderBuckets.WithLabel(PrometheusHistogramBucketLabelLessThan, bucketName);
+                    }
                 }
             }
         }
