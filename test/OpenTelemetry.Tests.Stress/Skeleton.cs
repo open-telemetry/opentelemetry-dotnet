@@ -30,6 +30,10 @@ public partial class Program
 
     public static void Stress(int concurrency = 0)
     {
+#if DEBUG
+        Console.WriteLine("***WARNING*** The current build is DEBUG which may affect timing!\n");
+#endif
+
         if (concurrency < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(concurrency), "concurrency level should be a non-negative number.");
