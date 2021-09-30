@@ -83,7 +83,7 @@ public partial class Program
                     var cntCpuCyclesOld = GetCpuCycles();
 
                     watch.Restart();
-                    Thread.Sleep(2000);
+                    Thread.Sleep(200);
                     watch.Stop();
 
                     var cntLoopsNew = (ulong)statistics.Sum();
