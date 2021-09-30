@@ -49,27 +49,20 @@ namespace OpenTelemetry.Metrics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, out string[] tagKeys, out object[] tagValues)
+        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, int tagLength, out string[] tagKeys, out object[] tagValues)
         {
-            var len = tags.Length;
-
-            if (len == 0)
+            if (tagLength <= MaxTagCacheSize)
             {
-                throw new InvalidOperationException("There must be atleast one tag to use ThreadStaticStorage.");
-            }
-
-            if (len <= MaxTagCacheSize)
-            {
-                tagKeys = this.tagStorage[len - 1].TagKey;
-                tagValues = this.tagStorage[len - 1].TagValue;
+                tagKeys = this.tagStorage[tagLength - 1].TagKey;
+                tagValues = this.tagStorage[tagLength - 1].TagValue;
             }
             else
             {
-                tagKeys = new string[len];
-                tagValues = new object[len];
+                tagKeys = new string[tagLength];
+                tagValues = new object[tagLength];
             }
 
-            for (var n = 0; n < len; n++)
+            for (var n = 0; n < tagLength; n++)
             {
                 tagKeys[n] = tags[n].Key;
                 tagValues[n] = tags[n].Value;
