@@ -250,12 +250,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             dataPoint.Count = (ulong)metricPoint.LongValue;
                             dataPoint.Sum = metricPoint.DoubleValue;
 
-                            for (int i = 0; i < metricPoint.BucketCounts.Length; i++)
+                            if (metricPoint.BucketCounts != null)
                             {
-                                dataPoint.BucketCounts.Add((ulong)metricPoint.BucketCounts[i]);
-                                if (i < metricPoint.BucketCounts.Length - 1)
+                                for (int i = 0; i < metricPoint.BucketCounts.Length; i++)
                                 {
-                                    dataPoint.ExplicitBounds.Add(metricPoint.ExplicitBounds[i]);
+                                    dataPoint.BucketCounts.Add((ulong)metricPoint.BucketCounts[i]);
+                                    if (i < metricPoint.BucketCounts.Length - 1)
+                                    {
+                                        dataPoint.ExplicitBounds.Add(metricPoint.ExplicitBounds[i]);
+                                    }
                                 }
                             }
 

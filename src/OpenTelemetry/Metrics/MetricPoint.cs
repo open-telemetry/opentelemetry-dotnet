@@ -32,7 +32,8 @@ namespace OpenTelemetry.Metrics
             AggregationType aggType,
             DateTimeOffset startTime,
             string[] keys,
-            object[] values)
+            object[] values,
+            double[] histogramBounds)
         {
             this.AggType = aggType;
             this.StartTime = startTime;
@@ -48,9 +49,16 @@ namespace OpenTelemetry.Metrics
 
             if (this.AggType == AggregationType.Histogram)
             {
-                this.ExplicitBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 };
+                this.ExplicitBounds = histogramBounds;
                 this.BucketCounts = new long[this.ExplicitBounds.Length + 1];
                 this.bucketCounts = new long[this.ExplicitBounds.Length + 1];
+                this.lockObject = new object();
+            }
+            else if (this.AggType == AggregationType.HistogramSumCount)
+            {
+                this.ExplicitBounds = null;
+                this.BucketCounts = null;
+                this.bucketCounts = null;
                 this.lockObject = new object();
             }
             else
@@ -103,6 +111,7 @@ namespace OpenTelemetry.Metrics
                     }
 
                 case AggregationType.Histogram:
+                case AggregationType.HistogramSumCount:
                     {
                         this.Update((double)number);
                         break;
@@ -155,6 +164,17 @@ namespace OpenTelemetry.Metrics
                             this.longVal++;
                             this.doubleVal += number;
                             this.bucketCounts[i]++;
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.HistogramSumCount:
+                    {
+                        lock (this.lockObject)
+                        {
+                            this.longVal++;
+                            this.doubleVal += number;
                         }
 
                         break;
@@ -246,6 +266,22 @@ namespace OpenTelemetry.Metrics
                                 {
                                     this.bucketCounts[i] = 0;
                                 }
+                            }
+                        }
+
+                        break;
+                    }
+
+                case AggregationType.HistogramSumCount:
+                    {
+                        lock (this.lockObject)
+                        {
+                            this.LongValue = this.longVal;
+                            this.DoubleValue = this.doubleVal;
+                            if (outputDelta)
+                            {
+                                this.longVal = 0;
+                                this.doubleVal = 0;
                             }
                         }
 
