@@ -53,6 +53,11 @@ namespace OpenTelemetry.Exporter.Prometheus
                 path = $"/{path}";
             }
 
+            if (!path.EndsWith("/"))
+            {
+                path = $"{path}/";
+            }
+
             foreach (string prefix in exporter.Options.HttpListenerPrefixes)
             {
                 this.httpListener.Prefixes.Add($"{prefix.TrimEnd('/')}{path}");

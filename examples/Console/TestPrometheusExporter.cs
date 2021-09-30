@@ -52,7 +52,7 @@ namespace Examples.Console
                 .AddPrometheusExporter(opt =>
                 {
                     opt.StartHttpListener = true;
-                    opt.HttpListenerPrefixes = new string[] { $"http://*:{port}/" };
+                    opt.HttpListenerPrefixes = new string[] { $"http://localhost:{port}/" };
                 })
                 .Build();
 
