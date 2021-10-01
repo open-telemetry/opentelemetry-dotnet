@@ -55,7 +55,7 @@ namespace OpenTelemetry.Exporter
                 msg.Append(metric.Name);
                 if (!string.IsNullOrEmpty(metric.Description))
                 {
-                    msg.Append(' ');
+                    msg.Append(", ");
                     msg.Append(metric.Description);
                 }
 
