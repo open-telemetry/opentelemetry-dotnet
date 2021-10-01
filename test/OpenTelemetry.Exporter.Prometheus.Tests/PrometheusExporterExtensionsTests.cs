@@ -30,7 +30,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         public PrometheusExporterExtensionsTests()
         {
             // Fix the times so tests can be deterministic
-            PrometheusMetricBuilder.GetUtcNowDateTimeOffset = () => DateTimeOffset.Parse("9/30/2021 10:30pm +00:00");
+            PrometheusMetricBuilder.GetUtcNowDateTimeOffset = () => new DateTimeOffset(2021, 9, 30, 22, 30, 0, TimeSpan.Zero);
         }
 
         public void Dispose()
@@ -47,11 +47,9 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 new KeyValuePair<string, object>("key2", "value2"),
             };
 
-            var metricReader = new BaseExportingMetricReader(new TestExporter<Metric>(RunTest));
-
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddSource("TestMeter")
-                .AddReader(metricReader)
+                .AddReader(new BaseExportingMetricReader(new TestExporter<Metric>(RunTest)))
                 .Build();
 
             using var meter = new Meter("TestMeter", "0.0.1");
@@ -63,7 +61,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var testCompleted = false;
 
             // Invokes the TestExporter which will invoke RunTest
-            metricReader.Collect();
+            provider.ForceFlush(3000);
 
             Assert.True(testCompleted);
 
