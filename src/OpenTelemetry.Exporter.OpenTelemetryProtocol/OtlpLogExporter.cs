@@ -1,4 +1,4 @@
-// <copyright file="OtlpLogsExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpLogExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,25 +28,25 @@ namespace OpenTelemetry.Exporter
     /// Exporter consuming <see cref="LogRecord"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    internal class OtlpLogsExporter : BaseOtlpExporter<LogRecord>
+    internal class OtlpLogExporter : BaseOtlpExporter<LogRecord>
     {
         private readonly OtlpCollector.LogsService.ILogsServiceClient logsClient;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OtlpLogsExporter"/> class.
+        /// Initializes a new instance of the <see cref="OtlpLogExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
-        public OtlpLogsExporter(OtlpExporterOptions options)
+        public OtlpLogExporter(OtlpExporterOptions options)
             : this(options, null)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OtlpLogsExporter"/> class.
+        /// Initializes a new instance of the <see cref="OtlpLogExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
         /// <param name="logsServiceClient"><see cref="OtlpCollector.LogsService.LogsServiceClient"/>.</param>
-        internal OtlpLogsExporter(OtlpExporterOptions options, OtlpCollector.LogsService.ILogsServiceClient logsServiceClient = null)
+        internal OtlpLogExporter(OtlpExporterOptions options, OtlpCollector.LogsService.ILogsServiceClient logsServiceClient = null)
             : base(options)
         {
             if (logsServiceClient != null)

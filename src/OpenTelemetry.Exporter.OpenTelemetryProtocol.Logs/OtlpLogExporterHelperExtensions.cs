@@ -1,4 +1,4 @@
-// <copyright file="OtlpLogsExporterHelperExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpLogExporterHelperExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ namespace OpenTelemetry.Logs
     /// <summary>
     /// Extension methods to simplify registering of the OpenTelemetry Protocol (OTLP) exporter.
     /// </summary>
-    public static class OtlpLogsExporterHelperExtensions
+    public static class OtlpLogExporterHelperExtensions
     {
         /// <summary>
         /// Adds Console Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Logs
         private static OpenTelemetryLoggerOptions AddOtlpExporter(OpenTelemetryLoggerOptions loggerOptions, OtlpExporterOptions exporterOptions, Action<OtlpExporterOptions> configure = null)
         {
             configure?.Invoke(exporterOptions);
-            var otlpExporter = new OtlpLogsExporter(exporterOptions);
+            var otlpExporter = new OtlpLogExporter(exporterOptions);
 
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {

@@ -1,2 +1,2 @@
-OpenTelemetry.Logs.OtlpLogsExporterHelperExtensions
-static OpenTelemetry.Logs.OtlpLogsExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions loggerOptions, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions> configure = null) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions
+OpenTelemetry.Logs.OtlpLogExporterHelperExtensions
+static OpenTelemetry.Logs.OtlpLogExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions loggerOptions, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions> configure = null) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions
