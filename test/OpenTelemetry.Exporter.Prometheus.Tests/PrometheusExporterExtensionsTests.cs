@@ -25,19 +25,8 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
-    public sealed class PrometheusExporterExtensionsTests : IDisposable
+    public sealed class PrometheusExporterExtensionsTests
     {
-        public PrometheusExporterExtensionsTests()
-        {
-            // Fix the times so tests can be deterministic
-            PrometheusMetricBuilder.GetUtcNowDateTimeOffset = () => new DateTimeOffset(2021, 9, 30, 22, 30, 0, TimeSpan.Zero);
-        }
-
-        public void Dispose()
-        {
-            PrometheusMetricBuilder.GetUtcNowDateTimeOffset = () => DateTimeOffset.UtcNow;
-        }
-
         [Fact]
         public void WriteMetricsCollectionTest()
         {
@@ -74,7 +63,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 using MemoryStream ms = new MemoryStream();
                 using (StreamWriter writer = new StreamWriter(ms))
                 {
-                    PrometheusExporterExtensions.WriteMetricsCollection(prometheusExporter, writer).GetAwaiter().GetResult();
+                    PrometheusExporterExtensions.WriteMetricsCollection(prometheusExporter, writer, () => new DateTimeOffset(2021, 9, 30, 22, 30, 0, TimeSpan.Zero)).GetAwaiter().GetResult();
                 }
 
                 Assert.Equal(
