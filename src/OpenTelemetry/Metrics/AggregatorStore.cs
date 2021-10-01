@@ -27,6 +27,8 @@ namespace OpenTelemetry.Metrics
         internal const int MaxMetricPoints = 2000;
         private static readonly ObjectArrayEqualityComparer ObjectArrayComparer = new ObjectArrayEqualityComparer();
         private readonly object lockZeroTags = new object();
+        private readonly HashSet<string> tagKeysInteresting;
+        private readonly int tagsKeysInterestingCount;
 
         // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
         private readonly ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>> keyValue2MetricAggs =
@@ -63,33 +65,20 @@ namespace OpenTelemetry.Metrics
             {
                 this.updateLongCallback = this.UpdateLongCustomTags;
                 this.updateDoubleCallback = this.UpdateDoubleCustomTags;
+                var hs = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var key in tagKeysInteresting)
+                {
+                    hs.Add(key);
+                }
+
+                this.tagKeysInteresting = hs;
+                this.tagsKeysInterestingCount = hs.Count;
             }
         }
 
         private delegate void UpdateLongDelegate(long value, ReadOnlySpan<KeyValuePair<string, object>> tags);
 
         private delegate void UpdateDoubleDelegate(double value, ReadOnlySpan<KeyValuePair<string, object>> tags);
-
-        internal int FindMetricAggregators(ReadOnlySpan<KeyValuePair<string, object>> tags)
-        {
-            int tagLength = tags.Length;
-            if (tagLength == 0)
-            {
-                this.InitializeZeroTagPointIfNotInitialized();
-                return 0;
-            }
-
-            var storage = ThreadStaticStorage.GetStorage();
-
-            storage.SplitToKeysAndValues(tags, tagLength, out var tagKey, out var tagValue);
-
-            if (tagLength > 1)
-            {
-                Array.Sort<string, object>(tagKey, tagValue);
-            }
-
-            return this.LookupAggregatorStore(tagKey, tagValue, tagLength);
-        }
 
         internal void Update(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
@@ -249,7 +238,7 @@ namespace OpenTelemetry.Metrics
         {
             try
             {
-                var index = this.FindMetricAggregators(tags);
+                var index = this.FindMetricAggregatorsCustomTag(tags);
                 if (index < 0)
                 {
                     // TODO: Measurement dropped due to MemoryPoint cap hit.
@@ -287,7 +276,7 @@ namespace OpenTelemetry.Metrics
         {
             try
             {
-                var index = this.FindMetricAggregators(tags);
+                var index = this.FindMetricAggregatorsCustomTag(tags);
                 if (index < 0)
                 {
                     // TODO: Measurement dropped due to MemoryPoint cap hit.
@@ -300,6 +289,48 @@ namespace OpenTelemetry.Metrics
             {
                 // TODO: Measurement dropped due to internal exception.
             }
+        }
+
+        private int FindMetricAggregatorsDefault(ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            int tagLength = tags.Length;
+            if (tagLength == 0)
+            {
+                this.InitializeZeroTagPointIfNotInitialized();
+                return 0;
+            }
+
+            var storage = ThreadStaticStorage.GetStorage();
+
+            storage.SplitToKeysAndValues(tags, tagLength, out var tagKey, out var tagValue);
+
+            if (tagLength > 1)
+            {
+                Array.Sort<string, object>(tagKey, tagValue);
+            }
+
+            return this.LookupAggregatorStore(tagKey, tagValue, tagLength);
+        }
+
+        private int FindMetricAggregatorsCustomTag(ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            int tagLength = tags.Length;
+            if (tagLength == 0 || this.tagsKeysInterestingCount == 0)
+            {
+                this.InitializeZeroTagPointIfNotInitialized();
+                return 0;
+            }
+
+            var storage = ThreadStaticStorage.GetStorage();
+
+            storage.SplitToKeysAndValues(tags, tagLength, out var tagKey, out var tagValue);
+
+            if (tagLength > 1)
+            {
+                Array.Sort<string, object>(tagKey, tagValue);
+            }
+
+            return this.LookupAggregatorStore(tagKey, tagValue, tagLength);
         }
     }
 }
