@@ -219,7 +219,7 @@ namespace OpenTelemetry.Metrics
         {
             try
             {
-                var index = this.FindMetricAggregators(tags);
+                var index = this.FindMetricAggregatorsDefault(tags);
                 if (index < 0)
                 {
                     // TODO: Measurement dropped due to MemoryPoint cap hit.
@@ -257,7 +257,7 @@ namespace OpenTelemetry.Metrics
         {
             try
             {
-                var index = this.FindMetricAggregators(tags);
+                var index = this.FindMetricAggregatorsDefault(tags);
                 if (index < 0)
                 {
                     // TODO: Measurement dropped due to MemoryPoint cap hit.
