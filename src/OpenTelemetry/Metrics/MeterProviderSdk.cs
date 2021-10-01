@@ -158,7 +158,7 @@ namespace OpenTelemetry.Metrics
                                     if (metricStreamConfig is HistogramConfiguration histogramConfig
                                         && histogramConfig.BucketBounds != null)
                                     {
-                                        metric = new Metric(instrument, temporality, histogramConfig.BucketBounds, metricStreamName, metricDescription);
+                                        metric = new Metric(instrument, temporality, metricStreamName, metricDescription, histogramConfig.BucketBounds);
                                     }
                                     else
                                     {

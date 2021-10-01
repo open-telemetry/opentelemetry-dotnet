@@ -30,16 +30,16 @@ namespace OpenTelemetry.Metrics
             AggregationTemporality temporality,
             string metricName,
             string metricDescription)
-            : this(instrument, temporality, DefaultHistogramBounds, metricName, metricDescription)
+            : this(instrument, temporality, metricName, metricDescription, DefaultHistogramBounds)
         {
         }
 
         internal Metric(
             Instrument instrument,
             AggregationTemporality temporality,
-            double[] histogramBounds,
             string metricName,
-            string metricDescription)
+            string metricDescription,
+            double[] histogramBounds)
         {
             this.Name = metricName;
             this.Description = metricDescription;
