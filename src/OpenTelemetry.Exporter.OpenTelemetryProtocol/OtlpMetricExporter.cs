@@ -1,4 +1,4 @@
-// <copyright file="OtlpMetricsExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpMetricExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,25 +29,25 @@ namespace OpenTelemetry.Exporter
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
     [AggregationTemporality(AggregationTemporality.Cumulative | AggregationTemporality.Delta, AggregationTemporality.Cumulative)]
-    public class OtlpMetricsExporter : BaseOtlpExporter<Metric>
+    public class OtlpMetricExporter : BaseOtlpExporter<Metric>
     {
         private readonly OtlpCollector.MetricsService.IMetricsServiceClient metricsClient;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OtlpMetricsExporter"/> class.
+        /// Initializes a new instance of the <see cref="OtlpMetricExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
-        public OtlpMetricsExporter(OtlpExporterOptions options)
+        public OtlpMetricExporter(OtlpExporterOptions options)
             : this(options, null)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OtlpMetricsExporter"/> class.
+        /// Initializes a new instance of the <see cref="OtlpMetricExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
         /// <param name="metricsServiceClient"><see cref="OtlpCollector.MetricsService.IMetricsServiceClient"/>.</param>
-        internal OtlpMetricsExporter(OtlpExporterOptions options, OtlpCollector.MetricsService.IMetricsServiceClient metricsServiceClient = null)
+        internal OtlpMetricExporter(OtlpExporterOptions options, OtlpCollector.MetricsService.IMetricsServiceClient metricsServiceClient = null)
             : base(options)
         {
             if (metricsServiceClient != null)
