@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using OpenTelemetry.Resources;
@@ -134,7 +135,8 @@ namespace OpenTelemetry.Metrics
                         {
                             for (int i = 0; i < maxCountMetricsToBeCreated; i++)
                             {
-                                var metricStreamName = metricStreamConfigs[i]?.Name ?? instrument.Name;
+                                var metricStreamConfig = metricStreamConfigs[i];
+                                var metricStreamName = metricStreamConfig?.Name ?? instrument.Name;
                                 if (this.metricStreamNames.ContainsKey(metricStreamName))
                                 {
                                     // TODO: Log that instrument is ignored
@@ -151,7 +153,17 @@ namespace OpenTelemetry.Metrics
                                 }
                                 else
                                 {
-                                    var metric = new Metric(instrument, temporality, metricStreamName);
+                                    Metric metric;
+                                    if (metricStreamConfig is HistogramConfiguration histogramConfig
+                                        && histogramConfig.BucketBounds != null)
+                                    {
+                                        metric = new Metric(instrument, temporality, histogramConfig.BucketBounds, metricStreamName);
+                                    }
+                                    else
+                                    {
+                                        metric = new Metric(instrument, temporality, metricStreamName);
+                                    }
+
                                     this.metrics[index] = metric;
                                     metrics.Add(metric);
                                     this.metricStreamNames.Add(metricStreamName, true);
@@ -243,7 +255,8 @@ namespace OpenTelemetry.Metrics
             // of size one as state.
             var metrics = state as List<Metric>;
 
-            if (instrument == null || metrics == null)
+            Debug.Assert(instrument != null, "instrument must be non-null.");
+            if (metrics == null)
             {
                 // TODO: log
                 return;
@@ -260,7 +273,8 @@ namespace OpenTelemetry.Metrics
             // Get Instrument State
             var metrics = state as List<Metric>;
 
-            if (instrument == null || metrics == null)
+            Debug.Assert(instrument != null, "instrument must be non-null.");
+            if (metrics == null)
             {
                 // TODO: log
                 return;

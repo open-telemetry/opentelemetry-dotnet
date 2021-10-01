@@ -22,9 +22,9 @@ namespace OpenTelemetry.Metrics.Tests
     public class AggregatorTest
     {
         [Fact]
-        public void HistogramDistributeToAllBuckets()
+        public void HistogramDistributeToAllBucketsDefault()
         {
-            var histogramPoint = new MetricPoint(AggregationType.Histogram, DateTimeOffset.Now, null, null);
+            var histogramPoint = new MetricPoint(AggregationType.Histogram, DateTimeOffset.Now, null, null, Metric.DefaultHistogramBounds);
             histogramPoint.Update(-1);
             histogramPoint.Update(0);
             histogramPoint.Update(2);
@@ -54,6 +54,61 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 Assert.Equal(2, histogramPoint.BucketCounts[i]);
             }
+        }
+
+        [Fact]
+        public void HistogramDistributeToAllBucketsCustom()
+        {
+            var bounds = new double[] { 10, 20 };
+            var histogramPoint = new MetricPoint(AggregationType.Histogram, DateTimeOffset.Now, null, null, bounds);
+
+            // 5 recordings <=10
+            histogramPoint.Update(-10);
+            histogramPoint.Update(0);
+            histogramPoint.Update(1);
+            histogramPoint.Update(9);
+            histogramPoint.Update(10);
+
+            // 2 recordings >10, <=20
+            histogramPoint.Update(11);
+            histogramPoint.Update(19);
+
+            histogramPoint.TakeSnapShot(true);
+
+            // Sum of all recordings
+            Assert.Equal(40, histogramPoint.DoubleValue);
+
+            // Count  = # of recordings
+            Assert.Equal(7, histogramPoint.LongValue);
+            Assert.Equal(bounds.Length + 1, histogramPoint.BucketCounts.Length);
+            Assert.Equal(5, histogramPoint.BucketCounts[0]);
+            Assert.Equal(2, histogramPoint.BucketCounts[1]);
+            Assert.Equal(0, histogramPoint.BucketCounts[2]);
+        }
+
+        [Fact]
+        public void HistogramWithOnlySumCount()
+        {
+            var bounds = new double[] { };
+            var histogramPoint = new MetricPoint(AggregationType.HistogramSumCount, DateTimeOffset.Now, null, null, bounds);
+
+            histogramPoint.Update(-10);
+            histogramPoint.Update(0);
+            histogramPoint.Update(1);
+            histogramPoint.Update(9);
+            histogramPoint.Update(10);
+            histogramPoint.Update(11);
+            histogramPoint.Update(19);
+
+            histogramPoint.TakeSnapShot(true);
+
+            // Sum of all recordings
+            Assert.Equal(40, histogramPoint.DoubleValue);
+
+            // Count  = # of recordings
+            Assert.Equal(7, histogramPoint.LongValue);
+            Assert.Null(histogramPoint.BucketCounts);
+            Assert.Null(histogramPoint.ExplicitBounds);
         }
     }
 }

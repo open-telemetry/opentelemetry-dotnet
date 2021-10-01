@@ -70,11 +70,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new ActivitySource("odd", "1.3.5"),
             };
 
-            var options = new OtlpExporterOptions();
-            using var exporter = new OtlpTraceExporter(
-                options,
-                new OtlpGrpcTraceExportClient(options, new NoopTraceServiceClient()));
-
             var resourceBuilder = ResourceBuilder.CreateEmpty();
             if (includeServiceNameInResource)
             {
@@ -92,8 +87,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 .AddSource(sources[1].Name);
 
             using var openTelemetrySdk = builder.Build();
-
-            exporter.ParentProvider = openTelemetrySdk;
 
             var processor = new BatchActivityExportProcessor(new TestExporter<Activity>(RunTest));
             const int numOfSpans = 10;
@@ -115,18 +108,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 var request = new OtlpCollector.ExportTraceServiceRequest();
 
-                request.AddBatch(exporter.ProcessResource, batch);
+                request.AddBatch(resourceBuilder.Build().ToOtlpResource(), batch);
 
                 Assert.Single(request.ResourceSpans);
                 var oltpResource = request.ResourceSpans.First().Resource;
                 if (includeServiceNameInResource)
                 {
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service-name");
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.ResourceSemanticConventions.AttributeServiceNamespace && kvp.Value.StringValue == "ns1");
+                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service-name");
+                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceNamespace && kvp.Value.StringValue == "ns1");
                 }
                 else
                 {
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == Resources.ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
+                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
                 }
 
                 foreach (var instrumentationLibrarySpans in request.ResourceSpans.First().InstrumentationLibrarySpans)
