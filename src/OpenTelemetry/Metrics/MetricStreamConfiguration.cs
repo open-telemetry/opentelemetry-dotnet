@@ -35,8 +35,6 @@ namespace OpenTelemetry.Metrics
 
         public string Description { get; set; }
 
-        public string Unit { get; set; }
-
         public string[] TagKeys { get; set; }
 
         public virtual Aggregation Aggregation { get; set; }

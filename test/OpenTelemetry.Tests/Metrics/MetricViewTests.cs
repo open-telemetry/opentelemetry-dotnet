@@ -66,7 +66,7 @@ namespace OpenTelemetry.Metrics.Tests
                     if (instrument.Meter.Name.Equals(meter2.Name, StringComparison.OrdinalIgnoreCase)
                         && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
                     {
-                        return new MetricStreamConfiguration() { Name = "name1_Renamed" };
+                        return new MetricStreamConfiguration() { Name = "name1_Renamed", Description = "new description" };
                     }
                     else
                     {
@@ -80,14 +80,16 @@ namespace OpenTelemetry.Metrics.Tests
             // exported (the 2nd one gets dropped due to
             // name conflict). Due to renaming with Views,
             // we expect 2 metric streams here.
-            var counter1 = meter1.CreateCounter<long>("name1");
-            var counter2 = meter2.CreateCounter<long>("name1");
+            var counter1 = meter1.CreateCounter<long>("name1", "unit", "original_description");
+            var counter2 = meter2.CreateCounter<long>("name1", "unit", "original_description");
             counter1.Add(10);
             counter2.Add(10);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Equal(2, exportedItems.Count);
             Assert.Equal("name1", exportedItems[0].Name);
             Assert.Equal("name1_Renamed", exportedItems[1].Name);
+            Assert.Equal("original_description", exportedItems[0].Description);
+            Assert.Equal("new description", exportedItems[1].Description);
         }
 
         [Fact]
