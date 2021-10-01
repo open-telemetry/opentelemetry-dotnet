@@ -29,17 +29,8 @@ namespace OpenTelemetry.Metrics
             Instrument instrument,
             AggregationTemporality temporality,
             string metricName,
-            string metricDescription)
-            : this(instrument, temporality, metricName, metricDescription, DefaultHistogramBounds)
-        {
-        }
-
-        internal Metric(
-            Instrument instrument,
-            AggregationTemporality temporality,
-            string metricName,
             string metricDescription,
-            double[] histogramBounds)
+            double[] histogramBounds = null)
         {
             this.Name = metricName;
             this.Description = metricDescription;
@@ -96,7 +87,9 @@ namespace OpenTelemetry.Metrics
                 || instrument.GetType() == typeof(Histogram<double>))
             {
                 this.MetricType = MetricType.Histogram;
-                if (histogramBounds.Length == 0)
+
+                if (histogramBounds != null
+                    && histogramBounds.Length == 0)
                 {
                     aggType = AggregationType.HistogramSumCount;
                 }
@@ -110,7 +103,7 @@ namespace OpenTelemetry.Metrics
                 // TODO: Log and assign some invalid Enum.
             }
 
-            this.aggStore = new AggregatorStore(aggType, temporality, histogramBounds);
+            this.aggStore = new AggregatorStore(aggType, temporality, histogramBounds ?? DefaultHistogramBounds);
             this.Temporality = temporality;
         }
 
