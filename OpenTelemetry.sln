@@ -218,6 +218,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customizing-the-sdk", "docs
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Tests.Stress", "test\OpenTelemetry.Tests.Stress\OpenTelemetry.Tests.Stress.csproj", "{2770158A-D220-414B-ABC6-179371323579}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus.Tests", "test\OpenTelemetry.Exporter.Prometheus.Tests\OpenTelemetry.Exporter.Prometheus.Tests.csproj", "{380EE686-91F1-45B3-AEEB-755F0E5B068F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -448,6 +450,10 @@ Global
 		{2770158A-D220-414B-ABC6-179371323579}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2770158A-D220-414B-ABC6-179371323579}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2770158A-D220-414B-ABC6-179371323579}.Release|Any CPU.Build.0 = Release|Any CPU
+		{380EE686-91F1-45B3-AEEB-755F0E5B068F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{380EE686-91F1-45B3-AEEB-755F0E5B068F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{380EE686-91F1-45B3-AEEB-755F0E5B068F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{380EE686-91F1-45B3-AEEB-755F0E5B068F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

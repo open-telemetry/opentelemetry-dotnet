@@ -28,6 +28,8 @@ namespace OpenTelemetry.Exporter.Prometheus
     {
         public const string ContentType = "text/plain; version = 0.0.4";
 
+        internal static Func<DateTimeOffset> GetUtcNowDateTimeOffset = () => DateTimeOffset.UtcNow;
+
         private static readonly char[] FirstCharacterNameCharset =
         {
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
@@ -141,7 +143,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             // ] value [ timestamp ]
             // In the sample syntax:
 
-            var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture);
+            var now = GetUtcNowDateTimeOffset().ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture);
 
             foreach (var m in this.values)
             {
