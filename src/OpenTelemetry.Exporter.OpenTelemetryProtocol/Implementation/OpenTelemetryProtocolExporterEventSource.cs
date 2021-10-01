@@ -104,7 +104,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             this.WriteEvent(7, exception);
         }
 
-        [Event(8, Message = "Could not translate LogRecord from class '{0}' and method '{1}', log will not be recorded.", Level = EventLevel.Informational)]
+        [Event(8, Message = "Could not translate LogRecord from class '{0}' and method '{1}', log will not be exported.", Level = EventLevel.Informational)]
         public void CouldNotTranslateLogRecord(string className, string methodName)
         {
             this.WriteEvent(8, className, methodName);
