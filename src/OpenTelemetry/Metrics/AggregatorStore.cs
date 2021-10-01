@@ -40,15 +40,35 @@ namespace OpenTelemetry.Metrics
         private double[] histogramBounds;
         private DateTimeOffset startTimeExclusive;
         private DateTimeOffset endTimeInclusive;
+        private UpdateLongDelegate updateLongCallback;
+        private UpdateDoubleDelegate updateDoubleCallback;
 
-        internal AggregatorStore(AggregationType aggType, AggregationTemporality temporality, double[] histogramBounds)
+        internal AggregatorStore(
+            AggregationType aggType,
+            AggregationTemporality temporality,
+            double[] histogramBounds,
+            string[] tagKeysInteresting = null)
         {
             this.metrics = new MetricPoint[MaxMetricPoints];
             this.aggType = aggType;
             this.temporality = temporality;
             this.histogramBounds = histogramBounds;
             this.startTimeExclusive = DateTimeOffset.UtcNow;
+            if (tagKeysInteresting == null)
+            {
+                this.updateLongCallback = this.UpdateLong;
+                this.updateDoubleCallback = this.UpdateDouble;
+            }
+            else
+            {
+                this.updateLongCallback = this.UpdateLongCustomTags;
+                this.updateDoubleCallback = this.UpdateDoubleCustomTags;
+            }
         }
+
+        private delegate void UpdateLongDelegate(long value, ReadOnlySpan<KeyValuePair<string, object>> tags);
+
+        private delegate void UpdateDoubleDelegate(double value, ReadOnlySpan<KeyValuePair<string, object>> tags);
 
         internal int FindMetricAggregators(ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
@@ -71,42 +91,14 @@ namespace OpenTelemetry.Metrics
             return this.LookupAggregatorStore(tagKey, tagValue, tagLength);
         }
 
-        internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        internal void Update(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            try
-            {
-                var index = this.FindMetricAggregators(tags);
-                if (index < 0)
-                {
-                    // TODO: Measurement dropped due to MemoryPoint cap hit.
-                    return;
-                }
-
-                this.metrics[index].Update(value);
-            }
-            catch (Exception)
-            {
-                // TODO: Measurement dropped due to internal exception.
-            }
+            this.updateLongCallback(value, tags);
         }
 
-        internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        internal void Update(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            try
-            {
-                var index = this.FindMetricAggregators(tags);
-                if (index < 0)
-                {
-                    // TODO: Measurement dropped due to MemoryPoint cap hit.
-                    return;
-                }
-
-                this.metrics[index].Update(value);
-            }
-            catch (Exception)
-            {
-                // TODO: Measurement dropped due to internal exception.
-            }
+            this.updateDoubleCallback(value, tags);
         }
 
         internal void SnapShot()
@@ -232,6 +224,82 @@ namespace OpenTelemetry.Metrics
             }
 
             return aggregatorIndex;
+        }
+
+        private void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            try
+            {
+                var index = this.FindMetricAggregators(tags);
+                if (index < 0)
+                {
+                    // TODO: Measurement dropped due to MemoryPoint cap hit.
+                    return;
+                }
+
+                this.metrics[index].Update(value);
+            }
+            catch (Exception)
+            {
+                // TODO: Measurement dropped due to internal exception.
+            }
+        }
+
+        private void UpdateLongCustomTags(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            try
+            {
+                var index = this.FindMetricAggregators(tags);
+                if (index < 0)
+                {
+                    // TODO: Measurement dropped due to MemoryPoint cap hit.
+                    return;
+                }
+
+                this.metrics[index].Update(value);
+            }
+            catch (Exception)
+            {
+                // TODO: Measurement dropped due to internal exception.
+            }
+        }
+
+        private void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            try
+            {
+                var index = this.FindMetricAggregators(tags);
+                if (index < 0)
+                {
+                    // TODO: Measurement dropped due to MemoryPoint cap hit.
+                    return;
+                }
+
+                this.metrics[index].Update(value);
+            }
+            catch (Exception)
+            {
+                // TODO: Measurement dropped due to internal exception.
+            }
+        }
+
+        private void UpdateDoubleCustomTags(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            try
+            {
+                var index = this.FindMetricAggregators(tags);
+                if (index < 0)
+                {
+                    // TODO: Measurement dropped due to MemoryPoint cap hit.
+                    return;
+                }
+
+                this.metrics[index].Update(value);
+            }
+            catch (Exception)
+            {
+                // TODO: Measurement dropped due to internal exception.
+            }
         }
     }
 }

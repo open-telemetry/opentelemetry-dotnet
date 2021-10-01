@@ -155,15 +155,10 @@ namespace OpenTelemetry.Metrics
                                 {
                                     Metric metric;
                                     var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
-                                    if (metricStreamConfig is HistogramConfiguration histogramConfig
-                                        && histogramConfig.BucketBounds != null)
-                                    {
-                                        metric = new Metric(instrument, temporality, metricStreamName, metricDescription, histogramConfig.BucketBounds);
-                                    }
-                                    else
-                                    {
-                                        metric = new Metric(instrument, temporality, metricStreamName, metricDescription);
-                                    }
+                                    string[] tagKeysInteresting = metricStreamConfig?.TagKeys;
+                                    double[] histogramBucketBounds = (metricStreamConfig is HistogramConfiguration histogramConfig
+                                        && histogramConfig.BucketBounds != null) ? histogramConfig.BucketBounds : null;
+                                    metric = new Metric(instrument, temporality, metricStreamName, metricDescription, histogramBucketBounds, tagKeysInteresting);
 
                                     this.metrics[index] = metric;
                                     metrics.Add(metric);
