@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -36,17 +37,20 @@ namespace OpenTelemetry.Exporter.Prometheus
         private const string PrometheusHistogramBucketLabelPositiveInfinity = "+Inf";
         private const string PrometheusHistogramBucketLabelLessThan = "le";
 
+        private static readonly Func<DateTimeOffset> DefaultGetUtcNowDateTimeOffset = () => DateTimeOffset.UtcNow;
+
         /// <summary>
         /// Serialize metrics to prometheus format.
         /// </summary>
         /// <param name="exporter"><see cref="PrometheusExporter"/>.</param>
         /// <param name="writer">StreamWriter to write to.</param>
+        /// <param name="getUtcNowDateTimeOffset">Optional function to resolve the current date &amp; time.</param>
         /// <returns><see cref="Task"/> to await the operation.</returns>
-        public static async Task WriteMetricsCollection(this PrometheusExporter exporter, StreamWriter writer)
+        public static async Task WriteMetricsCollection(this PrometheusExporter exporter, StreamWriter writer, Func<DateTimeOffset> getUtcNowDateTimeOffset = null)
         {
             foreach (var metric in exporter.Metrics)
             {
-                var builder = new PrometheusMetricBuilder()
+                var builder = new PrometheusMetricBuilder(getUtcNowDateTimeOffset ?? DefaultGetUtcNowDateTimeOffset)
                     .WithName(metric.Name)
                     .WithDescription(metric.Description);
 
