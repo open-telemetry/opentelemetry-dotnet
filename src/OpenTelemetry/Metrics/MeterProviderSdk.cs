@@ -264,9 +264,19 @@ namespace OpenTelemetry.Metrics
                 return;
             }
 
-            foreach (var metric in metrics)
+            if (metrics.Count == 1)
             {
-                metric.UpdateDouble(value, tagsRos);
+                // special casing the common path
+                // as this is faster than the
+                // foreach, when count is 1.
+                metrics[0].UpdateDouble(value, tagsRos);
+            }
+            else
+            {
+                foreach (var metric in metrics)
+                {
+                    metric.UpdateDouble(value, tagsRos);
+                }
             }
         }
 
@@ -282,9 +292,19 @@ namespace OpenTelemetry.Metrics
                 return;
             }
 
-            foreach (var metric in metrics)
+            if (metrics.Count == 1)
             {
-                metric.UpdateLong(value, tagsRos);
+                // special casing the common path
+                // as this is faster than the
+                // foreach, when count is 1.
+                metrics[0].UpdateLong(value, tagsRos);
+            }
+            else
+            {
+                foreach (var metric in metrics)
+                {
+                    metric.UpdateLong(value, tagsRos);
+                }
             }
         }
 
