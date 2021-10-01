@@ -25,15 +25,15 @@ namespace OpenTelemetry.Metrics
         internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 };
         private AggregatorStore aggStore;
 
-        internal Metric(Instrument instrument, AggregationTemporality temporality, string metricName = "")
-            : this(instrument, temporality, DefaultHistogramBounds, metricName)
+        internal Metric(
+            Instrument instrument,
+            AggregationTemporality temporality,
+            string metricName,
+            string metricDescription,
+            double[] histogramBounds = null)
         {
-        }
-
-        internal Metric(Instrument instrument, AggregationTemporality temporality, double[] histogramBounds, string metricName = "")
-        {
-            this.Name = string.IsNullOrWhiteSpace(metricName) ? instrument.Name : metricName;
-            this.Description = instrument.Description;
+            this.Name = metricName;
+            this.Description = metricDescription;
             this.Unit = instrument.Unit;
             this.Meter = instrument.Meter;
             AggregationType aggType = default;
@@ -87,7 +87,9 @@ namespace OpenTelemetry.Metrics
                 || instrument.GetType() == typeof(Histogram<double>))
             {
                 this.MetricType = MetricType.Histogram;
-                if (histogramBounds.Length == 0)
+
+                if (histogramBounds != null
+                    && histogramBounds.Length == 0)
                 {
                     aggType = AggregationType.HistogramSumCount;
                 }
@@ -101,7 +103,7 @@ namespace OpenTelemetry.Metrics
                 // TODO: Log and assign some invalid Enum.
             }
 
-            this.aggStore = new AggregatorStore(aggType, temporality, histogramBounds);
+            this.aggStore = new AggregatorStore(aggType, temporality, histogramBounds ?? DefaultHistogramBounds);
             this.Temporality = temporality;
         }
 
