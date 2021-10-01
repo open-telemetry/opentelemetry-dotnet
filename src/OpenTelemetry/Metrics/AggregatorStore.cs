@@ -321,6 +321,9 @@ namespace OpenTelemetry.Metrics
                 return 0;
             }
 
+            // TODO: Get only interesting tags
+            // from the incoming tags
+
             var storage = ThreadStaticStorage.GetStorage();
 
             storage.SplitToKeysAndValues(tags, tagLength, out var tagKey, out var tagValue);
