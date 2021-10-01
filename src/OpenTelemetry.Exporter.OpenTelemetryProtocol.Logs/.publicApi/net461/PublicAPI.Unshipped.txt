@@ -1,4 +1,2 @@
-OpenTelemetry.Exporter.OtlpLogExporter
-OpenTelemetry.Exporter.OtlpLogExporter.OtlpLogExporter(OpenTelemetry.Exporter.OtlpExporterOptions options) -> void
-override OpenTelemetry.Exporter.OtlpLogExporter.Export(in OpenTelemetry.Batch<OpenTelemetry.Logs.LogRecord> logRecordBatch) -> OpenTelemetry.ExportResult
-override OpenTelemetry.Exporter.OtlpLogExporter.OnShutdown(int timeoutMilliseconds) -> bool
+OpenTelemetry.Logs.OtlpLogsExporterHelperExtensions
+static OpenTelemetry.Logs.OtlpLogsExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions loggerOptions, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions> configure = null) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions

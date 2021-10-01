@@ -40,18 +40,18 @@ namespace OpenTelemetry.Logs
             return AddOtlpExporter(loggerOptions, new OtlpExporterOptions(), configure);
         }
 
-        private static OpenTelemetryLoggerOptions AddOtlpExporter(OpenTelemetryLoggerOptions builder, OtlpExporterOptions exporterOptions, Action<OtlpExporterOptions> configure = null)
+        private static OpenTelemetryLoggerOptions AddOtlpExporter(OpenTelemetryLoggerOptions loggerOptions, OtlpExporterOptions exporterOptions, Action<OtlpExporterOptions> configure = null)
         {
             configure?.Invoke(exporterOptions);
             var otlpExporter = new OtlpLogsExporter(exporterOptions);
 
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
-                return builder.AddProcessor(new SimpleLogRecordExportProcessor(otlpExporter));
+                return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(otlpExporter));
             }
             else
             {
-                return builder.AddProcessor(new BatchLogRecordExportProcessor(
+                return loggerOptions.AddProcessor(new BatchLogRecordExportProcessor(
                     otlpExporter,
                     exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
                     exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,

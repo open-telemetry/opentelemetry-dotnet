@@ -16,7 +16,3 @@ OpenTelemetry.Trace.OtlpTraceExporterHelperExtensions
 override OpenTelemetry.Exporter.OtlpTraceExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> activityBatch) -> OpenTelemetry.ExportResult
 override OpenTelemetry.Exporter.OtlpTraceExporter.OnShutdown(int timeoutMilliseconds) -> bool
 static OpenTelemetry.Trace.OtlpTraceExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder
-OpenTelemetry.Exporter.OtlpLogExporter
-OpenTelemetry.Exporter.OtlpLogExporter.OtlpLogExporter(OpenTelemetry.Exporter.OtlpExporterOptions options) -> void
-override OpenTelemetry.Exporter.OtlpLogExporter.Export(in OpenTelemetry.Batch<OpenTelemetry.Logs.LogRecord> logRecordBatch) -> OpenTelemetry.ExportResult
-override OpenTelemetry.Exporter.OtlpLogExporter.OnShutdown(int timeoutMilliseconds) -> bool
