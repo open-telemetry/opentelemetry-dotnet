@@ -178,6 +178,16 @@ namespace OpenTelemetry.Metrics
                         }
                     }
                 };
+
+                // Everything double
+                this.listener.SetMeasurementEventCallback<double>(this.MeasurementRecordedDouble);
+                this.listener.SetMeasurementEventCallback<float>((instrument, value, tags, state) => this.MeasurementRecordedDouble(instrument, value, tags, state));
+
+                // Everything long
+                this.listener.SetMeasurementEventCallback<long>(this.MeasurementRecordedLong);
+                this.listener.SetMeasurementEventCallback<int>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
+                this.listener.SetMeasurementEventCallback<short>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
+                this.listener.SetMeasurementEventCallback<byte>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
             }
             else
             {
@@ -186,7 +196,7 @@ namespace OpenTelemetry.Metrics
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
                         var metricName = instrument.Name;
-                        List<Metric> metrics = null;
+                        Metric metric = null;
                         lock (this.instrumentCreationLock)
                         {
                             if (this.metricStreamNames.ContainsKey(metricName))
@@ -206,31 +216,28 @@ namespace OpenTelemetry.Metrics
                             }
                             else
                             {
-                                metrics = new List<Metric>(1);
-                                var metric = new Metric(instrument, temporality, metricName, instrument.Description);
+                                metric = new Metric(instrument, temporality, metricName, instrument.Description);
                                 this.metrics[index] = metric;
-                                metrics.Add(metric);
                                 this.metricStreamNames.Add(metricName, true);
                             }
                         }
 
-                        listener.EnableMeasurementEvents(instrument, metrics);
+                        listener.EnableMeasurementEvents(instrument, metric);
                     }
                 };
+
+                // Everything double
+                this.listener.SetMeasurementEventCallback<double>(this.MeasurementRecordedDoubleSingleStream);
+                this.listener.SetMeasurementEventCallback<float>((instrument, value, tags, state) => this.MeasurementRecordedDoubleSingleStream(instrument, value, tags, state));
+
+                // Everything long
+                this.listener.SetMeasurementEventCallback<long>(this.MeasurementRecordedLongSingleStream);
+                this.listener.SetMeasurementEventCallback<int>((instrument, value, tags, state) => this.MeasurementRecordedLongSingleStream(instrument, value, tags, state));
+                this.listener.SetMeasurementEventCallback<short>((instrument, value, tags, state) => this.MeasurementRecordedLongSingleStream(instrument, value, tags, state));
+                this.listener.SetMeasurementEventCallback<byte>((instrument, value, tags, state) => this.MeasurementRecordedLongSingleStream(instrument, value, tags, state));
             }
 
             this.listener.MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state);
-
-            // Everything double
-            this.listener.SetMeasurementEventCallback<double>((instrument, value, tags, state) => this.MeasurementRecordedDouble(instrument, value, tags, state));
-            this.listener.SetMeasurementEventCallback<float>((instrument, value, tags, state) => this.MeasurementRecordedDouble(instrument, value, tags, state));
-
-            // Everything long
-            this.listener.SetMeasurementEventCallback<long>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
-            this.listener.SetMeasurementEventCallback<int>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
-            this.listener.SetMeasurementEventCallback<short>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
-            this.listener.SetMeasurementEventCallback<byte>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
-
             this.listener.Start();
         }
 
@@ -248,12 +255,6 @@ namespace OpenTelemetry.Metrics
         internal void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
             // Get Instrument State
-            // TODO: Benchmark and see if it makes
-            // sense to use a different state
-            // when there are no views registered.
-            // In that case, storing Metric as state
-            // might be faster than storing List<Metric>
-            // of size one as state.
             var metrics = state as List<Metric>;
 
             Debug.Assert(instrument != null, "instrument must be non-null.");
@@ -263,9 +264,19 @@ namespace OpenTelemetry.Metrics
                 return;
             }
 
-            foreach (var metric in metrics)
+            if (metrics.Count == 1)
             {
-                metric.UpdateDouble(value, tagsRos);
+                // special casing the common path
+                // as this is faster than the
+                // foreach, when count is 1.
+                metrics[0].UpdateDouble(value, tagsRos);
+            }
+            else
+            {
+                foreach (var metric in metrics)
+                {
+                    metric.UpdateDouble(value, tagsRos);
+                }
             }
         }
 
@@ -281,10 +292,50 @@ namespace OpenTelemetry.Metrics
                 return;
             }
 
-            foreach (var metric in metrics)
+            if (metrics.Count == 1)
             {
-                metric.UpdateLong(value, tagsRos);
+                // special casing the common path
+                // as this is faster than the
+                // foreach, when count is 1.
+                metrics[0].UpdateLong(value, tagsRos);
             }
+            else
+            {
+                foreach (var metric in metrics)
+                {
+                    metric.UpdateLong(value, tagsRos);
+                }
+            }
+        }
+
+        internal void MeasurementRecordedLongSingleStream(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
+        {
+            // Get Instrument State
+            var metric = state as Metric;
+
+            Debug.Assert(instrument != null, "instrument must be non-null.");
+            if (metric == null)
+            {
+                // TODO: log
+                return;
+            }
+
+            metric.UpdateLong(value, tagsRos);
+        }
+
+        internal void MeasurementRecordedDoubleSingleStream(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
+        {
+            // Get Instrument State
+            var metric = state as Metric;
+
+            Debug.Assert(instrument != null, "instrument must be non-null.");
+            if (metric == null)
+            {
+                // TODO: log
+                return;
+            }
+
+            metric.UpdateDouble(value, tagsRos);
         }
 
         internal Batch<Metric> Collect()
