@@ -326,14 +326,24 @@ namespace OpenTelemetry.Metrics
 
             var storage = ThreadStaticStorage.GetStorage();
 
-            storage.SplitToKeysAndValues(tags, tagLength, out var tagKey, out var tagValue);
+            storage.SplitToKeysAndValues(tags, tagLength, this.tagKeysInteresting, out var tagKey, out var tagValue);
 
-            if (tagLength > 1)
+            // Actual number of tags depend on how many
+            // of the incoming tags has user opted to
+            // select.
+            var actualLength = tagKey.Length;
+            if (actualLength == 0)
+            {
+                this.InitializeZeroTagPointIfNotInitialized();
+                return 0;
+            }
+
+            if (actualLength > 1)
             {
                 Array.Sort<string, object>(tagKey, tagValue);
             }
 
-            return this.LookupAggregatorStore(tagKey, tagValue, tagLength);
+            return this.LookupAggregatorStore(tagKey, tagValue, actualLength);
         }
     }
 }
