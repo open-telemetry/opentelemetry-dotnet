@@ -56,7 +56,6 @@ namespace OpenTelemetry.Trace
                 {
                     this.legacyActivityWildcardMode = true;
                     this.legacyActivityWildcardModeRegex = GetWildcardRegex(legacyActivityOperationNames.Keys);
-
                     break;
                 }
             }
@@ -242,10 +241,8 @@ namespace OpenTelemetry.Trace
                 {
                     return this.legacyActivityWildcardModeRegex.IsMatch(activity.OperationName);
                 }
-                else
-                {
-                    return legacyActivityOperationNames.ContainsKey(activity.OperationName);
-                }
+
+                return legacyActivityOperationNames.ContainsKey(activity.OperationName);
             }
         }
 
