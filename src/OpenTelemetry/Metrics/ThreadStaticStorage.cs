@@ -70,7 +70,7 @@ namespace OpenTelemetry.Metrics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, int tagLength, HashSet<string> tagKeysInteresting, out string[] tagKeys, out object[] tagValues)
+        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, int tagLength, HashSet<string> tagKeysInteresting, out string[] tagKeys, out object[] tagValues, out int actualLength)
         {
             // Iterate over tags to find the exact length.
             int i = 0;
@@ -82,9 +82,14 @@ namespace OpenTelemetry.Metrics
                 }
             }
 
-            int actualLength = i;
+            actualLength = i;
 
-            if (actualLength <= MaxTagCacheSize)
+            if (actualLength == 0)
+            {
+                tagKeys = null;
+                tagValues = null;
+            }
+            else if (actualLength <= MaxTagCacheSize)
             {
                 tagKeys = this.tagStorage[actualLength - 1].TagKey;
                 tagValues = this.tagStorage[actualLength - 1].TagValue;

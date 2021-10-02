@@ -326,12 +326,11 @@ namespace OpenTelemetry.Metrics
 
             var storage = ThreadStaticStorage.GetStorage();
 
-            storage.SplitToKeysAndValues(tags, tagLength, this.tagKeysInteresting, out var tagKey, out var tagValue);
+            storage.SplitToKeysAndValues(tags, tagLength, this.tagKeysInteresting, out var tagKey, out var tagValue, out var actualLength);
 
             // Actual number of tags depend on how many
             // of the incoming tags has user opted to
             // select.
-            var actualLength = tagKey.Length;
             if (actualLength == 0)
             {
                 this.InitializeZeroTagPointIfNotInitialized();
