@@ -5,6 +5,9 @@
 * SDK is allocation-free on recording of measurements with
   upto 8 tags.
 
+* TracerProviderBuilder.AddLegacySource now supports wildcard activity names.
+  ([#2183](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2183))
+
 ## 1.2.0-alpha4
 
 Released 2021-Sep-23
