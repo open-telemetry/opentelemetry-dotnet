@@ -34,6 +34,8 @@ namespace OpenTelemetry.Trace
         private readonly Sampler sampler;
         private readonly Action<Activity> getRequestedDataAction;
         private readonly bool supportLegacyActivity;
+        private readonly bool legacyActivityWildcardMode;
+        private readonly Regex legacyActivityWildcardModeRegex;
         private BaseProcessor<Activity> processor;
 
         internal TracerProviderSdk(
@@ -47,6 +49,17 @@ namespace OpenTelemetry.Trace
             this.Resource = resource;
             this.sampler = sampler;
             this.supportLegacyActivity = legacyActivityOperationNames.Count > 0;
+
+            foreach (var legacyName in legacyActivityOperationNames)
+            {
+                if (legacyName.Key.EndsWith("*"))
+                {
+                    this.legacyActivityWildcardMode = true;
+                    this.legacyActivityWildcardModeRegex = GetWildcardRegex(legacyActivityOperationNames.Keys);
+
+                    break;
+                }
+            }
 
             foreach (var processor in processors)
             {
@@ -71,7 +84,7 @@ namespace OpenTelemetry.Trace
                     if (this.supportLegacyActivity && string.IsNullOrEmpty(activity.Source.Name))
                     {
                         // We have a legacy activity in hand now
-                        if (legacyActivityOperationNames.ContainsKey(activity.OperationName))
+                        if (ShouldListenToLegacyActivity(activity))
                         {
                             // Legacy activity matches the user configured list.
                             // Call sampler for the legacy activity
@@ -111,7 +124,7 @@ namespace OpenTelemetry.Trace
                     if (this.supportLegacyActivity && string.IsNullOrEmpty(activity.Source.Name))
                     {
                         // We have a legacy activity in hand now
-                        if (!legacyActivityOperationNames.ContainsKey(activity.OperationName))
+                        if (!ShouldListenToLegacyActivity(activity))
                         {
                             // Legacy activity doesn't match the user configured list. No need to proceed further.
                             return;
@@ -172,13 +185,13 @@ namespace OpenTelemetry.Trace
                     if (name.Contains('*'))
                     {
                         wildcardMode = true;
+                        break;
                     }
                 }
 
                 if (wildcardMode)
                 {
-                    var pattern = '^' + string.Join("|", from name in sources select "(?:" + Regex.Escape(name).Replace("\\*", ".*") + ')') + '$';
-                    var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                    var regex = GetWildcardRegex(sources);
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
@@ -216,6 +229,24 @@ namespace OpenTelemetry.Trace
 
             ActivitySource.AddActivityListener(listener);
             this.listener = listener;
+
+            Regex GetWildcardRegex(IEnumerable<string> collection)
+            {
+                var pattern = '^' + string.Join("|", from name in collection select "(?:" + Regex.Escape(name).Replace("\\*", ".*") + ')') + '$';
+                return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            }
+
+            bool ShouldListenToLegacyActivity(Activity activity)
+            {
+                if (this.legacyActivityWildcardMode)
+                {
+                    return this.legacyActivityWildcardModeRegex.IsMatch(activity.OperationName);
+                }
+                else
+                {
+                    return legacyActivityOperationNames.ContainsKey(activity.OperationName);
+                }
+            }
         }
 
         internal Resource Resource { get; }
