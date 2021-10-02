@@ -52,7 +52,7 @@ namespace OpenTelemetry.Trace
 
             foreach (var legacyName in legacyActivityOperationNames)
             {
-                if (legacyName.Key.EndsWith("*"))
+                if (legacyName.Key.Contains('*'))
                 {
                     this.legacyActivityWildcardMode = true;
                     this.legacyActivityWildcardModeRegex = GetWildcardRegex(legacyActivityOperationNames.Keys);
