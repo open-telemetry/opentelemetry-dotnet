@@ -106,7 +106,6 @@ namespace Benchmarks.Trace
 
             Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new AlwaysOnSampler())
-                .AddSource(this.sourceWithTwoLegacyActivityOperationNameSubscriptions.Name)
                 .AddLegacySource("WildcardMatch.*")
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
