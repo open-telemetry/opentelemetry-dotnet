@@ -189,17 +189,17 @@ namespace Benchmarks.Trace
         }
 
         [Benchmark]
-        public void LegacyDiagnosticActivity_ExactMatchMode()
+        public void LegacyActivity_ExactMatchMode()
         {
-            using (var activity = new Activity("ExactMatch.OperationName1"))
+            using (var activity = new Activity("ExactMatch.OperationName1").Start())
             {
             }
         }
 
         [Benchmark]
-        public void LegacyDiagnosticActivity_WildcardMatchMode()
+        public void LegacyActivity_WildcardMatchMode()
         {
-            using (var activity = new Activity("WildcardMatch.OperationName1"))
+            using (var activity = new Activity("WildcardMatch.OperationName1").Start())
             {
             }
         }
