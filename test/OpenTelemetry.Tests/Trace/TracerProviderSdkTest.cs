@@ -1015,7 +1015,8 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.Contains(stopOpName, onStopProcessedActivities);  // Processor.OnEnd is called since we added a legacy OperationName
             }
 
-            Activity nonLegacyActivity = new Activity("TestActivity");
+            // Ensure we can still process "normal" activities when in legacy wildcard mode.
+            Activity nonLegacyActivity = activitySource.StartActivity("TestActivity");
             nonLegacyActivity.Start();
             nonLegacyActivity.Stop();
 
