@@ -985,6 +985,7 @@ namespace OpenTelemetry.Trace.Tests
                 };
 
             var legacySourceNamespaces = new[] { "LegacyNamespace.*", "Namespace.*.Operation" };
+            using var activitySource = new ActivitySource(ActivitySourceName);
 
             // AddLegacyOperationName chained to TracerProviderBuilder
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -992,6 +993,7 @@ namespace OpenTelemetry.Trace.Tests
                         .AddProcessor(testActivityProcessor)
                         .AddLegacySource(legacySourceNamespaces[0])
                         .AddLegacySource(legacySourceNamespaces[1])
+                        .AddSource(ActivitySourceName)
                         .Build();
 
             foreach (var ns in legacySourceNamespaces)
@@ -1012,6 +1014,13 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.Contains(stopOpName, onStartProcessedActivities); // Processor.OnStart is called since we added a legacy OperationName
                 Assert.Contains(stopOpName, onStopProcessedActivities);  // Processor.OnEnd is called since we added a legacy OperationName
             }
+
+            Activity nonLegacyActivity = new Activity("TestActivity");
+            nonLegacyActivity.Start();
+            nonLegacyActivity.Stop();
+
+            Assert.Contains(nonLegacyActivity.OperationName, onStartProcessedActivities); // Processor.OnStart is called since we added a legacy OperationName
+            Assert.Contains(nonLegacyActivity.OperationName, onStopProcessedActivities);  // Processor.OnEnd is called since we added a legacy OperationName
         }
 
         public void Dispose()
