@@ -1,4 +1,4 @@
-// <copyright file="OtlpMetricsExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpMetricExporter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,27 +28,27 @@ namespace OpenTelemetry.Exporter
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
     [AggregationTemporality(AggregationTemporality.Cumulative | AggregationTemporality.Delta, AggregationTemporality.Cumulative)]
-    public class OtlpMetricsExporter : BaseExporter<Metric>
+    public class OtlpMetricExporter : BaseExporter<Metric>
     {
         private readonly IExportClient<OtlpCollector.ExportMetricsServiceRequest> exportClient;
 
         private OtlpResource.Resource processResource;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OtlpMetricsExporter"/> class.
+        /// Initializes a new instance of the <see cref="OtlpMetricExporter"/> class.
         /// </summary>
-        /// <param name="options">Configuration options for the export.</param>
-        public OtlpMetricsExporter(OtlpExporterOptions options)
+        /// <param name="options">Configuration options for the exporter.</param>
+        public OtlpMetricExporter(OtlpExporterOptions options)
             : this(options, null)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="OtlpMetricsExporter"/> class.
+        /// Initializes a new instance of the <see cref="OtlpMetricExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the export.</param>
         /// <param name="exportClient">Client used for sending export request.</param>
-        internal OtlpMetricsExporter(OtlpExporterOptions options, IExportClient<OtlpCollector.ExportMetricsServiceRequest> exportClient = null)
+        internal OtlpMetricExporter(OtlpExporterOptions options, IExportClient<OtlpCollector.ExportMetricsServiceRequest> exportClient = null)
         {
             if (exportClient != null)
             {

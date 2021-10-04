@@ -59,10 +59,16 @@ namespace OpenTelemetry.Exporter.Prometheus
         };
 
         private readonly ICollection<PrometheusMetricValueBuilder> values = new List<PrometheusMetricValueBuilder>();
+        private readonly Func<DateTimeOffset> getUtcNowDateTimeOffset;
 
         private string name;
         private string description;
         private string type;
+
+        public PrometheusMetricBuilder(Func<DateTimeOffset> getUtcNowDateTimeOffset)
+        {
+            this.getUtcNowDateTimeOffset = getUtcNowDateTimeOffset;
+        }
 
         public PrometheusMetricBuilder WithName(string name)
         {
@@ -141,7 +147,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             // ] value [ timestamp ]
             // In the sample syntax:
 
-            var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture);
+            var now = this.getUtcNowDateTimeOffset().ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture);
 
             foreach (var m in this.values)
             {
