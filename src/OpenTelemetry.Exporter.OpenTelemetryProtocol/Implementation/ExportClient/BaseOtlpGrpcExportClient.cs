@@ -54,7 +54,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         public abstract bool SendExportRequest(TRequest request, CancellationToken cancellationToken = default);
 
         /// <inheritdoc/>
-        public virtual bool CancelExportRequest(int timeoutMilliseconds)
+        public virtual bool Shutdown(int timeoutMilliseconds)
         {
             if (this.Channel == null)
             {

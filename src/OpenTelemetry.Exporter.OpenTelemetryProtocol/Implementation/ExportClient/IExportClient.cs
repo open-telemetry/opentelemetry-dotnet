@@ -31,15 +31,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         bool SendExportRequest(TRequest request, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Method for cancellation of export request.
+        /// Method for shutting down the export client.
         /// </summary>
         /// <param name="timeoutMilliseconds">
         /// The number of milliseconds to wait, or <c>Timeout.Infinite</c> to
         /// wait indefinitely.
         /// </param>
         /// <returns>
-        /// Returns <c>true</c> if cancellation succeeded; otherwise, <c>false</c>.
+        /// Returns <c>true</c> if shutdown succeeded; otherwise, <c>false</c>.
         /// </returns>
-        bool CancelExportRequest(int timeoutMilliseconds);
+        bool Shutdown(int timeoutMilliseconds);
     }
 }

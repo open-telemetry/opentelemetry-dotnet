@@ -25,7 +25,6 @@ using System.Runtime.CompilerServices;
 #else
 [assembly: InternalsVisibleTo("OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests")]
 [assembly: InternalsVisibleTo("Benchmarks")]
-[assembly: InternalsVisibleTo("Examples.Console")]
 
 // Used by Moq.
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]

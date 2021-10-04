@@ -95,7 +95,7 @@ namespace OpenTelemetry.Exporter
         /// <inheritdoc />
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
-            return this.exportClient?.CancelExportRequest(timeoutMilliseconds) ?? true;
+            return this.exportClient?.Shutdown(timeoutMilliseconds) ?? true;
         }
     }
 }

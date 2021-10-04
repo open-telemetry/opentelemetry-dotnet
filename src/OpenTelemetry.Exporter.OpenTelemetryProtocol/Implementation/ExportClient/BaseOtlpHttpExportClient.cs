@@ -67,7 +67,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         }
 
         /// <inheritdoc/>
-        public bool CancelExportRequest(int timeoutMilliseconds)
+        public bool Shutdown(int timeoutMilliseconds)
         {
             try
             {

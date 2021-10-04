@@ -335,7 +335,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
-        public void Shutdown_ExportRequestCancelled()
+        public void Shutdown_ClientShutdownIsCalled()
         {
             var exportClientMock = new Mock<IExportClient<OtlpCollector.ExportTraceServiceRequest>>();
 
@@ -343,7 +343,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var result = exporter.Shutdown();
 
-            exportClientMock.Verify(m => m.CancelExportRequest(It.IsAny<int>()), Times.Once());
+            exportClientMock.Verify(m => m.Shutdown(It.IsAny<int>()), Times.Once());
         }
 
         private class NoopTraceServiceClient : OtlpCollector.TraceService.ITraceServiceClient
