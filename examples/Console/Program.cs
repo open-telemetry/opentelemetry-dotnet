@@ -165,8 +165,8 @@ namespace Examples.Console
         [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "http://localhost:4317")]
         public string Endpoint { get; set; }
 
-        [Option('p', "protocol", HelpText = "Transport protocol used by exporter. Supported values: Grpc, HttpProtobuf (case sensitive).", Default = ExportProtocol.Grpc)]
-        public ExportProtocol Protocol { get; set; }
+        [Option('p', "protocol", HelpText = "Transport protocol used by exporter. Supported values: Grpc, HttpProtobuf (case sensitive).", Default = OtlpExportProtocol.Grpc)]
+        public OtlpExportProtocol Protocol { get; set; }
     }
 
     [Verb("inmemory", HelpText = "Specify the options required to test InMemory Exporter")]

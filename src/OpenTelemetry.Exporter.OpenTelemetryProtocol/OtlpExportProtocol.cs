@@ -1,4 +1,4 @@
-// <copyright file="ExportProtocol.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpExportProtocol.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ namespace OpenTelemetry.Exporter
     /// <summary>
     /// Supported by OTLP exporter protocol types according to the specification https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md.
     /// </summary>
-    public enum ExportProtocol : byte
+    public enum OtlpExportProtocol : byte
     {
         /// <summary>
         /// OTLP over gRPC (corresponds to 'grpc' Protocol configuration option). Used as default.

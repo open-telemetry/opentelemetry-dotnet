@@ -69,16 +69,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         /// <inheritdoc/>
         public bool Shutdown(int timeoutMilliseconds)
         {
-            try
-            {
-                this.HttpClient.CancelPendingRequests();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
-                return false;
-            }
+            this.HttpClient.CancelPendingRequests();
+            return true;
         }
 
         protected abstract HttpRequestMessage CreateHttpRequest(TRequest request);

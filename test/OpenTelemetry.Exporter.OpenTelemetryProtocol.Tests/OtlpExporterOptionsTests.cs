@@ -39,7 +39,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(new Uri("http://localhost:4317"), options.Endpoint);
             Assert.Null(options.Headers);
             Assert.Equal(10000, options.TimeoutMilliseconds);
-            Assert.Equal(ExportProtocol.Grpc, options.Protocol);
+            Assert.Equal(OtlpExportProtocol.Grpc, options.Protocol);
         }
 
         [Fact]
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
             Assert.Equal("A=2,B=3", options.Headers);
             Assert.Equal(2000, options.TimeoutMilliseconds);
-            Assert.Equal(ExportProtocol.HttpProtobuf, options.Protocol);
+            Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
         }
 
         [Fact]
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var options = new OtlpExporterOptions();
 
-            Assert.Equal(ExportProtocol.Grpc, options.Protocol); // use default
+            Assert.Equal(OtlpExportProtocol.Grpc, options.Protocol); // use default
         }
 
         [Fact]
@@ -101,13 +101,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Endpoint = new Uri("http://localhost:200"),
                 Headers = "C=3",
                 TimeoutMilliseconds = 40000,
-                Protocol = ExportProtocol.HttpProtobuf,
+                Protocol = OtlpExportProtocol.HttpProtobuf,
             };
 
             Assert.Equal(new Uri("http://localhost:200"), options.Endpoint);
             Assert.Equal("C=3", options.Headers);
             Assert.Equal(40000, options.TimeoutMilliseconds);
-            Assert.Equal(ExportProtocol.HttpProtobuf, options.Protocol);
+            Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
         }
 
         [Fact]

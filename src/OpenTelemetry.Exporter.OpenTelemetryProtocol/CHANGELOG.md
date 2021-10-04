@@ -5,6 +5,9 @@
 * `MeterProviderBuilder` extension methods now support `OtlpExporterOptions`
   bound to `IConfiguration` when using OpenTelemetry.Extensions.Hosting
   ([#2413](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2413))
+* Extended `OtlpExporterOptions` by `Protocol` property. The property can by overriden by `OTEL_EXPORTER_OTLP_PROTOCOL` envionmental variable (grpc or http/protobuf). 
+  Implemented OTLP over HTTP binary protobuf trace exporter.
+  ([#2292](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2292))
 
 ## 1.2.0-alpha4
 
