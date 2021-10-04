@@ -28,6 +28,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
     public sealed class PrometheusExporterExtensionsTests
     {
+        private const string MeterName = "PrometheusExporterExtensionsTests.WriteMetricsCollectionTest.Meter";
+
         [Theory]
         [InlineData(nameof(WriteLongSum))]
         [InlineData(nameof(WriteDoubleSum))]
@@ -36,7 +38,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         [InlineData(nameof(WriteHistogram))]
         public void WriteMetricsCollectionTest(string writeActionMethodName)
         {
-            using var meter = new Meter("TestMeter", "0.0.1");
+            using var meter = new Meter(MeterName, "0.0.1");
 
             MethodInfo writeAction = typeof(PrometheusExporterExtensionsTests).GetMethod(writeActionMethodName, BindingFlags.NonPublic | BindingFlags.Static);
             if (writeAction == null)
@@ -56,7 +58,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var testCompleted = false;
 
             using (var provider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestMeter")
+                .AddSource(MeterName)
                 .AddReader(new BaseExportingMetricReader(new TestExporter<Metric>(RunTest)))
                 .Build())
             {
