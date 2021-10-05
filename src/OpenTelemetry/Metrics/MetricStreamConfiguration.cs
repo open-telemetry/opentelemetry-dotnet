@@ -31,6 +31,8 @@ namespace OpenTelemetry.Metrics
 
     public class MetricStreamConfiguration
     {
+        public static readonly MetricStreamConfiguration Drop = new DropConfiguration();
+
         public string Name { get; set; }
 
         public string Description { get; set; }

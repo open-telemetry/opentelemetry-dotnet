@@ -34,7 +34,7 @@ public class Program
             .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
 
             // Change Histogram bounds
-            .AddView(instrumentName: "MyHistogram", new HistogramConfiguration() { BucketBounds = new double[] { 10, 20 }, Aggregation = Aggregation.LastValue })
+            .AddView(instrumentName: "MyHistogram", new HistogramConfiguration() { BucketBounds = new double[] { 10, 20 } })
 
             // For the instrument "MyCounterCustomTags", aggregate with only the keys "tag1", "tag2".
             .AddView(instrumentName: "MyCounterCustomTags", new MetricStreamConfiguration() { TagKeys = new string[] { "tag1", "tag2" } })

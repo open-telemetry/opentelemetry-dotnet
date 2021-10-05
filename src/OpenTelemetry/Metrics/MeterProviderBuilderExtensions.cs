@@ -66,14 +66,14 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="instrumentName">Name of the instrument, to be used as part of Instrument selection criteria.</param>
-        /// <param name="aggregationConfig">Aggregation configuration used to produce metrics stream.</param>
+        /// <param name="metricStreamConfiguration">Aggregation configuration used to produce metrics stream.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
         /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
-        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, MetricStreamConfiguration aggregationConfig)
+        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
         {
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                return meterProviderBuilderBase.AddView(instrumentName, aggregationConfig);
+                return meterProviderBuilderBase.AddView(instrumentName, metricStreamConfiguration);
             }
 
             return meterProviderBuilder;
