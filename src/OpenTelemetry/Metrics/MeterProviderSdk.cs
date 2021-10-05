@@ -145,7 +145,7 @@ namespace OpenTelemetry.Metrics
                                     continue;
                                 }
 
-                                if (metricStreamConfig?.Aggregation == Aggregation.None)
+                                if (metricStreamConfig?.Aggregation == Aggregation.Drop)
                                 {
                                     // TODO: Log that instrument is ignored
                                     // as user explicitly asked to drop it

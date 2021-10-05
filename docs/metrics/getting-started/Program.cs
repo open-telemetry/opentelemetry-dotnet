@@ -21,6 +21,7 @@ using OpenTelemetry.Metrics;
 public class Program
 {
     private static readonly Meter MyMeter = new Meter("MyCompany.MyProduct.MyLibrary", "1.0");
+    private static readonly Counter<long> MyCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
 
     public static void Main(string[] args)
     {
@@ -29,13 +30,11 @@ public class Program
             .AddConsoleExporter()
             .Build();
 
-        var counter = MyMeter.CreateCounter<long>("MyFruitCounter");
-
-        counter.Add(1, new("name", "apple"), new("color", "red"));
-        counter.Add(2, new("name", "lemon"), new("color", "yellow"));
-        counter.Add(1, new("name", "lemon"), new("color", "yellow"));
-        counter.Add(2, new("name", "apple"), new("color", "green"));
-        counter.Add(5, new("name", "apple"), new("color", "red"));
-        counter.Add(4, new("name", "lemon"), new("color", "yellow"));
+        MyCounter.Add(1, new("name", "apple"), new("color", "red"));
+        MyCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
+        MyCounter.Add(1, new("name", "lemon"), new("color", "yellow"));
+        MyCounter.Add(2, new("name", "apple"), new("color", "green"));
+        MyCounter.Add(5, new("name", "apple"), new("color", "red"));
+        MyCounter.Add(4, new("name", "lemon"), new("color", "yellow"));
     }
 }
