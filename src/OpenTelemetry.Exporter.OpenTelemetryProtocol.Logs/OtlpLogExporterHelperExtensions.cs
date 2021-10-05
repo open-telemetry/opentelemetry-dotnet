@@ -25,7 +25,7 @@ namespace OpenTelemetry.Logs
     public static class OtlpLogExporterHelperExtensions
     {
         /// <summary>
-        /// Adds Console Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
+        /// Adds OTLP Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
         /// </summary>
         /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
         /// <param name="configure">Exporter configuration options.</param>

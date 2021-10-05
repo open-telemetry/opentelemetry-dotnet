@@ -5,9 +5,9 @@
     <PackageTags>$(PackageTags);OTLP</PackageTags>
   </PropertyGroup>
 
-  <!--Do not run ApiCompat for net461 as this is newly added. There is no existing contract for net461 against which we could compare the implementation.
-  Remove this property once we have released a stable net461 version.-->
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net461'">
+  <!--Do not run ApiCompat as this package has never released a stable version.
+  Remove this property once we have released a stable version.-->
+  <PropertyGroup>
     <RunApiCompat>false</RunApiCompat>
   </PropertyGroup>
 
@@ -15,5 +15,4 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" />
   </ItemGroup>
-
 </Project>
