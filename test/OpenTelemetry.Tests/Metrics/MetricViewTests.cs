@@ -342,6 +342,30 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("client.requests", exportedItems[0].Name);
             Assert.Equal("client.exceptions", exportedItems[1].Name);
         }
+
+        [Fact]
+        public void ViewToDropAndRetainInstrument()
+        {
+            using var meter = new Meter("ViewToDropAndRetainInstrumentTest");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource(meter.Name)
+                .AddView("server.requests", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+                .AddView("server.requests", "server.request_renamed")
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            // Expecting one metric stream even though a View is asking
+            // to drop the instrument, because another View is matching
+            // the instrument, which asks to aggregate with defaults
+            // and a use a new name for the resulting metric.
+            var serverRequests = meter.CreateCounter<long>("server.requests");
+            serverRequests.Add(10);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            Assert.Equal("server.request_renamed", exportedItems[0].Name);
+        }
     }
 #pragma warning restore SA1000 // KeywordsMustBeSpacedCorrectly
 }
