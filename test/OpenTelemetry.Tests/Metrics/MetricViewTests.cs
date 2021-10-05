@@ -22,6 +22,7 @@ using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Tests
 {
+#pragma warning disable SA1000 // KeywordsMustBeSpacedCorrectly https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/3214
     public class MetricViewTests
     {
         private const int MaxTimeToAllowForFlush = 10000;
@@ -229,5 +230,68 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(2, histogramPoint.BucketCounts[1]);
             Assert.Equal(0, histogramPoint.BucketCounts[2]);
         }
+
+        [Fact]
+        public void ViewToSelectTagKeys()
+        {
+            using var meter1 = new Meter("ViewToSelectTagKeysTest");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource(meter1.Name)
+                .AddView("FruitCounter", new MetricStreamConfiguration()
+                { TagKeys = new string[] { "name" }, Name = "NameOnly" })
+                .AddView("FruitCounter", new MetricStreamConfiguration()
+                { TagKeys = new string[] { "size" }, Name = "SizeOnly" })
+                .AddView("FruitCounter", new MetricStreamConfiguration()
+                { TagKeys = new string[] { }, Name = "NoTags" })
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var counter = meter1.CreateCounter<long>("FruitCounter");
+            counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "small"));
+            counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "small"));
+
+            counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "medium"));
+            counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "medium"));
+
+            counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "large"));
+            counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "large"));
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Equal(3, exportedItems.Count);
+            var metric = exportedItems[0];
+            Assert.Equal("NameOnly", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            // Only one point expected "apple"
+            Assert.Single(metricPoints);
+
+            metric = exportedItems[1];
+            Assert.Equal("SizeOnly", metric.Name);
+            metricPoints.Clear();
+            foreach (ref var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            // 3 points small,medium,large expected
+            Assert.Equal(3, metricPoints.Count);
+
+            metric = exportedItems[2];
+            Assert.Equal("NoTags", metric.Name);
+            metricPoints.Clear();
+            foreach (ref var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            // Single point expected.
+            Assert.Single(metricPoints);
+        }
     }
+#pragma warning restore SA1000 // KeywordsMustBeSpacedCorrectly
 }

@@ -27,6 +27,8 @@ namespace OpenTelemetry.Metrics
         internal const int MaxMetricPoints = 2000;
         private static readonly ObjectArrayEqualityComparer ObjectArrayComparer = new ObjectArrayEqualityComparer();
         private readonly object lockZeroTags = new object();
+        private readonly HashSet<string> tagKeysInteresting;
+        private readonly int tagsKeysInterestingCount;
 
         // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
         private readonly ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>> keyValue2MetricAggs =
@@ -40,73 +42,52 @@ namespace OpenTelemetry.Metrics
         private double[] histogramBounds;
         private DateTimeOffset startTimeExclusive;
         private DateTimeOffset endTimeInclusive;
+        private UpdateLongDelegate updateLongCallback;
+        private UpdateDoubleDelegate updateDoubleCallback;
 
-        internal AggregatorStore(AggregationType aggType, AggregationTemporality temporality, double[] histogramBounds)
+        internal AggregatorStore(
+            AggregationType aggType,
+            AggregationTemporality temporality,
+            double[] histogramBounds,
+            string[] tagKeysInteresting = null)
         {
             this.metrics = new MetricPoint[MaxMetricPoints];
             this.aggType = aggType;
             this.temporality = temporality;
             this.histogramBounds = histogramBounds;
             this.startTimeExclusive = DateTimeOffset.UtcNow;
-        }
-
-        internal int FindMetricAggregators(ReadOnlySpan<KeyValuePair<string, object>> tags)
-        {
-            int tagLength = tags.Length;
-            if (tagLength == 0)
+            if (tagKeysInteresting == null)
             {
-                this.InitializeZeroTagPointIfNotInitialized();
-                return 0;
+                this.updateLongCallback = this.UpdateLong;
+                this.updateDoubleCallback = this.UpdateDouble;
             }
-
-            var storage = ThreadStaticStorage.GetStorage();
-
-            storage.SplitToKeysAndValues(tags, tagLength, out var tagKey, out var tagValue);
-
-            if (tagLength > 1)
+            else
             {
-                Array.Sort<string, object>(tagKey, tagValue);
-            }
-
-            return this.LookupAggregatorStore(tagKey, tagValue, tagLength);
-        }
-
-        internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
-        {
-            try
-            {
-                var index = this.FindMetricAggregators(tags);
-                if (index < 0)
+                this.updateLongCallback = this.UpdateLongCustomTags;
+                this.updateDoubleCallback = this.UpdateDoubleCustomTags;
+                var hs = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var key in tagKeysInteresting)
                 {
-                    // TODO: Measurement dropped due to MemoryPoint cap hit.
-                    return;
+                    hs.Add(key);
                 }
 
-                this.metrics[index].Update(value);
-            }
-            catch (Exception)
-            {
-                // TODO: Measurement dropped due to internal exception.
+                this.tagKeysInteresting = hs;
+                this.tagsKeysInterestingCount = hs.Count;
             }
         }
 
-        internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
-        {
-            try
-            {
-                var index = this.FindMetricAggregators(tags);
-                if (index < 0)
-                {
-                    // TODO: Measurement dropped due to MemoryPoint cap hit.
-                    return;
-                }
+        private delegate void UpdateLongDelegate(long value, ReadOnlySpan<KeyValuePair<string, object>> tags);
 
-                this.metrics[index].Update(value);
-            }
-            catch (Exception)
-            {
-                // TODO: Measurement dropped due to internal exception.
-            }
+        private delegate void UpdateDoubleDelegate(double value, ReadOnlySpan<KeyValuePair<string, object>> tags);
+
+        internal void Update(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            this.updateLongCallback(value, tags);
+        }
+
+        internal void Update(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            this.updateDoubleCallback(value, tags);
         }
 
         internal void SnapShot()
@@ -232,6 +213,136 @@ namespace OpenTelemetry.Metrics
             }
 
             return aggregatorIndex;
+        }
+
+        private void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            try
+            {
+                var index = this.FindMetricAggregatorsDefault(tags);
+                if (index < 0)
+                {
+                    // TODO: Measurement dropped due to MemoryPoint cap hit.
+                    return;
+                }
+
+                this.metrics[index].Update(value);
+            }
+            catch (Exception)
+            {
+                // TODO: Measurement dropped due to internal exception.
+            }
+        }
+
+        private void UpdateLongCustomTags(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            try
+            {
+                var index = this.FindMetricAggregatorsCustomTag(tags);
+                if (index < 0)
+                {
+                    // TODO: Measurement dropped due to MemoryPoint cap hit.
+                    return;
+                }
+
+                this.metrics[index].Update(value);
+            }
+            catch (Exception)
+            {
+                // TODO: Measurement dropped due to internal exception.
+            }
+        }
+
+        private void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            try
+            {
+                var index = this.FindMetricAggregatorsDefault(tags);
+                if (index < 0)
+                {
+                    // TODO: Measurement dropped due to MemoryPoint cap hit.
+                    return;
+                }
+
+                this.metrics[index].Update(value);
+            }
+            catch (Exception)
+            {
+                // TODO: Measurement dropped due to internal exception.
+            }
+        }
+
+        private void UpdateDoubleCustomTags(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            try
+            {
+                var index = this.FindMetricAggregatorsCustomTag(tags);
+                if (index < 0)
+                {
+                    // TODO: Measurement dropped due to MemoryPoint cap hit.
+                    return;
+                }
+
+                this.metrics[index].Update(value);
+            }
+            catch (Exception)
+            {
+                // TODO: Measurement dropped due to internal exception.
+            }
+        }
+
+        private int FindMetricAggregatorsDefault(ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            int tagLength = tags.Length;
+            if (tagLength == 0)
+            {
+                this.InitializeZeroTagPointIfNotInitialized();
+                return 0;
+            }
+
+            var storage = ThreadStaticStorage.GetStorage();
+
+            storage.SplitToKeysAndValues(tags, tagLength, out var tagKey, out var tagValue);
+
+            if (tagLength > 1)
+            {
+                Array.Sort<string, object>(tagKey, tagValue);
+            }
+
+            return this.LookupAggregatorStore(tagKey, tagValue, tagLength);
+        }
+
+        private int FindMetricAggregatorsCustomTag(ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            int tagLength = tags.Length;
+            if (tagLength == 0 || this.tagsKeysInterestingCount == 0)
+            {
+                this.InitializeZeroTagPointIfNotInitialized();
+                return 0;
+            }
+
+            // TODO: Get only interesting tags
+            // from the incoming tags
+
+            var storage = ThreadStaticStorage.GetStorage();
+
+            storage.SplitToKeysAndValues(tags, tagLength, this.tagKeysInteresting, out var tagKey, out var tagValue, out var actualLength);
+
+            // Actual number of tags depend on how many
+            // of the incoming tags has user opted to
+            // select.
+            if (actualLength == 0)
+            {
+                this.InitializeZeroTagPointIfNotInitialized();
+                return 0;
+            }
+
+            if (actualLength > 1)
+            {
+                Array.Sort<string, object>(tagKey, tagValue);
+            }
+
+            return this.LookupAggregatorStore(tagKey, tagValue, actualLength);
         }
     }
 }

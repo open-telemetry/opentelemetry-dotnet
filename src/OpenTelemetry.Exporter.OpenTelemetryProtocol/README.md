@@ -29,6 +29,7 @@ setters take precedence over the environment variables.
   contain a port and path.
 * `Headers`: Optional headers for the connection.
 * `TimeoutMilliseconds` : Max waiting time for the backend to process a batch.
+* `Protocol`: OTLP transport protocol. Supported values: Grpc and HttpProtobuf.
 * `ExportProcessorType`: Whether the exporter should use [Batch or Simple
   exporting
   processor](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#built-in-span-processors)
@@ -45,11 +46,12 @@ The following environment variables can be used to override the default
 values of the `OtlpExporterOptions`
 (following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)).
 
-| Environment variable          | `OtlpExporterOptions` property |
-| ------------------------------| -------------------------------|
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | `Endpoint`                     |
-| `OTEL_EXPORTER_OTLP_HEADERS`  | `Headers`                      |
-| `OTEL_EXPORTER_OTLP_TIMEOUT`  | `TimeoutMilliseconds`          |
+| Environment variable          | `OtlpExporterOptions` property    |
+| ------------------------------| ----------------------------------|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `Endpoint`                        |
+| `OTEL_EXPORTER_OTLP_HEADERS`  | `Headers`                         |
+| `OTEL_EXPORTER_OTLP_TIMEOUT`  | `TimeoutMilliseconds`             |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `Protocol` (grpc or http/protobuf)|
 
 ## Special case when using insecure channel
 
