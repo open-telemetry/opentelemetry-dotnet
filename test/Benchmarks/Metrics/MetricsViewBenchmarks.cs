@@ -30,11 +30,11 @@ Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical c
   DefaultJob : .NET Core 5.0.10 (CoreCLR 5.0.1021.41214, CoreFX 5.0.1021.41214), X64 RyuJIT
 
 
-|                    Method | ViewConfig |     Mean |    Error |   StdDev | Gen 0 | Gen 1 | Gen 2 | Allocated |
-|-------------------------- |----------- |---------:|---------:|---------:|------:|------:|------:|----------:|
-| CounterWith3LabelsHotPath |          1 | 514.3 ns | 10.32 ns | 17.24 ns |     - |     - |     - |         - |
-| CounterWith3LabelsHotPath |          2 | 549.1 ns | 10.98 ns | 23.17 ns |     - |     - |     - |         - |
-| CounterWith3LabelsHotPath |          3 | 540.1 ns | 10.74 ns | 13.58 ns |     - |     - |     - |         - |
+|                                   Method |           ViewConfig |     Mean |    Error |   StdDev | Gen 0 | Gen 1 | Gen 2 | Allocated |
+|----------------------------------------- |--------------------- |---------:|---------:|---------:|------:|------:|------:|----------:|
+| CounterMeasurementRecordingWithThreeTags |               NoView | 656.6 ns | 31.92 ns | 90.03 ns |     - |     - |     - |         - |
+| CounterMeasurementRecordingWithThreeTags |    ViewNoInstrSelect | 693.0 ns | 28.91 ns | 83.41 ns |     - |     - |     - |         - |
+| CounterMeasurementRecordingWithThreeTags | ViewSelectInstrument | 616.6 ns | 14.53 ns | 41.21 ns |     - |     - |     - |         - |
 */
 
 namespace Benchmarks.Metrics
@@ -61,7 +61,7 @@ namespace Benchmarks.Metrics
             /// This tests the perf impact View has on hot path, for those
             /// instruments not participating in View feature.
             /// </summary>
-            ViewNoInstrumentSelect,
+            ViewNoInstrSelect,
 
             /// <summary>
             /// Provider has view registered and it does select the instrument.
@@ -71,7 +71,7 @@ namespace Benchmarks.Metrics
 
         [Params(
             ViewConfiguration.NoView,
-            ViewConfiguration.ViewNoInstrumentSelect,
+            ViewConfiguration.ViewNoInstrSelect,
             ViewConfiguration.ViewSelectsInstrument)]
         public ViewConfiguration ViewConfig { get; set; }
 
@@ -87,7 +87,7 @@ namespace Benchmarks.Metrics
                     .AddSource(this.meter.Name)
                     .Build();
             }
-            else if (this.ViewConfig == ViewConfiguration.ViewNoInstrumentSelect)
+            else if (this.ViewConfig == ViewConfiguration.ViewNoInstrSelect)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddSource(this.meter.Name)
