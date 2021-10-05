@@ -174,7 +174,14 @@ namespace OpenTelemetry.Metrics
 
                         if (metrics.Count > 0)
                         {
-                            listener.EnableMeasurementEvents(instrument, metrics);
+                            if (metrics.Count == 1)
+                            {
+                                listener.EnableMeasurementEvents(instrument, metrics[0]);
+                            }
+                            else
+                            {
+                                listener.EnableMeasurementEvents(instrument, metrics);
+                            }
                         }
                     }
                 };
@@ -254,57 +261,55 @@ namespace OpenTelemetry.Metrics
 
         internal void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
-            // Get Instrument State
-            var metrics = state as List<Metric>;
-
             Debug.Assert(instrument != null, "instrument must be non-null.");
-            if (metrics == null)
-            {
-                // TODO: log
-                return;
-            }
 
-            if (metrics.Count == 1)
+            // Get Instrument State
+            var metric = state as Metric;
+
+            if (metric == null)
             {
-                // special casing the common path
-                // as this is faster than the
-                // foreach, when count is 1.
-                metrics[0].UpdateDouble(value, tagsRos);
+                var metrics = state as List<Metric>;
+                if (metrics == null)
+                {
+                    // TODO: log
+                    return;
+                }
+
+                foreach (var m in metrics)
+                {
+                    m.UpdateDouble(value, tagsRos);
+                }
             }
             else
             {
-                foreach (var metric in metrics)
-                {
-                    metric.UpdateDouble(value, tagsRos);
-                }
+                metric.UpdateDouble(value, tagsRos);
             }
         }
 
         internal void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
-            // Get Instrument State
-            var metrics = state as List<Metric>;
-
             Debug.Assert(instrument != null, "instrument must be non-null.");
-            if (metrics == null)
-            {
-                // TODO: log
-                return;
-            }
 
-            if (metrics.Count == 1)
+            // Get Instrument State
+            var metric = state as Metric;
+
+            if (metric == null)
             {
-                // special casing the common path
-                // as this is faster than the
-                // foreach, when count is 1.
-                metrics[0].UpdateLong(value, tagsRos);
+                var metrics = state as List<Metric>;
+                if (metrics == null)
+                {
+                    // TODO: log
+                    return;
+                }
+
+                foreach (var m in metrics)
+                {
+                    m.UpdateLong(value, tagsRos);
+                }
             }
             else
             {
-                foreach (var metric in metrics)
-                {
-                    metric.UpdateLong(value, tagsRos);
-                }
+                metric.UpdateLong(value, tagsRos);
             }
         }
 
