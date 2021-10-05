@@ -350,7 +350,7 @@ namespace OpenTelemetry.Metrics.Tests
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddSource(meter.Name)
-                .AddView("server.requests", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+                .AddView("server.requests", MetricStreamConfiguration.Drop)
                 .AddView("server.requests", "server.request_renamed")
                 .AddInMemoryExporter(exportedItems)
                 .Build();
@@ -365,6 +365,12 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Single(exportedItems);
             Assert.Equal("server.request_renamed", exportedItems[0].Name);
+        }
+
+        [Fact]
+        public void MetricStreamConfigurationForDropMustNotAllowOverriding()
+        {
+            Assert.Throws<ArgumentException>(() => MetricStreamConfiguration.Drop.Aggregation = Aggregation.Histogram);
         }
     }
 #pragma warning restore SA1000 // KeywordsMustBeSpacedCorrectly
