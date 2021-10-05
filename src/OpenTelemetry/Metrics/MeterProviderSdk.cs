@@ -145,6 +145,14 @@ namespace OpenTelemetry.Metrics
                                     continue;
                                 }
 
+                                if (metricStreamConfig?.Aggregation == Aggregation.None)
+                                {
+                                    // TODO: Log that instrument is ignored
+                                    // as user explicitly asked to drop it
+                                    // with View.
+                                    continue;
+                                }
+
                                 var index = ++this.metricIndex;
                                 if (index >= MaxMetrics)
                                 {
