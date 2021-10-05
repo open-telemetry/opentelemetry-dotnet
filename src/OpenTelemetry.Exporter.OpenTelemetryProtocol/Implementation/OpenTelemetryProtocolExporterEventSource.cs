@@ -103,5 +103,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         {
             this.WriteEvent(7, exception);
         }
+
+        [Event(8, Message = "Unsupported value for protocol '{0}' is configured, default protocol 'grpc' will be used.", Level = EventLevel.Warning)]
+        public void UnsupportedProtocol(string protocol)
+        {
+            this.WriteEvent(8, protocol);
+        }
     }
 }
