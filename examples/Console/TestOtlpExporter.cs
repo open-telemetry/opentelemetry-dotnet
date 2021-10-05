@@ -24,7 +24,7 @@ namespace Examples.Console
 {
     internal static class TestOtlpExporter
     {
-        internal static object Run(string endpoint, OtlpExportProtocol protocol = OtlpExportProtocol.Grpc)
+        internal static object Run(string endpoint, string protocol)
         {
             /*
              * Prerequisite to run this example:
@@ -53,12 +53,19 @@ namespace Examples.Console
             return RunWithActivitySource(endpoint, protocol);
         }
 
-        private static object RunWithActivitySource(string endpoint, OtlpExportProtocol protocol)
+        private static object RunWithActivitySource(string endpoint, string protocol)
         {
             // Adding the OtlpExporter creates a GrpcChannel.
             // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
             // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
+            var otlpExportProtocol = ToOtlpExportProtocol(protocol);
+            if (!otlpExportProtocol.HasValue)
+            {
+                System.Console.WriteLine($"Export protocol {protocol} is not supported. Default protocol 'grpc' will be used.");
+                otlpExportProtocol = OtlpExportProtocol.Grpc;
+            }
 
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use OTLP exporter.
@@ -68,7 +75,7 @@ namespace Examples.Console
                     .AddOtlpExporter(opt =>
                     {
                         opt.Endpoint = new Uri(endpoint);
-                        opt.Protocol = protocol;
+                        opt.Protocol = otlpExportProtocol.Value;
                     })
                     .Build();
 
@@ -86,5 +93,13 @@ namespace Examples.Console
 
             return null;
         }
+
+        private static OtlpExportProtocol? ToOtlpExportProtocol(string protocol) =>
+            protocol.Trim().ToLower() switch
+            {
+                "grpc" => OtlpExportProtocol.Grpc,
+                "http/protobuf" => OtlpExportProtocol.HttpProtobuf,
+                _ => null
+            };
     }
 }
