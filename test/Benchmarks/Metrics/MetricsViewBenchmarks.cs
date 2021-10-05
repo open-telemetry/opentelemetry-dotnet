@@ -24,36 +24,16 @@ using OpenTelemetry.Metrics;
 
 /*
 BenchmarkDotNet=v0.12.1, OS=Windows 10.0.19043
-Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
-.NET Core SDK=6.0.100-rc.1.21458.32
-  [Host]     : .NET Core 3.1.19 (CoreCLR 4.700.21.41101, CoreFX 4.700.21.41603), X64 RyuJIT
-  DefaultJob : .NET Core 3.1.19 (CoreCLR 4.700.21.41101, CoreFX 4.700.21.41603), X64 RyuJIT
+Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical cores
+.NET Core SDK=5.0.401
+  [Host]     : .NET Core 5.0.10 (CoreCLR 5.0.1021.41214, CoreFX 5.0.1021.41214), X64 RyuJIT
+  DefaultJob : .NET Core 5.0.10 (CoreCLR 5.0.1021.41214, CoreFX 5.0.1021.41214), X64 RyuJIT
 
 
-|                                Method | WithSDK |      Mean |    Error |   StdDev |  Gen 0 | Gen 1 | Gen 2 | Allocated |
-|-------------------------------------- |-------- |----------:|---------:|---------:|-------:|------:|------:|----------:|
-|                        CounterHotPath |   False |  12.87 ns | 0.086 ns | 0.080 ns |      - |     - |     - |         - |
-|             CounterWith1LabelsHotPath |   False |  19.36 ns | 0.083 ns | 0.069 ns |      - |     - |     - |         - |
-|             CounterWith3LabelsHotPath |   False |  53.71 ns | 0.336 ns | 0.314 ns |      - |     - |     - |         - |
-|             CounterWith5LabelsHotPath |   False |  79.82 ns | 0.525 ns | 0.439 ns | 0.0166 |     - |     - |     104 B |
-|             CounterWith6LabelsHotPath |   False |  91.35 ns | 0.827 ns | 0.733 ns | 0.0191 |     - |     - |     120 B |
-|             CounterWith7LabelsHotPath |   False | 104.40 ns | 0.924 ns | 0.865 ns | 0.0216 |     - |     - |     136 B |
-| CounterWith1LabelsHotPathUsingTagList |   False |  50.43 ns | 0.415 ns | 0.388 ns |      - |     - |     - |         - |
-| CounterWith3LabelsHotPathUsingTagList |   False |  88.48 ns | 0.402 ns | 0.376 ns |      - |     - |     - |         - |
-| CounterWith5LabelsHotPathUsingTagList |   False | 121.61 ns | 0.472 ns | 0.418 ns |      - |     - |     - |         - |
-| CounterWith6LabelsHotPathUsingTagList |   False | 139.11 ns | 0.593 ns | 0.554 ns |      - |     - |     - |         - |
-| CounterWith7LabelsHotPathUsingTagList |   False | 154.07 ns | 0.773 ns | 0.685 ns |      - |     - |     - |         - |
-|                        CounterHotPath |    True |  38.23 ns | 0.235 ns | 0.220 ns |      - |     - |     - |         - |
-|             CounterWith1LabelsHotPath |    True | 102.48 ns | 0.942 ns | 0.881 ns |      - |     - |     - |         - |
-|             CounterWith3LabelsHotPath |    True | 417.00 ns | 2.904 ns | 2.716 ns |      - |     - |     - |         - |
-|             CounterWith5LabelsHotPath |    True | 578.45 ns | 5.287 ns | 4.946 ns | 0.0162 |     - |     - |     104 B |
-|             CounterWith6LabelsHotPath |    True | 665.56 ns | 3.716 ns | 3.476 ns | 0.0191 |     - |     - |     120 B |
-|             CounterWith7LabelsHotPath |    True | 778.88 ns | 5.482 ns | 4.578 ns | 0.0210 |     - |     - |     136 B |
-| CounterWith1LabelsHotPathUsingTagList |    True | 135.55 ns | 1.012 ns | 0.947 ns |      - |     - |     - |         - |
-| CounterWith3LabelsHotPathUsingTagList |    True | 457.96 ns | 4.242 ns | 3.968 ns |      - |     - |     - |         - |
-| CounterWith5LabelsHotPathUsingTagList |    True | 631.81 ns | 3.423 ns | 2.858 ns |      - |     - |     - |         - |
-| CounterWith6LabelsHotPathUsingTagList |    True | 719.81 ns | 4.704 ns | 4.400 ns |      - |     - |     - |         - |
-| CounterWith7LabelsHotPathUsingTagList |    True | 828.88 ns | 4.321 ns | 3.830 ns |      - |     - |     - |         - |
+|                    Method | ViewConfig |     Mean |    Error |   StdDev | Gen 0 | Gen 1 | Gen 2 | Allocated |
+|-------------------------- |----------- |---------:|---------:|---------:|------:|------:|------:|----------:|
+| CounterWith3LabelsHotPath |          1 | 530.7 ns | 10.45 ns | 17.17 ns |     - |     - |     - |         - |
+| CounterWith3LabelsHotPath |          2 | 569.3 ns | 11.27 ns |  9.41 ns |     - |     - |     - |         - |
 */
 
 namespace Benchmarks.Metrics
@@ -75,32 +55,32 @@ namespace Benchmarks.Metrics
         {
             /* ViewConfig 1 = no views registered at all.
              * ViewConfig 2 = view registered, but does not select the instrument
-             * ViewConfig 3 = view registed, selects the instrument.
+             * TODO: ViewConfig 3 = view registed, selects the instrument.
              */
+
+            this.meter = new Meter("TestMeter");
+            this.counter = this.meter.CreateCounter<long>("counter");
 
             if (this.ViewConfig == 1)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
-                    .AddSource("TestMeter")
+                    .AddSource(this.meter.Name)
                     .Build();
             }
             else if (this.ViewConfig == 2)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
-                    .AddSource("TestMeter")
-                    .AddView("TestCounter1", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
+                    .AddSource(this.meter.Name)
+                    .AddView(this.counter.Name + "notmatch", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
                     .Build();
             }
             else if (this.ViewConfig == 3)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
-                    .AddSource("TestMeter")
-                    .AddView("counter", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
+                    .AddSource(this.meter.Name)
+                    .AddView(this.counter.Name, new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
                     .Build();
             }
-
-            this.meter = new Meter("TestMeter");
-            this.counter = this.meter.CreateCounter<long>("counter");
         }
 
         [GlobalCleanup]
