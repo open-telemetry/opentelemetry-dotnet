@@ -119,11 +119,10 @@ public partial class Program
         var totalLoopsPerSecond = (double)cntLoopsTotal / ((double)watchForTotal.ElapsedMilliseconds / 1000.0);
         var cntCpuCyclesTotal = GetCpuCycles();
         var cpuCyclesPerLoopTotal = cntLoopsTotal == 0 ? 0 : cntCpuCyclesTotal / cntLoopsTotal;
-        Console.WriteLine(output);
-        Console.WriteLine("Stress test stopped by user.");
-        Console.WriteLine("Stats from entire duration:");
-        var totalOutput = $"Total Loops: {cntLoopsTotal:n0}, Average Loops/Second: {totalLoopsPerSecond:n0}, Average CPU Cycles/Loop: {cpuCyclesPerLoopTotal:n0}";
-        Console.WriteLine(totalOutput);
+        Console.WriteLine("Stopping the stress test...");
+        Console.WriteLine($"* Total Loops: {cntLoopsTotal:n0}");
+        Console.WriteLine($"* Average Loops/Second: {totalLoopsPerSecond:n0}");
+        Console.WriteLine($"* Average CPU Cycles/Loop: {cpuCyclesPerLoopTotal:n0}");
     }
 
     [DllImport("kernel32.dll")]
