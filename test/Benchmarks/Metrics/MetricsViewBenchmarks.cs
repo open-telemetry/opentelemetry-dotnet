@@ -91,7 +91,7 @@ namespace Benchmarks.Metrics
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddSource(this.meter.Name)
-                    .AddView(this.counter.Name + "notmatch", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
+                    .AddView("nomatch", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
                     .Build();
             }
             else if (this.ViewConfig == ViewConfiguration.ViewSelectsInstr)
