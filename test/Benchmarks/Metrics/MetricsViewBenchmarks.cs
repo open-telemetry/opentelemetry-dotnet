@@ -43,30 +43,37 @@ namespace Benchmarks.Metrics
     public class MetricsViewBenchmarks
     {
         private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());
+        private static readonly string[] DimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
+        private static readonly int DimensionsValuesLength = DimensionValues.Length;
         private Counter<long> counter;
         private MeterProvider provider;
         private Meter meter;
-        private string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
 
-        private enum ViewConfiguration
+        public enum ViewConfiguration
         {
-            // No views registered in the provider.
-            ZeroViewInProvider,
+            /// <summary>
+            /// No views registered in the provider.
+            /// </summary>
+            NoView,
 
-            // Provider has view registered, but it doesn't select the instrument.
-            // This tests the perf impact View has on hot path, for those
-            // instruments not participating in View feature.
-            ProviderHasViewNotSelectingInstrument,
+            /// <summary>
+            /// Provider has view registered, but it doesn't select the instrument.
+            /// This tests the perf impact View has on hot path, for those
+            /// instruments not participating in View feature.
+            /// </summary>
+            ViewNotSelectInstrument,
 
-            // Provider has view registered and it does select the instrument.
-            ProviderHasViewSelectingInstrument,
+            /// <summary>
+            /// Provider has view registered and it does select the instrument.
+            /// </summary>
+            ViewSelectInstrument,
         }
 
         [Params(
-            ViewConfiguration.ZeroViewInProvider,
-            ViewConfiguration.ProviderHasViewNotSelectingInstrument,
-            ViewConfiguration.ProviderHasViewSelectingInstrument)]
-        private ViewConfiguration ViewConfig { get; set; }
+            ViewConfiguration.NoView,
+            ViewConfiguration.ViewNotSelectInstrument,
+            ViewConfiguration.ViewSelectInstrument)]
+        public ViewConfiguration ViewConfig { get; set; }
 
         [GlobalSetup]
         public void Setup()
@@ -74,20 +81,20 @@ namespace Benchmarks.Metrics
             this.meter = new Meter("TestMeter");
             this.counter = this.meter.CreateCounter<long>("counter");
 
-            if (this.ViewConfig == ViewConfiguration.ZeroViewInProvider)
+            if (this.ViewConfig == ViewConfiguration.NoView)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddSource(this.meter.Name)
                     .Build();
             }
-            else if (this.ViewConfig == ViewConfiguration.ProviderHasViewNotSelectingInstrument)
+            else if (this.ViewConfig == ViewConfiguration.ViewNotSelectInstrument)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddSource(this.meter.Name)
                     .AddView(this.counter.Name + "notmatch", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
                     .Build();
             }
-            else if (this.ViewConfig == ViewConfiguration.ProviderHasViewSelectingInstrument)
+            else if (this.ViewConfig == ViewConfiguration.ViewSelectInstrument)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddSource(this.meter.Name)
@@ -107,10 +114,11 @@ namespace Benchmarks.Metrics
         public void CounterMeasurementRecordingWithThreeTags()
         {
             var random = ThreadLocalRandom.Value;
-            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[random.Next(0, 10)]);
-            var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[random.Next(0, 10)]);
-            var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[random.Next(0, 10)]);
-            this.counter?.Add(100, tag1, tag2, tag3);
+            this.counter?.Add(
+                100,
+                new KeyValuePair<string, object>("DimName1", DimensionValues[random.Next(0, DimensionsValuesLength)]),
+                new KeyValuePair<string, object>("DimName2", DimensionValues[random.Next(0, DimensionsValuesLength)]),
+                new KeyValuePair<string, object>("DimName3", DimensionValues[random.Next(0, DimensionsValuesLength)]));
         }
     }
 }
