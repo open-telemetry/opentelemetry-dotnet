@@ -69,11 +69,6 @@ allows users to capture measurements about the execution of a computer program
 at runtime. The Metrics API is designed to process raw measurements, generally
 with the intent to produce continuous summaries of those measurements.
 
-_**Warning:** OpenTelemetry .NET has a prototype Metrics API implementation only
-and is not recommended for any production use. The API is expected to change
-heavily. Please check the [Metric support
-plan](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)._
-
 ### Baggage API
 
 [Baggage
