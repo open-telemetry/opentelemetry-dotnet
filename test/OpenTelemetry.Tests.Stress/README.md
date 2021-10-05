@@ -91,4 +91,3 @@ Some useful notes:
   sliding window of few hundreds of milliseconds.
 * `CPU Cycles/Loop` represents the average CPU cycles for each `Run()`
   invocation, based on a small sliding window of few hundreds of milliseconds.
-
