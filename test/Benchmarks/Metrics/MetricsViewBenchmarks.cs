@@ -48,34 +48,46 @@ namespace Benchmarks.Metrics
         private Meter meter;
         private string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
 
-        [Params(1, 2, 3)]
-        public int ViewConfig { get; set; }
+        private enum ViewConfiguration
+        {
+            // No views registered in the provider.
+            ZeroViewInProvider,
+
+            // Provider has view registered, but it doesn't select the instrument.
+            // This tests the perf impact View has on hot path, for those
+            // instruments not participating in View feature.
+            ProviderHasViewNotSelectingInstrument,
+
+            // Provider has view registered and it does select the instrument.
+            ProviderHasViewSelectingInstrument,
+        }
+
+        [Params(
+            ViewConfiguration.ZeroViewInProvider,
+            ViewConfiguration.ProviderHasViewNotSelectingInstrument,
+            ViewConfiguration.ProviderHasViewSelectingInstrument)]
+        private ViewConfiguration ViewConfig { get; set; }
 
         [GlobalSetup]
         public void Setup()
         {
-            /* ViewConfig 1 = no views registered at all.
-             * ViewConfig 2 = view registered, but does not select the instrument
-             * ViewConfig 3 = view registed, selects the instrument with same tags as provided.
-             */
-
             this.meter = new Meter("TestMeter");
             this.counter = this.meter.CreateCounter<long>("counter");
 
-            if (this.ViewConfig == 1)
+            if (this.ViewConfig == ViewConfiguration.ZeroViewInProvider)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddSource(this.meter.Name)
                     .Build();
             }
-            else if (this.ViewConfig == 2)
+            else if (this.ViewConfig == ViewConfiguration.ProviderHasViewNotSelectingInstrument)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddSource(this.meter.Name)
                     .AddView(this.counter.Name + "notmatch", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
                     .Build();
             }
-            else if (this.ViewConfig == 3)
+            else if (this.ViewConfig == ViewConfiguration.ProviderHasViewSelectingInstrument)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddSource(this.meter.Name)
@@ -92,7 +104,7 @@ namespace Benchmarks.Metrics
         }
 
         [Benchmark]
-        public void CounterWith3LabelsHotPath()
+        public void CounterMeasurementRecordingWithThreeTags()
         {
             var random = ThreadLocalRandom.Value;
             var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[random.Next(0, 10)]);

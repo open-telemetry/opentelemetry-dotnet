@@ -120,8 +120,9 @@ public partial class Program
         var cntCpuCyclesTotal = GetCpuCycles();
         var cpuCyclesPerLoopTotal = cntLoopsTotal == 0 ? 0 : cntCpuCyclesTotal / cntLoopsTotal;
         Console.WriteLine(output);
+        Console.WriteLine("Stress test stopped by user.");
         Console.WriteLine("Stats from entire duration:");
-        var totalOutput = $"Loops: {cntLoopsTotal:n0}, Loops/Second: {totalLoopsPerSecond:n0}, CPU Cycles/Loop: {cpuCyclesPerLoopTotal:n0}";
+        var totalOutput = $"Total Loops: {cntLoopsTotal:n0}, Average Loops/Second: {totalLoopsPerSecond:n0}, Average CPU Cycles/Loop: {cpuCyclesPerLoopTotal:n0}";
         Console.WriteLine(totalOutput);
     }
 
