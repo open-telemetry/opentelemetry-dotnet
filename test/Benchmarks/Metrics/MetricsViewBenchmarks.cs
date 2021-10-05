@@ -61,18 +61,18 @@ namespace Benchmarks.Metrics
             /// This tests the perf impact View has on hot path, for those
             /// instruments not participating in View feature.
             /// </summary>
-            ViewNotSelectInstrument,
+            ViewNoInstrumentSelect,
 
             /// <summary>
             /// Provider has view registered and it does select the instrument.
             /// </summary>
-            ViewSelectInstrument,
+            ViewSelectsInstrument,
         }
 
         [Params(
             ViewConfiguration.NoView,
-            ViewConfiguration.ViewNotSelectInstrument,
-            ViewConfiguration.ViewSelectInstrument)]
+            ViewConfiguration.ViewNoInstrumentSelect,
+            ViewConfiguration.ViewSelectsInstrument)]
         public ViewConfiguration ViewConfig { get; set; }
 
         [GlobalSetup]
@@ -87,14 +87,14 @@ namespace Benchmarks.Metrics
                     .AddSource(this.meter.Name)
                     .Build();
             }
-            else if (this.ViewConfig == ViewConfiguration.ViewNotSelectInstrument)
+            else if (this.ViewConfig == ViewConfiguration.ViewNoInstrumentSelect)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddSource(this.meter.Name)
                     .AddView(this.counter.Name + "notmatch", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
                     .Build();
             }
-            else if (this.ViewConfig == ViewConfiguration.ViewSelectInstrument)
+            else if (this.ViewConfig == ViewConfiguration.ViewSelectsInstrument)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddSource(this.meter.Name)
