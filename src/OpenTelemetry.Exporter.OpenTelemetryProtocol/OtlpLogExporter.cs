@@ -16,11 +16,11 @@
 
 #if NET461 || NETSTANDARD2_0 || NETSTANDARD2_1
 using System;
-using Grpc.Core;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Logs;
 using OtlpCollector = Opentelemetry.Proto.Collector.Logs.V1;
+using OtlpResource = Opentelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter
 {
@@ -28,9 +28,11 @@ namespace OpenTelemetry.Exporter
     /// Exporter consuming <see cref="LogRecord"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    internal class OtlpLogExporter : BaseOtlpExporter<LogRecord>
+    internal class OtlpLogExporter : BaseExporter<LogRecord>
     {
-        private readonly OtlpCollector.LogsService.ILogsServiceClient logsClient;
+        private readonly IExportClient<OtlpCollector.ExportLogsServiceRequest> exportClient;
+
+        private OtlpResource.Resource processResource;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpLogExporter"/> class.
@@ -45,20 +47,21 @@ namespace OpenTelemetry.Exporter
         /// Initializes a new instance of the <see cref="OtlpLogExporter"/> class.
         /// </summary>
         /// <param name="options">Configuration options for the exporter.</param>
-        /// <param name="logsServiceClient"><see cref="OtlpCollector.LogsService.LogsServiceClient"/>.</param>
-        internal OtlpLogExporter(OtlpExporterOptions options, OtlpCollector.LogsService.ILogsServiceClient logsServiceClient = null)
-            : base(options)
+        /// <param name="exportClient">Client used for sending export request.</param>
+        internal OtlpLogExporter(OtlpExporterOptions options, IExportClient<OtlpCollector.ExportLogsServiceRequest> exportClient = null)
         {
-            if (logsServiceClient != null)
+            if (exportClient != null)
             {
-                this.logsClient = logsServiceClient;
+                this.exportClient = exportClient;
             }
             else
             {
-                this.Channel = options.CreateChannel();
-                this.logsClient = new OtlpCollector.LogsService.LogsServiceClient(this.Channel);
+                // TODO: this instantiation should be aligned with the protocol option (grpc or http/protobuf) when OtlpHttpMetricsExportClient will be implemented.
+                this.exportClient = new OtlpGrpcLogExportClient(options);
             }
         }
+
+        internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
 
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<LogRecord> logRecordBatch)
@@ -66,29 +69,30 @@ namespace OpenTelemetry.Exporter
             // Prevents the exporter's gRPC and HTTP operations from being instrumented.
             using var scope = SuppressInstrumentationScope.Begin();
 
-            OtlpCollector.ExportLogsServiceRequest request = new OtlpCollector.ExportLogsServiceRequest();
+            var request = new OtlpCollector.ExportLogsServiceRequest();
 
             request.AddBatch(this.ProcessResource, logRecordBatch);
-            var deadline = DateTime.UtcNow.AddMilliseconds(this.Options.TimeoutMilliseconds);
 
             try
             {
-                this.logsClient.Export(request, headers: this.Headers, deadline: deadline);
-            }
-            catch (RpcException ex)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(ex);
-
-                return ExportResult.Failure;
+                if (!this.exportClient.SendExportRequest(request))
+                {
+                    return ExportResult.Failure;
+                }
             }
             catch (Exception ex)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
-
                 return ExportResult.Failure;
             }
 
             return ExportResult.Success;
+        }
+
+        /// <inheritdoc />
+        protected override bool OnShutdown(int timeoutMilliseconds)
+        {
+            return this.exportClient?.Shutdown(timeoutMilliseconds) ?? true;
         }
     }
 }
