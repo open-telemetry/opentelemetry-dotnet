@@ -120,7 +120,8 @@ public partial class Program
         var cntCpuCyclesTotal = GetCpuCycles();
         var cpuCyclesPerLoopTotal = cntCpuCyclesTotal / cntLoopsTotal;
         Console.WriteLine(output);
-        var totalOutput = $"Stats from entire duration: Loops: {cntLoopsTotal:n0}, Loops/Second: {totalLoopsPerSecond:n0}, CPU Cycles/Loop: {cpuCyclesPerLoopTotal:n0}";
+        Console.WriteLine("Stats from entire duration:");
+        var totalOutput = $"Loops: {cntLoopsTotal:n0}, Loops/Second: {totalLoopsPerSecond:n0}, CPU Cycles/Loop: {cpuCyclesPerLoopTotal:n0}";
         Console.WriteLine(totalOutput);
     }
 

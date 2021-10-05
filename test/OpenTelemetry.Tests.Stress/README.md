@@ -91,3 +91,5 @@ Some useful notes:
   sliding window of few hundreds of milliseconds.
 * `CPU Cycles/Loop` represents the average CPU cycles for each `Run()`
   invocation, based on a small sliding window of few hundreds of milliseconds.
+* When the stress test program exits, it displays the above
+  results for the entire duration of the run as well.

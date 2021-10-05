@@ -16,8 +16,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Threading;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -42,10 +42,10 @@ namespace Benchmarks.Metrics
     [MemoryDiagnoser]
     public class MetricsViewBenchmarks
     {
+        private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());
         private Counter<long> counter;
         private MeterProvider provider;
         private Meter meter;
-        private Random random = new Random();
         private string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
 
         [Params(1, 2, 3)]
@@ -94,9 +94,10 @@ namespace Benchmarks.Metrics
         [Benchmark]
         public void CounterWith3LabelsHotPath()
         {
-            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
-            var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[this.random.Next(0, 10)]);
-            var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[this.random.Next(0, 10)]);
+            var random = ThreadLocalRandom.Value;
+            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[random.Next(0, 10)]);
+            var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[random.Next(0, 10)]);
+            var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[random.Next(0, 10)]);
             this.counter?.Add(100, tag1, tag2, tag3);
         }
     }
