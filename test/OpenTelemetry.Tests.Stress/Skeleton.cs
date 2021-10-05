@@ -118,7 +118,7 @@ public partial class Program
         var cntLoopsTotal = (ulong)statistics.Sum();
         var totalLoopsPerSecond = (double)cntLoopsTotal / ((double)watchForTotal.ElapsedMilliseconds / 1000.0);
         var cntCpuCyclesTotal = GetCpuCycles();
-        var cpuCyclesPerLoopTotal = cntCpuCyclesTotal / cntLoopsTotal;
+        var cpuCyclesPerLoopTotal = cntLoopsTotal == 0 ? 0 : cntCpuCyclesTotal / cntLoopsTotal;
         Console.WriteLine(output);
         Console.WriteLine("Stats from entire duration:");
         var totalOutput = $"Loops: {cntLoopsTotal:n0}, Loops/Second: {totalLoopsPerSecond:n0}, CPU Cycles/Loop: {cpuCyclesPerLoopTotal:n0}";
