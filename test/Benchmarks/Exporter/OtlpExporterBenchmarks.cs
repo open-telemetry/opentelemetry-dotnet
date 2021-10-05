@@ -22,6 +22,7 @@ using Benchmarks.Helper;
 using Grpc.Core;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Internal;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
@@ -43,9 +44,11 @@ namespace Benchmarks.Exporter
         [GlobalSetup]
         public void GlobalSetup()
         {
+            var options = new OtlpExporterOptions();
             this.exporter = new OtlpTraceExporter(
-                new OtlpExporterOptions(),
-                new NoopTraceServiceClient());
+                options,
+                new OtlpGrpcTraceExportClient(options, new NoopTraceServiceClient()));
+
             this.activity = ActivityHelper.CreateTestActivity();
             this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
         }

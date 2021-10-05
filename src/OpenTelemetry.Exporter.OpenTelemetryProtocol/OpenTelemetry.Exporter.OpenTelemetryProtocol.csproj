@@ -1,9 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net461</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net461;net5.0</TargetFrameworks>
     <Description>OpenTelemetry protocol exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);OTLP</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
+    <!-- TODO: Remove this once a version targeting net5.0 is released -->
+    <RunApiCompat Condition="$(TargetFramework) == 'net5.0'">false</RunApiCompat>
   </PropertyGroup>
 
   <!--Do not run ApiCompat for net461 as this is newly added. There is no existing contract for net461 against which we could compare the implementation.
@@ -16,7 +18,15 @@
     <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' != 'netstandard2.1'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
+    <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="Grpc" Version="$(GrpcPkgVer)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
     <PackageReference Include="Grpc" Version="$(GrpcPkgVer)" />
   </ItemGroup>
 

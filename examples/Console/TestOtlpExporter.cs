@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -23,7 +24,7 @@ namespace Examples.Console
 {
     internal static class TestOtlpExporter
     {
-        internal static object Run(string endpoint)
+        internal static object Run(string endpoint, string protocol)
         {
             /*
              * Prerequisite to run this example:
@@ -49,22 +50,33 @@ namespace Examples.Console
              * For more information about the OpenTelemetry Collector go to https://github.com/open-telemetry/opentelemetry-collector
              *
              */
-            return RunWithActivitySource(endpoint);
+            return RunWithActivitySource(endpoint, protocol);
         }
 
-        private static object RunWithActivitySource(string endpoint)
+        private static object RunWithActivitySource(string endpoint, string protocol)
         {
             // Adding the OtlpExporter creates a GrpcChannel.
             // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
             // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
+            var otlpExportProtocol = ToOtlpExportProtocol(protocol);
+            if (!otlpExportProtocol.HasValue)
+            {
+                System.Console.WriteLine($"Export protocol {protocol} is not supported. Default protocol 'grpc' will be used.");
+                otlpExportProtocol = OtlpExportProtocol.Grpc;
+            }
+
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use OTLP exporter.
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("otlp-test"))
-                    .AddOtlpExporter(opt => opt.Endpoint = new Uri(endpoint))
+                    .AddOtlpExporter(opt =>
+                    {
+                        opt.Endpoint = new Uri(endpoint);
+                        opt.Protocol = otlpExportProtocol.Value;
+                    })
                     .Build();
 
             // The above line is required only in Applications
@@ -81,5 +93,13 @@ namespace Examples.Console
 
             return null;
         }
+
+        private static OtlpExportProtocol? ToOtlpExportProtocol(string protocol) =>
+            protocol.Trim().ToLower() switch
+            {
+                "grpc" => OtlpExportProtocol.Grpc,
+                "http/protobuf" => OtlpExportProtocol.HttpProtobuf,
+                _ => null
+            };
     }
 }

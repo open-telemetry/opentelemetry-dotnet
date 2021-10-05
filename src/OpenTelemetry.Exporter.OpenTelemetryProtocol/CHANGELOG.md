@@ -5,6 +5,10 @@
 * `MeterProviderBuilder` extension methods now support `OtlpExporterOptions`
   bound to `IConfiguration` when using OpenTelemetry.Extensions.Hosting
   ([#2413](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2413))
+* Extended `OtlpExporterOptions` by `Protocol` property. The property can be
+  overridden by `OTEL_EXPORTER_OTLP_PROTOCOL` environmental variable (grpc or http/protobuf).
+  Implemented OTLP over HTTP binary protobuf trace exporter.
+  ([#2292](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2292))
 
 ## 1.2.0-alpha4
 
@@ -18,7 +22,7 @@ Released 2021-Sep-13
   `BatchExportActivityProcessorOptions` which supports field value overriding
   using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
   `OTEL_BSP_MAX_QUEUE_SIZE`, `OTEL_BSP_MAX_EXPORT_BATCH_SIZE`
-  envionmental variables as defined in the
+  environmental variables as defined in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/sdk-environment-variables.md#batch-span-processor).
   ([#2219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2219))
 
@@ -28,7 +32,7 @@ Released 2021-Aug-24
 
 * The `OtlpExporterOptions` defaults can be overridden using
   `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` and `OTEL_EXPORTER_OTLP_TIMEOUT`
-  envionmental variables as defined in the
+  environmental variables as defined in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md).
   ([#2188](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2188))
 
