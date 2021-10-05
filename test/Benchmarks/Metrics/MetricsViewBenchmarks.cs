@@ -34,7 +34,7 @@ Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical c
 |----------------------------------------- |--------------------- |---------:|---------:|---------:|------:|------:|------:|----------:|
 | CounterMeasurementRecordingWithThreeTags |               NoView | 503.2 ns |  8.36 ns |  7.82 ns |     - |     - |     - |         - |
 | CounterMeasurementRecordingWithThreeTags |    ViewNoInstrSelect | 552.7 ns | 10.98 ns | 19.24 ns |     - |     - |     - |         - |
-| CounterMeasurementRecordingWithThreeTags | ViewS(...)ument [21] | 556.0 ns | 11.12 ns | 24.18 ns |     - |     - |     - |         - |
+| CounterMeasurementRecordingWithThreeTags |     ViewSelectsInstr | 556.0 ns | 11.12 ns | 24.18 ns |     - |     - |     - |         - |
 */
 
 namespace Benchmarks.Metrics
@@ -66,13 +66,13 @@ namespace Benchmarks.Metrics
             /// <summary>
             /// Provider has view registered and it does select the instrument.
             /// </summary>
-            ViewSelectsInstrument,
+            ViewSelectsInstr,
         }
 
         [Params(
             ViewConfiguration.NoView,
             ViewConfiguration.ViewNoInstrSelect,
-            ViewConfiguration.ViewSelectsInstrument)]
+            ViewConfiguration.ViewSelectsInstr)]
         public ViewConfiguration ViewConfig { get; set; }
 
         [GlobalSetup]
@@ -94,7 +94,7 @@ namespace Benchmarks.Metrics
                     .AddView(this.counter.Name + "notmatch", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
                     .Build();
             }
-            else if (this.ViewConfig == ViewConfiguration.ViewSelectsInstrument)
+            else if (this.ViewConfig == ViewConfiguration.ViewSelectsInstr)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddSource(this.meter.Name)
