@@ -32,8 +32,9 @@ Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical c
 
 |                    Method | ViewConfig |     Mean |    Error |   StdDev | Gen 0 | Gen 1 | Gen 2 | Allocated |
 |-------------------------- |----------- |---------:|---------:|---------:|------:|------:|------:|----------:|
-| CounterWith3LabelsHotPath |          1 | 530.7 ns | 10.45 ns | 17.17 ns |     - |     - |     - |         - |
-| CounterWith3LabelsHotPath |          2 | 569.3 ns | 11.27 ns |  9.41 ns |     - |     - |     - |         - |
+| CounterWith3LabelsHotPath |          1 | 514.3 ns | 10.32 ns | 17.24 ns |     - |     - |     - |         - |
+| CounterWith3LabelsHotPath |          2 | 549.1 ns | 10.98 ns | 23.17 ns |     - |     - |     - |         - |
+| CounterWith3LabelsHotPath |          3 | 540.1 ns | 10.74 ns | 13.58 ns |     - |     - |     - |         - |
 */
 
 namespace Benchmarks.Metrics
@@ -47,7 +48,7 @@ namespace Benchmarks.Metrics
         private Random random = new Random();
         private string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
 
-        [Params(1, 2)]
+        [Params(1, 2, 3)]
         public int ViewConfig { get; set; }
 
         [GlobalSetup]
@@ -55,7 +56,7 @@ namespace Benchmarks.Metrics
         {
             /* ViewConfig 1 = no views registered at all.
              * ViewConfig 2 = view registered, but does not select the instrument
-             * TODO: ViewConfig 3 = view registed, selects the instrument.
+             * ViewConfig 3 = view registed, selects the instrument with same tags as provided.
              */
 
             this.meter = new Meter("TestMeter");
