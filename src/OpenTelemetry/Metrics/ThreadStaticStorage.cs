@@ -69,6 +69,59 @@ namespace OpenTelemetry.Metrics
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, int tagLength, HashSet<string> tagKeysInteresting, out string[] tagKeys, out object[] tagValues, out int actualLength)
+        {
+            // Iterate over tags to find the exact length.
+            int i = 0;
+            for (var n = 0; n < tagLength; n++)
+            {
+                if (tagKeysInteresting.Contains(tags[n].Key))
+                {
+                    i++;
+                }
+            }
+
+            actualLength = i;
+
+            if (actualLength == 0)
+            {
+                tagKeys = null;
+                tagValues = null;
+            }
+            else if (actualLength <= MaxTagCacheSize)
+            {
+                tagKeys = this.tagStorage[actualLength - 1].TagKey;
+                tagValues = this.tagStorage[actualLength - 1].TagValue;
+            }
+            else
+            {
+                tagKeys = new string[actualLength];
+                tagValues = new object[actualLength];
+            }
+
+            // Iterate again (!) to assign the actual value.
+            // TODO: The dual iteration over tags might be
+            // avoidable if we change the tagKey and tagObject
+            // to be a different type (eg: List).
+            // It might lead to some wasted memory.
+            // Also, it requires changes to the Dictionary
+            // used for lookup.
+            // The TODO here is to make that change
+            // separately, after benchmarking.
+            i = 0;
+            for (var n = 0; n < tagLength; n++)
+            {
+                var tag = tags[n];
+                if (tagKeysInteresting.Contains(tag.Key))
+                {
+                    tagKeys[i] = tag.Key;
+                    tagValues[i] = tag.Value;
+                    i++;
+                }
+            }
+        }
+
         internal class TagStorage
         {
             // Used to split into Key sequence, Value sequence.

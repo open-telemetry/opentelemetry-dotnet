@@ -30,7 +30,8 @@ namespace OpenTelemetry.Metrics
             AggregationTemporality temporality,
             string metricName,
             string metricDescription,
-            double[] histogramBounds = null)
+            double[] histogramBounds = null,
+            string[] tagKeysInteresting = null)
         {
             this.Name = metricName;
             this.Description = metricDescription;
@@ -103,7 +104,7 @@ namespace OpenTelemetry.Metrics
                 // TODO: Log and assign some invalid Enum.
             }
 
-            this.aggStore = new AggregatorStore(aggType, temporality, histogramBounds ?? DefaultHistogramBounds);
+            this.aggStore = new AggregatorStore(aggType, temporality, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
             this.Temporality = temporality;
         }
 
@@ -126,12 +127,12 @@ namespace OpenTelemetry.Metrics
 
         internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            this.aggStore.UpdateLong(value, tags);
+            this.aggStore.Update(value, tags);
         }
 
         internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            this.aggStore.UpdateDouble(value, tags);
+            this.aggStore.Update(value, tags);
         }
 
         internal void SnapShot()
