@@ -66,10 +66,6 @@ into the .NET runtime itself. From a high level, what this means is that you
 can instrument your application by simply depending on
 `System.Diagnostics.DiagnosticSource` package.
 
-Read
-[this](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api)
-to learn more.
-
 ## Learn more
 
 * If you want to learn about more instruments, refer to [learning
@@ -77,4 +73,3 @@ to learn more.
 
 * If you want to customize the Sdk, refer to [customizing
   the SDK](../customizing-the-sdk/README.md).
-
