@@ -292,6 +292,56 @@ namespace OpenTelemetry.Metrics.Tests
             // Single point expected.
             Assert.Single(metricPoints);
         }
+
+        [Fact]
+        public void ViewToDropSingleInstrument()
+        {
+            using var meter = new Meter("ViewToDropSingleInstrumentTest");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource(meter.Name)
+                .AddView("counterNotInteresting", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            // Expecting one metric stream.
+            var counterInteresting = meter.CreateCounter<long>("counterInteresting");
+            var counterNotInteresting = meter.CreateCounter<long>("counterNotInteresting");
+            counterInteresting.Add(10);
+            counterNotInteresting.Add(10);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("counterInteresting", metric.Name);
+        }
+
+        [Fact]
+        public void ViewToDropMultipleInstruments()
+        {
+            using var meter = new Meter("ViewToDropMultipleInstrumentsTest");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddSource(meter.Name)
+                .AddView("server*", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            // Expecting two client metric streams as both server* are dropped.
+            var serverRequests = meter.CreateCounter<long>("server.requests");
+            var serverExceptions = meter.CreateCounter<long>("server.exceptions");
+            var clientRequests = meter.CreateCounter<long>("client.requests");
+            var clientExceptions = meter.CreateCounter<long>("client.exceptions");
+            serverRequests.Add(10);
+            serverExceptions.Add(10);
+            clientRequests.Add(10);
+            clientExceptions.Add(10);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Equal(2, exportedItems.Count);
+            Assert.Equal("client.requests", exportedItems[0].Name);
+            Assert.Equal("client.exceptions", exportedItems[1].Name);
+        }
     }
 #pragma warning restore SA1000 // KeywordsMustBeSpacedCorrectly
 }
