@@ -148,7 +148,7 @@ namespace OpenTelemetry.Metrics
                                 if (metricStreamConfig?.Aggregation == Aggregation.None)
                                 {
                                     // TODO: Log that instrument is ignored
-                                    // as user explicitily asked to drop it
+                                    // as user explicitly asked to drop it
                                     // with View.
                                     continue;
                                 }
