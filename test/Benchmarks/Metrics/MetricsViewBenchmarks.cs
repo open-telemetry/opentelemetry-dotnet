@@ -32,9 +32,9 @@ Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical c
 
 |                                   Method |           ViewConfig |     Mean |    Error |   StdDev | Gen 0 | Gen 1 | Gen 2 | Allocated |
 |----------------------------------------- |--------------------- |---------:|---------:|---------:|------:|------:|------:|----------:|
-| CounterMeasurementRecordingWithThreeTags |               NoView | 656.6 ns | 31.92 ns | 90.03 ns |     - |     - |     - |         - |
-| CounterMeasurementRecordingWithThreeTags |    ViewNoInstrSelect | 693.0 ns | 28.91 ns | 83.41 ns |     - |     - |     - |         - |
-| CounterMeasurementRecordingWithThreeTags | ViewSelectInstrument | 616.6 ns | 14.53 ns | 41.21 ns |     - |     - |     - |         - |
+| CounterMeasurementRecordingWithThreeTags |               NoView | 503.2 ns |  8.36 ns |  7.82 ns |     - |     - |     - |         - |
+| CounterMeasurementRecordingWithThreeTags |    ViewNoInstrSelect | 552.7 ns | 10.98 ns | 19.24 ns |     - |     - |     - |         - |
+| CounterMeasurementRecordingWithThreeTags | ViewS(...)ument [21] | 556.0 ns | 11.12 ns | 24.18 ns |     - |     - |     - |         - |
 */
 
 namespace Benchmarks.Metrics
