@@ -5,16 +5,16 @@
 As shown in the [getting-started](../getting-started/README.md) doc, a valid
 [`MeterProvider`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#meterprovider)
 must be configured and built to collect metrics with OpenTelemetry .NET Sdk.
-`MeterProvider` holds all the configuration for metrics like metricreaders,
-views, etc. Naturally, almost all the customizations must be done on the
+`MeterProvider` holds all the configuration for metrics like MetricReaders,
+Views, etc. Naturally, almost all the customizations must be done on the
 `MeterProvider`.
 
 ## Building a MeterProvider
 
 Building a `MeterProvider` is done using `MeterProviderBuilder` which must be
 obtained by calling `Sdk.CreateMeterProviderBuilder()`. `MeterProviderBuilder`
-exposes various methods which configures the provider it is going to build.
-These includes methods like `AddSource`, `AddView` etc, and are explained in
+exposes various methods which configure the provider it is going to build.
+These include methods like `AddSource`, `AddView` etc, and are explained in
 subsequent sections of this document. Once configuration is done, calling
 `Build()` on the `MeterProviderBuilder` builds the `MeterProvider` instance.
 Once built, changes to its configuration is not allowed. In most cases, a single
@@ -64,10 +64,10 @@ instruments must be explicitly added to the meter provider.
 
 `AddSource` method on `MeterProviderBuilder` can be used to add a `Meter` to the
 provider. The name of the `Meter` (case-insensitive) must be the argument to
-this method. Multiple `AddSource` can be called to add more than one meter. It
-also supports wild-card subscription model as well.
+this method. `AddSource` can be called multiple times to add more than one
+meter. It also supports wild-card subscription model.
 
-It is not possible to add meters *after* the provider is built, by calling the
+It is **not** possible to add meters *once* the provider is built by the
 `Build()` method on the `MeterProviderBuilder`.
 
 The snippet below shows how to add meters to the provider.
@@ -88,7 +88,7 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
 
 See [Program.cs](./Program.cs) for complete example.
 
-**Note**
+**Note:**
 A common mistake while configuring `MeterProvider` is forgetting to add all
 `Meter`s to the provider. It is recommended to leverage the wild card
 subscription model where it makes sense. For example, if your application is

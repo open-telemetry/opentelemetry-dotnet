@@ -436,13 +436,13 @@ context.
 
 ## Introduction to OpenTelemetry .NET Metrics API
 
-Metrics in OpenTelemetry .NET is a somewhat unique implementation of the
-OpenTelemetry project, as the Metrics API are incorporated directly into the
-.NET runtime itself, as part of the
+Metrics in OpenTelemetry .NET are a somewhat unique implementation of the
+OpenTelemetry project, as the Metrics API is incorporated directly into the .NET
+runtime itself, as part of the
 [`System.Diagnostics.DiagnosticSource`](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/6.0.0-rc.1.21451.13)
 package. This means, users can instrument their applications/libraries to emit
 metrics by simply using the `System.Diagnostics.DiagnosticSource` package. This
-package can be used in applications targetting any of the officially supported
+package can be used in applications targeting any of the officially supported
 versions of [.NET Core](https://dotnet.microsoft.com/download/dotnet-core), and
 [.NET Framework](https://dotnet.microsoft.com/download/dotnet-framework) except
 for versions lower than `.NET Framework 4.6.1`.
@@ -464,8 +464,8 @@ for versions lower than `.NET Framework 4.6.1`.
     ```
 
 2. Create a `Meter`, providing the name and version of the library/application
-   doing the instrumentation. `Meter` instance is typically created once and is
-   reused throughout the application/library.
+   doing the instrumentation. The `Meter` instance is typically created once and
+   is reused throughout the application/library.
 
     ```csharp
     static Meter meter = new Meter(
@@ -475,7 +475,7 @@ for versions lower than `.NET Framework 4.6.1`.
 
     The above requires import of the `System.Diagnostics.Metrics` namespace.
 
-    **Note**
+    **Note:**
     It is important to note that `Meter` instances are created by using its
     constructor, and *not* by calling a `GetMeter` method on the
     `MeterProvider`. This is an important distinction from the [OpenTelemetry
@@ -487,7 +487,7 @@ for versions lower than `.NET Framework 4.6.1`.
    are to be created once and reused throughout the application/library.
 
     ```csharp
-    Counter<long> counter = meter.CreateCounter<long>("MyFruitCounter");
+    static Counter<long> counter = meter.CreateCounter<long>("MyFruitCounter");
     ```
 
 4. Use the instruments to report measurements, along with the attributes.
