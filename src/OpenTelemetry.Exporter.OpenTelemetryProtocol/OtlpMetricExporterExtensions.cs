@@ -54,6 +54,7 @@ namespace OpenTelemetry.Metrics
 
             var metricExporter = new OtlpMetricExporter(options);
             var metricReader = new PeriodicExportingMetricReader(metricExporter, options.MetricExportIntervalMilliseconds);
+            metricReader.PreferredAggregationTemporality = options.AggregationTemporality;
             return builder.AddReader(metricReader);
         }
     }
