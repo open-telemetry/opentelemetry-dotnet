@@ -59,8 +59,8 @@ is used for creating
 which are then used to report
 [Measurements](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#measurement).
 The SDK follows an explicit opt-in model for listening to meters. i.e, by
-default, it listens to no meters. Every meter which is used to create instrument
-must be explicitly added to the meter provider.
+default, it listens to no meters. Every meter which is used to create
+instruments must be explicitly added to the meter provider.
 
 `AddSource` method on `MeterProviderBuilder` can be used to add a `Meter` to the
 provider. The name of the `Meter` (case-insensitive) must be the argument to
@@ -93,7 +93,7 @@ A common mistake while configuring `MeterProvider` is forgetting to add all
 `Meter`s to the provider. It is recommended to leverage the wild card
 subscription model where it makes sense. For example, if your application is
 expecting to enable instruments from a number of libraries from a company "Abc",
-the you can use `AddSource("Abc.*")` to enable all sources whose name starts
+the you can use `AddSource("Abc.*")` to enable all meters whose name starts
 with "Abc.".
 
 ### View
