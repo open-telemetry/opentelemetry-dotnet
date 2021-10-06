@@ -34,16 +34,17 @@ namespace OpenTelemetry.Metrics
         private readonly ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>> keyValue2MetricAggs =
             new ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>>(new StringArrayEqualityComparer());
 
-        private AggregationTemporality temporality;
-        private MetricPoint[] metrics;
+        private readonly AggregationTemporality temporality;
+        private readonly bool outputDelta;
+        private readonly MetricPoint[] metrics;
+        private readonly AggregationType aggType;
+        private readonly double[] histogramBounds;
+        private readonly UpdateLongDelegate updateLongCallback;
+        private readonly UpdateDoubleDelegate updateDoubleCallback;
         private int metricPointIndex = 0;
         private bool zeroTagMetricPointInitialized;
-        private AggregationType aggType;
-        private double[] histogramBounds;
         private DateTimeOffset startTimeExclusive;
         private DateTimeOffset endTimeInclusive;
-        private UpdateLongDelegate updateLongCallback;
-        private UpdateDoubleDelegate updateDoubleCallback;
 
         internal AggregatorStore(
             AggregationType aggType,
@@ -54,6 +55,7 @@ namespace OpenTelemetry.Metrics
             this.metrics = new MetricPoint[MaxMetricPoints];
             this.aggType = aggType;
             this.temporality = temporality;
+            this.outputDelta = temporality == AggregationTemporality.Delta ? true : false;
             this.histogramBounds = histogramBounds;
             this.startTimeExclusive = DateTimeOffset.UtcNow;
             if (tagKeysInteresting == null)
@@ -102,7 +104,7 @@ namespace OpenTelemetry.Metrics
                     continue;
                 }
 
-                metricPoint.TakeSnapShot(this.temporality == AggregationTemporality.Delta ? true : false);
+                metricPoint.TakeSnapShot(this.outputDelta);
             }
 
             if (this.temporality == AggregationTemporality.Delta)
