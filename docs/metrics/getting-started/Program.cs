@@ -26,7 +26,7 @@ public class Program
     public static void Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddSource("MyCompany.MyProduct.MyLibrary")
+            .AddMeter("MyCompany.MyProduct.MyLibrary")
             .AddConsoleExporter()
             .Build();
 

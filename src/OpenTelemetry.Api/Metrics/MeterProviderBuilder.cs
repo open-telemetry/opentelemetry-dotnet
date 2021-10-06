@@ -40,10 +40,10 @@ namespace OpenTelemetry.Metrics
             where TInstrumentation : class;
 
         /// <summary>
-        /// Adds given Meter names to the list of subscribed sources.
+        /// Adds given Meter names to the list of subscribed meters.
         /// </summary>
-        /// <param name="names">Meter source names.</param>
+        /// <param name="names">Meter names.</param>
         /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
-        public abstract MeterProviderBuilder AddSource(params string[] names);
+        public abstract MeterProviderBuilder AddMeter(params string[] names);
     }
 }

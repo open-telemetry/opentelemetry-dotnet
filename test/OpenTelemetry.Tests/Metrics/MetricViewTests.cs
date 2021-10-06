@@ -39,7 +39,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter1 = new Meter("ViewToRenameMetricTest");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter1.Name)
+                .AddMeter(meter1.Name)
                 .AddView("name1", "renamed")
                 .AddInMemoryExporter(exportedItems)
                 .Build();
@@ -60,8 +60,8 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter2 = new Meter("ViewToRenameMetricConditionallyTest2");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter1.Name)
-                .AddSource(meter2.Name)
+                .AddMeter(meter1.Name)
+                .AddMeter(meter2.Name)
                 .AddView((instrument) =>
                 {
                     if (instrument.Meter.Name.Equals(meter2.Name, StringComparison.OrdinalIgnoreCase)
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter1 = new Meter("ViewToRenameMetricWildCardMatchTest");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter1.Name)
+                .AddMeter(meter1.Name)
                 .AddView("counter*", "renamed")
                 .AddInMemoryExporter(exportedItems)
                 .Build();
@@ -126,7 +126,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter1 = new Meter("ViewToProduceMultipleStreamsFromInstrumentTest");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter1.Name)
+                .AddMeter(meter1.Name)
                 .AddView("name1", "renamedStream1")
                 .AddView("name1", "renamedStream2")
                 .AddInMemoryExporter(exportedItems)
@@ -147,7 +147,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter1 = new Meter("ViewToProduceMultipleStreamsWithDuplicatesFromInstrumentTest");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter1.Name)
+                .AddMeter(meter1.Name)
                 .AddView("name1", "renamedStream1")
                 .AddView("name1", "renamedStream2")
                 .AddView("name1", "renamedStream2")
@@ -173,7 +173,7 @@ namespace OpenTelemetry.Metrics.Tests
             var exportedItems = new List<Metric>();
             var bounds = new double[] { 10, 20 };
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter1.Name)
+                .AddMeter(meter1.Name)
                 .AddView("MyHistogram", new HistogramConfiguration() { Name = "MyHistogramDefaultBound" })
                 .AddView("MyHistogram", new HistogramConfiguration() { BucketBounds = bounds })
                 .AddInMemoryExporter(exportedItems)
@@ -237,7 +237,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter1 = new Meter("ViewToSelectTagKeysTest");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter1.Name)
+                .AddMeter(meter1.Name)
                 .AddView("FruitCounter", new MetricStreamConfiguration()
                 { TagKeys = new string[] { "name" }, Name = "NameOnly" })
                 .AddView("FruitCounter", new MetricStreamConfiguration()
@@ -299,7 +299,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter = new Meter("ViewToDropSingleInstrumentTest");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter.Name)
+                .AddMeter(meter.Name)
                 .AddView("counterNotInteresting", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
                 .AddInMemoryExporter(exportedItems)
                 .Build();
@@ -322,7 +322,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter = new Meter("ViewToDropMultipleInstrumentsTest");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter.Name)
+                .AddMeter(meter.Name)
                 .AddView("server*", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
                 .AddInMemoryExporter(exportedItems)
                 .Build();
@@ -349,7 +349,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter = new Meter("ViewToDropAndRetainInstrumentTest");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter.Name)
+                .AddMeter(meter.Name)
                 .AddView("server.requests", MetricStreamConfiguration.Drop)
                 .AddView("server.requests", "server.request_renamed")
                 .AddInMemoryExporter(exportedItems)
