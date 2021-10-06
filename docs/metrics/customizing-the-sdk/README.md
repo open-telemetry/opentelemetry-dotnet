@@ -103,7 +103,7 @@ A
 provides the ability to customize the metrics that are output by the SDK.
 Following sections explains how to use this feature.
 
-#### View - Rename an instrument
+#### Rename an instrument
 
 When SDK produces Metrics, the name of Metric is by default the name of the
 instrument. View may be used to rename a metric to a different name. This is
@@ -115,9 +115,9 @@ own the instrument to create it with a different name.
    .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
 ```
 
-See [Program.cs](./Program.cs) for complete example.
+See [Program.cs](./Program.cs) for a complete example.
 
-#### View - Drop an instrument
+#### Drop an instrument
 
 When using `AddMeter` to add a Meter to the provider, all the instruments from
 that `Meter` gets subscribed. Views can be used to selectively drop an
@@ -143,8 +143,7 @@ then it is recommended to simply not add that `Meter` using `AddMeter`.
       })
 ```
 
-
-See [Program.cs](./Program.cs) for complete example.
+See [Program.cs](./Program.cs) for a complete example.
 
 ### Instrumentation
 
