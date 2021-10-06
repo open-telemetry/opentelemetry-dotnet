@@ -58,7 +58,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var testCompleted = false;
 
             using (var provider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(MeterName)
+                .AddMeter(MeterName)
                 .AddReader(new BaseExportingMetricReader(new TestExporter<Metric>(RunTest)))
                 .Build())
             {

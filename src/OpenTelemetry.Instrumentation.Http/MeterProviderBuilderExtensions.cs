@@ -46,7 +46,7 @@ namespace OpenTelemetry.Metrics
             //   RecordException - probably doesn't make sense for metric instrumentation
 
             var instrumentation = new HttpClientMetrics();
-            builder.AddSource(HttpClientMetrics.InstrumentationName);
+            builder.AddMeter(HttpClientMetrics.InstrumentationName);
             return builder.AddInstrumentation(() => instrumentation);
         }
     }

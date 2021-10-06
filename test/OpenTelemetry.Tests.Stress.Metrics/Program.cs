@@ -39,7 +39,7 @@ public partial class Program
         }
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddSource("TestMeter")
+            .AddMeter("TestMeter")
             .Build();
         Stress();
     }
