@@ -121,6 +121,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                 await writer.WriteAsync("# HELP ").ConfigureAwait(false);
                 await writer.WriteAsync(this.name).ConfigureAwait(false);
+                await writer.WriteAsync(" ").ConfigureAwait(false);
                 await writer.WriteAsync(GetSafeMetricDescription(this.description)).ConfigureAwait(false);
                 await writer.WriteAsync("\n").ConfigureAwait(false);
             }

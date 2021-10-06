@@ -28,7 +28,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
     public sealed class PrometheusExporterExtensionsTests
     {
-        private const string MeterName = "PrometheusExporterExtensionsTests.WriteMetricsCollectionTest.Meter";
+        private const string MeterName = "PrometheusExporterExtensionsTests.Meter";
 
         [Theory]
         [InlineData(nameof(WriteLongSum))]
@@ -36,6 +36,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         [InlineData(nameof(WriteLongGauge))]
         [InlineData(nameof(WriteDoubleGauge))]
         [InlineData(nameof(WriteHistogram))]
+        [InlineData(nameof(WriteMultiple))]
         public void WriteMetricsCollectionTest(string writeActionMethodName)
         {
             using var meter = new Meter(MeterName, "0.0.1");
@@ -92,7 +93,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var counter = meter.CreateCounter<int>("counter_int", description: "Prometheus help text goes here \n escaping.");
             counter.Add(100, tags);
 
-            return $"# HELP counter_intPrometheus help text goes here \\n escaping.\n# TYPE counter_int counter\ncounter_int{tagsExpected} 100 1633041000000\n";
+            return $"# HELP counter_int Prometheus help text goes here \\n escaping.\n# TYPE counter_int counter\ncounter_int{tagsExpected} 100 1633041000000\n";
         }
 
         private static string WriteDoubleSum(Meter meter, KeyValuePair<string, object>[] tags, string tagsExpected)
@@ -143,6 +144,13 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                + "histogram_name_bucket{key1=\"value1\",key2=\"value2\",le=\"500\"} 2 1633041000000\n"
                + "histogram_name_bucket{key1=\"value1\",key2=\"value2\",le=\"1000\"} 2 1633041000000\n"
                + "histogram_name_bucket{key1=\"value1\",key2=\"value2\",le=\"+Inf\"} 2 1633041000000\n";
+        }
+
+        private static string WriteMultiple(Meter meter, KeyValuePair<string, object>[] tags, string tagsExpected)
+        {
+            string expected = WriteLongSum(meter, tags, tagsExpected);
+            expected += WriteDoubleSum(meter, tags, tagsExpected);
+            return expected;
         }
     }
 }
