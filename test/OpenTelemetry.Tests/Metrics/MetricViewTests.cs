@@ -39,7 +39,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter1 = new Meter("ViewToRenameMetricTest");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter1.Name)
+                .AddMeter(meter1.Name)
                 .AddView("name1", "renamed")
                 .AddInMemoryExporter(exportedItems)
                 .Build();
@@ -60,8 +60,8 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter2 = new Meter("ViewToRenameMetricConditionallyTest2");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter1.Name)
-                .AddSource(meter2.Name)
+                .AddMeter(meter1.Name)
+                .AddMeter(meter2.Name)
                 .AddView((instrument) =>
                 {
                     if (instrument.Meter.Name.Equals(meter2.Name, StringComparison.OrdinalIgnoreCase)
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter1 = new Meter("ViewToRenameMetricWildCardMatchTest");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter1.Name)
+                .AddMeter(meter1.Name)
                 .AddView("counter*", "renamed")
                 .AddInMemoryExporter(exportedItems)
                 .Build();
@@ -126,7 +126,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter1 = new Meter("ViewToProduceMultipleStreamsFromInstrumentTest");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter1.Name)
+                .AddMeter(meter1.Name)
                 .AddView("name1", "renamedStream1")
                 .AddView("name1", "renamedStream2")
                 .AddInMemoryExporter(exportedItems)
@@ -147,7 +147,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter1 = new Meter("ViewToProduceMultipleStreamsWithDuplicatesFromInstrumentTest");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter1.Name)
+                .AddMeter(meter1.Name)
                 .AddView("name1", "renamedStream1")
                 .AddView("name1", "renamedStream2")
                 .AddView("name1", "renamedStream2")
@@ -173,7 +173,7 @@ namespace OpenTelemetry.Metrics.Tests
             var exportedItems = new List<Metric>();
             var bounds = new double[] { 10, 20 };
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter1.Name)
+                .AddMeter(meter1.Name)
                 .AddView("MyHistogram", new HistogramConfiguration() { Name = "MyHistogramDefaultBound" })
                 .AddView("MyHistogram", new HistogramConfiguration() { BucketBounds = bounds })
                 .AddInMemoryExporter(exportedItems)
@@ -237,7 +237,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter1 = new Meter("ViewToSelectTagKeysTest");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meter1.Name)
+                .AddMeter(meter1.Name)
                 .AddView("FruitCounter", new MetricStreamConfiguration()
                 { TagKeys = new string[] { "name" }, Name = "NameOnly" })
                 .AddView("FruitCounter", new MetricStreamConfiguration()
@@ -291,6 +291,86 @@ namespace OpenTelemetry.Metrics.Tests
 
             // Single point expected.
             Assert.Single(metricPoints);
+        }
+
+        [Fact]
+        public void ViewToDropSingleInstrument()
+        {
+            using var meter = new Meter("ViewToDropSingleInstrumentTest");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView("counterNotInteresting", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            // Expecting one metric stream.
+            var counterInteresting = meter.CreateCounter<long>("counterInteresting");
+            var counterNotInteresting = meter.CreateCounter<long>("counterNotInteresting");
+            counterInteresting.Add(10);
+            counterNotInteresting.Add(10);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("counterInteresting", metric.Name);
+        }
+
+        [Fact]
+        public void ViewToDropMultipleInstruments()
+        {
+            using var meter = new Meter("ViewToDropMultipleInstrumentsTest");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView("server*", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            // Expecting two client metric streams as both server* are dropped.
+            var serverRequests = meter.CreateCounter<long>("server.requests");
+            var serverExceptions = meter.CreateCounter<long>("server.exceptions");
+            var clientRequests = meter.CreateCounter<long>("client.requests");
+            var clientExceptions = meter.CreateCounter<long>("client.exceptions");
+            serverRequests.Add(10);
+            serverExceptions.Add(10);
+            clientRequests.Add(10);
+            clientExceptions.Add(10);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Equal(2, exportedItems.Count);
+            Assert.Equal("client.requests", exportedItems[0].Name);
+            Assert.Equal("client.exceptions", exportedItems[1].Name);
+        }
+
+        [Fact]
+        public void ViewToDropAndRetainInstrument()
+        {
+            using var meter = new Meter("ViewToDropAndRetainInstrumentTest");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView("server.requests", MetricStreamConfiguration.Drop)
+                .AddView("server.requests", "server.request_renamed")
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            // Expecting one metric stream even though a View is asking
+            // to drop the instrument, because another View is matching
+            // the instrument, which asks to aggregate with defaults
+            // and a use a new name for the resulting metric.
+            var serverRequests = meter.CreateCounter<long>("server.requests");
+            serverRequests.Add(10);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            Assert.Equal("server.request_renamed", exportedItems[0].Name);
+        }
+
+        [Fact]
+        public void MetricStreamConfigurationForDropMustNotAllowOverriding()
+        {
+            Assert.Throws<ArgumentException>(() => MetricStreamConfiguration.Drop.Aggregation = Aggregation.Histogram);
         }
     }
 #pragma warning restore SA1000 // KeywordsMustBeSpacedCorrectly

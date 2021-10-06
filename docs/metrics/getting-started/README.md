@@ -57,3 +57,19 @@ An OpenTelemetry
 is configured to subscribe to instruments from the Meter
 `MyCompany.MyProduct.MyLibrary`, and aggregate the measurements in-memory. The
 pre-aggregated metrics are exported to a `ConsoleExporter`.
+
+## OpenTelemetry .NET special note
+
+Metrics in OpenTelemetry .NET is a somewhat unique implementation of the
+OpenTelemetry project, as most of the Metrics API are incorporated directly
+into the .NET runtime itself. From a high level, what this means is that you
+can instrument your application by simply depending on
+`System.Diagnostics.DiagnosticSource` package.
+
+## Learn more
+
+* If you want to learn about more instruments, refer to [learning
+  more about instruments](../learning-more-instruments/README.md).
+
+* If you want to customize the Sdk, refer to [customizing
+  the SDK](../customizing-the-sdk/README.md).

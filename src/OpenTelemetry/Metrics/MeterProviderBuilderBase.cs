@@ -56,7 +56,7 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc />
-        public override MeterProviderBuilder AddSource(params string[] names)
+        public override MeterProviderBuilder AddMeter(params string[] names)
         {
             if (names == null)
             {

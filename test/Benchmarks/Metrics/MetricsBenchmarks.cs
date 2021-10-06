@@ -76,7 +76,7 @@ namespace Benchmarks.Metrics
             if (this.WithSDK)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
-                    .AddSource("TestMeter") // All instruments from this meter are enabled.
+                    .AddMeter("TestMeter") // All instruments from this meter are enabled.
                     .Build();
             }
 
