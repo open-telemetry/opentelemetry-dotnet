@@ -84,20 +84,20 @@ namespace Benchmarks.Metrics
             if (this.ViewConfig == ViewConfiguration.NoView)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
-                    .AddSource(this.meter.Name)
+                    .AddMeter(this.meter.Name)
                     .Build();
             }
             else if (this.ViewConfig == ViewConfiguration.ViewNoInstrSelect)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
-                    .AddSource(this.meter.Name)
+                    .AddMeter(this.meter.Name)
                     .AddView("nomatch", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
                     .Build();
             }
             else if (this.ViewConfig == ViewConfiguration.ViewSelectsInstr)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
-                    .AddSource(this.meter.Name)
+                    .AddMeter(this.meter.Name)
                     .AddView(this.counter.Name, new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
                     .Build();
             }

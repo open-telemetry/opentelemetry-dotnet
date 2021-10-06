@@ -62,8 +62,8 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter1 = new Meter("TestDuplicateMetricName1");
             using var meter2 = new Meter("TestDuplicateMetricName2");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestDuplicateMetricName1")
-                .AddSource("TestDuplicateMetricName2")
+                .AddMeter("TestDuplicateMetricName1")
+                .AddMeter("TestDuplicateMetricName2")
                 .AddReader(metricReader)
                 .Build();
 
@@ -116,7 +116,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter = new Meter("TestMeter");
             var counterLong = meter.CreateCounter<long>("mycounter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestMeter")
+                .AddMeter("TestMeter")
                 .AddReader(metricReader)
                 .Build();
 
@@ -201,7 +201,7 @@ namespace OpenTelemetry.Metrics.Tests
                 };
             });
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource(meterName)
+                .AddMeter(meterName)
                 .AddReader(metricReader)
                 .Build();
 
@@ -261,7 +261,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter = new Meter("TestPointCapMeter");
             var counterLong = meter.CreateCounter<long>("mycounterCapTest");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestPointCapMeter")
+                .AddMeter("TestPointCapMeter")
                 .AddReader(metricReader)
                 .Build();
 
@@ -313,7 +313,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter = new Meter("TestLongCounterMeter");
             var counterLong = meter.CreateCounter<long>("mycounter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestLongCounterMeter")
+                .AddMeter("TestLongCounterMeter")
                 .AddReader(metricReader)
                 .Build();
 
@@ -382,7 +382,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter = new Meter("TestDoubleCounterMeter");
             var counterDouble = meter.CreateCounter<double>("mycounter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestDoubleCounterMeter")
+                .AddMeter("TestDoubleCounterMeter")
                 .AddReader(metricReader)
                 .Build();
 
