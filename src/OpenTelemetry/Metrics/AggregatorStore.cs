@@ -22,7 +22,7 @@ using System.Threading;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class AggregatorStore
+    internal sealed class AggregatorStore
     {
         internal const int MaxMetricPoints = 2000;
         private static readonly ObjectArrayEqualityComparer ObjectArrayComparer = new ObjectArrayEqualityComparer();
