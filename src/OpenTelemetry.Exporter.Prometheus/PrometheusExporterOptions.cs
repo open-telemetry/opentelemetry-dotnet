@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Exporter
@@ -24,6 +25,7 @@ namespace OpenTelemetry.Exporter
     public class PrometheusExporterOptions
     {
         internal const string DefaultScrapeEndpointPath = "/metrics";
+        internal Func<DateTimeOffset> GetUtcNowDateTimeOffset = () => DateTimeOffset.UtcNow;
 
 #if NETCOREAPP3_1_OR_GREATER
         /// <summary>
