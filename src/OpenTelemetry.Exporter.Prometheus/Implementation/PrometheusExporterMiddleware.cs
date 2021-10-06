@@ -19,6 +19,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -97,10 +98,10 @@ namespace OpenTelemetry.Exporter.Prometheus
             response.StatusCode = 200;
             response.ContentType = PrometheusMetricBuilder.ContentType;
 
-            using var writer = new StreamWriter(response.Body);
+            using var writer = new StreamWriter(response.Body, encoding: Encoding.UTF8, leaveOpen: true);
             try
             {
-                await exporter.WriteMetricsCollection(writer).ConfigureAwait(false);
+                await exporter.WriteMetricsCollection(writer, exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
             }
             finally
             {

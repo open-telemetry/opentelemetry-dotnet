@@ -163,7 +163,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                 {
                     this.exporter.Collect(Timeout.Infinite);
 
-                    await this.exporter.WriteMetricsCollection(writer).ConfigureAwait(false);
+                    await this.exporter.WriteMetricsCollection(writer, this.exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
                 }
                 finally
                 {
