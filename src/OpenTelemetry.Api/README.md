@@ -487,13 +487,13 @@ for versions lower than `.NET Framework 4.6.1`.
    are to be created once and reused throughout the application/library.
 
     ```csharp
-    static Counter<long> counter = meter.CreateCounter<long>("MyFruitCounter");
+    static Counter<long> MyFruitCounter = meter.CreateCounter<long>("MyFruitCounter");
     ```
 
 4. Use the instruments to report measurements, along with the attributes.
 
     ```csharp
-    counter.Add(1, new("name", "apple"), new("color", "red"));
+    MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
     ```
 
 The above showed the usage of a `Counter` instrument. The following sections

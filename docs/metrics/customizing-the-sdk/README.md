@@ -14,7 +14,7 @@ Views, etc. Naturally, almost all the customizations must be done on the
 Building a `MeterProvider` is done using `MeterProviderBuilder` which must be
 obtained by calling `Sdk.CreateMeterProviderBuilder()`. `MeterProviderBuilder`
 exposes various methods which configure the provider it is going to build.
-These include methods like `AddSource`, `AddView` etc, and are explained in
+These include methods like `AddMeter`, `AddView` etc, and are explained in
 subsequent sections of this document. Once configuration is done, calling
 `Build()` on the `MeterProviderBuilder` builds the `MeterProvider` instance.
 Once built, changes to its configuration is not allowed. In most cases, a single
@@ -62,10 +62,10 @@ The SDK follows an explicit opt-in model for listening to meters. i.e, by
 default, it listens to no meters. Every meter which is used to create
 instruments must be explicitly added to the meter provider.
 
-`AddSource` method on `MeterProviderBuilder` can be used to add a `Meter` to the
-provider. The name of the `Meter` (case-insensitive) must be the argument to
-this method. `AddSource` can be called multiple times to add more than one
-meter. It also supports wild-card subscription model.
+`AddMeter` method on `MeterProviderBuilder` can be used to add a `Meter` to the
+provider. The name of the `Meter` (case-insensitive) must be provided as an
+argument to this method. `AddMeter` can be called multiple times to add more
+than one meters. It also supports wild-card subscription model.
 
 It is **not** possible to add meters *once* the provider is built by the
 `Build()` method on the `MeterProviderBuilder`.
@@ -79,22 +79,22 @@ using OpenTelemetry.Metrics;
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
     // The following enables instruments from Meter
     // named "MyCompany.MyProduct.MyLibrary" only.
-    .AddSource("MyCompany.MyProduct.MyLibrary")
+    .AddMeter("MyCompany.MyProduct.MyLibrary")
     // The following enables instruments from all Meters
     // whose name starts with  "AbcCompany.XyzProduct.".
-    .AddSource("AbcCompany.XyzProduct.*")
+    .AddMeter("AbcCompany.XyzProduct.*")
     .Build();
 ```
 
 See [Program.cs](./Program.cs) for complete example.
 
 **Note:**
-A common mistake while configuring `MeterProvider` is forgetting to add all
-`Meter`s to the provider. It is recommended to leverage the wild card
+A common mistake while configuring `MeterProvider` is forgetting to add the
+required `Meter`s to the provider. It is recommended to leverage the wildcard
 subscription model where it makes sense. For example, if your application is
 expecting to enable instruments from a number of libraries from a company "Abc",
-the you can use `AddSource("Abc.*")` to enable all meters whose name starts
-with "Abc.".
+the you can use `AddMeter("Abc.*")` to enable all meters whose name starts with
+"Abc.".
 
 ### View
 
