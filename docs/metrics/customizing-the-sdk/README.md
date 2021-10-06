@@ -98,7 +98,52 @@ the you can use `AddMeter("Abc.*")` to enable all meters whose name starts with
 
 ### View
 
-// TODO
+A
+[View](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view)
+provides the ability to customize the metrics that are output by the SDK.
+Following sections explains how to use this feature.
+
+#### Rename an instrument
+
+When SDK produces Metrics, the name of Metric is by default the name of the
+instrument. View may be used to rename a metric to a different name. This is
+particularly useful if there are conflicting instrument names, and you do not
+own the instrument to create it with a different name.
+
+```csharp
+   // Rename an instrument to new name.
+   .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
+```
+
+See [Program.cs](./Program.cs) for a complete example.
+
+#### Drop an instrument
+
+When using `AddMeter` to add a Meter to the provider, all the instruments from
+that `Meter` gets subscribed. Views can be used to selectively drop an
+instrument from a Meter. If the goal is to drop every instrument from a `Meter`,
+then it is recommended to simply not add that `Meter` using `AddMeter`.
+
+```csharp
+   // Drop the instrument "MyCounterDrop".
+   .AddView(instrumentName: "MyCounterDrop", MetricStreamConfiguration.Drop)
+```
+
+```csharp
+   // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
+   .AddView((instrument) =>
+      {
+         if (instrument.Meter.Name.Equals("CompanyA.ProductB.LibraryC") &&
+            instrument.Name.Equals("MyCounterDrop"))
+         {
+            return MetricStreamConfiguration.Drop;
+         }
+
+         return null;
+      })
+```
+
+See [Program.cs](./Program.cs) for a complete example.
 
 ### Instrumentation
 
