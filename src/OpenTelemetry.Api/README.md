@@ -434,6 +434,75 @@ and
 [extract](../../examples/MicroserviceExample/Utils/Messaging/MessageReceiver.cs)
 context.
 
+## Introduction to OpenTelemetry .NET Metrics API
+
+Metrics in OpenTelemetry .NET are a somewhat unique implementation of the
+OpenTelemetry project, as the Metrics API is incorporated directly into the .NET
+runtime itself, as part of the
+[`System.Diagnostics.DiagnosticSource`](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/6.0.0-rc.1.21451.13)
+package. This means, users can instrument their applications/libraries to emit
+metrics by simply using the `System.Diagnostics.DiagnosticSource` package. This
+package can be used in applications targeting any of the officially supported
+versions of [.NET Core](https://dotnet.microsoft.com/download/dotnet-core), and
+[.NET Framework](https://dotnet.microsoft.com/download/dotnet-framework) except
+for versions lower than `.NET Framework 4.6.1`.
+
+## Instrumenting a library/application with .NET Metrics API
+
+### Basic metric usage
+
+1. Install the `System.Diagnostics.DiagnosticSource` package version
+   `6.0.0-rc.1.21451.13` or above to your application or library.
+
+    ```xml
+    <ItemGroup>
+      <PackageReference
+        Include="System.Diagnostics.DiagnosticSource"
+        Version="6.0.0-rc.1.21451.13"
+      />
+    </ItemGroup>
+    ```
+
+2. Create a `Meter`, providing the name and version of the library/application
+   doing the instrumentation. The `Meter` instance is typically created once and
+   is reused throughout the application/library.
+
+    ```csharp
+    static Meter meter = new Meter(
+        "companyname.product.instrumentationlibrary",
+        "semver1.0.0");
+    ```
+
+    The above requires import of the `System.Diagnostics.Metrics` namespace.
+
+    **Note:**
+    It is important to note that `Meter` instances are created by using its
+    constructor, and *not* by calling a `GetMeter` method on the
+    `MeterProvider`. This is an important distinction from the [OpenTelemetry
+    specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#get-a-meter),
+    where `Meter`s are obtained from `MeterProvider`.
+
+3. Use the `Meter` instance from above to create instruments, which can be used
+   to report measurements. Just like meter instances, the instrument instances
+   are to be created once and reused throughout the application/library.
+
+    ```csharp
+    static Counter<long> MyFruitCounter = meter.CreateCounter<long>("MyFruitCounter");
+    ```
+
+4. Use the instruments to report measurements, along with the attributes.
+
+    ```csharp
+    MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
+    ```
+
+The above showed the usage of a `Counter` instrument. The following sections
+describes more kinds of instruments.
+
+### Instrument types
+
+// TODO - add all instruments.
+
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
