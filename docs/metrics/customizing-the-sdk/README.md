@@ -5,7 +5,7 @@
 As shown in the [getting-started](../getting-started/README.md) doc, a valid
 [`MeterProvider`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#meterprovider)
 must be configured and built to collect metrics with OpenTelemetry .NET Sdk.
-`MeterProvider` holds all the configuration for tracing like metricreaders,
+`MeterProvider` holds all the configuration for metrics like metricreaders,
 views, etc. Naturally, almost all the customizations must be done on the
 `MeterProvider`.
 
@@ -23,7 +23,7 @@ application shuts down.
 
 The snippet below shows how to build a basic `MeterProvider`. This will create a
 provider with default configuration, and is not particularly useful. The
-subsequent sections shows how to build a more useful provider.
+subsequent sections show how to build a more useful provider.
 
 ```csharp
 using OpenTelemetry;
@@ -39,7 +39,7 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder().Build();
 1. The list of `Meter`s from which instruments are created to report
    measurements.
 2. The list of instrumentations enabled via
-   [InstrumentationLibrary](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library).
+   [Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library).
 3. The list of
    [MetricReaders](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricreader),
    including exporting readers which exports metrics to

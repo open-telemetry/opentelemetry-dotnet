@@ -447,11 +447,6 @@ versions of [.NET Core](https://dotnet.microsoft.com/download/dotnet-core), and
 [.NET Framework](https://dotnet.microsoft.com/download/dotnet-framework) except
 for versions lower than `.NET Framework 4.6.1`.
 
-The recommended way of instrumenting is by using the [.NET Metrics
-API](#instrumenting-a-libraryapplication-with-net-metrics-api). Users are
-required to just take dependency on the
-[DiagnosticSource](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/6.0.0-rc.1.21451.13).
-
 ## Instrumenting a library/application with .NET Metrics API
 
 ### Basic usage
@@ -478,12 +473,12 @@ required to just take dependency on the
         "semver1.0.0");
     ```
 
-    The above requires import of the `System.Diagnostics` namespace.
+    The above requires import of the `System.Diagnostics.Metrics` namespace.
 
     **Note**
     It is important to note that `Meter` instances are created by using its
     constructor, and *not* by calling a `GetMeter` method on the
-    `MeterProvider`. This is important distinction from the [OpenTelemetry
+    `MeterProvider`. This is an important distinction from the [OpenTelemetry
     specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#get-a-meter),
     where `Meter`s are obtained from `MeterProvider`.
 
