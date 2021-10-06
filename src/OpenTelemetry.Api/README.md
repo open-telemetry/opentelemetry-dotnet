@@ -449,10 +449,10 @@ for versions lower than `.NET Framework 4.6.1`.
 
 ## Instrumenting a library/application with .NET Metrics API
 
-### Basic usage
+### Basic metric usage
 
-1. Install the `System.Diagnostics.DiagnosticSource` package version `6.0.0-rc.1.21451.13` or
-   above to your application or library.
+1. Install the `System.Diagnostics.DiagnosticSource` package version
+   `6.0.0-rc.1.21451.13` or above to your application or library.
 
     ```xml
     <ItemGroup>
@@ -501,9 +501,7 @@ describes more kinds of instruments.
 
 ### Instrument types
 
-
 // TODO - add all instruments.
-
 
 ## References
 
