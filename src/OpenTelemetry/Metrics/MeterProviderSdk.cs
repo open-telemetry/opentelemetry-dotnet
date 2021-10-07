@@ -102,6 +102,14 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
                 }
+
+                if (!wildcardMode)
+                {
+                    foreach (var meterSource in meterSources)
+                    {
+                        meterSourcesToSubscribe.Add(meterSource);
+                    }
+                }
             }
 
             this.listener = new MeterListener();
@@ -110,22 +118,8 @@ namespace OpenTelemetry.Metrics
             {
                 this.listener.InstrumentPublished = (instrument, listener) =>
                 {
-                    if (wildcardMode)
-                    {
-                        if (ShouldListenTo(instrument.Meter.Name))
-                        {
-                            meterSourcesToSubscribe.Add(instrument.Meter.Name);
-                        }
-                    }
-                    else
-                    {
-                        foreach (var meterSource in meterSources)
-                        {
-                            meterSourcesToSubscribe.Add(meterSource);
-                        }
-                    }
-
-                    if (meterSourcesToSubscribe.Contains(instrument.Meter.Name))
+                    if ((wildcardMode && regex.IsMatch(instrument.Meter.Name))
+                        || (!wildcardMode && meterSourcesToSubscribe.Contains(instrument.Meter.Name)))
                     {
                         // Creating list with initial capacity as the maximum
                         // possible size, to avoid any array resize/copy internally.
@@ -274,11 +268,6 @@ namespace OpenTelemetry.Metrics
             {
                 var pattern = '^' + string.Join("|", from name in collection select "(?:" + Regex.Escape(name).Replace("\\*", ".*") + ')') + '$';
                 return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            }
-
-            bool ShouldListenTo(string instrumentName)
-            {
-                return regex.IsMatch(instrumentName);
             }
         }
 
