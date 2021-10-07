@@ -168,14 +168,14 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void MeterSourcesWildCardSupportTest()
         {
-            var meterSources = new[] { "MeterSources.*", "MeterSources.*.Subset" };
+            var meterSources = new[] { "AbcCompany.XyzProduct.ComponentA", "AbcCompany.XyzProduct.ComponentB", "SomeCompany.SomeProduct.SomeComponent" };
             using var meter1 = new Meter(meterSources[0]);
             using var meter2 = new Meter(meterSources[1]);
+            using var meter3 = new Meter(meterSources[2]);
 
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter1.Name)
-                .AddMeter(meter2.Name)
+                .AddMeter("AbcCompany.XyzProduct.*")
                 .AddInMemoryExporter(exportedItems)
                 .AddView("name1", "renamed")
                 .Build();
@@ -183,10 +183,14 @@ namespace OpenTelemetry.Metrics.Tests
             var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
             meter1.CreateObservableGauge("myGauge1", () => measurement);
             meter2.CreateObservableGauge("myGauge2", () => measurement);
+            meter3.CreateObservableGauge("myGauge3", () => measurement);
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Equal("myGauge1", exportedItems[0].Name);
             Assert.Equal("myGauge2", exportedItems[1].Name);
+
+            // the third element "SomeCompany.SomeProduct.SomeComponent" will not be subscribed.
+            Assert.True(exportedItems.Count == 2);
         }
 
         [Theory]

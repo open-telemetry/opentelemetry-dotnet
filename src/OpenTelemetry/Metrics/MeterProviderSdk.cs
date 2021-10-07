@@ -112,15 +112,25 @@ namespace OpenTelemetry.Metrics
                 }
             }
 
+            Func<Instrument, bool> shouldListenTo = instrument =>
+            {
+                if (wildcardMode)
+                {
+                    return regex.IsMatch(instrument.Meter.Name);
+                }
+                else
+                {
+                    return meterSourcesToSubscribe.Contains(instrument.Meter.Name);
+                }
+            };
+
             this.listener = new MeterListener();
             var viewConfigCount = this.viewConfigs.Count;
             if (viewConfigCount > 0)
             {
                 this.listener.InstrumentPublished = (instrument, listener) =>
                 {
-                    var meterName = instrument.Meter.Name;
-                    if ((wildcardMode && regex.IsMatch(meterName))
-                        || (!wildcardMode && meterSourcesToSubscribe.Contains(meterName)))
+                    if (shouldListenTo(instrument))
                     {
                         // Creating list with initial capacity as the maximum
                         // possible size, to avoid any array resize/copy internally.
@@ -218,9 +228,7 @@ namespace OpenTelemetry.Metrics
             {
                 this.listener.InstrumentPublished = (instrument, listener) =>
                 {
-                    var meterName = instrument.Meter.Name;
-                    if ((wildcardMode && regex.IsMatch(meterName))
-                        || (!wildcardMode && meterSourcesToSubscribe.Contains(meterName)))
+                    if (shouldListenTo(instrument))
                     {
                         var metricName = instrument.Name;
                         Metric metric = null;
