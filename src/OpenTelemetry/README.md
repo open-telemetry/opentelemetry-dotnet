@@ -5,10 +5,10 @@
 
 * [Installation](#installation)
 * [Introduction](#introduction)
-* [Getting started with Logs](#getting-started-with-logging)
-* [Getting started with Traces](#getting-started-with-tracing)
-* [Tracing Configuration](#tracing-configuration)
-  * [ActivitySource](#activity-source)
+* [Getting started with Logging](#getting-started-with-logging)
+* [Getting started with Tracing](#getting-started-with-tracing)
+* [Tracing configuration](#tracing-configuration)
+  * [Activity Source](#activity-source)
   * [Instrumentation](#instrumentation)
   * [Processor](#processor)
   * [Resource](#resource)
@@ -16,6 +16,8 @@
 * [Advanced topics](#advanced-topics)
   * [Propagators](#propagators)
 * [Troubleshooting](#troubleshooting)
+  * [Configuration Parameters](#configuration-parameters)
+  * [Remarks](#remarks)
 * [References](#references)
 
 ## Installation
@@ -135,7 +137,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     // named "MyCompany.MyProduct.MyLibrary" only.
     .AddSource("MyCompany.MyProduct.MyLibrary")
     // The following subscribes to activities from all Activity Sources
-    // whose name starts with  "ABCCompany.XYZProduct.".
+    // whose name starts with "ABCCompany.XYZProduct.".
     .AddSource("ABCCompany.XYZProduct.*")
     .Build();
 ```
@@ -200,10 +202,24 @@ purposes, the SDK provides the following built-in processors:
 * [BatchExportProcessor&lt;T&gt;](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#batching-processor)
   : This is an exporting processor which batches the telemetry before sending to
   the configured exporter.
+
+  The following environment variables can be used to override the default
+  values of the `BatchExportActivityProcessorOptions`.
+
+  <!-- markdownlint-disable MD013 -->
+  | Environment variable             | `BatchExportActivityProcessorOptions` property |
+  | -------------------------------- | ---------------------------------------------- |
+  | `OTEL_BSP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                   |
+  | `OTEL_BSP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`                  |
+  | `OTEL_BSP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                                 |
+  | `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSizeEnvVarKey`                  |
+  <!-- markdownlint-enable MD013 -->
+
 * [CompositeProcessor&lt;T&gt;](../../src/OpenTelemetry/CompositeProcessor.cs)
   : This is a processor which can be composed from multiple processors. This is
   typically used to construct multiple processing pipelines, each ending with
   its own exporter.
+
 * [SimpleExportProcessor&lt;T&gt;](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#simple-processor)
   : This is an exporting processor which passes telemetry to the configured
   exporter without any batching.
@@ -242,6 +258,16 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyServiceName"))
     .Build();
 ```
+
+It is also possible to configure the `Resource` by using following
+environmental variables:
+
+<!-- markdownlint-disable MD013 -->
+| Environment variable       | Description                                        |
+| -------------------------- | -------------------------------------------------- |
+| `OTEL_RESOURCE_ATTRIBUTES` | Key-value pairs to be used as resource attributes. See the [Resource SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable) for more details. |
+| `OTEL_SERVICE_NAME`        | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |
+<!-- markdownlint-enable MD013 -->
 
 ### Sampler
 

@@ -1,13 +1,106 @@
 # Changelog
 
-## Experimental - Metrics
-
-Note: the metrics work is happening in the [metrics feature
-branch](https://github.com/open-telemetry/opentelemetry-dotnet/tree/metrics),
-please check the latest changes
-[here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/src/OpenTelemetry/CHANGELOG.md#experimental---metrics).
-
 ## Unreleased
+
+* Exception from Observable instrument callbacks does not
+  result in entire metrics being lost.
+
+* SDK is allocation-free on recording of measurements with
+  upto 8 tags.
+
+* TracerProviderBuilder.AddLegacySource now supports wildcard activity names.
+  ([#2183](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2183))
+
+## 1.2.0-alpha4
+
+Released 2021-Sep-23
+
+* `BatchExportProcessor.OnShutdown` will now log the count of dropped telemetry items.
+  ([#2331](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2331))
+* Changed `CompositeProcessor<T>.OnForceFlush` to meet with the spec
+  requirement. Now the SDK will invoke `ForceFlush` on all registered
+  processors, even if there is a timeout.
+  ([#2388](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2388))
+
+## 1.2.0-alpha3
+
+Released 2021-Sep-13
+
+* Metrics perf improvements, bug fixes.
+  Replace MetricProcessor with MetricReader.
+  ([#2306](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2306))
+
+* Add `BatchExportActivityProcessorOptions` which supports field value overriding
+  using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
+  `OTEL_BSP_MAX_QUEUE_SIZE`, `OTEL_BSP_MAX_EXPORT_BATCH_SIZE`
+  envionmental variables as defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/sdk-environment-variables.md#batch-span-processor).
+  ([#2219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2219))
+
+## 1.2.0-alpha2
+
+Released 2021-Aug-24
+
+* More Metrics features. All instrument types, push/pull
+  exporters, Delta/Cumulative temporality supported.
+
+* `ResourceBuilder.CreateDefault` has detectors for
+  `OTEL_RESOURCE_ATTRIBUTES`, `OTEL_SERVICE_NAME` environment variables
+  so that explicit `AddEnvironmentVariableDetector` call is not needed. ([#2247](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2247))
+
+* `ResourceBuilder.AddEnvironmentVariableDetector` handles `OTEL_SERVICE_NAME`
+   environmental variable. ([#2209](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2209))
+
+* Removes upper constraint for Microsoft.Extensions.Logging
+  dependencies. ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
+
+* OpenTelemetryLogger modified to not throw, when the
+  formatter supplied in ILogger.Log call is null. ([#2200](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2200))
+
+## 1.2.0-alpha1
+
+Released 2021-Jul-23
+
+* Add basic Metrics support with a single pipeline, and supporting Counter
+  (sync) instrument. Push and Pull exporters are supported.
+  ([#2174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2174))
+
+* Removes .NET Framework 4.5.2, .NET 4.6 support. The minimum .NET Framework
+  version supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
+
+## 1.1.0
+
+Released 2021-Jul-12
+
+## 1.1.0-rc1
+
+Released 2021-Jun-25
+
+* Moved `IDeferredTracerProviderBuilder` to API library.
+  ([#2058](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2100))
+
+## 1.1.0-beta4
+
+Released 2021-Jun-09
+
+## 1.1.0-beta3
+
+Released 2021-May-11
+
+* `AddLegacySource()` moved out of `TracerProviderBuilderExtensions` and into
+  public API
+  ([#2019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2019))
+
+* Fixed an issue causing inconsistent log scopes when using
+  `BatchLogRecordExportProcessor`. To make parsing scopes easier the
+  `LogRecord.ForEachScope` signature has been changed to receive instances of
+  `LogRecordScope` (a new type which implements
+  `IEnumerator<KeyValuePair<string, object>>` for accessing scope items)
+  ([#2026](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2026))
+
+## 1.1.0-beta2
+
+Released 2021-Apr-23
 
 * Use `AssemblyFileVersionAttribute` instead of `FileVersionInfo.GetVersionInfo`
   to get the SDK version attribute to ensure that it works when the assembly
@@ -124,6 +217,9 @@ Released 2021-Jan-29
   [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)
   for details on Metric release plans.
 * Fix Resource attribute telemetry.sdk.version to have correct file version.
+* Metrics removed as it is not part 1.0.0 release. See issue
+  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501)
+  for details on Metric release plans.
 
 ## 1.0.0-rc1.1
 

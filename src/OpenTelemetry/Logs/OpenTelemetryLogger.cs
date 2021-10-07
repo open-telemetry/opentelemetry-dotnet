@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if NET461 || NETSTANDARD2_0
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -54,12 +53,14 @@ namespace OpenTelemetry.Logs
                     this.categoryName,
                     logLevel,
                     eventId,
-                    options.IncludeFormattedMessage ? formatter(state, exception) : null,
+                    options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
                     options.ParseStateValues ? null : (object)state,
                     exception,
                     options.ParseStateValues ? this.ParseState(state) : null);
 
                 processor.OnEnd(record);
+
+                record.ScopeProvider = null;
             }
         }
 
@@ -91,4 +92,3 @@ namespace OpenTelemetry.Logs
         }
     }
 }
-#endif

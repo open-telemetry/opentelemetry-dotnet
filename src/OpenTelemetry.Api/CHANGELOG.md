@@ -1,13 +1,70 @@
 # Changelog
 
-## Experimental - Metrics
-
-Note: the metrics work is happening in the [metrics feature
-branch](https://github.com/open-telemetry/opentelemetry-dotnet/tree/metrics),
-please check the latest changes
-[here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/src/OpenTelemetry.Api/CHANGELOG.md#experimental---metrics).
-
 ## Unreleased
+
+* Added `IDeferredMeterProviderBuilder`
+  ([#2412](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2412))
+
+* Breaking: Renamed `AddSource` to `AddMeter` on MeterProviderBuilder
+  to better reflect the intent of the method.
+
+## 1.2.0-alpha4
+
+Released 2021-Sep-23
+
+* Updated System.Diagnostics.DiagnosticSource to version 6.0.0-rc.1.21451.13
+
+## 1.2.0-alpha3
+
+Released 2021-Sep-13
+
+* Static Baggage operations (`SetBaggage`, `RemoveBaggage`, & `ClearBaggage`)
+  are now thread-safe. Instance-based Baggage operations no longer mutate
+  `Baggage.Current` (breaking behavior change). For details see:
+  ([#2298](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2298))
+
+## 1.2.0-alpha2
+
+Released 2021-Aug-24
+
+## 1.2.0-alpha1
+
+Released 2021-Jul-23
+
+* Add Metrics support.([#2174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2174))
+
+* Removes .NET Framework 4.5.2, .NET 4.6 support. The minimum .NET Framework
+  version supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
+
+## 1.1.0
+
+Released 2021-Jul-12
+
+## 1.1.0-rc1
+
+Released 2021-Jun-25
+
+* Added `IDeferredTracerProviderBuilder`.
+  ([#2058](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2100))
+
+## 1.1.0-beta4
+
+Released 2021-Jun-09
+
+## 1.1.0-beta3
+
+Released 2021-May-11
+
+* Adds `AddLegacySource()` to `TracerProviderBuilder`
+  ([#2019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2019))
+
+## 1.1.0-beta2
+
+Released 2021-Apr-23
+
+* `BaggagePropagator` now uses `baggage` as the header name instead of `Baggage`
+  to `Extract` from and `Inject` to `carrier`
+  ([#2003](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2003))
 
 ## 1.1.0-beta1
 
@@ -48,12 +105,11 @@ Released 2021-Jan-29
 * `Status.WithDescription` will now ignore the provided description if the
   `Status.StatusCode` is anything other than `ERROR`.
   ([#1655](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655))
-* Metrics removed as it is not part 1.0.0 release. See issue
-  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655) for
-  details on Metric release plans.
 * Relax System.Diagnostics.DiagnosticSource version requirement to allow
   versions >=5.0. Previously only versions up to 6.0 (excluding 6.0) was
   allowed.
+* Metrics removed as it is not part 1.0.0 release. See issue [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655)
+  for details on Metric release plans.
 
 ## 1.0.0-rc1.1
 

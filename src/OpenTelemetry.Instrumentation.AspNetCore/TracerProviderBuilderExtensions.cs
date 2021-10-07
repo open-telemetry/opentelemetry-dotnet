@@ -40,14 +40,35 @@ namespace OpenTelemetry.Trace
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var aspnetCoreOptions = new AspNetCoreInstrumentationOptions();
-            configureAspNetCoreInstrumentationOptions?.Invoke(aspnetCoreOptions);
-            builder.AddInstrumentation(() => new AspNetCoreInstrumentation(aspnetCoreOptions));
+            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            {
+                return deferredTracerProviderBuilder.Configure((sp, builder) =>
+                {
+                    AddAspNetCoreInstrumentation(builder, sp.GetOptions<AspNetCoreInstrumentationOptions>(), configureAspNetCoreInstrumentationOptions);
+                });
+            }
+
+            return AddAspNetCoreInstrumentation(builder, new AspNetCoreInstrumentationOptions(), configureAspNetCoreInstrumentationOptions);
+        }
+
+        internal static TracerProviderBuilder AddAspNetCoreInstrumentation(
+            this TracerProviderBuilder builder,
+            AspNetCoreInstrumentation instrumentation)
+        {
             builder.AddSource(HttpInListener.ActivitySourceName);
             builder.AddLegacySource(HttpInListener.ActivityOperationName); // for the activities created by AspNetCore
-            builder.AddLegacySource(HttpInListener.ActivityNameByHttpInListener); // for the sibling activities created by the instrumentation library
+            return builder.AddInstrumentation(() => instrumentation);
+        }
 
-            return builder;
+        private static TracerProviderBuilder AddAspNetCoreInstrumentation(
+            TracerProviderBuilder builder,
+            AspNetCoreInstrumentationOptions options,
+            Action<AspNetCoreInstrumentationOptions> configure = null)
+        {
+            configure?.Invoke(options);
+            return AddAspNetCoreInstrumentation(
+                builder,
+                new AspNetCoreInstrumentation(new HttpInListener(options)));
         }
     }
 }

@@ -2,9 +2,11 @@
 
 [![Slack](https://img.shields.io/badge/slack-@cncf/otel/dotnet-brightgreen.svg?logo=slack)](https://cloud-native.slack.com/archives/C01N3BC2W7Q)
 [![codecov.io](https://codecov.io/gh/open-telemetry/opentelemetry-dotnet/branch/main/graphs/badge.svg?)](https://codecov.io/gh/open-telemetry/opentelemetry-dotnet/)
-[![Release](https://img.shields.io/github/v/release/open-telemetry/opentelemetry-dotnet?include_prereleases&style=)](https://github.com/open-telemetry/opentelemetry-dotnet/releases/)
-[![Nuget](https://img.shields.io/nuget/vpre/OpenTelemetry.svg)](https://www.nuget.org/profiles/OpenTelemetry)
+[![Release](https://img.shields.io/github/v/release/open-telemetry/opentelemetry-dotnet)](https://github.com/open-telemetry/opentelemetry-dotnet/releases/)
+[![Nuget](https://img.shields.io/nuget/v/OpenTelemetry.svg)](https://www.nuget.org/profiles/OpenTelemetry)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.svg)](https://www.nuget.org/profiles/OpenTelemetry)
+[![Linux](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/linux-ci.yml/badge.svg?branch=main)](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/linux-ci.yml)
+[![Windows](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/windows-ci.yml/badge.svg?branch=main)](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/windows-ci.yml)
 
 The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 
@@ -14,16 +16,15 @@ Packages shipped from this repository generally support all the officially
 supported versions of [.NET
 Core](https://dotnet.microsoft.com/download/dotnet-core), and [.NET
 Framework](https://dotnet.microsoft.com/download/dotnet-framework) except for
-`.NET Framework 3.5 SP1`. Any exceptions to this are noted in the individual
-`README.md` files.
+versions lower than `.NET Framework 4.6.1`.
+Any exceptions to this are noted in the individual `README.md` files.
 
 ## Getting Started
 
 If you are new here, please read the getting started docs:
 
 * [logs](./docs/logs/getting-started/README.md)
-* [metrics](https://github.com/open-telemetry/opentelemetry-dotnet/blob/metrics/docs/metrics/getting-started.md)
-  (experimental)
+* [metrics](./docs/metrics/getting-started/README.md) (experimental)
 * [trace](./docs/trace/getting-started/README.md)
 
 This repository includes multiple installable components, available on
@@ -56,6 +57,7 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [OTLP](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
   (OpenTelemetry Protocol)
 * [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md)
+* [Prometheus](./src/OpenTelemetry.Exporter.Prometheus/README.md)
 
 See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) for
 more exporters.
@@ -97,6 +99,7 @@ Approvers
 * [Eddy Nakamura](https://github.com/eddynaka), Microsoft
 * [Paulo Janotti](https://github.com/pjanotti), Splunk
 * [Reiley Yang](https://github.com/reyang), Microsoft
+* [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
 *Find more about the approver role in [community
 repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver).*
@@ -112,6 +115,14 @@ Maintainers
 
 *Find more about the maintainer role in [community
 repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).*
+
+Triager
+([@open-telemetry/dotnet-triagers](https://github.com/orgs/open-telemetry/teams/dotnet-triagers)):
+
+* [Victor Lu](https://github.com/victlu), Microsoft
+
+*Find more about the triager role in [community
+repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#triager).*
 
 ### Thanks to all the people who have contributed
 

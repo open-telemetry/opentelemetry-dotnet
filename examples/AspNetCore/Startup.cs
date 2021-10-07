@@ -24,6 +24,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Instrumentation.AspNetCore;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -54,9 +56,9 @@ namespace Examples.AspNetCore
                 }
             });
 
-            // Switch between Zipkin/Jaeger by setting UseExporter in appsettings.json.
-            var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
-            switch (exporter)
+            // Switch between Zipkin/Jaeger/OTLP by setting UseExporter in appsettings.json.
+            var tracingExporter = this.Configuration.GetValue<string>("UseTracingExporter").ToLowerInvariant();
+            switch (tracingExporter)
             {
                 case "jaeger":
                     services.AddOpenTelemetryTracing((builder) => builder
@@ -69,6 +71,7 @@ namespace Examples.AspNetCore
                     break;
                 case "zipkin":
                     services.AddOpenTelemetryTracing((builder) => builder
+                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(this.Configuration.GetValue<string>("Zipkin:ServiceName")))
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddZipkinExporter());
@@ -95,8 +98,40 @@ namespace Examples.AspNetCore
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddConsoleExporter());
+
+                    // For options which can be bound from IConfiguration.
+                    services.Configure<AspNetCoreInstrumentationOptions>(this.Configuration.GetSection("AspNetCoreInstrumentation"));
+
+                    // For options which can be configured from code only.
+                    services.Configure<AspNetCoreInstrumentationOptions>(options =>
+                    {
+                        options.Filter = (req) =>
+                        {
+                            return req.Request.Host != null;
+                        };
+                    });
+
                     break;
             }
+
+            var metricsExporter = this.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
+            services.AddOpenTelemetryMetrics(builder =>
+            {
+                builder.AddAspNetCoreInstrumentation();
+
+                switch (metricsExporter)
+                {
+                    case "prometheus":
+                        builder.AddPrometheusExporter();
+                        break;
+                    case "otlp":
+                        builder.AddOtlpExporter();
+                        break;
+                    default:
+                        builder.AddConsoleExporter();
+                        break;
+                }
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -116,6 +151,12 @@ namespace Examples.AspNetCore
             });
 
             app.UseRouting();
+
+            var metricsExporter = this.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
+            if (metricsExporter == "prometheus")
+            {
+                app.UseOpenTelemetryPrometheusScrapingEndpoint();
+            }
 
             app.UseEndpoints(endpoints =>
             {

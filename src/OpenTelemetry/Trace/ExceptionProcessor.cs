@@ -22,7 +22,7 @@ using System.Runtime.InteropServices;
 
 namespace OpenTelemetry.Trace
 {
-    internal class ExceptionProcessor : BaseProcessor<Activity>
+    internal sealed class ExceptionProcessor : BaseProcessor<Activity>
     {
         private const string ExceptionPointersKey = "otel.exception_pointers";
 

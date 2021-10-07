@@ -14,13 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-#if NET461 || NETSTANDARD2_0
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Configuration;
-using OpenTelemetry;
 using OpenTelemetry.Logs;
 
 namespace Microsoft.Extensions.Logging
@@ -46,4 +44,3 @@ namespace Microsoft.Extensions.Logging
         }
     }
 }
-#endif

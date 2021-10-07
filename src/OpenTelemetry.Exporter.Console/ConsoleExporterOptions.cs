@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System.Threading;
+using OpenTelemetry.Metrics;
+
 namespace OpenTelemetry.Exporter
 {
     public class ConsoleExporterOptions
@@ -22,5 +25,16 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets the output targets for the console exporter.
         /// </summary>
         public ConsoleExporterOutputTargets Targets { get; set; } = ConsoleExporterOutputTargets.Console;
+
+        /// <summary>
+        /// Gets or sets the metric export interval in milliseconds. The default value is <c>Timeout.Infinite</c>.
+        /// </summary>
+        public int MetricExportIntervalMilliseconds { get; set; } = Timeout.Infinite;
+
+        /// <summary>
+        /// Gets or sets the AggregationTemporality used for Histogram
+        /// and Sum metrics.
+        /// </summary>
+        public AggregationTemporality AggregationTemporality { get; set; } = AggregationTemporality.Delta;
     }
 }

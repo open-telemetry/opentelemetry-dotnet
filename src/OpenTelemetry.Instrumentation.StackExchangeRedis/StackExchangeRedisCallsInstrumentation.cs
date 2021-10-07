@@ -16,9 +16,11 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation;
+using OpenTelemetry.Trace;
 using StackExchange.Redis;
 using StackExchange.Redis.Profiling;
 
@@ -35,6 +37,10 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
         internal const string ActivityName = ActivitySourceName + ".Execute";
         internal static readonly Version Version = typeof(StackExchangeRedisCallsInstrumentation).Assembly.GetName().Version;
         internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+        internal static readonly IEnumerable<KeyValuePair<string, object>> CreationTags = new[]
+        {
+            new KeyValuePair<string, object>(SemanticConventions.AttributeDbSystem, "redis"),
+        };
 
         internal readonly ConcurrentDictionary<(ActivityTraceId TraceId, ActivitySpanId SpanId), (Activity Activity, ProfilingSession Session)> Cache
             = new ConcurrentDictionary<(ActivityTraceId, ActivitySpanId), (Activity, ProfilingSession)>();
@@ -114,7 +120,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
 
         internal void Flush()
         {
-            RedisProfilerEntryToActivityConverter.DrainSession(null, this.defaultSession.FinishProfiling());
+            RedisProfilerEntryToActivityConverter.DrainSession(null, this.defaultSession.FinishProfiling(), this.options);
 
             foreach (var entry in this.Cache)
             {
@@ -126,7 +132,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
                 }
 
                 ProfilingSession session = entry.Value.Session;
-                RedisProfilerEntryToActivityConverter.DrainSession(parent, session.FinishProfiling());
+                RedisProfilerEntryToActivityConverter.DrainSession(parent, session.FinishProfiling(), this.options);
                 this.Cache.TryRemove((entry.Key.TraceId, entry.Key.SpanId), out _);
             }
         }

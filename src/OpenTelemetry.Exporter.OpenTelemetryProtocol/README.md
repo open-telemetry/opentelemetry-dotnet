@@ -18,13 +18,18 @@ dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
 
 ## Configuration
 
-You can configure the `OtlpExporter` through `OtlpExporterOptions` properties:
+You can configure the `OtlpExporter` through `OtlpExporterOptions`
+properties and environment variables. The `OtlpExporterOptions`
+setters take precedence over the environment variables.
+
+## Options Properties
 
 * `Endpoint`: Target to which the exporter is going to send traces or metrics.
   The endpoint must be a valid Uri with scheme (http or https) and host, and MAY
   contain a port and path.
 * `Headers`: Optional headers for the connection.
 * `TimeoutMilliseconds` : Max waiting time for the backend to process a batch.
+* `Protocol`: OTLP transport protocol. Supported values: Grpc and HttpProtobuf.
 * `ExportProcessorType`: Whether the exporter should use [Batch or Simple
   exporting
   processor](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#built-in-span-processors)
@@ -35,12 +40,23 @@ You can configure the `OtlpExporter` through `OtlpExporterOptions` properties:
 See the [`TestOtlpExporter.cs`](../../examples/Console/TestOtlpExporter.cs) for
 an example of how to use the exporter.
 
+## Environment Variables
+
+The following environment variables can be used to override the default
+values of the `OtlpExporterOptions`
+(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)).
+
+| Environment variable          | `OtlpExporterOptions` property    |
+| ------------------------------| ----------------------------------|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `Endpoint`                        |
+| `OTEL_EXPORTER_OTLP_HEADERS`  | `Headers`                         |
+| `OTEL_EXPORTER_OTLP_TIMEOUT`  | `TimeoutMilliseconds`             |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `Protocol` (grpc or http/protobuf)|
+
 ## Special case when using insecure channel
 
-If your application is [.NET Standard
-2.1](https://docs.microsoft.com/dotnet/standard/net-standard) or above, and you
-are using an insecure (http) endpoint, the following switch must be set before
-adding `OtlpExporter`.
+If your application is targeting .NET Core 3.1, and you are using an insecure
+(HTTP) endpoint, the following switch must be set before adding `OtlpExporter`.
 
 ```csharp
 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport",

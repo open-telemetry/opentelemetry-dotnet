@@ -14,14 +14,51 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
+using System;
 using System.Diagnostics;
+using System.Security;
+using OpenTelemetry.Exporter.Jaeger.Implementation;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
 {
     public class JaegerExporterOptions
     {
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
+
+        internal const string OTelAgentHostEnvVarKey = "OTEL_EXPORTER_JAEGER_AGENT_HOST";
+        internal const string OTelAgentPortEnvVarKey = "OTEL_EXPORTER_JAEGER_AGENT_PORT";
+
+        public JaegerExporterOptions()
+        {
+            try
+            {
+                string agentHostEnvVar = Environment.GetEnvironmentVariable(OTelAgentHostEnvVarKey);
+                if (!string.IsNullOrEmpty(agentHostEnvVar))
+                {
+                    this.AgentHost = agentHostEnvVar;
+                }
+
+                string agentPortEnvVar = Environment.GetEnvironmentVariable(OTelAgentPortEnvVarKey);
+                if (!string.IsNullOrEmpty(agentPortEnvVar))
+                {
+                    if (int.TryParse(agentPortEnvVar, out var agentPortValue))
+                    {
+                        this.AgentPort = agentPortValue;
+                    }
+                    else
+                    {
+                        JaegerExporterEventSource.Log.FailedToParseEnvironmentVariable(OTelAgentPortEnvVarKey, agentPortEnvVar);
+                    }
+                }
+            }
+            catch (SecurityException ex)
+            {
+                // The caller does not have the required permission to
+                // retrieve the value of an environment variable from the current process.
+                JaegerExporterEventSource.Log.MissingPermissionsToReadEnvironmentVariable(ex);
+            }
+        }
 
         /// <summary>
         /// Gets or sets the Jaeger agent host. Default value: localhost.
@@ -39,13 +76,13 @@ namespace OpenTelemetry.Exporter
         public int? MaxPayloadSizeInBytes { get; set; } = DefaultMaxPayloadSizeInBytes;
 
         /// <summary>
-        /// Gets or sets the export processor type to be used with Jaeger Exporter.
+        /// Gets or sets the export processor type to be used with Jaeger Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
         /// </summary>
         public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
 
         /// <summary>
         /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is BatchExporter.
         /// </summary>
-        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportProcessorOptions<Activity>();
+        public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
     }
 }

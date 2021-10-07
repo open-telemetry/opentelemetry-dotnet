@@ -30,8 +30,8 @@ namespace Examples.Console
     internal class InstrumentationWithActivitySource : IDisposable
     {
         private const string RequestPath = "/api/request";
-        private SampleServer server = new SampleServer();
-        private SampleClient client = new SampleClient();
+        private readonly SampleServer server = new SampleServer();
+        private readonly SampleClient client = new SampleClient();
 
         public void Start(ushort port = 19999)
         {
@@ -48,7 +48,7 @@ namespace Examples.Console
 
         private class SampleServer : IDisposable
         {
-            private HttpListener listener = new HttpListener();
+            private readonly HttpListener listener = new HttpListener();
 
             public void Start(string url)
             {
@@ -136,7 +136,7 @@ namespace Examples.Console
                                 using var response = await client.PostAsync(url, content, cancellationToken).ConfigureAwait(false);
                                 activity?.AddEvent(new ActivityEvent("PostAsync:Ended"));
 
-                                activity?.SetTag("http.status_code", $"{response.StatusCode:D}");
+                                activity?.SetTag("http.status_code", (int)response.StatusCode);
 
                                 var responseContent = await response.Content.ReadAsStringAsync();
                                 activity?.SetTag("response.content", responseContent);

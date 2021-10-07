@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics.Tracing;
+using System.Security;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
@@ -26,9 +27,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         public static readonly OpenTelemetryProtocolExporterEventSource Log = new OpenTelemetryProtocolExporterEventSource();
 
         [NonEvent]
+        public void MissingPermissionsToReadEnvironmentVariable(SecurityException ex)
+        {
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+            {
+                this.MissingPermissionsToReadEnvironmentVariable(ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
         public void FailedToConvertToProtoDefinitionError(Exception ex)
         {
-            if (Log.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.FailedToConvertToProtoDefinitionError(ex.ToInvariantString());
             }
@@ -37,7 +47,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [NonEvent]
         public void FailedToReachCollector(Exception ex)
         {
-            if (Log.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.FailedToReachCollector(ex.ToInvariantString());
             }
@@ -46,7 +56,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [NonEvent]
         public void ExportMethodException(Exception ex)
         {
-            if (Log.IsEnabled(EventLevel.Error, (EventKeywords)(-1)))
+            if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.ExportMethodException(ex.ToInvariantString());
             }
@@ -58,7 +68,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             this.WriteEvent(1, ex);
         }
 
-        [Event(2, Message = "Exporter failed send spans to collector. Data will not be sent. Exception: {0}", Level = EventLevel.Error)]
+        [Event(2, Message = "Exporter failed send data to collector. Data will not be sent. Exception: {0}", Level = EventLevel.Error)]
         public void FailedToReachCollector(string ex)
         {
             this.WriteEvent(2, ex);
@@ -74,6 +84,30 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         public void ExportMethodException(string ex)
         {
             this.WriteEvent(4, ex);
+        }
+
+        [Event(5, Message = "Could not translate metric from class '{0}' and method '{1}', metric will not be recorded.", Level = EventLevel.Informational)]
+        public void CouldNotTranslateMetric(string className, string methodName)
+        {
+            this.WriteEvent(5, className, methodName);
+        }
+
+        [Event(6, Message = "Failed to parse environment variable: '{0}', value: '{1}'.", Level = EventLevel.Warning)]
+        public void FailedToParseEnvironmentVariable(string name, string value)
+        {
+            this.WriteEvent(6, name, value);
+        }
+
+        [Event(7, Message = "Missing permissions to read environment variable: '{0}'", Level = EventLevel.Warning)]
+        public void MissingPermissionsToReadEnvironmentVariable(string exception)
+        {
+            this.WriteEvent(7, exception);
+        }
+
+        [Event(8, Message = "Unsupported value for protocol '{0}' is configured, default protocol 'grpc' will be used.", Level = EventLevel.Warning)]
+        public void UnsupportedProtocol(string protocol)
+        {
+            this.WriteEvent(8, protocol);
         }
     }
 }

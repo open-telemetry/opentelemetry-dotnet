@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if NETCOREAPP3_1
+#if NETCOREAPP3_1_OR_GREATER
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -62,6 +62,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpClientInstrumentationInjectsHeadersAsync(bool shouldEnrich)
         {
             var processor = new Mock<BaseProcessor<Activity>>();
+            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
             var request = new HttpRequestMessage
             {
                 RequestUri = new Uri(this.url),
@@ -96,7 +97,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                         {
                             if (shouldEnrich)
                             {
-                                o.Enrich = ActivityEnrichment;
+                                o.Enrich = ActivityEnrichmentSetTag;
                             }
                         })
                         .AddProcessor(processor.Object)
@@ -122,6 +123,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.Equal($"00-{activity.Context.TraceId}-{activity.Context.SpanId}-01", traceparents.Single());
             Assert.Equal("k1=v1,k2=v2", tracestates.Single());
+
+            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
+            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
         }
 
         [Theory]
@@ -371,11 +375,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Start();
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
-            Baggage.Current.SetBaggage("b1", "v1");
+            Baggage.SetBaggage("b1", "v1");
             using (Sdk.CreateTracerProviderBuilder()
-                        .AddHttpClientInstrumentation()
-                        .AddProcessor(processor.Object)
-                        .Build())
+                .AddHttpClientInstrumentation()
+                .AddProcessor(processor.Object)
+                .Build())
             {
                 using var c = new HttpClient();
                 await c.SendAsync(request);
@@ -392,7 +396,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             Assert.True(request.Headers.TryGetValues("traceparent", out var traceparents));
             Assert.True(request.Headers.TryGetValues("tracestate", out var tracestates));
-            Assert.True(request.Headers.TryGetValues("Baggage", out var baggages));
+            Assert.True(request.Headers.TryGetValues("baggage", out var baggages));
             Assert.Single(traceparents);
             Assert.Single(tracestates);
             Assert.Single(baggages);
@@ -406,6 +410,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             this.serverLifeTime?.Dispose();
             Activity.Current = null;
+        }
+
+        private static void ActivityEnrichmentSetTag(Activity activity, string method, object obj)
+        {
+            ActivityEnrichment(activity, method, obj);
+            activity.SetTag("enriched", "yes");
         }
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)
