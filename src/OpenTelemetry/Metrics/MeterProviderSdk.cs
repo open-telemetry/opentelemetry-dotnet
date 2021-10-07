@@ -234,7 +234,7 @@ namespace OpenTelemetry.Metrics
                     }
                     catch (Exception)
                     {
-                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(instrument.Name, instrument.Meter.Name, "SDK internal error occured.", "Contact SDK owners.");
+                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(instrument.Name, instrument.Meter.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     }
                 };
 
