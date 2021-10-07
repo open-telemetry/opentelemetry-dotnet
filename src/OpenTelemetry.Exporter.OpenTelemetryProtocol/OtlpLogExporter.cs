@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if NET461 || NETSTANDARD2_0 || NETSTANDARD2_1
 using System;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -96,4 +95,3 @@ namespace OpenTelemetry.Exporter
         }
     }
 }
-#endif
