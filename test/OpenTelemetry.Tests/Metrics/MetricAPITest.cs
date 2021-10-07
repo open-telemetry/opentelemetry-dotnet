@@ -25,8 +25,10 @@ using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Tests
 {
+#pragma warning disable SA1000 // KeywordsMustBeSpacedCorrectly https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/3214
     public class MetricApiTest
     {
+        private const int MaxTimeToAllowForFlush = 10000;
         private static int numberOfThreads = Environment.ProcessorCount;
         private static long deltaLongValueUpdatedByEachCall = 10;
         private static double deltaDoubleValueUpdatedByEachCall = 11.987;
@@ -36,6 +38,77 @@ namespace OpenTelemetry.Metrics.Tests
         public MetricApiTest(ITestOutputHelper output)
         {
             this.output = output;
+        }
+
+        [Fact]
+        public void ObserverCallbackTest()
+        {
+            using var meter = new Meter("ObserverCallbackErrorTest");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
+            meter.CreateObservableGauge("myGauge", () => measurement);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("myGauge", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            var metricPoint = metricPoints[0];
+            Assert.Equal(100, metricPoint.LongValue);
+            Assert.NotNull(metricPoint.Keys);
+            Assert.NotNull(metricPoint.Values);
+        }
+
+        [Fact]
+        public void ObserverCallbackExceptionTest()
+        {
+            using var meter = new Meter("ObserverCallbackErrorTest");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
+            meter.CreateObservableGauge("myGauge", () => measurement);
+            meter.CreateObservableGauge<long>("myBadGauge", observeValues: () => throw new Exception("gauge read error"));
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Equal(2, exportedItems.Count);
+            var metric = exportedItems[0];
+            Assert.Equal("myGauge", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            var metricPoint = metricPoints[0];
+            Assert.Equal(100, metricPoint.LongValue);
+            Assert.NotNull(metricPoint.Keys);
+            Assert.NotNull(metricPoint.Values);
+
+            metric = exportedItems[1];
+            Assert.Equal("myBadGauge", metric.Name);
+            metricPoints.Clear();
+            foreach (ref var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Empty(metricPoints);
         }
 
         [Theory]
@@ -495,4 +568,5 @@ namespace OpenTelemetry.Metrics.Tests
             public T DeltaValueUpdatedByEachCall;
         }
     }
+#pragma warning restore SA1000 // KeywordsMustBeSpacedCorrectly
 }

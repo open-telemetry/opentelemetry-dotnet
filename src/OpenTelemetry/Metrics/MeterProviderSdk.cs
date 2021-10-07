@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Linq;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -348,7 +349,18 @@ namespace OpenTelemetry.Metrics
                 try
                 {
                     // Record all observable instruments
-                    this.listener.RecordObservableInstruments();
+                    try
+                    {
+                        this.listener.RecordObservableInstruments();
+                    }
+                    catch (Exception exception)
+                    {
+                        // TODO:
+                        // It doesn't looks like we can find which instrument callback
+                        // threw.
+                        OpenTelemetrySdkEventSource.Log.MetricObserverCallbackException(exception);
+                    }
+
                     var indexSnapShot = Math.Min(this.metricIndex, MaxMetrics - 1);
                     var target = indexSnapShot + 1;
                     for (int i = 0; i < target; i++)

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Exception from Observable instrument callbacks does not
+  result in entire metrics being lost.
+
 * SDK is allocation-free on recording of measurements with
   upto 8 tags.
 
