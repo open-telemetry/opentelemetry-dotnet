@@ -154,6 +154,18 @@ namespace OpenTelemetry.Metrics
                         {
                             var metricStreamConfig = metricStreamConfigs[i];
                             var metricStreamName = metricStreamConfig?.Name ?? instrument.Name;
+
+                            if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricStreamName))
+                            {
+                                OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
+                                    instrument.Name,
+                                    instrument.Meter.Name,
+                                    "Metric name is invalid.",
+                                    "The name must comply with the OpenTelemetry specification.");
+
+                                continue;
+                            }
+
                             if (this.metricStreamNames.ContainsKey(metricStreamName))
                             {
                                 // TODO: Log that instrument is ignored
@@ -220,6 +232,17 @@ namespace OpenTelemetry.Metrics
 
                     try
                     {
+                        if (!MeterProviderBuilderSdk.IsValidInstrumentName(instrument.Name))
+                        {
+                            OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
+                                instrument.Name,
+                                instrument.Meter.Name,
+                                "Metric name is invalid.",
+                                "The name must comply with the OpenTelemetry specification");
+
+                            return;
+                        }
+
                         var metricName = instrument.Name;
                         Metric metric = null;
                         lock (this.instrumentCreationLock)
