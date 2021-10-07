@@ -28,6 +28,7 @@ namespace OpenTelemetry.Exporter
     [ExportModes(ExportModes.Pull)]
     public class PrometheusExporter : BaseExporter<Metric>, IPullMetricExporter
     {
+        internal const string HttpListenerStartFailureExceptionMessage = "PrometheusExporter http listener could not be started.";
         internal readonly PrometheusExporterOptions Options;
         internal Batch<Metric> Metrics;
         private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
@@ -52,7 +53,7 @@ namespace OpenTelemetry.Exporter
                 }
                 catch (Exception ex)
                 {
-                    throw new InvalidOperationException("PrometheusExporter http listener could not be started.", ex);
+                    throw new InvalidOperationException(HttpListenerStartFailureExceptionMessage, ex);
                 }
             }
         }
