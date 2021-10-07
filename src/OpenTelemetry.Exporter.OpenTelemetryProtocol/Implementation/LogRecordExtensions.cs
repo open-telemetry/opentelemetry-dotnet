@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if NET461 || NETSTANDARD2_0 || NETSTANDARD2_1
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
@@ -120,4 +119,3 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
     }
 }
-#endif
