@@ -112,17 +112,21 @@ namespace OpenTelemetry.Metrics
                 }
             }
 
-            Func<Instrument, bool> shouldListenTo = instrument =>
+            Func<Instrument, bool> shouldListenTo;
+            if (wildcardMode)
             {
-                if (wildcardMode)
+                shouldListenTo = instrument =>
                 {
                     return regex.IsMatch(instrument.Meter.Name);
-                }
-                else
+                };
+            }
+            else
+            {
+                shouldListenTo = instrument =>
                 {
                     return meterSourcesToSubscribe.Contains(instrument.Meter.Name);
-                }
-            };
+                };
+            }
 
             this.listener = new MeterListener();
             var viewConfigCount = this.viewConfigs.Count;
