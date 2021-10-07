@@ -165,36 +165,6 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(1, metricCount);
         }
 
-        [Fact]
-        public void WildCardTest()
-        {
-            var metricItems = new List<Metric>();
-            int metricCount = 0;
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
-
-            void ProcessExport(Batch<Metric> batch)
-            {
-                foreach (var metric in batch)
-                {
-                    metricCount++;
-                }
-            }
-
-            var meterSources = new[] { "*", "MeterSource.*", "MeterSource.*.Namespace" };
-
-            using var meter1 = new Meter(meterSources[0]);
-            using var meter2 = new Meter(meterSources[1]);
-            using var meter3 = new Meter(meterSources[2]);
-
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meterSources[0])
-                .AddMeter(meterSources[1])
-                .AddMeter(meterSources[2])
-                .Build();
-
-            // Do some tests
-        }
-
         [Theory]
         [InlineData(true)]
         [InlineData(false)]

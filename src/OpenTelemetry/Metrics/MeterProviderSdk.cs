@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Linq;
-using System.Text.RegularExpressions;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -88,38 +87,10 @@ namespace OpenTelemetry.Metrics
             }
 
             // Setup Listener
-            var meterSourcesToSubscribe = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            if (meterSources.Any())
+            var meterSourcesToSubscribe = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+            foreach (var name in meterSources)
             {
-                var wildcardMode = false;
-                foreach (var meterSource in meterSources)
-                {
-                    if (meterSource.Contains('*'))
-                    {
-                        wildcardMode = true;
-                        break;
-                    }
-                }
-
-                if (wildcardMode)
-                {
-                    Regex regex = GetWildcardRegex(meterSources);
-                    foreach (var meterSource in meterSources)
-                    {
-                        if (regex.IsMatch(meterSource))
-                        {
-                            meterSourcesToSubscribe.Add(meterSource);
-                        }
-                    }
-                }
-                else
-                {
-                    foreach (var meterSource in meterSources)
-                    {
-                        meterSourcesToSubscribe.Add(meterSource);
-                    }
-                }
+                meterSourcesToSubscribe[name] = true;
             }
 
             this.listener = new MeterListener();
@@ -128,7 +99,7 @@ namespace OpenTelemetry.Metrics
             {
                 this.listener.InstrumentPublished = (instrument, listener) =>
                 {
-                    if (meterSourcesToSubscribe.Contains(instrument.Meter.Name))
+                    if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
                         // Creating list with initial capacity as the maximum
                         // possible size, to avoid any array resize/copy internally.
@@ -226,7 +197,7 @@ namespace OpenTelemetry.Metrics
             {
                 this.listener.InstrumentPublished = (instrument, listener) =>
                 {
-                    if (meterSourcesToSubscribe.Contains(instrument.Meter.Name))
+                    if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
                         var metricName = instrument.Name;
                         Metric metric = null;
@@ -272,12 +243,6 @@ namespace OpenTelemetry.Metrics
 
             this.listener.MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state);
             this.listener.Start();
-
-            static Regex GetWildcardRegex(IEnumerable<string> collection)
-            {
-                var pattern = '^' + string.Join("|", from name in collection select "(?:" + Regex.Escape(name).Replace("\\*", ".*") + ')') + '$';
-                return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            }
         }
 
         internal Resource Resource { get; }
