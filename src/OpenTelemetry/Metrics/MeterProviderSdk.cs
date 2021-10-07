@@ -89,35 +89,17 @@ namespace OpenTelemetry.Metrics
 
             // Setup Listener
             var meterSourcesToSubscribe = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
+            var wildcardMode = false;
+            Regex regex = null;
             if (meterSources.Any())
             {
-                var wildcardMode = false;
                 foreach (var meterSource in meterSources)
                 {
                     if (meterSource.Contains('*'))
                     {
                         wildcardMode = true;
+                        regex = GetWildcardRegex(meterSources);
                         break;
-                    }
-                }
-
-                if (wildcardMode)
-                {
-                    Regex regex = GetWildcardRegex(meterSources);
-                    foreach (var meterSource in meterSources)
-                    {
-                        if (regex.IsMatch(meterSource))
-                        {
-                            meterSourcesToSubscribe.Add(meterSource);
-                        }
-                    }
-                }
-                else
-                {
-                    foreach (var meterSource in meterSources)
-                    {
-                        meterSourcesToSubscribe.Add(meterSource);
                     }
                 }
             }
@@ -128,6 +110,21 @@ namespace OpenTelemetry.Metrics
             {
                 this.listener.InstrumentPublished = (instrument, listener) =>
                 {
+                    if (wildcardMode)
+                    {
+                        if (ShouldListenTo(instrument.Meter.Name))
+                        {
+                            meterSourcesToSubscribe.Add(instrument.Meter.Name);
+                        }
+                    }
+                    else
+                    {
+                        foreach (var meterSource in meterSources)
+                        {
+                            meterSourcesToSubscribe.Add(meterSource);
+                        }
+                    }
+
                     if (meterSourcesToSubscribe.Contains(instrument.Meter.Name))
                     {
                         // Creating list with initial capacity as the maximum
@@ -277,6 +274,11 @@ namespace OpenTelemetry.Metrics
             {
                 var pattern = '^' + string.Join("|", from name in collection select "(?:" + Regex.Escape(name).Replace("\\*", ".*") + ')') + '$';
                 return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            }
+
+            bool ShouldListenTo(string instrumentName)
+            {
+                return regex.IsMatch(instrumentName);
             }
         }
 

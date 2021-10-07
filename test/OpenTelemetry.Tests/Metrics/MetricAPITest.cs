@@ -166,33 +166,27 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
-        public void WildCardTest()
+        public void MeterSourcesWildCardSupportTest()
         {
-            var metricItems = new List<Metric>();
-            int metricCount = 0;
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
-
-            void ProcessExport(Batch<Metric> batch)
-            {
-                foreach (var metric in batch)
-                {
-                    metricCount++;
-                }
-            }
-
-            var meterSources = new[] { "*", "MeterSource.*", "MeterSource.*.Namespace" };
-
+            var meterSources = new[] { "MeterSources.*", "MeterSources.*.Subset" };
             using var meter1 = new Meter(meterSources[0]);
             using var meter2 = new Meter(meterSources[1]);
-            using var meter3 = new Meter(meterSources[2]);
 
+            var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meterSources[0])
-                .AddMeter(meterSources[1])
-                .AddMeter(meterSources[2])
+                .AddMeter(meter1.Name)
+                .AddMeter(meter2.Name)
+                .AddInMemoryExporter(exportedItems)
+                .AddView("name1", "renamed")
                 .Build();
 
-            // Do some tests
+            var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
+            meter1.CreateObservableGauge("myGauge1", () => measurement);
+            meter2.CreateObservableGauge("myGauge2", () => measurement);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Equal("myGauge1", exportedItems[0].Name);
+            Assert.Equal("myGauge2", exportedItems[1].Name);
         }
 
         [Theory]
