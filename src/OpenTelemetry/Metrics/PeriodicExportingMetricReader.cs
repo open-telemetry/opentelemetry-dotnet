@@ -47,6 +47,7 @@ namespace OpenTelemetry.Metrics
             {
                 while (!this.token.IsCancellationRequested)
                 {
+                    // TODO: Should pass CancellationToken
                     Task.Delay(exportIntervalMilliseconds).Wait();
                     this.Collect();
                 }
