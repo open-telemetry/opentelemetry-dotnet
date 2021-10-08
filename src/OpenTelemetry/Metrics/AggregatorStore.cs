@@ -119,7 +119,7 @@ namespace OpenTelemetry.Metrics
                     metricPoint.MetricPointStatus = MetricPointStatus.NoPendingUpdate;
 
                     // TODO: Does this avoid a copy?
-                    this.batchToProcess[i] = metricPoint;
+                    this.batchToProcess[this.batchSize] = metricPoint;
                     this.batchSize++;
                 }
                 else if (metricPoint.MetricPointStatus == MetricPointStatus.NoPendingUpdate)
