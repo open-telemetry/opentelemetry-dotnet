@@ -165,7 +165,9 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(1, metricCount);
         }
 
+#pragma warning disable SA1201 // Elements should appear in the correct order
         public static IEnumerable<object[]> ViewConfigs =>
+#pragma warning restore SA1201 // Elements should appear in the correct order
         new List<object[]>
         {
             new object[] { "myGauge1", "newName" },
