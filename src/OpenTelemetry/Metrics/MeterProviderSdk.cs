@@ -216,6 +216,7 @@ namespace OpenTelemetry.Metrics
                         OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(instrument.Name, instrument.Meter.Name, "Instrument belongs to a Meter not subscribed by the provider.", "Use AddMeter to add the Meter to the provider.");
                         return;
                     }
+
                     try
                     {
                         var metricName = instrument.Name;
@@ -224,9 +225,7 @@ namespace OpenTelemetry.Metrics
                         {
                             if (this.metricStreamNames.ContainsKey(metricName))
                             {
-                                // TODO: Log that instrument is ignored
-                                // as the resulting Metric name is conflicting
-                                // with existing name.
+                                OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Metric name conflicting with existing name.", "Either change the name of the instrument or change name using View.");
                                 return;
                             }
 
