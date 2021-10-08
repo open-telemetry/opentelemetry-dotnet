@@ -89,21 +89,16 @@ namespace OpenTelemetry.Metrics
 
             // Setup Listener
             var wildcardMode = false;
-            Regex regex = null;
             Func<Instrument, bool> shouldListenTo = null;
             if (meterSources.Any())
             {
                 foreach (var meterSource in meterSources)
                 {
+                    Regex regex = null;
                     if (meterSource.Contains('*'))
                     {
                         wildcardMode = true;
-
-                        shouldListenTo = instrument =>
-                        {
-                            return regex.IsMatch(instrument.Meter.Name);
-                        };
-
+                        shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
                         regex = GetWildcardRegex(meterSources);
                         break;
                     }
@@ -117,10 +112,7 @@ namespace OpenTelemetry.Metrics
                         meterSourcesToSubscribe.Add(meterSource);
                     }
 
-                    shouldListenTo = instrument =>
-                    {
-                        return meterSourcesToSubscribe.Contains(instrument.Meter.Name);
-                    };
+                    shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
                 }
             }
 

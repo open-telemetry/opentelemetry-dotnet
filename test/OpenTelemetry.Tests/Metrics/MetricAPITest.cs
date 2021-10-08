@@ -165,59 +165,18 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(1, metricCount);
         }
 
-#pragma warning disable SA1201 // Elements should appear in the correct order
-        public static IEnumerable<object[]> ViewConfigs =>
-#pragma warning restore SA1201 // Elements should appear in the correct order
-        new List<object[]>
-        {
-            new object[] { "myGauge1", "newName" },
-        };
-
         [Theory]
-        [MemberData(nameof(ViewConfigs))]
-        public void MeterSourcesWildcardSupportMatchTest(string instrumentName, string newName)
+        [InlineData(true)]
+        [InlineData(false)]
+        public void MeterSourcesWildcardSupportMatchTest(bool hasView)
         {
             var meterNames = new[]
             {
                 "AbcCompany.XyzProduct.ComponentA",
-                "AbcCompany.XyzProduct.ComponentB",
-                "SomeCompany.SomeProduct.SomeComponent",
-            };
-
-            using var meter1 = new Meter(meterNames[0]);
-            using var meter2 = new Meter(meterNames[1]);
-            using var meter3 = new Meter(meterNames[2]);
-
-            var exportedItems = new List<Metric>();
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter("AbcCompany.XyzProduct.*")
-                .AddInMemoryExporter(exportedItems)
-                .AddView(instrumentName, newName)
-                .Build();
-
-            var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
-            meter1.CreateObservableGauge("myGauge1", () => measurement);
-            meter2.CreateObservableGauge("myGauge2", () => measurement);
-            meter3.CreateObservableGauge("myGauge3", () => measurement);
-
-            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-
-            // the third element "SomeCompany.SomeProduct.SomeComponent" will not be subscribed.
-            Assert.True(exportedItems.Count == 2);
-            Assert.Equal("newName", exportedItems[0].Name);
-            Assert.Equal("myGauge2", exportedItems[1].Name);
-        }
-
-        [Theory]
-        [MemberData(nameof(ViewConfigs))]
-        public void MeterSourcesWildcardSupportTwoPatterns(string instrumentName, string newName)
-        {
-            var meterNames = new[]
-            {
-                "AbcCompany.XyzProduct.ComponentA",
-                "AbcCompany.XyzProduct.ComponentB",
+                "abcCompany.xYzProduct.componentC",
                 "DefCompany.AbcProduct.ComponentC",
                 "DefCompany.XyzProduct.ComponentC",
+                "SomeCompany.SomeProduct.SomeComponent",
             };
 
             using var meter1 = new Meter(meterNames[0]);
@@ -226,12 +185,17 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter4 = new Meter(meterNames[3]);
 
             var exportedItems = new List<Metric>();
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddMeter("AbcCompany.XyzProduct.*")
                 .AddMeter("DefCompany.*.ComponentC")
-                .AddInMemoryExporter(exportedItems)
-                .AddView(instrumentName, newName)
-                .Build();
+                .AddInMemoryExporter(exportedItems);
+
+            if (hasView)
+            {
+                meterProviderBuilder.AddView("myGauge1", "newName");
+            }
+
+            using var meterProvider = meterProviderBuilder.Build();
 
             var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
             meter1.CreateObservableGauge("myGauge1", () => measurement);
@@ -241,104 +205,74 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-            Assert.True(exportedItems.Count == 4);
-            Assert.Equal("newName", exportedItems[0].Name);
-            Assert.Equal("myGauge2", exportedItems[1].Name);
-            Assert.Equal("myGauge3", exportedItems[2].Name);
-            Assert.Equal("myGauge4", exportedItems[3].Name);
-        }
-
-        [Theory]
-        [MemberData(nameof(ViewConfigs))]
-        public void MeterSourcesWildcardSupportCaseInsensitive(string instrumentName, string newName)
-        {
-            var meterNames = new[]
+            if (hasView)
             {
-                "abcCompany.xYZProduct.compoNeNta",
-                "AbcCompany.XyzProduct.ComponentB",
-            };
-
-            using var meter1 = new Meter(meterNames[0]);
-            using var meter2 = new Meter(meterNames[1]);
-
-            var exportedItems = new List<Metric>();
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter("AbcCompany.XyzProduct.*")
-                .AddInMemoryExporter(exportedItems)
-                .AddView(instrumentName, newName)
-                .Build();
-
-            var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
-            meter1.CreateObservableGauge("myGauge1", () => measurement);
-            meter2.CreateObservableGauge("myGauge2", () => measurement);
-
-            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-
-            Assert.True(exportedItems.Count == 2);
-            Assert.Equal("newName", exportedItems[0].Name);
-            Assert.Equal("myGauge2", exportedItems[1].Name);
+                Assert.True(exportedItems.Count == 4); // the third element "SomeCompany.SomeProduct.SomeComponent" will not be subscribed.
+                Assert.Equal("newName", exportedItems[0].Name);
+                Assert.Equal("myGauge2", exportedItems[1].Name);
+                Assert.Equal("myGauge3", exportedItems[2].Name);
+                Assert.Equal("myGauge4", exportedItems[3].Name);
+            }
         }
 
         [Theory]
-        [MemberData(nameof(ViewConfigs))]
-        public void MeterSourcesWildcardSupportNoAddMeter(string instrumentName, string newName)
+        [InlineData(true)]
+        [InlineData(false)]
+        public void MeterSourcesWildcardSupportMixWithNoWildcardmeter(bool hasView)
         {
             var meterNames = new[]
             {
                 "AbcCompany.XyzProduct.ComponentA",
-                "AbcCompany.XyzProduct.ComponentB",
-            };
-
-            using var meter1 = new Meter(meterNames[0]);
-            using var meter2 = new Meter(meterNames[1]);
-
-            var exportedItems = new List<Metric>();
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddInMemoryExporter(exportedItems)
-                .AddView(instrumentName, newName)
-                .Build();
-
-            var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
-
-            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-
-            Assert.True(exportedItems.Count == 0);
-        }
-
-        [Theory]
-        [MemberData(nameof(ViewConfigs))]
-        public void MeterSourcesWildcardSupportMixWithNoWildcardmeter(string instrumentName, string newName)
-        {
-            var meterNames = new[]
-            {
-                "AbcCompany.XyzProduct.ComponentA",
-                "AbcCompany.XyzProduct.ComponentB",
                 "SomeCompany.SomeProduct.SomeComponent",
             };
 
             using var meter1 = new Meter(meterNames[0]);
             using var meter2 = new Meter(meterNames[1]);
-            using var meter3 = new Meter(meterNames[2]);
 
             var exportedItems = new List<Metric>();
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddMeter("AbcCompany.XyzProduct.*")
                 .AddMeter("SomeCompany.SomeProduct.SomeComponent")
-                .AddInMemoryExporter(exportedItems)
-                .AddView(instrumentName, newName)
-                .Build();
+                .AddInMemoryExporter(exportedItems);
+
+            if (hasView)
+            {
+                meterProviderBuilder.AddView("myGauge1", "newName");
+            }
+
+            using var meterProvider = meterProviderBuilder.Build();
 
             var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
             meter1.CreateObservableGauge("myGauge1", () => measurement);
             meter2.CreateObservableGauge("myGauge2", () => measurement);
-            meter3.CreateObservableGauge("myGauge3", () => measurement);
-
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-            Assert.True(exportedItems.Count == 3);
-            Assert.Equal("newName", exportedItems[0].Name);
-            Assert.Equal("myGauge2", exportedItems[1].Name);
-            Assert.Equal("myGauge3", exportedItems[2].Name);
+            if (hasView)
+            {
+                Assert.True(exportedItems.Count == 2);
+                Assert.Equal("newName", exportedItems[0].Name);
+                Assert.Equal("myGauge2", exportedItems[1].Name);
+            }
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void MeterSourcesWildcardSupportWithoutMeter(bool hasView)
+        {
+            var exportedItems = new List<Metric>();
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddInMemoryExporter(exportedItems);
+
+            if (hasView)
+            {
+                meterProviderBuilder.AddView("gauge1", "renamed");
+            }
+
+            using var meterProvider = meterProviderBuilder.Build();
+            var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.True(exportedItems.Count == 0);
         }
 
         [Theory]
