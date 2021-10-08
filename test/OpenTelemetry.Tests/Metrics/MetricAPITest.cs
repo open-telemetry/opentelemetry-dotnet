@@ -173,9 +173,9 @@ namespace OpenTelemetry.Metrics.Tests
             var meterNames = new[]
             {
                 "AbcCompany.XyzProduct.ComponentA",
-                "abcCompany.xYzProduct.componentC",
+                "abcCompany.xYzProduct.componentC", // Wildcard match is case insensitive.
                 "DefCompany.AbcProduct.ComponentC",
-                "DefCompany.XyzProduct.ComponentC",
+                "DefCompany.XyzProduct.ComponentC", // Wildcard match supports matching multiple patterns.
                 "SomeCompany.SomeProduct.SomeComponent",
             };
 
@@ -207,7 +207,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             if (hasView)
             {
-                Assert.True(exportedItems.Count == 4); // the third element "SomeCompany.SomeProduct.SomeComponent" will not be subscribed.
+                Assert.True(exportedItems.Count == 4); // "SomeCompany.SomeProduct.SomeComponent" will not be subscribed.
                 Assert.Equal("newName", exportedItems[0].Name);
                 Assert.Equal("myGauge2", exportedItems[1].Name);
                 Assert.Equal("myGauge3", exportedItems[2].Name);
