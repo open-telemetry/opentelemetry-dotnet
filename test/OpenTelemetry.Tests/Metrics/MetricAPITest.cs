@@ -353,7 +353,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             metricPointCount = 0;
             metricReader.Collect();
-            Assert.Equal(AggregatorStore.MaxMetricPoints, metricPointCount);
+            Assert.Equal(temporality == AggregationTemporality.Delta ? 0 : AggregatorStore.MaxMetricPoints, metricPointCount);
 
             // These updates would be dropped.
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueA"));
@@ -361,7 +361,15 @@ namespace OpenTelemetry.Metrics.Tests
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueC"));
             metricPointCount = 0;
             metricReader.Collect();
-            Assert.Equal(AggregatorStore.MaxMetricPoints, metricPointCount);
+            Assert.Equal(temporality == AggregationTemporality.Delta ? 0 : AggregatorStore.MaxMetricPoints, metricPointCount);
+
+            // These updates will not be dropped when temporality == delta.
+            counterLong.Add(10, new KeyValuePair<string, object>("key", "valueA"));
+            counterLong.Add(10, new KeyValuePair<string, object>("key", "valueB"));
+            counterLong.Add(10, new KeyValuePair<string, object>("key", "valueC"));
+            metricPointCount = 0;
+            metricReader.Collect();
+            Assert.Equal(temporality == AggregationTemporality.Delta ? 3 : AggregatorStore.MaxMetricPoints, metricPointCount);
         }
 
         [Fact]
