@@ -88,7 +88,7 @@ namespace OpenTelemetry.Metrics
             }
 
             // Setup Listener
-            Func<Instrument, bool> shouldListenTo = null;
+            Func<Instrument, bool> shouldListenTo = instrument => false;
             if (meterSources.Any(s => s.Contains('*')))
             {
                 var regex = GetWildcardRegex(meterSources);
@@ -111,80 +111,82 @@ namespace OpenTelemetry.Metrics
             {
                 this.listener.InstrumentPublished = (instrument, listener) =>
                 {
-                    if (shouldListenTo != null && shouldListenTo(instrument))
+                    if (!shouldListenTo(instrument))
                     {
-                        // Creating list with initial capacity as the maximum
-                        // possible size, to avoid any array resize/copy internally.
-                        // There may be excess space wasted, but it'll eligible for
-                        // GC right after this method.
-                        var metricStreamConfigs = new List<MetricStreamConfiguration>(viewConfigCount);
-                        foreach (var viewConfig in this.viewConfigs)
+                        return;
+                    }
+
+                    // Creating list with initial capacity as the maximum
+                    // possible size, to avoid any array resize/copy internally.
+                    // There may be excess space wasted, but it'll eligible for
+                    // GC right after this method.
+                    var metricStreamConfigs = new List<MetricStreamConfiguration>(viewConfigCount);
+                    foreach (var viewConfig in this.viewConfigs)
+                    {
+                        var metricStreamConfig = viewConfig(instrument);
+                        if (metricStreamConfig != null)
                         {
-                            var metricStreamConfig = viewConfig(instrument);
-                            if (metricStreamConfig != null)
+                            metricStreamConfigs.Add(metricStreamConfig);
+                        }
+                    }
+
+                    if (metricStreamConfigs.Count == 0)
+                    {
+                        // No views matched. Add null
+                        // which will apply defaults.
+                        // Users can turn off this default
+                        // by adding a view like below as the last view.
+                        // .AddView(instrumentName: "*", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+                        metricStreamConfigs.Add(null);
+                    }
+
+                    var maxCountMetricsToBeCreated = metricStreamConfigs.Count;
+
+                    // Create list with initial capacity as the max metric count.
+                    // Due to duplicate/max limit, we may not end up using them
+                    // all, and that memory is wasted until Meter disposed.
+                    // TODO: Revisit to see if we need to do metrics.TrimExcess()
+                    var metrics = new List<Metric>(maxCountMetricsToBeCreated);
+                    lock (this.instrumentCreationLock)
+                    {
+                        for (int i = 0; i < maxCountMetricsToBeCreated; i++)
+                        {
+                            var metricStreamConfig = metricStreamConfigs[i];
+                            var metricStreamName = metricStreamConfig?.Name ?? instrument.Name;
+                            if (this.metricStreamNames.ContainsKey(metricStreamName))
                             {
-                                metricStreamConfigs.Add(metricStreamConfig);
+                                // TODO: Log that instrument is ignored
+                                // as the resulting Metric name is conflicting
+                                // with existing name.
+                                continue;
                             }
-                        }
 
-                        if (metricStreamConfigs.Count == 0)
-                        {
-                            // No views matched. Add null
-                            // which will apply defaults.
-                            // Users can turn off this default
-                            // by adding a view like below as the last view.
-                            // .AddView(instrumentName: "*", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
-                            metricStreamConfigs.Add(null);
-                        }
-
-                        var maxCountMetricsToBeCreated = metricStreamConfigs.Count;
-
-                        // Create list with initial capacity as the max metric count.
-                        // Due to duplicate/max limit, we may not end up using them
-                        // all, and that memory is wasted until Meter disposed.
-                        // TODO: Revisit to see if we need to do metrics.TrimExcess()
-                        var metrics = new List<Metric>(maxCountMetricsToBeCreated);
-                        lock (this.instrumentCreationLock)
-                        {
-                            for (int i = 0; i < maxCountMetricsToBeCreated; i++)
+                            if (metricStreamConfig?.Aggregation == Aggregation.Drop)
                             {
-                                var metricStreamConfig = metricStreamConfigs[i];
-                                var metricStreamName = metricStreamConfig?.Name ?? instrument.Name;
-                                if (this.metricStreamNames.ContainsKey(metricStreamName))
-                                {
-                                    // TODO: Log that instrument is ignored
-                                    // as the resulting Metric name is conflicting
-                                    // with existing name.
-                                    continue;
-                                }
+                                // TODO: Log that instrument is ignored
+                                // as user explicitly asked to drop it
+                                // with View.
+                                continue;
+                            }
 
-                                if (metricStreamConfig?.Aggregation == Aggregation.Drop)
-                                {
-                                    // TODO: Log that instrument is ignored
-                                    // as user explicitly asked to drop it
-                                    // with View.
-                                    continue;
-                                }
+                            var index = ++this.metricIndex;
+                            if (index >= MaxMetrics)
+                            {
+                                // TODO: Log that instrument is ignored
+                                // as max number of Metrics have reached.
+                            }
+                            else
+                            {
+                                Metric metric;
+                                var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
+                                string[] tagKeysInteresting = metricStreamConfig?.TagKeys;
+                                double[] histogramBucketBounds = (metricStreamConfig is HistogramConfiguration histogramConfig
+                                    && histogramConfig.BucketBounds != null) ? histogramConfig.BucketBounds : null;
+                                metric = new Metric(instrument, temporality, metricStreamName, metricDescription, histogramBucketBounds, tagKeysInteresting);
 
-                                var index = ++this.metricIndex;
-                                if (index >= MaxMetrics)
-                                {
-                                    // TODO: Log that instrument is ignored
-                                    // as max number of Metrics have reached.
-                                }
-                                else
-                                {
-                                    Metric metric;
-                                    var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
-                                    string[] tagKeysInteresting = metricStreamConfig?.TagKeys;
-                                    double[] histogramBucketBounds = (metricStreamConfig is HistogramConfiguration histogramConfig
-                                        && histogramConfig.BucketBounds != null) ? histogramConfig.BucketBounds : null;
-                                    metric = new Metric(instrument, temporality, metricStreamName, metricDescription, histogramBucketBounds, tagKeysInteresting);
-
-                                    this.metrics[index] = metric;
-                                    metrics.Add(metric);
-                                    this.metricStreamNames.Add(metricStreamName, true);
-                                }
+                                this.metrics[index] = metric;
+                                metrics.Add(metric);
+                                this.metricStreamNames.Add(metricStreamName, true);
                             }
                         }
 
@@ -209,37 +211,39 @@ namespace OpenTelemetry.Metrics
             {
                 this.listener.InstrumentPublished = (instrument, listener) =>
                 {
-                    if (shouldListenTo != null && shouldListenTo(instrument))
+                    if (!shouldListenTo(instrument))
                     {
-                        var metricName = instrument.Name;
-                        Metric metric = null;
-                        lock (this.instrumentCreationLock)
-                        {
-                            if (this.metricStreamNames.ContainsKey(metricName))
-                            {
-                                // TODO: Log that instrument is ignored
-                                // as the resulting Metric name is conflicting
-                                // with existing name.
-                                return;
-                            }
+                        return;
+                    }
 
-                            var index = ++this.metricIndex;
-                            if (index >= MaxMetrics)
-                            {
-                                // TODO: Log that instrument is ignored
-                                // as max number of Metrics have reached.
-                                return;
-                            }
-                            else
-                            {
-                                metric = new Metric(instrument, temporality, metricName, instrument.Description);
-                                this.metrics[index] = metric;
-                                this.metricStreamNames.Add(metricName, true);
-                            }
+                    var metricName = instrument.Name;
+                    Metric metric = null;
+                    lock (this.instrumentCreationLock)
+                    {
+                        if (this.metricStreamNames.ContainsKey(metricName))
+                        {
+                            // TODO: Log that instrument is ignored
+                            // as the resulting Metric name is conflicting
+                            // with existing name.
+                            return;
                         }
 
-                        listener.EnableMeasurementEvents(instrument, metric);
+                        var index = ++this.metricIndex;
+                        if (index >= MaxMetrics)
+                        {
+                            // TODO: Log that instrument is ignored
+                            // as max number of Metrics have reached.
+                            return;
+                        }
+                        else
+                        {
+                            metric = new Metric(instrument, temporality, metricName, instrument.Description);
+                            this.metrics[index] = metric;
+                            this.metricStreamNames.Add(metricName, true);
+                        }
                     }
+
+                    listener.EnableMeasurementEvents(instrument, metric);
                 };
 
                 // Everything double
