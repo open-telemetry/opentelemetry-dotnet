@@ -197,36 +197,44 @@ namespace OpenTelemetry.Metrics
             {
                 this.listener.InstrumentPublished = (instrument, listener) =>
                 {
-                    if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
+                    try
                     {
-                        var metricName = instrument.Name;
-                        Metric metric = null;
-                        lock (this.instrumentCreationLock)
+                        if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                         {
-                            if (this.metricStreamNames.ContainsKey(metricName))
+                            var metricName = instrument.Name;
+                            Metric metric = null;
+                            lock (this.instrumentCreationLock)
                             {
-                                // TODO: Log that instrument is ignored
-                                // as the resulting Metric name is conflicting
-                                // with existing name.
-                                return;
+                                if (this.metricStreamNames.ContainsKey(metricName))
+                                {
+                                    OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Metric name conflicting with existing name.", "Either change the name of the instrument or change name using View.");
+                                    return;
+                                }
+
+                                var index = ++this.metricIndex;
+                                if (index >= MaxMetrics)
+                                {
+                                    OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Maximum allowed Metrics for the provider exceeded.", "Use views to drop unused instruments. Or configure Provider to allow higher limit.");
+                                    return;
+                                }
+                                else
+                                {
+                                    metric = new Metric(instrument, temporality, metricName, instrument.Description);
+                                    this.metrics[index] = metric;
+                                    this.metricStreamNames.Add(metricName, true);
+                                }
                             }
 
-                            var index = ++this.metricIndex;
-                            if (index >= MaxMetrics)
-                            {
-                                // TODO: Log that instrument is ignored
-                                // as max number of Metrics have reached.
-                                return;
-                            }
-                            else
-                            {
-                                metric = new Metric(instrument, temporality, metricName, instrument.Description);
-                                this.metrics[index] = metric;
-                                this.metricStreamNames.Add(metricName, true);
-                            }
+                            listener.EnableMeasurementEvents(instrument, metric);
                         }
-
-                        listener.EnableMeasurementEvents(instrument, metric);
+                        else
+                        {
+                            OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(instrument.Name, instrument.Meter.Name, "Instrument belongs to a Meter not subscribed by the provider.", "Use AddMeter to add the Meter to the provider.");
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(instrument.Name, instrument.Meter.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     }
                 };
 
