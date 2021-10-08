@@ -77,7 +77,7 @@ namespace Benchmarks.Exporter
         }
 
         [Benchmark]
-        public async Task PrometheusExporterMiddleware_Invoke()
+        public async Task WriteMetricsToResponse()
         {
             for (int i = 0; i < this.NumberOfExportCalls; i++)
             {
