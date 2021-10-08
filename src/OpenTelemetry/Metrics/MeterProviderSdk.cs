@@ -98,8 +98,8 @@ namespace OpenTelemetry.Metrics
                     if (meterSource.Contains('*'))
                     {
                         wildcardMode = true;
-                        shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
                         regex = GetWildcardRegex(meterSources);
+                        shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
                         break;
                     }
                 }
