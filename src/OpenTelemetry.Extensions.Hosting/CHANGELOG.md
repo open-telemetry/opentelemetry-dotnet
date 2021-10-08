@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc8
+
+Released 2021-Oct-08
+
 * Removes upper constraint for Microsoft.Extensions.Hosting.Abstractions
   dependency. ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
 

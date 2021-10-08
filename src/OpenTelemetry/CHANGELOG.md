@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-beta1
+
+Released 2021-Oct-08
+
 * Exception from Observable instrument callbacks does not
   result in entire metrics being lost.
 
