@@ -168,7 +168,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void MeterSourcesWildCardSupportTest()
         {
-            var meterSources = new[] { "AbcCompany.XyzProduct.ComponentA", "AbcCompany.XyzProduct.ComponentB", "SomeCompany.SomeProduct.SomeComponent" };
+            var meterNames = new[] { "AbcCompany.XyzProduct.ComponentA", "AbcCompany.XyzProduct.ComponentB", "SomeCompany.SomeProduct.SomeComponent" };
             using var meter1 = new Meter(meterSources[0]);
             using var meter2 = new Meter(meterSources[1]);
             using var meter3 = new Meter(meterSources[2]);
