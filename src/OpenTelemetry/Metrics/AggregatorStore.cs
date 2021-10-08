@@ -47,7 +47,7 @@ namespace OpenTelemetry.Metrics
         private DateTimeOffset startTimeExclusive;
         private DateTimeOffset endTimeInclusive;
 
-        private ConcurrentStack<int> metricPointFreeList = new ConcurrentStack<int>(Enumerable.Range(0, MaxMetricPoints - 1).Reverse());
+        private ConcurrentStack<int> metricPointFreeList = new ConcurrentStack<int>(Enumerable.Range(0, MaxMetricPoints).Reverse());
 
         internal AggregatorStore(
             AggregationType aggType,

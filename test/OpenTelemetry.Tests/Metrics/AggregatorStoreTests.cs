@@ -26,8 +26,7 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var aggregatorStore = new AggregatorStore(AggregationType.LongGauge, AggregationTemporality.Cumulative, Metric.DefaultHistogramBounds);
 
-            // TODO: Seems to be an off-by-one bug
-            var maxMetricPoints = AggregatorStore.MaxMetricPoints - 1;
+            var maxMetricPoints = AggregatorStore.MaxMetricPoints;
 
             for (var i = 0; i < maxMetricPoints; ++i)
             {
@@ -58,7 +57,7 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var aggregatorStore = new AggregatorStore(AggregationType.LongGauge, AggregationTemporality.Delta, Metric.DefaultHistogramBounds);
 
-            var maxMetricPoints = AggregatorStore.MaxMetricPoints - 1;
+            var maxMetricPoints = AggregatorStore.MaxMetricPoints;
 
             for (var i = 0; i < maxMetricPoints; ++i)
             {
