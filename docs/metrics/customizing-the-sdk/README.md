@@ -13,13 +13,12 @@ Views, etc. Naturally, almost all the customizations must be done on the
 
 Building a `MeterProvider` is done using `MeterProviderBuilder` which must be
 obtained by calling `Sdk.CreateMeterProviderBuilder()`. `MeterProviderBuilder`
-exposes various methods which configure the provider it is going to build.
-These include methods like `AddMeter`, `AddView` etc, and are explained in
-subsequent sections of this document. Once configuration is done, calling
-`Build()` on the `MeterProviderBuilder` builds the `MeterProvider` instance.
-Once built, changes to its configuration is not allowed. In most cases, a single
-`MeterProvider` is created at the application startup, and is disposed when
-application shuts down.
+exposes various methods which configure the provider it is going to build. These
+include methods like `AddMeter`, `AddView` etc, and are explained in subsequent
+sections of this document. Once configuration is done, calling `Build()` on the
+`MeterProviderBuilder` builds the `MeterProvider` instance. Once built, changes
+to its configuration is not allowed. In most cases, a single `MeterProvider` is
+created at the application startup, and is disposed when application shuts down.
 
 The snippet below shows how to build a basic `MeterProvider`. This will create a
 provider with default configuration, and is not particularly useful. The
@@ -38,8 +37,8 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder().Build();
 
 1. The list of `Meter`s from which instruments are created to report
    measurements.
-2. The list of instrumentations enabled via
-   [Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library).
+2. The list of instrumentations enabled via [Instrumentation
+   Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library).
 3. The list of
    [MetricReaders](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricreader),
    including exporting readers which exports metrics to
@@ -88,20 +87,26 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
 
 See [Program.cs](./Program.cs) for complete example.
 
-**Note:**
-A common mistake while configuring `MeterProvider` is forgetting to add the
-required `Meter`s to the provider. It is recommended to leverage the wildcard
-subscription model where it makes sense. For example, if your application is
-expecting to enable instruments from a number of libraries from a company "Abc",
-the you can use `AddMeter("Abc.*")` to enable all meters whose name starts with
-"Abc.".
+**Note:** A common mistake while configuring `MeterProvider` is forgetting to
+add the required `Meter`s to the provider. It is recommended to leverage the
+wildcard subscription model where it makes sense. For example, if your
+application is expecting to enable instruments from a number of libraries from a
+company "Abc", the you can use `AddMeter("Abc.*")` to enable all meters whose
+name starts with "Abc.".
 
 ### View
 
 A
 [View](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view)
 provides the ability to customize the metrics that are output by the SDK.
-Following sections explains how to use this feature.
+Following sections explains how to use this feature. Each section has two code
+snippets. The first one uses an overload of `AddView` method that takes in the
+name of the instrument as the first parameter. The `View` configuration is then
+applied to the matching instrument name. The second code snippet shows how to
+use an advanced selection criteria to achieve the same results. This requires
+the user to provide a `Func<Instrument, MetricStreamConfiguration>` which offers
+more flexibility in filtering the instruments to which the `View` should be
+applied.
 
 #### Rename an instrument
 
@@ -115,7 +120,19 @@ own the instrument to create it with a different name.
    .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
 ```
 
-See [Program.cs](./Program.cs) for a complete example.
+```csharp
+   // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
+   .AddView((instrument) =>
+      {
+         if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
+            instrument.Name == "MyCounter")
+         {
+            return new MetricStreamConfiguration() { Name = "MyCounterRenamed" };
+         }
+
+         return null;
+      })
+```
 
 #### Drop an instrument
 
@@ -133,8 +150,8 @@ then it is recommended to simply not add that `Meter` using `AddMeter`.
    // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
    .AddView((instrument) =>
       {
-         if (instrument.Meter.Name.Equals("CompanyA.ProductB.LibraryC") &&
-            instrument.Name.Equals("MyCounterDrop"))
+         if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
+            instrument.Name == "MyCounterDrop")
          {
             return MetricStreamConfiguration.Drop;
          }
@@ -142,6 +159,94 @@ then it is recommended to simply not add that `Meter` using `AddMeter`.
          return null;
       })
 ```
+
+#### Select specific dimensions
+
+When recording a measurement from an instrument, all the tags that were provided
+are reported as dimensions for the given metric. Views can be used to
+selectively choose a subset of dimensions to report for a given metric. This is
+useful when you have a metric for which only a few of the dimensions associated
+with the metric are of interest to you.
+
+```csharp
+    // Only choose "name" as the dimension for the metric "MyFruitCounter"
+   .AddView(
+      instrumentName: "MyFruitCounter",
+      metricStreamConfiguration: new MetricStreamConfiguration
+      {
+         TagKeys = new string[] { "name" },
+      })
+
+   ...
+   // Only the dimension "name" is selected, "color" is dropped
+   MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
+   MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
+   MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
+   ...
+```
+
+```csharp
+   // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
+   .AddView((instrument) =>
+      {
+         if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
+            instrument.Name == "MyFruitCounter")
+         {
+            return new MetricStreamConfiguration
+            {
+               TagKeys = new string[] { "name" },
+            };
+         }
+
+         return null;
+      })
+```
+
+#### Specify custom bounds for Histogram
+
+By default, the bounds used for a Histogram are [`{ 0, 5, 10, 25, 50, 75, 100,
+250, 500, 1000 }`](../../../src/OpenTelemetry/Metrics/Metric.cs#L25). Views can
+be used to provide custom bounds for a Histogram. The measurements are then
+aggregated against the custom bounds provided instead of the the default bounds.
+This requires the use of `HistogramConfiguration`.
+
+```csharp
+   // Change Histogram bounds to count measurements under the following buckets:
+   // (-inf, 10]
+   // (10, 20]
+   // (20, +inf)
+   .AddView(
+      instrumentName: "MyHistogram",
+      new HistogramConfiguration{ BucketBounds = new double[] { 10, 20 } })
+
+   // If you provide an empty `double` array as `BucketBounds` to the `HistogramConfiguration`,
+   // the SDK will only export the sum and count for the measurements.
+   // There are no buckets exported in this case.
+   .AddView(
+      instrumentName: "MyHistogram",
+      new HistogramConfiguration { BucketBounds = new double[] { } })
+```
+
+```csharp
+   // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
+   .AddView((instrument) =>
+      {
+         if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
+            instrument.Name == "MyHistogram")
+         {
+            // `HistogramConfiguration` is a child class of `MetricStreamConfiguration`
+            return new HistogramConfiguration
+            {
+               BucketBounds = new double[] { 10, 20 },
+            };
+         }
+
+         return null;
+      })
+```
+
+**NOTE:** The SDK currently does not support any changes to `Aggregation` type
+for Views.
 
 See [Program.cs](./Program.cs) for a complete example.
 
