@@ -229,7 +229,7 @@ This requires the use of `HistogramConfiguration`.
       })
 ```
 
-**NOTE:** The SDk currently does not support any changes to `Aggregation` type
+**NOTE:** The SDK currently does not support any changes to `Aggregation` type
 for Views.
 
 See [Program.cs](./Program.cs) for a complete example.
