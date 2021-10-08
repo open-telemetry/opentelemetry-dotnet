@@ -54,9 +54,9 @@ Only for Maintainers.
         {
          (Get-Content -Path $changelog.FullName) -replace "Unreleased", "Unreleased
 
-    ## 1.0.0-rc2
+## 1.0.0-rc2
 
-    Released $(Get-Date -UFormat '%Y-%b-%d')" | Set-Content -Path $changelog.FullName
+Released $(Get-Date -UFormat '%Y-%b-%d')" | Set-Content -Path $changelog.FullName
         }
     ```
 
