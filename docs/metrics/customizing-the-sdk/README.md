@@ -174,7 +174,7 @@ with the metric are of interest to you.
       instrumentName: "MyFruitCounter",
       metricStreamConfiguration: new MetricStreamConfiguration
       {
-         TagKeys = new string[] {"name" },
+         TagKeys = new string[] { "name" },
       })
 
    ...
