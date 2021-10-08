@@ -88,32 +88,21 @@ namespace OpenTelemetry.Metrics
             }
 
             // Setup Listener
-            var wildcardMode = false;
             Func<Instrument, bool> shouldListenTo = null;
-            if (meterSources.Any())
+            if (meterSources.Any(s => s.Contains('*')))
             {
+                var regex = GetWildcardRegex(meterSources);
+                shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
+            }
+            else if (meterSources.Any())
+            {
+                var meterSourcesToSubscribe = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var meterSource in meterSources)
                 {
-                    Regex regex = null;
-                    if (meterSource.Contains('*'))
-                    {
-                        wildcardMode = true;
-                        regex = GetWildcardRegex(meterSources);
-                        shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
-                        break;
-                    }
+                    meterSourcesToSubscribe.Add(meterSource);
                 }
 
-                if (!wildcardMode)
-                {
-                    var meterSourcesToSubscribe = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    foreach (var meterSource in meterSources)
-                    {
-                        meterSourcesToSubscribe.Add(meterSource);
-                    }
-
-                    shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
-                }
+                shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
             }
 
             this.listener = new MeterListener();
@@ -122,7 +111,7 @@ namespace OpenTelemetry.Metrics
             {
                 this.listener.InstrumentPublished = (instrument, listener) =>
                 {
-                    if (shouldListenTo(instrument))
+                    if (shouldListenTo != null && shouldListenTo(instrument))
                     {
                         // Creating list with initial capacity as the maximum
                         // possible size, to avoid any array resize/copy internally.
@@ -220,7 +209,7 @@ namespace OpenTelemetry.Metrics
             {
                 this.listener.InstrumentPublished = (instrument, listener) =>
                 {
-                    if (shouldListenTo(instrument))
+                    if (shouldListenTo != null && shouldListenTo(instrument))
                     {
                         var metricName = instrument.Name;
                         Metric metric = null;
