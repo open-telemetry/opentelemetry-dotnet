@@ -88,9 +88,9 @@ namespace OpenTelemetry.Metrics
             }
 
             // Setup Listener
-            var meterSourcesToSubscribe = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var wildcardMode = false;
             Regex regex = null;
+            Func<Instrument, bool> shouldListenTo = null;
             if (meterSources.Any())
             {
                 foreach (var meterSource in meterSources)
@@ -98,6 +98,12 @@ namespace OpenTelemetry.Metrics
                     if (meterSource.Contains('*'))
                     {
                         wildcardMode = true;
+
+                        shouldListenTo = instrument =>
+                        {
+                            return regex.IsMatch(instrument.Meter.Name);
+                        };
+
                         regex = GetWildcardRegex(meterSources);
                         break;
                     }
@@ -105,27 +111,17 @@ namespace OpenTelemetry.Metrics
 
                 if (!wildcardMode)
                 {
+                    var meterSourcesToSubscribe = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                     foreach (var meterSource in meterSources)
                     {
                         meterSourcesToSubscribe.Add(meterSource);
                     }
-                }
-            }
 
-            Func<Instrument, bool> shouldListenTo;
-            if (wildcardMode)
-            {
-                shouldListenTo = instrument =>
-                {
-                    return regex.IsMatch(instrument.Meter.Name);
-                };
-            }
-            else
-            {
-                shouldListenTo = instrument =>
-                {
-                    return meterSourcesToSubscribe.Contains(instrument.Meter.Name);
-                };
+                    shouldListenTo = instrument =>
+                    {
+                        return meterSourcesToSubscribe.Contains(instrument.Meter.Name);
+                    };
+                }
             }
 
             this.listener = new MeterListener();
