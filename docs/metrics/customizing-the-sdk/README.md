@@ -170,7 +170,12 @@ with the metric are of interest to you.
 
 ```csharp
     // Only choose "name" as the dimension for the metric "MyFruitCounter"
-   .AddView(instrumentName: "MyFruitCounter", metricStreamConfiguration: new MetricStreamConfiguration() { TagKeys = new string[] {"name" } })
+   .AddView(
+      instrumentName: "MyFruitCounter",
+      metricStreamConfiguration: new MetricStreamConfiguration
+      {
+         TagKeys = new string[] {"name" },
+      })
 
    ...
    // Only the dimension "name" is selected, "color" is dropped
@@ -187,7 +192,7 @@ with the metric are of interest to you.
          if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
             instrument.Name == "MyFruitCounter")
          {
-            return new MetricStreamConfiguration() { TagKeys = new string[] { "name" } };
+            return new MetricStreamConfiguration { TagKeys = new string[] { "name" } };
          }
 
          return null;
@@ -207,11 +212,16 @@ This requires the use of `HistogramConfiguration`.
    // (-inf, 10]
    // (10, 20]
    // (20, +inf)
-   .AddView(instrumentName: "MyHistogram", new HistogramConfiguration() { BucketBounds = new double[] { 10, 20 } })
+   .AddView(
+      instrumentName: "MyHistogram",
+      new HistogramConfiguration{ BucketBounds = new double[] { 10, 20 } })
 
-   // If you provide an empty `double` array as `BucketBounds` to the `HistogramConfiguration`, the SDK will only export the sum and count for the measurements.
+   // If you provide an empty `double` array as `BucketBounds` to the `HistogramConfiguration`,
+   // the SDK will only export the sum and count for the measurements.
    // There are no buckets exported in this case.
-   .AddView(instrumentName: "MyHistogram", new HistogramConfiguration() { BucketBounds = new double[] { } })
+   .AddView(
+      instrumentName: "MyHistogram",
+      new HistogramConfiguration { BucketBounds = new double[] { } })
 ```
 
 ```csharp
@@ -222,7 +232,7 @@ This requires the use of `HistogramConfiguration`.
             instrument.Name == "MyHistogram")
          {
             // `HistogramConfiguration` is a child class of `MetricStreamConfiguration`
-            return new HistogramConfiguration() { BucketBounds = new double[] { 10, 20 } };
+            return new HistogramConfiguration { BucketBounds = new double[] { 10, 20 } };
          }
 
          return null;
