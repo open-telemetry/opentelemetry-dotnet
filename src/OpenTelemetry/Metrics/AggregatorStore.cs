@@ -17,8 +17,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace OpenTelemetry.Metrics
 {
@@ -37,14 +37,17 @@ namespace OpenTelemetry.Metrics
         private readonly AggregationTemporality temporality;
         private readonly bool outputDelta;
         private readonly MetricPoint[] metrics;
+        private readonly MetricPoint[] batchToProcess;
         private readonly AggregationType aggType;
         private readonly double[] histogramBounds;
         private readonly UpdateLongDelegate updateLongCallback;
         private readonly UpdateDoubleDelegate updateDoubleCallback;
-        private int metricPointIndex = 0;
+        private int batchSize = 0;
         private bool zeroTagMetricPointInitialized;
         private DateTimeOffset startTimeExclusive;
         private DateTimeOffset endTimeInclusive;
+
+        private ConcurrentStack<int> metricPointFreeList = new ConcurrentStack<int>(Enumerable.Range(0, MaxMetricPoints - 1).Reverse());
 
         internal AggregatorStore(
             AggregationType aggType,
@@ -53,6 +56,7 @@ namespace OpenTelemetry.Metrics
             string[] tagKeysInteresting = null)
         {
             this.metrics = new MetricPoint[MaxMetricPoints];
+            this.batchToProcess = new MetricPoint[MaxMetricPoints];
             this.aggType = aggType;
             this.temporality = temporality;
             this.outputDelta = temporality == AggregationTemporality.Delta ? true : false;
@@ -94,17 +98,41 @@ namespace OpenTelemetry.Metrics
 
         internal void SnapShot()
         {
-            var indexSnapShot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
-
-            for (int i = 0; i <= indexSnapShot; i++)
+            this.batchSize = 0;
+            for (int i = 0; i < MaxMetricPoints; i++)
             {
                 ref var metricPoint = ref this.metrics[i];
-                if (metricPoint.StartTime == default)
+
+                // TODO: A switch statement is appropriate here.
+                if (metricPoint.MetricPointStatus == MetricPointStatus.Unset)
                 {
                     continue;
                 }
+                else if (metricPoint.MetricPointStatus == MetricPointStatus.UpdatePending
 
-                metricPoint.TakeSnapShot(this.outputDelta);
+                    // TODO: Support marking marking cumulative temporality metrics stale
+                    || this.temporality == AggregationTemporality.Cumulative)
+                {
+                    metricPoint.TakeSnapShot(this.outputDelta);
+
+                    // TODO: Consider concurrency issues here. An update may have occurred after the snapshot.
+                    metricPoint.MetricPointStatus = MetricPointStatus.NoPendingUpdate;
+
+                    // TODO: Does this avoid a copy?
+                    this.batchToProcess[i] = metricPoint;
+                    this.batchSize++;
+                }
+                else if (metricPoint.MetricPointStatus == MetricPointStatus.NoPendingUpdate)
+                {
+                    // TODO: Consider concurrency issues here. An update may have occurred after the snapshot.
+                    metricPoint.MetricPointStatus = MetricPointStatus.CandidateForRemoval;
+                }
+                else if (metricPoint.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
+                {
+                    // TODO: Consider concurrency issues here. An update may have occurred after the snapshot.
+                    metricPoint.MetricPointStatus = MetricPointStatus.Unset;
+                    this.metricPointFreeList.Push(i);
+                }
             }
 
             if (this.temporality == AggregationTemporality.Delta)
@@ -121,8 +149,7 @@ namespace OpenTelemetry.Metrics
 
         internal BatchMetricPoint GetMetricPoints()
         {
-            var indexSnapShot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
-            return new BatchMetricPoint(this.metrics, indexSnapShot + 1, this.startTimeExclusive, this.endTimeInclusive);
+            return new BatchMetricPoint(this.batchToProcess, this.batchSize, this.startTimeExclusive, this.endTimeInclusive);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -165,30 +192,16 @@ namespace OpenTelemetry.Metrics
 
             // GetOrAdd by TagValue at 2st Level of 2-level dictionary structure.
             // Get back Metrics[].
-            if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex))
+            if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex) || this.metrics[aggregatorIndex].MetricPointStatus == MetricPointStatus.Unset)
             {
-                aggregatorIndex = this.metricPointIndex;
-                if (aggregatorIndex >= MaxMetricPoints)
-                {
-                    // sorry! out of data points.
-                    // TODO: Once we support cleanup of
-                    // unused points (typically with delta)
-                    // we can re-claim them here.
-                    return -1;
-                }
-
                 lock (value2metrics)
                 {
                     // check again after acquiring lock.
-                    if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex))
+                    if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex) || this.metrics[aggregatorIndex].MetricPointStatus == MetricPointStatus.Unset)
                     {
-                        aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
-                        if (aggregatorIndex >= MaxMetricPoints)
+                        if (!this.metricPointFreeList.TryPop(out aggregatorIndex))
                         {
                             // sorry! out of data points.
-                            // TODO: Once we support cleanup of
-                            // unused points (typically with delta)
-                            // we can re-claim them here.
                             return -1;
                         }
 

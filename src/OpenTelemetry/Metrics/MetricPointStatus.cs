@@ -19,6 +19,11 @@ namespace OpenTelemetry.Metrics
     internal enum MetricPointStatus
     {
         /// <summary>
+        /// Uninitialized <see cref="MetricPoint"/>.
+        /// </summary>
+        Unset,
+
+        /// <summary>
         /// The <see cref="MetricPoint"/> has been updated since the previous Collect cycle.
         /// Collect will move it to <see cref="NoPendingUpdate"/>.
         /// </summary>

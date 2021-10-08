@@ -35,7 +35,7 @@ namespace OpenTelemetry.Metrics
             object[] values,
             double[] histogramBounds)
         {
-            this.MetricPointStatus = MetricPointStatus.CandidateForRemoval;
+            this.MetricPointStatus = MetricPointStatus.Unset;
             this.AggType = aggType;
             this.StartTime = startTime;
             this.Keys = keys;
@@ -294,16 +294,6 @@ namespace OpenTelemetry.Metrics
 
                         break;
                     }
-            }
-
-            // TODO: Concurrency issue here... Update and TakeSnapShot needs to be synchronized.
-            if (this.MetricPointStatus == MetricPointStatus.UpdatePending)
-            {
-                this.MetricPointStatus = MetricPointStatus.NoPendingUpdate;
-            }
-            else if (this.MetricPointStatus == MetricPointStatus.NoPendingUpdate)
-            {
-                this.MetricPointStatus = MetricPointStatus.CandidateForRemoval;
             }
         }
     }

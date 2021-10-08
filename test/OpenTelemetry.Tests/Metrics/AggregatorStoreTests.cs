@@ -56,7 +56,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void MetricPointStatusChangeTest()
         {
-            var aggregatorStore = new AggregatorStore(AggregationType.LongGauge, AggregationTemporality.Cumulative, Metric.DefaultHistogramBounds);
+            var aggregatorStore = new AggregatorStore(AggregationType.LongGauge, AggregationTemporality.Delta, Metric.DefaultHistogramBounds);
 
             var maxMetricPoints = AggregatorStore.MaxMetricPoints - 1;
 
@@ -65,26 +65,28 @@ namespace OpenTelemetry.Metrics.Tests
                 aggregatorStore.Update(100L, new[] { new KeyValuePair<string, object>("key", i) });
             }
 
+            aggregatorStore.SnapShot();
             var batch = aggregatorStore.GetMetricPoints();
 
-            foreach (var point in batch)
-            {
-                Assert.Equal(MetricPointStatus.UpdatePending, point.MetricPointStatus);
-            }
-
-            aggregatorStore.SnapShot();
-
+            var batchCount = 0;
             foreach (var point in batch)
             {
                 Assert.Equal(MetricPointStatus.NoPendingUpdate, point.MetricPointStatus);
+                batchCount++;
             }
+
+            Assert.Equal(maxMetricPoints, batchCount);
 
             aggregatorStore.SnapShot();
+            batch = aggregatorStore.GetMetricPoints();
 
+            batchCount = 0;
             foreach (var point in batch)
             {
-                Assert.Equal(MetricPointStatus.CandidateForRemoval, point.MetricPointStatus);
+                batchCount++;
             }
+
+            Assert.Equal(0, batchCount);
         }
     }
 }
