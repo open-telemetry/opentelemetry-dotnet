@@ -192,7 +192,10 @@ with the metric are of interest to you.
          if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
             instrument.Name == "MyFruitCounter")
          {
-            return new MetricStreamConfiguration { TagKeys = new string[] { "name" } };
+            return new MetricStreamConfiguration
+            {
+               TagKeys = new string[] { "name" },
+            };
          }
 
          return null;
@@ -232,7 +235,10 @@ This requires the use of `HistogramConfiguration`.
             instrument.Name == "MyHistogram")
          {
             // `HistogramConfiguration` is a child class of `MetricStreamConfiguration`
-            return new HistogramConfiguration { BucketBounds = new double[] { 10, 20 } };
+            return new HistogramConfiguration
+            {
+               BucketBounds = new double[] { 10, 20 },
+            };
          }
 
          return null;
