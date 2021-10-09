@@ -168,6 +168,89 @@ namespace OpenTelemetry.Metrics.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
+        public void MeterSourcesWildcardSupportMatchTest(bool hasView)
+        {
+            var meterNames = new[]
+            {
+                "AbcCompany.XyzProduct.ComponentA",
+                "abcCompany.xYzProduct.componentC", // Wildcard match is case insensitive.
+                "DefCompany.AbcProduct.ComponentC",
+                "DefCompany.XyzProduct.ComponentC", // Wildcard match supports matching multiple patterns.
+                "GhiCompany.qweProduct.ComponentN",
+                "SomeCompany.SomeProduct.SomeComponent",
+            };
+
+            using var meter1 = new Meter(meterNames[0]);
+            using var meter2 = new Meter(meterNames[1]);
+            using var meter3 = new Meter(meterNames[2]);
+            using var meter4 = new Meter(meterNames[3]);
+            using var meter5 = new Meter(meterNames[4]);
+            using var meter6 = new Meter(meterNames[5]);
+
+            var exportedItems = new List<Metric>();
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter("AbcCompany.XyzProduct.*")
+                .AddMeter("DefCompany.*.ComponentC")
+                .AddMeter("GhiCompany.qweProduct.ComponentN") // Mixing of non-wildcard meter name and wildcard meter name.
+                .AddInMemoryExporter(exportedItems);
+
+            if (hasView)
+            {
+                meterProviderBuilder.AddView("myGauge1", "newName");
+            }
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
+            meter1.CreateObservableGauge("myGauge1", () => measurement);
+            meter2.CreateObservableGauge("myGauge2", () => measurement);
+            meter3.CreateObservableGauge("myGauge3", () => measurement);
+            meter4.CreateObservableGauge("myGauge4", () => measurement);
+            meter5.CreateObservableGauge("myGauge5", () => measurement);
+            meter6.CreateObservableGauge("myGauge6", () => measurement);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.True(exportedItems.Count == 5); // "SomeCompany.SomeProduct.SomeComponent" will not be subscribed.
+
+            if (hasView)
+            {
+                Assert.Equal("newName", exportedItems[0].Name);
+            }
+            else
+            {
+                Assert.Equal("myGauge1", exportedItems[0].Name);
+            }
+
+            Assert.Equal("myGauge2", exportedItems[1].Name);
+            Assert.Equal("myGauge3", exportedItems[2].Name);
+            Assert.Equal("myGauge4", exportedItems[3].Name);
+            Assert.Equal("myGauge5", exportedItems[4].Name);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void MeterSourcesWildcardSupportWithoutAddingMeterToProvider(bool hasView)
+        {
+            var exportedItems = new List<Metric>();
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddInMemoryExporter(exportedItems);
+
+            if (hasView)
+            {
+                meterProviderBuilder.AddView("gauge1", "renamed");
+            }
+
+            using var meterProvider = meterProviderBuilder.Build();
+            var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.True(exportedItems.Count == 0);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
         public void CounterAggregationTest(bool exportDelta)
         {
             var metricItems = new List<Metric>();
