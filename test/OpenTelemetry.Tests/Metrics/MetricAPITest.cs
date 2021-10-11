@@ -231,8 +231,17 @@ namespace OpenTelemetry.Metrics.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void MeterSourcesWildcardSupportWithoutAddingMeterToProvider(bool hasView)
+        public void MeterSourcesWildcardSupportNegativeTestNoMeterAdded(bool hasView)
         {
+            var meterNames = new[]
+            {
+                "AbcCompany.XyzProduct.ComponentA",
+                "abcCompany.xYzProduct.componentC",
+            };
+
+            using var meter1 = new Meter(meterNames[0]);
+            using var meter2 = new Meter(meterNames[1]);
+
             var exportedItems = new List<Metric>();
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddInMemoryExporter(exportedItems);
@@ -244,6 +253,10 @@ namespace OpenTelemetry.Metrics.Tests
 
             using var meterProvider = meterProviderBuilder.Build();
             var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
+
+            meter1.CreateObservableGauge("myGauge1", () => measurement);
+            meter2.CreateObservableGauge("myGauge2", () => measurement);
+
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.True(exportedItems.Count == 0);
         }
