@@ -45,6 +45,13 @@ namespace OpenTelemetry.Exporter.Prometheus
         private const int MaxLongCharSize = 20;
         private const int MaxDoubleCharSize = 128;
 #endif
+        private const byte SpaceUtf8 = (byte)' ';
+        private const byte NewLineUtf8 = (byte)'\n';
+        private const byte OpeningBraceUtf8 = (byte)'{';
+        private const byte ClosingBraceUtf8 = (byte)'}';
+        private const byte EqualUtf8 = (byte)'=';
+        private const byte CommaUtf8 = (byte)',';
+        private const byte DoubleQuoteUtf8 = (byte)'"';
 
         private static readonly ConcurrentDictionary<string, MetricInfo> MetricInfoCache = new ConcurrentDictionary<string, MetricInfo>(StringComparer.OrdinalIgnoreCase);
 
@@ -59,13 +66,6 @@ namespace OpenTelemetry.Exporter.Prometheus
         private static readonly byte[] HistogramSumSuffixUtf8 = Encoding.UTF8.GetBytes("_sum");
         private static readonly byte[] HistogramCountSuffixUtf8 = Encoding.UTF8.GetBytes("_count");
         private static readonly byte[] HistogramBucketSuffixUtf8 = Encoding.UTF8.GetBytes("_bucket");
-        private static readonly byte[] SpaceUtf8 = new byte[] { (byte)' ' };
-        private static readonly byte[] NewLineUtf8 = new byte[] { (byte)'\n' };
-        private static readonly byte[] OpeningBraceUtf8 = new byte[] { (byte)'{' };
-        private static readonly byte[] ClosingBraceUtf8 = new byte[] { (byte)'}' };
-        private static readonly byte[] EqualUtf8 = new byte[] { (byte)'=' };
-        private static readonly byte[] CommaUtf8 = new byte[] { (byte)',' };
-        private static readonly byte[] DoubleQuoteUtf8 = new byte[] { (byte)'"' };
         private static readonly byte[] NaNUtf8 = Encoding.UTF8.GetBytes("Nan");
         private static readonly byte[] PositiveInfinityUtf8 = Encoding.UTF8.GetBytes("+Inf");
         private static readonly byte[] NegativeInfinityUtf8 = Encoding.UTF8.GetBytes("-Inf");
@@ -323,6 +323,8 @@ namespace OpenTelemetry.Exporter.Prometheus
             T value,
             KeyValuePair<byte[], byte[]>? additionalKvp = null)
         {
+            int bufferPosition = 0;
+
             // The remaining lines describe samples (one per line) using the following syntax (EBNF):
             // metric_name [
             //   "{" label_name "=" `"` label_value `"` { "," label_name "=" `"` label_value `"` } [ "," ] "}"
@@ -331,7 +333,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             var unixNow = getUtcNowDateTimeOffset().ToUnixTimeMilliseconds();
 
             // metric_name and label_name carry the usual Prometheus expression language restrictions.
-            await stream.WriteAsync(nameUtf8, 0, nameUtf8.Length).ConfigureAwait(false);
+            WriteToBuffer(nameUtf8, buffer, ref bufferPosition);
 
             // label_value can be any sequence of UTF-8 characters, but the backslash
             // (\, double-quote ("}, and line feed (\n) characters have to be escaped
@@ -340,40 +342,54 @@ namespace OpenTelemetry.Exporter.Prometheus
             int numberOfKeys = keys?.Length ?? 0;
             if (numberOfKeys > 0 || additionalKvp.HasValue)
             {
-                await stream.WriteAsync(OpeningBraceUtf8, 0, 1).ConfigureAwait(false);
+                WriteToBuffer(OpeningBraceUtf8, buffer, ref bufferPosition);
                 int i = 0;
                 while (i < keys.Length)
                 {
-                    await WriteKeyValuePair(stream, metricInfo.GetKeyUtf8(keys[i]), metricInfo.GetValueUtf8(values[i]), i > 0).ConfigureAwait(false);
+                    WriteKeyValuePair(buffer, ref bufferPosition, metricInfo.GetKeyUtf8(keys[i]), metricInfo.GetValueUtf8(values[i]), i > 0);
                     i++;
                 }
 
                 if (additionalKvp.HasValue)
                 {
-                    await WriteKeyValuePair(stream, additionalKvp.Value.Key, additionalKvp.Value.Value, i > 0).ConfigureAwait(false);
+                    WriteKeyValuePair(buffer, ref bufferPosition, additionalKvp.Value.Key, additionalKvp.Value.Value, i > 0);
                 }
 
-                await stream.WriteAsync(ClosingBraceUtf8, 0, 1).ConfigureAwait(false);
+                WriteToBuffer(ClosingBraceUtf8, buffer, ref bufferPosition);
             }
 
             // value is a float represented as required by Go's ParseFloat() function. In addition to
             // standard numerical values, Nan, +Inf, and -Inf are valid values representing not a number,
             // positive infinity, and negative infinity, respectively.
-            await stream.WriteAsync(SpaceUtf8, 0, 1).ConfigureAwait(false);
-            await WriteValue(stream, buffer, value).ConfigureAwait(false);
-            await stream.WriteAsync(SpaceUtf8, 0, 1).ConfigureAwait(false);
+            WriteToBuffer(SpaceUtf8, buffer, ref bufferPosition);
+            WriteValue(buffer, ref bufferPosition, value);
+            WriteToBuffer(SpaceUtf8, buffer, ref bufferPosition);
 
             // The timestamp is an int64 (milliseconds since epoch, i.e. 1970-01-01 00:00:00 UTC, excluding
             // leap seconds), represented as required by Go's ParseInt() function.
-            await WriteNow(stream, buffer, unixNow).ConfigureAwait(false);
+            WriteNow(buffer, ref bufferPosition, unixNow);
 
             // Prometheus' text-based format is line oriented. Lines are separated
             // by a line feed character (\n). The last line must end with a line
             // feed character. Empty lines are ignored.
-            await stream.WriteAsync(NewLineUtf8, 0, 1).ConfigureAwait(false);
+            WriteToBuffer(NewLineUtf8, buffer, ref bufferPosition);
+
+            // Write the buffer out to the response stream.
+            await stream.WriteAsync(buffer, 0, bufferPosition).ConfigureAwait(false);
         }
 
-        private static Task WriteValue<T>(Stream stream, byte[] buffer, T value)
+        private static void WriteToBuffer(Span<byte> source, byte[] destination, ref int destinationOffset)
+        {
+            source.CopyTo(new Span<byte>(destination, destinationOffset, destination.Length - destinationOffset));
+            destinationOffset += source.Length;
+        }
+
+        private static void WriteToBuffer(byte source, byte[] destination, ref int destinationOffset)
+        {
+            destination[destinationOffset++] = source;
+        }
+
+        private static void WriteValue<T>(byte[] destination, ref int destinationOffset, T value)
         {
             if (value is long longValue)
             {
@@ -381,80 +397,85 @@ namespace OpenTelemetry.Exporter.Prometheus
                 Span<char> longValueCharacters = stackalloc char[MaxLongCharSize];
                 bool result = longValue.TryFormat(longValueCharacters, out int charsWritten, "G", CultureInfo.InvariantCulture);
                 Debug.Assert(result, "result was not true");
-                int numberOfBytes = Encoding.UTF8.GetBytes(longValueCharacters.Slice(0, charsWritten), buffer);
-                return stream.WriteAsync(buffer, 0, numberOfBytes);
+                int numberOfBytes = Encoding.UTF8.GetBytes(longValueCharacters.Slice(0, charsWritten), new Span<byte>(destination, destinationOffset, destination.Length - destinationOffset));
+                destinationOffset += numberOfBytes;
 #else
                 string longValueString = longValue.ToString(CultureInfo.InvariantCulture);
                 byte[] longValueUtf8 = Encoding.UTF8.GetBytes(longValueString);
-                return stream.WriteAsync(longValueUtf8, 0, longValueUtf8.Length);
+                WriteToBuffer(longValueUtf8, destination, ref destinationOffset);
 #endif
+                return;
             }
 
             if (value is double doubleValue)
             {
                 if (double.IsNaN(doubleValue))
                 {
-                    return stream.WriteAsync(NaNUtf8, 0, NaNUtf8.Length);
+                    WriteToBuffer(NaNUtf8, destination, ref destinationOffset);
+                    return;
                 }
 
                 if (double.IsPositiveInfinity(doubleValue))
                 {
-                    return stream.WriteAsync(PositiveInfinityUtf8, 0, PositiveInfinityUtf8.Length);
+                    WriteToBuffer(PositiveInfinityUtf8, destination, ref destinationOffset);
+                    return;
                 }
 
                 if (double.IsNegativeInfinity(doubleValue))
                 {
-                    return stream.WriteAsync(NegativeInfinityUtf8, 0, NegativeInfinityUtf8.Length);
+                    WriteToBuffer(NegativeInfinityUtf8, destination, ref destinationOffset);
+                    return;
                 }
 
 #if NETCOREAPP3_1_OR_GREATER
                 Span<char> doubleValueCharacters = stackalloc char[MaxDoubleCharSize];
                 bool result = doubleValue.TryFormat(doubleValueCharacters, out int charsWritten, "G", CultureInfo.InvariantCulture);
                 Debug.Assert(result, "result was not true");
-                int numberOfBytes = Encoding.UTF8.GetBytes(doubleValueCharacters.Slice(0, charsWritten), buffer);
-                return stream.WriteAsync(buffer, 0, numberOfBytes);
+                int numberOfBytes = Encoding.UTF8.GetBytes(doubleValueCharacters.Slice(0, charsWritten), new Span<byte>(destination, destinationOffset, destination.Length - destinationOffset));
+                destinationOffset += numberOfBytes;
 #else
                 string doubleValueString = doubleValue.ToString(CultureInfo.InvariantCulture);
                 byte[] doubleValueUtf8 = Encoding.UTF8.GetBytes(doubleValueString);
-                return stream.WriteAsync(doubleValueUtf8, 0, doubleValueUtf8.Length);
+                WriteToBuffer(doubleValueUtf8, destination, ref destinationOffset);
 #endif
+                return;
             }
 
             Debug.Fail("This code should not be reached.");
             string stringValue = value.ToString();
             byte[] valueUtf8 = Encoding.UTF8.GetBytes(stringValue);
-            return stream.WriteAsync(valueUtf8, 0, valueUtf8.Length);
+            WriteToBuffer(valueUtf8, destination, ref destinationOffset);
         }
 
-        private static Task WriteNow(Stream stream, byte[] buffer, long unixNow)
+        private static void WriteNow(byte[] destination, ref int destinationOffset, long unixNow)
         {
 #if NETCOREAPP3_1_OR_GREATER
             Span<char> nowCharacters = stackalloc char[MaxLongCharSize];
             bool result = unixNow.TryFormat(nowCharacters, out int charsWritten, "G", CultureInfo.InvariantCulture);
             Debug.Assert(result, "result was not true");
-            int numberOfBytes = Encoding.UTF8.GetBytes(nowCharacters.Slice(0, charsWritten), buffer);
-            return stream.WriteAsync(buffer, 0, numberOfBytes);
+            int numberOfBytes = Encoding.UTF8.GetBytes(nowCharacters.Slice(0, charsWritten), new Span<byte>(destination, destinationOffset, destination.Length - destinationOffset));
+            destinationOffset += numberOfBytes;
 #else
             string now = unixNow.ToString(CultureInfo.InvariantCulture);
             byte[] nowUtf8 = Encoding.UTF8.GetBytes(now);
-            return stream.WriteAsync(nowUtf8, 0, nowUtf8.Length);
+            WriteToBuffer(nowUtf8, destination, ref destinationOffset);
 #endif
         }
 
-        private static async Task WriteKeyValuePair(Stream stream, byte[] keyUtf8, byte[] valueUtf8, bool writeCommaFirst)
+        private static void WriteKeyValuePair(byte[] destination, ref int destinationOffset, byte[] keyUtf8, byte[] valueUtf8, bool writeCommaFirst)
         {
             if (writeCommaFirst)
             {
-                await stream.WriteAsync(CommaUtf8, 0, 1).ConfigureAwait(false);
+                WriteToBuffer(CommaUtf8, destination, ref destinationOffset);
             }
 
-            await stream.WriteAsync(keyUtf8, 0, keyUtf8.Length).ConfigureAwait(false);
+            WriteToBuffer(keyUtf8, destination, ref destinationOffset);
 
-            await stream.WriteAsync(EqualUtf8, 0, 1).ConfigureAwait(false);
+            WriteToBuffer(EqualUtf8, destination, ref destinationOffset);
 
-            await stream.WriteAsync(DoubleQuoteUtf8, 0, 1).ConfigureAwait(false);
-            await stream.WriteAsync(valueUtf8, 0, valueUtf8.Length).ConfigureAwait(false);
-            await stream.WriteAsync(DoubleQuoteUtf8, 0, 1).ConfigureAwait(false);
+            WriteToBuffer(DoubleQuoteUtf8, destination, ref destinationOffset);
+            WriteToBuffer(valueUtf8, destination, ref destinationOffset);
+            WriteToBuffer(DoubleQuoteUtf8, destination, ref destinationOffset);
         }
 
         private class MetricInfo
