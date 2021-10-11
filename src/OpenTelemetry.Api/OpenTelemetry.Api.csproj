@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenTelemetry.Shared\OpenTelemetry.Shared.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Shared\OpenTelemetry.Shared.csproj" />
   </ItemGroup>
 
 </Project>
