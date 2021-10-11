@@ -24,7 +24,6 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using OpenTelemetry.Metrics;
-using static OpenTelemetry.Exporter.Prometheus.PrometheusMetricsFormatHelper;
 
 namespace OpenTelemetry.Exporter.Prometheus
 {
@@ -479,7 +478,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             {
                 MetricInfo metricInfo = new MetricInfo
                 {
-                    NameUtf8 = Encoding.UTF8.GetBytes(GetSafeMetricName(metric.Name)),
+                    NameUtf8 = Encoding.UTF8.GetBytes(PrometheusMetricsFormatHelper.GetSafeMetricName(metric.Name)),
                     WriteMetricFunc = writeMetricFunc,
                 };
 
@@ -491,7 +490,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                     if (!string.IsNullOrEmpty(metric.Description))
                     {
-                        byte[] descriptionUtf8 = Encoding.UTF8.GetBytes(GetSafeMetricDescription(metric.Description));
+                        byte[] descriptionUtf8 = Encoding.UTF8.GetBytes(PrometheusMetricsFormatHelper.GetSafeMetricDescription(metric.Description));
 
                         stream.Position = 0;
                         stream.SetLength(0);
@@ -538,7 +537,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             {
                 if (!this.keyCache.TryGetValue(key, out byte[] keyUtf8))
                 {
-                    string escapedKey = GetSafeLabelName(key);
+                    string escapedKey = PrometheusMetricsFormatHelper.GetSafeLabelName(key);
                     keyUtf8 = Encoding.UTF8.GetBytes(escapedKey);
                     if (this.keyCache.Count < 128)
                     {
@@ -553,7 +552,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             {
                 if (!this.valueCache.TryGetValue(value, out byte[] valueUtf8))
                 {
-                    string escapedValue = GetSafeLabelValue(value?.ToString() ?? "null");
+                    string escapedValue = PrometheusMetricsFormatHelper.GetSafeLabelValue(value?.ToString() ?? "null");
                     valueUtf8 = Encoding.UTF8.GetBytes(escapedValue);
                     if (this.valueCache.Count < 128)
                     {
