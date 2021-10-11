@@ -192,7 +192,7 @@ with the metric are of interest to you.
       {
          TagKeys = new string[] { },
       })
-   
+
    ...
    // both "name" and "color" are dropped
    MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
