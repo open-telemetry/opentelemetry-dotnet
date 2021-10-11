@@ -16,6 +16,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
+using System.Text.RegularExpressions;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -27,6 +29,7 @@ namespace OpenTelemetry.Metrics
     {
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private readonly List<string> meterSources = new List<string>();
+        private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs = new List<Func<Instrument, MetricStreamConfiguration>>();
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
 
         protected MeterProviderBuilderBase()
@@ -53,7 +56,7 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc />
-        public override MeterProviderBuilder AddSource(params string[] names)
+        public override MeterProviderBuilder AddMeter(params string[] names)
         {
             if (names == null)
             {
@@ -84,6 +87,31 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
+        internal MeterProviderBuilder AddView(string instrumentName, string name)
+        {
+            return this.AddView(instrumentName, new MetricStreamConfiguration() { Name = name });
+        }
+
+        internal MeterProviderBuilder AddView(string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
+        {
+            if (instrumentName.IndexOf('*') != -1)
+            {
+                var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*");
+                var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                return this.AddView(instrument => regex.IsMatch(instrument.Name) ? metricStreamConfiguration : null);
+            }
+            else
+            {
+                return this.AddView(instrument => instrument.Name.Equals(instrumentName, StringComparison.OrdinalIgnoreCase) ? metricStreamConfiguration : null);
+            }
+        }
+
+        internal MeterProviderBuilder AddView(Func<Instrument, MetricStreamConfiguration> viewConfig)
+        {
+            this.viewConfigs.Add(viewConfig);
+            return this;
+        }
+
         internal MeterProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
             this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
@@ -100,6 +128,7 @@ namespace OpenTelemetry.Metrics
                 this.resourceBuilder.Build(),
                 this.meterSources,
                 this.instrumentationFactories,
+                this.viewConfigs,
                 this.MetricReaders.ToArray());
         }
 

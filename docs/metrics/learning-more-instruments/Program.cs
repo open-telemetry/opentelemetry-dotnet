@@ -24,25 +24,28 @@ using OpenTelemetry.Metrics;
 public class Program
 {
     private static readonly Meter MyMeter = new Meter("MyCompany.MyProduct.MyLibrary", "1.0");
+    private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("MyHistogram");
 
-    public static void Main(string[] args)
+    static Program()
     {
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddSource("MyCompany.MyProduct.MyLibrary")
-            .AddConsoleExporter()
-            .Build();
-
         var process = Process.GetCurrentProcess();
 
         MyMeter.CreateObservableCounter<double>("Thread.CpuTime", () => GetThreadCpuTime(process), "seconds");
 
         MyMeter.CreateObservableGauge<int>("Thread.State", () => GetThreadState(process));
+    }
+
+    public static void Main(string[] args)
+    {
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter("MyCompany.MyProduct.MyLibrary")
+            .AddConsoleExporter()
+            .Build();
 
         var random = new Random();
-        var histogram = MyMeter.CreateHistogram<long>("MyHistogram");
         for (int i = 0; i < 1000; i++)
         {
-            histogram.Record(random.Next(1, 1000));
+            MyHistogram.Record(random.Next(1, 1000));
         }
     }
 

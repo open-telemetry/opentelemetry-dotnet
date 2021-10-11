@@ -41,12 +41,13 @@ namespace OpenTelemetry.Metrics
 
             var exporter = new ConsoleMetricExporter(options);
 
-            if (options.MetricExportIntervalMilliseconds == Timeout.Infinite)
-            {
-                return builder.AddReader(new BaseExportingMetricReader(exporter));
-            }
+            var reader = options.MetricExportIntervalMilliseconds == Timeout.Infinite
+                ? new BaseExportingMetricReader(exporter)
+                : new PeriodicExportingMetricReader(exporter, options.MetricExportIntervalMilliseconds);
 
-            return builder.AddReader(new PeriodicExportingMetricReader(exporter, options.MetricExportIntervalMilliseconds));
+            reader.PreferredAggregationTemporality = options.AggregationTemporality;
+
+            return builder.AddReader(reader);
         }
     }
 }

@@ -91,7 +91,7 @@ namespace Benchmarks.Metrics
                 PreferredAggregationTemporality = AggregationTemporality.Cumulative,
             };
             this.provider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestMeter")
+                .AddMeter("TestMeter")
                 .AddReader(this.reader)
                 .Build();
 

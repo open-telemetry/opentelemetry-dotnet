@@ -48,8 +48,12 @@ namespace Examples.Console
                 - targets: ['localhost:9184']
             */
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestMeter")
-                .AddPrometheusExporter(opt => opt.Url = $"http://localhost:{port}/metrics/")
+                .AddMeter("TestMeter")
+                .AddPrometheusExporter(opt =>
+                {
+                    opt.StartHttpListener = true;
+                    opt.HttpListenerPrefixes = new string[] { $"http://localhost:{port}/" };
+                })
                 .Build();
 
             ObservableGauge<long> gauge = MyMeter.CreateObservableGauge<long>(

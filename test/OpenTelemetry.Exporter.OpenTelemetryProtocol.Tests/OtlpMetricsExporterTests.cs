@@ -20,6 +20,7 @@ using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Threading;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -38,10 +39,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData(false)]
         public void ToOtlpResourceMetricsTest(bool includeServiceNameInResource)
         {
-            using var exporter = new OtlpMetricsExporter(
-                new OtlpExporterOptions(),
-                new NoopMetricsServiceClient());
-
             var resourceBuilder = ResourceBuilder.CreateEmpty();
             if (includeServiceNameInResource)
             {
@@ -66,11 +63,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
-                .AddSource("TestMeter")
+                .AddMeter("TestMeter")
                 .AddReader(metricReader)
                 .Build();
-
-            exporter.ParentProvider = provider;
 
             using var meter = new Meter("TestMeter", "0.0.1");
 
@@ -88,7 +83,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             void RunTest(Batch<Metric> metrics)
             {
                 var request = new OtlpCollector.ExportMetricsServiceRequest();
-                request.AddMetrics(exporter.ProcessResource, metrics);
+                request.AddMetrics(resourceBuilder.Build().ToOtlpResource(), metrics);
 
                 Assert.Single(request.ResourceMetrics);
                 var resourceMetric = request.ResourceMetrics.First();

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc8
+
+Released 2021-Oct-08
+
 * Adopted the donation
   [Microsoft.AspNet.TelemetryCorrelation](https://github.com/aspnet/Microsoft.AspNet.TelemetryCorrelation)
   from [.NET Foundation](https://dotnetfoundation.org/)

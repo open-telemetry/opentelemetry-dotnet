@@ -46,7 +46,7 @@ namespace OpenTelemetry.Metrics
             //   EnableGrpcAspNetCoreSupport - this instrumentation will also need to also handle gRPC requests
 
             var instrumentation = new AspNetCoreMetrics();
-            builder.AddSource(AspNetCoreMetrics.InstrumentationName);
+            builder.AddMeter(AspNetCoreMetrics.InstrumentationName);
             return builder.AddInstrumentation(() => instrumentation);
         }
     }

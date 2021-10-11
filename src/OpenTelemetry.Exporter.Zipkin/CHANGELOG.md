@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-beta1
+
+Released 2021-Oct-08
+
 * Added .NET 5.0 target and threading optimizations
   ([#2405](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2405))
 
