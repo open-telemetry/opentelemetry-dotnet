@@ -113,6 +113,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (!shouldListenTo(instrument))
                     {
+                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(instrument.Name, instrument.Meter.Name, "Instrument belongs to a Meter not subscribed by the provider.", "Use AddMeter to add the Meter to the provider.");
                         return;
                     }
 
