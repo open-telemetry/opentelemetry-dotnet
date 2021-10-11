@@ -15,9 +15,13 @@
 // </copyright>
 
 using System;
+#if NETCOREAPP3_1_OR_GREATER
+using System.Buffers;
+#endif
 using System.Diagnostics;
-using System.Linq;
+#if NET461
 using System.Text;
+#endif
 
 namespace OpenTelemetry.Exporter.Prometheus
 {
@@ -25,39 +29,42 @@ namespace OpenTelemetry.Exporter.Prometheus
     {
         public const string ContentType = "text/plain; version = 0.0.4";
 
-        private static readonly char[] FirstCharacterNameCharset =
-        {
-            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-            '_', ':',
-        };
+#if NETCOREAPP3_1_OR_GREATER
+        private static readonly SpanAction<char, (string, Func<char, bool, bool>)> CreateName
+            = (Span<char> data, (string name, Func<char, bool, bool> isCharacterAllowedFunc) state) =>
+            {
+                for (var i = 0; i < state.name.Length; i++)
+                {
+                    var c = state.name[i];
+                    data[i] = state.isCharacterAllowedFunc(c, i == 0)
+                        ? c
+                        : '_';
+                }
+            };
+#endif
 
-        private static readonly char[] NameCharset =
-        {
-            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '_', ':',
-        };
+        private static readonly Func<char, bool, bool> IsCharacterAllowedForName =
+            (char c, bool isFirstChar) =>
+            {
+                return (c >= 'a' && c <= 'z')
+                    || (c >= 'A' && c <= 'Z')
+                    || (!isFirstChar && c >= '0' && c <= '9')
+                    || c == '_'
+                    || c == ':';
+            };
 
-        private static readonly char[] FirstCharacterLabelCharset =
-        {
-            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-            '_',
-        };
+        private static readonly Func<char, bool, bool> IsCharacterAllowedForLabel
+            = (char c, bool isFirstChar) =>
+            {
+                return (c >= 'a' && c <= 'z')
+                    || (c >= 'A' && c <= 'Z')
+                    || (!isFirstChar && c >= '0' && c <= '9')
+                    || c == '_';
+            };
 
-        private static readonly char[] LabelCharset =
-        {
-            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            '_',
-        };
+        public static string GetSafeMetricName(string name) => GetSafeName(name, IsCharacterAllowedForName);
 
-        public static string GetSafeMetricName(string name) => GetSafeName(name, FirstCharacterNameCharset, NameCharset);
-
-        public static string GetSafeLabelName(string name) => GetSafeName(name, FirstCharacterLabelCharset, LabelCharset);
+        public static string GetSafeLabelName(string name) => GetSafeName(name, IsCharacterAllowedForLabel);
 
         public static string GetSafeLabelValue(string value)
         {
@@ -65,11 +72,10 @@ namespace OpenTelemetry.Exporter.Prometheus
             // (\), double-quote ("), and line feed (\n) characters have to be escaped
             // as \\, \", and \n, respectively.
 
-            var result = value.Replace("\\", @"\\");
-            result = result.Replace("\n", @"\n");
-            result = result.Replace("\"", @"\""");
-
-            return result;
+            return value
+                .Replace("\\", @"\\")
+                .Replace("\n", @"\n")
+                .Replace("\"", @"\""");
         }
 
         public static string GetSafeMetricDescription(string description)
@@ -77,13 +83,12 @@ namespace OpenTelemetry.Exporter.Prometheus
             // HELP lines may contain any sequence of UTF-8 characters(after the metric name), but the backslash
             // and the line feed characters have to be escaped as \\ and \n, respectively.Only one HELP line may
             // exist for any given metric name.
-            var result = description.Replace("\\", @"\\");
-            result = result.Replace("\n", @"\n");
-
-            return result;
+            return description
+                .Replace("\\", @"\\")
+                .Replace("\n", @"\n");
         }
 
-        private static string GetSafeName(string name, char[] firstCharNameCharset, char[] charNameCharset)
+        private static string GetSafeName(string name, Func<char, bool, bool> isCharacterAllowedFunc)
         {
             // https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
             //
@@ -95,22 +100,23 @@ namespace OpenTelemetry.Exporter.Prometheus
             // Label names may contain ASCII letters, numbers, as well as underscores. They must match the regex [a-zA-Z_][a-zA-Z0-9_]*. Label names beginning with __ are reserved for internal use.
             // Label values may contain any Unicode characters.
 
-            var sb = new StringBuilder();
             Debug.Assert(!string.IsNullOrEmpty(name), "name is empty or null");
-            var firstChar = name[0];
 
-            sb.Append(firstCharNameCharset.Contains(firstChar)
-                ? firstChar
-                : GetSafeChar(char.ToLowerInvariant(firstChar), firstCharNameCharset));
+#if NETCOREAPP3_1_OR_GREATER
+            return string.Create(name.Length, (name, isCharacterAllowedFunc), CreateName);
+#else
+            var sb = new StringBuilder(name.Length);
 
-            for (var i = 1; i < name.Length; ++i)
+            for (var i = 0; i < name.Length; i++)
             {
-                sb.Append(GetSafeChar(name[i], charNameCharset));
+                var c = name[i];
+                sb.Append(isCharacterAllowedFunc(c, i == 0)
+                    ? c
+                    : '_');
             }
 
             return sb.ToString();
-
-            static char GetSafeChar(char c, char[] charset) => charset.Contains(c) ? c : '_';
+#endif
         }
     }
 }
