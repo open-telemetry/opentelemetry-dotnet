@@ -28,7 +28,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
-    internal class HttpHandlerDiagnosticListener : ListenerHandler
+    internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
     {
         internal static readonly AssemblyName AssemblyName = typeof(HttpHandlerDiagnosticListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;

@@ -51,13 +51,24 @@ namespace OpenTelemetry.Trace
             return AddAspNetCoreInstrumentation(builder, new AspNetCoreInstrumentationOptions(), configureAspNetCoreInstrumentationOptions);
         }
 
-        private static TracerProviderBuilder AddAspNetCoreInstrumentation(TracerProviderBuilder builder, AspNetCoreInstrumentationOptions options, Action<AspNetCoreInstrumentationOptions> configure = null)
+        internal static TracerProviderBuilder AddAspNetCoreInstrumentation(
+            this TracerProviderBuilder builder,
+            AspNetCoreInstrumentation instrumentation)
         {
-            configure?.Invoke(options);
-            var instrumentation = new AspNetCoreInstrumentation(options);
             builder.AddSource(HttpInListener.ActivitySourceName);
             builder.AddLegacySource(HttpInListener.ActivityOperationName); // for the activities created by AspNetCore
             return builder.AddInstrumentation(() => instrumentation);
+        }
+
+        private static TracerProviderBuilder AddAspNetCoreInstrumentation(
+            TracerProviderBuilder builder,
+            AspNetCoreInstrumentationOptions options,
+            Action<AspNetCoreInstrumentationOptions> configure = null)
+        {
+            configure?.Invoke(options);
+            return AddAspNetCoreInstrumentation(
+                builder,
+                new AspNetCoreInstrumentation(new HttpInListener(options)));
         }
     }
 }

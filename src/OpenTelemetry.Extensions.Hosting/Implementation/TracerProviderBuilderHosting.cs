@@ -23,7 +23,7 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// A <see cref="TracerProviderBuilderBase"/> with support for deferred initialization using <see cref="IServiceProvider"/> for dependency injection.
     /// </summary>
-    internal class TracerProviderBuilderHosting : TracerProviderBuilderBase, IDeferredTracerProviderBuilder
+    internal sealed class TracerProviderBuilderHosting : TracerProviderBuilderBase, IDeferredTracerProviderBuilder
     {
         private readonly List<Action<IServiceProvider, TracerProviderBuilder>> configurationActions = new List<Action<IServiceProvider, TracerProviderBuilder>>();
 
@@ -47,10 +47,16 @@ namespace OpenTelemetry.Trace
 
         public TracerProvider Build(IServiceProvider serviceProvider)
         {
-            int i = 0;
-            while (i < this.configurationActions.Count)
+            if (serviceProvider == null)
             {
-                this.configurationActions[i++](serviceProvider, this);
+                throw new ArgumentNullException(nameof(serviceProvider));
+            }
+
+            // Note: Not using a foreach loop because additional actions can be
+            // added during each call.
+            for (int i = 0; i < this.configurationActions.Count; i++)
+            {
+                this.configurationActions[i](serviceProvider, this);
             }
 
             return this.Build();

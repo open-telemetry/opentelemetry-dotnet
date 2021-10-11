@@ -16,14 +16,14 @@
 
 using System;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
 {
-    public class ConsoleMetricExporter : ConsoleExporter<MetricItem>
+    [AggregationTemporality(AggregationTemporality.Cumulative | AggregationTemporality.Delta, AggregationTemporality.Cumulative)]
+    public class ConsoleMetricExporter : ConsoleExporter<Metric>
     {
         private Resource resource;
 
@@ -32,7 +32,7 @@ namespace OpenTelemetry.Exporter
         {
         }
 
-        public override ExportResult Export(in Batch<MetricItem> batch)
+        public override ExportResult Export(in Batch<Metric> batch)
         {
             if (this.resource == null)
             {
@@ -49,81 +49,119 @@ namespace OpenTelemetry.Exporter
                 }
             }
 
-            foreach (var metricItem in batch)
+            foreach (var metric in batch)
             {
-                foreach (var metric in metricItem.Metrics)
+                var msg = new StringBuilder($"\nExport ");
+                msg.Append(metric.Name);
+                if (!string.IsNullOrEmpty(metric.Description))
                 {
-                    var tags = metric.Attributes.ToArray().Select(k => $"{k.Key}={k.Value?.ToString()}");
+                    msg.Append(", ");
+                    msg.Append(metric.Description);
+                }
 
+                if (!string.IsNullOrEmpty(metric.Unit))
+                {
+                    msg.Append($", Unit: {metric.Unit}");
+                }
+
+                if (!string.IsNullOrEmpty(metric.Meter.Name))
+                {
+                    msg.Append($", Meter: {metric.Meter.Name}");
+
+                    if (!string.IsNullOrEmpty(metric.Meter.Version))
+                    {
+                        msg.Append($"/{metric.Meter.Version}");
+                    }
+                }
+
+                Console.WriteLine(msg.ToString());
+
+                foreach (ref var metricPoint in metric.GetMetricPoints())
+                {
                     string valueDisplay = string.Empty;
-
-                    // Switch would be faster than the if.else ladder
-                    // of try and cast.
-                    switch (metric.MetricType)
+                    StringBuilder tagsBuilder = new StringBuilder();
+                    if (metricPoint.Keys != null)
                     {
-                        case MetricType.LongSum:
-                            {
-                                valueDisplay = (metric as ISumMetricLong).LongSum.ToString(CultureInfo.InvariantCulture);
-                                break;
-                            }
-
-                        case MetricType.DoubleSum:
-                            {
-                                valueDisplay = (metric as ISumMetricDouble).DoubleSum.ToString(CultureInfo.InvariantCulture);
-                                break;
-                            }
-
-                        case MetricType.LongGauge:
-                            {
-                                // TODOs
-                                break;
-                            }
-
-                        case MetricType.DoubleGauge:
-                            {
-                                // TODOs
-                                break;
-                            }
-
-                        case MetricType.Histogram:
-                            {
-                                var histogramMetric = metric as IHistogramMetric;
-                                valueDisplay = string.Format("Sum: {0} Count: {1}", histogramMetric.PopulationSum, histogramMetric.PopulationCount);
-                                break;
-                            }
-
-                        case MetricType.Summary:
-                            {
-                                var summaryMetric = metric as ISummaryMetric;
-                                valueDisplay = string.Format("Sum: {0} Count: {1}", summaryMetric.PopulationSum, summaryMetric.PopulationCount);
-                                break;
-                            }
-                    }
-
-                    string time = $"{metric.StartTimeExclusive.ToLocalTime().ToString("HH:mm:ss.fff")} {metric.EndTimeInclusive.ToLocalTime().ToString("HH:mm:ss.fff")}";
-
-                    var msg = new StringBuilder($"Export {time} {metric.Name} [{string.Join(";", tags)}] {metric.MetricType} Value: {valueDisplay}");
-
-                    if (!string.IsNullOrEmpty(metric.Description))
-                    {
-                        msg.Append($", Description: {metric.Description}");
-                    }
-
-                    if (!string.IsNullOrEmpty(metric.Unit))
-                    {
-                        msg.Append($", Unit: {metric.Unit}");
-                    }
-
-                    if (!string.IsNullOrEmpty(metric.Meter.Name))
-                    {
-                        msg.Append($", Meter: {metric.Meter.Name}");
-
-                        if (!string.IsNullOrEmpty(metric.Meter.Version))
+                        for (int i = 0; i < metricPoint.Keys.Length; i++)
                         {
-                            msg.Append($"/{metric.Meter.Version}");
+                            tagsBuilder.Append(metricPoint.Keys[i]);
+                            tagsBuilder.Append(':');
+                            tagsBuilder.Append(metricPoint.Values[i]);
+                            tagsBuilder.Append(' ');
                         }
                     }
 
+                    var tags = tagsBuilder.ToString().TrimEnd();
+
+                    var metricType = metric.MetricType;
+
+                    if (metricType.IsHistogram())
+                    {
+                        var bucketsBuilder = new StringBuilder();
+                        bucketsBuilder.Append($"Sum: {metricPoint.DoubleValue} Count: {metricPoint.LongValue} \n");
+
+                        if (metricPoint.ExplicitBounds != null)
+                        {
+                            for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
+                            {
+                                if (i == 0)
+                                {
+                                    bucketsBuilder.Append("(-Infinity,");
+                                    bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
+                                    bucketsBuilder.Append(']');
+                                    bucketsBuilder.Append(':');
+                                    bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                                }
+                                else if (i == metricPoint.ExplicitBounds.Length)
+                                {
+                                    bucketsBuilder.Append('(');
+                                    bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
+                                    bucketsBuilder.Append(',');
+                                    bucketsBuilder.Append("+Infinity]");
+                                    bucketsBuilder.Append(':');
+                                    bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                                }
+                                else
+                                {
+                                    bucketsBuilder.Append('(');
+                                    bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
+                                    bucketsBuilder.Append(',');
+                                    bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
+                                    bucketsBuilder.Append(']');
+                                    bucketsBuilder.Append(':');
+                                    bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                                }
+
+                                bucketsBuilder.AppendLine();
+                            }
+                        }
+
+                        valueDisplay = bucketsBuilder.ToString();
+                    }
+                    else if (metricType.IsDouble())
+                    {
+                        valueDisplay = metricPoint.DoubleValue.ToString(CultureInfo.InvariantCulture);
+                    }
+                    else if (metricType.IsLong())
+                    {
+                        valueDisplay = metricPoint.LongValue.ToString(CultureInfo.InvariantCulture);
+                    }
+
+                    msg = new StringBuilder();
+                    msg.Append('(');
+                    msg.Append(metricPoint.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                    msg.Append(", ");
+                    msg.Append(metricPoint.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                    msg.Append("] ");
+                    msg.Append(tags);
+                    if (tags != string.Empty)
+                    {
+                        msg.Append(' ');
+                    }
+
+                    msg.Append(metric.MetricType);
+                    msg.AppendLine();
+                    msg.Append($"Value: {valueDisplay}");
                     Console.WriteLine(msg);
                 }
             }

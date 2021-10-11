@@ -15,9 +15,12 @@
 // </copyright>
 
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Web;
+using OpenTelemetry.Context;
+using OpenTelemetry.Context.Propagation;
 
 namespace OpenTelemetry.Instrumentation.AspNet
 {
@@ -27,97 +30,164 @@ namespace OpenTelemetry.Instrumentation.AspNet
     internal static class ActivityHelper
     {
         /// <summary>
-        /// Listener name.
+        /// Key to store the state in HttpContext.
         /// </summary>
-        public const string AspNetListenerName = "OpenTelemetry.Instrumentation.AspNet.Telemetry";
+        internal const string ContextKey = "__AspnetInstrumentationContext__";
+        internal static readonly object StartedButNotSampledObj = new object();
+
+        private const string BaggageSlotName = "otel.baggage";
+        private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
+        private static readonly ActivitySource AspNetSource = new ActivitySource(
+            TelemetryHttpModule.AspNetSourceName,
+            typeof(ActivityHelper).Assembly.GetName().Version.ToString());
 
         /// <summary>
-        /// Activity name for http request.
+        /// Try to get the started <see cref="Activity"/> for the running <see
+        /// cref="HttpContext"/>.
         /// </summary>
-        public const string AspNetActivityName = "Microsoft.AspNet.HttpReqIn";
-
-        /// <summary>
-        /// Event name for the activity start event.
-        /// </summary>
-        public const string AspNetActivityStartName = "Microsoft.AspNet.HttpReqIn.Start";
-
-        /// <summary>
-        /// Key to store the activity in HttpContext.
-        /// </summary>
-        public const string ActivityKey = "__AspnetActivity__";
-
-        private static readonly DiagnosticListener AspNetListener = new DiagnosticListener(AspNetListenerName);
-
-        private static readonly object EmptyPayload = new object();
-
-        /// <summary>
-        /// Stops the activity and notifies listeners about it.
-        /// </summary>
-        /// <param name="contextItems">HttpContext.Items.</param>
-        public static void StopAspNetActivity(IDictionary contextItems)
+        /// <param name="context"><see cref="HttpContext"/>.</param>
+        /// <param name="aspNetActivity">Started <see cref="Activity"/> or <see
+        /// langword="null"/> if 1) start has not been called or 2) start was
+        /// called but sampling decided not to create an instance.</param>
+        /// <returns><see langword="true"/> if start has been called.</returns>
+        public static bool HasStarted(HttpContext context, out Activity aspNetActivity)
         {
-            var currentActivity = Activity.Current;
-            Activity aspNetActivity = (Activity)contextItems[ActivityKey];
+            Debug.Assert(context != null, "Context is null.");
 
-            if (currentActivity != aspNetActivity)
+            object itemValue = context.Items[ContextKey];
+            if (itemValue is ContextHolder contextHolder)
             {
-                Activity.Current = aspNetActivity;
-                currentActivity = aspNetActivity;
+                aspNetActivity = contextHolder.Activity;
+                return true;
             }
 
-            if (currentActivity != null)
-            {
-                // stop Activity with Stop event
-                AspNetListener.StopActivity(currentActivity, EmptyPayload);
-                contextItems[ActivityKey] = null;
-            }
-
-            AspNetTelemetryEventSource.Log.ActivityStopped(currentActivity?.Id, currentActivity?.OperationName);
+            aspNetActivity = null;
+            return itemValue == StartedButNotSampledObj;
         }
 
         /// <summary>
         /// Creates root (first level) activity that describes incoming request.
         /// </summary>
-        /// <param name="context">Current HttpContext.</param>
-        /// <param name="parseHeaders">Determines if headers should be parsed get correlation ids.</param>
+        /// <param name="textMapPropagator"><see cref="TextMapPropagator"/>.</param>
+        /// <param name="context"><see cref="HttpContext"/>.</param>
+        /// <param name="onRequestStartedCallback">Callback action.</param>
         /// <returns>New root activity.</returns>
-        public static Activity CreateRootActivity(HttpContext context, bool parseHeaders)
+        public static Activity StartAspNetActivity(TextMapPropagator textMapPropagator, HttpContext context, Action<Activity, HttpContext> onRequestStartedCallback)
         {
-            if (AspNetListener.IsEnabled() && AspNetListener.IsEnabled(AspNetActivityName))
+            Debug.Assert(context != null, "Context is null.");
+
+            PropagationContext propagationContext = textMapPropagator.Extract(default, context.Request, HttpRequestHeaderValuesGetter);
+
+            Activity activity = AspNetSource.StartActivity(TelemetryHttpModule.AspNetActivityName, ActivityKind.Server, propagationContext.ActivityContext);
+
+            if (activity != null)
             {
-                var rootActivity = new Activity(AspNetActivityName);
-
-                if (parseHeaders)
+                if (!(textMapPropagator is TraceContextPropagator))
                 {
-                    rootActivity.Extract(context.Request.Unvalidated.Headers);
+                    Baggage.Current = propagationContext.Baggage;
+
+                    context.Items[ContextKey] = new ContextHolder { Activity = activity, Baggage = RuntimeContext.GetValue(BaggageSlotName) };
+                }
+                else
+                {
+                    context.Items[ContextKey] = new ContextHolder { Activity = activity };
                 }
 
-                AspNetListener.OnActivityImport(rootActivity, null);
-
-                if (StartAspNetActivity(rootActivity))
+                try
                 {
-                    context.Items[ActivityKey] = rootActivity;
-                    AspNetTelemetryEventSource.Log.ActivityStarted(rootActivity.Id);
-                    return rootActivity;
+                    onRequestStartedCallback?.Invoke(activity, context);
                 }
+                catch (Exception callbackEx)
+                {
+                    AspNetTelemetryEventSource.Log.CallbackException(activity, "OnStarted", callbackEx);
+                }
+
+                AspNetTelemetryEventSource.Log.ActivityStarted(activity);
+            }
+            else
+            {
+                context.Items[ContextKey] = StartedButNotSampledObj;
             }
 
-            return null;
+            return activity;
         }
 
-        public static void WriteActivityException(IDictionary contextItems, Exception exception)
+        /// <summary>
+        /// Stops the activity and notifies listeners about it.
+        /// </summary>
+        /// <param name="textMapPropagator"><see cref="TextMapPropagator"/>.</param>
+        /// <param name="aspNetActivity"><see cref="Activity"/>.</param>
+        /// <param name="context"><see cref="HttpContext"/>.</param>
+        /// <param name="onRequestStoppedCallback">Callback action.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void StopAspNetActivity(TextMapPropagator textMapPropagator, Activity aspNetActivity, HttpContext context, Action<Activity, HttpContext> onRequestStoppedCallback)
         {
-            Activity aspNetActivity = (Activity)contextItems[ActivityKey];
+            Debug.Assert(context != null, "Context is null.");
+
+            if (aspNetActivity == null)
+            {
+                Debug.Assert(context.Items[ContextKey] == StartedButNotSampledObj, "Context item is not StartedButNotSampledObj.");
+
+                // This is the case where a start was called but no activity was
+                // created due to a sampling decision.
+                context.Items[ContextKey] = null;
+                return;
+            }
+
+            Debug.Assert(context.Items[ContextKey] is ContextHolder, "Context item is not an ContextHolder instance.");
+
+            var currentActivity = Activity.Current;
+
+            aspNetActivity.Stop();
+            context.Items[ContextKey] = null;
+
+            try
+            {
+                onRequestStoppedCallback?.Invoke(aspNetActivity, context);
+            }
+            catch (Exception callbackEx)
+            {
+                AspNetTelemetryEventSource.Log.CallbackException(aspNetActivity, "OnStopped", callbackEx);
+            }
+
+            AspNetTelemetryEventSource.Log.ActivityStopped(currentActivity);
+
+            if (!(textMapPropagator is TraceContextPropagator))
+            {
+                Baggage.Current = default;
+            }
+
+            if (currentActivity != aspNetActivity)
+            {
+                Activity.Current = currentActivity;
+            }
+        }
+
+        /// <summary>
+        /// Notifies listeners about an unhandled exception thrown on the <see cref="HttpContext"/>.
+        /// </summary>
+        /// <param name="aspNetActivity"><see cref="Activity"/>.</param>
+        /// <param name="context"><see cref="HttpContext"/>.</param>
+        /// <param name="exception"><see cref="Exception"/>.</param>
+        /// <param name="onExceptionCallback">Callback action.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void WriteActivityException(Activity aspNetActivity, HttpContext context, Exception exception, Action<Activity, HttpContext, Exception> onExceptionCallback)
+        {
+            Debug.Assert(context != null, "Context is null.");
+            Debug.Assert(exception != null, "Exception is null.");
 
             if (aspNetActivity != null)
             {
-                if (Activity.Current != aspNetActivity)
+                try
                 {
-                    Activity.Current = aspNetActivity;
+                    onExceptionCallback?.Invoke(aspNetActivity, context, exception);
+                }
+                catch (Exception callbackEx)
+                {
+                    AspNetTelemetryEventSource.Log.CallbackException(aspNetActivity, "OnException", callbackEx);
                 }
 
-                AspNetListener.Write(aspNetActivity.OperationName + ".Exception", exception);
-                AspNetTelemetryEventSource.Log.ActivityException(aspNetActivity.Id, aspNetActivity.OperationName, exception);
+                AspNetTelemetryEventSource.Log.ActivityException(aspNetActivity, exception);
             }
         }
 
@@ -127,36 +197,28 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// This method is intended to restore the current activity in order to correlate the child
         /// activities with the root activity of the request.
         /// </summary>
-        /// <param name="contextItems">HttpContext.Items dictionary.</param>
-        internal static void RestoreActivityIfNeeded(IDictionary contextItems)
+        /// <param name="context"><see cref="HttpContext"/>.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void RestoreContextIfNeeded(HttpContext context)
         {
-            if (Activity.Current == null)
+            Debug.Assert(context != null, "Context is null.");
+
+            if (context.Items[ContextKey] is ContextHolder contextHolder && Activity.Current != contextHolder.Activity)
             {
-                Activity aspNetActivity = (Activity)contextItems[ActivityKey];
-                if (aspNetActivity != null)
+                Activity.Current = contextHolder.Activity;
+                if (contextHolder.Baggage != null)
                 {
-                    Activity.Current = aspNetActivity;
+                    RuntimeContext.SetValue(BaggageSlotName, contextHolder.Baggage);
                 }
+
+                AspNetTelemetryEventSource.Log.ActivityRestored(contextHolder.Activity);
             }
         }
 
-        private static bool StartAspNetActivity(Activity activity)
+        internal class ContextHolder
         {
-            if (AspNetListener.IsEnabled(AspNetActivityName, activity, EmptyPayload))
-            {
-                if (AspNetListener.IsEnabled(AspNetActivityStartName))
-                {
-                    AspNetListener.StartActivity(activity, EmptyPayload);
-                }
-                else
-                {
-                    activity.Start();
-                }
-
-                return true;
-            }
-
-            return false;
+            public Activity Activity;
+            public object Baggage;
         }
     }
 }

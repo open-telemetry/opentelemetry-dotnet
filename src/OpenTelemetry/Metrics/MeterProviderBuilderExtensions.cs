@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Diagnostics.Metrics;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -24,16 +26,72 @@ namespace OpenTelemetry.Metrics
     public static class MeterProviderBuilderExtensions
     {
         /// <summary>
-        /// Add metric processor.
+        /// Adds a reader to the provider.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="processor">Measurement Processors.</param>
+        /// <param name="reader"><see cref="MetricReader"/>.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder AddMetricProcessor(this MeterProviderBuilder meterProviderBuilder, MetricProcessor processor)
+        public static MeterProviderBuilder AddReader(this MeterProviderBuilder meterProviderBuilder, MetricReader reader)
         {
-            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                return meterProviderBuilderSdk.AddMetricProcessor(processor);
+                return meterProviderBuilderBase.AddReader(reader);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Add metric view, which can be used to customize the Metrics outputted
+        /// from the SDK. The views are applied in the order they are added.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="instrumentName">Name of the instrument, to be used as part of Instrument selection criteria.</param>
+        /// <param name="name">Name of the view. This will be used as name of resulting metrics stream.</param>
+        /// <returns><see cref="MeterProvider"/>.</returns>
+        /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
+        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, string name)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                return meterProviderBuilderBase.AddView(instrumentName, name);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Add metric view, which can be used to customize the Metrics outputted
+        /// from the SDK. The views are applied in the order they are added.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="instrumentName">Name of the instrument, to be used as part of Instrument selection criteria.</param>
+        /// <param name="metricStreamConfiguration">Aggregation configuration used to produce metrics stream.</param>
+        /// <returns><see cref="MeterProvider"/>.</returns>
+        /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
+        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                return meterProviderBuilderBase.AddView(instrumentName, metricStreamConfiguration);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Add metric view, which can be used to customize the Metrics outputted
+        /// from the SDK. The views are applied in the order they are added.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="viewConfig">Function to configure aggregation based on the instrument.</param>
+        /// <returns><see cref="MeterProvider"/>.</returns>
+        /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
+        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, MetricStreamConfiguration> viewConfig)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                return meterProviderBuilderBase.AddView(viewConfig);
             }
 
             return meterProviderBuilder;
@@ -48,9 +106,9 @@ namespace OpenTelemetry.Metrics
         /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
         public static MeterProviderBuilder SetResourceBuilder(this MeterProviderBuilder meterProviderBuilder, ResourceBuilder resourceBuilder)
         {
-            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                meterProviderBuilderSdk.SetResourceBuilder(resourceBuilder);
+                meterProviderBuilderBase.SetResourceBuilder(resourceBuilder);
             }
 
             return meterProviderBuilder;
@@ -63,9 +121,14 @@ namespace OpenTelemetry.Metrics
         /// <returns><see cref="MeterProvider"/>.</returns>
         public static MeterProvider Build(this MeterProviderBuilder meterProviderBuilder)
         {
+            if (meterProviderBuilder is IDeferredMeterProviderBuilder)
+            {
+                throw new NotSupportedException("DeferredMeterProviderBuilder requires a ServiceProvider to build.");
+            }
+
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                return meterProviderBuilderSdk.Build();
+                return meterProviderBuilderSdk.BuildSdk();
             }
 
             return null;

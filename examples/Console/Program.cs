@@ -15,6 +15,7 @@
 // </copyright>
 
 using CommandLine;
+using OpenTelemetry.Exporter;
 
 namespace Examples.Console
 {
@@ -31,8 +32,8 @@ namespace Examples.Console
         /// dotnet run -p Examples.Console.csproj inmemory
         /// dotnet run -p Examples.Console.csproj zipkin -u http://localhost:9411/api/v2/spans
         /// dotnet run -p Examples.Console.csproj jaeger -h localhost -p 6831
-        /// dotnet run -p Examples.Console.csproj prometheus -i 15 -p 9184 -d 2
-        /// dotnet run -p Examples.Console.csproj otlp -e "http://localhost:4317"
+        /// dotnet run -p Examples.Console.csproj prometheus -p 9184 -d 2
+        /// dotnet run -p Examples.Console.csproj otlp -e "http://localhost:4317" -p "grpc"
         /// dotnet run -p Examples.Console.csproj zpages
         /// dotnet run -p Examples.Console.csproj metrics --help
         ///
@@ -55,7 +56,7 @@ namespace Examples.Console
                     (ConsoleOptions options) => TestConsoleExporter.Run(options),
                     (OpenTelemetryShimOptions options) => TestOTelShimWithConsoleExporter.Run(options),
                     (OpenTracingShimOptions options) => TestOpenTracingShim.Run(options),
-                    (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
+                    (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint, options.Protocol),
                     (InMemoryOptions options) => TestInMemoryExporter.Run(options),
                     errs => 1);
         }
@@ -93,22 +94,19 @@ namespace Examples.Console
     [Verb("metrics", HelpText = "Specify the options required to test Metrics")]
     internal class MetricsOptions
     {
-        [Option('d', "IsDelta", HelpText = "Export Delta metrics", Required = false, Default = true)]
+        [Option('d', "IsDelta", HelpText = "Export Delta metrics", Required = false, Default = false)]
         public bool IsDelta { get; set; }
 
-        [Option('g', "Gauge", HelpText = "Include Observable Gauge.", Required = false)]
+        [Option('g', "Gauge", HelpText = "Include Observable Gauge.", Required = false, Default = false)]
         public bool? FlagGauge { get; set; }
 
-        [Option('u', "UpDownCounter", HelpText = "Include Observable Up/Down Counter.", Required = false)]
-        public bool? FlagUpDownCounter { get; set; }
-
-        [Option('c', "Counter", HelpText = "Include Counter.", Required = false)]
+        [Option('c', "Counter", HelpText = "Include Counter.", Required = false, Default = true)]
         public bool? FlagCounter { get; set; }
 
-        [Option('h', "Histogram", HelpText = "Include Histogram.", Required = false)]
+        [Option('h', "Histogram", HelpText = "Include Histogram.", Required = false, Default = false)]
         public bool? FlagHistogram { get; set; }
 
-        [Option("defaultCollection", Default = 500, HelpText = "Default collection period in milliseconds.", Required = false)]
+        [Option("defaultCollection", Default = 1000, HelpText = "Default collection period in milliseconds.", Required = false)]
         public int DefaultCollectionPeriodMilliseconds { get; set; }
 
         [Option("runtime", Default = 5000, HelpText = "Run time in milliseconds.", Required = false)]
@@ -166,6 +164,9 @@ namespace Examples.Console
     {
         [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "http://localhost:4317")]
         public string Endpoint { get; set; }
+
+        [Option('p', "protocol", HelpText = "Transport protocol used by exporter. Supported values: grpc and http/protobuf.", Default = "grpc")]
+        public string Protocol { get; set; }
     }
 
     [Verb("inmemory", HelpText = "Specify the options required to test InMemory Exporter")]

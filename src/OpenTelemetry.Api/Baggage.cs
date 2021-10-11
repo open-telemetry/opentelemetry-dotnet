@@ -29,7 +29,7 @@ namespace OpenTelemetry
     /// </remarks>
     public readonly struct Baggage : IEquatable<Baggage>
     {
-        private static readonly RuntimeContextSlot<Baggage> RuntimeContextSlot = RuntimeContext.RegisterSlot<Baggage>("otel.baggage");
+        private static readonly RuntimeContextSlot<BaggageHolder> RuntimeContextSlot = RuntimeContext.RegisterSlot<BaggageHolder>("otel.baggage");
         private static readonly Dictionary<string, string> EmptyBaggage = new Dictionary<string, string>();
 
         private readonly Dictionary<string, string> baggage;
@@ -46,10 +46,35 @@ namespace OpenTelemetry
         /// <summary>
         /// Gets or sets the current <see cref="Baggage"/>.
         /// </summary>
+        /// <remarks>
+        /// Note: <see cref="Current"/> returns a forked version of the current
+        /// Baggage. Changes to the forked version will not automatically be
+        /// reflected back on <see cref="Current"/>. To update <see
+        /// cref="Current"/> either use one of the static methods that target
+        /// <see cref="Current"/> as the default source or set <see
+        /// cref="Current"/> to a new instance of <see cref="Baggage"/>.
+        /// Examples:
+        /// <code>
+        /// Baggage.SetBaggage("newKey1", "newValue1"); // Updates Baggage.Current with 'newKey1'
+        /// Baggage.SetBaggage("newKey2", "newValue2"); // Updates Baggage.Current with 'newKey2'
+        /// </code>
+        /// Or:
+        /// <code>
+        /// var baggageCopy = Baggage.Current;
+        /// Baggage.SetBaggage("newKey1", "newValue1"); // Updates Baggage.Current with 'newKey1'
+        /// var newBaggage = baggageCopy
+        ///     .SetBaggage("newKey2", "newValue2");
+        ///     .SetBaggage("newKey3", "newValue3");
+        /// // Sets Baggage.Current to 'newBaggage' which will override any
+        /// // changes made to Baggage.Current after the copy was made. For example
+        /// // the 'newKey1' change is lost.
+        /// Baggage.Current = newBaggage;
+        /// </code>
+        /// </remarks>
         public static Baggage Current
         {
-            get => RuntimeContextSlot.Get();
-            set => RuntimeContextSlot.Set(value);
+            get => RuntimeContextSlot.Get()?.Baggage ?? default;
+            set => EnsureBaggageHolder().Baggage = value;
         }
 
         /// <summary>
@@ -83,7 +108,7 @@ namespace OpenTelemetry
                 return default;
             }
 
-            Dictionary<string, string> baggageCopy = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, string> baggageCopy = new Dictionary<string, string>(baggageItems.Count, StringComparer.OrdinalIgnoreCase);
             foreach (KeyValuePair<string, string> baggageItem in baggageItems)
             {
                 if (string.IsNullOrEmpty(baggageItem.Value))
@@ -132,9 +157,18 @@ namespace OpenTelemetry
         /// <param name="value">Baggage item value.</param>
         /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
         /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
+        /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "This was agreed on to be the friendliest API surface")]
         public static Baggage SetBaggage(string name, string value, Baggage baggage = default)
-            => baggage == default ? Current.SetBaggage(name, value) : baggage.SetBaggage(name, value);
+        {
+            var baggageHolder = EnsureBaggageHolder();
+            lock (baggageHolder)
+            {
+                return baggageHolder.Baggage = baggage == default
+                    ? baggageHolder.Baggage.SetBaggage(name, value)
+                    : baggage.SetBaggage(name, value);
+            }
+        }
 
         /// <summary>
         /// Returns a new <see cref="Baggage"/> which contains the new key/value pair.
@@ -142,9 +176,18 @@ namespace OpenTelemetry
         /// <param name="baggageItems">Baggage key/value pairs.</param>
         /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
         /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
+        /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("ApiDesign", "RS0026:Do not add multiple public overloads with optional parameters", Justification = "This was agreed on to be the friendliest API surface")]
         public static Baggage SetBaggage(IEnumerable<KeyValuePair<string, string>> baggageItems, Baggage baggage = default)
-           => baggage == default ? Current.SetBaggage(baggageItems) : baggage.SetBaggage(baggageItems);
+        {
+            var baggageHolder = EnsureBaggageHolder();
+            lock (baggageHolder)
+            {
+                return baggageHolder.Baggage = baggage == default
+                    ? baggageHolder.Baggage.SetBaggage(baggageItems)
+                    : baggage.SetBaggage(baggageItems);
+            }
+        }
 
         /// <summary>
         /// Returns a new <see cref="Baggage"/> with the key/value pair removed.
@@ -152,16 +195,34 @@ namespace OpenTelemetry
         /// <param name="name">Baggage item name.</param>
         /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
         /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
+        /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
         public static Baggage RemoveBaggage(string name, Baggage baggage = default)
-            => baggage == default ? Current.RemoveBaggage(name) : baggage.RemoveBaggage(name);
+        {
+            var baggageHolder = EnsureBaggageHolder();
+            lock (baggageHolder)
+            {
+                return baggageHolder.Baggage = baggage == default
+                    ? baggageHolder.Baggage.RemoveBaggage(name)
+                    : baggage.RemoveBaggage(name);
+            }
+        }
 
         /// <summary>
         /// Returns a new <see cref="Baggage"/> with all the key/value pairs removed.
         /// </summary>
         /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
         /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
+        /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
         public static Baggage ClearBaggage(Baggage baggage = default)
-            => baggage == default ? Current.ClearBaggage() : baggage.ClearBaggage();
+        {
+            var baggageHolder = EnsureBaggageHolder();
+            lock (baggageHolder)
+            {
+                return baggageHolder.Baggage = baggage == default
+                    ? baggageHolder.Baggage.ClearBaggage()
+                    : baggage.ClearBaggage();
+            }
+        }
 
         /// <summary>
         /// Returns the name/value pairs in the <see cref="Baggage"/>.
@@ -200,7 +261,7 @@ namespace OpenTelemetry
                 return this.RemoveBaggage(name);
             }
 
-            return Current = new Baggage(
+            return new Baggage(
                 new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase)
                 {
                     [name] = value,
@@ -222,7 +283,7 @@ namespace OpenTelemetry
         /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
         public Baggage SetBaggage(IEnumerable<KeyValuePair<string, string>> baggageItems)
         {
-            if ((baggageItems?.Count() ?? 0) <= 0)
+            if (baggageItems?.Any() != true)
             {
                 return this;
             }
@@ -241,7 +302,7 @@ namespace OpenTelemetry
                 }
             }
 
-            return Current = new Baggage(newBaggage);
+            return new Baggage(newBaggage);
         }
 
         /// <summary>
@@ -254,7 +315,7 @@ namespace OpenTelemetry
             var baggage = new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase);
             baggage.Remove(name);
 
-            return Current = new Baggage(baggage);
+            return new Baggage(baggage);
         }
 
         /// <summary>
@@ -262,7 +323,7 @@ namespace OpenTelemetry
         /// </summary>
         /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
         public Baggage ClearBaggage()
-            => Current = default;
+            => default;
 
         /// <summary>
         /// Returns an enumerator that iterates through the <see cref="Baggage"/>.
@@ -304,6 +365,23 @@ namespace OpenTelemetry
 
                 return res;
             }
+        }
+
+        private static BaggageHolder EnsureBaggageHolder()
+        {
+            var baggageHolder = RuntimeContextSlot.Get();
+            if (baggageHolder == null)
+            {
+                baggageHolder = new BaggageHolder();
+                RuntimeContextSlot.Set(baggageHolder);
+            }
+
+            return baggageHolder;
+        }
+
+        private class BaggageHolder
+        {
+            public Baggage Baggage;
         }
     }
 }

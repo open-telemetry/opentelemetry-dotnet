@@ -20,6 +20,7 @@ using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Threading;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -38,10 +39,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData(false)]
         public void ToOtlpResourceMetricsTest(bool includeServiceNameInResource)
         {
-            using var exporter = new OtlpMetricsExporter(
-                new OtlpExporterOptions(),
-                new NoopMetricsServiceClient());
-
             var resourceBuilder = ResourceBuilder.CreateEmpty();
             if (includeServiceNameInResource)
             {
@@ -59,15 +56,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new KeyValuePair<string, object>("key2", "value2"),
             };
 
-            var processor = new PullMetricProcessor(new TestExporter<MetricItem>(RunTest), true);
+            var metricReader = new BaseExportingMetricReader(new TestExporter<Metric>(RunTest))
+            {
+                PreferredAggregationTemporality = AggregationTemporality.Delta,
+            };
 
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
-                .AddSource("TestMeter")
-                .AddMetricProcessor(processor)
+                .AddMeter("TestMeter")
+                .AddReader(metricReader)
                 .Build();
-
-            exporter.ParentProvider = provider;
 
             using var meter = new Meter("TestMeter", "0.0.1");
 
@@ -78,14 +76,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var testCompleted = false;
 
             // Invokes the TestExporter which will invoke RunTest
-            processor.PullRequest();
+            metricReader.Collect();
 
             Assert.True(testCompleted);
 
-            void RunTest(Batch<MetricItem> metricItem)
+            void RunTest(Batch<Metric> metrics)
             {
                 var request = new OtlpCollector.ExportMetricsServiceRequest();
-                request.AddBatch(exporter.ProcessResource, metricItem);
+                request.AddMetrics(resourceBuilder.Build().ToOtlpResource(), metrics);
 
                 Assert.Single(request.ResourceMetrics);
                 var resourceMetric = request.ResourceMetrics.First();

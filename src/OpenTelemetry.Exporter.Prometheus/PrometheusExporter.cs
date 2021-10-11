@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using System.Threading;
+using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter
@@ -22,10 +24,17 @@ namespace OpenTelemetry.Exporter
     /// <summary>
     /// Exporter of OpenTelemetry metrics to Prometheus.
     /// </summary>
-    public class PrometheusExporter : BaseExporter<MetricItem>
+    [AggregationTemporality(AggregationTemporality.Cumulative)]
+    [ExportModes(ExportModes.Pull)]
+    public class PrometheusExporter : BaseExporter<Metric>, IPullMetricExporter
     {
+        internal const string HttpListenerStartFailureExceptionMessage = "PrometheusExporter http listener could not be started.";
         internal readonly PrometheusExporterOptions Options;
-        internal Batch<MetricItem> Batch;
+        internal Batch<Metric> Metrics;
+        private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
+        private readonly PrometheusExporterMetricsHttpServer metricsHttpServer;
+        private Func<int, bool> funcCollect;
+        private bool disposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
@@ -34,14 +43,57 @@ namespace OpenTelemetry.Exporter
         public PrometheusExporter(PrometheusExporterOptions options)
         {
             this.Options = options;
+
+            if (options.StartHttpListener)
+            {
+                try
+                {
+                    this.metricsHttpServer = new PrometheusExporterMetricsHttpServer(this);
+                    this.metricsHttpServer.Start();
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException(HttpListenerStartFailureExceptionMessage, ex);
+                }
+            }
         }
 
-        internal Action MakePullRequest { get; set; }
-
-        public override ExportResult Export(in Batch<MetricItem> batch)
+        public Func<int, bool> Collect
         {
-            this.Batch = batch;
+            get => this.funcCollect;
+            set => this.funcCollect = value;
+        }
+
+        public override ExportResult Export(in Batch<Metric> metrics)
+        {
+            this.Metrics = metrics;
             return ExportResult.Success;
+        }
+
+        internal bool TryEnterSemaphore()
+        {
+            return this.semaphore.Wait(0);
+        }
+
+        internal void ReleaseSemaphore()
+        {
+            this.semaphore.Release();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                if (disposing)
+                {
+                    this.metricsHttpServer?.Dispose();
+                    this.semaphore.Dispose();
+                }
+
+                this.disposed = true;
+            }
+
+            base.Dispose(disposing);
         }
     }
 }

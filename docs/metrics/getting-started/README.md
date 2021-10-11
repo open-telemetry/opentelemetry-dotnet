@@ -22,7 +22,7 @@ Install the
 package:
 
 ```sh
-dotnet add package OpenTelemetry.Exporter.Console
+dotnet add package --prerelease OpenTelemetry.Exporter.Console
 ```
 
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs):
@@ -32,11 +32,13 @@ output from the console, similar to shown below:
 
 <!-- markdownlint-disable MD013 -->
 ```text
-Export[] 16:38:36.241 16:38:37.233 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 590, Details: Delta=True,Mon=True,Count=59,Sum=590
-Export[] 16:38:37.233 16:38:38.258 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 640, Details: Delta=True,Mon=True,Count=64,Sum=640
-Export[] 16:38:38.258 16:38:39.261 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 640, Details: Delta=True,Mon=True,Count=64,Sum=640
-Export[] 16:38:39.261 16:38:40.266 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 630, Details: Delta=True,Mon=True,Count=63,Sum=630
-Export[] 16:38:40.266 16:38:41.271 TestMeter:counter [tag1=value1;tag2=value2] SumMetricAggregator Value: 640, Details: Delta=True,Mon=True,Count=64,Sum=640
+Export MyFruitCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
+(2021-09-23T22:00:08.4399776Z, 2021-09-23T22:00:08.4510115Z] color:red name:apple LongSum
+Value: 6
+(2021-09-23T22:00:08.4399776Z, 2021-09-23T22:00:08.4510115Z] color:yellow name:lemon LongSum
+Value: 7
+(2021-09-23T22:00:08.4399776Z, 2021-09-23T22:00:08.4510115Z] color:green name:apple LongSum
+Value: 2
 ```
 <!-- markdownlint-enable MD013 -->
 
@@ -46,14 +48,28 @@ What does the above program do?
 
 The program creates a
 [Meter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meter)
-instance named "TestMeter" and then creates a
+instance named "MyCompany.MyProduct.MyLibrary" and then creates a
 [Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#counter)
-instrument from it. This counter is used to repeatedly report metric
-measurements until exited after 10 seconds.
+instrument from it. This counter is used to report several metric measurements.
 
 An OpenTelemetry
 [MeterProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meterprovider)
-is configured to subscribe to instruments from the Meter `TestMeter`, and
-aggregate the measurements in-memory. The pre-aggregated metrics are exported
-every 1 second to a `ConsoleExporter`. `ConsoleExporter` simply displays it on
-the console.
+is configured to subscribe to instruments from the Meter
+`MyCompany.MyProduct.MyLibrary`, and aggregate the measurements in-memory. The
+pre-aggregated metrics are exported to a `ConsoleExporter`.
+
+## OpenTelemetry .NET special note
+
+Metrics in OpenTelemetry .NET is a somewhat unique implementation of the
+OpenTelemetry project, as most of the Metrics API are incorporated directly
+into the .NET runtime itself. From a high level, what this means is that you
+can instrument your application by simply depending on
+`System.Diagnostics.DiagnosticSource` package.
+
+## Learn more
+
+* If you want to learn about more instruments, refer to [learning
+  more about instruments](../learning-more-instruments/README.md).
+
+* If you want to customize the Sdk, refer to [customizing
+  the SDK](../customizing-the-sdk/README.md).
