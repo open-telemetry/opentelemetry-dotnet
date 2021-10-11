@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -64,9 +65,9 @@ namespace OpenTelemetry.Exporter.Prometheus
             // (\), double-quote ("), and line feed (\n) characters have to be escaped
             // as \\, \", and \n, respectively.
 
-            var result = value.Replace("\\", "\\\\");
-            result = result.Replace("\n", "\\n");
-            result = result.Replace("\"", "\\\"");
+            var result = value.Replace("\\", @"\\");
+            result = result.Replace("\n", @"\n");
+            result = result.Replace("\"", @"\""");
 
             return result;
         }
@@ -76,7 +77,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             // HELP lines may contain any sequence of UTF-8 characters(after the metric name), but the backslash
             // and the line feed characters have to be escaped as \\ and \n, respectively.Only one HELP line may
             // exist for any given metric name.
-            var result = description.Replace(@"\", @"\\");
+            var result = description.Replace("\\", @"\\");
             result = result.Replace("\n", @"\n");
 
             return result;
@@ -95,6 +96,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             // Label values may contain any Unicode characters.
 
             var sb = new StringBuilder();
+            Debug.Assert(!string.IsNullOrEmpty(name), "name is empty or null");
             var firstChar = name[0];
 
             sb.Append(firstCharNameCharset.Contains(firstChar)
