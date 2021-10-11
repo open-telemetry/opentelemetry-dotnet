@@ -39,7 +39,7 @@ namespace Benchmarks.Exporter
         private PrometheusExporter exporter;
         private DefaultHttpContext context;
 
-        [Params(10000)]
+        [Params(1, 1000, 10000)]
         public int NumberOfExportCalls { get; set; }
 
         [GlobalSetup]
@@ -54,8 +54,12 @@ namespace Benchmarks.Exporter
                 .Build();
 
             var counter = this.meter.CreateCounter<long>("counter_name_1", "long", "counter_name_1_description");
-
             counter.Add(18, new KeyValuePair<string, object>("label1", "value1"), new KeyValuePair<string, object>("label2", "value2"));
+
+            var gauge = this.meter.CreateObservableGauge("gauge_name_1", () => 18.0D, "long", "gauge_name_1_description");
+
+            var histogram = this.meter.CreateHistogram<long>("histogram_name_1", "long", "histogram_name_1_description");
+            histogram.Record(100, new KeyValuePair<string, object>("label1", "value1"), new KeyValuePair<string, object>("label2", "value2"));
 
             this.context = new DefaultHttpContext();
             this.context.Response.Body = this.responseStream;
@@ -79,6 +83,8 @@ namespace Benchmarks.Exporter
         [Benchmark]
         public async Task WriteMetricsToResponse()
         {
+            this.responseStream.Position = 0;
+
             for (int i = 0; i < this.NumberOfExportCalls; i++)
             {
                 await PrometheusExporterMiddleware.WriteMetricsToResponse(this.exporter, this.context.Response).ConfigureAwait(false);
