@@ -68,7 +68,6 @@ namespace Examples.Console
                     {
                         opt.AddConsoleExporter();
                     }
-
                 });
             });
 
