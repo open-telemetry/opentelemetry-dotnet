@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -68,7 +67,7 @@ namespace OpenTelemetry.Shared
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void NotValidTimeout(int value, string paramName)
         {
-            NotInRange(value, paramName, min: Timeout.Infinite, message: $"'{paramName}' must be non-negative or '{nameof(Timeout)}.{nameof(Timeout.Infinite)}'");
+            NotInRange(value, paramName, min: Timeout.Infinite, message: $"'{paramName}' = '{value}' must be non-negative or '{nameof(Timeout)}.{nameof(Timeout.Infinite)}'");
         }
 
         [DebuggerHidden]
@@ -77,9 +76,7 @@ namespace OpenTelemetry.Shared
         {
             if (value < min || value > max)
             {
-                var minMessage = minName != null ? $": {minName}" : string.Empty;
-                var maxMessage = maxName != null ? $": {maxName}" : string.Empty;
-                var exMessage = message ?? $"'{paramName}' must be in the range: [{min}{minMessage}, {max}{maxMessage}]";
+                var exMessage = message ?? InRangeString(paramName, min, max, minName, maxName);
                 throw new ArgumentOutOfRangeException(paramName, value, exMessage);
             }
         }
@@ -90,9 +87,7 @@ namespace OpenTelemetry.Shared
         {
             if (value < min || value > max)
             {
-                var minMessage = minName != null ? $": {minName}" : string.Empty;
-                var maxMessage = maxName != null ? $": {maxName}" : string.Empty;
-                var exMessage = message ?? $"'{paramName}' must be in the range: [{min}{minMessage}, {max}{maxMessage}]";
+                var exMessage = message ?? InRangeString(paramName, min, max, minName, maxName);
                 throw new ArgumentOutOfRangeException(paramName, value, exMessage);
             }
         }
@@ -107,6 +102,13 @@ namespace OpenTelemetry.Shared
             }
 
             return result;
+        }
+
+        private static string InRangeString(string paramName, double min = double.MinValue, double max = double.MaxValue, string minName = null, string maxName = null)
+        {
+            var minMessage = minName != null ? $": {minName}" : string.Empty;
+            var maxMessage = maxName != null ? $": {maxName}" : string.Empty;
+            return $"'{paramName}' must be in the range: [{min}{minMessage}, {max}{maxMessage}]";
         }
     }
 }
