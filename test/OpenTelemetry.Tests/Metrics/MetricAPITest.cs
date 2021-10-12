@@ -231,7 +231,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void MeterSourcesWildcardSupportNegativeTestNoMeterAdded(bool hasView)
+        public void SdkCreationShouldThrowWithNoMeterAdded(bool hasView)
         {
             var meterNames = new[]
             {
@@ -251,14 +251,8 @@ namespace OpenTelemetry.Metrics.Tests
                 meterProviderBuilder.AddView("gauge1", "renamed");
             }
 
-            using var meterProvider = meterProviderBuilder.Build();
-            var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
-
-            meter1.CreateObservableGauge("myGauge1", () => measurement);
-            meter2.CreateObservableGauge("myGauge2", () => measurement);
-
-            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-            Assert.True(exportedItems.Count == 0);
+            var ex = Assert.Throws<ArgumentException>(() => meterProviderBuilder.Build());
+            Assert.Equal("No meter was added to the Sdk.", ex.Message);
         }
 
         [Theory]

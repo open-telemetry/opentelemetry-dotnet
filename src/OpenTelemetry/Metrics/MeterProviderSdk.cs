@@ -52,6 +52,11 @@ namespace OpenTelemetry.Metrics
 
             AggregationTemporality temporality = AggregationTemporality.Cumulative;
 
+            if (meterSources.Count() == 0)
+            {
+                throw new ArgumentException("No meter was added to the Sdk.");
+            }
+
             foreach (var reader in readers)
             {
                 if (reader == null)
