@@ -62,7 +62,7 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilderSdk AddMetricReader(MetricReader metricReader)
         {
-            Guard.NotInRange(this.MetricReaders.Count, nameof(this.MetricReaders.Count), max: 1);
+            Guard.NotInRange(this.MetricReaders.Count, $"{nameof(this.MetricReaders)}.{nameof(this.MetricReaders.Count)}", max: 1);
 
             this.MetricReaders.Add(metricReader);
             return this;

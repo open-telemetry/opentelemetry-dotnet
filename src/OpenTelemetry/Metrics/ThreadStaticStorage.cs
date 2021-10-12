@@ -52,7 +52,7 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, out string[] tagKeys, out object[] tagValues)
         {
-            Guard.NotZero(tags.Length, nameof(tags.Length), $"There must be at least one tag to use {nameof(ThreadStaticStorage)}");
+            Guard.NotZero(tags.Length, $"{nameof(tags)}.{nameof(tags.Length)}", $"There must be at least one tag to use {nameof(ThreadStaticStorage)}");
 
             var len = tags.Length;
 

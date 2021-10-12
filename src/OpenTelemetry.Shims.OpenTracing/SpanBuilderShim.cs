@@ -279,7 +279,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.BooleanTag tag, bool value)
         {
-            Guard.NotNull(tag?.Key, nameof(tag.Key));
+            Guard.NotNull(tag?.Key, $"{nameof(tag)}?.{nameof(tag.Key)}");
 
             return this.WithTag(tag.Key, value);
         }
@@ -287,7 +287,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.IntOrStringTag tag, string value)
         {
-            Guard.NotNull(tag?.Key, nameof(tag.Key));
+            Guard.NotNull(tag?.Key, $"{nameof(tag)}?.{nameof(tag.Key)}");
 
             if (int.TryParse(value, out var result))
             {
@@ -300,7 +300,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.IntTag tag, int value)
         {
-            Guard.NotNull(tag?.Key, nameof(tag.Key));
+            Guard.NotNull(tag?.Key, $"{nameof(tag)}?.{nameof(tag.Key)}");
 
             return this.WithTag(tag.Key, value);
         }
@@ -308,7 +308,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.StringTag tag, string value)
         {
-            Guard.NotNull(tag?.Key, nameof(tag.Key));
+            Guard.NotNull(tag?.Key, $"{nameof(tag)}?.{nameof(tag.Key)}");
 
             return this.WithTag(tag.Key, value);
         }
