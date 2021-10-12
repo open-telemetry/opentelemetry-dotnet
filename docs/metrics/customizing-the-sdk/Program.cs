@@ -40,9 +40,9 @@ public class Program
             .AddView(instrumentName: "MyCounterCustomTags", new MetricStreamConfiguration() { TagKeys = new string[] { "tag1", "tag2" } })
 
             // Drop the instrument "MyCounterDrop".
-            .AddView(instrumentName: "MyCounterDrop", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+            .AddView(instrumentName: "MyCounterDrop", MetricStreamConfiguration.Drop)
 
-            // Advanced selection criteria and config via Func<Instrument, AggregationConfig>
+            // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
             .AddView((instrument) =>
              {
                  if (instrument.Meter.Name.Equals("CompanyA.ProductB.Library2") &&
