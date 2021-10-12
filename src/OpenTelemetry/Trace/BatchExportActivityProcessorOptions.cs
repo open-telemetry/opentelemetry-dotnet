@@ -85,7 +85,7 @@ namespace OpenTelemetry.Trace
 
             if (!int.TryParse(value, out result))
             {
-                throw new ArgumentException($"{envVarKey} environment variable has a non-integer value: ${value}");
+                throw new ArgumentException($"{envVarKey} environment variable has an invalid value: '${value}'");
             }
 
             return true;
