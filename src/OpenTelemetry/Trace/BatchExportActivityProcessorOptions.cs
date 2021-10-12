@@ -21,6 +21,11 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
+    /// <summary>
+    /// Batch span processor options.
+    /// OTEL_BSP_MAX_QUEUE_SIZE, OTEL_BSP_MAX_EXPORT_BATCH_SIZE, OTEL_BSP_EXPORT_TIMEOUT, OTEL_BSP_SCHEDULE_DELAY
+    /// environment variables are parsed during object construction.
+    /// </summary>
     public class BatchExportActivityProcessorOptions : BatchExportProcessorOptions<Activity>
     {
         internal const string MaxQueueSizeEnvVarKey = "OTEL_BSP_MAX_QUEUE_SIZE";
@@ -35,28 +40,28 @@ namespace OpenTelemetry.Trace
         {
             int value;
 
-            if (TryLoadEnvVarInt(ExporterTimeoutEnvVarKey, out value))
+            if (LoadEnvVarInt(ExporterTimeoutEnvVarKey, out value))
             {
                 this.ExporterTimeoutMilliseconds = value;
             }
 
-            if (TryLoadEnvVarInt(MaxExportBatchSizeEnvVarKey, out value))
+            if (LoadEnvVarInt(MaxExportBatchSizeEnvVarKey, out value))
             {
                 this.MaxExportBatchSize = value;
             }
 
-            if (TryLoadEnvVarInt(MaxQueueSizeEnvVarKey, out value))
+            if (LoadEnvVarInt(MaxQueueSizeEnvVarKey, out value))
             {
                 this.MaxQueueSize = value;
             }
 
-            if (TryLoadEnvVarInt(ScheduledDelayEnvVarKey, out value))
+            if (LoadEnvVarInt(ScheduledDelayEnvVarKey, out value))
             {
                 this.ScheduledDelayMilliseconds = value;
             }
         }
 
-        private static bool TryLoadEnvVarInt(string envVarKey, out int result)
+        private static bool LoadEnvVarInt(string envVarKey, out int result)
         {
             result = 0;
 
@@ -78,13 +83,11 @@ namespace OpenTelemetry.Trace
                 return false;
             }
 
-            if (!int.TryParse(value, out var parsedValue))
+            if (!int.TryParse(value, out result))
             {
-                OpenTelemetrySdkEventSource.Log.FailedToParseEnvironmentVariable(envVarKey, value);
-                return false;
+                throw new ArgumentException($"{envVarKey} environment variable has an invalid value: '${value}'");
             }
 
-            result = parsedValue;
             return true;
         }
     }
