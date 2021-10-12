@@ -43,12 +43,13 @@ namespace Examples.Console
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, LogsOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
                     (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port, options.DurationInMins),
                     (MetricsOptions options) => TestMetrics.Run(options),
+                    (LogsOptions options) => TestLogs.Run(options),
                     (GrpcNetClientOptions options) => TestGrpcNetClient.Run(),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
@@ -167,6 +168,13 @@ namespace Examples.Console
 
         [Option('p', "protocol", HelpText = "Transport protocol used by exporter. Supported values: grpc and http/protobuf.", Default = "grpc")]
         public string Protocol { get; set; }
+    }
+
+    [Verb("logs", HelpText = "Specify the options required to test Logs")]
+    internal class LogsOptions
+    {
+        [Option("useExporter", Default = "otlp", HelpText = "Options include otlp or console.", Required = false)]
+        public string UseExporter { get; set; }
     }
 
     [Verb("inmemory", HelpText = "Specify the options required to test InMemory Exporter")]
