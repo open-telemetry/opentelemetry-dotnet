@@ -252,7 +252,7 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             var ex = Assert.Throws<ArgumentException>(() => meterProviderBuilder.Build());
-            Assert.Equal("No meter was added to the Sdk.", ex.Message);
+            Assert.Equal("No meter was added to the sdk.", ex.Message);
         }
 
         [Theory]

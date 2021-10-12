@@ -54,7 +54,7 @@ namespace OpenTelemetry.Metrics
 
             if (meterSources.Count() == 0)
             {
-                throw new ArgumentException("No meter was added to the Sdk.");
+                throw new ArgumentException("No meter was added to the sdk.");
             }
 
             foreach (var reader in readers)
