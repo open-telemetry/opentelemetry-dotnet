@@ -36,7 +36,7 @@ namespace OpenTelemetry.Metrics
 
         private readonly AggregationTemporality temporality;
         private readonly bool outputDelta;
-        private readonly MetricPoint[] metrics;
+        private readonly MetricPoint[] metricPoints;
         private readonly MetricPoint[] batchToProcess;
         private readonly AggregationType aggType;
         private readonly double[] histogramBounds;
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Metrics
             double[] histogramBounds,
             string[] tagKeysInteresting = null)
         {
-            this.metrics = new MetricPoint[MaxMetricPoints];
+            this.metricPoints = new MetricPoint[MaxMetricPoints];
             this.batchToProcess = new MetricPoint[MaxMetricPoints];
             this.aggType = aggType;
             this.temporality = temporality;
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Metrics
             this.batchSize = 0;
             for (int i = 0; i < MaxMetricPoints; i++)
             {
-                ref var metricPoint = ref this.metrics[i];
+                ref var metricPoint = ref this.metricPoints[i];
 
                 // TODO: A switch statement is appropriate here.
                 if (metricPoint.MetricPointStatus == MetricPointStatus.Unset)
@@ -162,7 +162,7 @@ namespace OpenTelemetry.Metrics
                     if (!this.zeroTagMetricPointInitialized)
                     {
                         var dt = DateTimeOffset.UtcNow;
-                        this.metrics[0] = new MetricPoint(this.aggType, dt, null, null, this.histogramBounds);
+                        this.metricPoints[0] = new MetricPoint(this.aggType, dt, null, null, this.histogramBounds);
                         this.zeroTagMetricPointInitialized = true;
                     }
                 }
@@ -215,7 +215,7 @@ namespace OpenTelemetry.Metrics
                         var seqVal = new object[length];
                         tagValue.CopyTo(seqVal, 0);
 
-                        ref var metricPoint = ref this.metrics[aggregatorIndex];
+                        ref var metricPoint = ref this.metricPoints[aggregatorIndex];
                         var dt = DateTimeOffset.UtcNow;
                         metricPoint = new MetricPoint(this.aggType, dt, seqKey, seqVal, this.histogramBounds);
 
@@ -241,7 +241,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.metrics[index].Update(value);
+                this.metricPoints[index].Update(value);
             }
             catch (Exception)
             {
@@ -260,7 +260,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.metrics[index].Update(value);
+                this.metricPoints[index].Update(value);
             }
             catch (Exception)
             {
@@ -279,7 +279,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.metrics[index].Update(value);
+                this.metricPoints[index].Update(value);
             }
             catch (Exception)
             {
@@ -298,7 +298,7 @@ namespace OpenTelemetry.Metrics
                     return;
                 }
 
-                this.metrics[index].Update(value);
+                this.metricPoints[index].Update(value);
             }
             catch (Exception)
             {
