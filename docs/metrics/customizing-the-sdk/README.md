@@ -160,7 +160,7 @@ then it is recommended to simply not add that `Meter` using `AddMeter`.
       })
 ```
 
-#### Select specific dimensions
+#### Select specific tags
 
 When recording a measurement from an instrument, all the tags that were provided
 are reported as dimensions for the given metric. Views can be used to
@@ -179,6 +179,22 @@ with the metric are of interest to you.
 
    ...
    // Only the dimension "name" is selected, "color" is dropped
+   MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
+   MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
+   MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
+   ...
+
+   // If you provide an empty `string` array as `TagKeys` to the `MetricStreamConfiguration`
+   // the SDK will drop all the dimensions associated with the metric
+   .AddView(
+      instrumentName: "MyFruitCounter",
+      metricStreamConfiguration: new MetricStreamConfiguration
+      {
+         TagKeys = new string[] { },
+      })
+
+   ...
+   // both "name" and "color" are dropped
    MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
    MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
    MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
@@ -205,10 +221,11 @@ with the metric are of interest to you.
 #### Specify custom bounds for Histogram
 
 By default, the bounds used for a Histogram are [`{ 0, 5, 10, 25, 50, 75, 100,
-250, 500, 1000 }`](../../../src/OpenTelemetry/Metrics/Metric.cs#L25). Views can
-be used to provide custom bounds for a Histogram. The measurements are then
-aggregated against the custom bounds provided instead of the the default bounds.
-This requires the use of `HistogramConfiguration`.
+250, 500,
+1000}`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#explicit-bucket-histogram-aggregation).
+Views can be used to provide custom bounds for a Histogram. The measurements are
+then aggregated using the custom bounds provided instead of the the default
+bounds. This requires the use of `HistogramConfiguration`.
 
 ```csharp
    // Change Histogram bounds to count measurements under the following buckets:
