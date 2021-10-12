@@ -29,9 +29,7 @@
       {
         "files": [
           ".editorconfig",
-          "docs/**.cs",
-          "examples/**.cs",
-          "src/**.cs"
+          "**.cs"
         ]
       }
     ],

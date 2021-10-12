@@ -16,7 +16,6 @@
 
 using System;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -56,7 +55,7 @@ namespace OpenTelemetry.Exporter
                 msg.Append(metric.Name);
                 if (!string.IsNullOrEmpty(metric.Description))
                 {
-                    msg.Append(' ');
+                    msg.Append(", ");
                     msg.Append(metric.Description);
                 }
 
@@ -86,12 +85,13 @@ namespace OpenTelemetry.Exporter
                         for (int i = 0; i < metricPoint.Keys.Length; i++)
                         {
                             tagsBuilder.Append(metricPoint.Keys[i]);
-                            tagsBuilder.Append(":");
+                            tagsBuilder.Append(':');
                             tagsBuilder.Append(metricPoint.Values[i]);
+                            tagsBuilder.Append(' ');
                         }
                     }
 
-                    var tags = tagsBuilder.ToString();
+                    var tags = tagsBuilder.ToString().TrimEnd();
 
                     var metricType = metric.MetricType;
 
@@ -99,37 +99,41 @@ namespace OpenTelemetry.Exporter
                     {
                         var bucketsBuilder = new StringBuilder();
                         bucketsBuilder.Append($"Sum: {metricPoint.DoubleValue} Count: {metricPoint.LongValue} \n");
-                        for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
-                        {
-                            if (i == 0)
-                            {
-                                bucketsBuilder.Append("(-Infinity,");
-                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
-                                bucketsBuilder.Append("]");
-                                bucketsBuilder.Append(":");
-                                bucketsBuilder.Append(metricPoint.BucketCounts[i]);
-                            }
-                            else if (i == metricPoint.ExplicitBounds.Length)
-                            {
-                                bucketsBuilder.Append("(");
-                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
-                                bucketsBuilder.Append(",");
-                                bucketsBuilder.Append("+Infinity]");
-                                bucketsBuilder.Append(":");
-                                bucketsBuilder.Append(metricPoint.BucketCounts[i]);
-                            }
-                            else
-                            {
-                                bucketsBuilder.Append("(");
-                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
-                                bucketsBuilder.Append(",");
-                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
-                                bucketsBuilder.Append("]");
-                                bucketsBuilder.Append(":");
-                                bucketsBuilder.Append(metricPoint.BucketCounts[i]);
-                            }
 
-                            bucketsBuilder.AppendLine();
+                        if (metricPoint.ExplicitBounds != null)
+                        {
+                            for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
+                            {
+                                if (i == 0)
+                                {
+                                    bucketsBuilder.Append("(-Infinity,");
+                                    bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
+                                    bucketsBuilder.Append(']');
+                                    bucketsBuilder.Append(':');
+                                    bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                                }
+                                else if (i == metricPoint.ExplicitBounds.Length)
+                                {
+                                    bucketsBuilder.Append('(');
+                                    bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
+                                    bucketsBuilder.Append(',');
+                                    bucketsBuilder.Append("+Infinity]");
+                                    bucketsBuilder.Append(':');
+                                    bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                                }
+                                else
+                                {
+                                    bucketsBuilder.Append('(');
+                                    bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
+                                    bucketsBuilder.Append(',');
+                                    bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
+                                    bucketsBuilder.Append(']');
+                                    bucketsBuilder.Append(':');
+                                    bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                                }
+
+                                bucketsBuilder.AppendLine();
+                            }
                         }
 
                         valueDisplay = bucketsBuilder.ToString();
@@ -144,12 +148,17 @@ namespace OpenTelemetry.Exporter
                     }
 
                     msg = new StringBuilder();
+                    msg.Append('(');
                     msg.Append(metricPoint.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                     msg.Append(", ");
                     msg.Append(metricPoint.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                     msg.Append("] ");
-                    msg.Append(string.Join(";", tags));
-                    msg.Append(' ');
+                    msg.Append(tags);
+                    if (tags != string.Empty)
+                    {
+                        msg.Append(' ');
+                    }
+
                     msg.Append(metric.MetricType);
                     msg.AppendLine();
                     msg.Append($"Value: {valueDisplay}");

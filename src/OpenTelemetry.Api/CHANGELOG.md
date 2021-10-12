@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## 1.2.0-beta1
+
+Released 2021-Oct-08
+
+* Added `IDeferredMeterProviderBuilder`
+  ([#2412](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2412))
+
+* Breaking: Renamed `AddSource` to `AddMeter` on MeterProviderBuilder
+  to better reflect the intent of the method.
+
+## 1.2.0-alpha4
+
+Released 2021-Sep-23
+
 * Updated System.Diagnostics.DiagnosticSource to version 6.0.0-rc.1.21451.13
 
 ## 1.2.0-alpha3

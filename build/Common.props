@@ -5,6 +5,7 @@
     <RepoRoot>$([System.IO.Directory]::GetParent($(MSBuildThisFileDirectory)).Parent.FullName)</RepoRoot>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)debug.snk</AssemblyOriginatorKeyFile>
     <DefineConstants>$(DefineConstants);SIGNED</DefineConstants>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">

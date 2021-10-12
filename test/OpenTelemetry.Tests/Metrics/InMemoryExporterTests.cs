@@ -35,8 +35,8 @@ namespace OpenTelemetry.Metrics.Tests
             };
 
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddSource("InMemoryExporterTests")
-            .AddMetricReader(inMemoryReader)
+            .AddMeter("InMemoryExporterTests")
+            .AddReader(inMemoryReader)
             .Build();
 
             var counter = meter.CreateCounter<long>("meter");

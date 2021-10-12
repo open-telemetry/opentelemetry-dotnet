@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Text;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
@@ -29,18 +30,30 @@ internal class MyReader : MetricReader
 
     protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
     {
-        Console.WriteLine($"{this.name}.ProcessMetrics(metrics={metrics}, timeoutMilliseconds={timeoutMilliseconds})");
+        var sb = new StringBuilder();
+        foreach (var record in metrics)
+        {
+            if (sb.Length > 0)
+            {
+                sb.Append(", ");
+            }
+
+            sb.Append($"{record}");
+        }
+
+        Console.WriteLine($"{this.name}.ProcessMetrics(metrics=[{sb}], timeoutMilliseconds={timeoutMilliseconds})");
         return true;
     }
 
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
         Console.WriteLine($"{this.name}.OnShutdown(timeoutMilliseconds={timeoutMilliseconds})");
-        return true;
+        return base.OnShutdown(timeoutMilliseconds);
     }
 
     protected override void Dispose(bool disposing)
     {
         Console.WriteLine($"{this.name}.Dispose({disposing})");
+        base.Dispose(disposing);
     }
 }

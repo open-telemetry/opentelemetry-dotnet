@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 1.2.0-beta1
+
+Released 2021-Oct-08
+
+* Exception from Observable instrument callbacks does not
+  result in entire metrics being lost.
+
+* SDK is allocation-free on recording of measurements with
+  upto 8 tags.
+
+* TracerProviderBuilder.AddLegacySource now supports wildcard activity names.
+  ([#2183](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2183))
+
+## 1.2.0-alpha4
+
+Released 2021-Sep-23
+
+* `BatchExportProcessor.OnShutdown` will now log the count of dropped telemetry items.
+  ([#2331](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2331))
 * Changed `CompositeProcessor<T>.OnForceFlush` to meet with the spec
   requirement. Now the SDK will invoke `ForceFlush` on all registered
   processors, even if there is a timeout.
