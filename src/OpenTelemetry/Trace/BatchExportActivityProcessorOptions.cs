@@ -40,28 +40,28 @@ namespace OpenTelemetry.Trace
         {
             int value;
 
-            if (TryLoadEnvVarInt(ExporterTimeoutEnvVarKey, out value))
+            if (LoadEnvVarInt(ExporterTimeoutEnvVarKey, out value))
             {
                 this.ExporterTimeoutMilliseconds = value;
             }
 
-            if (TryLoadEnvVarInt(MaxExportBatchSizeEnvVarKey, out value))
+            if (LoadEnvVarInt(MaxExportBatchSizeEnvVarKey, out value))
             {
                 this.MaxExportBatchSize = value;
             }
 
-            if (TryLoadEnvVarInt(MaxQueueSizeEnvVarKey, out value))
+            if (LoadEnvVarInt(MaxQueueSizeEnvVarKey, out value))
             {
                 this.MaxQueueSize = value;
             }
 
-            if (TryLoadEnvVarInt(ScheduledDelayEnvVarKey, out value))
+            if (LoadEnvVarInt(ScheduledDelayEnvVarKey, out value))
             {
                 this.ScheduledDelayMilliseconds = value;
             }
         }
 
-        private static bool TryLoadEnvVarInt(string envVarKey, out int result)
+        private static bool LoadEnvVarInt(string envVarKey, out int result)
         {
             result = 0;
 
@@ -83,7 +83,11 @@ namespace OpenTelemetry.Trace
                 return false;
             }
 
-            result = int.Parse(value); // throws FormatException or OverflowException for bad input
+            if (!int.TryParse(value, out result))
+            {
+                throw new ArgumentException($"{envVarKey} environment variable has a non-integer value: ${value}");
+            }
+
             return true;
         }
     }
