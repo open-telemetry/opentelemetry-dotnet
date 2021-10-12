@@ -99,14 +99,16 @@ namespace OpenTelemetry.Metrics
                 var regex = GetWildcardRegex(meterSources);
                 shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
             }
-
-            var meterSourcesToSubscribe = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var meterSource in meterSources)
+            else
             {
-                meterSourcesToSubscribe.Add(meterSource);
-            }
+                var meterSourcesToSubscribe = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var meterSource in meterSources)
+                {
+                    meterSourcesToSubscribe.Add(meterSource);
+                }
 
-            shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
+                shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
+            }
 
             this.listener = new MeterListener();
             var viewConfigCount = this.viewConfigs.Count;
