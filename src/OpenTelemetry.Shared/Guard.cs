@@ -74,22 +74,14 @@ namespace OpenTelemetry.Shared
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void NotInRange(int value, string paramName, int min = int.MinValue, int max = int.MaxValue, string minName = null, string maxName = null, string message = null)
         {
-            if (value < min || value > max)
-            {
-                var exMessage = message ?? InRangeString(paramName, min, max, minName, maxName);
-                throw new ArgumentOutOfRangeException(paramName, value, exMessage);
-            }
+            NotInRange<int>(value, paramName, min, max, minName, maxName, message);
         }
 
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void NotInRange(double value, string paramName, double min = double.MinValue, double max = double.MaxValue, string minName = null, string maxName = null, string message = null)
         {
-            if (value < min || value > max)
-            {
-                var exMessage = message ?? InRangeString(paramName, min, max, minName, maxName);
-                throw new ArgumentOutOfRangeException(paramName, value, exMessage);
-            }
+            NotInRange<double>(value, paramName, min, max, minName, maxName, message);
         }
 
         [DebuggerHidden]
@@ -98,17 +90,24 @@ namespace OpenTelemetry.Shared
         {
             if (value is not T result)
             {
-                throw new InvalidCastException($"Cannot cast '{paramName}' to type '{typeof(T).Name}'");
+                throw new InvalidCastException($"Cannot cast '{paramName}' from type '{value.GetType().Name}' to type '{typeof(T).Name}'");
             }
 
             return result;
         }
 
-        private static string InRangeString(string paramName, double min = double.MinValue, double max = double.MaxValue, string minName = null, string maxName = null)
+        [DebuggerHidden]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void NotInRange<T>(T value, string paramName, T min, T max, string minName = null, string maxName = null, string message = null)
+            where T : IComparable<T>
         {
-            var minMessage = minName != null ? $": {minName}" : string.Empty;
-            var maxMessage = maxName != null ? $": {maxName}" : string.Empty;
-            return $"'{paramName}' must be in the range: [{min}{minMessage}, {max}{maxMessage}]";
+            if (value.CompareTo(min) > 0 || value.CompareTo(max) < 0)
+            {
+                var minMessage = minName != null ? $": {minName}" : string.Empty;
+                var maxMessage = maxName != null ? $": {maxName}" : string.Empty;
+                var exMessage = message ?? $"'{paramName}' must be in the range: [{min}{minMessage}, {max}{maxMessage}]";
+                throw new ArgumentOutOfRangeException(paramName, value, exMessage);
+            }
         }
     }
 }
