@@ -98,15 +98,15 @@ namespace OpenTelemetry.Metrics
 
                 switch (index)
                 {
-                case 0: // export
-                    this.Collect(this.exportTimeoutMilliseconds);
-                    break;
-                case 1: // shutdown
-                    this.Collect(this.exportTimeoutMilliseconds); // TODO: do we want to use the shutdown timeout here?
-                    return;
-                case WaitHandle.WaitTimeout: // timer
-                    this.Collect(this.exportTimeoutMilliseconds);
-                    break;
+                    case 0: // export
+                        this.Collect(this.exportTimeoutMilliseconds);
+                        break;
+                    case 1: // shutdown
+                        this.Collect(this.exportTimeoutMilliseconds); // TODO: do we want to use the shutdown timeout here?
+                        return;
+                    case WaitHandle.WaitTimeout: // timer
+                        this.Collect(this.exportTimeoutMilliseconds);
+                        break;
                 }
             }
         }
