@@ -37,7 +37,9 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             {
                 services.AddOpenTelemetryMetrics(builder =>
                 {
-                    builder.AddInstrumentation(() =>
+                    builder
+                    .AddMeter("SomeCompany.SomeProduct.SomeComponent")
+                    .AddInstrumentation(() =>
                     {
                         callbackRun = true;
                         return testInstrumentation;
@@ -71,7 +73,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
         {
             var builder = new HostBuilder().ConfigureServices(services =>
             {
-                services.AddOpenTelemetryMetrics();
+                services.AddOpenTelemetryMetrics(meterSdk => meterSdk.AddMeter("SomeCompany.SomeProduct.SomeComponent"));
             });
 
             var host = builder.Build();
@@ -91,8 +93,10 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             services.AddSingleton(testInstrumentation);
             services.AddOpenTelemetryMetrics(builder =>
             {
-                builder.Configure(
-                    (sp, b) => b.AddInstrumentation(() => sp.GetRequiredService<TestInstrumentation>()));
+                builder
+                    .AddMeter("SomeCompany.SomeProduct.SomeComponent")
+                    .Configure(
+                        (sp, b) => b.AddInstrumentation(() => sp.GetRequiredService<TestInstrumentation>()));
             });
 
             var serviceProvider = services.BuildServiceProvider();
@@ -139,6 +143,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             int configureCalls = 0;
             var services = new ServiceCollection();
             services.AddOpenTelemetryMetrics(builder => builder
+                .AddMeter("SomeCompany.SomeProduct.SomeComponent")
                 .Configure((sp1, builder1) =>
                 {
                     configureCalls++;
@@ -164,6 +169,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             services.AddSingleton<TestReader>();
 
             services.AddOpenTelemetryMetrics(builder => builder
+                .AddMeter("SomeCompany.SomeProduct.SomeComponent")
                 .Configure((sp1, builder1) =>
                 {
                     builder1
@@ -214,7 +220,9 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             (meterProviderBuilder.GetServices() ?? throw new NotSupportedException("MyFeature requires a hosting MeterProviderBuilder instance."))
                 .AddSingleton<TestReader>();
 
-            return meterProviderBuilder.AddReader<TestReader>();
+            return meterProviderBuilder
+                  .AddMeter("SomeCompany.SomeProject.SomeComponent")
+                  .AddReader<TestReader>();
         }
 
         internal class TestInstrumentation : IDisposable
