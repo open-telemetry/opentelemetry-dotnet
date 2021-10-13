@@ -22,14 +22,16 @@ namespace OpenTelemetry.Metrics
     public readonly struct BatchMetricPoint : IDisposable
     {
         private readonly MetricPoint[] metricsPoints;
+        private readonly int[] metricPointsToProcess;
         private readonly long targetCount;
         private readonly DateTimeOffset start;
         private readonly DateTimeOffset end;
 
-        internal BatchMetricPoint(MetricPoint[] metricsPoints, int maxSize, DateTimeOffset start, DateTimeOffset end)
+        internal BatchMetricPoint(MetricPoint[] metricsPoints, int[] metricPointsToProcess, long targetCount, DateTimeOffset start, DateTimeOffset end)
         {
             this.metricsPoints = metricsPoints ?? throw new ArgumentNullException(nameof(metricsPoints));
-            this.targetCount = maxSize;
+            this.metricPointsToProcess = metricPointsToProcess;
+            this.targetCount = targetCount;
             this.start = start;
             this.end = end;
         }
@@ -45,7 +47,7 @@ namespace OpenTelemetry.Metrics
         /// <returns><see cref="Enumerator"/>.</returns>
         public Enumerator GetEnumerator()
         {
-            return new Enumerator(this.metricsPoints, this.targetCount, this.start, this.end);
+            return new Enumerator(this.metricsPoints, this.metricPointsToProcess, this.targetCount, this.start, this.end);
         }
 
         /// <summary>
@@ -54,14 +56,16 @@ namespace OpenTelemetry.Metrics
         public struct Enumerator : IEnumerator
         {
             private readonly MetricPoint[] metricsPoints;
+            private readonly int[] metricPointsToProcess;
             private readonly DateTimeOffset start;
             private readonly DateTimeOffset end;
             private long targetCount;
             private long index;
 
-            internal Enumerator(MetricPoint[] metricsPoints, long targetCount, DateTimeOffset start, DateTimeOffset end)
+            internal Enumerator(MetricPoint[] metricsPoints, int[] metricPointsToProcess, long targetCount, DateTimeOffset start, DateTimeOffset end)
             {
                 this.metricsPoints = metricsPoints;
+                this.metricPointsToProcess = metricPointsToProcess;
                 this.targetCount = targetCount;
                 this.index = -1;
                 this.start = start;
@@ -72,7 +76,7 @@ namespace OpenTelemetry.Metrics
             {
                 get
                 {
-                    return ref this.metricsPoints[this.index];
+                    return ref this.metricsPoints[this.metricPointsToProcess[this.index]];
                 }
             }
 
@@ -88,8 +92,8 @@ namespace OpenTelemetry.Metrics
             {
                 while (++this.index < this.targetCount)
                 {
-                    ref var metricPoint = ref this.metricsPoints[this.index];
-                    if (metricPoint.StartTime == default)
+                    ref var metricPoint = ref this.metricsPoints[this.metricPointsToProcess[this.index]];
+                    if (metricPoint.MetricPointStatus == MetricPointStatus.Unset)
                     {
                         continue;
                     }

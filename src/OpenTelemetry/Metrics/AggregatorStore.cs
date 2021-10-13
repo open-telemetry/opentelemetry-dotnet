@@ -37,12 +37,12 @@ namespace OpenTelemetry.Metrics
         private readonly AggregationTemporality temporality;
         private readonly bool outputDelta;
         private readonly MetricPoint[] metricPoints;
-        private readonly MetricPoint[] batchToProcess;
+        private readonly int[] currentMetricPointBatch;
         private readonly AggregationType aggType;
         private readonly double[] histogramBounds;
         private readonly UpdateLongDelegate updateLongCallback;
         private readonly UpdateDoubleDelegate updateDoubleCallback;
-        private int batchSize = 0;
+        private long batchSize = 0;
         private bool zeroTagMetricPointInitialized;
         private DateTimeOffset startTimeExclusive;
         private DateTimeOffset endTimeInclusive;
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Metrics
             string[] tagKeysInteresting = null)
         {
             this.metricPoints = new MetricPoint[MaxMetricPoints];
-            this.batchToProcess = new MetricPoint[MaxMetricPoints];
+            this.currentMetricPointBatch = new int[MaxMetricPoints];
             this.aggType = aggType;
             this.temporality = temporality;
             this.outputDelta = temporality == AggregationTemporality.Delta ? true : false;
@@ -118,8 +118,7 @@ namespace OpenTelemetry.Metrics
                     // TODO: Consider concurrency issues here. An update may have occurred after the snapshot.
                     metricPoint.MetricPointStatus = MetricPointStatus.NoPendingUpdate;
 
-                    // TODO: Does this avoid a copy?
-                    this.batchToProcess[this.batchSize] = metricPoint;
+                    this.currentMetricPointBatch[this.batchSize] = i;
                     this.batchSize++;
                 }
                 else if (metricPoint.MetricPointStatus == MetricPointStatus.NoPendingUpdate)
@@ -149,7 +148,7 @@ namespace OpenTelemetry.Metrics
 
         internal BatchMetricPoint GetMetricPoints()
         {
-            return new BatchMetricPoint(this.batchToProcess, this.batchSize, this.startTimeExclusive, this.endTimeInclusive);
+            return new BatchMetricPoint(this.metricPoints, this.currentMetricPointBatch, this.batchSize, this.startTimeExclusive, this.endTimeInclusive);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
