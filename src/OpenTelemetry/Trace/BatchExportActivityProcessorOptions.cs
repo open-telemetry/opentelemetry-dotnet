@@ -26,6 +26,10 @@ namespace OpenTelemetry.Trace
     /// OTEL_BSP_MAX_QUEUE_SIZE, OTEL_BSP_MAX_EXPORT_BATCH_SIZE, OTEL_BSP_EXPORT_TIMEOUT, OTEL_BSP_SCHEDULE_DELAY
     /// environment variables are parsed during object construction.
     /// </summary>
+    /// <remarks>
+    /// The constructor throws <see cref="ArgumentException"/> if it fails to parse
+    /// any of the supported environment variables.
+    /// </remarks>
     public class BatchExportActivityProcessorOptions : BatchExportProcessorOptions<Activity>
     {
         internal const string MaxQueueSizeEnvVarKey = "OTEL_BSP_MAX_QUEUE_SIZE";
