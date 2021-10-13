@@ -21,21 +21,20 @@ namespace OpenTelemetry.Metrics
     {
 #pragma warning disable SA1602 // Enumeration items should be documented
         Default,
-        None,
+        Drop,
         Sum,
         LastValue,
         Histogram,
-        Drop = None,
 #pragma warning restore SA1602 // Enumeration items should be documented
     }
 
     public class MetricStreamConfiguration
     {
+        public static readonly MetricStreamConfiguration Drop = new DropConfiguration();
+
         public string Name { get; set; }
 
         public string Description { get; set; }
-
-        public string Unit { get; set; }
 
         public string[] TagKeys { get; set; }
 

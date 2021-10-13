@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics
     public static class OtlpMetricExporterExtensions
     {
         /// <summary>
-        /// Adds <see cref="OtlpMetricsExporter"/> to the <see cref="MeterProviderBuilder"/>.
+        /// Adds <see cref="OtlpMetricExporter"/> to the <see cref="MeterProviderBuilder"/>.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
@@ -52,8 +52,9 @@ namespace OpenTelemetry.Metrics
         {
             configure?.Invoke(options);
 
-            var metricExporter = new OtlpMetricsExporter(options);
+            var metricExporter = new OtlpMetricExporter(options);
             var metricReader = new PeriodicExportingMetricReader(metricExporter, options.MetricExportIntervalMilliseconds);
+            metricReader.PreferredAggregationTemporality = options.AggregationTemporality;
             return builder.AddReader(metricReader);
         }
     }

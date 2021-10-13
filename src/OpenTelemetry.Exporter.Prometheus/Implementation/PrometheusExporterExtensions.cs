@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -41,12 +42,13 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// </summary>
         /// <param name="exporter"><see cref="PrometheusExporter"/>.</param>
         /// <param name="writer">StreamWriter to write to.</param>
+        /// <param name="getUtcNowDateTimeOffset">Optional function to resolve the current date &amp; time.</param>
         /// <returns><see cref="Task"/> to await the operation.</returns>
-        public static async Task WriteMetricsCollection(this PrometheusExporter exporter, StreamWriter writer)
+        public static async Task WriteMetricsCollection(this PrometheusExporter exporter, StreamWriter writer, Func<DateTimeOffset> getUtcNowDateTimeOffset)
         {
             foreach (var metric in exporter.Metrics)
             {
-                var builder = new PrometheusMetricBuilder()
+                var builder = new PrometheusMetricBuilder(getUtcNowDateTimeOffset)
                     .WithName(metric.Name)
                     .WithDescription(metric.Description);
 
@@ -164,18 +166,21 @@ namespace OpenTelemetry.Exporter.Prometheus
                 metricValueBuilderCount = metricValueBuilderCount.WithValue(metricPoint.LongValue);
                 metricValueBuilderCount.AddLabels(metricPoint.Keys, metricPoint.Values);
 
-                long totalCount = 0;
-                for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
+                if (metricPoint.ExplicitBounds != null)
                 {
-                    totalCount += metricPoint.BucketCounts[i];
-                    var metricValueBuilderBuckets = builder.AddValue();
-                    metricValueBuilderBuckets.WithName(metric.Name + PrometheusHistogramBucketPostFix);
-                    metricValueBuilderBuckets = metricValueBuilderBuckets.WithValue(totalCount);
-                    metricValueBuilderBuckets.AddLabels(metricPoint.Keys, metricPoint.Values);
+                    long totalCount = 0;
+                    for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
+                    {
+                        totalCount += metricPoint.BucketCounts[i];
+                        var metricValueBuilderBuckets = builder.AddValue();
+                        metricValueBuilderBuckets.WithName(metric.Name + PrometheusHistogramBucketPostFix);
+                        metricValueBuilderBuckets = metricValueBuilderBuckets.WithValue(totalCount);
+                        metricValueBuilderBuckets.AddLabels(metricPoint.Keys, metricPoint.Values);
 
-                    var bucketName = i == metricPoint.ExplicitBounds.Length ?
-                    PrometheusHistogramBucketLabelPositiveInfinity : metricPoint.ExplicitBounds[i].ToString(CultureInfo.InvariantCulture);
-                    metricValueBuilderBuckets.WithLabel(PrometheusHistogramBucketLabelLessThan, bucketName);
+                        var bucketName = i == metricPoint.ExplicitBounds.Length ?
+                        PrometheusHistogramBucketLabelPositiveInfinity : metricPoint.ExplicitBounds[i].ToString(CultureInfo.InvariantCulture);
+                        metricValueBuilderBuckets.WithLabel(PrometheusHistogramBucketLabelLessThan, bucketName);
+                    }
                 }
             }
         }

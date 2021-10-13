@@ -103,5 +103,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         {
             this.WriteEvent(7, exception);
         }
+
+        [Event(8, Message = "Unsupported value for protocol '{0}' is configured, default protocol 'grpc' will be used.", Level = EventLevel.Warning)]
+        public void UnsupportedProtocol(string protocol)
+        {
+            this.WriteEvent(8, protocol);
+        }
+
+        [Event(9, Message = "Could not translate LogRecord from class '{0}' and method '{1}', log will not be exported.", Level = EventLevel.Informational)]
+        public void CouldNotTranslateLogRecord(string className, string methodName)
+        {
+            this.WriteEvent(9, className, methodName);
+        }
     }
 }

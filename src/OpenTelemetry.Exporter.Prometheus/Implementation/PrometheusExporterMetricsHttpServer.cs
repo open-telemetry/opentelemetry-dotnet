@@ -53,6 +53,11 @@ namespace OpenTelemetry.Exporter.Prometheus
                 path = $"/{path}";
             }
 
+            if (!path.EndsWith("/"))
+            {
+                path = $"{path}/";
+            }
+
             foreach (string prefix in exporter.Options.HttpListenerPrefixes)
             {
                 this.httpListener.Prefixes.Add($"{prefix.TrimEnd('/')}{path}");
@@ -158,7 +163,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                 {
                     this.exporter.Collect(Timeout.Infinite);
 
-                    await this.exporter.WriteMetricsCollection(writer).ConfigureAwait(false);
+                    await this.exporter.WriteMetricsCollection(writer, this.exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
                 }
                 finally
                 {

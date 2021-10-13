@@ -15,6 +15,7 @@
 // </copyright>
 
 using CommandLine;
+using OpenTelemetry.Exporter;
 
 namespace Examples.Console
 {
@@ -31,8 +32,8 @@ namespace Examples.Console
         /// dotnet run -p Examples.Console.csproj inmemory
         /// dotnet run -p Examples.Console.csproj zipkin -u http://localhost:9411/api/v2/spans
         /// dotnet run -p Examples.Console.csproj jaeger -h localhost -p 6831
-        /// dotnet run -p Examples.Console.csproj prometheus -i 15 -p 9184 -d 2
-        /// dotnet run -p Examples.Console.csproj otlp -e "http://localhost:4317"
+        /// dotnet run -p Examples.Console.csproj prometheus -p 9184 -d 2
+        /// dotnet run -p Examples.Console.csproj otlp -e "http://localhost:4317" -p "grpc"
         /// dotnet run -p Examples.Console.csproj zpages
         /// dotnet run -p Examples.Console.csproj metrics --help
         ///
@@ -42,12 +43,13 @@ namespace Examples.Console
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, LogsOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
                     (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port, options.DurationInMins),
                     (MetricsOptions options) => TestMetrics.Run(options),
+                    (LogsOptions options) => TestLogs.Run(options),
                     (GrpcNetClientOptions options) => TestGrpcNetClient.Run(),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
@@ -55,7 +57,7 @@ namespace Examples.Console
                     (ConsoleOptions options) => TestConsoleExporter.Run(options),
                     (OpenTelemetryShimOptions options) => TestOTelShimWithConsoleExporter.Run(options),
                     (OpenTracingShimOptions options) => TestOpenTracingShim.Run(options),
-                    (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint),
+                    (OtlpOptions options) => TestOtlpExporter.Run(options.Endpoint, options.Protocol),
                     (InMemoryOptions options) => TestInMemoryExporter.Run(options),
                     errs => 1);
         }
@@ -163,6 +165,16 @@ namespace Examples.Console
     {
         [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "http://localhost:4317")]
         public string Endpoint { get; set; }
+
+        [Option('p', "protocol", HelpText = "Transport protocol used by exporter. Supported values: grpc and http/protobuf.", Default = "grpc")]
+        public string Protocol { get; set; }
+    }
+
+    [Verb("logs", HelpText = "Specify the options required to test Logs")]
+    internal class LogsOptions
+    {
+        [Option("useExporter", Default = "otlp", HelpText = "Options include otlp or console.", Required = false)]
+        public string UseExporter { get; set; }
     }
 
     [Verb("inmemory", HelpText = "Specify the options required to test InMemory Exporter")]

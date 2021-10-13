@@ -27,22 +27,22 @@ public class Program
     public static void Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddSource(Meter1.Name)
-            .AddSource(Meter2.Name)
+            .AddMeter(Meter1.Name)
+            .AddMeter(Meter2.Name)
 
             // Rename an instrument to new name.
             .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
 
             // Change Histogram bounds
-            .AddView(instrumentName: "MyHistogram", new HistogramConfiguration() { BucketBounds = new double[] { 10, 20 }, Aggregation = Aggregation.LastValue })
+            .AddView(instrumentName: "MyHistogram", new HistogramConfiguration() { BucketBounds = new double[] { 10, 20 } })
 
             // For the instrument "MyCounterCustomTags", aggregate with only the keys "tag1", "tag2".
             .AddView(instrumentName: "MyCounterCustomTags", new MetricStreamConfiguration() { TagKeys = new string[] { "tag1", "tag2" } })
 
             // Drop the instrument "MyCounterDrop".
-            .AddView(instrumentName: "MyCounterDrop", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+            .AddView(instrumentName: "MyCounterDrop", MetricStreamConfiguration.Drop)
 
-            // Advanced selection criteria and config via Func<Instrument, AggregationConfig>
+            // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
             .AddView((instrument) =>
              {
                  if (instrument.Meter.Name.Equals("CompanyA.ProductB.Library2") &&

@@ -48,6 +48,18 @@ namespace OpenTelemetry.Trace
             this.sampler = sampler;
             this.supportLegacyActivity = legacyActivityOperationNames.Count > 0;
 
+            bool legacyActivityWildcardMode = false;
+            Regex legacyActivityWildcardModeRegex = null;
+            foreach (var legacyName in legacyActivityOperationNames)
+            {
+                if (legacyName.Key.Contains('*'))
+                {
+                    legacyActivityWildcardMode = true;
+                    legacyActivityWildcardModeRegex = GetWildcardRegex(legacyActivityOperationNames.Keys);
+                    break;
+                }
+            }
+
             foreach (var processor in processors)
             {
                 this.AddProcessor(processor);
@@ -61,17 +73,27 @@ namespace OpenTelemetry.Trace
                 }
             }
 
-            var listener = new ActivityListener
+            var listener = new ActivityListener();
+
+            if (this.supportLegacyActivity)
             {
-                // Callback when Activity is started.
-                ActivityStarted = (activity) =>
+                Func<Activity, bool> legacyActivityPredicate = null;
+                if (legacyActivityWildcardMode)
+                {
+                    legacyActivityPredicate = activity => legacyActivityWildcardModeRegex.IsMatch(activity.OperationName);
+                }
+                else
+                {
+                    legacyActivityPredicate = activity => legacyActivityOperationNames.ContainsKey(activity.OperationName);
+                }
+
+                listener.ActivityStarted = activity =>
                 {
                     OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
 
-                    if (this.supportLegacyActivity && string.IsNullOrEmpty(activity.Source.Name))
+                    if (string.IsNullOrEmpty(activity.Source.Name))
                     {
-                        // We have a legacy activity in hand now
-                        if (legacyActivityOperationNames.ContainsKey(activity.OperationName))
+                        if (legacyActivityPredicate(activity))
                         {
                             // Legacy activity matches the user configured list.
                             // Call sampler for the legacy activity
@@ -101,21 +123,16 @@ namespace OpenTelemetry.Trace
                     {
                         this.processor?.OnStart(activity);
                     }
-                },
+                };
 
-                // Callback when Activity is stopped.
-                ActivityStopped = (activity) =>
+                listener.ActivityStopped = activity =>
                 {
                     OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
 
-                    if (this.supportLegacyActivity && string.IsNullOrEmpty(activity.Source.Name))
+                    if (string.IsNullOrEmpty(activity.Source.Name) && !legacyActivityPredicate(activity))
                     {
-                        // We have a legacy activity in hand now
-                        if (!legacyActivityOperationNames.ContainsKey(activity.OperationName))
-                        {
-                            // Legacy activity doesn't match the user configured list. No need to proceed further.
-                            return;
-                        }
+                        // Legacy activity doesn't match the user configured list. No need to proceed further.
+                        return;
                     }
 
                     if (!activity.IsAllDataRequested)
@@ -135,8 +152,43 @@ namespace OpenTelemetry.Trace
                     {
                         this.processor?.OnEnd(activity);
                     }
-                },
-            };
+                };
+            }
+            else
+            {
+                listener.ActivityStarted = activity =>
+                {
+                    OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
+
+                    if (activity.IsAllDataRequested && SuppressInstrumentationScope.IncrementIfTriggered() == 0)
+                    {
+                        this.processor?.OnStart(activity);
+                    }
+                };
+
+                listener.ActivityStopped = activity =>
+                {
+                    OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
+
+                    if (!activity.IsAllDataRequested)
+                    {
+                        return;
+                    }
+
+                    // Spec says IsRecording must be false once span ends.
+                    // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#isrecording
+                    // However, Activity has slightly different semantic
+                    // than Span and we don't have strong reason to do this
+                    // now, as Activity anyway allows read/write always.
+                    // Intentionally commenting the following line.
+                    // activity.IsAllDataRequested = false;
+
+                    if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
+                    {
+                        this.processor?.OnEnd(activity);
+                    }
+                };
+            }
 
             if (sampler is AlwaysOnSampler)
             {
@@ -172,13 +224,13 @@ namespace OpenTelemetry.Trace
                     if (name.Contains('*'))
                     {
                         wildcardMode = true;
+                        break;
                     }
                 }
 
                 if (wildcardMode)
                 {
-                    var pattern = '^' + string.Join("|", from name in sources select "(?:" + Regex.Escape(name).Replace("\\*", ".*") + ')') + '$';
-                    var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                    var regex = GetWildcardRegex(sources);
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
@@ -216,6 +268,12 @@ namespace OpenTelemetry.Trace
 
             ActivitySource.AddActivityListener(listener);
             this.listener = listener;
+
+            Regex GetWildcardRegex(IEnumerable<string> collection)
+            {
+                var pattern = '^' + string.Join("|", from name in collection select "(?:" + Regex.Escape(name).Replace("\\*", ".*") + ')') + '$';
+                return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            }
         }
 
         internal Resource Resource { get; }

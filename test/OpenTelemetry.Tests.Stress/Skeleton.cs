@@ -30,6 +30,11 @@ public partial class Program
 
     public static void Stress(int concurrency = 0)
     {
+#if DEBUG
+        Console.WriteLine("***WARNING*** The current build is DEBUG which may affect timing!");
+        Console.WriteLine();
+#endif
+
         if (concurrency < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(concurrency), "concurrency level should be a non-negative number.");
@@ -41,6 +46,8 @@ public partial class Program
         }
 
         var statistics = new long[concurrency];
+        var watchForTotal = new Stopwatch();
+        watchForTotal.Start();
 
         Parallel.Invoke(
             () =>
@@ -107,7 +114,15 @@ public partial class Program
                 });
             });
 
-        Console.WriteLine(output);
+        watchForTotal.Stop();
+        var cntLoopsTotal = (ulong)statistics.Sum();
+        var totalLoopsPerSecond = (double)cntLoopsTotal / ((double)watchForTotal.ElapsedMilliseconds / 1000.0);
+        var cntCpuCyclesTotal = GetCpuCycles();
+        var cpuCyclesPerLoopTotal = cntLoopsTotal == 0 ? 0 : cntCpuCyclesTotal / cntLoopsTotal;
+        Console.WriteLine("Stopping the stress test...");
+        Console.WriteLine($"* Total Loops: {cntLoopsTotal:n0}");
+        Console.WriteLine($"* Average Loops/Second: {totalLoopsPerSecond:n0}");
+        Console.WriteLine($"* Average CPU Cycles/Loop: {cpuCyclesPerLoopTotal:n0}");
     }
 
     [DllImport("kernel32.dll")]

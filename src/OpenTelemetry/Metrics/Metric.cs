@@ -20,14 +20,21 @@ using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
-    public class Metric
+    public sealed class Metric
     {
+        internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 };
         private AggregatorStore aggStore;
 
-        internal Metric(Instrument instrument, AggregationTemporality temporality, string metricName = "")
+        internal Metric(
+            Instrument instrument,
+            AggregationTemporality temporality,
+            string metricName,
+            string metricDescription,
+            double[] histogramBounds = null,
+            string[] tagKeysInteresting = null)
         {
-            this.Name = string.IsNullOrWhiteSpace(metricName) ? instrument.Name : metricName;
-            this.Description = instrument.Description;
+            this.Name = metricName;
+            this.Description = metricDescription;
             this.Unit = instrument.Unit;
             this.Meter = instrument.Meter;
             AggregationType aggType = default;
@@ -80,15 +87,24 @@ namespace OpenTelemetry.Metrics
                 || instrument.GetType() == typeof(Histogram<float>)
                 || instrument.GetType() == typeof(Histogram<double>))
             {
-                aggType = AggregationType.Histogram;
                 this.MetricType = MetricType.Histogram;
+
+                if (histogramBounds != null
+                    && histogramBounds.Length == 0)
+                {
+                    aggType = AggregationType.HistogramSumCount;
+                }
+                else
+                {
+                    aggType = AggregationType.Histogram;
+                }
             }
             else
             {
                 // TODO: Log and assign some invalid Enum.
             }
 
-            this.aggStore = new AggregatorStore(aggType, temporality);
+            this.aggStore = new AggregatorStore(aggType, temporality, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
             this.Temporality = temporality;
         }
 
@@ -111,12 +127,12 @@ namespace OpenTelemetry.Metrics
 
         internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            this.aggStore.UpdateLong(value, tags);
+            this.aggStore.Update(value, tags);
         }
 
         internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            this.aggStore.UpdateDouble(value, tags);
+            this.aggStore.Update(value, tags);
         }
 
         internal void SnapShot()
