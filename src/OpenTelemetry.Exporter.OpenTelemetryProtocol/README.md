@@ -3,8 +3,8 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.OpenTelemetryProtocol.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.OpenTelemetryProtocol)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.OpenTelemetryProtocol.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.OpenTelemetryProtocol)
 
-The OTLP (OpenTelemetry Protocol) exporter communicates to an OpenTelemetry
-Collector through a gRPC protocol.
+[The OTLP (OpenTelemetry Protocol) exporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)
+implementation.
 
 ## Prerequisite
 
@@ -29,7 +29,8 @@ setters take precedence over the environment variables.
   contain a port and path.
 * `Headers`: Optional headers for the connection.
 * `TimeoutMilliseconds` : Max waiting time for the backend to process a batch.
-* `Protocol`: OTLP transport protocol. Supported values: Grpc and HttpProtobuf.
+* `Protocol`: OTLP transport protocol. Supported values:
+  `OtlpExportProtocol.Grpc` and `OtlpExportProtocol.HttpProtobuf`.
 * `ExportProcessorType`: Whether the exporter should use [Batch or Simple
   exporting
   processor](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#built-in-span-processors)
