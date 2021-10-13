@@ -134,7 +134,7 @@ namespace OpenTelemetry.Tests.Shared
 #if NETCOREAPP
             Assert.Equal("error (Parameter 'N/A')\r\nActual value was -1.", ex2.Message);
 #else
-            Assert.Equal("Must be in the range: [0: empty, 100: full]\r\nParameter name: N/A\r\nActual value was -1.", ex1.Message);
+            Assert.Equal("error\r\nParameter name: N/A\r\nActual value was -1.", ex1.Message);
 #endif
 
             // Double
@@ -144,7 +144,6 @@ namespace OpenTelemetry.Tests.Shared
 #else
             Assert.Equal("Must be in the range: [0.1: empty, 99.9: full]\r\nParameter name: N/A\r\nActual value was -1.1.", ex3.Message);
 #endif
-
 
             var ex4 = Assert.Throws<ArgumentOutOfRangeException>(() => Guard.NotInRange(-1.1, min: 0.0, max: 100.0));
 #if NETCOREAPP
