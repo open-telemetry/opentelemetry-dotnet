@@ -23,39 +23,41 @@ namespace OpenTelemetry.Shared
 {
     public static class Guard
     {
+        private const string DefaultParamName = "N/A";
+
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NotNull(object value, string paramName)
+        public static void NotNull(object value, string paramName = DefaultParamName)
         {
             if (value is null)
             {
-                throw new ArgumentNullException(paramName, $"'{paramName}' is null");
+                throw new ArgumentNullException(paramName, "Must not be null");
             }
         }
 
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NotNullOrEmpty(string value, string paramName)
+        public static void NotNullOrEmpty(string value, string paramName = DefaultParamName)
         {
             if (string.IsNullOrEmpty(value))
             {
-                throw new ArgumentNullException(paramName, $"'{paramName}' is null or empty");
+                throw new ArgumentException("Must not be null or empty", paramName);
             }
         }
 
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NotNullOrWhitespace(string value, string paramName)
+        public static void NotNullOrWhitespace(string value, string paramName = DefaultParamName)
         {
             if (string.IsNullOrWhiteSpace(value))
             {
-                throw new ArgumentNullException(paramName, $"'{paramName}' is null or whitespace");
+                throw new ArgumentException("Must not be null or whitespace", paramName);
             }
         }
 
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NotZero(int value, string paramName, string message)
+        public static void NotZero(int value, string message, string paramName = DefaultParamName)
         {
             if (value == 0)
             {
@@ -65,32 +67,32 @@ namespace OpenTelemetry.Shared
 
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NotValidTimeout(int value, string paramName)
+        public static void NotValidTimeout(int value, string paramName = DefaultParamName)
         {
-            NotInRange(value, paramName, min: Timeout.Infinite, message: $"'{paramName}' = '{value}' must be non-negative or '{nameof(Timeout)}.{nameof(Timeout.Infinite)}'");
+            NotInRange(value, paramName, min: Timeout.Infinite, message: $"Must be non-negative or '{nameof(Timeout)}.{nameof(Timeout.Infinite)}'");
         }
 
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NotInRange(int value, string paramName, int min = int.MinValue, int max = int.MaxValue, string minName = null, string maxName = null, string message = null)
+        public static void NotInRange(int value, string paramName = DefaultParamName, int min = int.MinValue, int max = int.MaxValue, string minName = null, string maxName = null, string message = null)
         {
             NotInRange<int>(value, paramName, min, max, minName, maxName, message);
         }
 
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NotInRange(double value, string paramName, double min = double.MinValue, double max = double.MaxValue, string minName = null, string maxName = null, string message = null)
+        public static void NotInRange(double value, string paramName = DefaultParamName, double min = double.MinValue, double max = double.MaxValue, string minName = null, string maxName = null, string message = null)
         {
             NotInRange<double>(value, paramName, min, max, minName, maxName, message);
         }
 
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T NotOfType<T>(object value, string paramName)
+        public static T NotOfType<T>(object value, string paramName = DefaultParamName)
         {
             if (value is not T result)
             {
-                throw new InvalidCastException($"Cannot cast '{paramName}' from type '{value.GetType().Name}' to type '{typeof(T).Name}'");
+                throw new InvalidCastException($"Cannot cast '{paramName}' from '{value.GetType().Name}' to '{typeof(T).Name}'");
             }
 
             return result;
@@ -98,14 +100,14 @@ namespace OpenTelemetry.Shared
 
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void NotInRange<T>(T value, string paramName, T min, T max, string minName = null, string maxName = null, string message = null)
+        private static void NotInRange<T>(T value, string paramName, T min, T max, string minName, string maxName, string message)
             where T : IComparable<T>
         {
-            if (value.CompareTo(min) > 0 || value.CompareTo(max) < 0)
+            if (value.CompareTo(min) < 0 || value.CompareTo(max) > 0)
             {
                 var minMessage = minName != null ? $": {minName}" : string.Empty;
                 var maxMessage = maxName != null ? $": {maxName}" : string.Empty;
-                var exMessage = message ?? $"'{paramName}' must be in the range: [{min}{minMessage}, {max}{maxMessage}]";
+                var exMessage = message ?? $"Must be in the range: [{min}{minMessage}, {max}{maxMessage}]";
                 throw new ArgumentOutOfRangeException(paramName, value, exMessage);
             }
         }

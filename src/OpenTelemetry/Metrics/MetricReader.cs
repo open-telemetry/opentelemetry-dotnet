@@ -223,8 +223,8 @@ namespace OpenTelemetry.Metrics
 
         private static void ValidateAggregationTemporality(AggregationTemporality preferred, AggregationTemporality supported)
         {
-            Guard.NotZero((int)(preferred & CumulativeAndDelta), nameof(preferred), $"PreferredAggregationTemporality has an invalid value {preferred}");
-            Guard.NotZero((int)(supported & CumulativeAndDelta), nameof(supported), $"SupportedAggregationTemporality has an invalid value {supported}");
+            Guard.NotZero((int)(preferred & CumulativeAndDelta), $"PreferredAggregationTemporality has an invalid value {preferred}", nameof(preferred));
+            Guard.NotZero((int)(supported & CumulativeAndDelta), $"SupportedAggregationTemporality has an invalid value {supported}", nameof(supported));
 
             /*
             | Preferred  | Supported  | Valid |
@@ -240,7 +240,7 @@ namespace OpenTelemetry.Metrics
             | Delta      | Delta      | true  |
             */
             string message = $"PreferredAggregationTemporality {preferred} and SupportedAggregationTemporality {supported} are incompatible";
-            Guard.NotZero((int)(preferred & supported), nameof(preferred), message);
+            Guard.NotZero((int)(preferred & supported), message, nameof(preferred));
             Guard.NotInRange((int)preferred, nameof(preferred), max: (int)supported, maxName: nameof(supported), message: message);
         }
     }
