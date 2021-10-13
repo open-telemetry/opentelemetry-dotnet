@@ -108,7 +108,7 @@ namespace OpenTelemetry.Metrics
                 {
                     continue;
                 }
-                else if (metricPoint.MetricPointStatus == MetricPointStatus.UpdatePending
+                else if (metricPoint.MetricPointStatus == MetricPointStatus.CollectPending
 
                     // TODO: Support marking marking cumulative temporality metrics stale
                     || this.temporality == AggregationTemporality.Cumulative)

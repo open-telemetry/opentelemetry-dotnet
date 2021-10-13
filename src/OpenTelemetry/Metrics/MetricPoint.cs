@@ -121,7 +121,7 @@ namespace OpenTelemetry.Metrics
                     }
             }
 
-            this.MetricPointStatus = MetricPointStatus.UpdatePending;
+            this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 
         internal void Update(double number)
@@ -186,7 +186,7 @@ namespace OpenTelemetry.Metrics
                     }
             }
 
-            this.MetricPointStatus = MetricPointStatus.UpdatePending;
+            this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 
         internal void TakeSnapShot(bool outputDelta)
