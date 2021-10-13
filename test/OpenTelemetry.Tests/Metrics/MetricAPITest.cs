@@ -601,7 +601,7 @@ namespace OpenTelemetry.Metrics.Tests
 
         [Theory]
         [MemberData(nameof(MetricsTestData.InvalidInstrumentNames), MemberType = typeof(MetricsTestData))]
-        public void InstrumentWithInvalidNameIsIgnoredTest(string name)
+        public void InstrumentWithInvalidNameIsIgnoredTest(string instrumentName)
         {
             var exportedItems = new List<Metric>();
 
@@ -612,7 +612,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
-            var counterLong = meter.CreateCounter<long>(name);
+            var counterLong = meter.CreateCounter<long>(instrumentName);
             counterLong.Add(10);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 

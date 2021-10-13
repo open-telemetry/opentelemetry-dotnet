@@ -47,6 +47,12 @@ namespace OpenTelemetry.Metrics
         /// <returns>Boolean indicating if the instrument is valid.</returns>
         internal static bool IsValidViewName(string customViewName)
         {
+            // Only validate the view name in case it's not null. In case it's null, the view name will be the instrument name as per the spec.
+            if (customViewName == null)
+            {
+                return true;
+            }
+
             return InstrumentNameRegex.IsMatch(customViewName);
         }
 

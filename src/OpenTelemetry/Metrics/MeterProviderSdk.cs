@@ -158,7 +158,7 @@ namespace OpenTelemetry.Metrics
                             if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricStreamName))
                             {
                                 OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
-                                    instrument.Name,
+                                    metricStreamName,
                                     instrument.Meter.Name,
                                     "Metric name is invalid.",
                                     "The name must comply with the OpenTelemetry specification.");

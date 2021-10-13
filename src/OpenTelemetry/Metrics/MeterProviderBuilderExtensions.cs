@@ -52,8 +52,7 @@ namespace OpenTelemetry.Metrics
         /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
         public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, string name)
         {
-            // we only need to validate the custom view name in case something was actually provided
-            if (!string.IsNullOrWhiteSpace(name) && !MeterProviderBuilderSdk.IsValidViewName(name))
+            if (!MeterProviderBuilderSdk.IsValidInstrumentName(name))
             {
                 throw new ArgumentException($"Custom view name {name} is invalid.", nameof(name));
             }
@@ -77,8 +76,12 @@ namespace OpenTelemetry.Metrics
         /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
         public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
         {
-            // we only need to validate the custom view name in case something was actually provided
-            if (!string.IsNullOrWhiteSpace(metricStreamConfiguration.Name) && !MeterProviderBuilderSdk.IsValidViewName(metricStreamConfiguration.Name))
+            if (metricStreamConfiguration == null)
+            {
+                throw new ArgumentNullException($"Metric stream configuration cannot be null.", nameof(metricStreamConfiguration.Name));
+            }
+
+            if (!MeterProviderBuilderSdk.IsValidViewName(metricStreamConfiguration.Name))
             {
                 throw new ArgumentException($"Custom view name {metricStreamConfiguration.Name} is invalid.", nameof(metricStreamConfiguration.Name));
             }
