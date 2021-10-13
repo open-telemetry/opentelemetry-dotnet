@@ -26,7 +26,7 @@ namespace OpenTelemetry.Metrics
     public static class OtlpMetricExporterExtensions
     {
         /// <summary>
-        /// Adds OpenTelemetry Protocol (OTLP) exporter to the MeterProvider.
+        /// Adds <see cref="OtlpMetricExporter"/> to the <see cref="MeterProviderBuilder"/>.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
@@ -35,12 +35,25 @@ namespace OpenTelemetry.Metrics
         {
             Guard.NotNull(builder, nameof(builder));
 
-            var options = new OtlpExporterOptions();
+            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            {
+                return deferredMeterProviderBuilder.Configure((sp, builder) =>
+                {
+                    AddOtlpExporter(builder, sp.GetOptions<OtlpExporterOptions>(), configure);
+                });
+            }
+
+            return AddOtlpExporter(builder, new OtlpExporterOptions(), configure);
+        }
+
+        private static MeterProviderBuilder AddOtlpExporter(MeterProviderBuilder builder, OtlpExporterOptions options, Action<OtlpExporterOptions> configure = null)
+        {
             configure?.Invoke(options);
 
-            var metricExporter = new OtlpMetricsExporter(options);
+            var metricExporter = new OtlpMetricExporter(options);
             var metricReader = new PeriodicExportingMetricReader(metricExporter, options.MetricExportIntervalMilliseconds);
-            return builder.AddMetricReader(metricReader);
+            metricReader.PreferredAggregationTemporality = options.AggregationTemporality;
+            return builder.AddReader(metricReader);
         }
     }
 }

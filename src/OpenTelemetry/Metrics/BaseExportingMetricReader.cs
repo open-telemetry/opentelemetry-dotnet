@@ -68,6 +68,8 @@ namespace OpenTelemetry.Metrics
             }
         }
 
+        internal BaseExporter<Metric> Exporter => this.exporter;
+
         protected ExportModes SupportedExportModes => this.supportedExportModes;
 
         internal override void SetParentProvider(BaseProvider parentProvider)
@@ -79,6 +81,7 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc/>
         protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
         {
+            // TODO: Do we need to consider timeout here?
             return this.exporter.Export(metrics) == ExportResult.Success;
         }
 

@@ -16,16 +16,18 @@
 
 using System;
 using System.Runtime.CompilerServices;
+#if DEBUG
 using System.Threading;
 using global::OpenTracing;
 using OpenTelemetry.Shared;
 using OpenTelemetry.Trace;
+using OpenTracing;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
     internal sealed class ScopeManagerShim : IScopeManager
     {
-        private static readonly ConditionalWeakTable<TelemetrySpan, global::OpenTracing.IScope> SpanScopeTable = new ConditionalWeakTable<TelemetrySpan, global::OpenTracing.IScope>();
+        private static readonly ConditionalWeakTable<TelemetrySpan, IScope> SpanScopeTable = new ConditionalWeakTable<TelemetrySpan, IScope>();
 
         private readonly Tracer tracer;
 
@@ -33,7 +35,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         private int spanScopeTableCount;
 #endif
 
-        public ScopeManagerShim(Trace.Tracer tracer)
+        public ScopeManagerShim(Tracer tracer)
         {
             Guard.NotNull(tracer, nameof(tracer));
 
@@ -45,7 +47,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 #endif
 
         /// <inheritdoc/>
-        public global::OpenTracing.IScope Active
+        public IScope Active
         {
             get
             {
@@ -65,7 +67,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.IScope Activate(ISpan span, bool finishSpanOnDispose)
+        public IScope Activate(ISpan span, bool finishSpanOnDispose)
         {
             var shim = Guard.NotOfType<SpanShim>(span, nameof(span));
 
@@ -93,7 +95,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             return instrumentation;
         }
 
-        private class ScopeInstrumentation : global::OpenTracing.IScope
+        private class ScopeInstrumentation : IScope
         {
             private readonly Action disposeAction;
 

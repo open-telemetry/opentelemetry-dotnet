@@ -21,83 +21,8 @@ using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class MeterProviderBuilderSdk : MeterProviderBuilder
+    internal class MeterProviderBuilderSdk : MeterProviderBuilderBase
     {
-        private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
-        private readonly List<string> meterSources = new List<string>();
-        private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
-
-        internal MeterProviderBuilderSdk()
-        {
-        }
-
-        internal List<MetricReader> MetricReaders { get; } = new List<MetricReader>();
-
-        public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
-        {
-            Guard.NotNull(instrumentationFactory, nameof(instrumentationFactory));
-
-            this.instrumentationFactories.Add(
-                new InstrumentationFactory(
-                    typeof(TInstrumentation).Name,
-                    "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
-                    instrumentationFactory));
-
-            return this;
-        }
-
-        public override MeterProviderBuilder AddSource(params string[] names)
-        {
-            Guard.NotNull(names, nameof(names));
-
-            foreach (var name in names)
-            {
-                Guard.NotNullOrWhitespace(name, nameof(name));
-
-                this.meterSources.Add(name);
-            }
-
-            return this;
-        }
-
-        internal MeterProviderBuilderSdk AddMetricReader(MetricReader metricReader)
-        {
-            Guard.NotInRange(this.MetricReaders.Count, $"{nameof(this.MetricReaders)}.{nameof(this.MetricReaders.Count)}", max: 1);
-
-            this.MetricReaders.Add(metricReader);
-            return this;
-        }
-
-        internal MeterProviderBuilderSdk SetResourceBuilder(ResourceBuilder resourceBuilder)
-        {
-            Guard.NotNull(resourceBuilder, nameof(resourceBuilder));
-
-            this.resourceBuilder = resourceBuilder;
-            return this;
-        }
-
-        internal MeterProvider Build()
-        {
-            return new MeterProviderSdk(
-                this.resourceBuilder.Build(),
-                this.meterSources,
-                this.instrumentationFactories,
-                this.MetricReaders.ToArray());
-        }
-
-        // TODO: This is copied from TracerProviderBuilderSdk. Move to common location.
-        internal readonly struct InstrumentationFactory
-        {
-            public readonly string Name;
-            public readonly string Version;
-            public readonly Func<object> Factory;
-
-            internal InstrumentationFactory(string name, string version, Func<object> factory)
-            {
-                this.Name = name;
-                this.Version = version;
-                this.Factory = factory;
-            }
-        }
+        internal MeterProvider BuildSdk() => this.Build();
     }
 }

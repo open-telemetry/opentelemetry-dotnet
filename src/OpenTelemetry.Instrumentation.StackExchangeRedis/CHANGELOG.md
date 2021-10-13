@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc8
+
+Released 2021-Oct-08
+
 * Adds SetVerboseDatabaseStatements option to allow setting more detailed database
   statement tag values.
 * Adds Enrich option to allow enriching activities from the source profiled command

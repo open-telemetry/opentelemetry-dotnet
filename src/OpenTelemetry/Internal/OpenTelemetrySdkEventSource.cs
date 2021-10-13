@@ -55,11 +55,21 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void MetricObserverCallbackException(string metricName, Exception ex)
+        public void MetricObserverCallbackException(Exception exception)
         {
             if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
-                this.MetricObserverCallbackError(metricName, ex.ToInvariantString());
+                if (exception is AggregateException aggregateException)
+                {
+                    foreach (var ex in aggregateException.InnerExceptions)
+                    {
+                        this.ObservableInstrumentCallbackException(ex.ToInvariantString());
+                    }
+                }
+                else
+                {
+                    this.ObservableInstrumentCallbackException(exception.ToInvariantString());
+                }
             }
         }
 
@@ -238,10 +248,10 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(15, spanName);
         }
 
-        [Event(16, Message = "Exception occurring while invoking Metric Observer callback. '{0}' Exception: '{1}'", Level = EventLevel.Warning)]
-        public void MetricObserverCallbackError(string metricName, string exception)
+        [Event(16, Message = "Exception occurred while invoking Observable instrument callback. Exception: '{0}'", Level = EventLevel.Warning)]
+        public void ObservableInstrumentCallbackException(string exception)
         {
-            this.WriteEvent(16, metricName, exception);
+            this.WriteEvent(16, exception);
         }
 
         [Event(17, Message = "Batcher finished collection with '{0}' metrics.", Level = EventLevel.Informational)]
@@ -338,6 +348,12 @@ namespace OpenTelemetry.Internal
         public void ExistsDroppedExportProcessorItems(string exportProcessorName, string exporterName, long droppedCount)
         {
             this.WriteEvent(32, exportProcessorName, exporterName, droppedCount);
+        }
+
+        [Event(33, Message = "Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{1}'. Suggested action: '{2}'", Level = EventLevel.Warning)]
+        public void MetricInstrumentIgnored(string instrumentName, string meterName, string reason, string fix)
+        {
+            this.WriteEvent(33, instrumentName, meterName, reason, fix);
         }
 
 #if DEBUG

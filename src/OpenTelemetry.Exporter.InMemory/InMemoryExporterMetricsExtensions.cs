@@ -34,7 +34,7 @@ namespace OpenTelemetry.Metrics
             Guard.NotNull(builder, nameof(builder));
             Guard.NotNull(exportedItems, nameof(exportedItems));
 
-            return builder.AddMetricReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems)));
+            return builder.AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems)));
         }
     }
 }

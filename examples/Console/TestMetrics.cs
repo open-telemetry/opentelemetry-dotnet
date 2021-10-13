@@ -32,7 +32,7 @@ namespace Examples.Console
         {
             var providerBuilder = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("myservice"))
-                .AddSource("TestMeter"); // All instruments from this meter are enabled.
+                .AddMeter("TestMeter"); // All instruments from this meter are enabled.
 
             if (options.UseExporter.ToLower() == "otlp")
             {
