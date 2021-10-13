@@ -18,8 +18,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using global::OpenTracing.Tag;
 using OpenTelemetry.Trace;
+using OpenTracing.Tag;
 using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
@@ -225,7 +225,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((string)null, true));
 
             shim.SetTag("foo", true);
-            shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, true);
+            shim.SetTag(Tags.Error.Key, true);
 
             Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
             Assert.True((bool)shim.Span.Activity.TagObjects.First().Value);
@@ -233,7 +233,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // A boolean tag named "error" is a special case that must be checked
             Assert.Equal(Status.Error, shim.Span.Activity.GetStatus());
 
-            shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
+            shim.SetTag(Tags.Error.Key, false);
             Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
         }
 
@@ -276,7 +276,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.Throws<ArgumentNullException>(() => shim.SetTag((BooleanTag)null, true));
 
             shim.SetTag(new BooleanTag("foo"), true);
-            shim.SetTag(new BooleanTag(global::OpenTracing.Tag.Tags.Error.Key), true);
+            shim.SetTag(new BooleanTag(Tags.Error.Key), true);
 
             Assert.Equal("foo", shim.Span.Activity.TagObjects.First().Key);
             Assert.True((bool)shim.Span.Activity.TagObjects.First().Value);
@@ -284,7 +284,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // A boolean tag named "error" is a special case that must be checked
             Assert.Equal(Status.Error, shim.Span.Activity.GetStatus());
 
-            shim.SetTag(global::OpenTracing.Tag.Tags.Error.Key, false);
+            shim.SetTag(Tags.Error.Key, false);
             Assert.Equal(Status.Ok, shim.Span.Activity.GetStatus());
         }
 

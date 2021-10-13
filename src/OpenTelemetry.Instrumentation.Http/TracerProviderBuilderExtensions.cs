@@ -17,7 +17,9 @@
 using System;
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Instrumentation.Http.Implementation;
+#if !NETFRAMEWORK
 using OpenTelemetry.Shared;
+#endif
 
 namespace OpenTelemetry.Trace
 {
