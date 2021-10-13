@@ -54,7 +54,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [MemberData(nameof(MetricsTestData.InvalidViewNames), MemberType = typeof(MetricsTestData))]
+        [MemberData(nameof(MetricsTestData.InvalidInstrumentNames), MemberType = typeof(MetricsTestData))]
         public void AddViewWithInvalidNameThrowsArgumentException(string viewNewName)
         {
             var exportedItems = new List<Metric>();
@@ -158,7 +158,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [MemberData(nameof(MetricsTestData.InvalidViewNames), MemberType = typeof(MetricsTestData))]
+        [MemberData(nameof(MetricsTestData.InvalidInstrumentNames), MemberType = typeof(MetricsTestData))]
         public void ViewWithInvalidNameIgnoredConditionally(string viewNewName)
         {
             using var meter1 = new Meter("ViewToRenameMetricConditionallyTest");

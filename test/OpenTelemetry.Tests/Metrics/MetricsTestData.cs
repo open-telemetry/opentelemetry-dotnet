@@ -30,16 +30,6 @@ namespace OpenTelemetry.Metrics.Tests
                     new object[] { new string('m', 64) },
            };
 
-        public static IEnumerable<object[]> InvalidViewNames
-           => new List<object[]>
-           {
-                    new object[] { " " },
-                    new object[] { "-first-char-not-alphabetic" },
-                    new object[] { "1first-char-not-alphabetic" },
-                    new object[] { "invalid+separator" },
-                    new object[] { new string('m', 64) },
-           };
-
         public static IEnumerable<object[]> ValidInstrumentNames
            => new List<object[]>
            {
