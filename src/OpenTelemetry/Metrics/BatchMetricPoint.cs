@@ -17,7 +17,7 @@
 using System;
 using System.Collections;
 using System.Diagnostics;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {

@@ -17,7 +17,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation
 {

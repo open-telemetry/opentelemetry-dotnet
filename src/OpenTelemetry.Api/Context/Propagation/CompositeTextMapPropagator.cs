@@ -16,7 +16,7 @@
 
 using System;
 using System.Collections.Generic;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation
 {

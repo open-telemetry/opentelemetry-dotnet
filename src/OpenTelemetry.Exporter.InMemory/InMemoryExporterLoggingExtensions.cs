@@ -16,7 +16,7 @@
 
 using System.Collections.Generic;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
 {

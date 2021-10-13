@@ -18,7 +18,7 @@
 // under the License.
 
 using System;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 using Thrift.Protocol;
 
 namespace Thrift

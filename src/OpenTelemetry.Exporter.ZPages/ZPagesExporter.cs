@@ -17,7 +17,7 @@
 using System.Diagnostics;
 using System.Timers;
 using OpenTelemetry.Exporter.ZPages.Implementation;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 using Timer = System.Timers.Timer;
 
 namespace OpenTelemetry.Exporter.ZPages

@@ -20,7 +20,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
-using OpenTelemetry.Shared;
 
 namespace OpenTelemetry
 {

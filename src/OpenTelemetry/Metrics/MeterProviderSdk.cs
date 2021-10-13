@@ -22,7 +22,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Metrics
 {

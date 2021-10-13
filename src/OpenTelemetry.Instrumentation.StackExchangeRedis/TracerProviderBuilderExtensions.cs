@@ -16,7 +16,7 @@
 
 using System;
 using OpenTelemetry.Instrumentation.StackExchangeRedis;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 using StackExchange.Redis;
 
 namespace OpenTelemetry.Trace

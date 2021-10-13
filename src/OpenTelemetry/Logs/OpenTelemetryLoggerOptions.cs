@@ -15,8 +15,8 @@
 // </copyright>
 
 using System.Collections.Generic;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Logs
 {

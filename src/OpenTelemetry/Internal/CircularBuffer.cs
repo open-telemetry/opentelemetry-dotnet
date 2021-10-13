@@ -16,7 +16,6 @@
 
 using System.Runtime.CompilerServices;
 using System.Threading;
-using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Internal
 {

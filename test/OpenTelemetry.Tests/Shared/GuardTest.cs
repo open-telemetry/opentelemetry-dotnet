@@ -16,7 +16,7 @@
 
 using System;
 using System.Threading;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 using Xunit;
 
 namespace OpenTelemetry.Tests.Shared

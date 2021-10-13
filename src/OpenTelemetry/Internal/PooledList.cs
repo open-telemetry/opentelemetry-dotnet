@@ -17,7 +17,6 @@ using System;
 using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
-using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Internal
 {

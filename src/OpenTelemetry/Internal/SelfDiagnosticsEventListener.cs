@@ -21,7 +21,6 @@ using System.Diagnostics.Tracing;
 using System.IO;
 using System.Text;
 using System.Threading;
-using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Internal
 {

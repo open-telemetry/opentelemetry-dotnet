@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {

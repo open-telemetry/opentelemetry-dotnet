@@ -18,10 +18,10 @@ using System;
 using System.Runtime.CompilerServices;
 #if DEBUG
 using System.Threading;
-using OpenTelemetry.Shared;
 using OpenTelemetry.Trace;
 using OpenTracing;
 #endif
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {

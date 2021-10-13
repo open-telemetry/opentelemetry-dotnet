@@ -17,8 +17,8 @@
 using System.Collections;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Logs
 {

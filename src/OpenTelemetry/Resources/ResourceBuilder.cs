@@ -15,7 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources
 {

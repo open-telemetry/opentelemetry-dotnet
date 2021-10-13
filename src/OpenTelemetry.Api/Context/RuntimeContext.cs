@@ -17,7 +17,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context
 {

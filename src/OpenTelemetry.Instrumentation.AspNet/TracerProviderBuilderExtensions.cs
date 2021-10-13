@@ -16,7 +16,7 @@
 
 using System;
 using OpenTelemetry.Instrumentation.AspNet;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {

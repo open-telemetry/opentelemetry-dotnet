@@ -27,8 +27,8 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Exporter
 {

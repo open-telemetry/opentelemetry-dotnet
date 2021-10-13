@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Shared;
 
 namespace OpenTelemetry
 {

@@ -19,7 +19,7 @@ using System.Diagnostics;
 using System.Web;
 using System.Web.Routing;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNet.Implementation

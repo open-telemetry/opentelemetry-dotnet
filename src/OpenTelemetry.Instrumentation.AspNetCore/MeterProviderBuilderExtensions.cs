@@ -15,7 +15,7 @@
 // </copyright>
 
 using OpenTelemetry.Instrumentation.AspNetCore;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {

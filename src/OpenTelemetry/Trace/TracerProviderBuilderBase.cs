@@ -17,8 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Trace
 {
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Sets whether the status of <see cref="System.Diagnostics.Activity"/>
+        /// Sets whether the status of <see cref="Activity"/>
         /// should be set to <c>Status.Error</c> when it ended abnormally due to an unhandled exception.
         /// </summary>
         /// <param name="enabled">Enabled or not.</param>

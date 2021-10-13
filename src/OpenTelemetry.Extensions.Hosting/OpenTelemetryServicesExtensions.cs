@@ -18,8 +18,8 @@ using System;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Extensions.Hosting.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
-using OpenTelemetry.Shared;
 using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.DependencyInjection

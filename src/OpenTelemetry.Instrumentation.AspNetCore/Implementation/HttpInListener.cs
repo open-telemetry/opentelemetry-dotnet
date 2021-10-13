@@ -25,7 +25,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 #if !NETSTANDARD2_0
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 #endif

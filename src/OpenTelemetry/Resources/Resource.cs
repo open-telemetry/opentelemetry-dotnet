@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Resources
 {
@@ -133,7 +132,7 @@ namespace OpenTelemetry.Resources
 
             if (value is int[] || value is short[])
             {
-                long[] convertedArr = new long[((System.Array)value).Length];
+                long[] convertedArr = new long[((Array)value).Length];
                 int i = 0;
                 foreach (var val in (Array)value)
                 {

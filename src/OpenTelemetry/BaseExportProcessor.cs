@@ -16,7 +16,6 @@
 
 using System;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Shared;
 
 namespace OpenTelemetry
 {

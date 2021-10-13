@@ -17,7 +17,6 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Shared;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 

@@ -15,7 +15,7 @@
 // </copyright>
 
 using OpenTelemetry.Instrumentation.Http;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {

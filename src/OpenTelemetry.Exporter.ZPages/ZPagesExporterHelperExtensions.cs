@@ -17,7 +17,7 @@
 using System;
 
 using OpenTelemetry.Exporter.ZPages;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {

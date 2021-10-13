@@ -16,7 +16,7 @@
 
 using System.Collections.Generic;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Shared;
+using OpenTelemetry.Internal;
 using OpenTracing.Propagation;
 
 namespace OpenTelemetry.Shims.OpenTracing
