@@ -102,7 +102,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var shim = new SpanShim(tracer.StartSpan(SpanName));
 
             // parameter validation
-            Assert.Throws<ArgumentNullException>(() => shim.GetBaggageItem(null));
+            Assert.Throws<ArgumentException>(() => shim.GetBaggageItem(null));
 
             // TODO - Method not implemented
         }

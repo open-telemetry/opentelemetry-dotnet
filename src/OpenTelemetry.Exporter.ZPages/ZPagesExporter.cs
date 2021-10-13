@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 using System.Timers;
 using OpenTelemetry.Exporter.ZPages.Implementation;

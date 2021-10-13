@@ -28,7 +28,7 @@ namespace OpenTelemetry.Tests.Shared
         {
             var ex1 = Assert.Throws<ArgumentNullException>(() => Guard.NotNull(null, "null"));
 #if NETCOREAPP
-            Assert.Equal("Must not be null\r\n(Parameter 'null')", ex1.Message);
+            Assert.Equal("Must not be null (Parameter 'null')", ex1.Message);
 #else
             Assert.Equal("Must not be null\r\nParameter name: null", ex1.Message);
 #endif
@@ -48,14 +48,14 @@ namespace OpenTelemetry.Tests.Shared
         {
             var ex1 = Assert.Throws<ArgumentException>(() => Guard.NotNullOrEmpty(null));
 #if NETCOREAPP
-            Assert.Equal("Must not be null or empty\r\n(Parameter 'N/A')", ex1.Message);
+            Assert.Equal("Must not be null or empty (Parameter 'N/A')", ex1.Message);
 #else
             Assert.Equal("Must not be null or empty\r\nParameter name: N/A", ex1.Message);
 #endif
 
             var ex2 = Assert.Throws<ArgumentException>(() => Guard.NotNullOrEmpty(string.Empty));
 #if NETCOREAPP
-            Assert.Equal("Must not be null or empty\r\n(Parameter 'N/A')", ex2.Message);
+            Assert.Equal("Must not be null or empty (Parameter 'N/A')", ex2.Message);
 #else
             Assert.Equal("Must not be null or empty\r\nParameter name: N/A", ex2.Message);
 #endif
@@ -74,22 +74,21 @@ namespace OpenTelemetry.Tests.Shared
         {
             var ex1 = Assert.Throws<ArgumentException>(() => Guard.NotNullOrWhitespace(null));
 #if NETCOREAPP
-            Assert.Equal("Must not be null or whitespace\r\n(Parameter 'N/A')", ex1.Message);
+            Assert.Equal("Must not be null or whitespace (Parameter 'N/A')", ex1.Message);
 #else
             Assert.Equal("Must not be null or whitespace\r\nParameter name: N/A", ex1.Message);
 #endif
 
-
             var ex2 = Assert.Throws<ArgumentException>(() => Guard.NotNullOrWhitespace(string.Empty));
 #if NETCOREAPP
-            Assert.Equal("Must not be null or whitespace\r\n(Parameter 'N/A')", ex2.Message);
+            Assert.Equal("Must not be null or whitespace (Parameter 'N/A')", ex2.Message);
 #else
             Assert.Equal("Must not be null or whitespace\r\nParameter name: N/A", ex2.Message);
 #endif
 
             var ex3 = Assert.Throws<ArgumentException>(() => Guard.NotNullOrWhitespace(" \t\n\r"));
 #if NETCOREAPP
-            Assert.Equal("Must not be null or whitespace\r\n(Parameter 'N/A')", ex3.Message);
+            Assert.Equal("Must not be null or whitespace (Parameter 'N/A')", ex3.Message);
 #else
             Assert.Equal("Must not be null or whitespace\r\nParameter name: N/A", ex3.Message);
 #endif
@@ -106,7 +105,7 @@ namespace OpenTelemetry.Tests.Shared
         {
             var ex1 = Assert.Throws<ArgumentOutOfRangeException>(() => Guard.NotValidTimeout(-100));
 #if NETCOREAPP
-            Assert.Equal("Must be non-negative or 'Timeout.Infinite'\r\n(Parameter 'N/A')\r\nActual value was -100.", ex1.Message);
+            Assert.Equal("Must be non-negative or 'Timeout.Infinite' (Parameter 'N/A')\r\nActual value was -100.", ex1.Message);
 #else
             Assert.Equal("Must be non-negative or 'Timeout.Infinite'\r\nParameter name: N/A\r\nActual value was -100.", ex1.Message);
 #endif
@@ -134,7 +133,7 @@ namespace OpenTelemetry.Tests.Shared
 #if NETCOREAPP
             Assert.Equal("error (Parameter 'N/A')\r\nActual value was -1.", ex2.Message);
 #else
-            Assert.Equal("error\r\nParameter name: N/A\r\nActual value was -1.", ex1.Message);
+            Assert.Equal("error\r\nParameter name: N/A\r\nActual value was -1.", ex2.Message);
 #endif
 
             // Double

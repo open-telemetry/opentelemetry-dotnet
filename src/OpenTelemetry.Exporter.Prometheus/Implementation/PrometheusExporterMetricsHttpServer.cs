@@ -19,7 +19,6 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Exporter.Prometheus.Implementation;
 using OpenTelemetry.Shared;
 
 namespace OpenTelemetry.Exporter.Prometheus
@@ -45,8 +44,6 @@ namespace OpenTelemetry.Exporter.Prometheus
             Guard.NotNull(exporter, nameof(exporter));
 
             this.exporter = exporter;
-            this.httpListener.Prefixes.Add(exporter.Options.Url);
-
             if ((exporter.Options.HttpListenerPrefixes?.Count ?? 0) <= 0)
             {
                 throw new ArgumentException("No HttpListenerPrefixes were specified on PrometheusExporterOptions.");

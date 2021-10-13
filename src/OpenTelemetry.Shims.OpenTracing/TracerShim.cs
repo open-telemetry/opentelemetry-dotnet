@@ -14,11 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
-using global::OpenTracing.Propagation;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Shared;
+using OpenTracing.Propagation;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
@@ -50,7 +49,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.ISpanContext Extract<TCarrier>(global::OpenTracing.Propagation.IFormat<TCarrier> format, TCarrier carrier)
+        public global::OpenTracing.ISpanContext Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier)
         {
             Guard.NotNull(format, nameof(format));
             Guard.NotNull(carrier, nameof(carrier));
@@ -90,7 +89,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public void Inject<TCarrier>(
             global::OpenTracing.ISpanContext spanContext,
-            global::OpenTracing.Propagation.IFormat<TCarrier> format,
+            IFormat<TCarrier> format,
             TCarrier carrier)
         {
             Guard.NotNull(spanContext, nameof(spanContext));

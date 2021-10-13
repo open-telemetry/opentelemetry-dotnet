@@ -29,8 +29,8 @@ namespace OpenTelemetry.Context.Tests
         [Fact]
         public static void RegisterSlotWithInvalidNameThrows()
         {
-            Assert.Throws<ArgumentNullException>(() => RuntimeContext.RegisterSlot<bool>(string.Empty));
-            Assert.Throws<ArgumentNullException>(() => RuntimeContext.RegisterSlot<bool>(null));
+            Assert.Throws<ArgumentException>(() => RuntimeContext.RegisterSlot<bool>(string.Empty));
+            Assert.Throws<ArgumentException>(() => RuntimeContext.RegisterSlot<bool>(null));
         }
 
         [Fact]
@@ -44,8 +44,8 @@ namespace OpenTelemetry.Context.Tests
         [Fact]
         public static void GetSlotWithInvalidNameThrows()
         {
-            Assert.Throws<ArgumentNullException>(() => RuntimeContext.GetSlot<bool>(string.Empty));
-            Assert.Throws<ArgumentNullException>(() => RuntimeContext.GetSlot<bool>(null));
+            Assert.Throws<ArgumentException>(() => RuntimeContext.GetSlot<bool>(string.Empty));
+            Assert.Throws<ArgumentException>(() => RuntimeContext.GetSlot<bool>(null));
         }
 
         [Fact]
