@@ -55,7 +55,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             counter.Add(100.18D, tags);
             counter.Add(0.99D, tags);
 
-            using var response = await host.GetTestClient().GetAsync("/metrics");
+            using var response = await host.GetTestClient().GetAsync("/metrics").ConfigureAwait(false);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-beta1
+
+Released 2021-Oct-08
+
 * `MeterProviderBuilder` extension methods now support `OtlpExporterOptions`
   bound to `IConfiguration` when using OpenTelemetry.Extensions.Hosting
   ([#2413](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2413))
