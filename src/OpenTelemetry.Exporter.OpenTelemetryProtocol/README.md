@@ -4,7 +4,7 @@
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.OpenTelemetryProtocol.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.OpenTelemetryProtocol)
 
 [The OTLP (OpenTelemetry Protocol) exporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)
-implementation supporting `grpc` and `http/protobuf` protocols.
+implementation.
 
 ## Prerequisite
 
