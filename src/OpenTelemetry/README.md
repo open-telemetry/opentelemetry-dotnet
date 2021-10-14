@@ -215,6 +215,9 @@ purposes, the SDK provides the following built-in processors:
   | `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSizeEnvVarKey`                  |
   <!-- markdownlint-enable MD013 -->
 
+  `ArgumentException` is thrown in case of an invalid value for any of the
+  supported environment variables.
+
 * [CompositeProcessor&lt;T&gt;](../../src/OpenTelemetry/CompositeProcessor.cs)
   : This is a processor which can be composed from multiple processors. This is
   typically used to construct multiple processing pipelines, each ending with
