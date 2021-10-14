@@ -46,7 +46,7 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options)
         {
-            Guard.NotNull(options, nameof(options));
+            Guard.Null(options, nameof(options));
 
             this.Options = options;
             this.Resource = options.ResourceBuilder.Build();
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
         {
-            Guard.NotNull(processor, nameof(processor));
+            Guard.Null(processor, nameof(processor));
 
             processor.SetParentProvider(this);
 

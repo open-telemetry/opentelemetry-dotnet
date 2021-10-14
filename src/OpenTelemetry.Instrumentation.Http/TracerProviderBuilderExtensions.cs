@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             Action<HttpClientInstrumentationOptions> configureHttpClientInstrumentationOptions = null)
         {
-            Guard.NotNull(builder, nameof(builder));
+            Guard.Null(builder, nameof(builder));
 
             var httpClientOptions = new HttpClientInstrumentationOptions();
 

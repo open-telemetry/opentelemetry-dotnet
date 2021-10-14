@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace
             Func<TInstrumentation> instrumentationFactory)
             where TInstrumentation : class
         {
-            Guard.NotNull(instrumentationFactory, nameof(instrumentationFactory));
+            Guard.Null(instrumentationFactory, nameof(instrumentationFactory));
 
             this.instrumentationFactories.Add(
                 new InstrumentationFactory(
@@ -57,11 +57,11 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public override TracerProviderBuilder AddSource(params string[] names)
         {
-            Guard.NotNull(names, nameof(names));
+            Guard.Null(names, nameof(names));
 
             foreach (var name in names)
             {
-                Guard.NotNullOrWhitespace(name, nameof(name));
+                Guard.NullOrWhitespace(name, nameof(name));
 
                 // TODO: We need to fix the listening model.
                 // Today it ignores version.
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public override TracerProviderBuilder AddLegacySource(string operationName)
         {
-            Guard.NotNullOrWhitespace(operationName, nameof(operationName));
+            Guard.NullOrWhitespace(operationName, nameof(operationName));
 
             this.legacyActivityOperationNames[operationName] = true;
 
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetSampler(Sampler sampler)
         {
-            Guard.NotNull(sampler, nameof(sampler));
+            Guard.Null(sampler, nameof(sampler));
 
             this.sampler = sampler;
             return this;
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
-            Guard.NotNull(resourceBuilder, nameof(resourceBuilder));
+            Guard.Null(resourceBuilder, nameof(resourceBuilder));
 
             this.resourceBuilder = resourceBuilder;
             return this;
@@ -156,7 +156,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder AddProcessor(BaseProcessor<Activity> processor)
         {
-            Guard.NotNull(processor, nameof(processor));
+            Guard.Null(processor, nameof(processor));
 
             this.processors.Add(processor);
 

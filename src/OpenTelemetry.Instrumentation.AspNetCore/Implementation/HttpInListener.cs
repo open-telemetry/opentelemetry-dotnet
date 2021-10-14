@@ -54,7 +54,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         public HttpInListener(AspNetCoreInstrumentationOptions options)
             : base(DiagnosticSourceName)
         {
-            Guard.NotNull(options, nameof(options));
+            Guard.Null(options, nameof(options));
 
             this.options = options;
         }

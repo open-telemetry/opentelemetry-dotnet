@@ -24,7 +24,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public BufferWriter(int initialCapacity)
         {
-            Guard.NotInRange(initialCapacity, nameof(initialCapacity), min: 0);
+            Guard.Range(initialCapacity, nameof(initialCapacity), min: 0);
 
             this.Buffer = new byte[initialCapacity];
         }

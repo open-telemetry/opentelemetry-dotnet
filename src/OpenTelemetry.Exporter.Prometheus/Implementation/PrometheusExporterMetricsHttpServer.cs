@@ -41,7 +41,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
         public PrometheusExporterMetricsHttpServer(PrometheusExporter exporter)
         {
-            Guard.NotNull(exporter, nameof(exporter));
+            Guard.Null(exporter, nameof(exporter));
 
             this.exporter = exporter;
             if ((exporter.Options.HttpListenerPrefixes?.Count ?? 0) <= 0)

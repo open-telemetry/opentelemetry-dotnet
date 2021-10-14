@@ -25,8 +25,8 @@ namespace OpenTelemetry.Trace
     {
         public static TracerProvider AddProcessor(this TracerProvider provider, BaseProcessor<Activity> processor)
         {
-            Guard.NotNull(provider, nameof(provider));
-            Guard.NotNull(processor, nameof(processor));
+            Guard.Null(provider, nameof(provider));
+            Guard.Null(processor, nameof(processor));
 
             if (provider is TracerProviderSdk tracerProviderSdk)
             {
@@ -56,8 +56,8 @@ namespace OpenTelemetry.Trace
         /// </remarks>
         public static bool ForceFlush(this TracerProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
-            Guard.NotNull(provider, nameof(provider));
-            Guard.NotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
+            Guard.Null(provider, nameof(provider));
+            Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             if (provider is TracerProviderSdk tracerProviderSdk)
             {
@@ -96,8 +96,8 @@ namespace OpenTelemetry.Trace
         /// </remarks>
         public static bool Shutdown(this TracerProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
-            Guard.NotNull(provider, nameof(provider));
-            Guard.NotValidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
+            Guard.Null(provider, nameof(provider));
+            Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             if (provider is TracerProviderSdk tracerProviderSdk)
             {

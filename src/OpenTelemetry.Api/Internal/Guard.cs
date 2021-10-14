@@ -35,7 +35,7 @@ namespace OpenTelemetry.Internal
         /// <param name="paramName">The parameter name to use in the thrown exception.</param>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NotNull(object value, string paramName = DefaultParamName)
+        public static void Null(object value, string paramName = DefaultParamName)
         {
             if (value is null)
             {
@@ -50,7 +50,7 @@ namespace OpenTelemetry.Internal
         /// <param name="paramName">The parameter name to use in the thrown exception.</param>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NotNullOrEmpty(string value, string paramName = DefaultParamName)
+        public static void NullOrEmpty(string value, string paramName = DefaultParamName)
         {
             if (string.IsNullOrEmpty(value))
             {
@@ -65,7 +65,7 @@ namespace OpenTelemetry.Internal
         /// <param name="paramName">The parameter name to use in the thrown exception.</param>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NotNullOrWhitespace(string value, string paramName = DefaultParamName)
+        public static void NullOrWhitespace(string value, string paramName = DefaultParamName)
         {
             if (string.IsNullOrWhiteSpace(value))
             {
@@ -81,7 +81,7 @@ namespace OpenTelemetry.Internal
         /// <param name="paramName">The parameter name to use in the thrown exception.</param>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NotZero(int value, string message, string paramName = DefaultParamName)
+        public static void Zero(int value, string message = "Must not be zero", string paramName = DefaultParamName)
         {
             if (value == 0)
             {
@@ -96,9 +96,9 @@ namespace OpenTelemetry.Internal
         /// <param name="paramName">The parameter name to use in the thrown exception.</param>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NotValidTimeout(int value, string paramName = DefaultParamName)
+        public static void InvalidTimeout(int value, string paramName = DefaultParamName)
         {
-            NotInRange(value, paramName, min: Timeout.Infinite, message: $"Must be non-negative or '{nameof(Timeout)}.{nameof(Timeout.Infinite)}'");
+            Range(value, paramName, min: Timeout.Infinite, message: $"Must be non-negative or '{nameof(Timeout)}.{nameof(Timeout.Infinite)}'");
         }
 
         /// <summary>
@@ -113,9 +113,9 @@ namespace OpenTelemetry.Internal
         /// <param name="message">An optional custom message to use in the thrown exception.</param>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NotInRange(int value, string paramName = DefaultParamName, int min = int.MinValue, int max = int.MaxValue, string minName = null, string maxName = null, string message = null)
+        public static void Range(int value, string paramName = DefaultParamName, int min = int.MinValue, int max = int.MaxValue, string minName = null, string maxName = null, string message = null)
         {
-            NotInRange<int>(value, paramName, min, max, minName, maxName, message);
+            Range<int>(value, paramName, min, max, minName, maxName, message);
         }
 
         /// <summary>
@@ -130,9 +130,9 @@ namespace OpenTelemetry.Internal
         /// <param name="message">An optional custom message to use in the thrown exception.</param>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void NotInRange(double value, string paramName = DefaultParamName, double min = double.MinValue, double max = double.MaxValue, string minName = null, string maxName = null, string message = null)
+        public static void Range(double value, string paramName = DefaultParamName, double min = double.MinValue, double max = double.MaxValue, string minName = null, string maxName = null, string message = null)
         {
-            NotInRange<double>(value, paramName, min, max, minName, maxName, message);
+            Range<double>(value, paramName, min, max, minName, maxName, message);
         }
 
         /// <summary>
@@ -144,7 +144,7 @@ namespace OpenTelemetry.Internal
         /// <returns>The value casted to the specified type.</returns>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T NotOfType<T>(object value, string paramName = DefaultParamName)
+        public static T Type<T>(object value, string paramName = DefaultParamName)
         {
             if (value is not T result)
             {
@@ -156,7 +156,7 @@ namespace OpenTelemetry.Internal
 
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void NotInRange<T>(T value, string paramName, T min, T max, string minName, string maxName, string message)
+        private static void Range<T>(T value, string paramName, T min, T max, string minName, string maxName, string message)
             where T : IComparable<T>
         {
             if (value.CompareTo(min) < 0 || value.CompareTo(max) > 0)

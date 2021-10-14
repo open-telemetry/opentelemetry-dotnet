@@ -48,7 +48,7 @@ namespace OpenTelemetry.Exporter
         /// <param name="client">Http client to use to upload telemetry.</param>
         public ZipkinExporter(ZipkinExporterOptions options, HttpClient client = null)
         {
-            Guard.NotNull(options, nameof(options));
+            Guard.Null(options, nameof(options));
 
             this.options = options;
             this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? ZipkinExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;

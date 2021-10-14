@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.ZPages
         /// <param name="options">Options for the exporter.</param>
         public ZPagesExporter(ZPagesExporterOptions options)
         {
-            Guard.NotNull(options?.RetentionTime, $"{nameof(options)}?.{nameof(options.RetentionTime)}");
+            Guard.Null(options?.RetentionTime, $"{nameof(options)}?.{nameof(options.RetentionTime)}");
 
             ZPagesActivityTracker.RetentionTime = options.RetentionTime;
 

@@ -90,7 +90,7 @@ namespace OpenTelemetry.Resources
         // https://github.com/open-telemetry/oteps/blob/master/text/0111-auto-resource-detection.md
         internal ResourceBuilder AddDetector(IResourceDetector resourceDetector)
         {
-            Guard.NotNull(resourceDetector, nameof(resourceDetector));
+            Guard.Null(resourceDetector, nameof(resourceDetector));
 
             Resource resource = resourceDetector.Detect();
 
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Resources
 
         internal ResourceBuilder AddResource(Resource resource)
         {
-            Guard.NotNull(resource, nameof(resource));
+            Guard.Null(resource, nameof(resource));
 
             this.resources.Add(resource);
 

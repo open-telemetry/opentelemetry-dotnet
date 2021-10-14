@@ -43,7 +43,7 @@ namespace OpenTelemetry.Internal
 
         public SelfDiagnosticsEventListener(EventLevel logLevel, SelfDiagnosticsConfigRefresher configRefresher)
         {
-            Guard.NotNull(configRefresher, nameof(configRefresher));
+            Guard.Null(configRefresher, nameof(configRefresher));
 
             this.logLevel = logLevel;
             this.configRefresher = configRefresher;

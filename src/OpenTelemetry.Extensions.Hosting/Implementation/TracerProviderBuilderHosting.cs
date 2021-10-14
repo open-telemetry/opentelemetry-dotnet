@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace
 
         public TracerProviderBuilderHosting(IServiceCollection services)
         {
-            Guard.NotNull(services, nameof(services));
+            Guard.Null(services, nameof(services));
 
             this.Services = services;
         }
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace
 
         public TracerProviderBuilder Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
         {
-            Guard.NotNull(configure, nameof(configure));
+            Guard.Null(configure, nameof(configure));
 
             this.configurationActions.Add(configure);
             return this;

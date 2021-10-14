@@ -29,8 +29,8 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLogger(string categoryName, OpenTelemetryLoggerProvider provider)
         {
-            Guard.NotNull(categoryName, nameof(categoryName));
-            Guard.NotNull(provider, nameof(provider));
+            Guard.Null(categoryName, nameof(categoryName));
+            Guard.Null(provider, nameof(provider));
 
             this.categoryName = categoryName;
             this.provider = provider;

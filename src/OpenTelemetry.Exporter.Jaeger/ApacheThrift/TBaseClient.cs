@@ -38,7 +38,7 @@ namespace Thrift
 
         protected TBaseClient(TProtocol outputProtocol)
         {
-            Guard.NotNull(outputProtocol, nameof(outputProtocol));
+            Guard.Null(outputProtocol, nameof(outputProtocol));
 
             _outputProtocol = outputProtocol;
         }

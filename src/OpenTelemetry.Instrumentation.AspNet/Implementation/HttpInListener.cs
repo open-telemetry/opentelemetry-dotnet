@@ -32,7 +32,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
         public HttpInListener(AspNetInstrumentationOptions options)
         {
-            Guard.NotNull(options, nameof(options));
+            Guard.Null(options, nameof(options));
 
             this.options = options;
 

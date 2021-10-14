@@ -60,10 +60,10 @@ namespace OpenTelemetry
             int maxExportBatchSize = DefaultMaxExportBatchSize)
             : base(exporter)
         {
-            Guard.NotInRange(maxQueueSize, nameof(maxQueueSize), min: 1);
-            Guard.NotInRange(maxExportBatchSize, nameof(maxExportBatchSize), min: 1, max: maxQueueSize, maxName: nameof(maxQueueSize));
-            Guard.NotInRange(scheduledDelayMilliseconds, nameof(scheduledDelayMilliseconds), min: 1);
-            Guard.NotInRange(exporterTimeoutMilliseconds, nameof(exporterTimeoutMilliseconds), min: 0);
+            Guard.Range(maxQueueSize, nameof(maxQueueSize), min: 1);
+            Guard.Range(maxExportBatchSize, nameof(maxExportBatchSize), min: 1, max: maxQueueSize, maxName: nameof(maxQueueSize));
+            Guard.Range(scheduledDelayMilliseconds, nameof(scheduledDelayMilliseconds), min: 1);
+            Guard.Range(exporterTimeoutMilliseconds, nameof(exporterTimeoutMilliseconds), min: 0);
 
             this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;

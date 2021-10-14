@@ -30,8 +30,8 @@ namespace OpenTelemetry.Metrics
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddInMemoryExporter(this MeterProviderBuilder builder, ICollection<Metric> exportedItems)
         {
-            Guard.NotNull(builder, nameof(builder));
-            Guard.NotNull(exportedItems, nameof(exportedItems));
+            Guard.Null(builder, nameof(builder));
+            Guard.Null(exportedItems, nameof(exportedItems));
 
             return builder.AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems)));
         }

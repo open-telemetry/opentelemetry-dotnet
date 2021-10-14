@@ -54,7 +54,7 @@ namespace OpenTelemetry.Metrics
 
             foreach (var reader in readers)
             {
-                Guard.NotNull(reader, nameof(reader));
+                Guard.Null(reader, nameof(reader));
 
                 reader.SetParentProvider(this);
 
