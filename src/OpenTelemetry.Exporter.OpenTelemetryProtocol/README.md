@@ -24,7 +24,7 @@ setters take precedence over the environment variables.
 
 ## Options Properties
 
-* `Endpoint`: Target to which the exporter is going to send traces or metrics.
+* `Endpoint`: Target to which the exporter is going to send traces, logs, or metrics.
   The endpoint must be a valid Uri with scheme (http or https) and host, and MAY
   contain a port and path.
 * `Headers`: Optional headers for the connection.
