@@ -6,4 +6,4 @@ implementation for logs.
 ## Prerequisite
 
 * [Get OpenTelemetry Collector](https://opentelemetry.io/docs/collector/)
-* Install the .NET exporter, [`OpenTelemetry.Exporter.OpenTelemetryProtocol`](../src/OpenTelemetry.Exporter.OpenTelemetryProtocol)
+* Install the .NET exporter, [`OpenTelemetry.Exporter.OpenTelemetryProtocol`](../OpenTelemetry.Exporter.OpenTelemetryProtocol)
