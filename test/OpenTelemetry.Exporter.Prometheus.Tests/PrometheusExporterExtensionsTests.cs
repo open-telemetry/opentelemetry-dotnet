@@ -75,10 +75,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 prometheusExporter.Metrics = metrics;
 
                 using MemoryStream ms = new MemoryStream();
-                using (StreamWriter writer = new StreamWriter(ms))
-                {
-                    PrometheusExporterExtensions.WriteMetricsCollection(prometheusExporter, writer, () => new DateTimeOffset(2021, 9, 30, 22, 30, 0, TimeSpan.Zero)).GetAwaiter().GetResult();
-                }
+
+                PrometheusExporterExtensions.WriteMetricsCollection(prometheusExporter, ms, () => new DateTimeOffset(2021, 9, 30, 22, 30, 0, TimeSpan.Zero)).GetAwaiter().GetResult();
 
                 Assert.Equal(
                     expected,
