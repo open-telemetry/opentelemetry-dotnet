@@ -27,11 +27,7 @@ namespace OpenTelemetry.Tests.Shared
         public static void NotNullTest_Throws()
         {
             var ex1 = Assert.Throws<ArgumentNullException>(() => Guard.NotNull(null, "null"));
-#if NETCOREAPP
-            Assert.Equal("Must not be null (Parameter 'null')", ex1.Message);
-#else
-            Assert.Equal("Must not be null\r\nParameter name: null", ex1.Message);
-#endif
+            Assert.Contains("Must not be null", ex1.Message);
         }
 
         [Fact]
@@ -47,19 +43,10 @@ namespace OpenTelemetry.Tests.Shared
         public static void NotNullOrEmptyTest_Throws()
         {
             var ex1 = Assert.Throws<ArgumentException>(() => Guard.NotNullOrEmpty(null));
-#if NETCOREAPP
-            Assert.Equal("Must not be null or empty (Parameter 'N/A')", ex1.Message);
-#else
-            Assert.Equal("Must not be null or empty\r\nParameter name: N/A", ex1.Message);
-#endif
+            Assert.Contains("Must not be null or empty", ex1.Message);
 
             var ex2 = Assert.Throws<ArgumentException>(() => Guard.NotNullOrEmpty(string.Empty));
-#if NETCOREAPP
-            Assert.Equal("Must not be null or empty (Parameter 'N/A')", ex2.Message);
-#else
-            Assert.Equal("Must not be null or empty\r\nParameter name: N/A", ex2.Message);
-#endif
-
+            Assert.Contains("Must not be null or empty", ex2.Message);
         }
 
         [Fact]
@@ -73,25 +60,13 @@ namespace OpenTelemetry.Tests.Shared
         public static void NotNullOrWhitespaceTest_Throws()
         {
             var ex1 = Assert.Throws<ArgumentException>(() => Guard.NotNullOrWhitespace(null));
-#if NETCOREAPP
-            Assert.Equal("Must not be null or whitespace (Parameter 'N/A')", ex1.Message);
-#else
-            Assert.Equal("Must not be null or whitespace\r\nParameter name: N/A", ex1.Message);
-#endif
+            Assert.Contains("Must not be null or whitespace", ex1.Message);
 
             var ex2 = Assert.Throws<ArgumentException>(() => Guard.NotNullOrWhitespace(string.Empty));
-#if NETCOREAPP
-            Assert.Equal("Must not be null or whitespace (Parameter 'N/A')", ex2.Message);
-#else
-            Assert.Equal("Must not be null or whitespace\r\nParameter name: N/A", ex2.Message);
-#endif
+            Assert.Contains("Must not be null or whitespace", ex2.Message);
 
             var ex3 = Assert.Throws<ArgumentException>(() => Guard.NotNullOrWhitespace(" \t\n\r"));
-#if NETCOREAPP
-            Assert.Equal("Must not be null or whitespace (Parameter 'N/A')", ex3.Message);
-#else
-            Assert.Equal("Must not be null or whitespace\r\nParameter name: N/A", ex3.Message);
-#endif
+            Assert.Contains("Must not be null or whitespace", ex3.Message);
         }
 
         [Fact]
@@ -104,11 +79,7 @@ namespace OpenTelemetry.Tests.Shared
         public static void NotValidTimeoutTest_Throws()
         {
             var ex1 = Assert.Throws<ArgumentOutOfRangeException>(() => Guard.NotValidTimeout(-100));
-#if NETCOREAPP
-            Assert.Equal("Must be non-negative or 'Timeout.Infinite' (Parameter 'N/A')\r\nActual value was -100.", ex1.Message);
-#else
-            Assert.Equal("Must be non-negative or 'Timeout.Infinite'\r\nParameter name: N/A\r\nActual value was -100.", ex1.Message);
-#endif
+            Assert.Contains("Must be non-negative or 'Timeout.Infinite'", ex1.Message);
         }
 
         [Fact]
@@ -124,32 +95,17 @@ namespace OpenTelemetry.Tests.Shared
         {
             // Int
             var ex1 = Assert.Throws<ArgumentOutOfRangeException>(() => Guard.NotInRange(-1, min: 0, max: 100, minName: "empty", maxName: "full"));
-#if NETCOREAPP
-            Assert.Equal("Must be in the range: [0: empty, 100: full] (Parameter 'N/A')\r\nActual value was -1.", ex1.Message);
-#else
-            Assert.Equal("Must be in the range: [0: empty, 100: full]\r\nParameter name: N/A\r\nActual value was -1.", ex1.Message);
-#endif
+            Assert.Contains("Must be in the range: [0: empty, 100: full]", ex1.Message);
+
             var ex2 = Assert.Throws<ArgumentOutOfRangeException>(() => Guard.NotInRange(-1, min: 0, max: 100, message: "error"));
-#if NETCOREAPP
-            Assert.Equal("error (Parameter 'N/A')\r\nActual value was -1.", ex2.Message);
-#else
-            Assert.Equal("error\r\nParameter name: N/A\r\nActual value was -1.", ex2.Message);
-#endif
+            Assert.Contains("error", ex2.Message);
 
             // Double
             var ex3 = Assert.Throws<ArgumentOutOfRangeException>(() => Guard.NotInRange(-1.1, min: 0.1, max: 99.9, minName: "empty", maxName: "full"));
-#if NETCOREAPP
-            Assert.Equal("Must be in the range: [0.1: empty, 99.9: full] (Parameter 'N/A')\r\nActual value was -1.1.", ex3.Message);
-#else
-            Assert.Equal("Must be in the range: [0.1: empty, 99.9: full]\r\nParameter name: N/A\r\nActual value was -1.1.", ex3.Message);
-#endif
+            Assert.Contains("Must be in the range: [0.1: empty, 99.9: full]", ex3.Message);
 
             var ex4 = Assert.Throws<ArgumentOutOfRangeException>(() => Guard.NotInRange(-1.1, min: 0.0, max: 100.0));
-#if NETCOREAPP
-            Assert.Equal("Must be in the range: [0, 100] (Parameter 'N/A')\r\nActual value was -1.1.", ex4.Message);
-#else
-            Assert.Equal("Must be in the range: [0, 100]\r\nParameter name: N/A\r\nActual value was -1.1.", ex4.Message);
-#endif
+            Assert.Contains("Must be in the range: [0, 100]", ex4.Message);
         }
 
         [Fact]
