@@ -237,7 +237,7 @@ namespace OpenTelemetry.Metrics
                             OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
                                 instrument.Name,
                                 instrument.Meter.Name,
-                                "Metric name is invalid.",
+                                "Instrument name is invalid.",
                                 "The name must comply with the OpenTelemetry specification");
 
                             return;
