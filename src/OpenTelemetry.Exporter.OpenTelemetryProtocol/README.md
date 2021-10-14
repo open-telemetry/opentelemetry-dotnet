@@ -24,7 +24,7 @@ setters take precedence over the environment variables.
 
 ## Options Properties
 
-* `Endpoint`: Target to which the exporter is going to send traces, logs, or metrics.
+* `Endpoint`: Target to which the exporter is going to send traces or metrics.
   The endpoint must be a valid Uri with scheme (http or https) and host, and MAY
   contain a port and path.
 * `Headers`: Optional headers for the connection.
@@ -53,6 +53,12 @@ values of the `OtlpExporterOptions`
 | `OTEL_EXPORTER_OTLP_HEADERS`  | `Headers`                         |
 | `OTEL_EXPORTER_OTLP_TIMEOUT`  | `TimeoutMilliseconds`             |
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | `Protocol` (grpc or http/protobuf)|
+
+## OTLP Logs
+
+This package currently only supports exporting traces and metrics. Once the [OTLP log data model](https://github.com/open-telemetry/opentelemetry-proto#maturity-level) is deemed stable, the OTLP log exporter will be folded into this package.
+
+In the meantime, support for exporting logs is provided by installing the [`OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs`](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs) package.
 
 ## Special case when using insecure channel
 
