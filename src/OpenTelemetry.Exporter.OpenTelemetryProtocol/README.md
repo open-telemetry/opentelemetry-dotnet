@@ -58,7 +58,7 @@ values of the `OtlpExporterOptions`
 
 This package currently only supports exporting traces and metrics. Once the [OTLP log data model](https://github.com/open-telemetry/opentelemetry-proto#maturity-level) is deemed stable, the OTLP log exporter will be folded into this package.
 
-In the meantime, support for exporting logs is provided by installing the [`OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs`](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs) package.
+In the meantime, support for exporting logs is provided by installing the [`OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs`](../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs) package.
 
 ## Special case when using insecure channel
 
