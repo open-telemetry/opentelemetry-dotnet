@@ -61,7 +61,7 @@ This package currently only supports exporting traces and metrics. Once the
 is deemed stable, the OTLP log exporter will be folded into this package.
 
 In the meantime, support for exporting logs is provided by installing the
-[`OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs`](../OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs)
+[`OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs`](../OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs/README.md)
 package.
 
 ## Special case when using insecure channel
