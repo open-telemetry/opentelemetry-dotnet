@@ -1,4 +1,4 @@
-// <copyright file="OtlpExporterBenchmarks.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpGrpcExporterBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,7 @@ using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 namespace Benchmarks.Exporter
 {
     [MemoryDiagnoser]
-    public class OtlpExporterBenchmarks
+    public class OtlpGrpcExporterBenchmarks
     {
         private OtlpTraceExporter exporter;
         private Activity activity;
