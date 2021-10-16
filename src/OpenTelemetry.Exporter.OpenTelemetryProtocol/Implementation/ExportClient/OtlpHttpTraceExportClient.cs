@@ -16,8 +16,14 @@
 
 using System;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
+#if NET5_0_OR_GREATER
+using System.Threading;
+#endif
+using System.Threading.Tasks;
 using Google.Protobuf;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
@@ -43,18 +49,48 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
                 request.Headers.Add(header.Key, header.Value);
             }
 
-            var content = Array.Empty<byte>();
-            using (var stream = new MemoryStream())
-            {
-                exportRequest.WriteTo(stream);
-                content = stream.ToArray();
-            }
-
-            var binaryContent = new ByteArrayContent(content);
-            binaryContent.Headers.ContentType = new MediaTypeHeaderValue(MediaContentType);
-            request.Content = binaryContent;
+            request.Content = new ExportRequestContent(exportRequest);
 
             return request;
+        }
+
+        internal sealed class ExportRequestContent : HttpContent
+        {
+            private static readonly MediaTypeHeaderValue ProtobufMediaTypeHeader = new MediaTypeHeaderValue(MediaContentType);
+
+            private readonly OtlpCollector.ExportTraceServiceRequest exportRequest;
+
+            public ExportRequestContent(OtlpCollector.ExportTraceServiceRequest exportRequest)
+            {
+                this.exportRequest = exportRequest;
+                this.Headers.ContentType = ProtobufMediaTypeHeader;
+            }
+
+#if NET5_0_OR_GREATER
+            protected override void SerializeToStream(Stream stream, TransportContext context, CancellationToken cancellationToken)
+            {
+                this.SerializeToStreamInternal(stream);
+            }
+#endif
+
+            protected override Task SerializeToStreamAsync(Stream stream, TransportContext context)
+            {
+                this.SerializeToStreamInternal(stream);
+                return Task.CompletedTask;
+            }
+
+            protected override bool TryComputeLength(out long length)
+            {
+                // We can't know the length of the content being pushed to the output stream.
+                length = -1;
+                return false;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private void SerializeToStreamInternal(Stream stream)
+            {
+                this.exportRequest.WriteTo(stream);
+            }
         }
     }
 }

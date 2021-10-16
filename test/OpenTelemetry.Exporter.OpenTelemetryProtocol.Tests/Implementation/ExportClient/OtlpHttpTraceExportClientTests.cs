@@ -181,7 +181,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Expo
                 Assert.Contains(httpRequest.Headers, h => h.Key == header2.Name && h.Value.First() == header2.Value);
 
                 Assert.NotNull(httpRequest.Content);
-                Assert.IsType<ByteArrayContent>(httpRequest.Content);
+                Assert.IsType<OtlpHttpTraceExportClient.ExportRequestContent>(httpRequest.Content);
                 Assert.Contains(httpRequest.Content.Headers, h => h.Key == "Content-Type" && h.Value.First() == OtlpHttpTraceExportClient.MediaContentType);
 
                 var exportTraceRequest = OtlpCollector.ExportTraceServiceRequest.Parser.ParseFrom(httpRequestContent);
