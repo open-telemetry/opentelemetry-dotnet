@@ -30,16 +30,12 @@ namespace OpenTelemetry
 
         public CompositeProcessor(IEnumerable<BaseProcessor<T>> processors)
         {
-            if (processors == null)
-            {
-                throw new ArgumentNullException(nameof(processors));
-            }
+            Guard.Null(processors, nameof(processors));
 
             using var iter = processors.GetEnumerator();
-
             if (!iter.MoveNext())
             {
-                throw new ArgumentException($"{nameof(processors)} collection is empty");
+                throw new ArgumentException($"'{iter}' is null or empty", nameof(iter));
             }
 
             this.head = new DoublyLinkedListNode(iter.Current);
@@ -53,10 +49,7 @@ namespace OpenTelemetry
 
         public CompositeProcessor<T> AddProcessor(BaseProcessor<T> processor)
         {
-            if (processor == null)
-            {
-                throw new ArgumentNullException(nameof(processor));
-            }
+            Guard.Null(processor, nameof(processor));
 
             var node = new DoublyLinkedListNode(processor)
             {

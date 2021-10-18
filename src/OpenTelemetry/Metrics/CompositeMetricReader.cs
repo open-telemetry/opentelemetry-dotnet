@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -29,16 +30,12 @@ namespace OpenTelemetry.Metrics
 
         public CompositeMetricReader(IEnumerable<MetricReader> readers)
         {
-            if (readers == null)
-            {
-                throw new ArgumentNullException(nameof(readers));
-            }
+            Guard.Null(readers, nameof(readers));
 
             using var iter = readers.GetEnumerator();
-
             if (!iter.MoveNext())
             {
-                throw new ArgumentException($"{nameof(readers)} collection is empty");
+                throw new ArgumentException($"'{iter}' is null or empty", nameof(iter));
             }
 
             this.head = new DoublyLinkedListNode(iter.Current);
@@ -52,10 +49,7 @@ namespace OpenTelemetry.Metrics
 
         public CompositeMetricReader AddReader(MetricReader reader)
         {
-            if (reader == null)
-            {
-                throw new ArgumentNullException(nameof(reader));
-            }
+            Guard.Null(reader, nameof(reader));
 
             var node = new DoublyLinkedListNode(reader)
             {

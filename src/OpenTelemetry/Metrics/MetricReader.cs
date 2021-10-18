@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -60,7 +61,7 @@ namespace OpenTelemetry.Metrics
         /// <returns>
         /// Returns <c>true</c> when metrics collection succeeded; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentOutOfRangeException">
         /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
         /// </exception>
         /// <remarks>
@@ -68,10 +69,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         public bool Collect(int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
-            }
+            Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             try
             {
@@ -95,7 +93,7 @@ namespace OpenTelemetry.Metrics
         /// <returns>
         /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentOutOfRangeException">
         /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
         /// </exception>
         /// <remarks>
@@ -104,10 +102,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         public bool Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
-            }
+            Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             if (Interlocked.Increment(ref this.shutdownCount) > 1)
             {
@@ -228,15 +223,8 @@ namespace OpenTelemetry.Metrics
 
         private static void ValidateAggregationTemporality(AggregationTemporality preferred, AggregationTemporality supported)
         {
-            if ((int)(preferred & CumulativeAndDelta) == 0)
-            {
-                throw new ArgumentException($"PreferredAggregationTemporality has an invalid value {preferred}.", nameof(preferred));
-            }
-
-            if ((int)(supported & CumulativeAndDelta) == 0)
-            {
-                throw new ArgumentException($"SupportedAggregationTemporality has an invalid value {supported}.", nameof(supported));
-            }
+            Guard.Zero((int)(preferred & CumulativeAndDelta), $"PreferredAggregationTemporality has an invalid value {preferred}", nameof(preferred));
+            Guard.Zero((int)(supported & CumulativeAndDelta), $"SupportedAggregationTemporality has an invalid value {supported}", nameof(supported));
 
             /*
             | Preferred  | Supported  | Valid |
@@ -251,10 +239,9 @@ namespace OpenTelemetry.Metrics
             | Delta      | Cumulative | false |
             | Delta      | Delta      | true  |
             */
-            if ((int)(preferred & supported) == 0 || preferred > supported)
-            {
-                throw new ArgumentException($"PreferredAggregationTemporality {preferred} and SupportedAggregationTemporality {supported} are incompatible.");
-            }
+            string message = $"PreferredAggregationTemporality {preferred} and SupportedAggregationTemporality {supported} are incompatible";
+            Guard.Zero((int)(preferred & supported), message, nameof(preferred));
+            Guard.Range((int)preferred, nameof(preferred), max: (int)supported, maxName: nameof(supported), message: message);
         }
     }
 }

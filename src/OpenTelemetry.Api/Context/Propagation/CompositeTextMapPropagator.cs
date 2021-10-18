@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation
 {
@@ -34,7 +35,9 @@ namespace OpenTelemetry.Context.Propagation
         /// <param name="propagators">List of <see cref="TextMapPropagator"/> wire context propagator.</param>
         public CompositeTextMapPropagator(IEnumerable<TextMapPropagator> propagators)
         {
-            this.propagators = new List<TextMapPropagator>(propagators ?? throw new ArgumentNullException(nameof(propagators)));
+            Guard.Null(propagators, nameof(propagators));
+
+            this.propagators = new List<TextMapPropagator>(propagators);
         }
 
         /// <inheritdoc/>

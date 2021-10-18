@@ -17,6 +17,7 @@
 using System;
 using System.Threading;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -31,10 +32,7 @@ namespace OpenTelemetry.Metrics
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public static MeterProviderBuilder AddConsoleExporter(this MeterProviderBuilder builder, Action<ConsoleExporterOptions> configure = null)
         {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.Null(builder, nameof(builder));
 
             var options = new ConsoleExporterOptions();
             configure?.Invoke(options);

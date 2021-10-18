@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using StackExchange.Redis;
 using StackExchange.Redis.Profiling;
@@ -58,10 +59,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
         /// <param name="options">Configuration options for redis instrumentation.</param>
         public StackExchangeRedisCallsInstrumentation(IConnectionMultiplexer connection, StackExchangeRedisCallsInstrumentationOptions options)
         {
-            if (connection == null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            Guard.Null(connection, nameof(connection));
 
             this.options = options ?? new StackExchangeRedisCallsInstrumentationOptions();
 

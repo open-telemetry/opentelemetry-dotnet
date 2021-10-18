@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
@@ -23,10 +24,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public BufferWriter(int initialCapacity)
         {
-            if (initialCapacity < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(initialCapacity), initialCapacity, "initialCapacity should be non-negative.");
-            }
+            Guard.Range(initialCapacity, nameof(initialCapacity), min: 0);
 
             this.Buffer = new byte[initialCapacity];
         }

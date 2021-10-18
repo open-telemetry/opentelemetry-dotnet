@@ -54,10 +54,7 @@ namespace OpenTelemetry.Metrics
 
             foreach (var reader in readers)
             {
-                if (reader == null)
-                {
-                    throw new ArgumentException("A null value was found.", nameof(readers));
-                }
+                Guard.Null(reader, nameof(reader));
 
                 reader.SetParentProvider(this);
 

@@ -21,6 +21,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.ZPages.Implementation;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.ZPages
 {
@@ -41,7 +42,9 @@ namespace OpenTelemetry.Exporter.ZPages
         /// <param name="exporter">The <see cref="ZPagesExporterStatsHttpServer"/> instance.</param>
         public ZPagesExporterStatsHttpServer(ZPagesExporter exporter)
         {
-            this.httpListener.Prefixes.Add(exporter?.Options?.Url ?? throw new ArgumentNullException(nameof(exporter)));
+            Guard.Null(exporter?.Options?.Url, $"{nameof(exporter)}?.{nameof(exporter.Options)}?.{nameof(exporter.Options.Url)}");
+
+            this.httpListener.Prefixes.Add(exporter.Options.Url);
         }
 
         /// <summary>

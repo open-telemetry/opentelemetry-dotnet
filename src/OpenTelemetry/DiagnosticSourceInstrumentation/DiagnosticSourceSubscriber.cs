@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation
 {
@@ -41,8 +42,10 @@ namespace OpenTelemetry.Instrumentation
             Func<DiagnosticListener, bool> diagnosticSourceFilter,
             Func<string, object, object, bool> isEnabledFilter)
         {
+            Guard.Null(handlerFactory, nameof(handlerFactory));
+
             this.listenerSubscriptions = new List<IDisposable>();
-            this.handlerFactory = handlerFactory ?? throw new ArgumentNullException(nameof(handlerFactory));
+            this.handlerFactory = handlerFactory;
             this.diagnosticSourceFilter = diagnosticSourceFilter;
             this.isEnabledFilter = isEnabledFilter;
         }

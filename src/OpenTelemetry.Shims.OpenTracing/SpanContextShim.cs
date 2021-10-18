@@ -26,7 +26,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         {
             if (!spanContext.IsValid)
             {
-                throw new ArgumentException(nameof(spanContext));
+                throw new ArgumentException($"Invalid '{nameof(Trace.SpanContext)}'", nameof(spanContext));
             }
 
             this.SpanContext = spanContext;

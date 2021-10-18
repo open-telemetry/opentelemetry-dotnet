@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace
             }
             catch (Exception ex)
             {
-                throw new NotSupportedException("System.Runtime.InteropServices.Marshal.GetExceptionPointers is not supported.", ex);
+                throw new NotSupportedException($"'{typeof(Marshal).FullName}.GetExceptionPointers' is not supported", ex);
             }
         }
 

@@ -14,13 +14,13 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 #if NETSTANDARD2_1 || NET5_0_OR_GREATER
 using Grpc.Net.Client;
 #endif
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
 {
@@ -30,13 +30,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     {
         protected BaseOtlpGrpcExportClient(OtlpExporterOptions options)
         {
-            this.Options = options ?? throw new ArgumentNullException(nameof(options));
+            Guard.Null(options, nameof(options));
+            Guard.InvalidTimeout(options.TimeoutMilliseconds, nameof(options.TimeoutMilliseconds));
 
-            if (options.TimeoutMilliseconds <= 0)
-            {
-                throw new ArgumentException("Timeout value provided is not a positive number.", nameof(options.TimeoutMilliseconds));
-            }
-
+            this.Options = options;
             this.Headers = options.GetMetadataFromHeaders();
         }
 

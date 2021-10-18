@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -37,10 +36,7 @@ namespace OpenTelemetry.Internal
         /// <param name="capacity">The capacity of the circular buffer, must be a positive integer.</param>
         public CircularBuffer(int capacity)
         {
-            if (capacity <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(capacity), capacity, "capacity should be greater than zero.");
-            }
+            Guard.Range(capacity, nameof(capacity), min: 1);
 
             this.Capacity = capacity;
             this.trait = new T[capacity];
@@ -83,10 +79,7 @@ namespace OpenTelemetry.Internal
         /// </returns>
         public bool Add(T value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
+            Guard.Null(value, nameof(value));
 
             while (true)
             {
@@ -126,10 +119,7 @@ namespace OpenTelemetry.Internal
                 return this.Add(value);
             }
 
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
+            Guard.Null(value, nameof(value));
 
             var spinCountDown = maxSpinCount;
 
