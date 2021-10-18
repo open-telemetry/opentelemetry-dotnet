@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 using System.Timers;
 using OpenTelemetry.Exporter.ZPages.Implementation;
+using OpenTelemetry.Internal;
 using Timer = System.Timers.Timer;
 
 namespace OpenTelemetry.Exporter.ZPages
@@ -37,7 +37,9 @@ namespace OpenTelemetry.Exporter.ZPages
         /// <param name="options">Options for the exporter.</param>
         public ZPagesExporter(ZPagesExporterOptions options)
         {
-            ZPagesActivityTracker.RetentionTime = options?.RetentionTime ?? throw new ArgumentNullException(nameof(options));
+            Guard.Null(options?.RetentionTime, $"{nameof(options)}?.{nameof(options.RetentionTime)}");
+
+            ZPagesActivityTracker.RetentionTime = options.RetentionTime;
 
             this.Options = options;
 

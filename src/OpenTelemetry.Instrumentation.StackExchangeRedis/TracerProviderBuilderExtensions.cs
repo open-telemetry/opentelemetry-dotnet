@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry.Instrumentation.StackExchangeRedis;
+using OpenTelemetry.Internal;
 using StackExchange.Redis;
 
 namespace OpenTelemetry.Trace
@@ -42,38 +43,35 @@ namespace OpenTelemetry.Trace
             IConnectionMultiplexer connection = null,
             Action<StackExchangeRedisCallsInstrumentationOptions> configure = null)
         {
-            if (builder == null)
+            Guard.Null(builder, nameof(builder));
+
+            if (builder is not IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
             {
-                throw new ArgumentNullException(nameof(builder));
+                if (connection == null)
+                {
+                    throw new NotSupportedException($"StackExchange.Redis {nameof(IConnectionMultiplexer)} must be supplied when dependency injection is unavailable - to enable dependency injection use the OpenTelemetry.Extensions.Hosting package");
+                }
+
+                return AddRedisInstrumentation(builder, connection, new StackExchangeRedisCallsInstrumentationOptions(), configure);
             }
 
-            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            return deferredTracerProviderBuilder.Configure((sp, builder) =>
             {
-                return deferredTracerProviderBuilder.Configure((sp, builder) =>
+                if (connection == null)
                 {
+                    connection = (IConnectionMultiplexer)sp.GetService(typeof(IConnectionMultiplexer));
                     if (connection == null)
                     {
-                        connection = (IConnectionMultiplexer)sp.GetService(typeof(IConnectionMultiplexer));
-                        if (connection == null)
-                        {
-                            throw new InvalidOperationException("StackExchange.Redis IConnectionMultiplexer could not be resolved through application IServiceProvider.");
-                        }
+                        throw new InvalidOperationException($"StackExchange.Redis {nameof(IConnectionMultiplexer)} could not be resolved through application {nameof(IServiceProvider)}");
                     }
+                }
 
-                    AddRedisInstrumentation(
-                        builder,
-                        connection,
-                        sp.GetOptions<StackExchangeRedisCallsInstrumentationOptions>(),
-                        configure);
-                });
-            }
-
-            if (connection == null)
-            {
-                throw new NotSupportedException("StackExchange.Redis IConnectionMultiplexer must be supplied when dependency injection is unavailable. To enable dependency injection use the OpenTelemetry.Extensions.Hosting package.");
-            }
-
-            return AddRedisInstrumentation(builder, connection, new StackExchangeRedisCallsInstrumentationOptions(), configure);
+                AddRedisInstrumentation(
+                    builder,
+                    connection,
+                    sp.GetOptions<StackExchangeRedisCallsInstrumentationOptions>(),
+                    configure);
+            });
         }
 
         private static TracerProviderBuilder AddRedisInstrumentation(

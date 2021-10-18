@@ -19,6 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Configuration;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 
 namespace Microsoft.Extensions.Logging
@@ -27,10 +28,7 @@ namespace Microsoft.Extensions.Logging
     {
         public static ILoggingBuilder AddOpenTelemetry(this ILoggingBuilder builder, Action<OpenTelemetryLoggerOptions> configure = null)
         {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.Null(builder, nameof(builder));
 
             builder.AddConfiguration();
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>());

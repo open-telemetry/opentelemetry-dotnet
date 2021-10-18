@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
@@ -32,10 +33,7 @@ namespace OpenTelemetry.Trace
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddOtlpExporter(this TracerProviderBuilder builder, Action<OtlpExporterOptions> configure = null)
         {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.Null(builder, nameof(builder));
 
             if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
             {

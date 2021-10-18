@@ -18,6 +18,7 @@ using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Prometheus
 {
@@ -39,8 +40,9 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
         public PrometheusExporterMetricsHttpServer(PrometheusExporter exporter)
         {
-            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+            Guard.Null(exporter, nameof(exporter));
 
+            this.exporter = exporter;
             if ((exporter.Options.HttpListenerPrefixes?.Count ?? 0) <= 0)
             {
                 throw new ArgumentException("No HttpListenerPrefixes were specified on PrometheusExporterOptions.");
