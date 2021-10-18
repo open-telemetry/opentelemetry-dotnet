@@ -77,7 +77,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var mockCarrier = new Mock<ITextMap>();
 
             Assert.Throws<ArgumentNullException>(() => shim.Inject(null, mockFormat.Object, mockCarrier.Object));
-            Assert.Throws<ArgumentException>(() => shim.Inject(new Mock<ISpanContext>().Object, mockFormat.Object, mockCarrier.Object));
+            Assert.Throws<InvalidCastException>(() => shim.Inject(new Mock<ISpanContext>().Object, mockFormat.Object, mockCarrier.Object));
             Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, null, mockCarrier.Object));
             Assert.Throws<ArgumentNullException>(() => shim.Inject(spanContextShim, mockFormat.Object, null));
         }

@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Runtime.CompilerServices;
 using System.Text;
 using OpenTelemetry.Internal;
@@ -29,7 +28,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public Batch(Process process)
         {
-            this.Process = process ?? throw new ArgumentNullException(nameof(process));
+            Guard.Null(process, nameof(process));
+
+            this.Process = process;
             this.spanMessages = PooledList<BufferWriterMemory>.Create();
         }
 

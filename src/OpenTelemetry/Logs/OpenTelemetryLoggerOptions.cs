@@ -14,8 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Logs
@@ -58,10 +58,7 @@ namespace OpenTelemetry.Logs
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions AddProcessor(BaseProcessor<LogRecord> processor)
         {
-            if (processor == null)
-            {
-                throw new ArgumentNullException(nameof(processor));
-            }
+            Guard.Null(processor, nameof(processor));
 
             this.Processors.Add(processor);
 
@@ -76,8 +73,9 @@ namespace OpenTelemetry.Logs
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
-            this.ResourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
+            Guard.Null(resourceBuilder, nameof(resourceBuilder));
 
+            this.ResourceBuilder = resourceBuilder;
             return this;
         }
     }

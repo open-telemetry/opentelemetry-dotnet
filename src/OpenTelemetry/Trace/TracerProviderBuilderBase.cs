@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
@@ -42,10 +43,7 @@ namespace OpenTelemetry.Trace
             Func<TInstrumentation> instrumentationFactory)
             where TInstrumentation : class
         {
-            if (instrumentationFactory == null)
-            {
-                throw new ArgumentNullException(nameof(instrumentationFactory));
-            }
+            Guard.Null(instrumentationFactory, nameof(instrumentationFactory));
 
             this.instrumentationFactories.Add(
                 new InstrumentationFactory(
@@ -59,17 +57,11 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public override TracerProviderBuilder AddSource(params string[] names)
         {
-            if (names == null)
-            {
-                throw new ArgumentNullException(nameof(names));
-            }
+            Guard.Null(names, nameof(names));
 
             foreach (var name in names)
             {
-                if (string.IsNullOrWhiteSpace(name))
-                {
-                    throw new ArgumentException($"{nameof(names)} contains null or whitespace string.");
-                }
+                Guard.NullOrWhitespace(name, nameof(name));
 
                 // TODO: We need to fix the listening model.
                 // Today it ignores version.
@@ -82,10 +74,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public override TracerProviderBuilder AddLegacySource(string operationName)
         {
-            if (string.IsNullOrWhiteSpace(operationName))
-            {
-                throw new ArgumentException($"{nameof(operationName)} contains null or whitespace string.");
-            }
+            Guard.NullOrWhitespace(operationName, nameof(operationName));
 
             this.legacyActivityOperationNames[operationName] = true;
 
@@ -93,7 +82,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Sets whether the status of <see cref="System.Diagnostics.Activity"/>
+        /// Sets whether the status of <see cref="Activity"/>
         /// should be set to <c>Status.Error</c> when it ended abnormally due to an unhandled exception.
         /// </summary>
         /// <param name="enabled">Enabled or not.</param>
@@ -117,7 +106,7 @@ namespace OpenTelemetry.Trace
                     }
                     catch (Exception ex)
                     {
-                        throw new NotSupportedException("SetErrorStatusOnException is not supported on this platform.", ex);
+                        throw new NotSupportedException($"'{nameof(this.SetErrorStatusOnException)}' is not supported on this platform", ex);
                     }
                 }
             }
@@ -140,7 +129,9 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetSampler(Sampler sampler)
         {
-            this.sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
+            Guard.Null(sampler, nameof(sampler));
+
+            this.sampler = sampler;
             return this;
         }
 
@@ -152,7 +143,9 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
-            this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
+            Guard.Null(resourceBuilder, nameof(resourceBuilder));
+
+            this.resourceBuilder = resourceBuilder;
             return this;
         }
 
@@ -163,10 +156,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder AddProcessor(BaseProcessor<Activity> processor)
         {
-            if (processor == null)
-            {
-                throw new ArgumentNullException(nameof(processor));
-            }
+            Guard.Null(processor, nameof(processor));
 
             this.processors.Add(processor);
 

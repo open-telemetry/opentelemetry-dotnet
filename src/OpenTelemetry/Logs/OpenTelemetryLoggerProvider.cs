@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Logs
@@ -46,8 +46,9 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options)
         {
-            this.Options = options ?? throw new ArgumentNullException(nameof(options));
+            Guard.Null(options, nameof(options));
 
+            this.Options = options;
             this.Resource = options.ResourceBuilder.Build();
 
             foreach (var processor in options.Processors)
@@ -96,10 +97,7 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
         {
-            if (processor == null)
-            {
-                throw new ArgumentNullException(nameof(processor));
-            }
+            Guard.Null(processor, nameof(processor));
 
             processor.SetParentProvider(this);
 

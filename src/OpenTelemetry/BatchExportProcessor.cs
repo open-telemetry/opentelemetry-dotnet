@@ -60,25 +60,10 @@ namespace OpenTelemetry
             int maxExportBatchSize = DefaultMaxExportBatchSize)
             : base(exporter)
         {
-            if (maxQueueSize <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(maxQueueSize), maxQueueSize, "maxQueueSize should be greater than zero.");
-            }
-
-            if (maxExportBatchSize <= 0 || maxExportBatchSize > maxQueueSize)
-            {
-                throw new ArgumentOutOfRangeException(nameof(maxExportBatchSize), maxExportBatchSize, "maxExportBatchSize should be greater than zero and less than maxQueueSize.");
-            }
-
-            if (scheduledDelayMilliseconds <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(scheduledDelayMilliseconds), scheduledDelayMilliseconds, "scheduledDelayMilliseconds should be greater than zero.");
-            }
-
-            if (exporterTimeoutMilliseconds < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(exporterTimeoutMilliseconds), exporterTimeoutMilliseconds, "exporterTimeoutMilliseconds should be non-negative.");
-            }
+            Guard.Range(maxQueueSize, nameof(maxQueueSize), min: 1);
+            Guard.Range(maxExportBatchSize, nameof(maxExportBatchSize), min: 1, max: maxQueueSize, maxName: nameof(maxQueueSize));
+            Guard.Range(scheduledDelayMilliseconds, nameof(scheduledDelayMilliseconds), min: 1);
+            Guard.Range(exporterTimeoutMilliseconds, nameof(exporterTimeoutMilliseconds), min: 0);
 
             this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
