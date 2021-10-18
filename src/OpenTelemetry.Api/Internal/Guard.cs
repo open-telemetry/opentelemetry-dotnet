@@ -136,7 +136,7 @@ namespace OpenTelemetry.Internal
         }
 
         /// <summary>
-        /// Throw an exception if the value is not within the given range.
+        /// Throw an exception if the value is not of the expected type.
         /// </summary>
         /// <param name="value">The value to check.</param>
         /// <param name="paramName">The parameter name to use in the thrown exception.</param>
