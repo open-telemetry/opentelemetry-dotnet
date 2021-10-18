@@ -17,12 +17,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using global::OpenTracing;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
+using OpenTracing;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
-    internal sealed class SpanShim : global::OpenTracing.ISpan
+    internal sealed class SpanShim : ISpan
     {
         /// <summary>
         /// The default event name if not specified.
@@ -45,13 +46,13 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public SpanShim(TelemetrySpan span)
         {
-            this.Span = span ?? throw new ArgumentNullException(nameof(span), "Parameter cannot be null");
-
-            if (!this.Span.Context.IsValid)
+            Guard.Null(span, nameof(span));
+            if (!span.Context.IsValid)
             {
-                throw new ArgumentException("Passed span's context is not valid", nameof(this.Span.Context));
+                throw new ArgumentException($"Invalid '{nameof(SpanContext)}'", nameof(span.Context));
             }
 
+            this.Span = span;
             this.spanContextShim = new SpanContextShim(this.Span.Context);
         }
 
@@ -76,12 +77,9 @@ namespace OpenTelemetry.Shims.OpenTracing
             => Baggage.GetBaggage(key);
 
         /// <inheritdoc/>
-        public global::OpenTracing.ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
+        public ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
         {
-            if (fields is null)
-            {
-                throw new ArgumentNullException(nameof(fields), "Parameter cannot be null");
-            }
+            Guard.Null(fields, nameof(fields));
 
             var payload = ConvertToEventPayload(fields);
             var eventName = payload.Item1;
@@ -134,79 +132,64 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.ISpan Log(IEnumerable<KeyValuePair<string, object>> fields)
+        public ISpan Log(IEnumerable<KeyValuePair<string, object>> fields)
         {
             return this.Log(DateTimeOffset.MinValue, fields);
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.ISpan Log(string @event)
+        public ISpan Log(string @event)
         {
-            if (@event is null)
-            {
-                throw new ArgumentNullException(nameof(@event), "Parameter cannot be null");
-            }
+            Guard.Null(@event, nameof(@event));
 
             this.Span.AddEvent(@event);
             return this;
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.ISpan Log(DateTimeOffset timestamp, string @event)
+        public ISpan Log(DateTimeOffset timestamp, string @event)
         {
-            if (@event is null)
-            {
-                throw new ArgumentNullException(nameof(@event), "Parameter cannot be null");
-            }
+            Guard.Null(@event, nameof(@event));
 
             this.Span.AddEvent(@event, timestamp);
             return this;
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.ISpan SetBaggageItem(string key, string value)
+        public ISpan SetBaggageItem(string key, string value)
         {
             Baggage.SetBaggage(key, value);
             return this;
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.ISpan SetOperationName(string operationName)
+        public ISpan SetOperationName(string operationName)
         {
-            if (operationName is null)
-            {
-                throw new ArgumentNullException(nameof(operationName), "Parameter cannot be null");
-            }
+            Guard.Null(operationName, nameof(operationName));
 
             this.Span.UpdateName(operationName);
             return this;
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.ISpan SetTag(string key, string value)
+        public ISpan SetTag(string key, string value)
         {
-            if (key is null)
-            {
-                throw new ArgumentNullException(nameof(key), "Parameter cannot be null");
-            }
+            Guard.Null(key, nameof(key));
 
             this.Span.SetAttribute(key, value);
             return this;
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.ISpan SetTag(string key, bool value)
+        public ISpan SetTag(string key, bool value)
         {
-            if (key is null)
-            {
-                throw new ArgumentNullException(nameof(key), "Parameter cannot be null");
-            }
+            Guard.Null(key, nameof(key));
 
             // Special case the OpenTracing Error Tag
             // see https://opentracing.io/specification/conventions/
             if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key, StringComparison.Ordinal))
             {
-                this.Span.SetStatus(value ? Trace.Status.Error : Trace.Status.Ok);
+                this.Span.SetStatus(value ? Status.Error : Status.Ok);
             }
             else
             {
@@ -217,37 +200,31 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.ISpan SetTag(string key, int value)
+        public ISpan SetTag(string key, int value)
         {
-            if (key is null)
-            {
-                throw new ArgumentNullException(nameof(key), "Parameter cannot be null");
-            }
+            Guard.Null(key, nameof(key));
 
             this.Span.SetAttribute(key, value);
             return this;
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.ISpan SetTag(string key, double value)
+        public ISpan SetTag(string key, double value)
         {
-            if (key is null)
-            {
-                throw new ArgumentNullException(nameof(key), "Parameter cannot be null");
-            }
+            Guard.Null(key, nameof(key));
 
             this.Span.SetAttribute(key, value);
             return this;
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.ISpan SetTag(global::OpenTracing.Tag.BooleanTag tag, bool value)
+        public ISpan SetTag(global::OpenTracing.Tag.BooleanTag tag, bool value)
         {
             return this.SetTag(tag?.Key, value);
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.ISpan SetTag(global::OpenTracing.Tag.IntOrStringTag tag, string value)
+        public ISpan SetTag(global::OpenTracing.Tag.IntOrStringTag tag, string value)
         {
             if (int.TryParse(value, out var result))
             {
@@ -258,13 +235,13 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.ISpan SetTag(global::OpenTracing.Tag.IntTag tag, int value)
+        public ISpan SetTag(global::OpenTracing.Tag.IntTag tag, int value)
         {
             return this.SetTag(tag?.Key, value);
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.ISpan SetTag(global::OpenTracing.Tag.StringTag tag, string value)
+        public ISpan SetTag(global::OpenTracing.Tag.StringTag tag, string value)
         {
             return this.SetTag(tag?.Key, value);
         }

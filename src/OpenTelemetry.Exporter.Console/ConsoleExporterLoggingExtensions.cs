@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
 {
@@ -29,10 +30,7 @@ namespace OpenTelemetry.Logs
         /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
         public static OpenTelemetryLoggerOptions AddConsoleExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<ConsoleExporterOptions> configure = null)
         {
-            if (loggerOptions == null)
-            {
-                throw new ArgumentNullException(nameof(loggerOptions));
-            }
+            Guard.Null(loggerOptions, nameof(loggerOptions));
 
             var options = new ConsoleExporterOptions();
             configure?.Invoke(options);

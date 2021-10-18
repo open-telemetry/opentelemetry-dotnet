@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -42,15 +41,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             bool? debug,
             bool? shared)
         {
-            if (string.IsNullOrWhiteSpace(traceId))
-            {
-                throw new ArgumentNullException(nameof(traceId));
-            }
-
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                throw new ArgumentNullException(nameof(id));
-            }
+            Guard.NullOrWhitespace(traceId, nameof(traceId));
+            Guard.NullOrWhitespace(id, nameof(id));
 
             this.TraceId = traceId;
             this.ParentId = parentId;

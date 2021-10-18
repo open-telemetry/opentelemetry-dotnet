@@ -241,21 +241,21 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    var activitySources = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+                    var activitySources = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
                     foreach (var name in sources)
                     {
-                        activitySources[name] = true;
+                        activitySources.Add(name);
                     }
 
                     if (this.supportLegacyActivity)
                     {
-                        activitySources[string.Empty] = true;
+                        activitySources.Add(string.Empty);
                     }
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
-                    listener.ShouldListenTo = (activitySource) => activitySources.ContainsKey(activitySource.Name);
+                    listener.ShouldListenTo = (activitySource) => activitySources.Contains(activitySource.Name);
                 }
             }
             else
@@ -286,10 +286,7 @@ namespace OpenTelemetry.Trace
 
         internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
         {
-            if (processor == null)
-            {
-                throw new ArgumentNullException(nameof(processor));
-            }
+            Guard.Null(processor, nameof(processor));
 
             processor.SetParentProvider(this);
 

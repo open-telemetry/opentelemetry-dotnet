@@ -19,6 +19,7 @@ using System.Runtime.CompilerServices;
 #if DEBUG
 using System.Threading;
 #endif
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using OpenTracing;
 
@@ -36,7 +37,9 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public ScopeManagerShim(Tracer tracer)
         {
-            this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
+            Guard.Null(tracer, nameof(tracer));
+
+            this.tracer = tracer;
         }
 
 #if DEBUG
@@ -66,10 +69,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public IScope Activate(ISpan span, bool finishSpanOnDispose)
         {
-            if (!(span is SpanShim shim))
-            {
-                throw new ArgumentException("span is not a valid SpanShim object");
-            }
+            var shim = Guard.Type<SpanShim>(span, nameof(span));
 
             var scope = Tracer.WithSpan(shim.Span);
 

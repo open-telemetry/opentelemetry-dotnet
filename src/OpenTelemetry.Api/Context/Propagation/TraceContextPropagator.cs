@@ -330,7 +330,7 @@ namespace OpenTelemetry.Context.Propagation
                 return (byte)(c - 'a' + 10);
             }
 
-            throw new ArgumentOutOfRangeException(nameof(c), c, $"Invalid character: {c}.");
+            throw new ArgumentOutOfRangeException(nameof(c), c, "Must be within: [0-9] or [a-f]");
         }
 
         private static bool ValidateKey(ReadOnlySpan<char> key)

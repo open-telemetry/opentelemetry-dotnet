@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Web;
 using System.Web.Routing;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNet.Implementation
@@ -31,7 +32,9 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
         public HttpInListener(AspNetInstrumentationOptions options)
         {
-            this.options = options ?? throw new ArgumentNullException(nameof(options));
+            Guard.Null(options, nameof(options));
+
+            this.options = options;
 
             TelemetryHttpModule.Options.TextMapPropagator = Propagators.DefaultTextMapPropagator;
 
