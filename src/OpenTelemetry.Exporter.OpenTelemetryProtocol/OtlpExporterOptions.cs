@@ -113,20 +113,7 @@ namespace OpenTelemetry.Exporter
         /// Must be a valid Uri with scheme (http or https) and host, and
         /// may contain a port and path. The default value is http://localhost:4317.
         /// </summary>
-        public Uri Endpoint
-        {
-            get
-            {
-                return this.endpoint;
-            }
-
-            set
-            {
-                this.endpoint = value;
-                this.TracesEndpoint = value;
-                this.MetricsEndpoint = value;
-            }
-        }
+        public Uri Endpoint { get; set; } = new Uri("http://localhost:4317");
 
         /// <summary>
         /// Gets the target to which the exporter is going to send traces. The default value is http://localhost:4317.
