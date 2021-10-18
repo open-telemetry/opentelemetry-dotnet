@@ -30,11 +30,11 @@ setters take precedence over the environment variables.
 * `TracesEndpoint` (read only): Target to which the exporter is going to send
   traces. Initially the property is derived from OTEL_EXPORTER_OTLP_ENDPOINT
   environment variable and adjusted according to the specification.
-  The property may be overridden by Endpoint property.
+  If the Endpoint is set, then this property will be set with the same value.
 * `MetricsEndpoint` (read only): Target to which the exporter is going to send
   metrics. Initially this property is derived from OTEL_EXPORTER_OTLP_ENDPOINT
   environment variable and adjusted according to the specification.
-  May be overridden by Endpoint property.
+  If the Endpoint is set, then this property will be set with the same value.
 * `Headers`: Optional headers for the connection.
 * `TimeoutMilliseconds` : Max waiting time for the backend to process a batch.
 * `Protocol`: OTLP transport protocol. Supported values:
