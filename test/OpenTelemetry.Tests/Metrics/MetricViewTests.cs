@@ -370,7 +370,8 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void MetricStreamConfigurationForDropMustNotAllowOverriding()
         {
-            Assert.Throws<ArgumentException>(() => MetricStreamConfiguration.Drop.Aggregation = Aggregation.Histogram);
+            MetricStreamConfiguration.Drop.Aggregation = Aggregation.Histogram;
+            Assert.Equal(Aggregation.Drop, MetricStreamConfiguration.Drop.Aggregation);
         }
     }
 #pragma warning restore SA1000 // KeywordsMustBeSpacedCorrectly
