@@ -36,9 +36,9 @@ namespace OpenTelemetry.Exporter
         internal const string TracesExportPath = "v1/traces";
         internal const string MetricsExportPath = "v1/metrics";
 
-        private const string DefaultEndpoint = "http://localhost:4317";
+        private static readonly Uri DefaultEndpoint = new Uri("http://localhost:4317");
 
-        private Uri endpoint = new Uri(DefaultEndpoint);
+        private Uri endpoint = DefaultEndpoint;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
@@ -136,7 +136,7 @@ namespace OpenTelemetry.Exporter
         /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#endpoint-urls-for-otlphttp.
         /// If the <see cref="Endpoint"/> is set, then this property will be set with the same value.
         /// </summary>
-        public Uri TracesEndpoint { get; private set; } = new Uri(DefaultEndpoint);
+        public Uri TracesEndpoint { get; private set; } = DefaultEndpoint;
 
         /// <summary>
         /// Gets the target to which the exporter is going to send metrics. The default value is http://localhost:4317.
@@ -144,7 +144,7 @@ namespace OpenTelemetry.Exporter
         /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#endpoint-urls-for-otlphttp.
         /// If the <see cref="Endpoint"/> is set, then this property will be set with the same value.
         /// </summary>
-        public Uri MetricsEndpoint { get; private set; } = new Uri(DefaultEndpoint);
+        public Uri MetricsEndpoint { get; private set; } = DefaultEndpoint;
 
         /// <summary>
         /// Gets or sets optional headers for the connection. Refer to the <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables">
