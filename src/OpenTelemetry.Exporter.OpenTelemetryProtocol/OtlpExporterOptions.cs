@@ -67,7 +67,7 @@ namespace OpenTelemetry.Exporter
                 {
                     if (Uri.TryCreate(endpointEnvVar, UriKind.Absolute, out var endpoint))
                     {
-                        this.Endpoint = endpoint;
+                        this.endpoint = endpoint;
                         this.TracesEndpoint = endpoint;
                         this.MetricsEndpoint = endpoint;
 
