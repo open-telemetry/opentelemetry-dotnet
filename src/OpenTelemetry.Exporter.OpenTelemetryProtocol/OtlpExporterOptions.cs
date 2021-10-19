@@ -132,7 +132,7 @@ namespace OpenTelemetry.Exporter
 
         /// <summary>
         /// Gets the target to which the exporter is going to send traces. The default value is http://localhost:4317.
-        /// Initially this property is derived from OTEL_EXPORTER_OTLP_ENDPOINT environment variable and adjusted according to the specification:
+        /// Initially, this property is derived from the OTEL_EXPORTER_OTLP_ENDPOINT environment variable and adjusted according to the specification:
         /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#endpoint-urls-for-otlphttp.
         /// If the <see cref="Endpoint"/> is set, then this property will be set with the same value.
         /// </summary>
@@ -140,7 +140,7 @@ namespace OpenTelemetry.Exporter
 
         /// <summary>
         /// Gets the target to which the exporter is going to send metrics. The default value is http://localhost:4317.
-        /// Initially this property is derived from OTEL_EXPORTER_OTLP_ENDPOINT environment variable and adjusted according to the specification:
+        /// Initially, this property is derived from the OTEL_EXPORTER_OTLP_ENDPOINT environment variable and adjusted according to the specification:
         /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#endpoint-urls-for-otlphttp.
         /// If the <see cref="Endpoint"/> is set, then this property will be set with the same value.
         /// </summary>

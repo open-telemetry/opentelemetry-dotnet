@@ -28,11 +28,11 @@ setters take precedence over the environment variables.
   The endpoint must be a valid Uri with scheme (http or https) and host, and MAY
   contain a port and path.
 * `TracesEndpoint` (read only): Target to which the exporter is going to send
-  traces. Initially the property is derived from OTEL_EXPORTER_OTLP_ENDPOINT
+  traces. Initially, the property is derived from the `OTEL_EXPORTER_OTLP_ENDPOINT`
   environment variable and adjusted according to the specification.
   If the Endpoint is set, then this property will be set with the same value.
 * `MetricsEndpoint` (read only): Target to which the exporter is going to send
-  metrics. Initially this property is derived from OTEL_EXPORTER_OTLP_ENDPOINT
+  metrics. Initially, this property is derived from the `OTEL_EXPORTER_OTLP_ENDPOINT`
   environment variable and adjusted according to the specification.
   If the Endpoint is set, then this property will be set with the same value.
 * `Headers`: Optional headers for the connection.
