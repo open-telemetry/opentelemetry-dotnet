@@ -166,9 +166,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
 
             var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+            var originalEndpoint = options.Endpoint;
             options.Endpoint = new Uri("http://test:8888");
 
-            options.AdjustEndpoint(options.Endpoint, "test/path");
+            options.AdjustEndpoint(originalEndpoint, "test/path");
 
             Assert.Equal("http://test:8888/", options.Endpoint.AbsoluteUri);
 
@@ -183,9 +184,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             ClearEndpointEnvVar();
 
             var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+            var originalEndpoint = options.Endpoint;
             options.Endpoint = new Uri(endpoint);
 
-            options.AdjustEndpoint(options.Endpoint, "test/path");
+            options.AdjustEndpoint(originalEndpoint, "test/path");
 
             Assert.Equal(endpoint, options.Endpoint.AbsoluteUri);
         }
