@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics
         private readonly WaitHandle[] triggers;
         private AggregationTemporality preferredAggregationTemporality = CumulativeAndDelta;
         private AggregationTemporality supportedAggregationTemporality = CumulativeAndDelta;
-        private volatile int collectionSequenceNumber;
+        private long collectionSequenceNumber;
         private int isCollectionInProgress;
         private int shutdownCount;
 
