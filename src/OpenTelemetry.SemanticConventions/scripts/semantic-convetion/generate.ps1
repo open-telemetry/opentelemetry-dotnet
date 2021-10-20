@@ -4,11 +4,12 @@ $ROOT_DIR="${SCRIPT_DIR}/../../"
 
 # freeze the spec & generator tools versions to make SemanticAttributes generation reproducible
 $SPEC_VERSION="v1.7.0"
+$SCHEMA_URL="https://opentelemetry.io/schemas/$SPEC_VERSION"
 $GENERATOR_VERSION="0.8.0"
 
 Set-Location $SCRIPT_DIR
 
-rm -rf opentelemetry-specification || true
+rm -r -fo opentelemetry-specification
 mkdir opentelemetry-specification
 Set-Location opentelemetry-specification
 
@@ -27,6 +28,7 @@ docker run --rm `
   --template /templates/SemanticConventions.cs.j2 `
   --output /output/TraceSemanticConventions.cs `
   -D class=TraceSemanticConventions `
+  -D schemaUrl=$SCHEMA_URL `
   -D pkg=OpenTelemetry.Trace
 
 docker run --rm `
@@ -38,4 +40,7 @@ docker run --rm `
   --template /templates/SemanticConventions.cs.j2 `
   --output /output/ResourceSemanticConventions.cs `
   -D class=ResourceSemanticConventions `
+  -D schemaUrl=$SCHEMA_URL `
   -D pkg=OpenTelemetry.Resources
+
+cd ${ROOT_DIR}
