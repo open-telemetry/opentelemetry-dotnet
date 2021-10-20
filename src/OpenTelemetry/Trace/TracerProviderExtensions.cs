@@ -25,15 +25,8 @@ namespace OpenTelemetry.Trace
     {
         public static TracerProvider AddProcessor(this TracerProvider provider, BaseProcessor<Activity> processor)
         {
-            if (provider == null)
-            {
-                throw new ArgumentNullException(nameof(provider));
-            }
-
-            if (processor == null)
-            {
-                throw new ArgumentNullException(nameof(processor));
-            }
+            Guard.Null(provider, nameof(provider));
+            Guard.Null(processor, nameof(processor));
 
             if (provider is TracerProviderSdk tracerProviderSdk)
             {
@@ -55,7 +48,7 @@ namespace OpenTelemetry.Trace
         /// <returns>
         /// Returns <c>true</c> when force flush succeeded; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentOutOfRangeException">
         /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
         /// </exception>
         /// <remarks>
@@ -63,15 +56,8 @@ namespace OpenTelemetry.Trace
         /// </remarks>
         public static bool ForceFlush(this TracerProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (provider == null)
-            {
-                throw new ArgumentNullException(nameof(provider));
-            }
-
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
-            }
+            Guard.Null(provider, nameof(provider));
+            Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             if (provider is TracerProviderSdk tracerProviderSdk)
             {
@@ -101,7 +87,7 @@ namespace OpenTelemetry.Trace
         /// <returns>
         /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentOutOfRangeException">
         /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
         /// </exception>
         /// <remarks>
@@ -110,15 +96,8 @@ namespace OpenTelemetry.Trace
         /// </remarks>
         public static bool Shutdown(this TracerProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (provider == null)
-            {
-                throw new ArgumentNullException(nameof(provider));
-            }
-
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
-            }
+            Guard.Null(provider, nameof(provider));
+            Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             if (provider is TracerProviderSdk tracerProviderSdk)
             {

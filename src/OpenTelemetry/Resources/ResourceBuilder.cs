@@ -14,8 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources
 {
@@ -90,10 +90,7 @@ namespace OpenTelemetry.Resources
         // https://github.com/open-telemetry/oteps/blob/master/text/0111-auto-resource-detection.md
         internal ResourceBuilder AddDetector(IResourceDetector resourceDetector)
         {
-            if (resourceDetector == null)
-            {
-                throw new ArgumentNullException(nameof(resourceDetector));
-            }
+            Guard.Null(resourceDetector, nameof(resourceDetector));
 
             Resource resource = resourceDetector.Detect();
 
@@ -107,10 +104,7 @@ namespace OpenTelemetry.Resources
 
         internal ResourceBuilder AddResource(Resource resource)
         {
-            if (resource == null)
-            {
-                throw new ArgumentNullException(nameof(resource));
-            }
+            Guard.Null(resource, nameof(resource));
 
             this.resources.Add(resource);
 

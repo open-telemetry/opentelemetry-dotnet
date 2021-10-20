@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTelemetry.Internal;
@@ -107,58 +108,55 @@ namespace OpenTelemetry.Resources
 
         private static object SanitizeValue(object value, string keyName)
         {
-            if (value != null)
+            Guard.Null(keyName, nameof(keyName));
+
+            if (value is string || value is bool || value is double || value is long)
             {
-                if (value is string || value is bool || value is double || value is long)
-                {
-                    return value;
-                }
-
-                if (value is string[] || value is bool[] || value is double[] || value is long[])
-                {
-                    return value;
-                }
-
-                if (value is int || value is short)
-                {
-                    return System.Convert.ToInt64(value);
-                }
-
-                if (value is float)
-                {
-                    return System.Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture);
-                }
-
-                if (value is int[] || value is short[])
-                {
-                    long[] convertedArr = new long[((System.Array)value).Length];
-                    int i = 0;
-                    foreach (var val in (System.Array)value)
-                    {
-                        convertedArr[i] = System.Convert.ToInt64(val);
-                        i++;
-                    }
-
-                    return convertedArr;
-                }
-
-                if (value is float[])
-                {
-                    double[] convertedArr = new double[((float[])value).Length];
-                    int i = 0;
-                    foreach (float val in (float[])value)
-                    {
-                        convertedArr[i] = System.Convert.ToDouble(val, System.Globalization.CultureInfo.InvariantCulture);
-                        i++;
-                    }
-
-                    return convertedArr;
-                }
-
-                throw new System.ArgumentException("Attribute value type is not an accepted primitive", keyName);
+                return value;
             }
 
-            throw new System.ArgumentException("Attribute value is null", keyName);
+            if (value is string[] || value is bool[] || value is double[] || value is long[])
+            {
+                return value;
+            }
+
+            if (value is int || value is short)
+            {
+                return Convert.ToInt64(value);
+            }
+
+            if (value is float)
+            {
+                return Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            if (value is int[] || value is short[])
+            {
+                long[] convertedArr = new long[((Array)value).Length];
+                int i = 0;
+                foreach (var val in (Array)value)
+                {
+                    convertedArr[i] = Convert.ToInt64(val);
+                    i++;
+                }
+
+                return convertedArr;
+            }
+
+            if (value is float[])
+            {
+                double[] convertedArr = new double[((float[])value).Length];
+                int i = 0;
+                foreach (float val in (float[])value)
+                {
+                    convertedArr[i] = Convert.ToDouble(val, System.Globalization.CultureInfo.InvariantCulture);
+                    i++;
+                }
+
+                return convertedArr;
+            }
+
+            throw new ArgumentException("Attribute value type is not an accepted primitive", keyName);
         }
     }
 }

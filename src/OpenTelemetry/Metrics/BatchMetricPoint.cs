@@ -16,6 +16,8 @@
 
 using System;
 using System.Collections;
+using System.Diagnostics;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -29,7 +31,9 @@ namespace OpenTelemetry.Metrics
 
         internal BatchMetricPoint(MetricPoint[] metricsPoints, int[] metricPointsToProcess, long targetCount, DateTimeOffset start, DateTimeOffset end)
         {
-            this.metricsPoints = metricsPoints ?? throw new ArgumentNullException(nameof(metricsPoints));
+            Guard.Null(metricsPoints, nameof(metricsPoints));
+
+            this.metricsPoints = metricsPoints;
             this.metricPointsToProcess = metricPointsToProcess;
             this.targetCount = targetCount;
             this.start = start;

@@ -15,10 +15,10 @@
 // </copyright>
 
 using System;
-using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Prometheus
 {
@@ -40,8 +40,9 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
         public PrometheusExporterMetricsHttpServer(PrometheusExporter exporter)
         {
-            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+            Guard.Null(exporter, nameof(exporter));
 
+            this.exporter = exporter;
             if ((exporter.Options.HttpListenerPrefixes?.Count ?? 0) <= 0)
             {
                 throw new ArgumentException("No HttpListenerPrefixes were specified on PrometheusExporterOptions.");
@@ -158,24 +159,29 @@ namespace OpenTelemetry.Exporter.Prometheus
         {
             try
             {
-                using var writer = new StreamWriter(context.Response.OutputStream);
-                try
-                {
-                    this.exporter.Collect(Timeout.Infinite);
+                this.exporter.Collect(Timeout.Infinite);
 
-                    await this.exporter.WriteMetricsCollection(writer, this.exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
-                }
-                finally
-                {
-                    await writer.FlushAsync().ConfigureAwait(false);
-                }
+                context.Response.StatusCode = 200;
+                context.Response.ContentType = PrometheusMetricsFormatHelper.ContentType;
+
+                await this.exporter.WriteMetricsCollection(context.Response.OutputStream, this.exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 PrometheusExporterEventSource.Log.FailedExport(ex);
+
+                context.Response.StatusCode = 500;
             }
             finally
             {
+                try
+                {
+                    context.Response.Close();
+                }
+                catch
+                {
+                }
+
                 this.exporter.ReleaseSemaphore();
             }
         }
