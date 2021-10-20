@@ -65,7 +65,7 @@ namespace OpenTelemetry.Instrumentation
         /// <returns><see langword= "true"/> if the property was fetched.</returns>
         public bool TryFetch(object obj, out T value, bool skipObjNullCheck = false)
         {
-            if (skipObjNullCheck || obj == null)
+            if (!skipObjNullCheck && obj == null)
             {
                 value = default;
                 return false;
