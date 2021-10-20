@@ -24,8 +24,12 @@ namespace OpenTelemetry.Metrics
     public abstract class MetricReader : IDisposable
     {
         private const AggregationTemporality CumulativeAndDelta = AggregationTemporality.Cumulative | AggregationTemporality.Delta;
+        private readonly ManualResetEvent collectCompletedNotification = new ManualResetEvent(false);
+        private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
         private AggregationTemporality preferredAggregationTemporality = CumulativeAndDelta;
         private AggregationTemporality supportedAggregationTemporality = CumulativeAndDelta;
+        private volatile int collectionSequenceNumber;
+        private int isCollectionInProgress;
         private int shutdownCount;
 
         public BaseProvider ParentProvider { get; private set; }
@@ -71,6 +75,50 @@ namespace OpenTelemetry.Metrics
         {
             Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
+            if (Interlocked.CompareExchange(ref this.isCollectionInProgress, 1, 0) == 1)
+            {
+                var targetCollectionSequenceNumber = this.collectionSequenceNumber + 1;
+
+                var triggers = new WaitHandle[] { this.collectCompletedNotification, this.shutdownTrigger };
+
+                var sw = Stopwatch.StartNew();
+
+                const int pollingMilliseconds = 1000;
+
+                do
+                {
+                    if (timeoutMilliseconds == Timeout.Infinite)
+                    {
+                        WaitHandle.WaitAny(triggers, pollingMilliseconds);
+                    }
+                    else
+                    {
+                        var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+
+                        if (timeout <= 0)
+                        {
+                            if (this.collectionSequenceNumber < targetCollectionSequenceNumber)
+                            {
+                                return false;
+                            }
+                            else
+                            {
+                                return true; // TODO: need to get the actual Collect result
+                            }
+                        }
+
+                        WaitHandle.WaitAny(triggers, Math.Min((int)timeout, pollingMilliseconds));
+                    }
+
+                    if (this.collectionSequenceNumber >= targetCollectionSequenceNumber)
+                    {
+                        return true; // we need to get the actual Collect result
+                    }
+                } // TODO: reformat the code once SA1500 is fixed (https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/2801)
+                while (Interlocked.CompareExchange(ref this.isCollectionInProgress, 1, 0) == 1);
+            }
+
+            // if there is no Collect
             try
             {
                 return this.OnCollect(timeoutMilliseconds);
@@ -79,6 +127,13 @@ namespace OpenTelemetry.Metrics
             {
                 // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Collect), ex);
                 return false;
+            }
+            finally
+            {
+                this.collectionSequenceNumber++;
+                this.isCollectionInProgress = 0;
+                this.collectCompletedNotification.Set();
+                this.collectCompletedNotification.Reset();
             }
         }
 
@@ -117,6 +172,10 @@ namespace OpenTelemetry.Metrics
             {
                 // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Shutdown), ex);
                 return false;
+            }
+            finally
+            {
+                this.shutdownTrigger.Set();
             }
         }
 
