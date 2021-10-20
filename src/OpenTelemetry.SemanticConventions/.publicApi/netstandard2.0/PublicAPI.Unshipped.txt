@@ -81,6 +81,8 @@ const OpenTelemetry.Resources.ResourceSemanticConventions.AttributeWebengineName
 const OpenTelemetry.Resources.ResourceSemanticConventions.AttributeWebengineVersion = "webengine.version" -> string
 const OpenTelemetry.Resources.ResourceSemanticConventions.AwsEcsLaunchtypeValues.Ec2 = "ec2" -> string
 const OpenTelemetry.Resources.ResourceSemanticConventions.AwsEcsLaunchtypeValues.Fargate = "fargate" -> string
+const OpenTelemetry.Resources.ResourceSemanticConventions.CloudPlatformValues.AlibabaCloudEcs = "alibaba_cloud_ecs" -> string
+const OpenTelemetry.Resources.ResourceSemanticConventions.CloudPlatformValues.AlibabaCloudFc = "alibaba_cloud_fc" -> string
 const OpenTelemetry.Resources.ResourceSemanticConventions.CloudPlatformValues.AwsEc2 = "aws_ec2" -> string
 const OpenTelemetry.Resources.ResourceSemanticConventions.CloudPlatformValues.AwsEcs = "aws_ecs" -> string
 const OpenTelemetry.Resources.ResourceSemanticConventions.CloudPlatformValues.AwsEks = "aws_eks" -> string
@@ -96,6 +98,7 @@ const OpenTelemetry.Resources.ResourceSemanticConventions.CloudPlatformValues.Gc
 const OpenTelemetry.Resources.ResourceSemanticConventions.CloudPlatformValues.GcpCloudRun = "gcp_cloud_run" -> string
 const OpenTelemetry.Resources.ResourceSemanticConventions.CloudPlatformValues.GcpComputeEngine = "gcp_compute_engine" -> string
 const OpenTelemetry.Resources.ResourceSemanticConventions.CloudPlatformValues.GcpKubernetesEngine = "gcp_kubernetes_engine" -> string
+const OpenTelemetry.Resources.ResourceSemanticConventions.CloudProviderValues.AlibabaCloud = "alibaba_cloud" -> string
 const OpenTelemetry.Resources.ResourceSemanticConventions.CloudProviderValues.Aws = "aws" -> string
 const OpenTelemetry.Resources.ResourceSemanticConventions.CloudProviderValues.Azure = "azure" -> string
 const OpenTelemetry.Resources.ResourceSemanticConventions.CloudProviderValues.Gcp = "gcp" -> string
@@ -210,6 +213,11 @@ const OpenTelemetry.Trace.TraceSemanticConventions.AttributeHttpStatusCode = "ht
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeHttpTarget = "http.target" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeHttpUrl = "http.url" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeHttpUserAgent = "http.user_agent" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.AttributeMessageCompressedSize = "message.compressed_size" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.AttributeMessageId = "message.id" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.AttributeMessageType = "message.type" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.AttributeMessageUncompressedSize = "message.uncompressed_size" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.AttributeMessagingConsumerId = "messaging.consumer_id" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeMessagingConversationId = "messaging.conversation_id" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeMessagingDestination = "messaging.destination" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeMessagingDestinationKind = "messaging.destination_kind" -> string
@@ -228,6 +236,12 @@ const OpenTelemetry.Trace.TraceSemanticConventions.AttributeMessagingRabbitmqRou
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeMessagingSystem = "messaging.system" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeMessagingTempDestination = "messaging.temp_destination" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeMessagingUrl = "messaging.url" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.AttributeNetHostCarrierIcc = "net.host.carrier.icc" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.AttributeNetHostCarrierMcc = "net.host.carrier.mcc" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.AttributeNetHostCarrierMnc = "net.host.carrier.mnc" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.AttributeNetHostCarrierName = "net.host.carrier.name" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.AttributeNetHostConnectionSubtype = "net.host.connection.subtype" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.AttributeNetHostConnectionType = "net.host.connection.type" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeNetHostIp = "net.host.ip" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeNetHostName = "net.host.name" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeNetHostPort = "net.host.port" -> string
@@ -307,6 +321,7 @@ const OpenTelemetry.Trace.TraceSemanticConventions.DbSystemValues.Vertica = "ver
 const OpenTelemetry.Trace.TraceSemanticConventions.FaasDocumentOperationValues.Delete = "delete" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.FaasDocumentOperationValues.Edit = "edit" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.FaasDocumentOperationValues.Insert = "insert" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.FaasInvokedProviderValues.AlibabaCloud = "alibaba_cloud" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.FaasInvokedProviderValues.Aws = "aws" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.FaasInvokedProviderValues.Azure = "azure" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.FaasInvokedProviderValues.Gcp = "gcp" -> string
@@ -320,10 +335,38 @@ const OpenTelemetry.Trace.TraceSemanticConventions.HttpFlavorValues.Http11 = "1.
 const OpenTelemetry.Trace.TraceSemanticConventions.HttpFlavorValues.Http20 = "2.0" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.HttpFlavorValues.Quic = "QUIC" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.HttpFlavorValues.Spdy = "SPDY" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.MessageTypeValues.Received = "RECEIVED" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.MessageTypeValues.Sent = "SENT" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.MessagingDestinationKindValues.Queue = "queue" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.MessagingDestinationKindValues.Topic = "topic" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.MessagingOperationValues.Process = "process" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.MessagingOperationValues.Receive = "receive" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Cdma = "cdma" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Cdma20001xrtt = "cdma2000_1xrtt" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Edge = "edge" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Ehrpd = "ehrpd" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Evdo0 = "evdo_0" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.EvdoA = "evdo_a" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.EvdoB = "evdo_b" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Gprs = "gprs" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Gsm = "gsm" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Hsdpa = "hsdpa" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Hspa = "hspa" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Hspap = "hspap" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Hsupa = "hsupa" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Iden = "iden" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Iwlan = "iwlan" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Lte = "lte" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.LteCa = "lte_ca" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Nr = "nr" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Nrnsa = "nrnsa" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.TdScdma = "td_scdma" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues.Umts = "umts" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionTypeValues.Cell = "cell" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionTypeValues.Unavailable = "unavailable" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionTypeValues.Unknown = "unknown" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionTypeValues.Wifi = "wifi" -> string
+const OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionTypeValues.Wired = "wired" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.NetTransportValues.Inproc = "inproc" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.NetTransportValues.Ip = "ip" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.NetTransportValues.IpTcp = "ip_tcp" -> string
@@ -362,7 +405,10 @@ OpenTelemetry.Trace.TraceSemanticConventions.FaasDocumentOperationValues
 OpenTelemetry.Trace.TraceSemanticConventions.FaasInvokedProviderValues
 OpenTelemetry.Trace.TraceSemanticConventions.FaasTriggerValues
 OpenTelemetry.Trace.TraceSemanticConventions.HttpFlavorValues
+OpenTelemetry.Trace.TraceSemanticConventions.MessageTypeValues
 OpenTelemetry.Trace.TraceSemanticConventions.MessagingDestinationKindValues
 OpenTelemetry.Trace.TraceSemanticConventions.MessagingOperationValues
+OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues
+OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionTypeValues
 OpenTelemetry.Trace.TraceSemanticConventions.NetTransportValues
 OpenTelemetry.Trace.TraceSemanticConventions.RpcGrpcStatusCodeValues

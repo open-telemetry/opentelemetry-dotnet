@@ -6,8 +6,4 @@
     <PackageTags>$(PackageTags);semantic-conventions</PackageTags>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <NoWarn>$(NoWarn),IDE0005</NoWarn>
-  </PropertyGroup>
-
 </Project>

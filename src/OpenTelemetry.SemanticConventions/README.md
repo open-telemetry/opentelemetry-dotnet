@@ -28,6 +28,17 @@ Or, with PowerShell:
 ./scripts/semantic-convetion/generate.ps1
 ```
 
+## Updating PublicAPI files
+
+If new items are added, it is important that the PublicAPI files are updated. 
+We can use the [dotnet-format](https://github.com/dotnet/format) global tool to update the files and fix the `RS0016` warnings:
+
+```shell
+$ OpenTelemetry.SemanticConventions: dotnet format -a warn
+```
+
+
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
+* [Build tools](https://github.com/open-telemetry/build-tools)
