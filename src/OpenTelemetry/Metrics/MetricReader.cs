@@ -26,11 +26,17 @@ namespace OpenTelemetry.Metrics
         private const AggregationTemporality CumulativeAndDelta = AggregationTemporality.Cumulative | AggregationTemporality.Delta;
         private readonly ManualResetEvent collectCompletedNotification = new ManualResetEvent(false);
         private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
+        private readonly WaitHandle[] triggers;
         private AggregationTemporality preferredAggregationTemporality = CumulativeAndDelta;
         private AggregationTemporality supportedAggregationTemporality = CumulativeAndDelta;
         private volatile int collectionSequenceNumber;
         private int isCollectionInProgress;
         private int shutdownCount;
+
+        protected MetricReader()
+        {
+            this.triggers = new WaitHandle[] { this.collectCompletedNotification, this.shutdownTrigger };
+        }
 
         public BaseProvider ParentProvider { get; private set; }
 
@@ -79,8 +85,6 @@ namespace OpenTelemetry.Metrics
             {
                 var targetCollectionSequenceNumber = this.collectionSequenceNumber + 1;
 
-                var triggers = new WaitHandle[] { this.collectCompletedNotification, this.shutdownTrigger };
-
                 var sw = Stopwatch.StartNew();
 
                 const int pollingMilliseconds = 1000;
@@ -89,7 +93,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (timeoutMilliseconds == Timeout.Infinite)
                     {
-                        WaitHandle.WaitAny(triggers, pollingMilliseconds);
+                        WaitHandle.WaitAny(this.triggers, pollingMilliseconds);
                     }
                     else
                     {
@@ -107,7 +111,7 @@ namespace OpenTelemetry.Metrics
                             }
                         }
 
-                        WaitHandle.WaitAny(triggers, Math.Min((int)timeout, pollingMilliseconds));
+                        WaitHandle.WaitAny(this.triggers, Math.Min((int)timeout, pollingMilliseconds));
                     }
 
                     if (this.collectionSequenceNumber >= targetCollectionSequenceNumber)
