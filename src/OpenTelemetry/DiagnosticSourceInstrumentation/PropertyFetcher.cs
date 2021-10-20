@@ -17,6 +17,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation
 {
@@ -45,9 +46,11 @@ namespace OpenTelemetry.Instrumentation
         /// <returns>Property fetched.</returns>
         public T Fetch(object obj)
         {
+            Guard.Null(obj, nameof(obj));
+
             if (!this.TryFetch(obj, out T value))
             {
-                throw new ArgumentException("Supplied object was null or did not match the expected type.", nameof(obj));
+                throw new ArgumentException($"Unable to fetch property: '{nameof(obj)}'", nameof(obj));
             }
 
             return value;

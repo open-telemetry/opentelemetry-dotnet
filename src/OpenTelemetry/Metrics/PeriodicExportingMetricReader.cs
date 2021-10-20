@@ -49,7 +49,7 @@ namespace OpenTelemetry.Metrics
 
             if ((this.SupportedExportModes & ExportModes.Push) != ExportModes.Push)
             {
-                throw new InvalidOperationException("The exporter does not support push mode.");
+                throw new InvalidOperationException($"The '{nameof(exporter)}' does not support '{nameof(ExportModes)}.{nameof(ExportModes.Push)}'");
             }
 
             this.exportIntervalMilliseconds = exportIntervalMilliseconds;
