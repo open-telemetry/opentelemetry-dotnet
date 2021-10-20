@@ -23,13 +23,15 @@ namespace OpenTelemetry.Internal
     /// <summary>
     /// EnvironmentVariableHelper facilitates parsing environmetal variable values as defined by
     /// <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md">
-    /// the specification</a>
+    /// the specification</a>.
     /// </summary>
     internal static class EnvironmentVariableHelper
     {
         /// <summary>
         /// Reads an environmetal variable without any parsing.
         /// </summary>
+        /// <param name="envVarKey">The name of the environment variable.</param>
+        /// <param name="result">The parsed value of the environment variable.</param>
         /// <returns>
         /// Returns <c>true</c> when if a non-empty value was read; otherwise, <c>false</c>.
         /// </returns>
@@ -55,6 +57,8 @@ namespace OpenTelemetry.Internal
         /// <summary>
         /// Reads an environmetal variable and parses is as a non-negative decimal number.
         /// </summary>
+        /// <param name="envVarKey">The name of the environment variable.</param>
+        /// <param name="result">The parsed value of the environment variable.</param>
         /// <returns>
         /// Returns <c>true</c> when if a non-empty value was read; otherwise, <c>false</c>.
         /// </returns>
@@ -81,6 +85,8 @@ namespace OpenTelemetry.Internal
         /// <summary>
         /// Reads an environmetal variable and parses is as a <see cref="Uri" />.
         /// </summary>
+        /// <param name="envVarKey">The name of the environment variable.</param>
+        /// <param name="result">The parsed value of the environment variable.</param>
         /// <returns>
         /// Returns <c>true</c> when if a non-empty value was read; otherwise, <c>false</c>.
         /// </returns>
