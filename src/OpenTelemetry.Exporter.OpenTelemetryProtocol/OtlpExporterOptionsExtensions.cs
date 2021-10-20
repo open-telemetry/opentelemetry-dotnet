@@ -107,7 +107,7 @@ namespace OpenTelemetry.Exporter
         {
             // We allow endpoint overwrite with the value equal to default or value read from OTEL_EXPORTER_OTLP_ENDPOINT.
             // In case of overwritten endpoint we leave it as is (without appending traces/metrics path) regardless its value.
-            // That's why object refernces are compared instead of actual Uri(s).
+            // That's why object references are compared instead of actual Uri(s).
             if (ReferenceEquals(originalEndpoint, options.Endpoint))
             {
                 if (options.Protocol == OtlpExportProtocol.HttpProtobuf)
