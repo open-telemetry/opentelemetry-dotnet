@@ -26,7 +26,7 @@ namespace OpenTelemetry.Trace
     /// environment variables are parsed during object construction.
     /// </summary>
     /// <remarks>
-    /// The constructor throws <see cref="ArgumentException"/> if it fails to parse
+    /// The constructor throws <see cref="FormatException"/> if it fails to parse
     /// any of the supported environment variables.
     /// </remarks>
     public class BatchExportActivityProcessorOptions : BatchExportProcessorOptions<Activity>

@@ -72,7 +72,7 @@ namespace OpenTelemetry.Internal.Tests
         {
             Environment.SetEnvironmentVariable(EnvVar, value);
 
-            Assert.Throws<ArgumentException>(() => EnvironmentVariableHelper.LoadNonNegativeInt32(EnvVar, out int _));
+            Assert.Throws<FormatException>(() => EnvironmentVariableHelper.LoadNonNegativeInt32(EnvVar, out int _));
         }
     }
 }
