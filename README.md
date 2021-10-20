@@ -99,7 +99,6 @@ Approvers
 * [Eddy Nakamura](https://github.com/eddynaka), Microsoft
 * [Paulo Janotti](https://github.com/pjanotti), Splunk
 * [Reiley Yang](https://github.com/reyang), Microsoft
-* [Robert Pajak](https://github.com/pellared), Splunk
 * [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
 *Find more about the approver role in [community
