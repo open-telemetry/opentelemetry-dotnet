@@ -103,6 +103,26 @@ namespace OpenTelemetry.Exporter
                 _ => null
             };
 
+        public static void AdjustEndpoint(this OtlpExporterOptions options, Uri originalEndpoint, string exportRelativePath)
+        {
+            // We allow endpoint overwrite with the value equal to default or value read from OTEL_EXPORTER_OTLP_ENDPOINT.
+            // In case of overwritten endpoint we leave it as is (without appending traces/metrics path) regardless its value.
+            // That's why object refernces are compared instead of actual Uri(s).
+            if (ReferenceEquals(originalEndpoint, options.Endpoint))
+            {
+                if (options.Protocol == OtlpExportProtocol.HttpProtobuf)
+                {
+                    var endpointEnvVar = Environment.GetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName);
+                    if (!string.IsNullOrEmpty(endpointEnvVar))
+                    {
+                        // In this case the Endpoint is read from OTEL_EXPORTER_OTLP_ENDPOINT
+                        // and has to be appened by traces/metrics relative path.
+                        options.Endpoint = options.Endpoint.AppendPathIfNotPresent(exportRelativePath);
+                    }
+                }
+            }
+        }
+
         public static Uri AppendPathIfNotPresent(this Uri uri, string path)
         {
             var absoluteUri = uri.AbsoluteUri;

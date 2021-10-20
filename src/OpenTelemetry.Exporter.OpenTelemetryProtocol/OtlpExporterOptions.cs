@@ -36,10 +36,6 @@ namespace OpenTelemetry.Exporter
         internal const string TracesExportPath = "v1/traces";
         internal const string MetricsExportPath = "v1/metrics";
 
-        private static readonly Uri DefaultEndpoint = new Uri("http://localhost:4317");
-
-        private Uri endpoint = DefaultEndpoint;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
         /// </summary>
@@ -47,35 +43,12 @@ namespace OpenTelemetry.Exporter
         {
             try
             {
-                // Protocol initialization should come before the endpoint as endpoint's value may be adjusted according to the protocols value.
-                string protocolEnvVar = Environment.GetEnvironmentVariable(ProtocolEnvVarName);
-                if (!string.IsNullOrEmpty(protocolEnvVar))
-                {
-                    var protocol = protocolEnvVar.ToOtlpExportProtocol();
-                    if (protocol.HasValue)
-                    {
-                        this.Protocol = protocol.Value;
-                    }
-                    else
-                    {
-                        OpenTelemetryProtocolExporterEventSource.Log.UnsupportedProtocol(protocolEnvVar);
-                    }
-                }
-
                 string endpointEnvVar = Environment.GetEnvironmentVariable(EndpointEnvVarName);
                 if (!string.IsNullOrEmpty(endpointEnvVar))
                 {
                     if (Uri.TryCreate(endpointEnvVar, UriKind.Absolute, out var endpoint))
                     {
-                        this.endpoint = endpoint;
-                        this.TracesEndpoint = endpoint;
-                        this.MetricsEndpoint = endpoint;
-
-                        if (this.Protocol == OtlpExportProtocol.HttpProtobuf)
-                        {
-                            this.TracesEndpoint = endpoint.AppendPathIfNotPresent(TracesExportPath);
-                            this.MetricsEndpoint = endpoint.AppendPathIfNotPresent(MetricsExportPath);
-                        }
+                        this.Endpoint = endpoint;
                     }
                     else
                     {
@@ -101,6 +74,20 @@ namespace OpenTelemetry.Exporter
                         OpenTelemetryProtocolExporterEventSource.Log.FailedToParseEnvironmentVariable(TimeoutEnvVarName, timeoutEnvVar);
                     }
                 }
+
+                string protocolEnvVar = Environment.GetEnvironmentVariable(ProtocolEnvVarName);
+                if (!string.IsNullOrEmpty(protocolEnvVar))
+                {
+                    var protocol = protocolEnvVar.ToOtlpExportProtocol();
+                    if (protocol.HasValue)
+                    {
+                        this.Protocol = protocol.Value;
+                    }
+                    else
+                    {
+                        OpenTelemetryProtocolExporterEventSource.Log.UnsupportedProtocol(protocolEnvVar);
+                    }
+                }
             }
             catch (SecurityException ex)
             {
@@ -115,36 +102,7 @@ namespace OpenTelemetry.Exporter
         /// Must be a valid Uri with scheme (http or https) and host, and
         /// may contain a port and path. The default value is http://localhost:4317.
         /// </summary>
-        public Uri Endpoint
-        {
-            get
-            {
-                return this.endpoint;
-            }
-
-            set
-            {
-                this.endpoint = value;
-                this.TracesEndpoint = value;
-                this.MetricsEndpoint = value;
-            }
-        }
-
-        /// <summary>
-        /// Gets the target to which the exporter is going to send traces. The default value is http://localhost:4317.
-        /// Initially, this property is derived from the OTEL_EXPORTER_OTLP_ENDPOINT environment variable and adjusted according to the specification:
-        /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#endpoint-urls-for-otlphttp.
-        /// If the <see cref="Endpoint"/> is set, then this property will be set with the same value.
-        /// </summary>
-        public Uri TracesEndpoint { get; private set; } = DefaultEndpoint;
-
-        /// <summary>
-        /// Gets the target to which the exporter is going to send metrics. The default value is http://localhost:4317.
-        /// Initially, this property is derived from the OTEL_EXPORTER_OTLP_ENDPOINT environment variable and adjusted according to the specification:
-        /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#endpoint-urls-for-otlphttp.
-        /// If the <see cref="Endpoint"/> is set, then this property will be set with the same value.
-        /// </summary>
-        public Uri MetricsEndpoint { get; private set; } = DefaultEndpoint;
+        public Uri Endpoint { get; set; } = new Uri("http://localhost:4317");
 
         /// <summary>
         /// Gets or sets optional headers for the connection. Refer to the <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables">
