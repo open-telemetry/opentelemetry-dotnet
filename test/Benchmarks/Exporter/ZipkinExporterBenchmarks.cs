@@ -14,15 +14,17 @@
 // limitations under the License.
 // </copyright>
 
+extern alias Zipkin;
+
 using System;
 using System.Diagnostics;
 using System.IO;
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
 using OpenTelemetry;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
+using Zipkin::OpenTelemetry.Exporter;
 
 namespace Benchmarks.Exporter
 {
