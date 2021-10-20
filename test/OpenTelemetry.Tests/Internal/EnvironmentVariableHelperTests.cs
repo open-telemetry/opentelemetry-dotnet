@@ -19,7 +19,7 @@ using Xunit;
 
 namespace OpenTelemetry.Internal.Tests
 {
-    public class EnvironmentVariableHelperTests
+    public class EnvironmentVariableHelperTests : IDisposable
     {
         private const string EnvVar = "OTEL_EXAMPLE_VARIABLE";
 
