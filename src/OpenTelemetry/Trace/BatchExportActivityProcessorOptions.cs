@@ -16,7 +16,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Security;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
@@ -44,55 +43,25 @@ namespace OpenTelemetry.Trace
         {
             int value;
 
-            if (LoadEnvVarInt(ExporterTimeoutEnvVarKey, out value))
+            if (EnvironmentVariableHelper.LoadNonNegativeInt32(ExporterTimeoutEnvVarKey, out value))
             {
                 this.ExporterTimeoutMilliseconds = value;
             }
 
-            if (LoadEnvVarInt(MaxExportBatchSizeEnvVarKey, out value))
+            if (EnvironmentVariableHelper.LoadNonNegativeInt32(MaxExportBatchSizeEnvVarKey, out value))
             {
                 this.MaxExportBatchSize = value;
             }
 
-            if (LoadEnvVarInt(MaxQueueSizeEnvVarKey, out value))
+            if (EnvironmentVariableHelper.LoadNonNegativeInt32(MaxQueueSizeEnvVarKey, out value))
             {
                 this.MaxQueueSize = value;
             }
 
-            if (LoadEnvVarInt(ScheduledDelayEnvVarKey, out value))
+            if (EnvironmentVariableHelper.LoadNonNegativeInt32(ScheduledDelayEnvVarKey, out value))
             {
                 this.ScheduledDelayMilliseconds = value;
             }
-        }
-
-        private static bool LoadEnvVarInt(string envVarKey, out int result)
-        {
-            result = 0;
-
-            string value;
-            try
-            {
-                value = Environment.GetEnvironmentVariable(envVarKey);
-            }
-            catch (SecurityException ex)
-            {
-                // The caller does not have the required permission to
-                // retrieve the value of an environment variable from the current process.
-                OpenTelemetrySdkEventSource.Log.MissingPermissionsToReadEnvironmentVariable(ex);
-                return false;
-            }
-
-            if (string.IsNullOrEmpty(value))
-            {
-                return false;
-            }
-
-            if (!int.TryParse(value, out result))
-            {
-                throw new ArgumentException($"{envVarKey} environment variable has an invalid value: '${value}'");
-            }
-
-            return true;
         }
     }
 }
