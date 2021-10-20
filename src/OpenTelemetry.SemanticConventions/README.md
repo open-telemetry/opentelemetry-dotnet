@@ -30,13 +30,13 @@ Or, with PowerShell:
 
 ## Updating PublicAPI files
 
-If new items are added, it is important that the PublicAPI files are updated. 
-We can use the [dotnet-format](https://github.com/dotnet/format) global tool to update the files and fix the `RS0016` warnings:
+If new items are added, it is important that the PublicAPI files are updated.
+We can use the [dotnet-format](https://github.com/dotnet/format) global tool
+to update the files and fix the `RS0016` warnings:
 
 ```shell
-$ OpenTelemetry.SemanticConventions: dotnet format -a warn
+dotnet format -a warn
 ```
-
 
 ## References
 
