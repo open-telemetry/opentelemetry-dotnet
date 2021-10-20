@@ -118,7 +118,6 @@ namespace OpenTelemetry.Metrics
                 while (Interlocked.CompareExchange(ref this.isCollectionInProgress, 1, 0) == 1);
             }
 
-            // if there is no Collect
             try
             {
                 return this.OnCollect(timeoutMilliseconds);
