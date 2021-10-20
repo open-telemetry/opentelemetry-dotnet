@@ -175,7 +175,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Expo
                 Assert.True(result);
                 Assert.NotNull(httpRequest);
                 Assert.Equal(HttpMethod.Post, httpRequest.Method);
-                Assert.Equal("http://localhost:4317/v1/traces", httpRequest.RequestUri.AbsoluteUri);
+                Assert.Equal("http://localhost:4317/", httpRequest.RequestUri.AbsoluteUri);
                 Assert.Equal(2, httpRequest.Headers.Count());
                 Assert.Contains(httpRequest.Headers, h => h.Key == header1.Name && h.Value.First() == header1.Value);
                 Assert.Contains(httpRequest.Headers, h => h.Key == header2.Name && h.Value.First() == header2.Value);
