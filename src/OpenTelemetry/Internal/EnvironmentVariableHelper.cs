@@ -21,7 +21,7 @@ using System.Security;
 namespace OpenTelemetry.Internal
 {
     /// <summary>
-    /// EnvironmentVariableHelper facilitates parsing environmetal variable values defined by
+    /// EnvironmentVariableHelper facilitates parsing environmetal variable values as defined by
     /// <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md">
     /// the specification</a>
     /// </summary>
