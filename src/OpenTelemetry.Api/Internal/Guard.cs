@@ -140,7 +140,7 @@ namespace OpenTelemetry.Internal
         /// </summary>
         /// <param name="value">The value to check.</param>
         /// <param name="paramName">The parameter name to use in the thrown exception.</param>
-        /// <typeparam name="T">The type to attempt to convert to.</typeparam>
+        /// <typeparam name="T">The type attempted to convert to.</typeparam>
         /// <returns>The value casted to the specified type.</returns>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
