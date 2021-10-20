@@ -33,33 +33,47 @@ namespace OpenTelemetry.Internal.Tests
             Environment.SetEnvironmentVariable(EnvVar, null);
         }
 
-        [Theory]
-        [InlineData(null, false, null)]
-        [InlineData("", false, null)] // Environment.SetEnvironmentVariable(EnvVar, ""); clears the environemtal variable as well
-        [InlineData("something", true, "something")]
-        public void LoadString(string value, bool expectedBool, string expectedValue)
+        [Fact]
+        public void LoadString()
         {
+            const string value = "something";
             Environment.SetEnvironmentVariable(EnvVar, value);
 
             bool actualBool = EnvironmentVariableHelper.LoadString(EnvVar, out string actualValue);
 
-            Assert.Equal(expectedBool, actualBool);
-            Assert.Equal(expectedValue, actualValue);
+            Assert.True(actualBool);
+            Assert.Equal(value, actualValue);
+        }
+
+        [Fact]
+        public void LoadString_NoValue()
+        {
+            bool actualBool = EnvironmentVariableHelper.LoadString(EnvVar, out string actualValue);
+
+            Assert.False(actualBool);
+            Assert.Null(actualValue);
         }
 
         [Theory]
-        [InlineData(null, false, 0)]
-        [InlineData("", false, 0)] // Environment.SetEnvironmentVariable(EnvVar, ""); clears the environemtal variable as well
-        [InlineData("123", true, 123)]
-        [InlineData("0", true, 0)]
-        public void LoadNumeric(string value, bool expectedBool, int expectedValue)
+        [InlineData("123", 123)]
+        [InlineData("0", 0)]
+        public void LoadNumeric(string value, int expectedValue)
         {
             Environment.SetEnvironmentVariable(EnvVar, value);
 
             bool actualBool = EnvironmentVariableHelper.LoadNumeric(EnvVar, out int actualValue);
 
-            Assert.Equal(expectedBool, actualBool);
+            Assert.True(actualBool);
             Assert.Equal(expectedValue, actualValue);
+        }
+
+        [Fact]
+        public void LoadNumeric_NoValue()
+        {
+            bool actualBool = EnvironmentVariableHelper.LoadNumeric(EnvVar, out int actualValue);
+
+            Assert.False(actualBool);
+            Assert.Equal(0, actualValue);
         }
 
         [Theory]
@@ -73,6 +87,39 @@ namespace OpenTelemetry.Internal.Tests
             Environment.SetEnvironmentVariable(EnvVar, value);
 
             Assert.Throws<FormatException>(() => EnvironmentVariableHelper.LoadNumeric(EnvVar, out int _));
+        }
+
+        [Theory]
+        [InlineData("http://www.example.com", "http://www.example.com/")]
+        [InlineData("http://www.example.com/space%20here.html", "http://www.example.com/space here.html")] // characters are converted
+        [InlineData("http://www.example.com/space here.html", "http://www.example.com/space here.html")] // characters are escaped
+        public void LoadUri(string value, string expectedValue)
+        {
+            Environment.SetEnvironmentVariable(EnvVar, value);
+
+            bool actualBool = EnvironmentVariableHelper.LoadUri(EnvVar, out Uri actualValue);
+
+            Assert.True(actualBool);
+            Assert.Equal(expectedValue, actualValue.ToString());
+        }
+
+        [Fact]
+        public void LoadUri_NoValue()
+        {
+            bool actualBool = EnvironmentVariableHelper.LoadUri(EnvVar, out Uri actualValue);
+
+            Assert.False(actualBool);
+            Assert.Null(actualValue);
+        }
+
+        [Theory]
+        [InlineData("invalid")] // invalid format
+        [InlineData("  ")] // whitespace
+        public void LoadUri_Invalid(string value)
+        {
+            Environment.SetEnvironmentVariable(EnvVar, value);
+
+            Assert.Throws<FormatException>(() => EnvironmentVariableHelper.LoadUri(EnvVar, out Uri _));
         }
     }
 }

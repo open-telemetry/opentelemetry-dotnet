@@ -40,16 +40,9 @@ namespace OpenTelemetry.Exporter
         /// </summary>
         public OtlpExporterOptions()
         {
-            if (EnvironmentVariableHelper.LoadString(EndpointEnvVarName, out string endpointEnvVar))
+            if (EnvironmentVariableHelper.LoadUri(EndpointEnvVarName, out Uri endpoint))
             {
-                if (Uri.TryCreate(endpointEnvVar, UriKind.Absolute, out var endpoint))
-                {
-                    this.Endpoint = endpoint;
-                }
-                else
-                {
-                    throw new FormatException($"{EndpointEnvVarName} environment variable has an invalid value: '${endpointEnvVar}'");
-                }
+                this.Endpoint = endpoint;
             }
 
             if (EnvironmentVariableHelper.LoadString(HeadersEnvVarName, out string headersEnvVar))

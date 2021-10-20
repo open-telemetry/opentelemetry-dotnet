@@ -57,5 +57,22 @@ namespace OpenTelemetry.Internal
 
             return true;
         }
+
+        public static bool LoadUri(string envVarKey, out Uri result)
+        {
+            result = null;
+
+            if (!LoadString(envVarKey, out string value))
+            {
+                return false;
+            }
+
+            if (!Uri.TryCreate(value, UriKind.Absolute, out result))
+            {
+                throw new FormatException($"{envVarKey} environment variable has an invalid value: '${value}'");
+            }
+
+            return true;
+        }
     }
 }
