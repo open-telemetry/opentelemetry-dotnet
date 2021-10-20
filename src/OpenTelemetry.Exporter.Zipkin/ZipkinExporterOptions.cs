@@ -22,8 +22,14 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Exporter
 {
     /// <summary>
-    /// Zipkin trace exporter options.
+    /// Zipkin span exporter options.
+    /// OTEL_EXPORTER_ZIPKIN_ENDPOINT
+    /// environment variables are parsed during object construction.
     /// </summary>
+    /// <remarks>
+    /// The constructor throws <see cref="FormatException"/> if it fails to parse
+    /// any of the supported environment variables.
+    /// </remarks>
     public sealed class ZipkinExporterOptions
     {
         internal const int DefaultMaxPayloadSizeInBytes = 4096;

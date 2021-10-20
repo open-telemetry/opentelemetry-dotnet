@@ -23,8 +23,14 @@ using OpenTelemetry.Trace;
 namespace OpenTelemetry.Exporter
 {
     /// <summary>
-    /// Configuration options for the OpenTelemetry Protocol (OTLP) exporter.
+    /// OpenTelemetry Protocol (OTLP) exporter options.
+    /// OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_HEADERS, OTEL_EXPORTER_OTLP_TIMEOUT, OTEL_EXPORTER_OTLP_PROTOCOL
+    /// environment variables are parsed during object construction.
     /// </summary>
+    /// <remarks>
+    /// The constructor throws <see cref="FormatException"/> if it fails to parse
+    /// any of the supported environment variables.
+    /// </remarks>
     public class OtlpExporterOptions
     {
         internal const string EndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
