@@ -41,7 +41,7 @@ namespace OpenTelemetry.Internal
             return !string.IsNullOrEmpty(result);
         }
 
-        public static bool LoadNonNegativeInt32(string envVarKey, out int result)
+        public static bool LoadNumeric(string envVarKey, out int result)
         {
             result = 0;
 

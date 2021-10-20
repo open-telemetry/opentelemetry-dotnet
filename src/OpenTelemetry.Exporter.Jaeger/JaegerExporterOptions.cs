@@ -34,7 +34,7 @@ namespace OpenTelemetry.Exporter
                 this.AgentHost = agentHostEnvVar;
             }
 
-            if (EnvironmentVariableHelper.LoadNonNegativeInt32(OTelAgentPortEnvVarKey, out int agentPortEnvVar))
+            if (EnvironmentVariableHelper.LoadNumeric(OTelAgentPortEnvVarKey, out int agentPortEnvVar))
             {
                 this.AgentPort = agentPortEnvVar;
             }

@@ -43,22 +43,22 @@ namespace OpenTelemetry.Trace
         {
             int value;
 
-            if (EnvironmentVariableHelper.LoadNonNegativeInt32(ExporterTimeoutEnvVarKey, out value))
+            if (EnvironmentVariableHelper.LoadNumeric(ExporterTimeoutEnvVarKey, out value))
             {
                 this.ExporterTimeoutMilliseconds = value;
             }
 
-            if (EnvironmentVariableHelper.LoadNonNegativeInt32(MaxExportBatchSizeEnvVarKey, out value))
+            if (EnvironmentVariableHelper.LoadNumeric(MaxExportBatchSizeEnvVarKey, out value))
             {
                 this.MaxExportBatchSize = value;
             }
 
-            if (EnvironmentVariableHelper.LoadNonNegativeInt32(MaxQueueSizeEnvVarKey, out value))
+            if (EnvironmentVariableHelper.LoadNumeric(MaxQueueSizeEnvVarKey, out value))
             {
                 this.MaxQueueSize = value;
             }
 
-            if (EnvironmentVariableHelper.LoadNonNegativeInt32(ScheduledDelayEnvVarKey, out value))
+            if (EnvironmentVariableHelper.LoadNumeric(ScheduledDelayEnvVarKey, out value))
             {
                 this.ScheduledDelayMilliseconds = value;
             }

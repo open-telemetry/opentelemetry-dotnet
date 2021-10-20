@@ -52,11 +52,11 @@ namespace OpenTelemetry.Internal.Tests
         [InlineData("", false, 0)] // Environment.SetEnvironmentVariable(EnvVar, ""); clears the environemtal variable as well
         [InlineData("123", true, 123)]
         [InlineData("0", true, 0)]
-        public void LoadNonNegativeInt32(string value, bool expectedBool, int expectedValue)
+        public void LoadNumeric(string value, bool expectedBool, int expectedValue)
         {
             Environment.SetEnvironmentVariable(EnvVar, value);
 
-            bool actualBool = EnvironmentVariableHelper.LoadNonNegativeInt32(EnvVar, out int actualValue);
+            bool actualBool = EnvironmentVariableHelper.LoadNumeric(EnvVar, out int actualValue);
 
             Assert.Equal(expectedBool, actualBool);
             Assert.Equal(expectedValue, actualValue);
@@ -68,11 +68,11 @@ namespace OpenTelemetry.Internal.Tests
         [InlineData("-0")] // sign not allowed
         [InlineData(" 123 ")] // whitespaces not allowed
         [InlineData("0xFF")] // only decimal number allowed
-        public void LoadNonNegativeInt32_Invalid(string value)
+        public void LoadNumeric_Invalid(string value)
         {
             Environment.SetEnvironmentVariable(EnvVar, value);
 
-            Assert.Throws<FormatException>(() => EnvironmentVariableHelper.LoadNonNegativeInt32(EnvVar, out int _));
+            Assert.Throws<FormatException>(() => EnvironmentVariableHelper.LoadNumeric(EnvVar, out int _));
         }
     }
 }
