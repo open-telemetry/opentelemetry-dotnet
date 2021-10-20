@@ -49,7 +49,7 @@ namespace OpenTelemetry.Internal.Tests
 
         [Theory]
         [InlineData(null, false, 0)]
-        [InlineData("", false, 0)]
+        [InlineData("", false, 0)] // Environment.SetEnvironmentVariable(EnvVar, ""); clears the environemtal variable as well
         [InlineData("123", true, 123)]
         [InlineData("0", true, 0)]
         public void LoadNonNegativeInt32(string value, bool expectedBool, int expectedValue)

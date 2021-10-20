@@ -32,8 +32,7 @@ namespace OpenTelemetry.Resources
 
             try
             {
-                EnvironmentVariableHelper.LoadString(EnvVarKey, out string envResourceAttributeValue);
-                if (!string.IsNullOrEmpty(envResourceAttributeValue))
+                if (EnvironmentVariableHelper.LoadString(EnvVarKey, out string envResourceAttributeValue))
                 {
                     var attributes = ParseResourceAttributes(envResourceAttributeValue);
                     resource = new Resource(attributes);

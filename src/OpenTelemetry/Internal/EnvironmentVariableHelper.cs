@@ -38,15 +38,14 @@ namespace OpenTelemetry.Internal
                 return false;
             }
 
-            return result != null;
+            return !string.IsNullOrEmpty(result);
         }
 
         public static bool LoadNonNegativeInt32(string envVarKey, out int result)
         {
             result = 0;
 
-            LoadString(envVarKey, out string value);
-            if (string.IsNullOrEmpty(value))
+            if (!LoadString(envVarKey, out string value))
             {
                 return false;
             }
