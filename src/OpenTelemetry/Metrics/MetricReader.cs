@@ -116,7 +116,7 @@ namespace OpenTelemetry.Metrics
 
                     if (this.collectionSequenceNumber >= targetCollectionSequenceNumber)
                     {
-                        return true; // we need to get the actual Collect result
+                        return true; // TODO: need to get the actual Collect result
                     }
                 } // TODO: reformat the code once SA1500 is fixed (https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/2801)
                 while (Interlocked.CompareExchange(ref this.isCollectionInProgress, 1, 0) == 1);
