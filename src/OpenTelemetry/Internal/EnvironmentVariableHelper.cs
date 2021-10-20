@@ -20,8 +20,19 @@ using System.Security;
 
 namespace OpenTelemetry.Internal
 {
+    /// <summary>
+    /// EnvironmentVariableHelper facilitates parsing environmetal variable values defined by
+    /// <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md">
+    /// the specification</a>
+    /// </summary>
     internal static class EnvironmentVariableHelper
     {
+        /// <summary>
+        /// Reads an environmetal variable without any parsing.
+        /// </summary>
+        /// <returns>
+        /// Returns <c>true</c> when if a non-empty value was read; otherwise, <c>false</c>.
+        /// </returns>
         public static bool LoadString(string envVarKey, out string result)
         {
             result = null;
@@ -41,6 +52,15 @@ namespace OpenTelemetry.Internal
             return !string.IsNullOrEmpty(result);
         }
 
+        /// <summary>
+        /// Reads an environmetal variable and parses is as a non-negative decimal number.
+        /// </summary>
+        /// <returns>
+        /// Returns <c>true</c> when if a non-empty value was read; otherwise, <c>false</c>.
+        /// </returns>
+        /// <exception cref="FormatException">
+        /// Thrown when failed to parse the non-empty value.
+        /// </exception>
         public static bool LoadNumeric(string envVarKey, out int result)
         {
             result = 0;
@@ -58,6 +78,15 @@ namespace OpenTelemetry.Internal
             return true;
         }
 
+        /// <summary>
+        /// Reads an environmetal variable and parses is as a <see cref="Uri" />.
+        /// </summary>
+        /// <returns>
+        /// Returns <c>true</c> when if a non-empty value was read; otherwise, <c>false</c>.
+        /// </returns>
+        /// <exception cref="FormatException">
+        /// Thrown when failed to parse the non-empty value.
+        /// </exception>
         public static bool LoadUri(string envVarKey, out Uri result)
         {
             result = null;
