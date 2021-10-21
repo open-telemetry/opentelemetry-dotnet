@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
@@ -24,18 +25,16 @@ namespace OpenTelemetry.Metrics
     public abstract class MetricReader : IDisposable
     {
         private const AggregationTemporality CumulativeAndDelta = AggregationTemporality.Cumulative | AggregationTemporality.Delta;
-        private readonly ManualResetEvent collectCompletedNotification = new ManualResetEvent(false);
-        private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
-        private readonly WaitHandle[] triggers;
+        private readonly object syncObject = new object();
+        private readonly Task<bool> shutdownTask;
         private AggregationTemporality preferredAggregationTemporality = CumulativeAndDelta;
         private AggregationTemporality supportedAggregationTemporality = CumulativeAndDelta;
-        private long collectionSequenceNumber;
-        private int isCollectionInProgress;
-        private int shutdownCount;
+        private int shutdownTimeout = int.MinValue;
+        private Task<bool> collectionTask;
 
         protected MetricReader()
         {
-            this.triggers = new WaitHandle[] { this.collectCompletedNotification, this.shutdownTrigger };
+            this.shutdownTask = new Task<bool>(() => this.OnShutdown(this.shutdownTimeout));
         }
 
         public BaseProvider ParentProvider { get; private set; }
@@ -81,50 +80,34 @@ namespace OpenTelemetry.Metrics
         {
             Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
-            if (Interlocked.CompareExchange(ref this.isCollectionInProgress, 1, 0) == 1)
+            var task = this.collectionTask;
+            var kickoff = false;
+
+            if (task == null)
             {
-                var targetCollectionSequenceNumber = this.collectionSequenceNumber + 1;
-
-                var sw = Stopwatch.StartNew();
-
-                const int pollingMilliseconds = 1000;
-
-                do
+                lock (this.syncObject)
                 {
-                    if (timeoutMilliseconds == Timeout.Infinite)
+                    if (this.collectionTask == null)
                     {
-                        WaitHandle.WaitAny(this.triggers, pollingMilliseconds);
-                    }
-                    else
-                    {
-                        var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-
-                        if (timeout <= 0)
-                        {
-                            if (this.collectionSequenceNumber < targetCollectionSequenceNumber)
-                            {
-                                return false;
-                            }
-                            else
-                            {
-                                return true; // TODO: need to get the actual Collect result
-                            }
-                        }
-
-                        WaitHandle.WaitAny(this.triggers, Math.Min((int)timeout, pollingMilliseconds));
+                        this.collectionTask = new Task<bool>(() => this.OnCollect(timeoutMilliseconds));
+                        kickoff = true;
                     }
 
-                    if (this.collectionSequenceNumber >= targetCollectionSequenceNumber)
-                    {
-                        return true; // TODO: need to get the actual Collect result
-                    }
-                } // TODO: reformat the code once SA1500 is fixed (https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/2801)
-                while (Interlocked.CompareExchange(ref this.isCollectionInProgress, 1, 0) == 1);
+                    task = this.collectionTask;
+                }
             }
 
             try
             {
-                return this.OnCollect(timeoutMilliseconds);
+                if (kickoff)
+                {
+                    task.RunSynchronously();
+                    return task.Result;
+                }
+                else
+                {
+                    return Task.WaitAny(task, this.shutdownTask, Task.Delay(timeoutMilliseconds)) == 0 ? task.Result : false;
+                }
             }
             catch (Exception)
             {
@@ -133,10 +116,10 @@ namespace OpenTelemetry.Metrics
             }
             finally
             {
-                this.collectionSequenceNumber++;
-                this.isCollectionInProgress = 0;
-                this.collectCompletedNotification.Set();
-                this.collectCompletedNotification.Reset();
+                if (kickoff)
+                {
+                    this.collectionTask = null;
+                }
             }
         }
 
@@ -162,23 +145,22 @@ namespace OpenTelemetry.Metrics
         {
             Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
-            if (Interlocked.Increment(ref this.shutdownCount) > 1)
+            if (Interlocked.CompareExchange(ref this.shutdownTimeout, timeoutMilliseconds, int.MinValue) != int.MinValue)
             {
                 return false; // shutdown already called
             }
 
+            this.shutdownTimeout = timeoutMilliseconds;
+
             try
             {
-                return this.OnShutdown(timeoutMilliseconds);
+                this.shutdownTask.RunSynchronously();
+                return this.shutdownTask.Result;
             }
             catch (Exception)
             {
                 // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Shutdown), ex);
                 return false;
-            }
-            finally
-            {
-                this.shutdownTrigger.Set();
             }
         }
 
