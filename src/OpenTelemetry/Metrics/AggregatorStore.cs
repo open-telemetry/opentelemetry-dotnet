@@ -212,12 +212,12 @@ namespace OpenTelemetry.Metrics
 
             // GetOrAdd by TagValue at 2st Level of 2-level dictionary structure.
             // Get back Metrics[].
-            if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex) || this.metricPoints[aggregatorIndex].MetricPointStatus == MetricPointStatus.Unset)
+            if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex))
             {
                 lock (value2metrics)
                 {
                     // check again after acquiring lock.
-                    if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex) || this.metricPoints[aggregatorIndex].MetricPointStatus == MetricPointStatus.Unset)
+                    if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex))
                     {
                         if (!this.metricPointFreeList.TryPop(out aggregatorIndex))
                         {
