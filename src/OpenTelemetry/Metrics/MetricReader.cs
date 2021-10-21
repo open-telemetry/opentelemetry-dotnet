@@ -26,6 +26,7 @@ namespace OpenTelemetry.Metrics
     {
         private const AggregationTemporality CumulativeAndDelta = AggregationTemporality.Cumulative | AggregationTemporality.Delta;
         private readonly object syncObject = new object();
+        private readonly object onCollectLock = new object();
         private readonly Task<bool> shutdownTask;
         private AggregationTemporality preferredAggregationTemporality = CumulativeAndDelta;
         private AggregationTemporality supportedAggregationTemporality = CumulativeAndDelta;
@@ -80,20 +81,21 @@ namespace OpenTelemetry.Metrics
         {
             Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
-            var task = this.collectionTask;
             var kickoff = false;
+            var task = this.collectionTask;
 
             if (task == null)
             {
                 lock (this.syncObject)
                 {
-                    if (this.collectionTask == null)
-                    {
-                        this.collectionTask = new Task<bool>(() => this.OnCollect(timeoutMilliseconds));
-                        kickoff = true;
-                    }
-
                     task = this.collectionTask;
+
+                    if (task == null)
+                    {
+                        kickoff = true;
+                        task = new Task<bool>(() => this.OnCollect(timeoutMilliseconds));
+                        this.collectionTask = task;
+                    }
                 }
             }
 
@@ -101,7 +103,12 @@ namespace OpenTelemetry.Metrics
             {
                 if (kickoff)
                 {
-                    task.RunSynchronously();
+                    lock (this.onCollectLock)
+                    {
+                        this.collectionTask = null;
+                        task.RunSynchronously();
+                    }
+
                     return task.Result;
                 }
                 else
@@ -113,13 +120,6 @@ namespace OpenTelemetry.Metrics
             {
                 // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Collect), ex);
                 return false;
-            }
-            finally
-            {
-                if (kickoff)
-                {
-                    this.collectionTask = null;
-                }
             }
         }
 
