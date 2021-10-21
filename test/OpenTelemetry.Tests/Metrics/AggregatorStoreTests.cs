@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using Xunit;
 
@@ -22,15 +23,18 @@ namespace OpenTelemetry.Metrics.Tests
     public class AggregatorStoreTests
     {
         [Fact]
-        public void MetricPointStatusChangeTest()
+        public void MetricPointStatusIsNoPendingUpdateAfterCollect()
         {
             var aggregatorStore = new AggregatorStore(AggregationType.LongGauge, AggregationTemporality.Delta, Metric.DefaultHistogramBounds);
 
             var maxMetricPoints = AggregatorStore.MaxMetricPoints;
 
-            for (var i = 0; i < maxMetricPoints; ++i)
+            // MetricPoint with no tags is reserved.
+            aggregatorStore.Update(100, ReadOnlySpan<KeyValuePair<string, object>>.Empty);
+
+            for (var i = 0; i < maxMetricPoints - 1; ++i)
             {
-                aggregatorStore.Update(100L, new[] { new KeyValuePair<string, object>("key", i) });
+                aggregatorStore.Update(100, new[] { new KeyValuePair<string, object>("key", i) });
             }
 
             aggregatorStore.SnapShot();
