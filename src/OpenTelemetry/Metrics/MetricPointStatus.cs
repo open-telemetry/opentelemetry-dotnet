@@ -24,6 +24,11 @@ namespace OpenTelemetry.Metrics
         Unset,
 
         /// <summary>
+        /// UpdatePending <see cref="MetricPoint"/>.
+        /// </summary>
+        UpdatePending,
+
+        /// <summary>
         /// The <see cref="MetricPoint"/> has been updated since the previous Collect cycle.
         /// Collect will move it to <see cref="NoPendingUpdate"/>.
         /// </summary>

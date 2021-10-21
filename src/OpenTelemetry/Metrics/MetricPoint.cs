@@ -30,6 +30,18 @@ namespace OpenTelemetry.Metrics
 
         internal MetricPoint(
             AggregationType aggType,
+            MetricPointStatus metricPointStatus,
+            DateTimeOffset startTime,
+            string[] keys,
+            object[] values,
+            double[] histogramBounds)
+            : this(aggType, startTime, keys, values, histogramBounds)
+        {
+            this.MetricPointStatus = metricPointStatus;
+        }
+
+        internal MetricPoint(
+            AggregationType aggType,
             DateTimeOffset startTime,
             string[] keys,
             object[] values,
@@ -120,8 +132,6 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
             }
-
-            this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 
         internal void Update(double number)
@@ -185,8 +195,6 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
             }
-
-            this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 
         internal void TakeSnapShot(bool outputDelta)

@@ -19,6 +19,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace OpenTelemetry.Metrics
 {
@@ -37,6 +38,7 @@ namespace OpenTelemetry.Metrics
         private readonly AggregationTemporality temporality;
         private readonly bool outputDelta;
         private readonly MetricPoint[] metricPoints;
+        private readonly ReaderWriterLockSlim[] metricPointLocks;
         private readonly int[] currentMetricPointBatch;
         private readonly AggregationType aggType;
         private readonly double[] histogramBounds;
@@ -56,6 +58,12 @@ namespace OpenTelemetry.Metrics
             string[] tagKeysInteresting = null)
         {
             this.metricPoints = new MetricPoint[MaxMetricPoints];
+            this.metricPointLocks = new ReaderWriterLockSlim[MaxMetricPoints];
+            for (var i = 0; i < MaxMetricPoints; ++i)
+            {
+                this.metricPointLocks[i] = new ReaderWriterLockSlim();
+            }
+
             this.currentMetricPointBatch = new int[MaxMetricPoints];
             this.aggType = aggType;
             this.temporality = temporality;
@@ -103,34 +111,46 @@ namespace OpenTelemetry.Metrics
             {
                 ref var metricPoint = ref this.metricPoints[i];
 
-                // TODO: A switch statement is appropriate here.
-                if (metricPoint.MetricPointStatus == MetricPointStatus.Unset)
+                if (this.temporality == AggregationTemporality.Cumulative)
                 {
-                    continue;
-                }
-                else if (metricPoint.MetricPointStatus == MetricPointStatus.CollectPending
-
                     // TODO: Support marking marking cumulative temporality metrics stale
-                    || this.temporality == AggregationTemporality.Cumulative)
-                {
                     metricPoint.TakeSnapShot(this.outputDelta);
-
-                    // TODO: Consider concurrency issues here. An update may have occurred after the snapshot.
-                    metricPoint.MetricPointStatus = MetricPointStatus.NoPendingUpdate;
-
                     this.currentMetricPointBatch[this.batchSize] = i;
                     this.batchSize++;
                 }
-                else if (metricPoint.MetricPointStatus == MetricPointStatus.NoPendingUpdate)
+                else
                 {
-                    // TODO: Consider concurrency issues here. An update may have occurred after the snapshot.
-                    metricPoint.MetricPointStatus = MetricPointStatus.CandidateForRemoval;
-                }
-                else if (metricPoint.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
-                {
-                    // TODO: Consider concurrency issues here. An update may have occurred after the snapshot.
-                    metricPoint.MetricPointStatus = MetricPointStatus.Unset;
-                    this.metricPointFreeList.Push(i);
+                    this.metricPointLocks[i].EnterWriteLock();
+
+                    switch (metricPoint.MetricPointStatus)
+                    {
+                        case MetricPointStatus.CollectPending:
+                            metricPoint.TakeSnapShot(this.outputDelta);
+                            metricPoint.MetricPointStatus = MetricPointStatus.NoPendingUpdate;
+                            this.currentMetricPointBatch[this.batchSize] = i;
+                            this.batchSize++;
+                            break;
+                        case MetricPointStatus.NoPendingUpdate:
+                            metricPoint.MetricPointStatus = MetricPointStatus.CandidateForRemoval;
+                            break;
+                        case MetricPointStatus.CandidateForRemoval:
+                            metricPoint.MetricPointStatus = MetricPointStatus.Unset;
+
+                            if (metricPoint.Keys != null)
+                            {
+                                var t = this.keyValue2MetricAggs[metricPoint.Keys];
+                                t.TryRemove(metricPoint.Values, out var _);
+                                this.metricPointFreeList.Push(i);
+                            }
+
+                            break;
+                        case MetricPointStatus.Unset:
+                        case MetricPointStatus.UpdatePending:
+                        default:
+                            break;
+                    }
+
+                    this.metricPointLocks[i].ExitWriteLock();
                 }
             }
 
@@ -161,7 +181,7 @@ namespace OpenTelemetry.Metrics
                     if (!this.zeroTagMetricPointInitialized)
                     {
                         var dt = DateTimeOffset.UtcNow;
-                        this.metricPoints[0] = new MetricPoint(this.aggType, dt, null, null, this.histogramBounds);
+                        this.metricPoints[0] = new MetricPoint(this.aggType, MetricPointStatus.UpdatePending, dt, null, null, this.histogramBounds);
                         this.zeroTagMetricPointInitialized = true;
                     }
                 }
@@ -216,7 +236,7 @@ namespace OpenTelemetry.Metrics
 
                         ref var metricPoint = ref this.metricPoints[aggregatorIndex];
                         var dt = DateTimeOffset.UtcNow;
-                        metricPoint = new MetricPoint(this.aggType, dt, seqKey, seqVal, this.histogramBounds);
+                        metricPoint = new MetricPoint(this.aggType, MetricPointStatus.UpdatePending, dt, seqKey, seqVal, this.histogramBounds);
 
                         // Add to dictionary *after* initializing MetricPoint
                         // as other threads can start writing to the
@@ -233,14 +253,17 @@ namespace OpenTelemetry.Metrics
         {
             try
             {
-                var index = this.FindMetricAggregatorsDefault(tags);
-                if (index < 0)
+                int index;
+                do
                 {
-                    // TODO: Measurement dropped due to MemoryPoint cap hit.
-                    return;
+                    index = this.FindMetricAggregatorsDefault(tags);
+                    if (index < 0)
+                    {
+                        // TODO: Measurement dropped due to MemoryPoint cap hit.
+                        return;
+                    }
                 }
-
-                this.metricPoints[index].Update(value);
+                while (!this.TryUpdateMetricPoint(index, value));
             }
             catch (Exception)
             {
@@ -252,14 +275,17 @@ namespace OpenTelemetry.Metrics
         {
             try
             {
-                var index = this.FindMetricAggregatorsCustomTag(tags);
-                if (index < 0)
+                int index;
+                do
                 {
-                    // TODO: Measurement dropped due to MemoryPoint cap hit.
-                    return;
+                    index = this.FindMetricAggregatorsCustomTag(tags);
+                    if (index < 0)
+                    {
+                        // TODO: Measurement dropped due to MemoryPoint cap hit.
+                        return;
+                    }
                 }
-
-                this.metricPoints[index].Update(value);
+                while (!this.TryUpdateMetricPoint(index, value));
             }
             catch (Exception)
             {
@@ -271,14 +297,17 @@ namespace OpenTelemetry.Metrics
         {
             try
             {
-                var index = this.FindMetricAggregatorsDefault(tags);
-                if (index < 0)
+                int index;
+                do
                 {
-                    // TODO: Measurement dropped due to MemoryPoint cap hit.
-                    return;
+                    index = this.FindMetricAggregatorsDefault(tags);
+                    if (index < 0)
+                    {
+                        // TODO: Measurement dropped due to MemoryPoint cap hit.
+                        return;
+                    }
                 }
-
-                this.metricPoints[index].Update(value);
+                while (!this.TryUpdateMetricPoint(index, value));
             }
             catch (Exception)
             {
@@ -290,19 +319,64 @@ namespace OpenTelemetry.Metrics
         {
             try
             {
-                var index = this.FindMetricAggregatorsCustomTag(tags);
-                if (index < 0)
+                int index;
+                do
                 {
-                    // TODO: Measurement dropped due to MemoryPoint cap hit.
-                    return;
+                    index = this.FindMetricAggregatorsCustomTag(tags);
+                    if (index < 0)
+                    {
+                        // TODO: Measurement dropped due to MemoryPoint cap hit.
+                        return;
+                    }
                 }
-
-                this.metricPoints[index].Update(value);
+                while (!this.TryUpdateMetricPoint(index, value));
             }
             catch (Exception)
             {
                 // TODO: Measurement dropped due to internal exception.
             }
+        }
+
+        private bool TryUpdateMetricPoint(int index, long value)
+        {
+            ref var metricPoint = ref this.metricPoints[index];
+            var metricPointLock = this.metricPointLocks[index];
+
+            metricPointLock.EnterReadLock();
+
+            if (metricPoint.MetricPointStatus == MetricPointStatus.Unset)
+            {
+                metricPointLock.ExitReadLock();
+                return false;
+            }
+
+            metricPoint.Update(value);
+            metricPoint.MetricPointStatus = MetricPointStatus.CollectPending;
+
+            metricPointLock.ExitReadLock();
+
+            return true;
+        }
+
+        private bool TryUpdateMetricPoint(int index, double value)
+        {
+            ref var metricPoint = ref this.metricPoints[index];
+            var metricPointLock = this.metricPointLocks[index];
+
+            metricPointLock.EnterReadLock();
+
+            if (metricPoint.MetricPointStatus == MetricPointStatus.Unset)
+            {
+                metricPointLock.ExitReadLock();
+                return false;
+            }
+
+            metricPoint.Update(value);
+            metricPoint.MetricPointStatus = MetricPointStatus.CollectPending;
+
+            metricPointLock.ExitReadLock();
+
+            return true;
         }
 
         private int FindMetricAggregatorsDefault(ReadOnlySpan<KeyValuePair<string, object>> tags)
