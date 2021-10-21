@@ -57,7 +57,6 @@ namespace OpenTelemetry.Internal.Tests
         [Theory]
         [InlineData("123", 123)]
         [InlineData("0", 0)]
-        [InlineData("-1", -1)]
         public void LoadNumeric(string value, int expectedValue)
         {
             Environment.SetEnvironmentVariable(EnvVar, value);
@@ -81,6 +80,7 @@ namespace OpenTelemetry.Internal.Tests
         [InlineData("something")] // NaN
         [InlineData("-12")] // negative number not allowed
         [InlineData("-0")] // sign not allowed
+        [InlineData("-1")] // -1 is not allowed
         [InlineData(" 123 ")] // whitespaces not allowed
         [InlineData("0xFF")] // only decimal number allowed
         public void LoadNumeric_Invalid(string value)
