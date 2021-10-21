@@ -55,7 +55,7 @@ namespace OpenTelemetry.Internal
         }
 
         /// <summary>
-        /// Reads an environment variable and parses is as a non-negative decimal number or -1.
+        /// Reads an environment variable and parses is as a non-negative decimal integer or -1.
         /// </summary>
         /// <param name="envVarKey">The name of the environment variable.</param>
         /// <param name="result">The parsed value of the environment variable.</param>
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Internal
 
             if (value == "-1")
             {
-                // -1 is a special case according to the specifiaction
+                // -1 is a special case according to the specification
                 result = -1;
                 return true;
             }
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Internal
         }
 
         /// <summary>
-        /// Reads an environment variable and parses is as a <see cref="Uri" />.
+        /// Reads an environment variable and parses it as a <see cref="Uri" />.
         /// </summary>
         /// <param name="envVarKey">The name of the environment variable.</param>
         /// <param name="result">The parsed value of the environment variable.</param>
