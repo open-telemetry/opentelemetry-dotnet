@@ -33,7 +33,7 @@ namespace OpenTelemetry.Internal
         /// <param name="envVarKey">The name of the environment variable.</param>
         /// <param name="result">The parsed value of the environment variable.</param>
         /// <returns>
-        /// Returns <c>true</c> when if a non-empty value was read; otherwise, <c>false</c>.
+        /// Returns <c>true</c> when a non-empty value was read; otherwise, <c>false</c>.
         /// </returns>
         public static bool LoadString(string envVarKey, out string result)
         {
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Internal
         /// <param name="envVarKey">The name of the environment variable.</param>
         /// <param name="result">The parsed value of the environment variable.</param>
         /// <returns>
-        /// Returns <c>true</c> when if a non-empty value was read; otherwise, <c>false</c>.
+        /// Returns <c>true</c> when a non-empty value was read; otherwise, <c>false</c>.
         /// </returns>
         /// <exception cref="FormatException">
         /// Thrown when failed to parse the non-empty value.
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Internal
         /// <param name="envVarKey">The name of the environment variable.</param>
         /// <param name="result">The parsed value of the environment variable.</param>
         /// <returns>
-        /// Returns <c>true</c> when if a non-empty value was read; otherwise, <c>false</c>.
+        /// Returns <c>true</c> when a non-empty value was read; otherwise, <c>false</c>.
         /// </returns>
         /// <exception cref="FormatException">
         /// Thrown when failed to parse the non-empty value.
