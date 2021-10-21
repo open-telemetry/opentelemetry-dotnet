@@ -136,7 +136,8 @@ namespace OpenTelemetry.Metrics
                         case MetricPointStatus.CandidateForRemoval:
                             metricPoint.MetricPointStatus = MetricPointStatus.Unset;
 
-                            if (metricPoint.Keys != null)
+                            // MetricPoint at index 0 is reserved for the MetricPoint with no tags.
+                            if (i > 0)
                             {
                                 var t = this.keyValue2MetricAggs[metricPoint.Keys];
                                 t.TryRemove(metricPoint.Values, out var _);
