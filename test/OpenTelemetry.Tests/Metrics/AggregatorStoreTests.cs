@@ -22,37 +22,6 @@ namespace OpenTelemetry.Metrics.Tests
     public class AggregatorStoreTests
     {
         [Fact]
-        public void MetricPointCapTest()
-        {
-            var aggregatorStore = new AggregatorStore(AggregationType.LongGauge, AggregationTemporality.Cumulative, Metric.DefaultHistogramBounds);
-
-            var maxMetricPoints = AggregatorStore.MaxMetricPoints;
-
-            for (var i = 0; i < maxMetricPoints; ++i)
-            {
-                aggregatorStore.Update(100L, new[] { new KeyValuePair<string, object>("key", i) });
-            }
-
-            aggregatorStore.SnapShot();
-
-            var batch = aggregatorStore.GetMetricPoints();
-
-            var metricPoints = new List<MetricPoint>();
-            foreach (var point in batch)
-            {
-                metricPoints.Add(point);
-            }
-
-            Assert.Equal(maxMetricPoints, metricPoints.Count);
-
-            for (var i = 0; i < maxMetricPoints; ++i)
-            {
-                var value = metricPoints[i].Values[0];
-                Assert.Equal(i, value);
-            }
-        }
-
-        [Fact]
         public void MetricPointStatusChangeTest()
         {
             var aggregatorStore = new AggregatorStore(AggregationType.LongGauge, AggregationTemporality.Delta, Metric.DefaultHistogramBounds);
