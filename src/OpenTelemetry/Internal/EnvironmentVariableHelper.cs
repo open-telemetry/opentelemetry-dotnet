@@ -55,7 +55,9 @@ namespace OpenTelemetry.Internal
         }
 
         /// <summary>
-        /// Reads an environment variable and parses is as a non-negative decimal integer or -1.
+        /// Reads an environment variable and parses is as a
+        /// <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#numeric-value">
+        /// numeric value</a> - a non-negative decimal integer or -1.
         /// </summary>
         /// <param name="envVarKey">The name of the environment variable.</param>
         /// <param name="result">The parsed value of the environment variable.</param>
