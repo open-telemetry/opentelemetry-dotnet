@@ -55,7 +55,7 @@ namespace OpenTelemetry.Internal
         }
 
         /// <summary>
-        /// Reads an environment variable and parses is as a non-negative decimal number.
+        /// Reads an environment variable and parses is as a non-negative decimal number or -1.
         /// </summary>
         /// <param name="envVarKey">The name of the environment variable.</param>
         /// <param name="result">The parsed value of the environment variable.</param>
@@ -72,6 +72,13 @@ namespace OpenTelemetry.Internal
             if (!LoadString(envVarKey, out string value))
             {
                 return false;
+            }
+
+            if (value == "-1")
+            {
+                // -1 is a special case according to the specifiaction
+                result = -1;
+                return true;
             }
 
             if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out result))

@@ -57,6 +57,7 @@ namespace OpenTelemetry.Internal.Tests
         [Theory]
         [InlineData("123", 123)]
         [InlineData("0", 0)]
+        [InlineData("-1", -1)]
         public void LoadNumeric(string value, int expectedValue)
         {
             Environment.SetEnvironmentVariable(EnvVar, value);
