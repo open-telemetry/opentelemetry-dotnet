@@ -133,26 +133,26 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
-        public void AdjustEndpoint_EndpointNotSet_EnvironmentVariableNotDefined_NotAdjusted()
+        public void AppendExportPath_EndpointNotSet_EnvironmentVariableNotDefined_NotAdjusted()
         {
             ClearEndpointEnvVar();
 
             var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
 
-            options.AdjustEndpoint(options.Endpoint, "test/path");
+            options.AppendExportPath(options.Endpoint, "test/path");
 
             Assert.Equal("http://localhost:4317/", options.Endpoint.AbsoluteUri);
         }
 
         [Fact]
-        public void AdjustEndpoint_EndpointNotSet_EnvironmentVariableDefined_Adjusted()
+        public void AppendExportPath_EndpointNotSet_EnvironmentVariableDefined_Adjusted()
         {
             ClearEndpointEnvVar();
             Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
 
             var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
 
-            options.AdjustEndpoint(options.Endpoint, "test/path");
+            options.AppendExportPath(options.Endpoint, "test/path");
 
             Assert.Equal("http://test:8888/test/path", options.Endpoint.AbsoluteUri);
 
@@ -160,7 +160,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
-        public void AdjustEndpoint_EndpointSetEqualToEnvironmentVariable_EnvironmentVariableDefined_NotAdjusted()
+        public void AppendExportPath_EndpointSetEqualToEnvironmentVariable_EnvironmentVariableDefined_NotAdjusted()
         {
             ClearEndpointEnvVar();
             Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
@@ -169,7 +169,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var originalEndpoint = options.Endpoint;
             options.Endpoint = new Uri("http://test:8888");
 
-            options.AdjustEndpoint(originalEndpoint, "test/path");
+            options.AppendExportPath(originalEndpoint, "test/path");
 
             Assert.Equal("http://test:8888/", options.Endpoint.AbsoluteUri);
 
@@ -179,7 +179,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData("http://localhost:4317/")]
         [InlineData("http://test:8888/")]
-        public void AdjustEndpoint_EndpointSet_EnvironmentVariableNotDefined_NotAdjusted(string endpoint)
+        public void AppendExportPath_EndpointSet_EnvironmentVariableNotDefined_NotAdjusted(string endpoint)
         {
             ClearEndpointEnvVar();
 
@@ -187,7 +187,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var originalEndpoint = options.Endpoint;
             options.Endpoint = new Uri(endpoint);
 
-            options.AdjustEndpoint(originalEndpoint, "test/path");
+            options.AppendExportPath(originalEndpoint, "test/path");
 
             Assert.Equal(endpoint, options.Endpoint.AbsoluteUri);
         }

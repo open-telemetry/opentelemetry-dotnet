@@ -103,11 +103,11 @@ namespace OpenTelemetry.Exporter
                 _ => null
             };
 
-        public static void AdjustEndpoint(this OtlpExporterOptions options, Uri originalEndpoint, string exportRelativePath)
+        internal static void AppendExportPath(this OtlpExporterOptions options, Uri originalEndpoint, string exportRelativePath)
         {
-            // We allow endpoint overwrite with the value equal to default or value read from OTEL_EXPORTER_OTLP_ENDPOINT.
-            // In case of overwritten endpoint we leave it as is (without appending traces/metrics path) regardless its value.
-            // That's why object references are compared instead of actual Uri(s).
+            // The exportRelativePath is only appended when the protocol is HttpProtobuf, the options
+            // Endpoint property wasn't set by the user and the OTEL_EXPORTER_OTLP_ENDPOINT env var is present.
+            // If the user provided a custom value for options.Endpoint that value is taken as is.
             if (ReferenceEquals(originalEndpoint, options.Endpoint))
             {
                 if (options.Protocol == OtlpExportProtocol.HttpProtobuf)
@@ -115,7 +115,7 @@ namespace OpenTelemetry.Exporter
                     var endpointEnvVar = Environment.GetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName);
                     if (!string.IsNullOrEmpty(endpointEnvVar))
                     {
-                        // In this case the Endpoint is read from OTEL_EXPORTER_OTLP_ENDPOINT
+                        // In this case we can conclude that endpoint is read from OTEL_EXPORTER_OTLP_ENDPOINT
                         // and has to be appened by traces/metrics relative path.
                         options.Endpoint = options.Endpoint.AppendPathIfNotPresent(exportRelativePath);
                     }
@@ -123,7 +123,7 @@ namespace OpenTelemetry.Exporter
             }
         }
 
-        public static Uri AppendPathIfNotPresent(this Uri uri, string path)
+        internal static Uri AppendPathIfNotPresent(this Uri uri, string path)
         {
             var absoluteUri = uri.AbsoluteUri;
             var separator = string.Empty;

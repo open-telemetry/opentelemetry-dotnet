@@ -52,7 +52,7 @@ namespace OpenTelemetry.Metrics
 
             configure?.Invoke(options);
 
-            options.AdjustEndpoint(originalEndpoint, OtlpExporterOptions.MetricsExportPath);
+            options.AppendExportPath(originalEndpoint, OtlpExporterOptions.MetricsExportPath);
 
             var metricExporter = new OtlpMetricExporter(options);
             var metricReader = new PeriodicExportingMetricReader(metricExporter, options.MetricExportIntervalMilliseconds);

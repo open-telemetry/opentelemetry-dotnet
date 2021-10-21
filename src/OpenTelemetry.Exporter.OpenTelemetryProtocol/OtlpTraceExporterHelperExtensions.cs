@@ -52,7 +52,7 @@ namespace OpenTelemetry.Trace
 
             configure?.Invoke(exporterOptions);
 
-            exporterOptions.AdjustEndpoint(originalEndpoint, OtlpExporterOptions.TracesExportPath);
+            exporterOptions.AppendExportPath(originalEndpoint, OtlpExporterOptions.TracesExportPath);
 
             var otlpExporter = new OtlpTraceExporter(exporterOptions);
 
