@@ -97,11 +97,6 @@ namespace OpenTelemetry.Metrics
                 while (++this.index < this.targetCount)
                 {
                     ref var metricPoint = ref this.metricsPoints[this.metricPointsToProcess[this.index]];
-                    if (metricPoint.MetricPointStatus == MetricPointStatus.Unset)
-                    {
-                        continue;
-                    }
-
                     metricPoint.StartTime = this.start;
                     metricPoint.EndTime = this.end;
                     return true;

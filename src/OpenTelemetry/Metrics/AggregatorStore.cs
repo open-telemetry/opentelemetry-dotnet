@@ -111,9 +111,15 @@ namespace OpenTelemetry.Metrics
             {
                 ref var metricPoint = ref this.metricPoints[i];
 
+                // TODO: Consider support for marking cumulative temporality metrics stale
                 if (this.temporality == AggregationTemporality.Cumulative)
                 {
-                    // TODO: Support marking marking cumulative temporality metrics stale
+                    if (metricPoint.MetricPointStatus == MetricPointStatus.Unset
+                        || metricPoint.MetricPointStatus == MetricPointStatus.UpdatePending)
+                    {
+                        continue;
+                    }
+
                     metricPoint.TakeSnapShot(this.outputDelta);
                     this.currentMetricPointBatch[this.batchSize] = i;
                     this.batchSize++;
