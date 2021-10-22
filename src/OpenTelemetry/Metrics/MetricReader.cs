@@ -114,8 +114,13 @@ namespace OpenTelemetry.Metrics
 
                 return Task.WaitAny(task, this.shutdownTask, Task.Delay(timeoutMilliseconds)) == 0 ? task.Result : false;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                if (ex is AggregateException)
+                {
+                    ex = ((AggregateException)ex).InnerExceptions[0];
+                }
+
                 // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Collect), ex);
                 return false;
             }
@@ -155,8 +160,13 @@ namespace OpenTelemetry.Metrics
                 this.shutdownTask.RunSynchronously();
                 return this.shutdownTask.Result;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                if (ex is AggregateException)
+                {
+                    ex = ((AggregateException)ex).InnerExceptions[0];
+                }
+
                 // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Shutdown), ex);
                 return false;
             }
