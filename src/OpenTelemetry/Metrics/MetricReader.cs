@@ -116,12 +116,16 @@ namespace OpenTelemetry.Metrics
             }
             catch (Exception ex)
             {
-                if (ex is AggregateException)
+                if (kickoff)
                 {
-                    ex = ((AggregateException)ex).InnerExceptions[0];
+                    if (ex is AggregateException)
+                    {
+                        ex = ((AggregateException)ex).InnerExceptions[0];
+                    }
+
+                    // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Collect), ex);
                 }
 
-                // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Collect), ex);
                 return false;
             }
         }
