@@ -3,7 +3,7 @@
 {%- endmacro %}
 
 {%- macro format_remarks(text) -%}
-{%- set notes = '\n /// '.join(text.splitlines()).encode('ascii', 'xmlcharrefreplace').decode() -%}
+{%- set notes = '\n ///'.join(text.splitlines()).encode('ascii', 'xmlcharrefreplace').decode() -%}
 {{notes}}
 {%- endmacro -%}
 

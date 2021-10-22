@@ -50,4 +50,5 @@ docker run --rm `
 Set-Location ${ROOT_DIR}
 
 Write-Host "Running dotnet-format on the generated files"
+dotnet format -a warn
 dotnet format -w -s warn

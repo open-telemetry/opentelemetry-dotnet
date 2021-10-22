@@ -49,4 +49,5 @@ docker run --rm \
   -Dpkg=OpenTelemetry.Resources
 
 echo "Running dotnet-format on the generated files"
+dotnet format -a warn
 dotnet format -w -s warn
