@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics
     public abstract class MetricReader : IDisposable
     {
         private const AggregationTemporality CumulativeAndDelta = AggregationTemporality.Cumulative | AggregationTemporality.Delta;
-        private readonly object syncObject = new object();
+        private readonly object newTaskLock = new object();
         private readonly object onCollectLock = new object();
         private readonly Task<bool> shutdownTask;
         private AggregationTemporality preferredAggregationTemporality = CumulativeAndDelta;
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Metrics
 
             if (task == null)
             {
-                lock (this.syncObject)
+                lock (this.newTaskLock)
                 {
                     task = this.collectionTask;
 
@@ -111,10 +111,8 @@ namespace OpenTelemetry.Metrics
 
                     return task.Result;
                 }
-                else
-                {
-                    return Task.WaitAny(task, this.shutdownTask, Task.Delay(timeoutMilliseconds)) == 0 ? task.Result : false;
-                }
+
+                return Task.WaitAny(task, this.shutdownTask, Task.Delay(timeoutMilliseconds)) == 0 ? task.Result : false;
             }
             catch (Exception)
             {
