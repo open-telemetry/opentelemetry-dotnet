@@ -24,9 +24,22 @@ namespace OpenTelemetry.Metrics
     public abstract class MetricReader : IDisposable
     {
         private const AggregationTemporality CumulativeAndDelta = AggregationTemporality.Cumulative | AggregationTemporality.Delta;
+        private readonly object newJobLock = new object();
+        private readonly object onCollectLock = new object();
+        private readonly ManualResetEvent collectCompletedNotification = new ManualResetEvent(false);
+        private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
+        private readonly WaitHandle[] triggers;
         private AggregationTemporality preferredAggregationTemporality = CumulativeAndDelta;
         private AggregationTemporality supportedAggregationTemporality = CumulativeAndDelta;
+        private long scheduledJobCount;
+        private long completedJobCount;
         private int shutdownCount;
+        private Job<bool> collectionJob;
+
+        protected MetricReader()
+        {
+            this.triggers = new WaitHandle[] { this.collectCompletedNotification, this.shutdownTrigger };
+        }
 
         public BaseProvider ParentProvider { get; private set; }
 
@@ -71,15 +84,77 @@ namespace OpenTelemetry.Metrics
         {
             Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
+            var job = this.collectionJob;
+            var shouldDoJob = false;
+
+            if (job == null)
+            {
+                lock (this.newJobLock)
+                {
+                    job = this.collectionJob;
+
+                    if (job == null)
+                    {
+                        shouldDoJob = true;
+                        job = new Job<bool>(Interlocked.Increment(ref this.scheduledJobCount));
+                        this.collectionJob = job;
+                    }
+                }
+            }
+
+            if (!shouldDoJob)
+            {
+                // There is a chance that the collect thread finished processing all the data, and signaled
+                // before we enter wait here, use polling to prevent being blocked indefinitely.
+                const int pollingMilliseconds = 1000;
+
+                var sw = Stopwatch.StartNew();
+
+                while (true)
+                {
+                    if (timeoutMilliseconds == Timeout.Infinite)
+                    {
+                        WaitHandle.WaitAny(this.triggers, pollingMilliseconds);
+                    }
+                    else
+                    {
+                        var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+
+                        if (timeout <= 0)
+                        {
+                            return Interlocked.Read(ref this.completedJobCount) >= job.Id ? job.Result : false;
+                        }
+
+                        WaitHandle.WaitAny(this.triggers, Math.Min((int)timeout, pollingMilliseconds));
+                    }
+
+                    if (Interlocked.Read(ref this.completedJobCount) >= job.Id)
+                    {
+                        return job.Result;
+                    }
+                }
+            }
+
             try
             {
-                return this.OnCollect(timeoutMilliseconds);
+                lock (this.onCollectLock)
+                {
+                    this.collectionJob = null;
+                    job.Result = this.OnCollect(timeoutMilliseconds);
+                }
             }
             catch (Exception)
             {
                 // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Collect), ex);
-                return false;
             }
+            finally
+            {
+                Interlocked.Increment(ref this.completedJobCount);
+                this.collectCompletedNotification.Set();
+                this.collectCompletedNotification.Reset();
+            }
+
+            return job.Result;
         }
 
         /// <summary>
@@ -104,7 +179,7 @@ namespace OpenTelemetry.Metrics
         {
             Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
-            if (Interlocked.Increment(ref this.shutdownCount) > 1)
+            if (Interlocked.CompareExchange(ref this.shutdownCount, 1, 0) != 0)
             {
                 return false; // shutdown already called
             }
@@ -117,6 +192,10 @@ namespace OpenTelemetry.Metrics
             {
                 // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Shutdown), ex);
                 return false;
+            }
+            finally
+            {
+                this.shutdownTrigger.Set();
             }
         }
 
@@ -242,6 +321,20 @@ namespace OpenTelemetry.Metrics
             string message = $"PreferredAggregationTemporality {preferred} and SupportedAggregationTemporality {supported} are incompatible";
             Guard.Zero((int)(preferred & supported), message, nameof(preferred));
             Guard.Range((int)preferred, nameof(preferred), max: (int)supported, maxName: nameof(supported), message: message);
+        }
+
+        private class Job<T>
+        {
+            private long id;
+
+            public Job(long id)
+            {
+                this.id = id;
+            }
+
+            public long Id => this.id;
+
+            public T Result { get; set; }
         }
     }
 }

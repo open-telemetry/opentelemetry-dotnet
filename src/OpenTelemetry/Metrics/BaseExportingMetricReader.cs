@@ -28,6 +28,7 @@ namespace OpenTelemetry.Metrics
         private bool disposed;
 
         public BaseExportingMetricReader(BaseExporter<Metric> exporter)
+            : base()
         {
             Guard.Null(exporter, nameof(exporter));
 
