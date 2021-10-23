@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
@@ -24,9 +25,13 @@ namespace OpenTelemetry.Metrics
     public abstract class MetricReader : IDisposable
     {
         private const AggregationTemporality CumulativeAndDelta = AggregationTemporality.Cumulative | AggregationTemporality.Delta;
+        private readonly object newTaskLock = new object();
+        private readonly object onCollectLock = new object();
+        private readonly TaskCompletionSource<bool> shutdownTcs = new TaskCompletionSource<bool>();
         private AggregationTemporality preferredAggregationTemporality = CumulativeAndDelta;
         private AggregationTemporality supportedAggregationTemporality = CumulativeAndDelta;
-        private int shutdownCount;
+        private int shutdownTimeout = int.MinValue;
+        private TaskCompletionSource<bool> collectionTcs;
 
         public BaseProvider ParentProvider { get; private set; }
 
@@ -71,13 +76,48 @@ namespace OpenTelemetry.Metrics
         {
             Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
+            var kickoff = false;
+            var tcs = this.collectionTcs;
+
+            if (tcs == null)
+            {
+                lock (this.newTaskLock)
+                {
+                    tcs = this.collectionTcs;
+
+                    if (tcs == null)
+                    {
+                        kickoff = true;
+                        tcs = new TaskCompletionSource<bool>();
+                        this.collectionTcs = tcs;
+                    }
+                }
+            }
+
             try
             {
-                return this.OnCollect(timeoutMilliseconds);
+                if (kickoff)
+                {
+                    lock (this.onCollectLock)
+                    {
+                        this.collectionTcs = null;
+                        bool result = this.OnCollect(timeoutMilliseconds);
+                        tcs.TrySetResult(result);
+                        return result;
+                    }
+                }
+
+                return Task.WaitAny(tcs.Task, this.shutdownTcs.Task, Task.Delay(timeoutMilliseconds)) == 0 ? tcs.Task.Result : false;
             }
             catch (Exception)
             {
-                // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Collect), ex);
+                if (kickoff)
+                {
+                    tcs.TrySetResult(false);
+
+                    // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Collect), ex);
+                }
+
                 return false;
             }
         }
@@ -104,18 +144,25 @@ namespace OpenTelemetry.Metrics
         {
             Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
-            if (Interlocked.Increment(ref this.shutdownCount) > 1)
+            if (Interlocked.CompareExchange(ref this.shutdownTimeout, timeoutMilliseconds, int.MinValue) != int.MinValue)
             {
                 return false; // shutdown already called
             }
 
+            this.shutdownTimeout = timeoutMilliseconds;
+
             try
             {
-                return this.OnShutdown(timeoutMilliseconds);
+                bool result = this.OnShutdown(this.shutdownTimeout);
+                this.shutdownTcs.TrySetResult(result);
+                return result;
             }
             catch (Exception)
             {
+                this.shutdownTcs.TrySetResult(false);
+
                 // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Shutdown), ex);
+
                 return false;
             }
         }
