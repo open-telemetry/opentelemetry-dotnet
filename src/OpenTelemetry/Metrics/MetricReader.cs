@@ -35,6 +35,7 @@ namespace OpenTelemetry.Metrics
         private long completedJobCount;
         private int shutdownCount;
         private Job<bool> collectionJob;
+        private bool disposed;
 
         protected MetricReader()
         {
@@ -298,6 +299,18 @@ namespace OpenTelemetry.Metrics
         /// </param>
         protected virtual void Dispose(bool disposing)
         {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                this.collectCompletedNotification.Dispose();
+                this.shutdownTrigger.Dispose();
+            }
+
+            this.disposed = true;
         }
 
         private static void ValidateAggregationTemporality(AggregationTemporality preferred, AggregationTemporality supported)
