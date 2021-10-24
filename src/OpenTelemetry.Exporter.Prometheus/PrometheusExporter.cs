@@ -82,16 +82,18 @@ namespace OpenTelemetry.Exporter
 
         protected override void Dispose(bool disposing)
         {
-            if (!this.disposed)
+            if (this.disposed)
             {
-                if (disposing)
-                {
-                    this.metricsHttpServer?.Dispose();
-                    this.semaphore.Dispose();
-                }
-
-                this.disposed = true;
+                return;
             }
+
+            if (disposing)
+            {
+                this.metricsHttpServer?.Dispose();
+                this.semaphore.Dispose();
+            }
+
+            this.disposed = true;
 
             base.Dispose(disposing);
         }

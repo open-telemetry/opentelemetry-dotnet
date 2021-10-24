@@ -136,6 +136,8 @@ namespace OpenTelemetry.Logs
             }
 
             this.disposed = true;
+
+            base.Dispose(disposing);
         }
     }
 }

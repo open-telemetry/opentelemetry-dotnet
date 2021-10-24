@@ -43,6 +43,7 @@ namespace OpenTelemetry
         private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
         private long shutdownDrainTarget = long.MaxValue;
         private long droppedCount;
+        private bool disposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchExportProcessor{T}"/> class.
@@ -188,6 +189,26 @@ namespace OpenTelemetry
             this.exporterThread.Join(timeoutMilliseconds);
             var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
             return this.exporter.Shutdown((int)Math.Max(timeout, 0));
+        }
+
+        /// <inheritdoc/>
+        protected override void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                this.exportTrigger.Dispose();
+                this.dataExportedNotification.Dispose();
+                this.shutdownTrigger.Dispose();
+            }
+
+            this.disposed = true;
+
+            base.Dispose(disposing);
         }
 
         private void ExporterProc()

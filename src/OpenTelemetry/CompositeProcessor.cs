@@ -139,6 +139,7 @@ namespace OpenTelemetry
             return result;
         }
 
+        /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
             if (this.disposed)
@@ -166,6 +167,8 @@ namespace OpenTelemetry
             }
 
             this.disposed = true;
+
+            base.Dispose(disposing);
         }
 
         private class DoublyLinkedListNode

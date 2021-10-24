@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter
         private readonly InMemoryTransport memoryTransport;
         private readonly TProtocol memoryProtocol;
         private int batchByteSize;
-        private bool disposedValue; // To detect redundant dispose calls
+        private bool disposed;
 
         public JaegerExporter(JaegerExporterOptions options)
             : this(options, null)
@@ -169,18 +169,20 @@ namespace OpenTelemetry.Exporter
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            if (!this.disposedValue)
+            if (this.disposed)
             {
-                if (disposing)
-                {
-                    this.thriftClient.Dispose();
-                    this.clientTransport.Dispose();
-                    this.memoryTransport.Dispose();
-                    this.memoryProtocol.Dispose();
-                }
-
-                this.disposedValue = true;
+                return;
             }
+
+            if (disposing)
+            {
+                this.thriftClient.Dispose();
+                this.clientTransport.Dispose();
+                this.memoryTransport.Dispose();
+                this.memoryProtocol.Dispose();
+            }
+
+            this.disposed = true;
 
             base.Dispose(disposing);
         }
