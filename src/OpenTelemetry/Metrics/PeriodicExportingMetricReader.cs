@@ -30,6 +30,7 @@ namespace OpenTelemetry.Metrics
         private readonly Thread exporterThread;
         private readonly AutoResetEvent exportTrigger = new AutoResetEvent(false);
         private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
+        private bool disposed;
 
         public PeriodicExportingMetricReader(
             BaseExporter<Metric> exporter,
@@ -84,6 +85,25 @@ namespace OpenTelemetry.Metrics
             }
 
             return result;
+        }
+
+        /// <inheritdoc/>
+        protected override void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                this.exportTrigger.Dispose();
+                this.shutdownTrigger.Dispose();
+            }
+
+            this.disposed = true;
+
+            base.Dispose(disposing);
         }
 
         private void ExporterProc()
