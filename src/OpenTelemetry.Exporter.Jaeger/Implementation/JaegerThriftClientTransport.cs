@@ -24,7 +24,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     {
         private readonly IJaegerClient client;
         private readonly MemoryStream byteStream;
-        private bool isDisposed;
+        private bool disposed;
 
         public JaegerThriftClientTransport(string host, int port)
             : this(host, port, new MemoryStream(), new JaegerUdpClient())
@@ -88,13 +88,18 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         protected override void Dispose(bool disposing)
         {
-            if (!this.isDisposed && disposing)
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
             {
                 this.byteStream?.Dispose();
                 this.client?.Dispose();
             }
 
-            this.isDisposed = true;
+            this.disposed = true;
         }
     }
 }
