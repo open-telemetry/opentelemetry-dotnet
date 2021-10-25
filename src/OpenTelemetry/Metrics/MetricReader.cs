@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics
         private readonly TaskCompletionSource<bool> shutdownTcs = new TaskCompletionSource<bool>();
         private AggregationTemporality preferredAggregationTemporality = CumulativeAndDelta;
         private AggregationTemporality supportedAggregationTemporality = CumulativeAndDelta;
-        private int shutdownTimeout = int.MinValue;
+        private int shutdownCount;
         private TaskCompletionSource<bool> collectionTcs;
 
         public BaseProvider ParentProvider { get; private set; }
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Metrics
         {
             Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
-            var kickoff = false;
+            var shouldRunCollect = false;
             var tcs = this.collectionTcs;
 
             if (tcs == null)
@@ -87,39 +87,34 @@ namespace OpenTelemetry.Metrics
 
                     if (tcs == null)
                     {
-                        kickoff = true;
+                        shouldRunCollect = true;
                         tcs = new TaskCompletionSource<bool>();
                         this.collectionTcs = tcs;
                     }
                 }
             }
 
+            if (!shouldRunCollect)
+            {
+                return Task.WaitAny(tcs.Task, this.shutdownTcs.Task, Task.Delay(timeoutMilliseconds)) == 0 ? tcs.Task.Result : false;
+            }
+
+            var result = false;
             try
             {
-                if (kickoff)
+                lock (this.onCollectLock)
                 {
-                    lock (this.onCollectLock)
-                    {
-                        this.collectionTcs = null;
-                        bool result = this.OnCollect(timeoutMilliseconds);
-                        tcs.TrySetResult(result);
-                        return result;
-                    }
+                    this.collectionTcs = null;
+                    result = this.OnCollect(timeoutMilliseconds);
                 }
-
-                return Task.WaitAny(tcs.Task, this.shutdownTcs.Task, Task.Delay(timeoutMilliseconds)) == 0 ? tcs.Task.Result : false;
             }
             catch (Exception)
             {
-                if (kickoff)
-                {
-                    tcs.TrySetResult(false);
-
-                    // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Collect), ex);
-                }
-
-                return false;
+                // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Shutdown), ex);
             }
+
+            tcs.TrySetResult(result);
+            return result;
         }
 
         /// <summary>
@@ -144,27 +139,23 @@ namespace OpenTelemetry.Metrics
         {
             Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
-            if (Interlocked.CompareExchange(ref this.shutdownTimeout, timeoutMilliseconds, int.MinValue) != int.MinValue)
+            if (Interlocked.CompareExchange(ref this.shutdownCount, 1, 0) != 0)
             {
                 return false; // shutdown already called
             }
 
-            this.shutdownTimeout = timeoutMilliseconds;
-
+            var result = false;
             try
             {
-                bool result = this.OnShutdown(this.shutdownTimeout);
-                this.shutdownTcs.TrySetResult(result);
-                return result;
+                result = this.OnShutdown(timeoutMilliseconds);
             }
             catch (Exception)
             {
-                this.shutdownTcs.TrySetResult(false);
-
                 // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Shutdown), ex);
-
-                return false;
             }
+
+            this.shutdownTcs.TrySetResult(result);
+            return result;
         }
 
         /// <inheritdoc/>
