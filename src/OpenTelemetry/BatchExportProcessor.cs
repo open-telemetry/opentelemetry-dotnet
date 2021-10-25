@@ -43,6 +43,7 @@ namespace OpenTelemetry
         private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
         private long shutdownDrainTarget = long.MaxValue;
         private long droppedCount;
+        private bool disposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchExportProcessor{T}"/> class.
@@ -139,7 +140,14 @@ namespace OpenTelemetry
             {
                 if (timeoutMilliseconds == Timeout.Infinite)
                 {
-                    WaitHandle.WaitAny(triggers, pollingMilliseconds);
+                    try
+                    {
+                        WaitHandle.WaitAny(triggers, pollingMilliseconds);
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        return false;
+                    }
                 }
                 else
                 {
@@ -150,7 +158,14 @@ namespace OpenTelemetry
                         return this.circularBuffer.RemovedCount >= head;
                     }
 
-                    WaitHandle.WaitAny(triggers, Math.Min((int)timeout, pollingMilliseconds));
+                    try
+                    {
+                        WaitHandle.WaitAny(triggers, Math.Min((int)timeout, pollingMilliseconds));
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        return false;
+                    }
                 }
 
                 if (this.circularBuffer.RemovedCount >= head)
@@ -190,6 +205,24 @@ namespace OpenTelemetry
             return this.exporter.Shutdown((int)Math.Max(timeout, 0));
         }
 
+        /// <inheritdoc/>
+        protected override void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                if (disposing)
+                {
+                    this.exportTrigger.Dispose();
+                    this.dataExportedNotification.Dispose();
+                    this.shutdownTrigger.Dispose();
+                }
+
+                this.disposed = true;
+            }
+
+            base.Dispose(disposing);
+        }
+
         private void ExporterProc()
         {
             var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
@@ -199,7 +232,14 @@ namespace OpenTelemetry
                 // only wait when the queue doesn't have enough items, otherwise keep busy and send data continuously
                 if (this.circularBuffer.Count < this.maxExportBatchSize)
                 {
-                    WaitHandle.WaitAny(triggers, this.scheduledDelayMilliseconds);
+                    try
+                    {
+                        WaitHandle.WaitAny(triggers, this.scheduledDelayMilliseconds);
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        return;
+                    }
                 }
 
                 if (this.circularBuffer.Count > 0)
@@ -215,7 +255,7 @@ namespace OpenTelemetry
 
                 if (this.circularBuffer.RemovedCount >= this.shutdownDrainTarget)
                 {
-                    break;
+                    return;
                 }
             }
         }
