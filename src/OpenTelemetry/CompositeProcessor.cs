@@ -139,33 +139,34 @@ namespace OpenTelemetry
             return result;
         }
 
+        /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (!this.disposed)
             {
-                return;
-            }
-
-            if (disposing)
-            {
-                var cur = this.head;
-
-                while (cur != null)
+                if (disposing)
                 {
-                    try
-                    {
-                        cur.Value?.Dispose();
-                    }
-                    catch (Exception ex)
-                    {
-                        OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-                    }
+                    var cur = this.head;
 
-                    cur = cur.Next;
+                    while (cur != null)
+                    {
+                        try
+                        {
+                            cur.Value?.Dispose();
+                        }
+                        catch (Exception ex)
+                        {
+                            OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+                        }
+
+                        cur = cur.Next;
+                    }
                 }
+
+                this.disposed = true;
             }
 
-            this.disposed = true;
+            base.Dispose(disposing);
         }
 
         private class DoublyLinkedListNode
