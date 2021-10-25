@@ -90,18 +90,16 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (!this.disposed)
             {
-                return;
-            }
+                if (disposing)
+                {
+                    this.exportTrigger.Dispose();
+                    this.shutdownTrigger.Dispose();
+                }
 
-            if (disposing)
-            {
-                this.exportTrigger.Dispose();
-                this.shutdownTrigger.Dispose();
+                this.disposed = true;
             }
-
-            this.disposed = true;
 
             base.Dispose(disposing);
         }

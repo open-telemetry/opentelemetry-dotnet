@@ -448,31 +448,29 @@ namespace OpenTelemetry.Metrics
 
         protected override void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (!this.disposed)
             {
-                return;
-            }
-
-            if (disposing)
-            {
-                if (this.instrumentations != null)
+                if (disposing)
                 {
-                    foreach (var item in this.instrumentations)
+                    if (this.instrumentations != null)
                     {
-                        (item as IDisposable)?.Dispose();
+                        foreach (var item in this.instrumentations)
+                        {
+                            (item as IDisposable)?.Dispose();
+                        }
+
+                        this.instrumentations.Clear();
                     }
 
-                    this.instrumentations.Clear();
+                    // Wait for up to 5 seconds grace period
+                    this.reader?.Shutdown(5000);
+                    this.reader?.Dispose();
+
+                    this.listener.Dispose();
                 }
 
-                // Wait for up to 5 seconds grace period
-                this.reader?.Shutdown(5000);
-                this.reader?.Dispose();
-
-                this.listener.Dispose();
+                this.disposed = true;
             }
-
-            this.disposed = true;
 
             base.Dispose(disposing);
         }

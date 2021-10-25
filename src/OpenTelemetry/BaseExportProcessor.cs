@@ -68,24 +68,22 @@ namespace OpenTelemetry
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (!this.disposed)
             {
-                return;
-            }
-
-            if (disposing)
-            {
-                try
+                if (disposing)
                 {
-                    this.exporter.Dispose();
+                    try
+                    {
+                        this.exporter.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-                }
-            }
 
-            this.disposed = true;
+                this.disposed = true;
+            }
 
             base.Dispose(disposing);
         }

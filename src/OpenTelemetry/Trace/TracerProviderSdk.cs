@@ -353,36 +353,34 @@ namespace OpenTelemetry.Trace
 
         protected override void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (!this.disposed)
             {
-                return;
-            }
-
-            if (disposing)
-            {
-                if (this.instrumentations != null)
+                if (disposing)
                 {
-                    foreach (var item in this.instrumentations)
+                    if (this.instrumentations != null)
                     {
-                        (item as IDisposable)?.Dispose();
+                        foreach (var item in this.instrumentations)
+                        {
+                            (item as IDisposable)?.Dispose();
+                        }
+
+                        this.instrumentations.Clear();
                     }
 
-                    this.instrumentations.Clear();
+                    (this.sampler as IDisposable)?.Dispose();
+
+                    // Wait for up to 5 seconds grace period
+                    this.processor?.Shutdown(5000);
+                    this.processor?.Dispose();
+
+                    // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
+                    // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
+                    // sessions that were open.
+                    this.listener?.Dispose();
                 }
 
-                (this.sampler as IDisposable)?.Dispose();
-
-                // Wait for up to 5 seconds grace period
-                this.processor?.Shutdown(5000);
-                this.processor?.Dispose();
-
-                // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
-                // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
-                // sessions that were open.
-                this.listener?.Dispose();
+                this.disposed = true;
             }
-
-            this.disposed = true;
 
             base.Dispose(disposing);
         }

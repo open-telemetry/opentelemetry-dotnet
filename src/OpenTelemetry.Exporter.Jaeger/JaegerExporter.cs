@@ -169,20 +169,18 @@ namespace OpenTelemetry.Exporter
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (!this.disposed)
             {
-                return;
-            }
+                if (disposing)
+                {
+                    this.thriftClient.Dispose();
+                    this.clientTransport.Dispose();
+                    this.memoryTransport.Dispose();
+                    this.memoryProtocol.Dispose();
+                }
 
-            if (disposing)
-            {
-                this.thriftClient.Dispose();
-                this.clientTransport.Dispose();
-                this.memoryTransport.Dispose();
-                this.memoryProtocol.Dispose();
+                this.disposed = true;
             }
-
-            this.disposed = true;
 
             base.Dispose(disposing);
         }

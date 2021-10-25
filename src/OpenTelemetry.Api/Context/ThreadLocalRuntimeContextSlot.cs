@@ -62,17 +62,15 @@ namespace OpenTelemetry.Context
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (!this.disposed)
             {
-                return;
-            }
+                if (disposing)
+                {
+                    this.slot.Dispose();
+                }
 
-            if (disposing)
-            {
-                this.slot.Dispose();
+                this.disposed = true;
             }
-
-            this.disposed = true;
 
             base.Dispose(disposing);
         }
