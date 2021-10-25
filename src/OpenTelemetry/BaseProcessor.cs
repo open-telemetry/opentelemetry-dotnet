@@ -117,7 +117,7 @@ namespace OpenTelemetry
         {
             Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
-            if (Interlocked.Increment(ref this.shutdownCount) > 1)
+            if (Interlocked.CompareExchange(ref this.shutdownCount, 1, 0) != 0)
             {
                 return false; // shutdown already called
             }
