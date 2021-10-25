@@ -69,25 +69,30 @@ namespace OpenTelemetry.Exporter.Prometheus
                 return;
             }
 
-            try
+            this.exporter.OnExport = (metrics) =>
             {
-                this.exporter.Collect(Timeout.Infinite);
-
-                await WriteMetricsToResponse(this.exporter, response).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                if (!response.HasStarted)
+                try
                 {
-                    response.StatusCode = 500;
+                    WriteMetricsToResponse(this.exporter, response).ConfigureAwait(false).GetAwaiter().GetResult();
+                    return ExportResult.Success;
                 }
+                catch (Exception ex)
+                {
+                    if (!response.HasStarted)
+                    {
+                        response.StatusCode = 500;
+                    }
 
-                PrometheusExporterEventSource.Log.FailedExport(ex);
-            }
-            finally
-            {
-                this.exporter.ReleaseSemaphore();
-            }
+                    PrometheusExporterEventSource.Log.FailedExport(ex);
+                    return ExportResult.Failure;
+                }
+                finally
+                {
+                    this.exporter.ReleaseSemaphore();
+                }
+            };
+
+            this.exporter.Collect(Timeout.Infinite);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
