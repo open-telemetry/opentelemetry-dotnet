@@ -140,7 +140,14 @@ namespace OpenTelemetry
             {
                 if (timeoutMilliseconds == Timeout.Infinite)
                 {
-                    WaitHandle.WaitAny(triggers, pollingMilliseconds);
+                    try
+                    {
+                        WaitHandle.WaitAny(triggers, pollingMilliseconds);
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        return false;
+                    }
                 }
                 else
                 {
@@ -151,7 +158,14 @@ namespace OpenTelemetry
                         return this.circularBuffer.RemovedCount >= head;
                     }
 
-                    WaitHandle.WaitAny(triggers, Math.Min((int)timeout, pollingMilliseconds));
+                    try
+                    {
+                        WaitHandle.WaitAny(triggers, Math.Min((int)timeout, pollingMilliseconds));
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        return false;
+                    }
                 }
 
                 if (this.circularBuffer.RemovedCount >= head)
@@ -220,7 +234,14 @@ namespace OpenTelemetry
                 // only wait when the queue doesn't have enough items, otherwise keep busy and send data continuously
                 if (this.circularBuffer.Count < this.maxExportBatchSize)
                 {
-                    WaitHandle.WaitAny(triggers, this.scheduledDelayMilliseconds);
+                    try
+                    {
+                        WaitHandle.WaitAny(triggers, this.scheduledDelayMilliseconds);
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        return;
+                    }
                 }
 
                 if (this.circularBuffer.Count > 0)
@@ -236,7 +257,7 @@ namespace OpenTelemetry
 
                 if (this.circularBuffer.RemovedCount >= this.shutdownDrainTarget)
                 {
-                    break;
+                    return;
                 }
             }
         }

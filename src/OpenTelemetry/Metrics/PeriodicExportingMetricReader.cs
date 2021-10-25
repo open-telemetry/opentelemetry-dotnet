@@ -114,7 +114,17 @@ namespace OpenTelemetry.Metrics
             while (true)
             {
                 var timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
-                var index = WaitHandle.WaitAny(triggers, timeout);
+
+                int index;
+
+                try
+                {
+                    index = WaitHandle.WaitAny(triggers, timeout);
+                }
+                catch (ObjectDisposedException)
+                {
+                    return;
+                }
 
                 switch (index)
                 {
