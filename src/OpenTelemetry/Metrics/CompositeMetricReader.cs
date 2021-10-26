@@ -22,7 +22,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class CompositeMetricReader : MetricReader
+    internal sealed class CompositeMetricReader : MetricReader
     {
         private readonly DoublyLinkedListNode head;
         private DoublyLinkedListNode tail;
@@ -64,11 +64,11 @@ namespace OpenTelemetry.Metrics
         public Enumerator GetEnumerator() => new Enumerator(this.head);
 
         /// <inheritdoc/>
-        protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
+        protected override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
         {
             // CompositeMetricReader delegates the work to its underlying readers,
             // so CompositeMetricReader.ProcessMetrics should never be called.
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         /// <inheritdoc/>
