@@ -22,7 +22,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class CompositeMetricReader : MetricReader
+    internal sealed class CompositeMetricReader : MetricReader
     {
         private readonly DoublyLinkedListNode head;
         private DoublyLinkedListNode tail;
@@ -64,11 +64,11 @@ namespace OpenTelemetry.Metrics
         public Enumerator GetEnumerator() => new Enumerator(this.head);
 
         /// <inheritdoc/>
-        protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
+        protected override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
         {
             // CompositeMetricReader delegates the work to its underlying readers,
             // so CompositeMetricReader.ProcessMetrics should never be called.
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         /// <inheritdoc/>
@@ -127,32 +127,32 @@ namespace OpenTelemetry.Metrics
 
         protected override void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (!this.disposed)
             {
-                return;
-            }
-
-            if (disposing)
-            {
-                var cur = this.head;
-
-                while (cur != null)
+                if (disposing)
                 {
-                    try
-                    {
-                        cur.Value?.Dispose();
-                    }
-                    catch (Exception)
-                    {
-                        // TODO: which event source do we use?
-                        // OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-                    }
+                    var cur = this.head;
 
-                    cur = cur.Next;
+                    while (cur != null)
+                    {
+                        try
+                        {
+                            cur.Value?.Dispose();
+                        }
+                        catch (Exception)
+                        {
+                            // TODO: which event source do we use?
+                            // OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+                        }
+
+                        cur = cur.Next;
+                    }
                 }
+
+                this.disposed = true;
             }
 
-            this.disposed = true;
+            base.Dispose(disposing);
         }
 
         public struct Enumerator
