@@ -100,7 +100,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             // Label names may contain ASCII letters, numbers, as well as underscores. They must match the regex [a-zA-Z_][a-zA-Z0-9_]*. Label names beginning with __ are reserved for internal use.
             // Label values may contain any Unicode characters.
 
-            Debug.Assert(!string.IsNullOrEmpty(name), "name is empty or null");
+            Debug.Assert(!string.IsNullOrEmpty(name), $"{nameof(name)} must not be null or empty");
 
 #if NETCOREAPP3_1_OR_GREATER
             return string.Create(name.Length, (name, isCharacterAllowedFunc), CreateName);

@@ -396,7 +396,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 #if NETCOREAPP3_1_OR_GREATER
                 Span<char> longValueCharacters = stackalloc char[MaxLongCharSize];
                 bool result = longValue.TryFormat(longValueCharacters, out int charsWritten, "G", CultureInfo.InvariantCulture);
-                Debug.Assert(result, "result was not true");
+                Debug.Assert(result, $"{nameof(result)} must be true");
                 int numberOfBytes = Encoding.UTF8.GetBytes(longValueCharacters.Slice(0, charsWritten), new Span<byte>(destination, destinationOffset, destination.Length - destinationOffset));
                 destinationOffset += numberOfBytes;
 #else
@@ -430,7 +430,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 #if NETCOREAPP3_1_OR_GREATER
                 Span<char> doubleValueCharacters = stackalloc char[MaxDoubleCharSize];
                 bool result = doubleValue.TryFormat(doubleValueCharacters, out int charsWritten, "G", CultureInfo.InvariantCulture);
-                Debug.Assert(result, "result was not true");
+                Debug.Assert(result, $"{nameof(result)} must be true");
                 int numberOfBytes = Encoding.UTF8.GetBytes(doubleValueCharacters.Slice(0, charsWritten), new Span<byte>(destination, destinationOffset, destination.Length - destinationOffset));
                 destinationOffset += numberOfBytes;
 #else
@@ -452,7 +452,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 #if NETCOREAPP3_1_OR_GREATER
             Span<char> nowCharacters = stackalloc char[MaxLongCharSize];
             bool result = unixNow.TryFormat(nowCharacters, out int charsWritten, "G", CultureInfo.InvariantCulture);
-            Debug.Assert(result, "result was not true");
+            Debug.Assert(result, $"{nameof(result)} must be true");
             int numberOfBytes = Encoding.UTF8.GetBytes(nowCharacters.Slice(0, charsWritten), new Span<byte>(destination, destinationOffset, destination.Length - destinationOffset));
             destinationOffset += numberOfBytes;
 #else

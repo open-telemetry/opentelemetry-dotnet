@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public static void SetStatus(this Activity activity, Status status)
         {
-            Debug.Assert(activity != null, "Activity should not be null");
+            Debug.Assert(activity != null, $"{nameof(activity)} must not be null");
 
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, StatusHelper.GetTagValueForStatusCode(status.StatusCode));
             activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, status.Description);

@@ -52,7 +52,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// <returns><see langword="true"/> if start has been called.</returns>
         public static bool HasStarted(HttpContext context, out Activity aspNetActivity)
         {
-            Debug.Assert(context != null, "Context is null.");
+            Debug.Assert(context != null, $"{nameof(context)} must not be null");
 
             object itemValue = context.Items[ContextKey];
             if (itemValue is ContextHolder contextHolder)
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// <returns>New root activity.</returns>
         public static Activity StartAspNetActivity(TextMapPropagator textMapPropagator, HttpContext context, Action<Activity, HttpContext> onRequestStartedCallback)
         {
-            Debug.Assert(context != null, "Context is null.");
+            Debug.Assert(context != null, $"{nameof(context)} must not be null");
 
             PropagationContext propagationContext = textMapPropagator.Extract(default, context.Request, HttpRequestHeaderValuesGetter);
 
@@ -122,11 +122,11 @@ namespace OpenTelemetry.Instrumentation.AspNet
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void StopAspNetActivity(TextMapPropagator textMapPropagator, Activity aspNetActivity, HttpContext context, Action<Activity, HttpContext> onRequestStoppedCallback)
         {
-            Debug.Assert(context != null, "Context is null.");
+            Debug.Assert(context != null, $"{nameof(context)} must not be null");
 
             if (aspNetActivity == null)
             {
-                Debug.Assert(context.Items[ContextKey] == StartedButNotSampledObj, "Context item is not StartedButNotSampledObj.");
+                Debug.Assert(context.Items[ContextKey] == StartedButNotSampledObj, $"{nameof(context)}.{nameof(context.Items)}[{ContextKey}] must equal {nameof(StartedButNotSampledObj)}");
 
                 // This is the case where a start was called but no activity was
                 // created due to a sampling decision.
@@ -134,7 +134,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
                 return;
             }
 
-            Debug.Assert(context.Items[ContextKey] is ContextHolder, "Context item is not an ContextHolder instance.");
+            Debug.Assert(context.Items[ContextKey] is ContextHolder, $"{nameof(context)}.{nameof(context.Items)}[{ContextKey}] must be of type {nameof(ContextHolder)}");
 
             var currentActivity = Activity.Current;
 
@@ -173,8 +173,8 @@ namespace OpenTelemetry.Instrumentation.AspNet
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteActivityException(Activity aspNetActivity, HttpContext context, Exception exception, Action<Activity, HttpContext, Exception> onExceptionCallback)
         {
-            Debug.Assert(context != null, "Context is null.");
-            Debug.Assert(exception != null, "Exception is null.");
+            Debug.Assert(context != null, $"{nameof(context)} must not be null");
+            Debug.Assert(exception != null, $"{nameof(exception)} must not be null");
 
             if (aspNetActivity != null)
             {
@@ -201,7 +201,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void RestoreContextIfNeeded(HttpContext context)
         {
-            Debug.Assert(context != null, "Context is null.");
+            Debug.Assert(context != null, $"{nameof(context)} must not be null");
 
             if (context.Items[ContextKey] is ContextHolder contextHolder && Activity.Current != contextHolder.Activity)
             {
