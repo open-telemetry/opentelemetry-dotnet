@@ -59,9 +59,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         {
             Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentPortEnvVarKey, "invalid");
 
-            var options = new JaegerExporterOptions();
-
-            Assert.Equal(6831, options.AgentPort); // use default
+            Assert.Throws<FormatException>(() => new JaegerExporterOptions());
         }
 
         [Fact]

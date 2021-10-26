@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using System.Security;
 using OpenTelemetry.Internal;
@@ -33,8 +32,7 @@ namespace OpenTelemetry.Resources
 
             try
             {
-                string envResourceAttributeValue = Environment.GetEnvironmentVariable(EnvVarKey);
-                if (!string.IsNullOrEmpty(envResourceAttributeValue))
+                if (EnvironmentVariableHelper.LoadString(EnvVarKey, out string envResourceAttributeValue))
                 {
                     var attributes = ParseResourceAttributes(envResourceAttributeValue);
                     resource = new Resource(attributes);

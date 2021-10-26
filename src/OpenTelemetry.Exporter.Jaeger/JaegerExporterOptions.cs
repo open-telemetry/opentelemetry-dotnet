@@ -16,12 +16,20 @@
 
 using System;
 using System.Diagnostics;
-using System.Security;
-using OpenTelemetry.Exporter.Jaeger.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
 {
+    /// <summary>
+    /// Jaeger exporter options.
+    /// OTEL_EXPORTER_JAEGER_AGENT_HOST, OTEL_EXPORTER_JAEGER_AGENT_PORT
+    /// environment variables are parsed during object construction.
+    /// </summary>
+    /// <remarks>
+    /// The constructor throws <see cref="FormatException"/> if it fails to parse
+    /// any of the supported environment variables.
+    /// </remarks>
     public class JaegerExporterOptions
     {
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
@@ -31,32 +39,14 @@ namespace OpenTelemetry.Exporter
 
         public JaegerExporterOptions()
         {
-            try
+            if (EnvironmentVariableHelper.LoadString(OTelAgentHostEnvVarKey, out string agentHostEnvVar))
             {
-                string agentHostEnvVar = Environment.GetEnvironmentVariable(OTelAgentHostEnvVarKey);
-                if (!string.IsNullOrEmpty(agentHostEnvVar))
-                {
-                    this.AgentHost = agentHostEnvVar;
-                }
-
-                string agentPortEnvVar = Environment.GetEnvironmentVariable(OTelAgentPortEnvVarKey);
-                if (!string.IsNullOrEmpty(agentPortEnvVar))
-                {
-                    if (int.TryParse(agentPortEnvVar, out var agentPortValue))
-                    {
-                        this.AgentPort = agentPortValue;
-                    }
-                    else
-                    {
-                        JaegerExporterEventSource.Log.FailedToParseEnvironmentVariable(OTelAgentPortEnvVarKey, agentPortEnvVar);
-                    }
-                }
+                this.AgentHost = agentHostEnvVar;
             }
-            catch (SecurityException ex)
+
+            if (EnvironmentVariableHelper.LoadNumeric(OTelAgentPortEnvVarKey, out int agentPortEnvVar))
             {
-                // The caller does not have the required permission to
-                // retrieve the value of an environment variable from the current process.
-                JaegerExporterEventSource.Log.MissingPermissionsToReadEnvironmentVariable(ex);
+                this.AgentPort = agentPortEnvVar;
             }
         }
 

@@ -63,7 +63,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.ExporterTimeoutEnvVarKey, "invalid");
 
-            Assert.Throws<ArgumentException>(() => new BatchExportActivityProcessorOptions());
+            Assert.Throws<FormatException>(() => new BatchExportActivityProcessorOptions());
         }
 
         [Fact]
