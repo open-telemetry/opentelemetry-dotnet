@@ -229,7 +229,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
 
         internal class TestReader : MetricReader
         {
-            protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
+            protected override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
             {
                 return true;
             }

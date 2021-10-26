@@ -28,7 +28,7 @@ internal class MyReader : MetricReader
         this.name = name;
     }
 
-    protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
+    protected override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
     {
         var sb = new StringBuilder();
         foreach (var record in metrics)
