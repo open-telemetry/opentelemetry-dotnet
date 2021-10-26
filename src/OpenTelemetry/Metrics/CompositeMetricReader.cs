@@ -75,10 +75,9 @@ namespace OpenTelemetry.Metrics
         protected override bool OnCollect(int timeoutMilliseconds = Timeout.Infinite)
         {
             var result = true;
-            var cur = this.head;
             var sw = Stopwatch.StartNew();
 
-            while (cur != null)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
                 if (timeoutMilliseconds == Timeout.Infinite)
                 {
@@ -91,8 +90,6 @@ namespace OpenTelemetry.Metrics
                     // notify all the readers, even if we run overtime
                     result = cur.Value.Collect((int)Math.Max(timeout, 0)) && result;
                 }
-
-                cur = cur.Next;
             }
 
             return result;
@@ -101,11 +98,10 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc/>
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
-            var cur = this.head;
             var result = true;
             var sw = Stopwatch.StartNew();
 
-            while (cur != null)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
                 if (timeoutMilliseconds == Timeout.Infinite)
                 {
@@ -118,8 +114,6 @@ namespace OpenTelemetry.Metrics
                     // notify all the readers, even if we run overtime
                     result = cur.Value.Shutdown((int)Math.Max(timeout, 0)) && result;
                 }
-
-                cur = cur.Next;
             }
 
             return result;
@@ -131,9 +125,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (disposing)
                 {
-                    var cur = this.head;
-
-                    while (cur != null)
+                    for (var cur = this.head; cur != null; cur = cur.Next)
                     {
                         try
                         {
@@ -144,8 +136,6 @@ namespace OpenTelemetry.Metrics
                             // TODO: which event source do we use?
                             // OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
                         }
-
-                        cur = cur.Next;
                     }
                 }
 

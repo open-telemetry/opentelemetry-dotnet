@@ -64,24 +64,18 @@ namespace OpenTelemetry
         /// <inheritdoc/>
         public override void OnEnd(T data)
         {
-            var cur = this.head;
-
-            while (cur != null)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
                 cur.Value.OnEnd(data);
-                cur = cur.Next;
             }
         }
 
         /// <inheritdoc/>
         public override void OnStart(T data)
         {
-            var cur = this.head;
-
-            while (cur != null)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
                 cur.Value.OnStart(data);
-                cur = cur.Next;
             }
         }
 
@@ -89,10 +83,9 @@ namespace OpenTelemetry
         protected override bool OnForceFlush(int timeoutMilliseconds)
         {
             var result = true;
-            var cur = this.head;
             var sw = Stopwatch.StartNew();
 
-            while (cur != null)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
                 if (timeoutMilliseconds == Timeout.Infinite)
                 {
@@ -105,8 +98,6 @@ namespace OpenTelemetry
                     // notify all the processors, even if we run overtime
                     result = cur.Value.ForceFlush((int)Math.Max(timeout, 0)) && result;
                 }
-
-                cur = cur.Next;
             }
 
             return result;
@@ -115,11 +106,10 @@ namespace OpenTelemetry
         /// <inheritdoc/>
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
-            var cur = this.head;
             var result = true;
             var sw = Stopwatch.StartNew();
 
-            while (cur != null)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
                 if (timeoutMilliseconds == Timeout.Infinite)
                 {
@@ -132,8 +122,6 @@ namespace OpenTelemetry
                     // notify all the processors, even if we run overtime
                     result = cur.Value.Shutdown((int)Math.Max(timeout, 0)) && result;
                 }
-
-                cur = cur.Next;
             }
 
             return result;
@@ -146,9 +134,7 @@ namespace OpenTelemetry
             {
                 if (disposing)
                 {
-                    var cur = this.head;
-
-                    while (cur != null)
+                    for (var cur = this.head; cur != null; cur = cur.Next)
                     {
                         try
                         {
@@ -158,8 +144,6 @@ namespace OpenTelemetry
                         {
                             OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
                         }
-
-                        cur = cur.Next;
                     }
                 }
 
