@@ -96,7 +96,7 @@ namespace OpenTelemetry.Metrics
             }
 
             // TODO: Do we need to consider timeout here?
-            return await this.exporter.ExportAsync(metrics).ConfigureAwait(false) == ExportResult.Success;
+            return this.exporter.Export(metrics) == ExportResult.Success;
         }
 
         /// <inheritdoc />
