@@ -284,10 +284,11 @@ namespace OpenTelemetry.Metrics
 
         internal void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
+            Debug.Assert(instrument != null, $"{nameof(instrument)} must not be null");
+
             // Get Instrument State
             var metrics = state as List<Metric>;
 
-            Debug.Assert(instrument != null, "instrument must be non-null.");
             if (metrics == null)
             {
                 // TODO: log
@@ -312,10 +313,11 @@ namespace OpenTelemetry.Metrics
 
         internal void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
+            Debug.Assert(instrument != null, $"{nameof(instrument)} must not be null");
+
             // Get Instrument State
             var metrics = state as List<Metric>;
 
-            Debug.Assert(instrument != null, "instrument must be non-null.");
             if (metrics == null)
             {
                 // TODO: log
@@ -340,10 +342,11 @@ namespace OpenTelemetry.Metrics
 
         internal void MeasurementRecordedLongSingleStream(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
+            Debug.Assert(instrument != null, $"{nameof(instrument)} must not be null");
+
             // Get Instrument State
             var metric = state as Metric;
 
-            Debug.Assert(instrument != null, "instrument must be non-null.");
             if (metric == null)
             {
                 // TODO: log
@@ -355,10 +358,11 @@ namespace OpenTelemetry.Metrics
 
         internal void MeasurementRecordedDoubleSingleStream(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
+            Debug.Assert(instrument != null, $"{nameof(instrument)} must not be null");
+
             // Get Instrument State
             var metric = state as Metric;
 
-            Debug.Assert(instrument != null, "instrument must be non-null.");
             if (metric == null)
             {
                 // TODO: log

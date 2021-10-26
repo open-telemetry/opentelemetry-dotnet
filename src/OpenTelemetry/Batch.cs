@@ -47,7 +47,7 @@ namespace OpenTelemetry
 
         internal Batch(CircularBuffer<T> circularBuffer, int maxSize)
         {
-            Debug.Assert(maxSize > 0, $"{nameof(maxSize)} must be a positive number.");
+            Debug.Assert(maxSize > 0, $"{nameof(maxSize)} must be a positive number");
             Debug.Assert(circularBuffer != null, $"{nameof(circularBuffer)} must not be null");
 
             this.item = null;
@@ -58,7 +58,7 @@ namespace OpenTelemetry
 
         internal Batch(T[] metrics, int maxSize)
         {
-            Debug.Assert(maxSize > 0, $"{nameof(maxSize)} must be a positive number.");
+            Debug.Assert(maxSize > 0, $"{nameof(maxSize)} must be a positive number");
             Debug.Assert(metrics != null, $"{nameof(metrics)} must not be null");
 
             this.item = null;

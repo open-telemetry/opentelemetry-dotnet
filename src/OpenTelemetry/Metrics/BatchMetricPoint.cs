@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics
 
         internal BatchMetricPoint(MetricPoint[] metricsPoints, int maxSize, DateTimeOffset start, DateTimeOffset end)
         {
-            Debug.Assert(maxSize > 0, $"{nameof(maxSize)} should be a positive number.");
+            Debug.Assert(maxSize > 0, $"{nameof(maxSize)} must be a positive number");
             Guard.Null(metricsPoints, nameof(metricsPoints));
 
             this.metricsPoints = metricsPoints;
