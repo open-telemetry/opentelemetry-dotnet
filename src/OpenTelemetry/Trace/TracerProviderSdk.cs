@@ -35,6 +35,7 @@ namespace OpenTelemetry.Trace
         private readonly Action<Activity> getRequestedDataAction;
         private readonly bool supportLegacyActivity;
         private BaseProcessor<Activity> processor;
+        private bool disposed;
 
         internal TracerProviderSdk(
             Resource resource,
@@ -352,26 +353,34 @@ namespace OpenTelemetry.Trace
 
         protected override void Dispose(bool disposing)
         {
-            if (this.instrumentations != null)
+            if (!this.disposed)
             {
-                foreach (var item in this.instrumentations)
+                if (disposing)
                 {
-                    (item as IDisposable)?.Dispose();
+                    if (this.instrumentations != null)
+                    {
+                        foreach (var item in this.instrumentations)
+                        {
+                            (item as IDisposable)?.Dispose();
+                        }
+
+                        this.instrumentations.Clear();
+                    }
+
+                    (this.sampler as IDisposable)?.Dispose();
+
+                    // Wait for up to 5 seconds grace period
+                    this.processor?.Shutdown(5000);
+                    this.processor?.Dispose();
+
+                    // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
+                    // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
+                    // sessions that were open.
+                    this.listener?.Dispose();
                 }
 
-                this.instrumentations.Clear();
+                this.disposed = true;
             }
-
-            (this.sampler as IDisposable)?.Dispose();
-
-            // Wait for up to 5 seconds grace period
-            this.processor?.Shutdown(5000);
-            this.processor?.Dispose();
-
-            // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
-            // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
-            // sessions that were open.
-            this.listener?.Dispose();
 
             base.Dispose(disposing);
         }
