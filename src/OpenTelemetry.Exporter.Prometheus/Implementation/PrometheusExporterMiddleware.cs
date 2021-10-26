@@ -69,20 +69,28 @@ namespace OpenTelemetry.Exporter.Prometheus
                 return;
             }
 
+            this.exporter.OnPullExportAsync = async (metrics) =>
+            {
+                try
+                {
+                    await WriteMetricsToResponse(this.exporter, metrics, response).ConfigureAwait(false);
+                    return ExportResult.Success;
+                }
+                catch (Exception ex)
+                {
+                    if (!response.HasStarted)
+                    {
+                        response.StatusCode = 500;
+                    }
+
+                    PrometheusExporterEventSource.Log.FailedExport(ex);
+                    return ExportResult.Failure;
+                }
+            };
+
             try
             {
-                this.exporter.Collect(Timeout.Infinite);
-
-                await WriteMetricsToResponse(this.exporter, response).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                if (!response.HasStarted)
-                {
-                    response.StatusCode = 500;
-                }
-
-                PrometheusExporterEventSource.Log.FailedExport(ex);
+                await this.exporter.CollectAndPullAsync(Timeout.Infinite).ConfigureAwait(false);
             }
             finally
             {
@@ -91,12 +99,12 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static async Task WriteMetricsToResponse(PrometheusExporter exporter, HttpResponse response)
+        internal static async Task WriteMetricsToResponse(PrometheusExporter exporter, Batch<Metric> metrics, HttpResponse response)
         {
             response.StatusCode = 200;
             response.ContentType = PrometheusMetricsFormatHelper.ContentType;
 
-            await exporter.WriteMetricsCollection(response.Body, exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
+            await PrometheusExporterExtensions.WriteMetricsCollection(metrics, response.Body, exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
         }
     }
 }

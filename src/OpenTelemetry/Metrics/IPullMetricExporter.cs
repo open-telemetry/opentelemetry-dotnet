@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Threading.Tasks;
 
 namespace OpenTelemetry.Metrics
 {
@@ -23,6 +24,8 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public interface IPullMetricExporter
     {
-        Func<int, bool> Collect { get; set; }
+        Func<int, Task<bool>> CollectAndPullAsync { get; set; }
+
+        Task<ExportResult> PullAsync(Batch<Metric> batch);
     }
 }

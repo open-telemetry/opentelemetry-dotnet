@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests
@@ -56,7 +57,7 @@ namespace OpenTelemetry.Metrics.Tests
                 case ExportModes.Pull:
                     Assert.False(reader.Collect());
                     Assert.False(meterProvider.ForceFlush());
-                    Assert.True((exporter as IPullMetricExporter).Collect(-1));
+                    Assert.True((exporter as IPullMetricExporter).CollectAndPullAsync(-1).Result);
                     break;
                 case ExportModes.Pull | ExportModes.Push:
                     Assert.True(reader.Collect());
@@ -77,17 +78,22 @@ namespace OpenTelemetry.Metrics.Tests
         [ExportModes(ExportModes.Pull)]
         private class PullOnlyMetricExporter : BaseExporter<Metric>, IPullMetricExporter
         {
-            private Func<int, bool> funcCollect;
+            private Func<int, Task<bool>> funcCollectAndPullAsync;
 
-            public Func<int, bool> Collect
+            public Func<int, Task<bool>> CollectAndPullAsync
             {
-                get => this.funcCollect;
-                set { this.funcCollect = value; }
+                get => this.funcCollectAndPullAsync;
+                set { this.funcCollectAndPullAsync = value; }
+            }
+
+            public Task<ExportResult> PullAsync(Batch<Metric> batch)
+            {
+                return Task.FromResult(ExportResult.Success);
             }
 
             public override ExportResult Export(in Batch<Metric> batch)
             {
-                return ExportResult.Success;
+                return ExportResult.Failure;
             }
         }
 

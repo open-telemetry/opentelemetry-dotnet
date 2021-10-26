@@ -26,7 +26,6 @@ namespace OpenTelemetry.Metrics
     {
         private const AggregationTemporality CumulativeAndDelta = AggregationTemporality.Cumulative | AggregationTemporality.Delta;
         private readonly object newTaskLock = new object();
-        private readonly object onCollectLock = new object();
         private readonly TaskCompletionSource<bool> shutdownTcs = new TaskCompletionSource<bool>();
         private AggregationTemporality preferredAggregationTemporality = CumulativeAndDelta;
         private AggregationTemporality supportedAggregationTemporality = CumulativeAndDelta;
@@ -106,15 +105,61 @@ namespace OpenTelemetry.Metrics
             var result = false;
             try
             {
-                lock (this.onCollectLock)
-                {
-                    this.collectionTcs = null;
-                    result = this.OnCollect(timeoutMilliseconds);
-                }
+                result = this.OnCollect(timeoutMilliseconds);
             }
             catch (Exception)
             {
                 // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Shutdown), ex);
+            }
+            finally
+            {
+                this.collectionTcs = null;
+            }
+
+            tcs.TrySetResult(result);
+            return result;
+        }
+
+        public async Task<bool> CollectAsync(int timeoutMilliseconds = Timeout.Infinite)
+        {
+            Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
+
+            var shouldRunCollect = false;
+            var tcs = this.collectionTcs;
+
+            if (tcs == null)
+            {
+                lock (this.newTaskLock)
+                {
+                    tcs = this.collectionTcs;
+
+                    if (tcs == null)
+                    {
+                        shouldRunCollect = true;
+                        tcs = new TaskCompletionSource<bool>();
+                        this.collectionTcs = tcs;
+                    }
+                }
+            }
+
+            if (!shouldRunCollect)
+            {
+                Task completedTask = await Task.WhenAny(tcs.Task, this.shutdownTcs.Task, Task.Delay(timeoutMilliseconds)).ConfigureAwait(false);
+                return completedTask == tcs.Task && tcs.Task.Result;
+            }
+
+            var result = false;
+            try
+            {
+                result = await this.OnCollectAsync(timeoutMilliseconds).ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Shutdown), ex);
+            }
+            finally
+            {
+                this.collectionTcs = null;
             }
 
             tcs.TrySetResult(result);
@@ -188,6 +233,11 @@ namespace OpenTelemetry.Metrics
         /// </returns>
         protected abstract bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds);
 
+        protected virtual Task<bool> ProcessMetricsAsync(Batch<Metric> metrics, int timeoutMilliseconds)
+        {
+            return Task.FromResult(this.ProcessMetrics(metrics, timeoutMilliseconds));
+        }
+
         /// <summary>
         /// Called by <c>Collect</c>. This function should block the current
         /// thread until metrics collection completed, shutdown signaled or
@@ -226,6 +276,30 @@ namespace OpenTelemetry.Metrics
                 }
 
                 return this.ProcessMetrics(metrics, (int)timeout);
+            }
+        }
+
+        protected virtual Task<bool> OnCollectAsync(int timeoutMilliseconds)
+        {
+            var sw = Stopwatch.StartNew();
+
+            var collectMetric = this.ParentProvider.GetMetricCollect();
+            var metrics = collectMetric();
+
+            if (timeoutMilliseconds == Timeout.Infinite)
+            {
+                return this.ProcessMetricsAsync(metrics, Timeout.Infinite);
+            }
+            else
+            {
+                var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+
+                if (timeout <= 0)
+                {
+                    return Task.FromResult(false);
+                }
+
+                return this.ProcessMetricsAsync(metrics, (int)timeout);
             }
         }
 

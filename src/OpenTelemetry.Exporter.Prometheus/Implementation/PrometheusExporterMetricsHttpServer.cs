@@ -157,20 +157,28 @@ namespace OpenTelemetry.Exporter.Prometheus
 
         private async Task ProcessExportRequest(HttpListenerContext context)
         {
+            this.exporter.OnPullExportAsync = async (metrics) =>
+            {
+                try
+                {
+                    context.Response.StatusCode = 200;
+                    context.Response.ContentType = PrometheusMetricsFormatHelper.ContentType;
+
+                    await PrometheusExporterExtensions.WriteMetricsCollection(metrics, context.Response.OutputStream, this.exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
+
+                    return ExportResult.Success;
+                }
+                catch (Exception ex)
+                {
+                    context.Response.StatusCode = 500;
+                    PrometheusExporterEventSource.Log.FailedExport(ex);
+                    return ExportResult.Failure;
+                }
+            };
+
             try
             {
-                this.exporter.Collect(Timeout.Infinite);
-
-                context.Response.StatusCode = 200;
-                context.Response.ContentType = PrometheusMetricsFormatHelper.ContentType;
-
-                await this.exporter.WriteMetricsCollection(context.Response.OutputStream, this.exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                PrometheusExporterEventSource.Log.FailedExport(ex);
-
-                context.Response.StatusCode = 500;
+                await this.exporter.CollectAndPullAsync(Timeout.Infinite).ConfigureAwait(false);
             }
             finally
             {

@@ -16,6 +16,7 @@
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
 
@@ -30,10 +31,10 @@ namespace OpenTelemetry.Exporter
     {
         internal const string HttpListenerStartFailureExceptionMessage = "PrometheusExporter http listener could not be started.";
         internal readonly PrometheusExporterOptions Options;
-        internal Batch<Metric> Metrics;
         private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
         private readonly PrometheusExporterMetricsHttpServer metricsHttpServer;
-        private Func<int, bool> funcCollect;
+        private Func<int, Task<bool>> funcCollectAndPullAsync;
+        private Func<Batch<Metric>, Task<ExportResult>> funcPullExportAsync;
         private bool disposed;
 
         /// <summary>
@@ -58,16 +59,34 @@ namespace OpenTelemetry.Exporter
             }
         }
 
-        public Func<int, bool> Collect
+        public Func<int, Task<bool>> CollectAndPullAsync
         {
-            get => this.funcCollect;
-            set => this.funcCollect = value;
+            get => this.funcCollectAndPullAsync;
+            set => this.funcCollectAndPullAsync = value;
+        }
+
+        internal Func<Batch<Metric>, Task<ExportResult>> OnPullExportAsync
+        {
+            get => this.funcPullExportAsync;
+            set => this.funcPullExportAsync = value;
         }
 
         public override ExportResult Export(in Batch<Metric> metrics)
         {
-            this.Metrics = metrics;
-            return ExportResult.Success;
+            // todo: Implement PUSH export here.
+            throw new NotImplementedException();
+        }
+
+        public Task<ExportResult> PullAsync(Batch<Metric> metrics)
+        {
+            var pullFunc = this.funcPullExportAsync;
+            if (pullFunc == null)
+            {
+                // todo: Log an error.
+                return Task.FromResult(ExportResult.Failure);
+            }
+
+            return pullFunc(metrics);
         }
 
         internal bool TryEnterSemaphore()

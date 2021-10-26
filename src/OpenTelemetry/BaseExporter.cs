@@ -16,6 +16,7 @@
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry
@@ -56,6 +57,11 @@ namespace OpenTelemetry
         /// <param name="batch">Batch of telemetry objects to export.</param>
         /// <returns>Result of the export operation.</returns>
         public abstract ExportResult Export(in Batch<T> batch);
+
+        public virtual Task<ExportResult> ExportAsync(Batch<T> batch)
+        {
+            return Task.FromResult(this.Export(batch));
+        }
 
         /// <summary>
         /// Attempts to shutdown the exporter, blocks the current thread until

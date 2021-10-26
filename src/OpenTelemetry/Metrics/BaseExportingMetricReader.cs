@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
@@ -53,15 +54,15 @@ namespace OpenTelemetry.Metrics
             {
                 if (this.supportedExportModes.HasFlag(ExportModes.Push))
                 {
-                    pullExporter.Collect = this.Collect;
+                    pullExporter.CollectAndPullAsync = this.CollectAsync;
                 }
                 else
                 {
-                    pullExporter.Collect = (timeoutMilliseconds) =>
+                    pullExporter.CollectAndPullAsync = async (timeoutMilliseconds) =>
                     {
                         using (PullMetricScope.Begin())
                         {
-                            return this.Collect(timeoutMilliseconds);
+                            return await this.CollectAsync(timeoutMilliseconds).ConfigureAwait(false);
                         }
                     };
                 }
@@ -85,6 +86,19 @@ namespace OpenTelemetry.Metrics
             return this.exporter.Export(metrics) == ExportResult.Success;
         }
 
+        /// <inheritdoc/>
+        protected override async Task<bool> ProcessMetricsAsync(Batch<Metric> metrics, int timeoutMilliseconds)
+        {
+            if (PullMetricScope.IsPullAllowed && this.exporter is IPullMetricExporter pullMetricExporter)
+            {
+                // TODO: Do we need to consider timeout here?
+                return await pullMetricExporter.PullAsync(metrics).ConfigureAwait(false) == ExportResult.Success;
+            }
+
+            // TODO: Do we need to consider timeout here?
+            return await this.exporter.ExportAsync(metrics).ConfigureAwait(false) == ExportResult.Success;
+        }
+
         /// <inheritdoc />
         protected override bool OnCollect(int timeoutMilliseconds)
         {
@@ -100,6 +114,23 @@ namespace OpenTelemetry.Metrics
 
             // TODO: add some error log
             return false;
+        }
+
+        /// <inheritdoc />
+        protected override Task<bool> OnCollectAsync(int timeoutMilliseconds)
+        {
+            if (this.supportedExportModes.HasFlag(ExportModes.Push))
+            {
+                return base.OnCollectAsync(timeoutMilliseconds);
+            }
+
+            if (this.supportedExportModes.HasFlag(ExportModes.Pull) && PullMetricScope.IsPullAllowed)
+            {
+                return base.OnCollectAsync(timeoutMilliseconds);
+            }
+
+            // TODO: add some error log
+            return Task.FromResult(false);
         }
 
         /// <inheritdoc />
@@ -134,7 +165,7 @@ namespace OpenTelemetry.Metrics
                     {
                         if (this.exporter is IPullMetricExporter pullExporter)
                         {
-                            pullExporter.Collect = null;
+                            pullExporter.CollectAndPullAsync = null;
                         }
 
                         this.exporter.Dispose();
