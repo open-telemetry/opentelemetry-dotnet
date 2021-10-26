@@ -28,15 +28,17 @@ Or, with PowerShell:
 ./scripts/semantic-convetion/generate.ps1
 ```
 
-## Updating PublicAPI files
+### dotnet-format
 
-If new items are added, it is important that the PublicAPI files are updated.
-We can use the [dotnet-format](https://github.com/dotnet/format) global tool
-to update the files and fix the `RS0016` warnings:
+The script installs and runs the [dotnet format](https://github.com/dotnet/format)
+tool after the `.cs` files are generated. It will apply fixes for whitespaces,
+code style and analyzer warnings.
 
-```shell
-dotnet format -a warn
-```
+### Updating PublicAPI files
+
+Because the script runs `dotnet-format`, the PublicAPI files **will be
+updated automatically**, as the tool fixes warnings for analyzers
+([RS0016](https://github.com/dotnet/roslyn-analyzers/issues/3229)).
 
 ## References
 

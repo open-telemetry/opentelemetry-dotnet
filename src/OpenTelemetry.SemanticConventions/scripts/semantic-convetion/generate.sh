@@ -47,6 +47,8 @@ docker run --rm \
   -Dclass=ResourceSemanticConventions \
   -DschemaUrl=$SCHEMA_URL \
   -Dpkg=OpenTelemetry.Resources
+  
+cd ${ROOT_DIR}
 
 echo "Running dotnet-format on the generated files"
 dotnet format -a warn
