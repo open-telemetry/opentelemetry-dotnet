@@ -54,6 +54,9 @@ values of the `OtlpExporterOptions`
 | `OTEL_EXPORTER_OTLP_TIMEOUT`  | `TimeoutMilliseconds`             |
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | `Protocol` (grpc or http/protobuf)|
 
+`FormatException` is thrown in case of an invalid value for any of the
+supported environment variables.
+
 ## OTLP Logs
 
 This package currently only supports exporting traces and metrics. Once the

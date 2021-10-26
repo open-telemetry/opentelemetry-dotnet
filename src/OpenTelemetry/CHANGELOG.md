@@ -2,8 +2,9 @@
 
 ## Unreleased
 
-* Changed `BatchExportActivityProcessorOptions` to throw `ArgumentException`
-  if it fails to parse any of the supported environment variables.
+* Changed `BatchExportActivityProcessorOptions` constructor to throw
+  `FormatException` if it fails to parse any of the supported environment
+  variables.
 
 ## 1.2.0-beta1
 

@@ -16,14 +16,20 @@
 
 using System;
 using System.Diagnostics;
-using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
 {
     /// <summary>
-    /// Zipkin trace exporter options.
+    /// Zipkin span exporter options.
+    /// OTEL_EXPORTER_ZIPKIN_ENDPOINT
+    /// environment variables are parsed during object construction.
     /// </summary>
+    /// <remarks>
+    /// The constructor throws <see cref="FormatException"/> if it fails to parse
+    /// any of the supported environment variables.
+    /// </remarks>
     public sealed class ZipkinExporterOptions
     {
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
@@ -36,14 +42,9 @@ namespace OpenTelemetry.Exporter
         /// </summary>
         public ZipkinExporterOptions()
         {
-            try
+            if (EnvironmentVariableHelper.LoadUri(ZipkinEndpointEnvVar, out Uri endpoint))
             {
-                this.Endpoint = new Uri(Environment.GetEnvironmentVariable(ZipkinEndpointEnvVar) ?? DefaultZipkinEndpoint);
-            }
-            catch (Exception ex)
-            {
-                this.Endpoint = new Uri(DefaultZipkinEndpoint);
-                ZipkinExporterEventSource.Log.FailedEndpointInitialization(ex);
+                this.Endpoint = endpoint;
             }
         }
 
@@ -51,7 +52,7 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets Zipkin endpoint address. See https://zipkin.io/zipkin-api/#/default/post_spans.
         /// Typically https://zipkin-server-name:9411/api/v2/spans.
         /// </summary>
-        public Uri Endpoint { get; set; }
+        public Uri Endpoint { get; set; } = new Uri(DefaultZipkinEndpoint);
 
         /// <summary>
         /// Gets or sets a value indicating whether short trace id should be used.

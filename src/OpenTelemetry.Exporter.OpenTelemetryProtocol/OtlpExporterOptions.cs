@@ -16,16 +16,21 @@
 
 using System;
 using System.Diagnostics;
-using System.Security;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
 {
     /// <summary>
-    /// Configuration options for the OpenTelemetry Protocol (OTLP) exporter.
+    /// OpenTelemetry Protocol (OTLP) exporter options.
+    /// OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_HEADERS, OTEL_EXPORTER_OTLP_TIMEOUT, OTEL_EXPORTER_OTLP_PROTOCOL
+    /// environment variables are parsed during object construction.
     /// </summary>
+    /// <remarks>
+    /// The constructor throws <see cref="FormatException"/> if it fails to parse
+    /// any of the supported environment variables.
+    /// </remarks>
     public class OtlpExporterOptions
     {
         internal const string EndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
@@ -41,59 +46,32 @@ namespace OpenTelemetry.Exporter
         /// </summary>
         public OtlpExporterOptions()
         {
-            try
+            if (EnvironmentVariableHelper.LoadUri(EndpointEnvVarName, out Uri endpoint))
             {
-                string endpointEnvVar = Environment.GetEnvironmentVariable(EndpointEnvVarName);
-                if (!string.IsNullOrEmpty(endpointEnvVar))
-                {
-                    if (Uri.TryCreate(endpointEnvVar, UriKind.Absolute, out var endpoint))
-                    {
-                        this.Endpoint = endpoint;
-                    }
-                    else
-                    {
-                        OpenTelemetryProtocolExporterEventSource.Log.FailedToParseEnvironmentVariable(EndpointEnvVarName, endpointEnvVar);
-                    }
-                }
-
-                string headersEnvVar = Environment.GetEnvironmentVariable(HeadersEnvVarName);
-                if (!string.IsNullOrEmpty(headersEnvVar))
-                {
-                    this.Headers = headersEnvVar;
-                }
-
-                string timeoutEnvVar = Environment.GetEnvironmentVariable(TimeoutEnvVarName);
-                if (!string.IsNullOrEmpty(timeoutEnvVar))
-                {
-                    if (int.TryParse(timeoutEnvVar, out var timeout))
-                    {
-                        this.TimeoutMilliseconds = timeout;
-                    }
-                    else
-                    {
-                        OpenTelemetryProtocolExporterEventSource.Log.FailedToParseEnvironmentVariable(TimeoutEnvVarName, timeoutEnvVar);
-                    }
-                }
-
-                string protocolEnvVar = Environment.GetEnvironmentVariable(ProtocolEnvVarName);
-                if (!string.IsNullOrEmpty(protocolEnvVar))
-                {
-                    var protocol = protocolEnvVar.ToOtlpExportProtocol();
-                    if (protocol.HasValue)
-                    {
-                        this.Protocol = protocol.Value;
-                    }
-                    else
-                    {
-                        OpenTelemetryProtocolExporterEventSource.Log.UnsupportedProtocol(protocolEnvVar);
-                    }
-                }
+                this.Endpoint = endpoint;
             }
-            catch (SecurityException ex)
+
+            if (EnvironmentVariableHelper.LoadString(HeadersEnvVarName, out string headersEnvVar))
             {
-                // The caller does not have the required permission to
-                // retrieve the value of an environment variable from the current process.
-                OpenTelemetryProtocolExporterEventSource.Log.MissingPermissionsToReadEnvironmentVariable(ex);
+                this.Headers = headersEnvVar;
+            }
+
+            if (EnvironmentVariableHelper.LoadNumeric(TimeoutEnvVarName, out int timeout))
+            {
+                this.TimeoutMilliseconds = timeout;
+            }
+
+            if (EnvironmentVariableHelper.LoadString(ProtocolEnvVarName, out string protocolEnvVar))
+            {
+                var protocol = protocolEnvVar.ToOtlpExportProtocol();
+                if (protocol.HasValue)
+                {
+                    this.Protocol = protocol.Value;
+                }
+                else
+                {
+                    throw new FormatException($"{ProtocolEnvVarName} environment variable has an invalid value: '${protocolEnvVar}'");
+                }
             }
         }
 

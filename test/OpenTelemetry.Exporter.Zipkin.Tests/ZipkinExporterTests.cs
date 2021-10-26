@@ -175,9 +175,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             {
                 Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, "InvalidUri");
 
-                var exporterOptions = new ZipkinExporterOptions();
-
-                Assert.Equal(new Uri(ZipkinExporterOptions.DefaultZipkinEndpoint).AbsoluteUri, exporterOptions.Endpoint.AbsoluteUri);
+                Assert.Throws<FormatException>(() => new ZipkinExporterOptions());
             }
             finally
             {

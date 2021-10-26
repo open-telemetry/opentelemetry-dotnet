@@ -62,6 +62,9 @@ values of the `JaegerExporterOptions`.
 | `OTEL_EXPORTER_JAEGER_AGENT_HOST` | `AgentHost`                      |
 | `OTEL_EXPORTER_JAEGER_AGENT_PORT` | `AgentPort`                      |
 
+`FormatException` is thrown in case of an invalid value for any of the
+supported environment variables.
+
 ## References
 
 * [Jaeger](https://www.jaegertracing.io)
