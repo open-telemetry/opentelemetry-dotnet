@@ -21,10 +21,10 @@ using Xunit;
 
 namespace OpenTelemetry.Tests.Internal
 {
-    public static class GuardTest
+    public class GuardTest
     {
         [Fact]
-        public static void NullTest()
+        public void NullTest()
         {
             // Valid
             Guard.Null(1);
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Tests.Internal
         }
 
         [Fact]
-        public static void NullOrEmptyTest()
+        public void NullOrEmptyTest()
         {
             // Valid
             Guard.NullOrEmpty("a");
@@ -53,7 +53,7 @@ namespace OpenTelemetry.Tests.Internal
         }
 
         [Fact]
-        public static void NullOrWhitespaceTest()
+        public void NullOrWhitespaceTest()
         {
             // Valid
             Guard.NullOrWhitespace("a");
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Tests.Internal
         }
 
         [Fact]
-        public static void InvalidTimeoutTest()
+        public void InvalidTimeoutTest()
         {
             // Valid
             Guard.InvalidTimeout(Timeout.Infinite);
@@ -83,7 +83,7 @@ namespace OpenTelemetry.Tests.Internal
         }
 
         [Fact]
-        public static void RangeIntTest()
+        public void RangeIntTest()
         {
             // Valid
             Guard.Range(0);
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Tests.Internal
         }
 
         [Fact]
-        public static void RangeDoubleTest()
+        public void RangeDoubleTest()
         {
             // Valid
             Guard.Range(1.0, min: 1.0, max: 1.0);
@@ -117,7 +117,7 @@ namespace OpenTelemetry.Tests.Internal
         }
 
         [Fact]
-        public static void TypeTest()
+        public void TypeTest()
         {
             // Valid
             Guard.Type<int>(0);
@@ -130,7 +130,7 @@ namespace OpenTelemetry.Tests.Internal
         }
 
         [Fact]
-        public static void ZeroTest()
+        public void ZeroTest()
         {
             // Valid
             Guard.Zero(1);

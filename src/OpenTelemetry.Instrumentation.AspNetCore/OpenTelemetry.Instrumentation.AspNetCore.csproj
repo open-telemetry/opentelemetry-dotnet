@@ -10,6 +10,7 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.GrpcNetClient\GrpcTagHelper.cs" Link="Includes\GrpcTagHelper.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.GrpcNetClient\StatusCanonicalCode.cs" Link="Includes\StatusCanonicalCode.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\ServiceProviderExtensions.cs" Link="Includes\ServiceProviderExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
   </ItemGroup>
 
   <ItemGroup>
