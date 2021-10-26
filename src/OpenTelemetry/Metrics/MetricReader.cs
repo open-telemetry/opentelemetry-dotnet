@@ -57,20 +57,24 @@ namespace OpenTelemetry.Metrics
 
         /// <summary>
         /// Attempts to collect the metrics, blocks the current thread until
-        /// metrics collection completed or timed out.
+        /// metrics collection completed, shutdown signaled or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
         /// The number (non-negative) of milliseconds to wait, or
         /// <c>Timeout.Infinite</c> to wait indefinitely.
         /// </param>
         /// <returns>
-        /// Returns <c>true</c> when metrics collection succeeded; otherwise, <c>false</c>.
+        /// Returns <c>true</c> when metrics collection succeeded; otherwise,
+        /// <c>false</c>.
         /// </returns>
         /// <exception cref="ArgumentOutOfRangeException">
         /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
         /// </exception>
         /// <remarks>
-        /// This function guarantees thread-safety.
+        /// This function guarantees thread-safety. If multiple calls occurred
+        /// simultaneously, they might get folded and result in less calls to
+        /// the <c>OnCollect</c> callback for improved performance, as long as
+        /// the semantic can be preserved.
         /// </remarks>
         public bool Collect(int timeoutMilliseconds = Timeout.Infinite)
         {
@@ -182,7 +186,7 @@ namespace OpenTelemetry.Metrics
         /// Returns <c>true</c> when metrics processing succeeded; otherwise,
         /// <c>false</c>.
         /// </returns>
-        protected abstract bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds);
+        protected abstract bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds);
 
         /// <summary>
         /// Called by <c>Collect</c>. This function should block the current
@@ -198,9 +202,8 @@ namespace OpenTelemetry.Metrics
         /// <c>false</c>.
         /// </returns>
         /// <remarks>
-        /// This function is called synchronously on the thread which called
-        /// <c>Collect</c>. This function should be thread-safe, and should
-        /// not throw exceptions.
+        /// This function is called synchronously on the threads which called
+        /// <c>Collect</c>. This function should not throw exceptions.
         /// </remarks>
         protected virtual bool OnCollect(int timeoutMilliseconds)
         {
