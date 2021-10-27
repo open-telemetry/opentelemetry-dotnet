@@ -314,12 +314,6 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(26, logDirectory, exception);
         }
 
-        [Event(27, Message = "Failed to create resource from ResourceDetector: '{0}' due to '{1}'.", Level = EventLevel.Warning)]
-        public void ResourceDetectorFailed(string resourceDetector, string issue)
-        {
-            this.WriteEvent(27, resourceDetector, issue);
-        }
-
         [Event(28, Message = "Unknown error in TracerProvider '{0}': '{1}'.", Level = EventLevel.Error)]
         public void TracerProviderException(string evnt, string ex)
         {
