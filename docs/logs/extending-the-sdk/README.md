@@ -18,11 +18,12 @@ not covered by the built-in exporters:
 * Exporters should derive from `OpenTelemetry.BaseExporter<LogRecord>` (which
   belongs to the [OpenTelemetry](../../../src/OpenTelemetry/README.md) package)
   and implement the `Export` method.
-* Exporters can optionally implement the `OnShutdown` method.
+* Exporters can optionally implement the `OnForceFlush` and `OnShutdown` method.
 * Depending on user's choice and load on the application, `Export` may get
   called with one or more log records.
 * Exporters will only receive sampled-in log records.
-* Exporters should not throw exceptions from `Export` and `OnShutdown`.
+* Exporters should not throw exceptions from `Export`, `OnForceFlush` and
+  `OnShutdown`.
 * Exporters should not modify log records they receive (the same log records may
   be exported again by different exporter).
 * Exporters are responsible for any retry logic needed by the scenario. The SDK
