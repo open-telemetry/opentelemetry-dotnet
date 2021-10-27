@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Internal;
 
@@ -108,7 +109,7 @@ namespace OpenTelemetry.Resources
 
         private static object SanitizeValue(object value, string keyName)
         {
-            Guard.Null(keyName, nameof(keyName));
+            Debug.Assert(keyName != null, $"{nameof(keyName)} must not be null");
 
             if (value is string || value is bool || value is double || value is long)
             {

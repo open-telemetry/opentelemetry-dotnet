@@ -133,7 +133,7 @@ namespace OpenTelemetry.Trace
 
         private void AddInternal(string key, object value)
         {
-            Guard.Null(key, nameof(key));
+            Debug.Assert(key != null, $"{nameof(key)} must not be null");
 
             this.Attributes[key] = value;
         }

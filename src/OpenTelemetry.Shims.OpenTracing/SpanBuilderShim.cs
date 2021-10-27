@@ -321,9 +321,9 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <exception cref="ArgumentException">span is not a valid SpanShim object.</exception>
         private static TelemetrySpan GetOpenTelemetrySpan(ISpan span)
         {
-            var shim = Guard.Type<SpanShim>(span, nameof(span));
+            Debug.Assert(span is SpanShim shim, $"Cannot cast '{nameof(span)}' from '{span.GetType().Name}' to '{nameof(SpanShim)}'");
 
-            return shim.Span;
+            return (span as SpanShim).Span;
         }
 
         /// <summary>
@@ -334,9 +334,9 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <exception cref="ArgumentException">context is not a valid SpanContextShim object.</exception>
         private static SpanContext GetOpenTelemetrySpanContext(ISpanContext spanContext)
         {
-            var shim = Guard.Type<SpanContextShim>(spanContext, nameof(spanContext));
+            Debug.Assert(spanContext is SpanContextShim shim, $"Cannot cast '{nameof(spanContext)}' from '{spanContext.GetType().Name}' to '{nameof(SpanContextShim)}'");
 
-            return shim.SpanContext;
+            return (spanContext as SpanContextShim).SpanContext;
         }
     }
 }

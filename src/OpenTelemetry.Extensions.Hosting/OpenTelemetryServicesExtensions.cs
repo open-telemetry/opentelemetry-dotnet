@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Extensions.Hosting.Implementation;
@@ -90,8 +91,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         private static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Func<IServiceProvider, TracerProvider> createTracerProvider)
         {
-            Guard.Null(services, nameof(services));
-            Guard.Null(createTracerProvider, nameof(createTracerProvider));
+            Debug.Assert(services != null, $"{nameof(services)} must not be null");
+            Debug.Assert(createTracerProvider != null, $"{nameof(createTracerProvider)} must not be null");
 
             try
             {
