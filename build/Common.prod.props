@@ -6,13 +6,12 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-  </ItemGroup>
-
-  <!-- Temporarily disable public API check till metrics get close to Release
-  <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersPkgVer)" Condition=" $(OS) == 'Windows_NT'">
+    <!-- Temporarily disable public API check till metrics get close to Release
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="$(MicrosoftCodeAnalysisAnalyzersPkgVer)" Condition=" $(OS) == 'Windows_NT'">
       <PrivateAssets>All</PrivateAssets>
-  </PackageReference>
-  -->
+    </PackageReference>
+    -->
+  </ItemGroup>
 
   <ItemGroup Condition="'$(MinVerTagPrefix)' == 'core-' AND '$(CheckAPICompatibility)' == 'true'">
     <PackageReference Include="Microsoft.DotNet.ApiCompat" Version="6.0.0-beta.21308.1" PrivateAssets="All" />
