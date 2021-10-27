@@ -71,6 +71,10 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\DiagnosticSourceInstrumentation\ListenerHandler.cs" Link="Includes\ListenerHandler.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\DiagnosticSourceInstrumentation\PropertyFetcher.cs" Link="Includes\PropertyFetcher.cs" />
   </ItemGroup>
+    
+  <ItemGroup>
+      <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
+  </ItemGroup>
 
   <ItemGroup Condition="'$(IncludeInstrumentationHelpers)'=='true' Or '$(IncludeDiagnosticSourceInstrumentationHelpers)'=='true'">
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ActivityHelperExtensions.cs" Link="Includes\ActivityHelperExtensions.cs" />
