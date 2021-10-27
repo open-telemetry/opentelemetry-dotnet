@@ -129,7 +129,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetSampler(Sampler sampler)
         {
-            Guard.Null(sampler, nameof(sampler));
+            Debug.Assert(sampler != null, $"{nameof(sampler)} must not be null");
 
             this.sampler = sampler;
             return this;
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
-            Guard.Null(resourceBuilder, nameof(resourceBuilder));
+            Debug.Assert(resourceBuilder != null, $"{nameof(resourceBuilder)} must not be null");
 
             this.resourceBuilder = resourceBuilder;
             return this;
@@ -156,7 +156,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder AddProcessor(BaseProcessor<Activity> processor)
         {
-            Guard.Null(processor, nameof(processor));
+            Debug.Assert(processor != null, $"{nameof(processor)} must not be null");
 
             this.processors.Add(processor);
 

@@ -55,7 +55,7 @@ namespace OpenTelemetry.Metrics
 
             foreach (var reader in readers)
             {
-                Guard.Null(reader, nameof(reader));
+                Debug.Assert(reader != null, $"{nameof(reader)} must not be null");
 
                 reader.SetParentProvider(this);
 

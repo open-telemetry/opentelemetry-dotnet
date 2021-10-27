@@ -16,9 +16,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
 {
@@ -29,8 +29,8 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLogger(string categoryName, OpenTelemetryLoggerProvider provider)
         {
-            Guard.Null(categoryName, nameof(categoryName));
-            Guard.Null(provider, nameof(provider));
+            Debug.Assert(categoryName != null, $"{nameof(categoryName)} must not be null");
+            Debug.Assert(provider != null, $"{nameof(provider)} must not be null");
 
             this.categoryName = categoryName;
             this.provider = provider;

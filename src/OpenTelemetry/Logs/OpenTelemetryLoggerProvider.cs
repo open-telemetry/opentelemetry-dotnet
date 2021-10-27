@@ -15,9 +15,9 @@
 // </copyright>
 
 using System.Collections;
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Logs
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options)
         {
-            Guard.Null(options, nameof(options));
+            Debug.Assert(options != null, $"{nameof(options)} must not be null");
 
             this.Options = options;
             this.Resource = options.ResourceBuilder.Build();
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
         {
-            Guard.Null(processor, nameof(processor));
+            Debug.Assert(processor != null, $"{nameof(processor)} must not be null");
 
             processor.SetParentProvider(this);
 

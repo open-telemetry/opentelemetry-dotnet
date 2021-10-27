@@ -20,7 +20,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 using Thrift.Protocol;
 using Thrift.Transport;
@@ -46,7 +45,7 @@ namespace OpenTelemetry.Exporter
 
         internal JaegerExporter(JaegerExporterOptions options, TTransport clientTransport = null)
         {
-            Guard.Null(options, nameof(options));
+            Debug.Assert(options != null, $"{nameof(options)} must not be null");
 
             this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? JaegerExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
             this.protocolFactory = new TCompactProtocol.Factory();
@@ -93,7 +92,7 @@ namespace OpenTelemetry.Exporter
 
         internal void SetResourceAndInitializeBatch(Resource resource)
         {
-            Guard.Null(resource, nameof(resource));
+            Debug.Assert(resource != null, $"{nameof(resource)} must not be null");
 
             var process = this.Process;
 

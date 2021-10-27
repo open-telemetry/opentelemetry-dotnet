@@ -15,7 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
-using OpenTelemetry.Internal;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Resources
 {
@@ -33,9 +33,9 @@ namespace OpenTelemetry.Resources
         private static Resource DefaultResource { get; } = new Resource(new Dictionary<string, object>
         {
             [ResourceSemanticConventions.AttributeServiceName] = "unknown_service"
-                + (string.IsNullOrWhiteSpace(System.Diagnostics.Process.GetCurrentProcess().ProcessName)
+                + (string.IsNullOrWhiteSpace(Process.GetCurrentProcess().ProcessName)
                 ? string.Empty :
-                ":" + System.Diagnostics.Process.GetCurrentProcess().ProcessName),
+                ":" + Process.GetCurrentProcess().ProcessName),
         });
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Resources
         // https://github.com/open-telemetry/oteps/blob/master/text/0111-auto-resource-detection.md
         internal ResourceBuilder AddDetector(IResourceDetector resourceDetector)
         {
-            Guard.Null(resourceDetector, nameof(resourceDetector));
+            Debug.Assert(resourceDetector != null, $"{nameof(resourceDetector)} must not be null");
 
             Resource resource = resourceDetector.Detect();
 
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Resources
 
         internal ResourceBuilder AddResource(Resource resource)
         {
-            Guard.Null(resource, nameof(resource));
+            Debug.Assert(resource != null, $"{nameof(resource)} must not be null");
 
             this.resources.Add(resource);
 

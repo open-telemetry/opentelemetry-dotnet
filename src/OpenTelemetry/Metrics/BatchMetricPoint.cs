@@ -17,7 +17,6 @@
 using System;
 using System.Collections;
 using System.Diagnostics;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -31,7 +30,7 @@ namespace OpenTelemetry.Metrics
         internal BatchMetricPoint(MetricPoint[] metricsPoints, int maxSize, DateTimeOffset start, DateTimeOffset end)
         {
             Debug.Assert(maxSize > 0, $"{nameof(maxSize)} must be a positive number");
-            Guard.Null(metricsPoints, nameof(metricsPoints));
+            Debug.Assert(metricsPoints != null, $"{nameof(metricsPoints)} must not be null");
 
             this.metricsPoints = metricsPoints;
             this.targetCount = maxSize;
