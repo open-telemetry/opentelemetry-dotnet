@@ -58,6 +58,38 @@ namespace OpenTelemetry
         public abstract ExportResult Export(in Batch<T> batch);
 
         /// <summary>
+        /// Flushes the exporter, blocks the current thread until flush
+        /// completed, shutdown signaled or timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
+        /// </exception>
+        /// <remarks>
+        /// This function guarantees thread-safety.
+        /// </remarks>
+        public bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
+        {
+            Guard.InvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
+
+            try
+            {
+                return this.OnForceFlush(timeoutMilliseconds);
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.ForceFlush), ex);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Attempts to shutdown the exporter, blocks the current thread until
         /// shutdown completed or timed out.
         /// </summary>
@@ -100,6 +132,27 @@ namespace OpenTelemetry
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Called by <c>ForceFlush</c>. This function should block the current
+        /// thread until flush completed, shutdown signaled or timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when flush succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>
+        /// This function is called synchronously on the thread which called
+        /// <c>ForceFlush</c>. This function should be thread-safe, and should
+        /// not throw exceptions.
+        /// </remarks>
+        protected virtual bool OnForceFlush(int timeoutMilliseconds)
+        {
+            return true;
         }
 
         /// <summary>

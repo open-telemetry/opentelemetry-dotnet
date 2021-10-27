@@ -60,6 +60,12 @@ namespace OpenTelemetry
         protected abstract void OnExport(T data);
 
         /// <inheritdoc />
+        protected override bool OnForceFlush(int timeoutMilliseconds)
+        {
+            return this.exporter.ForceFlush(timeoutMilliseconds);
+        }
+
+        /// <inheritdoc />
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
             return this.exporter.Shutdown(timeoutMilliseconds);
