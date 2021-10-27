@@ -24,7 +24,7 @@ namespace OpenTelemetry.Tests
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static string GetCurrentMethodName()
         {
-            var method = new StackTrace().GetFrame(1).GetMethod();
+            var method = new StackFrame(1).GetMethod();
             return $"{method.DeclaringType.FullName}.{method.Name}";
         }
     }

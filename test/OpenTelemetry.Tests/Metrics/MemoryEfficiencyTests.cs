@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics.Tests
 {
     public class MemoryEfficiencyTests
     {
-        [Fact]
+        [Fact(Skip = "To be run after https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361 is fixed")]
         public void CumulativeOnlyExportWhenPointChanged()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName(), "1.0");
@@ -38,14 +38,12 @@ namespace OpenTelemetry.Metrics.Tests
             var counter = meter.CreateCounter<long>("meter");
 
             counter.Add(10, new KeyValuePair<string, object>("tag1", "value1"));
-
             meterProvider.ForceFlush();
-
             Assert.Single(exportedItems);
 
+            exportedItems.Clear();
             meterProvider.ForceFlush();
-
-            Assert.Single(exportedItems);
+            Assert.Empty(exportedItems);
         }
     }
 }
