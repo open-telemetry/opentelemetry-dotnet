@@ -62,6 +62,9 @@ values of the `ZipkinExporterOptions`.
 | --------------------------------| -------------------------------- |
 | `OTEL_EXPORTER_ZIPKIN_ENDPOINT` | `Endpoint`                       |
 
+`FormatException` is thrown in case of an invalid value for any of the
+supported environment variables.
+
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
