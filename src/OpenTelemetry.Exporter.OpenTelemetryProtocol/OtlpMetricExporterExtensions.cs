@@ -48,11 +48,11 @@ namespace OpenTelemetry.Metrics
 
         private static MeterProviderBuilder AddOtlpExporter(MeterProviderBuilder builder, OtlpExporterOptions options, Action<OtlpExporterOptions> configure = null)
         {
-            var originalEndpoint = options.Endpoint;
+            var initialEndpoint = options.Endpoint;
 
             configure?.Invoke(options);
 
-            options.AppendExportPath(originalEndpoint, OtlpExporterOptions.MetricsExportPath);
+            options.AppendExportPath(initialEndpoint, OtlpExporterOptions.MetricsExportPath);
 
             var metricExporter = new OtlpMetricExporter(options);
             var metricReader = new PeriodicExportingMetricReader(metricExporter, options.MetricExportIntervalMilliseconds);

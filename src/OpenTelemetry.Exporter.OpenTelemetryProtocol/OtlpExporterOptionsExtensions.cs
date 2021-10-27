@@ -17,6 +17,7 @@
 using System;
 using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Internal;
 #if NETSTANDARD2_1 || NET5_0_OR_GREATER
 using Grpc.Net.Client;
 #endif
@@ -103,21 +104,20 @@ namespace OpenTelemetry.Exporter
                 _ => null
             };
 
-        internal static void AppendExportPath(this OtlpExporterOptions options, Uri originalEndpoint, string exportRelativePath)
+        internal static void AppendExportPath(this OtlpExporterOptions options, Uri initialEndpoint, string exportRelativePath)
         {
-            // The exportRelativePath is only appended when the protocol is HttpProtobuf, the options
-            // Endpoint property wasn't set by the user and the OTEL_EXPORTER_OTLP_ENDPOINT env var is present.
-            // If the user provided a custom value for options.Endpoint that value is taken as is.
-            if (ReferenceEquals(originalEndpoint, options.Endpoint))
+            // The exportRelativePath is only appended when the options.Endpoint property wasn't set by the user,
+            // the protocol is HttpProtobuf and the OTEL_EXPORTER_OTLP_ENDPOINT environment variable
+            // is present. If the user provides a custom value for options.Endpoint that value is taken as is.
+            if (ReferenceEquals(initialEndpoint, options.Endpoint))
             {
                 if (options.Protocol == OtlpExportProtocol.HttpProtobuf)
                 {
-                    var endpointEnvVar = Environment.GetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName);
-                    if (!string.IsNullOrEmpty(endpointEnvVar))
+                    if (EnvironmentVariableHelper.LoadUri(OtlpExporterOptions.EndpointEnvVarName, out Uri endpoint))
                     {
-                        // In this case we can conclude that endpoint is read from OTEL_EXPORTER_OTLP_ENDPOINT
-                        // and has to be appened by traces/metrics relative path.
-                        options.Endpoint = options.Endpoint.AppendPathIfNotPresent(exportRelativePath);
+                        // At this point we can conclude that endpoint was initialized from OTEL_EXPORTER_OTLP_ENDPOINT
+                        // and has to be appended by export relative path (traces/metrics).
+                        options.Endpoint = endpoint.AppendPathIfNotPresent(exportRelativePath);
                     }
                 }
             }
