@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.Http\HttpRequestMessageContextPropagation.cs" Link="Includes\HttpRequestMessageContextPropagation.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
   </ItemGroup>
 
   <ItemGroup>

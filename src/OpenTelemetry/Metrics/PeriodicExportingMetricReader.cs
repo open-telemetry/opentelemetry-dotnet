@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -30,6 +31,7 @@ namespace OpenTelemetry.Metrics
         private readonly Thread exporterThread;
         private readonly AutoResetEvent exportTrigger = new AutoResetEvent(false);
         private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
+        private bool disposed;
 
         public PeriodicExportingMetricReader(
             BaseExporter<Metric> exporter,
@@ -37,15 +39,8 @@ namespace OpenTelemetry.Metrics
             int exportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
             : base(exporter)
         {
-            if (exportIntervalMilliseconds <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(exportIntervalMilliseconds), exportIntervalMilliseconds, "exportIntervalMilliseconds should be greater than zero.");
-            }
-
-            if (exportTimeoutMilliseconds < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(exportTimeoutMilliseconds), exportTimeoutMilliseconds, "exportTimeoutMilliseconds should be non-negative.");
-            }
+            Guard.Range(exportIntervalMilliseconds, nameof(exportIntervalMilliseconds), min: 1);
+            Guard.Range(exportTimeoutMilliseconds, nameof(exportTimeoutMilliseconds), min: 0);
 
             if ((this.SupportedExportModes & ExportModes.Push) != ExportModes.Push)
             {
@@ -86,6 +81,23 @@ namespace OpenTelemetry.Metrics
             return result;
         }
 
+        /// <inheritdoc/>
+        protected override void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                if (disposing)
+                {
+                    this.exportTrigger.Dispose();
+                    this.shutdownTrigger.Dispose();
+                }
+
+                this.disposed = true;
+            }
+
+            base.Dispose(disposing);
+        }
+
         private void ExporterProc()
         {
             var sw = Stopwatch.StartNew();
@@ -94,7 +106,17 @@ namespace OpenTelemetry.Metrics
             while (true)
             {
                 var timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
-                var index = WaitHandle.WaitAny(triggers, timeout);
+
+                int index;
+
+                try
+                {
+                    index = WaitHandle.WaitAny(triggers, timeout);
+                }
+                catch (ObjectDisposedException)
+                {
+                    return;
+                }
 
                 switch (index)
                 {

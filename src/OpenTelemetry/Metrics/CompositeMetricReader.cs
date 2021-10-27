@@ -22,7 +22,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class CompositeMetricReader : MetricReader
+    internal sealed class CompositeMetricReader : MetricReader
     {
         private readonly DoublyLinkedListNode head;
         private DoublyLinkedListNode tail;
@@ -64,21 +64,20 @@ namespace OpenTelemetry.Metrics
         public Enumerator GetEnumerator() => new Enumerator(this.head);
 
         /// <inheritdoc/>
-        protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
+        protected override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
         {
             // CompositeMetricReader delegates the work to its underlying readers,
             // so CompositeMetricReader.ProcessMetrics should never be called.
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         /// <inheritdoc/>
         protected override bool OnCollect(int timeoutMilliseconds = Timeout.Infinite)
         {
             var result = true;
-            var cur = this.head;
             var sw = Stopwatch.StartNew();
 
-            while (cur != null)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
                 if (timeoutMilliseconds == Timeout.Infinite)
                 {
@@ -91,8 +90,6 @@ namespace OpenTelemetry.Metrics
                     // notify all the readers, even if we run overtime
                     result = cur.Value.Collect((int)Math.Max(timeout, 0)) && result;
                 }
-
-                cur = cur.Next;
             }
 
             return result;
@@ -101,11 +98,10 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc/>
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
-            var cur = this.head;
             var result = true;
             var sw = Stopwatch.StartNew();
 
-            while (cur != null)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
                 if (timeoutMilliseconds == Timeout.Infinite)
                 {
@@ -118,8 +114,6 @@ namespace OpenTelemetry.Metrics
                     // notify all the readers, even if we run overtime
                     result = cur.Value.Shutdown((int)Math.Max(timeout, 0)) && result;
                 }
-
-                cur = cur.Next;
             }
 
             return result;
@@ -127,32 +121,28 @@ namespace OpenTelemetry.Metrics
 
         protected override void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (!this.disposed)
             {
-                return;
-            }
-
-            if (disposing)
-            {
-                var cur = this.head;
-
-                while (cur != null)
+                if (disposing)
                 {
-                    try
+                    for (var cur = this.head; cur != null; cur = cur.Next)
                     {
-                        cur.Value?.Dispose();
+                        try
+                        {
+                            cur.Value?.Dispose();
+                        }
+                        catch (Exception)
+                        {
+                            // TODO: which event source do we use?
+                            // OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+                        }
                     }
-                    catch (Exception)
-                    {
-                        // TODO: which event source do we use?
-                        // OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-                    }
-
-                    cur = cur.Next;
                 }
+
+                this.disposed = true;
             }
 
-            this.disposed = true;
+            base.Dispose(disposing);
         }
 
         public struct Enumerator

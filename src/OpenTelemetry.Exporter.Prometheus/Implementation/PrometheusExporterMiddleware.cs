@@ -55,8 +55,8 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <summary>
         /// Invoke.
         /// </summary>
-        /// <param name="httpContext"> context. </param>
-        /// <returns>Task. </returns>
+        /// <param name="httpContext"> context.</param>
+        /// <returns>Task.</returns>
         public async Task InvokeAsync(HttpContext httpContext)
         {
             Debug.Assert(httpContext != null, "httpContext should not be null");

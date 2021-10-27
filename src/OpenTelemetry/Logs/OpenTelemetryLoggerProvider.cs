@@ -123,19 +123,19 @@ namespace OpenTelemetry.Logs
 
         protected override void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (!this.disposed)
             {
-                return;
+                if (disposing)
+                {
+                    // Wait for up to 5 seconds grace period
+                    this.Processor?.Shutdown(5000);
+                    this.Processor?.Dispose();
+                }
+
+                this.disposed = true;
             }
 
-            if (disposing)
-            {
-                // Wait for up to 5 seconds grace period
-                this.Processor?.Shutdown(5000);
-                this.Processor?.Dispose();
-            }
-
-            this.disposed = true;
+            base.Dispose(disposing);
         }
     }
 }
