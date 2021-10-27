@@ -13,8 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-using System;
+
 using System.Diagnostics;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
@@ -42,8 +43,9 @@ namespace OpenTelemetry.Trace
         /// <param name="rootSampler">The <see cref="Sampler"/> to be called for root span/activity.</param>
         public ParentBasedSampler(Sampler rootSampler)
         {
-            this.rootSampler = rootSampler ?? throw new ArgumentNullException(nameof(rootSampler));
+            Guard.Null(rootSampler, nameof(rootSampler));
 
+            this.rootSampler = rootSampler;
             this.Description = $"ParentBased{{{rootSampler.Description}}}";
 
             this.remoteParentSampled = new AlwaysOnSampler();

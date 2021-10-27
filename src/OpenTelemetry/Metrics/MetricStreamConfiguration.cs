@@ -41,5 +41,14 @@ namespace OpenTelemetry.Metrics
         public virtual Aggregation Aggregation { get; set; }
 
         // TODO: MetricPoints caps can be configured here
+
+        private sealed class DropConfiguration : MetricStreamConfiguration
+        {
+            public override Aggregation Aggregation
+            {
+                get => Aggregation.Drop;
+                set { }
+            }
+        }
     }
 }

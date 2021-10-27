@@ -2,8 +2,12 @@
 
 ## Unreleased
 
-* Changed `BatchExportActivityProcessorOptions` to throw `ArgumentException`
-  if it fails to parse any of the supported environment variables.
+* Changed `BatchExportActivityProcessorOptions` constructor to throw
+  `FormatException` if it fails to parse any of the supported environment
+  variables.
+
+* Added `BaseExporter.ForceFlush`.
+  ([#2525](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2525))
 
 ## 1.2.0-beta1
 

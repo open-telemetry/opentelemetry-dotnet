@@ -38,6 +38,7 @@ namespace OpenTelemetry.Metrics
         private readonly MeterListener listener;
         private readonly MetricReader reader;
         private int metricIndex = -1;
+        private bool disposed;
 
         internal MeterProviderSdk(
             Resource resource,
@@ -54,10 +55,7 @@ namespace OpenTelemetry.Metrics
 
             foreach (var reader in readers)
             {
-                if (reader == null)
-                {
-                    throw new ArgumentException("A null value was found.", nameof(readers));
-                }
+                Guard.Null(reader, nameof(reader));
 
                 reader.SetParentProvider(this);
 
@@ -473,21 +471,31 @@ namespace OpenTelemetry.Metrics
 
         protected override void Dispose(bool disposing)
         {
-            if (this.instrumentations != null)
+            if (!this.disposed)
             {
-                foreach (var item in this.instrumentations)
+                if (disposing)
                 {
-                    (item as IDisposable)?.Dispose();
+                    if (this.instrumentations != null)
+                    {
+                        foreach (var item in this.instrumentations)
+                        {
+                            (item as IDisposable)?.Dispose();
+                        }
+
+                        this.instrumentations.Clear();
+                    }
+
+                    // Wait for up to 5 seconds grace period
+                    this.reader?.Shutdown(5000);
+                    this.reader?.Dispose();
+
+                    this.listener.Dispose();
                 }
 
-                this.instrumentations.Clear();
+                this.disposed = true;
             }
 
-            // Wait for up to 5 seconds grace period
-            this.reader?.Shutdown(5000);
-            this.reader?.Dispose();
-
-            this.listener.Dispose();
+            base.Dispose(disposing);
         }
     }
 }

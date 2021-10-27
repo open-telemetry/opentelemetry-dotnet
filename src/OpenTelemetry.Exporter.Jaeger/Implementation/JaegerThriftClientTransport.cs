@@ -24,7 +24,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     {
         private readonly IJaegerClient client;
         private readonly MemoryStream byteStream;
-        private bool isDisposed;
+        private bool disposed;
 
         public JaegerThriftClientTransport(string host, int port)
             : this(host, port, new MemoryStream(), new JaegerUdpClient())
@@ -64,11 +64,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
             catch (SocketException se)
             {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush because of socket exception. UDP Packet size was {buffer.Count}. Exception message: {se.Message}");
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush due to a '{nameof(SocketException)}' - UDP Packet size: '{buffer.Count}'", se);
             }
             catch (Exception e)
             {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush closed transport. {e.Message}");
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, "Cannot flush closed transport", e);
             }
             finally
             {
@@ -88,13 +88,18 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         protected override void Dispose(bool disposing)
         {
-            if (!this.isDisposed && disposing)
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
             {
                 this.byteStream?.Dispose();
                 this.client?.Dispose();
             }
 
-            this.isDisposed = true;
+            this.disposed = true;
         }
     }
 }

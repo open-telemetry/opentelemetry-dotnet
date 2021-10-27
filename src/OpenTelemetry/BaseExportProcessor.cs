@@ -35,7 +35,9 @@ namespace OpenTelemetry
         /// <param name="exporter">Exporter instance.</param>
         protected BaseExportProcessor(BaseExporter<T> exporter)
         {
-            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+            Guard.Null(exporter, nameof(exporter));
+
+            this.exporter = exporter;
         }
 
         /// <inheritdoc />
@@ -58,6 +60,12 @@ namespace OpenTelemetry
         protected abstract void OnExport(T data);
 
         /// <inheritdoc />
+        protected override bool OnForceFlush(int timeoutMilliseconds)
+        {
+            return this.exporter.ForceFlush(timeoutMilliseconds);
+        }
+
+        /// <inheritdoc />
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
             return this.exporter.Shutdown(timeoutMilliseconds);
@@ -66,21 +74,24 @@ namespace OpenTelemetry
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
-
-            if (disposing && !this.disposed)
+            if (!this.disposed)
             {
-                try
+                if (disposing)
                 {
-                    this.exporter.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+                    try
+                    {
+                        this.exporter.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+                    }
                 }
 
                 this.disposed = true;
             }
+
+            base.Dispose(disposing);
         }
     }
 }

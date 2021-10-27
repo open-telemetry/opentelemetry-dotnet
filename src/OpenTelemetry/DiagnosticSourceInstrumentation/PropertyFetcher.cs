@@ -17,6 +17,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation
 {
@@ -45,9 +46,11 @@ namespace OpenTelemetry.Instrumentation
         /// <returns>Property fetched.</returns>
         public T Fetch(object obj)
         {
-            if (!this.TryFetch(obj, out T value))
+            Guard.Null(obj, nameof(obj));
+
+            if (!this.TryFetch(obj, out T value, true))
             {
-                throw new ArgumentException("Supplied object was null or did not match the expected type.", nameof(obj));
+                throw new ArgumentException($"Unable to fetch property: '{nameof(obj)}'", nameof(obj));
             }
 
             return value;
@@ -58,10 +61,11 @@ namespace OpenTelemetry.Instrumentation
         /// </summary>
         /// <param name="obj">Object to be fetched.</param>
         /// <param name="value">Fetched value.</param>
-        /// <returns><see langword="true"/> if the property was fetched.</returns>
-        public bool TryFetch(object obj, out T value)
+        /// <param name="skipObjNullCheck">Set this to <see langword= "true"/> if we know <paramref name="obj"/> is not <see langword= "null"/>.</param>
+        /// <returns><see langword= "true"/> if the property was fetched.</returns>
+        public bool TryFetch(object obj, out T value, bool skipObjNullCheck = false)
         {
-            if (obj == null)
+            if (!skipObjNullCheck && obj == null)
             {
                 value = default;
                 return false;

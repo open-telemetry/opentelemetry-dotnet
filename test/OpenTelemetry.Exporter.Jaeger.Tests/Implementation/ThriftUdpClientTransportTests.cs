@@ -114,7 +114,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
 
             var ex = Assert.Throws<TTransportException>(() => transport.Flush());
 
-            Assert.Equal("Cannot flush closed transport. message, yo", ex.Message);
+            Assert.Equal("Cannot flush closed transport", ex.Message);
         }
 
         [Fact]

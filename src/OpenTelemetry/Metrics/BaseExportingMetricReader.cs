@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -28,7 +29,9 @@ namespace OpenTelemetry.Metrics
 
         public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
-            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+            Guard.Null(exporter, nameof(exporter));
+
+            this.exporter = exporter;
 
             var exportorType = exporter.GetType();
             var attributes = exportorType.GetCustomAttributes(typeof(AggregationTemporalityAttribute), true);
@@ -76,7 +79,7 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc/>
-        protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
+        protected override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
         {
             // TODO: Do we need to consider timeout here?
             return this.exporter.Export(metrics) == ExportResult.Success;
@@ -123,29 +126,27 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (!this.disposed)
             {
-                return;
-            }
-
-            if (disposing)
-            {
-                try
+                if (disposing)
                 {
-                    if (this.exporter is IPullMetricExporter pullExporter)
+                    try
                     {
-                        pullExporter.Collect = null;
+                        if (this.exporter is IPullMetricExporter pullExporter)
+                        {
+                            pullExporter.Collect = null;
+                        }
+
+                        this.exporter.Dispose();
                     }
+                    catch (Exception)
+                    {
+                        // TODO: Log
+                    }
+                }
 
-                    this.exporter.Dispose();
-                }
-                catch (Exception)
-                {
-                    // TODO: Log
-                }
+                this.disposed = true;
             }
-
-            this.disposed = true;
 
             base.Dispose(disposing);
         }

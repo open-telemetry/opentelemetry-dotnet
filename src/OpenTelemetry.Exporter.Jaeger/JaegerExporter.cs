@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 using Thrift.Protocol;
 using Thrift.Transport;
@@ -36,7 +37,7 @@ namespace OpenTelemetry.Exporter
         private readonly InMemoryTransport memoryTransport;
         private readonly TProtocol memoryProtocol;
         private int batchByteSize;
-        private bool disposedValue; // To detect redundant dispose calls
+        private bool disposed;
 
         public JaegerExporter(JaegerExporterOptions options)
             : this(options, null)
@@ -45,10 +46,7 @@ namespace OpenTelemetry.Exporter
 
         internal JaegerExporter(JaegerExporterOptions options, TTransport clientTransport = null)
         {
-            if (options is null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
+            Guard.Null(options, nameof(options));
 
             this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? JaegerExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
             this.protocolFactory = new TCompactProtocol.Factory();
@@ -95,10 +93,7 @@ namespace OpenTelemetry.Exporter
 
         internal void SetResourceAndInitializeBatch(Resource resource)
         {
-            if (resource is null)
-            {
-                throw new ArgumentNullException(nameof(resource));
-            }
+            Guard.Null(resource, nameof(resource));
 
             var process = this.Process;
 
@@ -174,7 +169,7 @@ namespace OpenTelemetry.Exporter
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            if (!this.disposedValue)
+            if (!this.disposed)
             {
                 if (disposing)
                 {
@@ -184,7 +179,7 @@ namespace OpenTelemetry.Exporter
                     this.memoryProtocol.Dispose();
                 }
 
-                this.disposedValue = true;
+                this.disposed = true;
             }
 
             base.Dispose(disposing);

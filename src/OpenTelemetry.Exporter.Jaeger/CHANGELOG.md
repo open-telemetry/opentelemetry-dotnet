@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Changed `JaegerExporterOptions` constructor to throw
+  `FormatException` if it fails to parse any of the supported environment
+  variables.
+
 ## 1.2.0-beta1
 
 Released 2021-Oct-08

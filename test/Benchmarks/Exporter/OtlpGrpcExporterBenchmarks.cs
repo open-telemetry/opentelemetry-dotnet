@@ -1,4 +1,4 @@
-// <copyright file="ZipkinExporterBenchmarks.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpGrpcExporterBenchmarks.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,32 +14,28 @@
 // limitations under the License.
 // </copyright>
 
-extern alias Zipkin;
+extern alias OpenTelemetryProtocol;
 
 using System;
 using System.Diagnostics;
-using System.IO;
+using System.Threading;
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
+using Grpc.Core;
 using OpenTelemetry;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Tests;
-using Zipkin::OpenTelemetry.Exporter;
+using OpenTelemetryProtocol::OpenTelemetry.Exporter;
+using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OtlpCollector = OpenTelemetryProtocol::Opentelemetry.Proto.Collector.Trace.V1;
 
 namespace Benchmarks.Exporter
 {
     [MemoryDiagnoser]
-#if !NET462
-    [ThreadingDiagnoser]
-#endif
-    public class ZipkinExporterBenchmarks
+    public class OtlpGrpcExporterBenchmarks
     {
-        private readonly byte[] buffer = new byte[4096];
+        private OtlpTraceExporter exporter;
         private Activity activity;
         private CircularBuffer<Activity> activityBatch;
-        private IDisposable server;
-        private string serverHost;
-        private int serverPort;
 
         [Params(1, 10, 100)]
         public int NumberOfBatches { get; set; }
@@ -50,44 +46,25 @@ namespace Benchmarks.Exporter
         [GlobalSetup]
         public void GlobalSetup()
         {
+            var options = new OtlpExporterOptions();
+            this.exporter = new OtlpTraceExporter(
+                options,
+                new OtlpGrpcTraceExportClient(options, new NoopTraceServiceClient()));
+
             this.activity = ActivityHelper.CreateTestActivity();
             this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);
-            this.server = TestHttpServer.RunServer(
-                (ctx) =>
-                {
-                    using (Stream receiveStream = ctx.Request.InputStream)
-                    {
-                        while (true)
-                        {
-                            if (receiveStream.Read(this.buffer, 0, this.buffer.Length) == 0)
-                            {
-                                break;
-                            }
-                        }
-                    }
-
-                    ctx.Response.StatusCode = 200;
-                    ctx.Response.OutputStream.Close();
-                },
-                out this.serverHost,
-                out this.serverPort);
         }
 
         [GlobalCleanup]
         public void GlobalCleanup()
         {
-            this.server.Dispose();
+            this.exporter.Shutdown();
+            this.exporter.Dispose();
         }
 
         [Benchmark]
-        public void ZipkinExporter_Batching()
+        public void OtlpExporter_Batching()
         {
-            var exporter = new ZipkinExporter(
-                new ZipkinExporterOptions
-                {
-                    Endpoint = new Uri($"http://{this.serverHost}:{this.serverPort}"),
-                });
-
             for (int i = 0; i < this.NumberOfBatches; i++)
             {
                 for (int c = 0; c < this.NumberOfSpans; c++)
@@ -95,10 +72,16 @@ namespace Benchmarks.Exporter
                     this.activityBatch.Add(this.activity);
                 }
 
-                exporter.Export(new Batch<Activity>(this.activityBatch, this.NumberOfSpans));
+                this.exporter.Export(new Batch<Activity>(this.activityBatch, this.NumberOfSpans));
             }
+        }
 
-            exporter.Shutdown();
+        private class NoopTraceServiceClient : OtlpCollector.TraceService.ITraceServiceClient
+        {
+            public OtlpCollector.ExportTraceServiceResponse Export(OtlpCollector.ExportTraceServiceRequest request, Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default)
+            {
+                return null;
+            }
         }
     }
 }

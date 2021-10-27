@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Logs
@@ -46,8 +46,9 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options)
         {
-            this.Options = options ?? throw new ArgumentNullException(nameof(options));
+            Guard.Null(options, nameof(options));
 
+            this.Options = options;
             this.Resource = options.ResourceBuilder.Build();
 
             foreach (var processor in options.Processors)
@@ -96,10 +97,7 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
         {
-            if (processor == null)
-            {
-                throw new ArgumentNullException(nameof(processor));
-            }
+            Guard.Null(processor, nameof(processor));
 
             processor.SetParentProvider(this);
 
@@ -125,19 +123,19 @@ namespace OpenTelemetry.Logs
 
         protected override void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (!this.disposed)
             {
-                return;
+                if (disposing)
+                {
+                    // Wait for up to 5 seconds grace period
+                    this.Processor?.Shutdown(5000);
+                    this.Processor?.Dispose();
+                }
+
+                this.disposed = true;
             }
 
-            if (disposing)
-            {
-                // Wait for up to 5 seconds grace period
-                this.Processor?.Shutdown(5000);
-                this.Processor?.Dispose();
-            }
-
-            this.disposed = true;
+            base.Dispose(disposing);
         }
     }
 }

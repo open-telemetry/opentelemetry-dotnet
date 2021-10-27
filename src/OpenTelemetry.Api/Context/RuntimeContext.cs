@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context
 {
@@ -40,16 +41,13 @@ namespace OpenTelemetry.Context
         /// <returns>The slot registered.</returns>
         public static RuntimeContextSlot<T> RegisterSlot<T>(string slotName)
         {
-            if (string.IsNullOrEmpty(slotName))
-            {
-                throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
-            }
+            Guard.NullOrEmpty(slotName, nameof(slotName));
 
             lock (Slots)
             {
                 if (Slots.ContainsKey(slotName))
                 {
-                    throw new InvalidOperationException($"The context slot {slotName} is already registered.");
+                    throw new InvalidOperationException($"Context slot already registered: '{slotName}'");
                 }
 
                 var type = ContextSlotType.MakeGenericType(typeof(T));
@@ -68,17 +66,10 @@ namespace OpenTelemetry.Context
         /// <returns>The slot previously registered.</returns>
         public static RuntimeContextSlot<T> GetSlot<T>(string slotName)
         {
-            if (string.IsNullOrEmpty(slotName))
-            {
-                throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
-            }
-
-            if (!Slots.TryGetValue(slotName, out var slot))
-            {
-                throw new ArgumentException($"The context slot {slotName} could not be found.");
-            }
-
-            return slot as RuntimeContextSlot<T> ?? throw new ArgumentException($"The context slot {slotName} cannot be cast as {typeof(RuntimeContextSlot<T>)}.");
+            Guard.NullOrEmpty(slotName, nameof(slotName));
+            var slot = GuardNotFound(slotName);
+            var contextSlot = Guard.Type<RuntimeContextSlot<T>>(slot, nameof(slot));
+            return contextSlot;
         }
 
         /*
@@ -136,23 +127,10 @@ namespace OpenTelemetry.Context
         /// <param name="value">The value to be set.</param>
         public static void SetValue(string slotName, object value)
         {
-            if (string.IsNullOrEmpty(slotName))
-            {
-                throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
-            }
-
-            if (!Slots.TryGetValue(slotName, out var slot))
-            {
-                throw new ArgumentException($"The context slot {slotName} could not be found.");
-            }
-
-            if (slot is IRuntimeContextSlotValueAccessor runtimeContextSlotValueAccessor)
-            {
-                runtimeContextSlotValueAccessor.Value = value;
-                return;
-            }
-
-            throw new NotSupportedException($"The context slot {slotName} value cannot be accessed as an object.");
+            Guard.NullOrEmpty(slotName, nameof(slotName));
+            var slot = GuardNotFound(slotName);
+            var runtimeContextSlotValueAccessor = Guard.Type<IRuntimeContextSlotValueAccessor>(slot, nameof(slot));
+            runtimeContextSlotValueAccessor.Value = value;
         }
 
         /// <summary>
@@ -162,28 +140,26 @@ namespace OpenTelemetry.Context
         /// <returns>The value retrieved from the context slot.</returns>
         public static object GetValue(string slotName)
         {
-            if (string.IsNullOrEmpty(slotName))
-            {
-                throw new ArgumentException($"{nameof(slotName)} cannot be null or empty string.");
-            }
-
-            if (!Slots.TryGetValue(slotName, out var slot))
-            {
-                throw new ArgumentException($"The context slot {slotName} could not be found.");
-            }
-
-            if (slot is IRuntimeContextSlotValueAccessor runtimeContextSlotValueAccessor)
-            {
-                return runtimeContextSlotValueAccessor.Value;
-            }
-
-            throw new NotSupportedException($"The context slot {slotName} value cannot be accessed as an object.");
+            Guard.NullOrEmpty(slotName, nameof(slotName));
+            var slot = GuardNotFound(slotName);
+            var runtimeContextSlotValueAccessor = Guard.Type<IRuntimeContextSlotValueAccessor>(slot, nameof(slot));
+            return runtimeContextSlotValueAccessor.Value;
         }
 
         // For testing purpose
         internal static void Clear()
         {
             Slots.Clear();
+        }
+
+        private static object GuardNotFound(string slotName)
+        {
+            if (!Slots.TryGetValue(slotName, out var slot))
+            {
+                throw new ArgumentException($"Context slot not found: '{slotName}'");
+            }
+
+            return slot;
         }
     }
 }
