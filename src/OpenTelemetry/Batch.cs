@@ -37,7 +37,7 @@ namespace OpenTelemetry
 
         internal Batch(T item)
         {
-            Debug.Assert(item != null, $"{nameof(item)} must not be null");
+            Guard.Null(item, nameof(item));
 
             this.item = item;
             this.circularBuffer = null;
