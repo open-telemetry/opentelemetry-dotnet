@@ -132,6 +132,34 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Throws<NotSupportedException>(() => enumerator.Reset());
         }
 
+        [Fact]
+        public void DrainIntoNewBatchTest()
+        {
+            var circularBuffer = new CircularBuffer<string>(100);
+            circularBuffer.Add("a");
+            circularBuffer.Add("b");
+
+            Batch<string> batch = new Batch<string>(circularBuffer, 10);
+
+            Assert.Equal(2, batch.Count);
+
+            string[] storage = new string[10];
+            int selectedItemCount = 0;
+            foreach (string item in batch)
+            {
+                if (item == "b")
+                {
+                    storage[selectedItemCount++] = item;
+                }
+            }
+
+            batch = new Batch<string>(storage, selectedItemCount);
+
+            Assert.Equal(1, batch.Count);
+
+            this.ValidateEnumerator(batch.GetEnumerator(), "b");
+        }
+
         private void ValidateEnumerator(Batch<string>.Enumerator enumerator, string expected)
         {
             if (enumerator.Current != null)
