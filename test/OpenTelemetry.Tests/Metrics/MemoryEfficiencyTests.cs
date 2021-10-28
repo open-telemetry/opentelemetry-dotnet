@@ -16,6 +16,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -23,8 +24,10 @@ namespace OpenTelemetry.Metrics.Tests
 {
     public class MemoryEfficiencyTests
     {
-        [Fact(Skip = "To be run after https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361 is fixed")]
-        public void CumulativeOnlyExportWhenPointChanged()
+        [Theory(Skip = "To be run after https://github.com/open-telemetry/opentelemetry-dotnet/issues/2524 is fixed")]
+        [InlineData(AggregationTemporality.Cumulative)]
+        [InlineData(AggregationTemporality.Delta)]
+        public void ExportOnlyWhenPointChanged(AggregationTemporality temporality)
         {
             using var meter = new Meter(Utils.GetCurrentMethodName(), "1.0");
 
@@ -32,7 +35,11 @@ namespace OpenTelemetry.Metrics.Tests
 
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(exportedItems)
+                .AddReader(
+                    new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                    {
+                        PreferredAggregationTemporality = temporality,
+                    })
                 .Build();
 
             var counter = meter.CreateCounter<long>("meter");
