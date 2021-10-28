@@ -19,7 +19,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry
 {
@@ -32,40 +31,51 @@ namespace OpenTelemetry
     {
         private readonly T item;
         private readonly CircularBuffer<T> circularBuffer;
-        private readonly T[] metrics;
+        private readonly T[] items;
         private readonly long targetCount;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Batch{T}"/> struct.
+        /// </summary>
+        /// <param name="items">The items to store in the batch.</param>
+        /// <param name="count">The number of items in the batch.</param>
+        public Batch(T[] items, int count)
+        {
+            Guard.Null(items, nameof(items));
+            Guard.Range(count, nameof(count), 0, items.Length);
+
+            this.item = null;
+            this.circularBuffer = null;
+            this.items = items;
+            this.Count = this.targetCount = count;
+        }
 
         internal Batch(T item)
         {
-            Guard.Null(item, nameof(item));
+            Debug.Assert(item != null, $"{nameof(item)} was null.");
 
             this.item = item;
             this.circularBuffer = null;
-            this.metrics = null;
-            this.targetCount = 1;
+            this.items = null;
+            this.Count = this.targetCount = 1;
         }
 
         internal Batch(CircularBuffer<T> circularBuffer, int maxSize)
         {
             Debug.Assert(maxSize > 0, $"{nameof(maxSize)} should be a positive number.");
-            Guard.Null(circularBuffer, nameof(circularBuffer));
+            Debug.Assert(circularBuffer != null, $"{nameof(circularBuffer)} was null.");
 
             this.item = null;
-            this.metrics = null;
+            this.items = null;
             this.circularBuffer = circularBuffer;
-            this.targetCount = circularBuffer.RemovedCount + Math.Min(maxSize, circularBuffer.Count);
+            this.Count = Math.Min(maxSize, circularBuffer.Count);
+            this.targetCount = circularBuffer.RemovedCount + this.Count;
         }
 
-        internal Batch(T[] metrics, int maxSize)
-        {
-            Debug.Assert(maxSize > 0, $"{nameof(maxSize)} should be a positive number.");
-            Guard.Null(metrics, nameof(metrics));
-
-            this.item = null;
-            this.circularBuffer = null;
-            this.metrics = metrics;
-            this.targetCount = maxSize;
-        }
+        /// <summary>
+        /// Gets the count of items in the batch.
+        /// </summary>
+        public long Count { get; }
 
         /// <inheritdoc/>
         public void Dispose()
@@ -88,9 +98,9 @@ namespace OpenTelemetry
         {
             return this.circularBuffer != null
                 ? new Enumerator(this.circularBuffer, this.targetCount)
-                : this.metrics != null
-                ? new Enumerator(this.metrics, this.targetCount)
-                : new Enumerator(this.item);
+                : this.items != null
+                    ? new Enumerator(this.items, this.targetCount)
+                    : new Enumerator(this.item);
         }
 
         /// <summary>
@@ -99,35 +109,35 @@ namespace OpenTelemetry
         public struct Enumerator : IEnumerator<T>
         {
             private readonly CircularBuffer<T> circularBuffer;
-            private readonly T[] metrics;
+            private readonly T[] items;
             private long targetCount;
-            private int metricIndex;
+            private int itemIndex;
 
             internal Enumerator(T item)
             {
                 this.Current = item;
                 this.circularBuffer = null;
-                this.metrics = null;
+                this.items = null;
                 this.targetCount = -1;
-                this.metricIndex = 0;
+                this.itemIndex = 0;
             }
 
             internal Enumerator(CircularBuffer<T> circularBuffer, long targetCount)
             {
                 this.Current = null;
-                this.metrics = null;
+                this.items = null;
                 this.circularBuffer = circularBuffer;
                 this.targetCount = targetCount;
-                this.metricIndex = 0;
+                this.itemIndex = 0;
             }
 
-            internal Enumerator(T[] metrics, long targetCount)
+            internal Enumerator(T[] items, long targetCount)
             {
                 this.Current = null;
                 this.circularBuffer = null;
-                this.metrics = metrics;
+                this.items = items;
                 this.targetCount = targetCount;
-                this.metricIndex = 0;
+                this.itemIndex = 0;
             }
 
             /// <inheritdoc/>
@@ -144,18 +154,13 @@ namespace OpenTelemetry
             /// <inheritdoc/>
             public bool MoveNext()
             {
-                if (typeof(T) == typeof(Metric))
+                if (this.items != null)
                 {
-                    var metrics = this.metrics;
-
-                    if (metrics != null)
+                    if (this.itemIndex < this.targetCount)
                     {
-                        if (this.metricIndex < this.targetCount)
-                        {
-                            this.Current = metrics[this.metricIndex];
-                            this.metricIndex++;
-                            return true;
-                        }
+                        this.Current = this.items[this.itemIndex];
+                        this.itemIndex++;
+                        return true;
                     }
 
                     this.Current = null;
