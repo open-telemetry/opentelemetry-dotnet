@@ -56,8 +56,8 @@ namespace OpenTelemetry.Metrics
 
             if (tagLength <= MaxTagCacheSize)
             {
-                tagKeys = this.tagStorage[tagLength - 1].TagKey;
-                tagValues = this.tagStorage[tagLength - 1].TagValue;
+                tagKeys = this.tagStorage[tagLength - 1].TagKeys;
+                tagValues = this.tagStorage[tagLength - 1].TagValues;
             }
             else
             {
@@ -94,8 +94,8 @@ namespace OpenTelemetry.Metrics
             }
             else if (actualLength <= MaxTagCacheSize)
             {
-                tagKeys = this.tagStorage[actualLength - 1].TagKey;
-                tagValues = this.tagStorage[actualLength - 1].TagValue;
+                tagKeys = this.tagStorage[actualLength - 1].TagKeys;
+                tagValues = this.tagStorage[actualLength - 1].TagValues;
             }
             else
             {
@@ -128,13 +128,13 @@ namespace OpenTelemetry.Metrics
         internal class TagStorage
         {
             // Used to split into Key sequence, Value sequence.
-            internal readonly string[] TagKey;
-            internal readonly object[] TagValue;
+            internal readonly string[] TagKeys;
+            internal readonly object[] TagValues;
 
             internal TagStorage(int n)
             {
-                this.TagKey = new string[n];
-                this.TagValue = new object[n];
+                this.TagKeys = new string[n];
+                this.TagValues = new object[n];
             }
         }
     }
