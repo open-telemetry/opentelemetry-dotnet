@@ -16,7 +16,7 @@
 
 using System;
 using System.Collections.Generic;
-using global::OpenTracing;
+using OpenTracing;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
