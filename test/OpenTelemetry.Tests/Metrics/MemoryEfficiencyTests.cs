@@ -35,10 +35,11 @@ namespace OpenTelemetry.Metrics.Tests
 
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
-                {
-                    PreferredAggregationTemporality = temporality,
-                })
+                .AddReader(
+                    new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                    {
+                        PreferredAggregationTemporality = temporality,
+                    })
                 .Build();
 
             var counter = meter.CreateCounter<long>("meter");
