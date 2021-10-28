@@ -37,25 +37,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             }
         }
 
-        [NonEvent]
-        public void FailedEndpointInitialization(Exception ex)
-        {
-            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
-            {
-                this.FailedEndpointInitialization(ex.ToInvariantString());
-            }
-        }
-
         [Event(1, Message = "Failed to export activities: '{0}'", Level = EventLevel.Error)]
         public void FailedExport(string exception)
         {
             this.WriteEvent(1, exception);
-        }
-
-        [Event(2, Message = "Error initializing Zipkin endpoint, falling back to default value: '{0}'", Level = EventLevel.Error)]
-        public void FailedEndpointInitialization(string exception)
-        {
-            this.WriteEvent(2, exception);
         }
     }
 }

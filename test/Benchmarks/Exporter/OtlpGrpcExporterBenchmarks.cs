@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+extern alias OpenTelemetryProtocol;
+
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -21,10 +23,10 @@ using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
 using Grpc.Core;
 using OpenTelemetry;
-using OpenTelemetry.Exporter;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Internal;
-using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
+using OpenTelemetryProtocol::OpenTelemetry.Exporter;
+using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OtlpCollector = OpenTelemetryProtocol::Opentelemetry.Proto.Collector.Trace.V1;
 
 namespace Benchmarks.Exporter
 {
