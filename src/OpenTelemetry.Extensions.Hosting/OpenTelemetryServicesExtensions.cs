@@ -37,6 +37,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services)
         {
+            Guard.Null(services, nameof(services));
+
             return services.AddOpenTelemetryTracing(builder => { });
         }
 
