@@ -143,18 +143,18 @@ namespace OpenTelemetry.Metrics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int LookupAggregatorStore(string[] tagKey, object[] tagValue, int length)
+        private int LookupAggregatorStore(string[] tagKeys, object[] tagValues, int length)
         {
             int aggregatorIndex;
             string[] seqKey = null;
 
-            // GetOrAdd by TagKey at 1st Level of 2-level dictionary structure.
+            // GetOrAdd by TagKeys at 1st Level of 2-level dictionary structure.
             // Get back a Dictionary of [ Values x Metrics[] ].
-            if (!this.keyValue2MetricAggs.TryGetValue(tagKey, out var value2metrics))
+            if (!this.keyValue2MetricAggs.TryGetValue(tagKeys, out var value2metrics))
             {
                 // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
                 seqKey = new string[length];
-                tagKey.CopyTo(seqKey, 0);
+                tagKeys.CopyTo(seqKey, 0);
 
                 value2metrics = new ConcurrentDictionary<object[], int>(ObjectArrayComparer);
                 if (!this.keyValue2MetricAggs.TryAdd(seqKey, value2metrics))
@@ -163,9 +163,9 @@ namespace OpenTelemetry.Metrics
                 }
             }
 
-            // GetOrAdd by TagValue at 2st Level of 2-level dictionary structure.
+            // GetOrAdd by TagValues at 2st Level of 2-level dictionary structure.
             // Get back Metrics[].
-            if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex))
+            if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
             {
                 aggregatorIndex = this.metricPointIndex;
                 if (aggregatorIndex >= MaxMetricPoints)
@@ -180,7 +180,7 @@ namespace OpenTelemetry.Metrics
                 lock (value2metrics)
                 {
                     // check again after acquiring lock.
-                    if (!value2metrics.TryGetValue(tagValue, out aggregatorIndex))
+                    if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
                     {
                         aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
                         if (aggregatorIndex >= MaxMetricPoints)
@@ -196,11 +196,11 @@ namespace OpenTelemetry.Metrics
                         if (seqKey == null)
                         {
                             seqKey = new string[length];
-                            tagKey.CopyTo(seqKey, 0);
+                            tagKeys.CopyTo(seqKey, 0);
                         }
 
                         var seqVal = new object[length];
-                        tagValue.CopyTo(seqVal, 0);
+                        tagValues.CopyTo(seqVal, 0);
 
                         ref var metricPoint = ref this.metricPoints[aggregatorIndex];
                         var dt = DateTimeOffset.UtcNow;
@@ -304,14 +304,14 @@ namespace OpenTelemetry.Metrics
 
             var storage = ThreadStaticStorage.GetStorage();
 
-            storage.SplitToKeysAndValues(tags, tagLength, out var tagKey, out var tagValue);
+            storage.SplitToKeysAndValues(tags, tagLength, out var tagKeys, out var tagValues);
 
             if (tagLength > 1)
             {
-                Array.Sort<string, object>(tagKey, tagValue);
+                Array.Sort(tagKeys, tagValues);
             }
 
-            return this.LookupAggregatorStore(tagKey, tagValue, tagLength);
+            return this.LookupAggregatorStore(tagKeys, tagValues, tagLength);
         }
 
         private int FindMetricAggregatorsCustomTag(ReadOnlySpan<KeyValuePair<string, object>> tags)
@@ -328,7 +328,7 @@ namespace OpenTelemetry.Metrics
 
             var storage = ThreadStaticStorage.GetStorage();
 
-            storage.SplitToKeysAndValues(tags, tagLength, this.tagKeysInteresting, out var tagKey, out var tagValue, out var actualLength);
+            storage.SplitToKeysAndValues(tags, tagLength, this.tagKeysInteresting, out var tagKeys, out var tagValues, out var actualLength);
 
             // Actual number of tags depend on how many
             // of the incoming tags has user opted to
@@ -341,10 +341,10 @@ namespace OpenTelemetry.Metrics
 
             if (actualLength > 1)
             {
-                Array.Sort<string, object>(tagKey, tagValue);
+                Array.Sort(tagKeys, tagValues);
             }
 
-            return this.LookupAggregatorStore(tagKey, tagValue, actualLength);
+            return this.LookupAggregatorStore(tagKeys, tagValues, actualLength);
         }
     }
 }
