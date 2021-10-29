@@ -132,8 +132,8 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 PreferredAggregationTemporality = temporality,
             };
-            using var meter1 = new Meter(Utils.GetCurrentMethodName() + '1' + temporality);
-            using var meter2 = new Meter(Utils.GetCurrentMethodName() + '2' + temporality);
+            using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.1.{temporality}");
+            using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.2.{temporality}");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter1.Name)
                 .AddMeter(meter2.Name)
@@ -223,8 +223,8 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(false)]
         public void MeterSourcesWildcardSupportNegativeTestNoMeterAdded(bool hasView)
         {
-            using var meter1 = new Meter("AbcCompany.XyzProduct.ComponentA" + hasView);
-            using var meter2 = new Meter("abcCompany.xYzProduct.componentC" + hasView);
+            using var meter1 = new Meter($"AbcCompany.XyzProduct.ComponentA.{hasView}");
+            using var meter2 = new Meter($"abcCompany.xYzProduct.componentC.{hasView}");
 
             var exportedItems = new List<Metric>();
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -266,7 +266,7 @@ namespace OpenTelemetry.Metrics.Tests
                 PreferredAggregationTemporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
             };
 
-            using var meter = new Meter(Utils.GetCurrentMethodName() + exportDelta);
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
             var counterLong = meter.CreateCounter<long>("mycounter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
@@ -341,7 +341,7 @@ namespace OpenTelemetry.Metrics.Tests
                 PreferredAggregationTemporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
             };
 
-            using var meter = new Meter(Utils.GetCurrentMethodName() + exportDelta);
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
             int i = 1;
             var counterLong = meter.CreateObservableCounter(
             "observable-counter",
@@ -410,7 +410,7 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 PreferredAggregationTemporality = temporality,
             };
-            using var meter = new Meter(Utils.GetCurrentMethodName() + temporality);
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
             var counterLong = meter.CreateCounter<long>("mycounterCapTest");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
