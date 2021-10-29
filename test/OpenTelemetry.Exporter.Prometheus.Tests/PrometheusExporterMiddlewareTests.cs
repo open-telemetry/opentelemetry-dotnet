@@ -50,7 +50,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 new KeyValuePair<string, object>("key2", "value2"),
             };
 
-            using var meter = new Meter(MeterName, "0.0.1");
+            using var meter = new Meter(MeterName);
 
             var counter = meter.CreateCounter<double>("counter_double");
             counter.Add(100.18D, tags);

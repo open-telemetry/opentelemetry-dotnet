@@ -30,7 +30,7 @@ namespace Examples.Console
     {
         internal static object Run(MetricsOptions options)
         {
-            using var meter = new Meter("TestMeter", "0.0.1");
+            using var meter = new Meter("TestMeter");
 
             var providerBuilder = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("myservice"))

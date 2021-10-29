@@ -46,7 +46,7 @@ namespace Benchmarks.Exporter
         [GlobalSetup]
         public void GlobalSetup()
         {
-            this.meter = new Meter(Utils.GetCurrentMethodName(), "1.0.0");
+            this.meter = new Meter(Utils.GetCurrentMethodName());
             this.responseStream = new MemoryStream(1024 * 1024);
 
             this.meterProvider = Sdk.CreateMeterProviderBuilder()

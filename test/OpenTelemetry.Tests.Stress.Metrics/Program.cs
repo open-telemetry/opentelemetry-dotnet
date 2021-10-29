@@ -27,7 +27,7 @@ using OpenTelemetry.Tests;
 public partial class Program
 {
     private const int ArraySize = 10;
-    private static readonly Meter TestMeter = new Meter(Utils.GetCurrentMethodName(), "1.0.0");
+    private static readonly Meter TestMeter = new Meter(Utils.GetCurrentMethodName());
     private static readonly Counter<long> TestCounter = TestMeter.CreateCounter<long>("TestCounter");
     private static readonly string[] DimensionValues = new string[ArraySize];
     private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());

@@ -27,7 +27,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact(Skip = "To be run after https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361 is fixed")]
         public void InMemoryExporterShouldDeepCopyMetricPoints()
         {
-            var meter = new Meter(Utils.GetCurrentMethodName(), "1.0");
+            var meter = new Meter(Utils.GetCurrentMethodName());
 
             var exportedItems = new List<Metric>();
             using var inMemoryReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))

@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             MeterProvider provider;
             string address = null;
 
-            using var meter = new Meter(Utils.GetCurrentMethodName(), "0.0.1");
+            using var meter = new Meter(Utils.GetCurrentMethodName());
 
             while (true)
             {

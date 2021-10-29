@@ -27,7 +27,7 @@ namespace Examples.Console
 {
     internal class TestPrometheusExporter
     {
-        private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
+        private static readonly Meter MyMeter = new Meter("TestMeter");
         private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("myCounter");
         private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("myHistogram");
         private static readonly Random RandomGenerator = new Random();
