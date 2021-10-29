@@ -1,2 +1,4 @@
+OpenTelemetry.Batch<T>.Batch(T[] items, int count) -> void
+OpenTelemetry.Batch<T>.Count.get -> long
 OpenTelemetry.Trace.BatchExportActivityProcessorOptions
 OpenTelemetry.Trace.BatchExportActivityProcessorOptions.BatchExportActivityProcessorOptions() -> void
