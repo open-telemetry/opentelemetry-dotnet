@@ -98,7 +98,7 @@ namespace Examples.Console
 
             if (options.FlagGauge ?? false)
             {
-                var observableCounter = meter.CreateObservableGauge<int>("gauge", () =>
+                var observableCounter = meter.CreateObservableGauge("gauge", () =>
                 {
                     return new List<Measurement<int>>()
                     {

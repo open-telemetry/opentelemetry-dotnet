@@ -56,7 +56,7 @@ namespace Examples.Console
                 })
                 .Build();
 
-            ObservableGauge<long> gauge = MyMeter.CreateObservableGauge<long>(
+            ObservableGauge<long> gauge = MyMeter.CreateObservableGauge(
             "Gauge",
             () =>
             {
