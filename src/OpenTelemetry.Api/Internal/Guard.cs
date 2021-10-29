@@ -24,7 +24,7 @@ namespace OpenTelemetry.Internal
     /// <summary>
     /// Methods for guarding against exception throwing values.
     /// </summary>
-    internal static class Guard
+    internal static sealed class Guard
     {
         private const string DefaultParamName = "N/A";
 
