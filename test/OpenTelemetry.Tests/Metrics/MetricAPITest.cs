@@ -132,8 +132,8 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 PreferredAggregationTemporality = temporality,
             };
-            using var meter1 = new Meter(Utils.GetCurrentMethodName() + temporality + '1');
-            using var meter2 = new Meter(Utils.GetCurrentMethodName() + temporality + '2');
+            using var meter1 = new Meter(Utils.GetCurrentMethodName() + '1' + temporality);
+            using var meter2 = new Meter(Utils.GetCurrentMethodName() + '2' + temporality);
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter1.Name)
                 .AddMeter(meter2.Name)
