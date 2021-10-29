@@ -9,6 +9,9 @@
 * Added `BaseExporter.ForceFlush`.
   ([#2525](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2525))
 
+* Exposed public `Batch(T[] items, int count)` constructor on `Batch<T>` struct
+  ([#2542](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2542))
+
 ## 1.2.0-beta1
 
 Released 2021-Oct-08
