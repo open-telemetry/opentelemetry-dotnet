@@ -48,7 +48,7 @@ namespace Examples.Console
                 - targets: ['localhost:9184']
             */
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter("TestMeter")
+                .AddMeter(MyMeter.Name)
                 .AddPrometheusExporter(opt =>
                 {
                     opt.StartHttpListener = true;
