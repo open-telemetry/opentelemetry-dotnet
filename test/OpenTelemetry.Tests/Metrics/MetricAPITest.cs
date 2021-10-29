@@ -223,8 +223,8 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(false)]
         public void MeterSourcesWildcardSupportNegativeTestNoMeterAdded(bool hasView)
         {
-            using var meter1 = new Meter("AbcCompany.XyzProduct.ComponentA" + (hasView ? '1' : '0'));
-            using var meter2 = new Meter("abcCompany.xYzProduct.componentC" + (hasView ? '1' : '0'));
+            using var meter1 = new Meter("AbcCompany.XyzProduct.ComponentA" + hasView);
+            using var meter2 = new Meter("abcCompany.xYzProduct.componentC" + hasView);
 
             var exportedItems = new List<Metric>();
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -266,7 +266,7 @@ namespace OpenTelemetry.Metrics.Tests
                 PreferredAggregationTemporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
             };
 
-            using var meter = new Meter(Utils.GetCurrentMethodName() + (exportDelta ? '1' : '0'));
+            using var meter = new Meter(Utils.GetCurrentMethodName() + exportDelta);
             var counterLong = meter.CreateCounter<long>("mycounter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
@@ -341,7 +341,7 @@ namespace OpenTelemetry.Metrics.Tests
                 PreferredAggregationTemporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
             };
 
-            using var meter = new Meter(Utils.GetCurrentMethodName() + (exportDelta ? '1' : '0'));
+            using var meter = new Meter(Utils.GetCurrentMethodName() + exportDelta);
             int i = 1;
             var counterLong = meter.CreateObservableCounter(
             "observable-counter",

@@ -55,7 +55,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new KeyValuePair<string, object>("key2", "value2"),
             };
 
-            using var meter = new Meter(Utils.GetCurrentMethodName() + (includeServiceNameInResource ? '1' : '0'), "0.0.1");
+            using var meter = new Meter(Utils.GetCurrentMethodName() + includeServiceNameInResource, "0.0.1");
 
             var metricReader = new BaseExportingMetricReader(new TestExporter<Metric>(RunTest))
             {
