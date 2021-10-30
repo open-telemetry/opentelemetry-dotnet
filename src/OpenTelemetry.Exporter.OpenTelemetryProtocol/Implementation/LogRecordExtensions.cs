@@ -35,7 +35,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             OtlpResource.Resource processResource,
             in Batch<LogRecord> logRecordBatch)
         {
-            Dictionary<string, OtlpLogs.InstrumentationLibraryLogs> logRecordsByLibrary = new Dictionary<string, OtlpLogs.InstrumentationLibraryLogs>();
             OtlpLogs.ResourceLogs resourceLogs = new OtlpLogs.ResourceLogs
             {
                 Resource = processResource,
