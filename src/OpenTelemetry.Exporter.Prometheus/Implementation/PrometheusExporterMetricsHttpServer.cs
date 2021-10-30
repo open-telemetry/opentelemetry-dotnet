@@ -147,6 +147,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                         };
 
                         this.exporter.Collect(Timeout.Infinite);
+                        this.exporter.OnExport = null;
                     }
                     catch (Exception ex)
                     {
