@@ -103,6 +103,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 otlpLogRecord.Flags = (uint)logRecord.TraceFlags;
             }
 
+            if (logRecord.StateValues != null)
+            {
+                foreach (var stateValue in logRecord.StateValues)
+                {
+                    var attributeKey = stateValue.Key;
+                    var attributeValue = stateValue.Value?.ToString(); // TODO: Is ToString() correct here?
+
+                    // TODO: Needs validation of contract allowed into StateValues versus contract permitted for Attributes
+                    // TODO: Needs validation of (A) should this come after SemanticConventions and TraceId settings [allowing it to overwrite them], or (B) before [allowing them to overwrite this]
+                    otlpLogRecord.Attributes.AddAttribute(attributeKey, attributeValue); // TODO: What happens in Add() on duplicates?
+                }
+            }
+
             // TODO: Add additional attributes from scope and state
             // Might make sense to take an approach similar to https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/897b734aa5ea9992538f04f6ea6871fe211fa903/src/OpenTelemetry.Contrib.Preview/Internal/DefaultLogStateConverter.cs
 
