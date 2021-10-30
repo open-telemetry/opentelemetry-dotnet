@@ -58,7 +58,6 @@ namespace OpenTelemetry.Exporter.Prometheus
         public async Task InvokeAsync(HttpContext httpContext)
         {
             Debug.Assert(httpContext != null, "httpContext should not be null");
-            Debugger.Launch();
 
             var response = httpContext.Response;
 
@@ -70,10 +69,9 @@ namespace OpenTelemetry.Exporter.Prometheus
 
             this.exporter.OnExport = (metrics) =>
             {
-                Debugger.Launch();
                 try
                 {
-                    WriteMetricsToResponse(this.exporter, response).ConfigureAwait(false).GetAwaiter().GetResult();
+                    WriteMetricsToResponse(this.exporter, metrics, response).ConfigureAwait(false).GetAwaiter().GetResult();
                     return ExportResult.Success;
                 }
                 catch (Exception ex)
@@ -96,12 +94,12 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static async Task WriteMetricsToResponse(PrometheusExporter exporter, HttpResponse response)
+        internal static async Task WriteMetricsToResponse(PrometheusExporter exporter, Batch<Metric> metrics, HttpResponse response)
         {
             response.StatusCode = 200;
             response.ContentType = PrometheusMetricsFormatHelper.ContentType;
 
-            await exporter.WriteMetricsCollection(response.Body, exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
+            await exporter.WriteMetricsCollection(metrics, response.Body, exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
         }
     }
 }
