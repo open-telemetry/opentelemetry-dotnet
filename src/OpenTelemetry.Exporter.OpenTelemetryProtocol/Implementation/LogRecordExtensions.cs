@@ -80,14 +80,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             if (logRecord.EventId != 0)
             {
-                otlpLogRecord.Attributes.AddAttribute(nameof(logRecord.EventId), logRecord.EventId.ToString());
+                otlpLogRecord.Attributes.AddStringAttribute(nameof(logRecord.EventId), logRecord.EventId.ToString());
             }
 
             if (logRecord.Exception != null)
             {
-                otlpLogRecord.Attributes.AddAttribute(SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name);
-                otlpLogRecord.Attributes.AddAttribute(SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message);
-                otlpLogRecord.Attributes.AddAttribute(SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString());
+                otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name);
+                otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message);
+                otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString());
             }
 
             if (logRecord.TraceId != default && logRecord.SpanId != default)
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                     // TODO: Needs validation of contract allowed into StateValues versus contract permitted for Attributes
                     // TODO: Needs validation of (A) should this come after SemanticConventions and TraceId settings [allowing it to overwrite them], or (B) before [allowing them to overwrite this]
-                    otlpLogRecord.Attributes.AddAttribute(attributeKey, attributeValue); // TODO: What happens in Add() on duplicates?
+                    otlpLogRecord.Attributes.AddStringAttribute(attributeKey, attributeValue); // TODO: What happens in Add() on duplicates?
                 }
             }
 
@@ -122,7 +122,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             return otlpLogRecord;
         }
 
-        private static void AddAttribute(this RepeatedField<OtlpCommon.KeyValue> repeatedField, string key, string value)
+        private static void AddStringAttribute(this RepeatedField<OtlpCommon.KeyValue> repeatedField, string key, string value)
         {
             repeatedField.Add(new OtlpCommon.KeyValue
             {
