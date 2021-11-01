@@ -107,12 +107,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             {
                 foreach (var stateValue in logRecord.StateValues)
                 {
-                    var attributeKey = stateValue.Key;
-                    var attributeValue = stateValue.Value?.ToString(); // TODO: Is ToString() correct here?
-
                     // TODO: Needs validation of contract allowed into StateValues versus contract permitted for Attributes
                     // TODO: Needs validation of (A) should this come after SemanticConventions and TraceId settings [allowing it to overwrite them], or (B) before [allowing them to overwrite this]
-                    otlpLogRecord.Attributes.AddStringAttribute(attributeKey, attributeValue); // TODO: What happens in Add() on duplicates?
+                    var otlpAttribute = ActivityExtensions.ToOtlpAttribute(stateValue);
+                    otlpLogRecord.Attributes.Add(otlpAttribute); // TODO: What happens in Add() on duplicates?
                 }
             }
 
