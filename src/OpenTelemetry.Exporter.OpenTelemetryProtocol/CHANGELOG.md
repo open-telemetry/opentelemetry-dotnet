@@ -1,5 +1,8 @@
 # Changelog
 
+* Changed `OtlpLogExporter` to convert `ILogger` structured log inputs to `Attributes` in
+  OpenTelemetry (only active when `ParseStateValues` is `true` on `OpenTelemetryLoggerOptions`)
+
 ## Unreleased
 
 * Changed `OtlpExporterOptions` constructor to throw
