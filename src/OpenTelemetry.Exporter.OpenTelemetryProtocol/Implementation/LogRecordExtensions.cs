@@ -82,9 +82,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             {
                 foreach (var stateValue in logRecord.StateValues)
                 {
-                    // TODO: Needs validation of contract allowed into StateValues versus contract permitted for Attributes
                     var otlpAttribute = stateValue.ToOtlpAttribute();
-                    otlpLogRecord.Attributes.Add(otlpAttribute); // TODO: What happens in Add() on duplicates?
+                    otlpLogRecord.Attributes.Add(otlpAttribute);
                 }
             }
 
