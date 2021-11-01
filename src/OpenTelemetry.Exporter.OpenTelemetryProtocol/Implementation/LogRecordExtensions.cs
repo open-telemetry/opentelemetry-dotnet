@@ -78,6 +78,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = logRecord.FormattedMessage };
             }
 
+            if (logRecord.StateValues != null)
+            {
+                foreach (var stateValue in logRecord.StateValues)
+                {
+                    // TODO: Needs validation of contract allowed into StateValues versus contract permitted for Attributes
+                    var otlpAttribute = stateValue.ToOtlpAttribute();
+                    otlpLogRecord.Attributes.Add(otlpAttribute); // TODO: What happens in Add() on duplicates?
+                }
+            }
+
             if (logRecord.EventId != 0)
             {
                 otlpLogRecord.Attributes.AddStringAttribute(nameof(logRecord.EventId), logRecord.EventId.ToString());
@@ -101,17 +111,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 otlpLogRecord.TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes);
                 otlpLogRecord.SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes);
                 otlpLogRecord.Flags = (uint)logRecord.TraceFlags;
-            }
-
-            if (logRecord.StateValues != null)
-            {
-                foreach (var stateValue in logRecord.StateValues)
-                {
-                    // TODO: Needs validation of contract allowed into StateValues versus contract permitted for Attributes
-                    // TODO: Needs validation of (A) should this come after SemanticConventions and TraceId settings [allowing it to overwrite them], or (B) before [allowing them to overwrite this]
-                    var otlpAttribute = stateValue.ToOtlpAttribute();
-                    otlpLogRecord.Attributes.Add(otlpAttribute); // TODO: What happens in Add() on duplicates?
-                }
             }
 
             // TODO: Add additional attributes from scope and state
