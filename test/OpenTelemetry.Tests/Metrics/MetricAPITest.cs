@@ -599,6 +599,51 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.True(difference <= 0.0001);
         }
 
+        [Theory]
+        [MemberData(nameof(MetricsTestData.InvalidInstrumentNames), MemberType = typeof(MetricsTestData))]
+        public void InstrumentWithInvalidNameIsIgnoredTest(string instrumentName)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter("InstrumentWithInvalidNameIsIgnoredTest");
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var counterLong = meter.CreateCounter<long>(instrumentName);
+            counterLong.Add(10);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            // instrument should have been ignored
+            // as its name does not comply with the specification
+            Assert.Empty(exportedItems);
+        }
+
+        [Theory]
+        [MemberData(nameof(MetricsTestData.ValidInstrumentNames), MemberType = typeof(MetricsTestData))]
+        public void InstrumentWithValidNameIsExportedTest(string name)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter("InstrumentValidNameIsExportedTest");
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var counterLong = meter.CreateCounter<long>(name);
+            counterLong.Add(10);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            // Expecting one metric stream.
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal(name, metric.Name);
+        }
+
         private static long GetLongSum(List<Metric> metrics)
         {
             long sum = 0;
