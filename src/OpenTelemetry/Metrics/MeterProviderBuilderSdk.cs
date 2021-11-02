@@ -14,10 +14,48 @@
 // limitations under the License.
 // </copyright>
 
+using System.Text.RegularExpressions;
+
 namespace OpenTelemetry.Metrics
 {
     internal class MeterProviderBuilderSdk : MeterProviderBuilderBase
     {
+        private static readonly Regex InstrumentNameRegex = new Regex(
+            @"^[a-zA-Z][-.\w]{0,62}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        /// <summary>
+        /// Returns whether the given instrument name is valid according to the specification.
+        /// </summary>
+        /// <remarks>See specification: <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument"/>.</remarks>
+        /// <param name="instrumentName">The instrument name.</param>
+        /// <returns>Boolean indicating if the instrument is valid.</returns>
+        internal static bool IsValidInstrumentName(string instrumentName)
+        {
+            if (string.IsNullOrWhiteSpace(instrumentName))
+            {
+                return false;
+            }
+
+            return InstrumentNameRegex.IsMatch(instrumentName);
+        }
+
+        /// <summary>
+        /// Returns whether the given custom view name is valid according to the specification.
+        /// </summary>
+        /// <remarks>See specification: <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument"/>.</remarks>
+        /// <param name="customViewName">The view name.</param>
+        /// <returns>Boolean indicating if the instrument is valid.</returns>
+        internal static bool IsValidViewName(string customViewName)
+        {
+            // Only validate the view name in case it's not null. In case it's null, the view name will be the instrument name as per the spec.
+            if (customViewName == null)
+            {
+                return true;
+            }
+
+            return InstrumentNameRegex.IsMatch(customViewName);
+        }
+
         internal MeterProvider BuildSdk() => this.Build();
     }
 }

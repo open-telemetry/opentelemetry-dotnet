@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
@@ -35,7 +34,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             OtlpResource.Resource processResource,
             in Batch<LogRecord> logRecordBatch)
         {
-            Dictionary<string, OtlpLogs.InstrumentationLibraryLogs> logRecordsByLibrary = new Dictionary<string, OtlpLogs.InstrumentationLibraryLogs>();
             OtlpLogs.ResourceLogs resourceLogs = new OtlpLogs.ResourceLogs
             {
                 Resource = processResource,
