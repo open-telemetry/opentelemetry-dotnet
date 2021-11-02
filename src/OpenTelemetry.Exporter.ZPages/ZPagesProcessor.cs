@@ -41,7 +41,7 @@ namespace OpenTelemetry.Exporter.ZPages
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public override void OnStart(Activity activity)
         {
-            Debug.Assert(activity != null, $"{nameof(activity)} must not be null");
+            Debug.Assert(activity != null);
 
             if (!ZPagesActivityTracker.ProcessingList.ContainsKey(activity.DisplayName))
             {
@@ -66,7 +66,7 @@ namespace OpenTelemetry.Exporter.ZPages
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public override void OnEnd(Activity activity)
         {
-            Debug.Assert(activity != null, $"{nameof(activity)} must not be null");
+            Debug.Assert(activity != null);
             try
             {
                 // If the span name is not in the current minute list, add it to the span list.

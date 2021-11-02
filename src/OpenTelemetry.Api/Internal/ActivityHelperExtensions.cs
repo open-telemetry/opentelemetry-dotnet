@@ -40,7 +40,7 @@ namespace OpenTelemetry.Trace
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public static bool TryGetStatus(this Activity activity, out StatusCode statusCode, out string statusDescription)
         {
-            Debug.Assert(activity != null, $"{nameof(activity)} must not be null");
+            Debug.Assert(activity != null);
 
             ActivityStatusTagEnumerator state = default;
 
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Trace
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
         public static object GetTagValue(this Activity activity, string tagName)
         {
-            Debug.Assert(activity != null, $"{nameof(activity)} must not be null");
+            Debug.Assert(activity != null);
 
             ActivitySingleTagEnumerator state = new ActivitySingleTagEnumerator(tagName);
 
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryCheckFirstTag(this Activity activity, string tagName, out object tagValue)
         {
-            Debug.Assert(activity != null, $"{nameof(activity)} must not be null");
+            Debug.Assert(activity != null);
 
             ActivityFirstTagEnumerator state = new ActivityFirstTagEnumerator(tagName);
 
@@ -114,7 +114,7 @@ namespace OpenTelemetry.Trace
         public static void EnumerateTags<T>(this Activity activity, ref T tagEnumerator)
             where T : struct, IActivityEnumerator<KeyValuePair<string, object>>
         {
-            Debug.Assert(activity != null, $"{nameof(activity)} must not be null");
+            Debug.Assert(activity != null);
 
             ActivityTagsEnumeratorFactory<T>.Enumerate(activity, ref tagEnumerator);
         }
@@ -130,7 +130,7 @@ namespace OpenTelemetry.Trace
         public static void EnumerateLinks<T>(this Activity activity, ref T linkEnumerator)
             where T : struct, IActivityEnumerator<ActivityLink>
         {
-            Debug.Assert(activity != null, $"{nameof(activity)} must not be null");
+            Debug.Assert(activity != null);
 
             ActivityLinksEnumeratorFactory<T>.Enumerate(activity, ref linkEnumerator);
         }
@@ -160,7 +160,7 @@ namespace OpenTelemetry.Trace
         public static void EnumerateEvents<T>(this Activity activity, ref T eventEnumerator)
             where T : struct, IActivityEnumerator<ActivityEvent>
         {
-            Debug.Assert(activity != null, $"{nameof(activity)} must not be null");
+            Debug.Assert(activity != null);
 
             ActivityEventsEnumeratorFactory<T>.Enumerate(activity, ref eventEnumerator);
         }

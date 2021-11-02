@@ -287,7 +287,7 @@ namespace OpenTelemetry.Trace
 
         internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
         {
-            Debug.Assert(processor != null, $"{nameof(processor)} must not be null");
+            Debug.Assert(processor != null);
 
             processor.SetParentProvider(this);
 

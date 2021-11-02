@@ -156,7 +156,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder AddProcessor(BaseProcessor<Activity> processor)
         {
-            Debug.Assert(processor != null, $"{nameof(processor)} must not be null");
+            Debug.Assert(processor != null);
 
             this.processors.Add(processor);
 

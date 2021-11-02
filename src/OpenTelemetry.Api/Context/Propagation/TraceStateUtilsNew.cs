@@ -40,7 +40,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <returns>True if string was parsed successfully and tracestate was recognized, false otherwise.</returns>
         internal static bool AppendTraceState(string traceStateString, List<KeyValuePair<string, string>> tracestate)
         {
-            Debug.Assert(tracestate != null, $"{nameof(tracestate)} must not be null");
+            Debug.Assert(tracestate != null);
 
             if (string.IsNullOrEmpty(traceStateString))
             {

@@ -97,7 +97,7 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
         {
-            Debug.Assert(processor != null, $"{nameof(processor)} must not be null");
+            Debug.Assert(processor != null);
 
             processor.SetParentProvider(this);
 

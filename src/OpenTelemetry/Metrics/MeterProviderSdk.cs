@@ -284,7 +284,7 @@ namespace OpenTelemetry.Metrics
 
         internal void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
-            Debug.Assert(instrument != null, $"{nameof(instrument)} must not be null");
+            Debug.Assert(instrument != null);
 
             // Get Instrument State
             var metrics = state as List<Metric>;
@@ -313,7 +313,7 @@ namespace OpenTelemetry.Metrics
 
         internal void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
-            Debug.Assert(instrument != null, $"{nameof(instrument)} must not be null");
+            Debug.Assert(instrument != null);
 
             // Get Instrument State
             var metrics = state as List<Metric>;
@@ -342,7 +342,7 @@ namespace OpenTelemetry.Metrics
 
         internal void MeasurementRecordedLongSingleStream(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
-            Debug.Assert(instrument != null, $"{nameof(instrument)} must not be null");
+            Debug.Assert(instrument != null);
 
             // Get Instrument State
             var metric = state as Metric;
@@ -358,7 +358,7 @@ namespace OpenTelemetry.Metrics
 
         internal void MeasurementRecordedDoubleSingleStream(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
-            Debug.Assert(instrument != null, $"{nameof(instrument)} must not be null");
+            Debug.Assert(instrument != null);
 
             // Get Instrument State
             var metric = state as Metric;
