@@ -57,8 +57,8 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewToRenameMetricConditionally()
         {
-            using var meter1 = new Meter(Utils.GetCurrentMethodName() + '1');
-            using var meter2 = new Meter(Utils.GetCurrentMethodName() + '2');
+            using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.1");
+            using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.2");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter1.Name)

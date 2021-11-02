@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         [InlineData(nameof(WriteMultiple))]
         public void WriteMetricsCollectionTest(string writeActionMethodName)
         {
-            using var meter = new Meter(Utils.GetCurrentMethodName() + writeActionMethodName);
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{writeActionMethodName}");
 
             MethodInfo writeAction = typeof(PrometheusExporterExtensionsTests).GetMethod(writeActionMethodName, BindingFlags.NonPublic | BindingFlags.Static);
             if (writeAction == null)
