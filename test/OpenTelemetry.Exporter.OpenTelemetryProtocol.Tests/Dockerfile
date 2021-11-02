@@ -3,7 +3,7 @@
 # docker build --file test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/Dockerfile
 
 ARG SDK_VERSION=6.0
-FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0-focal AS build
 ARG PUBLISH_CONFIGURATION=Release
 ARG PUBLISH_FRAMEWORK=net6.0
 WORKDIR /repo
