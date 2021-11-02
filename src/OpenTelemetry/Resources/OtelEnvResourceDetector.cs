@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Collections.Generic;
-using System.Security;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources
@@ -30,17 +29,10 @@ namespace OpenTelemetry.Resources
         {
             var resource = Resource.Empty;
 
-            try
+            if (EnvironmentVariableHelper.LoadString(EnvVarKey, out string envResourceAttributeValue))
             {
-                if (EnvironmentVariableHelper.LoadString(EnvVarKey, out string envResourceAttributeValue))
-                {
-                    var attributes = ParseResourceAttributes(envResourceAttributeValue);
-                    resource = new Resource(attributes);
-                }
-            }
-            catch (SecurityException ex)
-            {
-                OpenTelemetrySdkEventSource.Log.ResourceDetectorFailed(nameof(OtelEnvResourceDetector), ex.Message);
+                var attributes = ParseResourceAttributes(envResourceAttributeValue);
+                resource = new Resource(attributes);
             }
 
             return resource;

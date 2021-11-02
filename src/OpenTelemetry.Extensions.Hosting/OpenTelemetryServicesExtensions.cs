@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Extensions.Hosting.Implementation;
@@ -72,10 +73,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetryMetrics(this IServiceCollection services, Action<MeterProviderBuilder> configure)
         {
-            if (configure is null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
+            Guard.Null(configure, nameof(configure));
 
             var builder = new MeterProviderBuilderHosting(services);
             configure(builder);
@@ -114,15 +112,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         private static IServiceCollection AddOpenTelemetryMetrics(this IServiceCollection services, Func<IServiceProvider, MeterProvider> createMeterProvider)
         {
-            if (services is null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            if (createMeterProvider is null)
-            {
-                throw new ArgumentNullException(nameof(createMeterProvider));
-            }
+            Debug.Assert(services != null, $"{nameof(services)} must not be null");
+            Debug.Assert(createMeterProvider != null, $"{nameof(createMeterProvider)} must not be null");
 
             try
             {

@@ -34,7 +34,7 @@ namespace OpenTelemetry.Metrics
         private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs;
         private readonly object collectLock = new object();
         private readonly object instrumentCreationLock = new object();
-        private readonly Dictionary<string, bool> metricStreamNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> metricStreamNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly MeterListener listener;
         private readonly MetricReader reader;
         private int metricIndex = -1;
@@ -164,7 +164,7 @@ namespace OpenTelemetry.Metrics
                                 continue;
                             }
 
-                            if (this.metricStreamNames.ContainsKey(metricStreamName))
+                            if (this.metricStreamNames.Contains(metricStreamName))
                             {
                                 // TODO: Log that instrument is ignored
                                 // as the resulting Metric name is conflicting
@@ -197,7 +197,7 @@ namespace OpenTelemetry.Metrics
 
                                 this.metrics[index] = metric;
                                 metrics.Add(metric);
-                                this.metricStreamNames.Add(metricStreamName, true);
+                                this.metricStreamNames.Add(metricStreamName);
                             }
                         }
 
@@ -245,7 +245,7 @@ namespace OpenTelemetry.Metrics
                         Metric metric = null;
                         lock (this.instrumentCreationLock)
                         {
-                            if (this.metricStreamNames.ContainsKey(metricName))
+                            if (this.metricStreamNames.Contains(metricName))
                             {
                                 OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Metric name conflicting with existing name.", "Either change the name of the instrument or change name using View.");
                                 return;
@@ -261,7 +261,7 @@ namespace OpenTelemetry.Metrics
                             {
                                 metric = new Metric(instrument, temporality, metricName, instrument.Description);
                                 this.metrics[index] = metric;
-                                this.metricStreamNames.Add(metricName, true);
+                                this.metricStreamNames.Add(metricName);
                             }
                         }
 

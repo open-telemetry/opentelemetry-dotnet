@@ -16,8 +16,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text.RegularExpressions;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -41,10 +43,7 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc />
         public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
         {
-            if (instrumentationFactory == null)
-            {
-                throw new ArgumentNullException(nameof(instrumentationFactory));
-            }
+            Guard.Null(instrumentationFactory, nameof(instrumentationFactory));
 
             this.instrumentationFactories.Add(
                 new InstrumentationFactory(
@@ -58,17 +57,11 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc />
         public override MeterProviderBuilder AddMeter(params string[] names)
         {
-            if (names == null)
-            {
-                throw new ArgumentNullException(nameof(names));
-            }
+            Guard.Null(names, nameof(names));
 
             foreach (var name in names)
             {
-                if (string.IsNullOrWhiteSpace(name))
-                {
-                    throw new ArgumentException($"{nameof(names)} contains null or whitespace string.");
-                }
+                Guard.NullOrWhitespace(name, nameof(name));
 
                 this.meterSources.Add(name);
             }
@@ -114,7 +107,9 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
-            this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
+            Debug.Assert(resourceBuilder != null, $"{nameof(resourceBuilder)} must not be null");
+
+            this.resourceBuilder = resourceBuilder;
             return this;
         }
 
