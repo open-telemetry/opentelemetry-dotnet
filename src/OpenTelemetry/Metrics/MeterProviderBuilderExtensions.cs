@@ -78,7 +78,7 @@ namespace OpenTelemetry.Metrics
         {
             if (metricStreamConfiguration == null)
             {
-                throw new ArgumentNullException($"Metric stream configuration cannot be null.", nameof(metricStreamConfiguration.Name));
+                throw new ArgumentNullException($"Metric stream configuration cannot be null.", nameof(metricStreamConfiguration));
             }
 
             if (!MeterProviderBuilderSdk.IsValidViewName(metricStreamConfiguration.Name))
