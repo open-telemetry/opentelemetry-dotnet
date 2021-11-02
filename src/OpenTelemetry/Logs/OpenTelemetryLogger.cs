@@ -29,8 +29,8 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLogger(string categoryName, OpenTelemetryLoggerProvider provider)
         {
-            Debug.Assert(categoryName != null, $"{nameof(categoryName)} must not be null");
-            Debug.Assert(provider != null, $"{nameof(provider)} must not be null");
+            Debug.Assert(categoryName != null);
+            Debug.Assert(provider != null);
 
             this.categoryName = categoryName;
             this.provider = provider;

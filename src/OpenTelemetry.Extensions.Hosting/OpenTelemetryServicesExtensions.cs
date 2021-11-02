@@ -93,8 +93,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         private static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Func<IServiceProvider, TracerProvider> createTracerProvider)
         {
-            Debug.Assert(services != null, $"{nameof(services)} must not be null");
-            Debug.Assert(createTracerProvider != null, $"{nameof(createTracerProvider)} must not be null");
+            Debug.Assert(services != null);
+            Debug.Assert(createTracerProvider != null);
 
             try
             {

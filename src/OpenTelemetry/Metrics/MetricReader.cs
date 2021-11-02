@@ -264,8 +264,8 @@ namespace OpenTelemetry.Metrics
 
         private static void ValidateAggregationTemporality(AggregationTemporality preferred, AggregationTemporality supported)
         {
-            Debug.Assert((int)(preferred & CumulativeAndDelta) != 0, $"PreferredAggregationTemporality has an invalid value {preferred}");
-            Debug.Assert((int)(supported & CumulativeAndDelta) != 0, $"SupportedAggregationTemporality has an invalid value {supported}");
+            Debug.Assert((int)(preferred & CumulativeAndDelta) != 0);
+            Debug.Assert((int)(supported & CumulativeAndDelta) != 0);
             /*
             | Preferred  | Supported  | Valid |
             | ---------- | ---------- | ----- |
@@ -279,7 +279,7 @@ namespace OpenTelemetry.Metrics
             | Delta      | Cumulative | false |
             | Delta      | Delta      | true  |
             */
-            Debug.Assert((int)(preferred & supported) != 0 && preferred <= supported, $"PreferredAggregationTemporality {preferred} and SupportedAggregationTemporality {supported} are incompatible");
+            Debug.Assert((int)(preferred & supported) != 0 && preferred <= supported);
         }
     }
 }

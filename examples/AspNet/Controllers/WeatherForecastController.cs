@@ -199,7 +199,7 @@ namespace Examples.AspNet.Controllers
 
             using var response = await request.GetAsync(this.Url.Content("~/subroute/-1")).ConfigureAwait(false);
 
-            Debug.Assert(response.StatusCode == HttpStatusCode.InternalServerError, $"{nameof(response)}.{nameof(response.StatusCode)} must be {nameof(HttpStatusCode.InternalServerError)}");
+            Debug.Assert(response.StatusCode == HttpStatusCode.InternalServerError);
         }
 
         // Test successful dependency collection via HttpClient.

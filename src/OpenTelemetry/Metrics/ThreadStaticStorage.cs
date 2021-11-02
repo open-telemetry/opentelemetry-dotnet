@@ -52,7 +52,7 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, int tagLength, out string[] tagKeys, out object[] tagValues)
         {
-            Debug.Assert(tagLength > 0, $"There must be at least one tag to use {nameof(ThreadStaticStorage)}");
+            Debug.Assert(tagLength > 0);
 
             if (tagLength <= MaxTagCacheSize)
             {

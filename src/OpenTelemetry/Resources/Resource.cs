@@ -109,7 +109,7 @@ namespace OpenTelemetry.Resources
 
         private static object SanitizeValue(object value, string keyName)
         {
-            Debug.Assert(keyName != null, $"{nameof(keyName)} must not be null");
+            Debug.Assert(keyName != null);
 
             if (value is string || value is bool || value is double || value is long)
             {

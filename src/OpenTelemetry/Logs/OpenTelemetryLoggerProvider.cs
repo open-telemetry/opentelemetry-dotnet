@@ -46,7 +46,7 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options)
         {
-            Debug.Assert(options != null, $"{nameof(options)} must not be null");
+            Debug.Assert(options != null);
 
             this.Options = options;
             this.Resource = options.ResourceBuilder.Build();

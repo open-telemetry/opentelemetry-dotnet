@@ -447,7 +447,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
         private void EnableListener(Action<Activity> onStarted = null, Action<Activity> onStopped = null, Func<ActivityContext, ActivitySamplingResult> onSample = null)
         {
-            Debug.Assert(this.activitySourceListener == null, "Cannot attach multiple listeners in tests");
+            Debug.Assert(this.activitySourceListener == null);
 
             this.activitySourceListener = new ActivityListener
             {
