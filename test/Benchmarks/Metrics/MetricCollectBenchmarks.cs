@@ -57,6 +57,9 @@ namespace Benchmarks.Metrics
         [Params(false, true)]
         public bool UseWithRef { get; set; }
 
+        [Params(AggregationTemporality.Cumulative, AggregationTemporality.Delta)]
+        public AggregationTemporality AggregationTemporatlity { get; set; }
+
         [GlobalSetup]
         public void Setup()
         {
@@ -88,7 +91,7 @@ namespace Benchmarks.Metrics
 
             this.reader = new BaseExportingMetricReader(metricExporter)
             {
-                PreferredAggregationTemporality = AggregationTemporality.Cumulative,
+                PreferredAggregationTemporality = this.AggregationTemporatlity,
             };
             this.provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter("TestMeter")
