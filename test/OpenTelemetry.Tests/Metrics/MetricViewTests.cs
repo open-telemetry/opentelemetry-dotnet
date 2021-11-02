@@ -53,12 +53,76 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("renamed", metric.Name);
         }
 
+        [Theory]
+        [MemberData(nameof(MetricsTestData.InvalidInstrumentNames), MemberType = typeof(MetricsTestData))]
+        public void AddViewWithInvalidNameThrowsArgumentException(string viewNewName)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter1 = new Meter("AddViewWithInvalidNameThrowsArgumentException");
+
+            var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter1.Name)
+                .AddView("name1", viewNewName)
+                .AddInMemoryExporter(exportedItems)
+                .Build());
+
+            Assert.Contains($"Custom view name {viewNewName} is invalid.", ex.Message);
+
+            ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter1.Name)
+                .AddView("name1", new MetricStreamConfiguration { Name = viewNewName })
+                .AddInMemoryExporter(exportedItems)
+                .Build());
+
+            Assert.Contains($"Custom view name {viewNewName} is invalid.", ex.Message);
+        }
+
+        [Fact]
+        public void AddViewWithNullMetricStreamConfigurationThrowsArgumentnullException()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter1 = new Meter("AddViewWithInvalidNameThrowsArgumentException");
+
+            Assert.Throws<ArgumentNullException>(() => Sdk.CreateMeterProviderBuilder()
+               .AddMeter(meter1.Name)
+               .AddView("name1", (MetricStreamConfiguration)null)
+               .AddInMemoryExporter(exportedItems)
+               .Build());
+        }
+
+        [Theory]
+        [MemberData(nameof(MetricsTestData.ValidInstrumentNames), MemberType = typeof(MetricsTestData))]
+        public void ViewWithValidNameExported(string viewNewName)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter1 = new Meter("ViewWithInvalidNameIgnoredTest");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter1.Name)
+                .AddView("name1", viewNewName)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var counterLong = meter1.CreateCounter<long>("name1");
+            counterLong.Add(10);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            // Expecting one metric stream.
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal(viewNewName, metric.Name);
+        }
+
         [Fact]
         public void ViewToRenameMetricConditionally()
         {
             using var meter1 = new Meter("ViewToRenameMetricConditionallyTest");
             using var meter2 = new Meter("ViewToRenameMetricConditionallyTest2");
+
             var exportedItems = new List<Metric>();
+
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter1.Name)
                 .AddMeter(meter2.Name)
@@ -91,6 +155,116 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("name1_Renamed", exportedItems[1].Name);
             Assert.Equal("original_description", exportedItems[0].Description);
             Assert.Equal("new description", exportedItems[1].Description);
+        }
+
+        [Theory]
+        [MemberData(nameof(MetricsTestData.InvalidInstrumentNames), MemberType = typeof(MetricsTestData))]
+        public void ViewWithInvalidNameIgnoredConditionally(string viewNewName)
+        {
+            using var meter1 = new Meter("ViewToRenameMetricConditionallyTest");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter1.Name)
+
+                // since here it's a func, we can't validate the name right away
+                // so the view is allowed to be added, but upon instrument creation it's going to be ignored.
+                .AddView((instrument) =>
+                {
+                    if (instrument.Meter.Name.Equals(meter1.Name, StringComparison.OrdinalIgnoreCase)
+                        && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // invalid instrument name as per the spec
+                        return new MetricStreamConfiguration() { Name = viewNewName, Description = "new description" };
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                })
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            // We should expect 1 metric here,
+            // but because the MetricStreamName passed is invalid, the instrument is ignored
+            var counter1 = meter1.CreateCounter<long>("name1", "unit", "original_description");
+            counter1.Add(10);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.Empty(exportedItems);
+        }
+
+        [Theory]
+        [MemberData(nameof(MetricsTestData.ValidInstrumentNames), MemberType = typeof(MetricsTestData))]
+        public void ViewWithValidNameConditionally(string viewNewName)
+        {
+            using var meter1 = new Meter("ViewToRenameMetricConditionallyTest");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter1.Name)
+                .AddView((instrument) =>
+                {
+                    if (instrument.Meter.Name.Equals(meter1.Name, StringComparison.OrdinalIgnoreCase)
+                        && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // invalid instrument name as per the spec
+                        return new MetricStreamConfiguration() { Name = viewNewName, Description = "new description" };
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                })
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            // Expecting one metric stream.
+            var counter1 = meter1.CreateCounter<long>("name1", "unit", "original_description");
+            counter1.Add(10);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            // Expecting one metric stream.
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal(viewNewName, metric.Name);
+        }
+
+        [Fact]
+        public void ViewWithNullCustomNameTakesInstrumentName()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter("ViewToRenameMetricConditionallyTest");
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView((instrument) =>
+                {
+                    if (instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // null View name
+                        return new MetricStreamConfiguration() { };
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                })
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            // Expecting one metric stream.
+            // Since the View name was null, the instrument name was used instead
+            var counter1 = meter.CreateCounter<long>("name1", "unit", "original_description");
+            counter1.Add(10);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            // Expecting one metric stream.
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal(counter1.Name, metric.Name);
         }
 
         [Fact]
