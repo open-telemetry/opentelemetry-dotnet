@@ -222,6 +222,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prom
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs", "src\OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs\OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs.csproj", "{6E1A5FA3-E024-4972-9EDC-11E36C5A0D6F}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore.6.0", "test\TestApp.AspNetCore.6.0\TestApp.AspNetCore.6.0.csproj", "{0076C657-564F-4787-9FFF-52D9D55166E8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -460,6 +462,10 @@ Global
 		{6E1A5FA3-E024-4972-9EDC-11E36C5A0D6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6E1A5FA3-E024-4972-9EDC-11E36C5A0D6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6E1A5FA3-E024-4972-9EDC-11E36C5A0D6F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0076C657-564F-4787-9FFF-52D9D55166E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0076C657-564F-4787-9FFF-52D9D55166E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0076C657-564F-4787-9FFF-52D9D55166E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0076C657-564F-4787-9FFF-52D9D55166E8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -494,6 +500,7 @@ Global
 		{EA60B549-F712-4ABE-8E44-FCA83B78C06E} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
 		{1F9D7748-D099-4E25-97F5-9C969D6FF969} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
 		{81234AFA-B4E7-4D0D-AB97-FD559C78EDA2} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
+		{0076C657-564F-4787-9FFF-52D9D55166E8} = {77C7929A-2EED-4AA6-8705-B5C443C8AA0F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}
