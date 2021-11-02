@@ -126,18 +126,20 @@ namespace OpenTelemetry.Metrics
                 }
                 else
                 {
-                    this.metricPointLocks[i].EnterWriteLock();
-
                     switch (metricPoint.MetricPointStatus)
                     {
                         case MetricPointStatus.CollectPending:
+                            this.metricPointLocks[i].EnterWriteLock();
                             metricPoint.TakeSnapShot(this.outputDelta);
                             metricPoint.MetricPointStatus = MetricPointStatus.NoPendingUpdate;
+                            this.metricPointLocks[i].ExitWriteLock();
                             this.currentMetricPointBatch[this.batchSize] = i;
                             this.batchSize++;
                             break;
                         case MetricPointStatus.NoPendingUpdate:
+                            this.metricPointLocks[i].EnterWriteLock();
                             metricPoint.MetricPointStatus = MetricPointStatus.CandidateForRemoval;
+                            this.metricPointLocks[i].ExitWriteLock();
                             break;
                         case MetricPointStatus.CandidateForRemoval:
                         case MetricPointStatus.Unset:
@@ -145,8 +147,6 @@ namespace OpenTelemetry.Metrics
                         default:
                             break;
                     }
-
-                    this.metricPointLocks[i].ExitWriteLock();
                 }
             }
 
