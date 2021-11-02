@@ -140,17 +140,6 @@ namespace OpenTelemetry.Metrics
                             metricPoint.MetricPointStatus = MetricPointStatus.CandidateForRemoval;
                             break;
                         case MetricPointStatus.CandidateForRemoval:
-                            metricPoint.MetricPointStatus = MetricPointStatus.Unset;
-
-                            // MetricPoint at index 0 is reserved for the MetricPoint with no tags.
-                            if (i > 0)
-                            {
-                                var t = this.keyValue2MetricAggs[metricPoint.Keys];
-                                t.TryRemove(metricPoint.Values, out var _);
-                                this.metricPointFreeList.Push(i);
-                            }
-
-                            break;
                         case MetricPointStatus.Unset:
                         case MetricPointStatus.UpdatePending:
                         default:
@@ -227,8 +216,18 @@ namespace OpenTelemetry.Metrics
                     {
                         if (!this.metricPointFreeList.TryPop(out aggregatorIndex))
                         {
-                            // sorry! out of data points.
-                            return -1;
+                            if (this.temporality == AggregationTemporality.Cumulative)
+                            {
+                                // sorry! out of data points.
+                                return -1;
+                            }
+
+                            this.FreeUnusedMetrics();
+                            if (!this.metricPointFreeList.TryPop(out aggregatorIndex))
+                            {
+                                // sorry! out of data points.
+                                return -1;
+                            }
                         }
 
                         // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
@@ -254,6 +253,28 @@ namespace OpenTelemetry.Metrics
             }
 
             return aggregatorIndex;
+        }
+
+        private void FreeUnusedMetrics()
+        {
+            for (int i = 1; i < MaxMetricPoints; i++)
+            {
+                ref var metricPoint = ref this.metricPoints[i];
+                if (metricPoint.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
+                {
+                    this.metricPointLocks[i].EnterWriteLock();
+
+                    if (metricPoint.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
+                    {
+                        metricPoint.MetricPointStatus = MetricPointStatus.Unset;
+                        var t = this.keyValue2MetricAggs[metricPoint.Keys];
+                        t.TryRemove(metricPoint.Values, out var _);
+                        this.metricPointFreeList.Push(i);
+                    }
+
+                    this.metricPointLocks[i].ExitWriteLock();
+                }
+            }
         }
 
         private void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
