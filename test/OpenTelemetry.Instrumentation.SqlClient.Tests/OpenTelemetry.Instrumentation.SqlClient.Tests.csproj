@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry SqlClient instrumentations</Description>
-    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == ''">netcoreapp3.1;net5.0</TargetFrameworks>
+    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == ''">netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == '' and $(OS) == 'Windows_NT'">$(TargetFrameworks);net461</TargetFrameworks>
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) != ''">$(TARGET_FRAMEWORK)</TargetFrameworks>
   </PropertyGroup>
