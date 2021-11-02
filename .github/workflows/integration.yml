@@ -19,6 +19,20 @@ jobs:
         version: [netcoreapp3.1,net5.0,net6.0]
     steps:
       - uses: actions/checkout@v2
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '3.1.x'
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '5.0.x'
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
+          include-prerelease: true
+
       - name: Run redis docker-compose.integration
         run: docker-compose --file=test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 
@@ -30,6 +44,20 @@ jobs:
         version: [netcoreapp3.1,net5.0,net6.0]
     steps:
       - uses: actions/checkout@v2
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '3.1.x'
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '5.0.x'
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
+          include-prerelease: true
+
       - name: Run sql docker-compose.integration
         run: docker-compose --file=test/OpenTelemetry.Instrumentation.SqlClient.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 
@@ -41,6 +69,20 @@ jobs:
         version: [netcoreapp3.1,net5.0,net6.0]
     steps:
       - uses: actions/checkout@v2
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '3.1.x'
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '5.0.x'
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
+          include-prerelease: true
+
       - name: Run W3C Trace Context docker-compose.integration
         run: docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 
@@ -52,5 +94,19 @@ jobs:
         version: [netcoreapp3.1,net5.0,net6.0]
     steps:
       - uses: actions/checkout@v2
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '3.1.x'
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '5.0.x'
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
+          include-prerelease: true
+
       - name: Run OTLP Exporter docker-compose.integration
         run: docker-compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
