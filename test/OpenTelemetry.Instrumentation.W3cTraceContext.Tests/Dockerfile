@@ -2,7 +2,7 @@
 # This should be run from the root of the repo:
 # docker build --file test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/Dockerfile .
 
-ARG SDK_VERSION=5.0
+ARG SDK_VERSION=6.0
 FROM ubuntu AS w3c
 #Install git
 WORKDIR /w3c
@@ -11,7 +11,7 @@ RUN git clone https://github.com/w3c/trace-context.git
 
 FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS build
 ARG PUBLISH_CONFIGURATION=Release
-ARG PUBLISH_FRAMEWORK=net5.0
+ARG PUBLISH_FRAMEWORK=net6.0
 WORKDIR /repo
 COPY . ./
 WORKDIR "/repo/test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests"

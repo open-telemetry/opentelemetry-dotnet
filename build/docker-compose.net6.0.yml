@@ -5,4 +5,4 @@ services:
     build:
       args:
         PUBLISH_FRAMEWORK: net6.0
-        SDK_VERSION: 6.0.100-rc.2.21505.57
+        SDK_VERSION: 6.0
