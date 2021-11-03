@@ -22,9 +22,11 @@ using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Trace;
 #if NETCOREAPP3_1
 using TestApp.AspNetCore._3._1;
-#elif NET5_0
+#endif
+#if NET5_0
 using TestApp.AspNetCore._5._0;
-#else
+#endif
+#if NET6_0
 using TestApp.AspNetCore._6._0;
 #endif
 using Xunit.Abstractions;
