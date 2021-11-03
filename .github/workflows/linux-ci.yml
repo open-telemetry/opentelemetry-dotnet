@@ -18,8 +18,8 @@ jobs:
       matrix:
         version: [netcoreapp3.1,net5.0,net6.0]
 
-    # steps:
-    # - uses: actions/checkout@v2
+    steps:
+    - uses: actions/checkout@v2
 
     # - uses: actions/setup-dotnet@v1
     #   with:
