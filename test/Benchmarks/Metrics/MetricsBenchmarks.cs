@@ -14,11 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+extern alias InMemory;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using BenchmarkDotNet.Attributes;
+using InMemory::OpenTelemetry.Exporter;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
@@ -67,16 +70,24 @@ namespace Benchmarks.Metrics
         private Random random = new Random();
         private string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
 
-        [Params(false, true)]
+        [Params(true)]
         public bool WithSDK { get; set; }
+
+        [Params(AggregationTemporality.Cumulative, AggregationTemporality.Delta)]
+        public AggregationTemporality AggregationTemporality { get; set; }
 
         [GlobalSetup]
         public void Setup()
         {
             if (this.WithSDK)
             {
+                var exportedItems = new List<Metric>();
+                var reader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems));
+                reader.PreferredAggregationTemporality = this.AggregationTemporality;
+
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter("TestMeter") // All instruments from this meter are enabled.
+                    .AddReader(reader)
                     .Build();
             }
 
