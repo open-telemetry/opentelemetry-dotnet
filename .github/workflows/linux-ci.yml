@@ -36,4 +36,6 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: Test ${{ matrix.version }}
+      env:
+        DOTNET_MULTILEVEL_LOOKUP: 1
       run: dotnet test **/bin/**/${{ matrix.version }}/*.Tests.dll --configuration Release --no-build --logger:"console;verbosity=detailed"
