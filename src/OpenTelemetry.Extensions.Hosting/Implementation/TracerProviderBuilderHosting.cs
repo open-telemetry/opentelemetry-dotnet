@@ -47,10 +47,7 @@ namespace OpenTelemetry.Trace
 
         public TracerProvider Build(IServiceProvider serviceProvider)
         {
-            if (serviceProvider == null)
-            {
-                throw new ArgumentNullException(nameof(serviceProvider));
-            }
+            Guard.Null(serviceProvider, nameof(serviceProvider));
 
             // Note: Not using a foreach loop because additional actions can be
             // added during each call.

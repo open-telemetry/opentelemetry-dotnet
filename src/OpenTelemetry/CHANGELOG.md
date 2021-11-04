@@ -9,6 +9,9 @@
 * Added `BaseExporter.ForceFlush`.
   ([#2525](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2525))
 
+* Exposed public `Batch(T[] items, int count)` constructor on `Batch<T>` struct
+  ([#2542](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2542))
+
 ## 1.2.0-beta1
 
 Released 2021-Oct-08
@@ -21,6 +24,10 @@ Released 2021-Oct-08
 
 * TracerProviderBuilder.AddLegacySource now supports wildcard activity names.
   ([#2183](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2183))
+
+* Instrument and View names are validated
+  [according with the spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument).
+  ([#2470](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2470))
 
 ## 1.2.0-alpha4
 
