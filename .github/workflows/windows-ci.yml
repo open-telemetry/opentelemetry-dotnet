@@ -13,6 +13,8 @@ on:
 jobs:
   build-test:
     runs-on: windows-latest
+    env:
+      DOTNET_MULTILEVEL_LOOKUP: 1
 
     strategy:
       matrix:
@@ -21,13 +23,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '3.1.x'
+    # - uses: actions/setup-dotnet@v1
+    #   with:
+    #     dotnet-version: '3.1.x'
 
-    - uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '5.0.x'
+    # - uses: actions/setup-dotnet@v1
+    #   with:
+    #     dotnet-version: '5.0.x'
 
     - uses: actions/setup-dotnet@v1
       with:
