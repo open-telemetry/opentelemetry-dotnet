@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -267,15 +268,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void CounterAggregationTest(bool exportDelta)
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
-
-            void ProcessExport(Batch<Metric> batch)
-            {
-                foreach (var metricItem in batch)
-                {
-                    metricItems.Add(metricItem);
-                }
-            }
+            var metricExporter = new InMemoryExporter<Metric>(metricItems);
 
             var metricReader = new BaseExportingMetricReader(metricExporter)
             {
