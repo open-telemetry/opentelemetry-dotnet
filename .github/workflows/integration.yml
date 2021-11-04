@@ -13,20 +13,15 @@ on:
 jobs:
   redis-test:
     runs-on: ubuntu-latest
+    # https://github.com/actions/setup-dotnet/issues/122
+    env:
+      DOTNET_MULTILEVEL_LOOKUP: 1
     strategy:
       fail-fast: false
       matrix:
         version: [netcoreapp3.1,net5.0,net6.0]
     steps:
       - uses: actions/checkout@v2
-
-      - uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '3.1.x'
-
-      - uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '5.0.x'
 
       - uses: actions/setup-dotnet@v1
         with:
@@ -38,20 +33,15 @@ jobs:
 
   sql-test:
     runs-on: ubuntu-latest
+    # https://github.com/actions/setup-dotnet/issues/122
+    env:
+      DOTNET_MULTILEVEL_LOOKUP: 1
     strategy:
       fail-fast: false
       matrix:
         version: [netcoreapp3.1,net5.0,net6.0]
     steps:
       - uses: actions/checkout@v2
-
-      - uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '3.1.x'
-
-      - uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '5.0.x'
 
       - uses: actions/setup-dotnet@v1
         with:
@@ -63,20 +53,15 @@ jobs:
 
   w3c-trace-context-test:
     runs-on: ubuntu-latest
+    # https://github.com/actions/setup-dotnet/issues/122
+    env:
+      DOTNET_MULTILEVEL_LOOKUP: 1
     strategy:
       fail-fast: false
       matrix:
         version: [netcoreapp3.1,net5.0,net6.0]
     steps:
       - uses: actions/checkout@v2
-
-      - uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '3.1.x'
-
-      - uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '5.0.x'
 
       - uses: actions/setup-dotnet@v1
         with:
@@ -88,20 +73,15 @@ jobs:
 
   otlp-exporter-test:
     runs-on: ubuntu-latest
+    # https://github.com/actions/setup-dotnet/issues/122
+    env:
+      DOTNET_MULTILEVEL_LOOKUP: 1
     strategy:
       fail-fast: false
       matrix:
         version: [netcoreapp3.1,net5.0,net6.0]
     steps:
       - uses: actions/checkout@v2
-
-      - uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '3.1.x'
-
-      - uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '5.0.x'
 
       - uses: actions/setup-dotnet@v1
         with:

@@ -9,6 +9,9 @@ on:
 jobs:
   build-test:
     runs-on: windows-latest
+    # https://github.com/actions/setup-dotnet/issues/122
+    env:
+      DOTNET_MULTILEVEL_LOOKUP: 1
     env:
       CheckAPICompatibility: true
     steps:
