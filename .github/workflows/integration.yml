@@ -13,44 +13,80 @@ on:
 jobs:
   redis-test:
     runs-on: ubuntu-latest
+    # https://github.com/actions/setup-dotnet/issues/122
+    env:
+      DOTNET_MULTILEVEL_LOOKUP: 1
     strategy:
       fail-fast: false
       matrix:
-        version: [netcoreapp3.1,net5.0]
+        version: [netcoreapp3.1,net5.0,net6.0]
     steps:
       - uses: actions/checkout@v2
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
+          include-prerelease: true
+
       - name: Run redis docker-compose.integration
         run: docker-compose --file=test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 
   sql-test:
     runs-on: ubuntu-latest
+    # https://github.com/actions/setup-dotnet/issues/122
+    env:
+      DOTNET_MULTILEVEL_LOOKUP: 1
     strategy:
       fail-fast: false
       matrix:
-        version: [netcoreapp3.1,net5.0]
+        version: [netcoreapp3.1,net5.0,net6.0]
     steps:
       - uses: actions/checkout@v2
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
+          include-prerelease: true
+
       - name: Run sql docker-compose.integration
         run: docker-compose --file=test/OpenTelemetry.Instrumentation.SqlClient.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 
   w3c-trace-context-test:
     runs-on: ubuntu-latest
+    # https://github.com/actions/setup-dotnet/issues/122
+    env:
+      DOTNET_MULTILEVEL_LOOKUP: 1
     strategy:
       fail-fast: false
       matrix:
-        version: [netcoreapp3.1,net5.0]
+        version: [netcoreapp3.1,net5.0,net6.0]
     steps:
       - uses: actions/checkout@v2
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
+          include-prerelease: true
+
       - name: Run W3C Trace Context docker-compose.integration
         run: docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
 
   otlp-exporter-test:
     runs-on: ubuntu-latest
+    # https://github.com/actions/setup-dotnet/issues/122
+    env:
+      DOTNET_MULTILEVEL_LOOKUP: 1
     strategy:
       fail-fast: false
       matrix:
-        version: [netcoreapp3.1,net5.0]
+        version: [netcoreapp3.1,net5.0,net6.0]
     steps:
       - uses: actions/checkout@v2
+
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
+          include-prerelease: true
+
       - name: Run OTLP Exporter docker-compose.integration
         run: docker-compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
