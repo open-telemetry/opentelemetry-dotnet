@@ -105,7 +105,7 @@ namespace OpenTelemetry.Metrics
                 // TODO: Consider support for marking cumulative temporality metrics stale
                 if (this.temporality == AggregationTemporality.Cumulative)
                 {
-                    if (metricPoint.MetricPointStatus == MetricPointStatus.Unset
+                    if (metricPoint.MetricPointStatus == MetricPointStatus.Unused
                         || metricPoint.MetricPointStatus == MetricPointStatus.UpdatePending)
                     {
                         continue;
@@ -124,11 +124,11 @@ namespace OpenTelemetry.Metrics
                             this.currentMetricPointBatch[this.batchSize] = i;
                             this.batchSize++;
                             break;
-                        case MetricPointStatus.NoPendingUpdate:
+                        case MetricPointStatus.NoPendingCollect:
                             metricPoint.MarkStale();
                             break;
                         case MetricPointStatus.CandidateForRemoval:
-                        case MetricPointStatus.Unset:
+                        case MetricPointStatus.Unused:
                         case MetricPointStatus.UpdatePending:
                         default:
                             break;

@@ -43,7 +43,7 @@ namespace OpenTelemetry.Metrics.Tests
             var batchCount = 0;
             foreach (var point in batch)
             {
-                Assert.Equal(MetricPointStatus.NoPendingUpdate, point.MetricPointStatus);
+                Assert.Equal(MetricPointStatus.NoPendingCollect, point.MetricPointStatus);
                 batchCount++;
             }
 

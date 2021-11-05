@@ -47,7 +47,7 @@ namespace OpenTelemetry.Metrics
             object[] values,
             double[] histogramBounds)
         {
-            this.MetricPointStatus = MetricPointStatus.Unset;
+            this.MetricPointStatus = MetricPointStatus.Unused;
             this.AggType = aggType;
             this.StartTime = startTime;
             this.Keys = keys;
@@ -306,16 +306,16 @@ namespace OpenTelemetry.Metrics
                     }
             }
 
-            this.MetricPointStatus = MetricPointStatus.NoPendingUpdate;
+            this.MetricPointStatus = MetricPointStatus.NoPendingCollect;
         }
 
         internal void MarkStale()
         {
-            if (this.MetricPointStatus == MetricPointStatus.NoPendingUpdate)
+            if (this.MetricPointStatus == MetricPointStatus.NoPendingCollect)
             {
                 lock (this.lockObject)
                 {
-                    if (this.MetricPointStatus == MetricPointStatus.NoPendingUpdate)
+                    if (this.MetricPointStatus == MetricPointStatus.NoPendingCollect)
                     {
                         this.MetricPointStatus = MetricPointStatus.CandidateForRemoval;
                     }
@@ -331,7 +331,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (this.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
                     {
-                        this.MetricPointStatus = MetricPointStatus.Unset;
+                        this.MetricPointStatus = MetricPointStatus.Unused;
                         return true;
                     }
                 }
@@ -342,7 +342,7 @@ namespace OpenTelemetry.Metrics
 
         private bool TrySetCollectPending()
         {
-            if (this.MetricPointStatus == MetricPointStatus.CandidateForRemoval || this.MetricPointStatus == MetricPointStatus.Unset)
+            if (this.MetricPointStatus == MetricPointStatus.CandidateForRemoval || this.MetricPointStatus == MetricPointStatus.Unused)
             {
                 lock (this.lockObject)
                 {
