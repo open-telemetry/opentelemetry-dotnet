@@ -28,6 +28,11 @@ namespace OpenTelemetry.Trace
     public static class TraceSemanticConventions
     {
         /// <summary>
+        /// Attribute for db.instance.
+        /// </summary>
+        public const string AttributeDbInstance = "db.instance";
+
+        /// <summary>
         /// The full invoked ARN as provided on the <c>Context</c> passed to the function (<c>Lambda-Runtime-Invoked-Function-Arn</c> header on the <c>/runtime/invocation/next</c> applicable).
         /// </summary>
         /// <remarks>
@@ -752,12 +757,173 @@ namespace OpenTelemetry.Trace
         /// </summary>
         public const string AttributeMessageUncompressedSize = "message.uncompressed_size";
 
-        // Manually defined and not YET in the YAML
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public const string AttributeDbInstance = "db.instance";
+        /// <summary>
+        /// Prefix for 'aws.lambda'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixAwsLambda = "aws.lambda";
 
-        public const string AttributeExceptionEventName = "exception";
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+        /// <summary>
+        /// Prefix for 'db'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixDb = "db";
+
+        /// <summary>
+        /// Prefix for 'db.mssql'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixDbMssql = "db.mssql";
+
+        /// <summary>
+        /// Prefix for 'db.cassandra'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixDbCassandra = "db.cassandra";
+
+        /// <summary>
+        /// Prefix for 'db.hbase'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixDbHbase = "db.hbase";
+
+        /// <summary>
+        /// Prefix for 'db.redis'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixDbRedis = "db.redis";
+
+        /// <summary>
+        /// Prefix for 'db.mongodb'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixDbMongodb = "db.mongodb";
+
+        /// <summary>
+        /// Prefix for 'db.sql'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixDbSql = "db.sql";
+
+        /// <summary>
+        /// Prefix for 'exception'.
+        /// </summary>
+        /// event
+        public static readonly string PrefixException = "exception";
+
+        /// <summary>
+        /// Prefix for 'faas_span'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixFaasSpan = "faas";
+
+        /// <summary>
+        /// Prefix for 'faas_span.datasource'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixFaasSpanDatasource = "faas.document";
+
+        /// <summary>
+        /// Prefix for 'network'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixNetwork = "net";
+
+        /// <summary>
+        /// Prefix for 'peer'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixPeer = "peer";
+
+        /// <summary>
+        /// Prefix for 'identity'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixIdentity = "enduser";
+
+        /// <summary>
+        /// Prefix for 'thread'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixThread = "thread";
+
+        /// <summary>
+        /// Prefix for 'code'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixCode = "code";
+
+        /// <summary>
+        /// Prefix for 'http'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixHttp = "http";
+
+        /// <summary>
+        /// Prefix for 'aws'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixAws = "aws";
+
+        /// <summary>
+        /// Prefix for 'dynamodb.shared'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixDynamodbShared = "aws.dynamodb";
+
+        /// <summary>
+        /// Prefix for 'messaging'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixMessaging = "messaging";
+
+        /// <summary>
+        /// Prefix for 'messaging.rabbitmq'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixMessagingRabbitmq = "messaging.rabbitmq";
+
+        /// <summary>
+        /// Prefix for 'messaging.kafka'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixMessagingKafka = "messaging.kafka";
+
+        /// <summary>
+        /// Prefix for 'rpc'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixRpc = "rpc";
+
+        /// <summary>
+        /// Prefix for 'rpc.grpc'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixRpcGrpc = "rpc.grpc";
+
+        /// <summary>
+        /// Prefix for 'rpc.jsonrpc'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixRpcJsonrpc = "rpc.jsonrpc";
+
+        /// <summary>
+        /// Prefix for 'rpc.message'.
+        /// </summary>
+        /// event
+        public static readonly string PrefixRpcMessage = "message";
+
+        /// <summary>
+        /// Event name for 'exception'.
+        /// </summary>
+        /// event
+        public static readonly string EventException = "exception";
+
+        /// <summary>
+        /// Event name for 'rpc.message'.
+        /// </summary>
+        /// event
+        public static readonly string EventRpcMessage = "message";
 
         /// <summary>
         /// An identifier for the database management system (DBMS) product being used. See below for a list of well-known identifiers.

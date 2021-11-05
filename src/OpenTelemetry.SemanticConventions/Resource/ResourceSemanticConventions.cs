@@ -502,6 +502,162 @@ namespace OpenTelemetry.Resources
         public const string AttributeWebengineDescription = "webengine.description";
 
         /// <summary>
+        /// Prefix for 'cloud'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixCloud = "cloud";
+
+        /// <summary>
+        /// Prefix for 'aws.ecs'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixAwsEcs = "aws.ecs";
+
+        /// <summary>
+        /// Prefix for 'aws.eks'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixAwsEks = "aws.eks";
+
+        /// <summary>
+        /// Prefix for 'aws.log'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixAwsLog = "aws.log";
+
+        /// <summary>
+        /// Prefix for 'container'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixContainer = "container";
+
+        /// <summary>
+        /// Prefix for 'deployment'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixDeployment = "deployment";
+
+        /// <summary>
+        /// Prefix for 'device'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixDevice = "device";
+
+        /// <summary>
+        /// Prefix for 'faas_resource'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixFaasResource = "faas";
+
+        /// <summary>
+        /// Prefix for 'host'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixHost = "host";
+
+        /// <summary>
+        /// Prefix for 'k8s.cluster'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixK8sCluster = "k8s.cluster";
+
+        /// <summary>
+        /// Prefix for 'k8s.node'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixK8sNode = "k8s.node";
+
+        /// <summary>
+        /// Prefix for 'k8s.namespace'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixK8sNamespace = "k8s.namespace";
+
+        /// <summary>
+        /// Prefix for 'k8s.pod'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixK8sPod = "k8s.pod";
+
+        /// <summary>
+        /// Prefix for 'k8s.container'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixK8sContainer = "k8s.container";
+
+        /// <summary>
+        /// Prefix for 'k8s.replicaset'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixK8sReplicaset = "k8s.replicaset";
+
+        /// <summary>
+        /// Prefix for 'k8s.deployment'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixK8sDeployment = "k8s.deployment";
+
+        /// <summary>
+        /// Prefix for 'k8s.statefulset'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixK8sStatefulset = "k8s.statefulset";
+
+        /// <summary>
+        /// Prefix for 'k8s.daemonset'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixK8sDaemonset = "k8s.daemonset";
+
+        /// <summary>
+        /// Prefix for 'k8s.job'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixK8sJob = "k8s.job";
+
+        /// <summary>
+        /// Prefix for 'k8s.cronjob'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixK8sCronjob = "k8s.cronjob";
+
+        /// <summary>
+        /// Prefix for 'os'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixOs = "os";
+
+        /// <summary>
+        /// Prefix for 'process'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixProcess = "process";
+
+        /// <summary>
+        /// Prefix for 'process.runtime'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixProcessRuntime = "process.runtime";
+
+        /// <summary>
+        /// Prefix for 'service'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixService = "service";
+
+        /// <summary>
+        /// Prefix for 'telemetry'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixTelemetry = "telemetry";
+
+        /// <summary>
+        /// Prefix for 'webengine_resource'.
+        /// </summary>
+        /// span
+        public static readonly string PrefixWebengineResource = "webengine";
+
+        /// <summary>
         /// Name of the cloud provider.
         /// </summary>
         public static class CloudProviderValues

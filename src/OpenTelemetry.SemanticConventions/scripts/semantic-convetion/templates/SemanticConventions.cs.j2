@@ -50,6 +50,13 @@ namespace {{pkg | trim}}
     /// </remarks>
     public static class {{class}}
     {
+{%- if class == "TraceSemanticConventions" %}
+        /// <summary>
+        /// Attribute for db.instance
+        /// </summary>
+        public const string AttributeDbInstance = "db.instance";
+{% endif -%}
+
 {%- for attribute in attributes if attribute.is_local and not attribute.ref %}
         /// <summary>
         /// {{format_xml_doc(attribute.brief | render_markdown(code="<c>{0}</c>", paragraph="{0}"))}}
@@ -62,17 +69,30 @@ namespace {{pkg | trim}}
   {%- if attribute.deprecated %}
         [Obsolete("{{attribute.deprecated | to_doc_brief}}")]
   {%- endif %}
-        public const string Attribute{{attribute.fqn | to_camelcase(True)}} = "{{attribute.fqn}}";
+        public const string Attribute{{attribute.fqn  | replace("-","_") | to_camelcase(True)}} = "{{attribute.fqn}}";
 {% endfor -%}
 
-{%- if class == "TraceSemanticConventions" %}
-        // Manually defined and not YET in the YAML
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public const string AttributeDbInstance = "db.instance";
+{%- for semconv in semconvs.values() | unique(attribute="prefix") %}
+  {%- if semconv.prefix %}
+        /// <summary>
+        /// Prefix for '{{semconv.semconv_id}}'.
+        /// </summary>
+        /// {{semconv.GROUP_TYPE_NAME}}
+        public static readonly string Prefix{{semconv.semconv_id | replace("-","_") | to_camelcase(True)}} = "{{semconv.prefix}}";
+  {%- endif %}
+{% endfor -%}
 
-        public const string AttributeExceptionEventName = "exception";
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
-{%- endif -%}
+{%- for semconv in semconvs.values() %}
+  {%- if semconv.GROUP_TYPE_NAME == 'event' %}
+        /// <summary>
+        /// Event name for '{{semconv.semconv_id}}'.
+        /// </summary>
+        /// {{semconv.GROUP_TYPE_NAME}}
+        public static readonly string Event{{semconv.semconv_id | replace("-","_") | to_camelcase(True)}} = "{{semconv.name}}";
+  {%- endif %}
+{% endfor -%}
+
+
 {%- for attribute in attributes if attribute.is_local and not attribute.ref %}
   {%- if attribute.is_enum %}
   {%- set class_name = attribute.fqn | to_camelcase(True) ~ "Values" %}
@@ -88,8 +108,7 @@ namespace {{pkg | trim}}
             /// {{format_xml_doc(member.brief | render_markdown(code="<c>{0}</c>", paragraph="{0}"))}}
             /// </summary>
             public const {{ type }} {{ member.member_id | to_camelcase(True) }} = {{ print_value(type, member.value) }};
-              {%- if not loop.last -%} {{"\n"}} {%- endif %}
-            {%- endfor %}
+            {% endfor -%}
         }
   {%- endif -%}
 {%- endfor %}
