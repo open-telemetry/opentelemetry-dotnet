@@ -20,7 +20,6 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -336,7 +335,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             using var meter = new Meter(meterName);
             int i = 1;
-            var counterLong = meter.CreateObservableCounter<long>(
+            var counterLong = meter.CreateObservableCounter(
             "observable-counter",
             () =>
             {
