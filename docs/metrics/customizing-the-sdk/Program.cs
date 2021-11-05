@@ -34,7 +34,7 @@ public class Program
             // Rename an instrument to new name.
             .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
 
-            // Change Histogram bounds
+            // Change Histogram bounds, and add additional tags from Baggage.
             .AddView(instrumentName: "MyHistogram", new HistogramConfiguration()
             {
                 BucketBounds = new double[] { 10, 20 },
@@ -78,6 +78,8 @@ public class Program
         }
 
         var histogram = Meter1.CreateHistogram<long>("MyHistogram");
+        Baggage.SetBaggage("baggagekey1", "baggagevalue1");
+        Baggage.SetBaggage("baggagekey2", "baggagevalue2");
         for (int i = 0; i < 20000; i++)
         {
             histogram.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
