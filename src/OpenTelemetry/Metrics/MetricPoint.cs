@@ -59,27 +59,25 @@ namespace OpenTelemetry.Metrics
             this.DoubleValue = default;
             this.doubleVal = default;
             this.lastDoubleSum = default;
+            this.lockObject = new object();
 
             if (this.AggType == AggregationType.Histogram)
             {
                 this.ExplicitBounds = histogramBounds;
                 this.BucketCounts = new long[this.ExplicitBounds.Length + 1];
                 this.bucketCounts = new long[this.ExplicitBounds.Length + 1];
-                this.lockObject = new object();
             }
             else if (this.AggType == AggregationType.HistogramSumCount)
             {
                 this.ExplicitBounds = null;
                 this.BucketCounts = null;
                 this.bucketCounts = null;
-                this.lockObject = new object();
             }
             else
             {
                 this.ExplicitBounds = null;
                 this.BucketCounts = null;
                 this.bucketCounts = null;
-                this.lockObject = null;
             }
         }
 
@@ -99,11 +97,11 @@ namespace OpenTelemetry.Metrics
 
         public double[] ExplicitBounds { get; internal set; }
 
-        internal MetricPointStatus MetricPointStatus { get; set; }
+        internal MetricPointStatus MetricPointStatus { get; private set; }
 
         private readonly AggregationType AggType { get; }
 
-        internal void Update(long number)
+        internal bool Update(long number)
         {
             switch (this.AggType)
             {
@@ -132,9 +130,11 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
             }
+
+            return this.TrySetCollectPending();
         }
 
-        internal void Update(double number)
+        internal bool Update(double number)
         {
             switch (this.AggType)
             {
@@ -195,6 +195,8 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
             }
+
+            return this.TrySetCollectPending();
         }
 
         internal void TakeSnapShot(bool outputDelta)
@@ -303,6 +305,60 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
             }
+
+            this.MetricPointStatus = MetricPointStatus.NoPendingUpdate;
+        }
+
+        internal void MarkStale()
+        {
+            if (this.MetricPointStatus == MetricPointStatus.NoPendingUpdate)
+            {
+                lock (this.lockObject)
+                {
+                    if (this.MetricPointStatus == MetricPointStatus.NoPendingUpdate)
+                    {
+                        this.MetricPointStatus = MetricPointStatus.CandidateForRemoval;
+                    }
+                }
+            }
+        }
+
+        internal bool TryFree()
+        {
+            if (this.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
+            {
+                lock (this.lockObject)
+                {
+                    if (this.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
+                    {
+                        this.MetricPointStatus = MetricPointStatus.Unset;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private bool TrySetCollectPending()
+        {
+            if (this.MetricPointStatus == MetricPointStatus.CandidateForRemoval || this.MetricPointStatus == MetricPointStatus.Unset)
+            {
+                lock (this.lockObject)
+                {
+                    if (this.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
+                    {
+                        this.MetricPointStatus = MetricPointStatus.CollectPending;
+                        return true;
+                    }
+
+                    // Update failed because MetricPoint was freed prior to update
+                    return false;
+                }
+            }
+
+            this.MetricPointStatus = MetricPointStatus.CollectPending;
+            return true;
         }
     }
 }

@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -38,18 +37,16 @@ namespace OpenTelemetry.Metrics
         private readonly AggregationTemporality temporality;
         private readonly bool outputDelta;
         private readonly MetricPoint[] metricPoints;
-        private readonly ReaderWriterLockSlim[] metricPointLocks;
         private readonly int[] currentMetricPointBatch;
         private readonly AggregationType aggType;
         private readonly double[] histogramBounds;
         private readonly UpdateLongDelegate updateLongCallback;
         private readonly UpdateDoubleDelegate updateDoubleCallback;
+        private int metricPointIndex = 0;
         private long batchSize = 0;
         private bool zeroTagMetricPointInitialized;
         private DateTimeOffset startTimeExclusive;
         private DateTimeOffset endTimeInclusive;
-
-        private ConcurrentStack<int> metricPointFreeList = new ConcurrentStack<int>(Enumerable.Range(1, MaxMetricPoints - 1));
 
         internal AggregatorStore(
             AggregationType aggType,
@@ -58,12 +55,6 @@ namespace OpenTelemetry.Metrics
             string[] tagKeysInteresting = null)
         {
             this.metricPoints = new MetricPoint[MaxMetricPoints];
-            this.metricPointLocks = new ReaderWriterLockSlim[MaxMetricPoints];
-            for (var i = 0; i < MaxMetricPoints; ++i)
-            {
-                this.metricPointLocks[i] = new ReaderWriterLockSlim();
-            }
-
             this.currentMetricPointBatch = new int[MaxMetricPoints];
             this.aggType = aggType;
             this.temporality = temporality;
@@ -129,17 +120,12 @@ namespace OpenTelemetry.Metrics
                     switch (metricPoint.MetricPointStatus)
                     {
                         case MetricPointStatus.CollectPending:
-                            this.metricPointLocks[i].EnterWriteLock();
                             metricPoint.TakeSnapShot(this.outputDelta);
-                            metricPoint.MetricPointStatus = MetricPointStatus.NoPendingUpdate;
-                            this.metricPointLocks[i].ExitWriteLock();
                             this.currentMetricPointBatch[this.batchSize] = i;
                             this.batchSize++;
                             break;
                         case MetricPointStatus.NoPendingUpdate:
-                            this.metricPointLocks[i].EnterWriteLock();
-                            metricPoint.MetricPointStatus = MetricPointStatus.CandidateForRemoval;
-                            this.metricPointLocks[i].ExitWriteLock();
+                            metricPoint.MarkStale();
                             break;
                         case MetricPointStatus.CandidateForRemoval:
                         case MetricPointStatus.Unset:
@@ -214,20 +200,10 @@ namespace OpenTelemetry.Metrics
                     // check again after acquiring lock.
                     if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
                     {
-                        if (!this.metricPointFreeList.TryPop(out aggregatorIndex))
+                        if (!this.TryGetUnusedMetricPoint(out aggregatorIndex))
                         {
-                            if (this.temporality == AggregationTemporality.Cumulative)
-                            {
-                                // sorry! out of data points.
-                                return -1;
-                            }
-
-                            this.FreeUnusedMetrics();
-                            if (!this.metricPointFreeList.TryPop(out aggregatorIndex))
-                            {
-                                // sorry! out of data points.
-                                return -1;
-                            }
+                            // sorry! out of data points.
+                            return -1;
                         }
 
                         // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
@@ -255,26 +231,38 @@ namespace OpenTelemetry.Metrics
             return aggregatorIndex;
         }
 
-        private void FreeUnusedMetrics()
+        private bool TryGetUnusedMetricPoint(out int index)
         {
-            for (int i = 1; i < MaxMetricPoints; i++)
+            if (this.metricPointIndex < MaxMetricPoints)
             {
-                ref var metricPoint = ref this.metricPoints[i];
-                if (metricPoint.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
+                index = Interlocked.Increment(ref this.metricPointIndex);
+                if (index < MaxMetricPoints)
                 {
-                    this.metricPointLocks[i].EnterWriteLock();
-
-                    if (metricPoint.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
-                    {
-                        metricPoint.MetricPointStatus = MetricPointStatus.Unset;
-                        var t = this.keyValue2MetricAggs[metricPoint.Keys];
-                        t.TryRemove(metricPoint.Values, out var _);
-                        this.metricPointFreeList.Push(i);
-                    }
-
-                    this.metricPointLocks[i].ExitWriteLock();
+                    return true;
                 }
             }
+
+            if (this.temporality == AggregationTemporality.Delta)
+            {
+                for (int i = 1; i < MaxMetricPoints; i++)
+                {
+                    ref var metricPoint = ref this.metricPoints[i];
+                    if (metricPoint.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
+                    {
+                        if (metricPoint.TryFree())
+                        {
+                            var t = this.keyValue2MetricAggs[metricPoint.Keys];
+                            t.TryRemove(metricPoint.Values, out var _);
+
+                            index = i;
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            index = -1;
+            return false;
         }
 
         private void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
@@ -368,43 +356,13 @@ namespace OpenTelemetry.Metrics
         private bool TryUpdateMetricPoint(int index, long value)
         {
             ref var metricPoint = ref this.metricPoints[index];
-            var metricPointLock = this.metricPointLocks[index];
-
-            metricPointLock.EnterReadLock();
-
-            if (metricPoint.MetricPointStatus == MetricPointStatus.Unset)
-            {
-                metricPointLock.ExitReadLock();
-                return false;
-            }
-
-            metricPoint.Update(value);
-            metricPoint.MetricPointStatus = MetricPointStatus.CollectPending;
-
-            metricPointLock.ExitReadLock();
-
-            return true;
+            return metricPoint.Update(value);
         }
 
         private bool TryUpdateMetricPoint(int index, double value)
         {
             ref var metricPoint = ref this.metricPoints[index];
-            var metricPointLock = this.metricPointLocks[index];
-
-            metricPointLock.EnterReadLock();
-
-            if (metricPoint.MetricPointStatus == MetricPointStatus.Unset)
-            {
-                metricPointLock.ExitReadLock();
-                return false;
-            }
-
-            metricPoint.Update(value);
-            metricPoint.MetricPointStatus = MetricPointStatus.CollectPending;
-
-            metricPointLock.ExitReadLock();
-
-            return true;
+            return metricPoint.Update(value);
         }
 
         private int FindMetricAggregatorsDefault(ReadOnlySpan<KeyValuePair<string, object>> tags)
