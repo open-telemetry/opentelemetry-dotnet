@@ -222,11 +222,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prom
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs", "src\OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs\OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs.csproj", "{6E1A5FA3-E024-4972-9EDC-11E36C5A0D6F}"
 EndProject
-<<<<<<< HEAD
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.SemanticConventions", "src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj", "{D4519DF6-CC72-4AC4-A851-E21383098D11}"
-=======
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore.6.0", "test\TestApp.AspNetCore.6.0\TestApp.AspNetCore.6.0.csproj", "{0076C657-564F-4787-9FFF-52D9D55166E8}"
->>>>>>> upstream/main
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.SemanticConventions", "src\OpenTelemetry.SemanticConventions\OpenTelemetry.SemanticConventions.csproj", "{D4519DF6-CC72-4AC4-A851-E21383098D11}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -466,17 +464,14 @@ Global
 		{6E1A5FA3-E024-4972-9EDC-11E36C5A0D6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6E1A5FA3-E024-4972-9EDC-11E36C5A0D6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6E1A5FA3-E024-4972-9EDC-11E36C5A0D6F}.Release|Any CPU.Build.0 = Release|Any CPU
-<<<<<<< HEAD
-		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Release|Any CPU.Build.0 = Release|Any CPU
-=======
 		{0076C657-564F-4787-9FFF-52D9D55166E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0076C657-564F-4787-9FFF-52D9D55166E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0076C657-564F-4787-9FFF-52D9D55166E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0076C657-564F-4787-9FFF-52D9D55166E8}.Release|Any CPU.Build.0 = Release|Any CPU
->>>>>>> upstream/main
+		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4519DF6-CC72-4AC4-A851-E21383098D11}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
