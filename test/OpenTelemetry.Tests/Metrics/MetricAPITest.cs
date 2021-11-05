@@ -141,7 +141,6 @@ namespace OpenTelemetry.Metrics.Tests
             // The following will be ignored as
             // metric of same name exists.
             // Metric stream will remain one.
-            // TODO: Fix comments and Assert statements to actually ensure only 1 metric stream is present.
             var anotherCounterSameName = meter1.CreateCounter<long>("name1");
             anotherCounterSameName.Add(10);
             metricItems.Clear();
@@ -432,7 +431,6 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(AggregatorStore.MaxMetricPoints, MetricPointCount());
 
             // These updates would be dropped.
-            // TODO review this
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueA"));
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueB"));
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueC"));
