@@ -19,6 +19,9 @@ using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
+    // TODO: Clarify if spec allows adding anything from context
+    // or only Baggage entries. If the later, we just need to accept the
+    // Baggage key names only, and SDK can internally do Baggage.GetBaggage(name)
     public delegate ReadOnlySpan<KeyValuePair<string, object>> AdditionalTagsCallback();
 
     // TODO: can be optimized like MetricType
