@@ -133,7 +133,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
-        public void AppendExportPath_EndpointNotSet_EnvironmentVariableNotDefined_NotAdjusted()
+        public void AppendExportPath_EndpointNotSet_EnvironmentVariableNotDefined_NotAppended()
         {
             ClearEndpointEnvVar();
 
@@ -145,9 +145,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
-        public void AppendExportPath_EndpointNotSet_EnvironmentVariableDefined_Adjusted()
+        public void AppendExportPath_EndpointNotSet_EnvironmentVariableDefined_Appended()
         {
-            ClearEndpointEnvVar();
             Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
 
             var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
@@ -160,9 +159,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
-        public void AppendExportPath_EndpointSetEqualToEnvironmentVariable_EnvironmentVariableDefined_NotAdjusted()
+        public void AppendExportPath_EndpointSetEqualToEnvironmentVariable_EnvironmentVariableDefined_NotAppended()
         {
-            ClearEndpointEnvVar();
             Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
 
             var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
@@ -179,7 +177,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData("http://localhost:4317/")]
         [InlineData("http://test:8888/")]
-        public void AppendExportPath_EndpointSet_EnvironmentVariableNotDefined_NotAdjusted(string endpoint)
+        public void AppendExportPath_EndpointSet_EnvironmentVariableNotDefined_NotAppended(string endpoint)
         {
             ClearEndpointEnvVar();
 
