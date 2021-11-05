@@ -182,7 +182,6 @@ const OpenTelemetry.Trace.TraceSemanticConventions.AttributeEnduserId = "enduser
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeEnduserRole = "enduser.role" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeEnduserScope = "enduser.scope" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeExceptionEscaped = "exception.escaped" -> string
-const OpenTelemetry.Trace.TraceSemanticConventions.AttributeExceptionEventName = "exception" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeExceptionMessage = "exception.message" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeExceptionStacktrace = "exception.stacktrace" -> string
 const OpenTelemetry.Trace.TraceSemanticConventions.AttributeExceptionType = "exception.type" -> string
@@ -412,3 +411,57 @@ OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionSubtypeValues
 OpenTelemetry.Trace.TraceSemanticConventions.NetHostConnectionTypeValues
 OpenTelemetry.Trace.TraceSemanticConventions.NetTransportValues
 OpenTelemetry.Trace.TraceSemanticConventions.RpcGrpcStatusCodeValues
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixAwsEcs -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixAwsEks -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixAwsLog -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixCloud -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixContainer -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixDeployment -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixDevice -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixFaasResource -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixHost -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixK8sCluster -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixK8sContainer -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixK8sCronjob -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixK8sDaemonset -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixK8sDeployment -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixK8sJob -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixK8sNamespace -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixK8sNode -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixK8sPod -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixK8sReplicaset -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixK8sStatefulset -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixOs -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixProcess -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixProcessRuntime -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixService -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixTelemetry -> string
+static readonly OpenTelemetry.Resources.ResourceSemanticConventions.PrefixWebengineResource -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.EventException -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.EventRpcMessage -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixAws -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixAwsLambda -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixCode -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixDb -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixDbCassandra -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixDbHbase -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixDbMongodb -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixDbMssql -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixDbRedis -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixDbSql -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixDynamodbShared -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixException -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixFaasSpan -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixFaasSpanDatasource -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixHttp -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixIdentity -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixMessaging -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixMessagingKafka -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixMessagingRabbitmq -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixNetwork -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixPeer -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixRpc -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixRpcGrpc -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixRpcJsonrpc -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixRpcMessage -> string
+static readonly OpenTelemetry.Trace.TraceSemanticConventions.PrefixThread -> string
