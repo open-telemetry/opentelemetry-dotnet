@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -117,16 +118,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void StreamNamesDuplicatesAreNotAllowedTest(AggregationTemporality temporality)
         {
             var metricItems = new List<Metric>();
-            int metricCount = 0;
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
-
-            void ProcessExport(Batch<Metric> batch)
-            {
-                foreach (var metric in batch)
-                {
-                    metricCount++;
-                }
-            }
+            var metricExporter = new InMemoryExporter<Metric>(metricItems);
 
             var metricReader = new BaseExportingMetricReader(metricExporter)
             {
@@ -144,25 +136,25 @@ namespace OpenTelemetry.Metrics.Tests
             var counterLong = meter1.CreateCounter<long>("name1");
             counterLong.Add(10);
             metricReader.Collect();
-            Assert.Equal(1, metricCount);
+            Assert.Single(metricItems);
 
             // The following will be ignored as
             // metric of same name exists.
             // Metric stream will remain one.
             var anotherCounterSameName = meter1.CreateCounter<long>("name1");
             anotherCounterSameName.Add(10);
-            metricCount = 0;
+            metricItems.Clear();
             metricReader.Collect();
-            Assert.Equal(1, metricCount);
+            Assert.Single(metricItems);
 
             // The following will also be ignored
             // as the name is same.
             // (the Meter name is not part of stream name)
             var anotherCounterSameNameDiffMeter = meter2.CreateCounter<long>("name1");
             anotherCounterSameNameDiffMeter.Add(10);
-            metricCount = 0;
+            metricItems.Clear();
             metricReader.Collect();
-            Assert.Equal(1, metricCount);
+            Assert.Single(metricItems);
         }
 
         [Theory]
@@ -267,15 +259,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void CounterAggregationTest(bool exportDelta)
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
-
-            void ProcessExport(Batch<Metric> batch)
-            {
-                foreach (var metricItem in batch)
-                {
-                    metricItems.Add(metricItem);
-                }
-            }
+            var metricExporter = new InMemoryExporter<Metric>(metricItems);
 
             var metricReader = new BaseExportingMetricReader(metricExporter)
             {
@@ -343,15 +327,7 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var meterName = "TestMeter" + exportDelta;
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
-
-            void ProcessExport(Batch<Metric> batch)
-            {
-                foreach (var metricItem in batch)
-                {
-                    metricItems.Add(metricItem);
-                }
-            }
+            var metricExporter = new InMemoryExporter<Metric>(metricItems);
 
             var metricReader = new BaseExportingMetricReader(metricExporter)
             {
@@ -409,18 +385,21 @@ namespace OpenTelemetry.Metrics.Tests
         public void TestMetricPointCap(AggregationTemporality temporality)
         {
             var metricItems = new List<Metric>();
-            int metricPointCount = 0;
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
+            var metricExporter = new InMemoryExporter<Metric>(metricItems);
 
-            void ProcessExport(Batch<Metric> batch)
+            int MetricPointCount()
             {
-                foreach (var metric in batch)
+                var count = 0;
+
+                foreach (var metric in metricItems)
                 {
                     foreach (ref var metricPoint in metric.GetMetricPoints())
                     {
-                        metricPointCount++;
+                        count++;
                     }
                 }
+
+                return count;
             }
 
             var metricReader = new BaseExportingMetricReader(metricExporter)
@@ -445,34 +424,26 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             metricReader.Collect();
-            Assert.Equal(AggregatorStore.MaxMetricPoints, metricPointCount);
+            Assert.Equal(AggregatorStore.MaxMetricPoints, MetricPointCount());
 
-            metricPointCount = 0;
+            metricItems.Clear();
             metricReader.Collect();
-            Assert.Equal(AggregatorStore.MaxMetricPoints, metricPointCount);
+            Assert.Equal(AggregatorStore.MaxMetricPoints, MetricPointCount());
 
             // These updates would be dropped.
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueA"));
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueB"));
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueC"));
-            metricPointCount = 0;
+            metricItems.Clear();
             metricReader.Collect();
-            Assert.Equal(AggregatorStore.MaxMetricPoints, metricPointCount);
+            Assert.Equal(AggregatorStore.MaxMetricPoints, MetricPointCount());
         }
 
         [Fact]
         public void MultithreadedLongCounterTest()
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
-
-            void ProcessExport(Batch<Metric> batch)
-            {
-                foreach (var metricItem in batch)
-                {
-                    metricItems.Add(metricItem);
-                }
-            }
+            var metricExporter = new InMemoryExporter<Metric>(metricItems);
 
             var metricReader = new BaseExportingMetricReader(metricExporter)
             {
@@ -533,15 +504,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void MultithreadedDoubleCounterTest()
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
-
-            void ProcessExport(Batch<Metric> batch)
-            {
-                foreach (var metricItem in batch)
-                {
-                    metricItems.Add(metricItem);
-                }
-            }
+            var metricExporter = new InMemoryExporter<Metric>(metricItems);
 
             var metricReader = new BaseExportingMetricReader(metricExporter)
             {

@@ -16,11 +16,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.AspNetCore\OpenTelemetry.Instrumentation.AspNetCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="EventSourceTestHelper.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\InMemoryEventListener.cs" Link="InMemoryEventListener.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestEventListener.cs" Link="TestEventListener.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestExporter.cs" Link="TestExporter.cs" />
-    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\InMemoryEventListener.cs" Link="InMemoryEventListener.cs" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
