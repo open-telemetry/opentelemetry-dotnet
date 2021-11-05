@@ -14,16 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-
 namespace OpenTelemetry.Metrics
 {
-    // TODO: Clarify if spec allows adding anything from context
-    // or only Baggage entries. If the later, we just need to accept the
-    // Baggage key names only, and SDK can internally do Baggage.GetBaggage(name)
-    public delegate ReadOnlySpan<KeyValuePair<string, object>> AdditionalTagsCallback();
-
     // TODO: can be optimized like MetricType
     public enum Aggregation
     {
@@ -46,7 +38,17 @@ namespace OpenTelemetry.Metrics
 
         public string[] TagKeys { get; set; }
 
-        public AdditionalTagsCallback AdditionalTagsCallback { get; set; }
+        /// <summary>
+        /// Gets or sets the names of <see cref="Baggage"/> keys, which,
+        /// if available, will be used as additional tags for Metric
+        /// aggregation.
+        /// <see cref="Baggage.GetBaggage(string)"/> will be used by the SDK
+        /// internally to obtain the additional tags.
+        /// </summary>
+        /// <remarks>
+        /// It is invalid to specify this for Observable instruments.
+        /// </remarks>
+        public string[] BaggageKeysForAdditionalTags { get; set; }
 
         public virtual Aggregation Aggregation { get; set; }
 
