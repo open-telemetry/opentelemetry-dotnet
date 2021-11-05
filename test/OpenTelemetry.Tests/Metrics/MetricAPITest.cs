@@ -144,16 +144,18 @@ namespace OpenTelemetry.Metrics.Tests
             // TODO: Fix comments and Assert statements to actually ensure only 1 metric stream is present.
             var anotherCounterSameName = meter1.CreateCounter<long>("name1");
             anotherCounterSameName.Add(10);
+            metricItems.Clear();
             metricReader.Collect();
-            Assert.Equal(2, metricItems.Count);
+            Assert.Single(metricItems);
 
             // The following will also be ignored
             // as the name is same.
             // (the Meter name is not part of stream name)
             var anotherCounterSameNameDiffMeter = meter2.CreateCounter<long>("name1");
             anotherCounterSameNameDiffMeter.Add(10);
+            metricItems.Clear();
             metricReader.Collect();
-            Assert.Equal(3, metricItems.Count);
+            Assert.Single(metricItems);
         }
 
         [Theory]
@@ -425,16 +427,18 @@ namespace OpenTelemetry.Metrics.Tests
             metricReader.Collect();
             Assert.Equal(AggregatorStore.MaxMetricPoints, MetricPointCount());
 
+            metricItems.Clear();
             metricReader.Collect();
-            Assert.Equal(AggregatorStore.MaxMetricPoints * 2, MetricPointCount());
+            Assert.Equal(AggregatorStore.MaxMetricPoints, MetricPointCount());
 
             // These updates would be dropped.
             // TODO review this
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueA"));
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueB"));
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueC"));
+            metricItems.Clear();
             metricReader.Collect();
-            Assert.Equal(AggregatorStore.MaxMetricPoints * 3, MetricPointCount());
+            Assert.Equal(AggregatorStore.MaxMetricPoints, MetricPointCount());
         }
 
         [Fact]
