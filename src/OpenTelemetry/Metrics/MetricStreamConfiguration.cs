@@ -14,8 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+
 namespace OpenTelemetry.Metrics
 {
+    public delegate ReadOnlySpan<KeyValuePair<string, object>> AdditionalTagsCallback();
+
     // TODO: can be optimized like MetricType
     public enum Aggregation
     {
@@ -37,6 +42,8 @@ namespace OpenTelemetry.Metrics
         public string Description { get; set; }
 
         public string[] TagKeys { get; set; }
+
+        public AdditionalTagsCallback AdditionalTagsCallback { get; set; }
 
         public virtual Aggregation Aggregation { get; set; }
 

@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -34,7 +35,11 @@ public class Program
             .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
 
             // Change Histogram bounds
-            .AddView(instrumentName: "MyHistogram", new HistogramConfiguration() { BucketBounds = new double[] { 10, 20 } })
+            .AddView(instrumentName: "MyHistogram", new HistogramConfiguration()
+            {
+                BucketBounds = new double[] { 10, 20 },
+                AdditionalTagsCallback = GetAdditionalTags,
+            })
 
             // For the instrument "MyCounterCustomTags", aggregate with only the keys "tag1", "tag2".
             .AddView(instrumentName: "MyCounterCustomTags", new MetricStreamConfiguration() { TagKeys = new string[] { "tag1", "tag2" } })
@@ -95,5 +100,16 @@ public class Program
         {
             histogram2.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
         }
+    }
+
+    private static ReadOnlySpan<KeyValuePair<string, object>> GetAdditionalTags()
+    {
+        var extraTagsArray = new KeyValuePair<string, object>[2];
+
+        // In practice, obtain tags from Activity.Current or Baggage.Current
+        // instead of hardcoded ones.
+        extraTagsArray[0] = new KeyValuePair<string, object>("extraKey1", "extraValue1");
+        extraTagsArray[1] = new KeyValuePair<string, object>("extraKey2", "extraValue2");
+        return extraTagsArray;
     }
 }
