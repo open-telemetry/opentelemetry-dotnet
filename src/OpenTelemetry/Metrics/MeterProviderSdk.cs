@@ -125,7 +125,16 @@ namespace OpenTelemetry.Metrics
                         var metricStreamConfig = viewConfig(instrument);
                         if (metricStreamConfig != null)
                         {
-                            metricStreamConfigs.Add(metricStreamConfig);
+                            if (instrument.IsObservable && metricStreamConfig.AdditionalTagsCallback != null)
+                            {
+                                // Log that View config is ignored as Async instruments
+                                // cannot have AdditionalTagsCallback, so this view
+                                // is a user error.
+                            }
+                            else
+                            {
+                                metricStreamConfigs.Add(metricStreamConfig);
+                            }
                         }
                     }
 
