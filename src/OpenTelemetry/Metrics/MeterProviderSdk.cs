@@ -125,6 +125,15 @@ namespace OpenTelemetry.Metrics
                         var metricStreamConfig = viewConfig(instrument);
                         if (metricStreamConfig != null)
                         {
+                            if (metricStreamConfig is HistogramConfiguration histogramConfiguration)
+                            {
+                                // Validate the histogram bounds
+                                if (!this.IsSortedAndDistinct(histogramConfiguration.BucketBounds))
+                                {
+                                    throw new ArgumentException("Must be in ascending order with distinct values", $"{histogramConfiguration}.{histogramConfiguration.BucketBounds}");
+                                }
+                            }
+
                             metricStreamConfigs.Add(metricStreamConfig);
                         }
                     }
@@ -496,6 +505,19 @@ namespace OpenTelemetry.Metrics
             }
 
             base.Dispose(disposing);
+        }
+
+        private bool IsSortedAndDistinct(double[] values)
+        {
+            for (int i = 1; i < values.Length; i++)
+            {
+                if (values[i] <= values[i - 1])
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

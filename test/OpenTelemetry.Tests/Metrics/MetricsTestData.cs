@@ -40,5 +40,20 @@ namespace OpenTelemetry.Metrics.Tests
                     new object[] { "my_metric2" },
                     new object[] { new string('m', 63) },
            };
+
+        public static IEnumerable<object[]> ValidHistogramBounds
+            => new List<object[]>
+            {
+                new object[] { 0, new double[] { } },
+                new object[] { 1, new double[] { 10 } },
+                new object[] { 2, new double[] { 10, 20 } },
+            };
+
+        public static IEnumerable<object[]> InvalidHistogramBounds
+            => new List<object[]>
+            {
+                new object[] { 0, new double[] { 10, 10 } },
+                new object[] { 1, new double[] { 20, 10 } },
+            };
     }
 }

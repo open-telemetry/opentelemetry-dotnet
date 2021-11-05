@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -76,6 +77,29 @@ namespace OpenTelemetry.Metrics.Tests
                 .Build());
 
             Assert.Contains($"Custom view name {viewNewName} is invalid.", ex.Message);
+        }
+
+        [Theory]
+        [MemberData(nameof(MetricsTestData.ValidHistogramBounds), MemberType = typeof(MetricsTestData))]
+        public void AddViewWithValidHistogramBounds(int index, double[] bounds)
+        {
+            Sdk.CreateMeterProviderBuilder()
+                .AddView("name1", new HistogramConfiguration { BucketBounds = bounds })
+                .Build();
+        }
+
+        [Theory]
+        [MemberData(nameof(MetricsTestData.InvalidHistogramBounds), MemberType = typeof(MetricsTestData))]
+        public void AddViewWithInvalidHistogramBoundsThrowsArgumentException(int index, double[] bounds)
+        {
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{index}");
+
+            var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView("name1", new HistogramConfiguration { BucketBounds = bounds })
+                .Build());
+
+            Assert.Contains("Must be in ascending order with distinct values", ex.Message);
         }
 
         [Fact]
