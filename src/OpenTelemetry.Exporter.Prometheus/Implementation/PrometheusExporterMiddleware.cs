@@ -21,6 +21,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus
@@ -39,10 +40,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <param name="next"><see cref="RequestDelegate"/>.</param>
         public PrometheusExporterMiddleware(MeterProvider meterProvider, RequestDelegate next)
         {
-            if (meterProvider == null)
-            {
-                throw new ArgumentNullException(nameof(meterProvider));
-            }
+            Guard.Null(meterProvider, nameof(meterProvider));
 
             if (!meterProvider.TryFindExporter(out PrometheusExporter exporter))
             {

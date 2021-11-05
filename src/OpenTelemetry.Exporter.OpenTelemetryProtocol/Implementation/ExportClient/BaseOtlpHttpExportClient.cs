@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
 {
@@ -27,15 +28,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     {
         protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient = null)
         {
-            this.Options = options ?? throw new ArgumentNullException(nameof(options));
+            Guard.Null(options, nameof(options));
+            Guard.InvalidTimeout(options.TimeoutMilliseconds, $"{nameof(options)}.{nameof(options.TimeoutMilliseconds)}");
 
-            if (this.Options.TimeoutMilliseconds <= 0)
-            {
-                throw new ArgumentException("Timeout value provided is not a positive number.", nameof(this.Options.TimeoutMilliseconds));
-            }
-
+            this.Options = options;
             this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
-
             this.HttpClient = httpClient ?? new HttpClient { Timeout = TimeSpan.FromMilliseconds(this.Options.TimeoutMilliseconds) };
         }
 

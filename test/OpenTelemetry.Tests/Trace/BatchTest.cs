@@ -25,9 +25,9 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckConstructorExceptions()
         {
-            Assert.Throws<ArgumentNullException>(() => new Batch<string>(null));
-
-            // Assert.Throws<ArgumentNullException>(() => new Batch<string>(null, 1));
+            Assert.Throws<ArgumentNullException>(() => new Batch<string>((string[])null, 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new Batch<string>(Array.Empty<string>(), -1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new Batch<string>(Array.Empty<string>(), 1));
         }
 
         [Fact]
@@ -130,6 +130,34 @@ namespace OpenTelemetry.Trace.Tests
             var batch = new Batch<string>(value);
             var enumerator = batch.GetEnumerator();
             Assert.Throws<NotSupportedException>(() => enumerator.Reset());
+        }
+
+        [Fact]
+        public void DrainIntoNewBatchTest()
+        {
+            var circularBuffer = new CircularBuffer<string>(100);
+            circularBuffer.Add("a");
+            circularBuffer.Add("b");
+
+            Batch<string> batch = new Batch<string>(circularBuffer, 10);
+
+            Assert.Equal(2, batch.Count);
+
+            string[] storage = new string[10];
+            int selectedItemCount = 0;
+            foreach (string item in batch)
+            {
+                if (item == "b")
+                {
+                    storage[selectedItemCount++] = item;
+                }
+            }
+
+            batch = new Batch<string>(storage, selectedItemCount);
+
+            Assert.Equal(1, batch.Count);
+
+            this.ValidateEnumerator(batch.GetEnumerator(), "b");
         }
 
         private void ValidateEnumerator(Batch<string>.Enumerator enumerator, string expected)
