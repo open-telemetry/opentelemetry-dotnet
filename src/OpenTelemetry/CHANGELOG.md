@@ -25,6 +25,10 @@ Released 2021-Oct-08
 * TracerProviderBuilder.AddLegacySource now supports wildcard activity names.
   ([#2183](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2183))
 
+* Instrument and View names are validated
+  [according with the spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument).
+  ([#2470](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2470))
+
 ## 1.2.0-alpha4
 
 Released 2021-Sep-23

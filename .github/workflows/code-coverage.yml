@@ -13,6 +13,7 @@ on:
 jobs:
   build-test-report:
     runs-on: ${{ matrix.os }}
+    # https://github.com/actions/setup-dotnet/issues/122
 
     strategy:
       fail-fast: false
@@ -20,11 +21,17 @@ jobs:
         os: [windows-latest]
     env:
       OS: ${{ matrix.os }}
+      DOTNET_MULTILEVEL_LOOKUP: 1
 
     steps:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0 # fetching all
+
+    - uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0.x'
+        include-prerelease: true
 
     - name: Install dependencies
       run: dotnet restore
