@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#if NETCOREAPP3_1_OR_GREATER
 using System;
+#endif
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -36,6 +38,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteDouble(byte[] buffer, int cursor, double value) // TODO: handle +Inf and -Inf
         {
+#if NETCOREAPP3_1_OR_GREATER
             Span<char> span = stackalloc char[128];
 
             var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
@@ -45,6 +48,10 @@ namespace OpenTelemetry.Exporter.Prometheus
             {
                 buffer[cursor++] = unchecked((byte)span[i]);
             }
+#else
+            var repr = value.ToString(CultureInfo.InvariantCulture);
+            cursor += Encoding.UTF8.GetBytes(repr, 0, repr.Length, buffer, cursor);
+#endif
 
             return cursor;
         }
@@ -52,6 +59,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteLong(byte[] buffer, int cursor, long value)
         {
+#if NETCOREAPP3_1_OR_GREATER
             Span<char> span = stackalloc char[20];
 
             var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
@@ -61,6 +69,10 @@ namespace OpenTelemetry.Exporter.Prometheus
             {
                 buffer[cursor++] = unchecked((byte)span[i]);
             }
+#else
+            var repr = value.ToString(CultureInfo.InvariantCulture);
+            cursor += Encoding.UTF8.GetBytes(repr, 0, repr.Length, buffer, cursor);
+#endif
 
             return cursor;
         }
