@@ -56,16 +56,15 @@ namespace Examples.Console
                 })
                 .Build();
 
+#pragma warning disable SA1000 // KeywordsMustBeSpacedCorrectly https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/3214
             ObservableGauge<long> gauge = MyMeter.CreateObservableGauge(
             "myGauge",
             () =>
             {
-                var tag1 = new KeyValuePair<string, object>("tag1", "value1");
-                var tag2 = new KeyValuePair<string, object>("tag2", "value2");
-
                 return new List<Measurement<long>>()
                 {
-                    new Measurement<long>(ThreadLocalRandom.Value.Next(1, 1000), tag1, tag2),
+                    new Measurement<long>(ThreadLocalRandom.Value.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2")),
+                    new Measurement<long>(ThreadLocalRandom.Value.Next(1, 1000), new("tag1", "value1"), new("tag2", "value3")),
                 };
             },
             description: "A gauge for demonstration purpose.");
@@ -75,25 +74,15 @@ namespace Examples.Console
             {
                 while (!token.IsCancellationRequested)
                 {
-                    Counter.Add(
-                                9.9,
-                                new KeyValuePair<string, object>("tag1", "value1"),
-                                new KeyValuePair<string, object>("tag2", "value2"));
-
-                    Counter.Add(
-                                99.9,
-                                new KeyValuePair<string, object>("tag1", "anothervalue"),
-                                new KeyValuePair<string, object>("tag2", "somethingelse"));
-
-                    MyHistogram.Record(
-                            ThreadLocalRandom.Value.Next(1, 1500),
-                            new KeyValuePair<string, object>("tag1", "value1"),
-                            new KeyValuePair<string, object>("tag2", "value2"));
+                    Counter.Add(9.9, new("name", "apple"), new("color", "red"));
+                    Counter.Add(99.9, new("name", "lemon"), new("color", "yellow"));
+                    MyHistogram.Record(ThreadLocalRandom.Value.Next(1, 1500), new("tag1", "value1"), new("tag2", "value2"));
 
                     Task.Delay(10).Wait();
                 }
             });
             writeMetricTask.Start();
+#pragma warning restore SA1000 // KeywordsMustBeSpacedCorrectly
 
             token.CancelAfter(totalDurationInMins * 60 * 1000);
 
