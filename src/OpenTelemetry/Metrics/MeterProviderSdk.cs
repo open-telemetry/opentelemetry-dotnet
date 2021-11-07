@@ -130,7 +130,7 @@ namespace OpenTelemetry.Metrics
                                 // Validate the histogram bounds
                                 if (!this.IsSortedAndDistinct(histogramConfiguration.BucketBounds))
                                 {
-                                    throw new ArgumentException("Must be in ascending order with distinct values", $"{histogramConfiguration}.{histogramConfiguration.BucketBounds}");
+                                    // TODO: Log that the histogram bounds are invalid
                                 }
                             }
 
