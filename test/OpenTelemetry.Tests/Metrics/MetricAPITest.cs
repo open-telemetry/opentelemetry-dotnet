@@ -44,7 +44,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ObserverCallbackTest()
         {
-            using var meter = new Meter("ObserverCallbackErrorTest");
+            using var meter = new Meter(Utils.GetCurrentMethodName());
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ObserverCallbackExceptionTest()
         {
-            using var meter = new Meter("ObserverCallbackErrorTest");
+            using var meter = new Meter(Utils.GetCurrentMethodName());
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
@@ -124,11 +124,11 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 PreferredAggregationTemporality = temporality,
             };
-            using var meter1 = new Meter("TestDuplicateMetricName1");
-            using var meter2 = new Meter("TestDuplicateMetricName2");
+            using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.1.{temporality}");
+            using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.2.{temporality}");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter("TestDuplicateMetricName1")
-                .AddMeter("TestDuplicateMetricName2")
+                .AddMeter(meter1.Name)
+                .AddMeter(meter2.Name)
                 .AddReader(metricReader)
                 .Build();
 
@@ -162,22 +162,12 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(false)]
         public void MeterSourcesWildcardSupportMatchTest(bool hasView)
         {
-            var meterNames = new[]
-            {
-                "AbcCompany.XyzProduct.ComponentA",
-                "abcCompany.xYzProduct.componentC", // Wildcard match is case insensitive.
-                "DefCompany.AbcProduct.ComponentC",
-                "DefCompany.XyzProduct.ComponentC", // Wildcard match supports matching multiple patterns.
-                "GhiCompany.qweProduct.ComponentN",
-                "SomeCompany.SomeProduct.SomeComponent",
-            };
-
-            using var meter1 = new Meter(meterNames[0]);
-            using var meter2 = new Meter(meterNames[1]);
-            using var meter3 = new Meter(meterNames[2]);
-            using var meter4 = new Meter(meterNames[3]);
-            using var meter5 = new Meter(meterNames[4]);
-            using var meter6 = new Meter(meterNames[5]);
+            using var meter1 = new Meter("AbcCompany.XyzProduct.ComponentA");
+            using var meter2 = new Meter("abcCompany.xYzProduct.componentC"); // Wildcard match is case insensitive.
+            using var meter3 = new Meter("DefCompany.AbcProduct.ComponentC");
+            using var meter4 = new Meter("DefCompany.XyzProduct.ComponentC"); // Wildcard match supports matching multiple patterns.
+            using var meter5 = new Meter("GhiCompany.qweProduct.ComponentN");
+            using var meter6 = new Meter("SomeCompany.SomeProduct.SomeComponent");
 
             var exportedItems = new List<Metric>();
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -225,14 +215,8 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(false)]
         public void MeterSourcesWildcardSupportNegativeTestNoMeterAdded(bool hasView)
         {
-            var meterNames = new[]
-            {
-                "AbcCompany.XyzProduct.ComponentA",
-                "abcCompany.xYzProduct.componentC",
-            };
-
-            using var meter1 = new Meter(meterNames[0]);
-            using var meter2 = new Meter(meterNames[1]);
+            using var meter1 = new Meter($"AbcCompany.XyzProduct.ComponentA.{hasView}");
+            using var meter2 = new Meter($"abcCompany.xYzProduct.componentC.{hasView}");
 
             var exportedItems = new List<Metric>();
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -266,10 +250,10 @@ namespace OpenTelemetry.Metrics.Tests
                 PreferredAggregationTemporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
             };
 
-            using var meter = new Meter("TestMeter");
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
             var counterLong = meter.CreateCounter<long>("mycounter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter("TestMeter")
+                .AddMeter(meter.Name)
                 .AddReader(metricReader)
                 .Build();
 
@@ -325,7 +309,6 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(false)]
         public void ObservableCounterAggregationTest(bool exportDelta)
         {
-            var meterName = "TestMeter" + exportDelta;
             var metricItems = new List<Metric>();
             var metricExporter = new InMemoryExporter<Metric>(metricItems);
 
@@ -334,9 +317,9 @@ namespace OpenTelemetry.Metrics.Tests
                 PreferredAggregationTemporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
             };
 
-            using var meter = new Meter(meterName);
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
             int i = 1;
-            var counterLong = meter.CreateObservableCounter<long>(
+            var counterLong = meter.CreateObservableCounter(
             "observable-counter",
             () =>
             {
@@ -346,7 +329,7 @@ namespace OpenTelemetry.Metrics.Tests
                 };
             });
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meterName)
+                .AddMeter(meter.Name)
                 .AddReader(metricReader)
                 .Build();
 
@@ -406,10 +389,10 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 PreferredAggregationTemporality = temporality,
             };
-            using var meter = new Meter("TestPointCapMeter");
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
             var counterLong = meter.CreateCounter<long>("mycounterCapTest");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter("TestPointCapMeter")
+                .AddMeter(meter.Name)
                 .AddReader(metricReader)
                 .Build();
 
@@ -450,10 +433,10 @@ namespace OpenTelemetry.Metrics.Tests
                 PreferredAggregationTemporality = AggregationTemporality.Cumulative,
             };
 
-            using var meter = new Meter("TestLongCounterMeter");
+            using var meter = new Meter(Utils.GetCurrentMethodName());
             var counterLong = meter.CreateCounter<long>("mycounter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter("TestLongCounterMeter")
+                .AddMeter(meter.Name)
                 .AddReader(metricReader)
                 .Build();
 
@@ -511,10 +494,10 @@ namespace OpenTelemetry.Metrics.Tests
                 PreferredAggregationTemporality = AggregationTemporality.Cumulative,
             };
 
-            using var meter = new Meter("TestDoubleCounterMeter");
+            using var meter = new Meter(Utils.GetCurrentMethodName());
             var counterDouble = meter.CreateCounter<double>("mycounter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter("TestDoubleCounterMeter")
+                .AddMeter(meter.Name)
                 .AddReader(metricReader)
                 .Build();
 
