@@ -28,9 +28,9 @@ namespace Examples.Console
     internal class TestPrometheusExporter
     {
         private static readonly Meter MyMeter = new Meter("TestMeter");
-        private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("myCounter");
-        private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("myHistogram");
-        private static readonly Random RandomGenerator = new Random();
+        private static readonly Counter<double> Counter = MyMeter.CreateCounter<double>("myCounter", description: "A counter for demonstration purpose.");
+        private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("myHistogram", description: "A histogram for demonstration purpose.");
+        private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());
 
         internal static object Run(int port, int totalDurationInMins)
         {
@@ -57,7 +57,7 @@ namespace Examples.Console
                 .Build();
 
             ObservableGauge<long> gauge = MyMeter.CreateObservableGauge(
-            "Gauge",
+            "myGauge",
             () =>
             {
                 var tag1 = new KeyValuePair<string, object>("tag1", "value1");
@@ -65,9 +65,10 @@ namespace Examples.Console
 
                 return new List<Measurement<long>>()
                 {
-                    new Measurement<long>(RandomGenerator.Next(1, 1000), tag1, tag2),
+                    new Measurement<long>(ThreadLocalRandom.Value.Next(1, 1000), tag1, tag2),
                 };
-            });
+            },
+            description: "A gauge for demonstration purpose.");
 
             using var token = new CancellationTokenSource();
             Task writeMetricTask = new Task(() =>
@@ -75,17 +76,17 @@ namespace Examples.Console
                 while (!token.IsCancellationRequested)
                 {
                     Counter.Add(
-                                10,
+                                9.9,
                                 new KeyValuePair<string, object>("tag1", "value1"),
                                 new KeyValuePair<string, object>("tag2", "value2"));
 
                     Counter.Add(
-                                100,
+                                99.9,
                                 new KeyValuePair<string, object>("tag1", "anothervalue"),
                                 new KeyValuePair<string, object>("tag2", "somethingelse"));
 
                     MyHistogram.Record(
-                            RandomGenerator.Next(1, 1500),
+                            ThreadLocalRandom.Value.Next(1, 1500),
                             new KeyValuePair<string, object>("tag1", "value1"),
                             new KeyValuePair<string, object>("tag2", "value2"));
 

@@ -137,7 +137,15 @@ namespace OpenTelemetry.Exporter.Prometheus
                         {
                             try
                             {
-                                this.exporter.WriteMetricsCollection(metrics, ctx.Response.OutputStream, this.exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false).GetAwaiter().GetResult();
+                                var buffer = new byte[65536];
+                                var cursor = 0;
+
+                                foreach (var metric in metrics)
+                                {
+                                    cursor = PrometheusSerializer.WriteMetric(buffer, cursor, metric);
+                                }
+
+                                ctx.Response.OutputStream.Write(buffer, 0, cursor - 0);
                                 return ExportResult.Success;
                             }
                             catch (Exception)
