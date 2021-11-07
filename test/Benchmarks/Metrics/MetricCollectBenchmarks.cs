@@ -90,12 +90,14 @@ namespace Benchmarks.Metrics
             {
                 PreferredAggregationTemporality = AggregationTemporality.Cumulative,
             };
+
+            this.meter = new Meter(Utils.GetCurrentMethodName());
+
             this.provider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter("TestMeter")
+                .AddMeter(this.meter.Name)
                 .AddReader(this.reader)
                 .Build();
 
-            this.meter = new Meter("TestMeter");
             this.counter = this.meter.CreateCounter<double>("counter");
             this.token = new CancellationTokenSource();
             this.writeMetricTask = new Task(() =>

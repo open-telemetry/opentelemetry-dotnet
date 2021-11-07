@@ -21,14 +21,13 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
     public class PrometheusExporterMetricsHttpServerTests
     {
-        private const string MeterName = "PrometheusExporterMetricsHttpServerTests.Meter";
-
         [Fact]
         public async Task PrometheusExporterMetricsHttpServerIntegration()
         {
@@ -38,13 +37,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             MeterProvider provider;
             string address = null;
 
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+
             while (true)
             {
                 try
                 {
                     port = random.Next(2000, 5000);
                     provider = Sdk.CreateMeterProviderBuilder()
-                        .AddMeter(MeterName)
+                        .AddMeter(meter.Name)
                         .AddPrometheusExporter(o =>
                         {
                             o.GetUtcNowDateTimeOffset = () => new DateTimeOffset(2021, 9, 30, 22, 30, 0, TimeSpan.Zero);
@@ -88,8 +89,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 new KeyValuePair<string, object>("key1", "value1"),
                 new KeyValuePair<string, object>("key2", "value2"),
             };
-
-            using var meter = new Meter(MeterName, "0.0.1");
 
             var counter = meter.CreateCounter<double>("counter_double");
             counter.Add(100.18D, tags);

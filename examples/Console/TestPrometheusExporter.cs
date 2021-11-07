@@ -27,7 +27,7 @@ namespace Examples.Console
 {
     internal class TestPrometheusExporter
     {
-        private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
+        private static readonly Meter MyMeter = new Meter("TestMeter");
         private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("myCounter");
         private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("myHistogram");
         private static readonly Random RandomGenerator = new Random();
@@ -48,7 +48,7 @@ namespace Examples.Console
                 - targets: ['localhost:9184']
             */
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter("TestMeter")
+                .AddMeter(MyMeter.Name)
                 .AddPrometheusExporter(opt =>
                 {
                     opt.StartHttpListener = true;
@@ -56,7 +56,7 @@ namespace Examples.Console
                 })
                 .Build();
 
-            ObservableGauge<long> gauge = MyMeter.CreateObservableGauge<long>(
+            ObservableGauge<long> gauge = MyMeter.CreateObservableGauge(
             "Gauge",
             () =>
             {
