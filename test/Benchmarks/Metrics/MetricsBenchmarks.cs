@@ -21,6 +21,7 @@ using System.Diagnostics.Metrics;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Tests;
 
 /*
 BenchmarkDotNet=v0.12.1, OS=Windows 10.0.19043
@@ -73,14 +74,15 @@ namespace Benchmarks.Metrics
         [GlobalSetup]
         public void Setup()
         {
+            this.meter = new Meter(Utils.GetCurrentMethodName());
+
             if (this.WithSDK)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
-                    .AddMeter("TestMeter") // All instruments from this meter are enabled.
+                    .AddMeter(this.meter.Name) // All instruments from this meter are enabled.
                     .Build();
             }
 
-            this.meter = new Meter("TestMeter");
             this.counter = this.meter.CreateCounter<long>("counter");
         }
 
