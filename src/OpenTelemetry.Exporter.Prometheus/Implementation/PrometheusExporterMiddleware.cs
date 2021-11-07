@@ -55,7 +55,9 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// </summary>
         /// <param name="httpContext"> context.</param>
         /// <returns>Task.</returns>
+#pragma warning disable CS1998 // This async method lacks 'await' operators and will run synchronously.
         public async Task InvokeAsync(HttpContext httpContext)
+#pragma warning restore CS1998 // This async method lacks 'await' operators and will run synchronously.
         {
             Debug.Assert(httpContext != null, "httpContext should not be null");
 
