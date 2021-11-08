@@ -46,6 +46,8 @@ namespace OpenTelemetry.Metrics.Tests
            {
                     new object[] { new double[] { 0, 0 } },
                     new object[] { new double[] { 1, 0 } },
+                    new object[] { new double[] { 0, 1, 1, 2 } },
+                    new object[] { new double[] { 0, 1, 2, -1 } },
            };
     }
 }
