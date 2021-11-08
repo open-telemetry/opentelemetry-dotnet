@@ -138,13 +138,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                             try
                             {
                                 var buffer = new byte[65536];
-                                var cursor = 0;
-
-                                foreach (var metric in metrics)
-                                {
-                                    cursor = PrometheusSerializer.WriteMetric(buffer, cursor, metric);
-                                }
-
+                                var cursor = PrometheusSerializer.WriteMetrics(buffer, 0, metrics);
                                 ctx.Response.OutputStream.Write(buffer, 0, cursor - 0);
                                 return ExportResult.Success;
                             }

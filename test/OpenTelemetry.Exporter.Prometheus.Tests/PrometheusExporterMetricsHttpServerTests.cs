@@ -108,7 +108,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var index = content.LastIndexOf(' ');
 
             Assert.Equal(
-                $"# TYPE counter_double counter\ncounter_double {{key1=\"value1\",key2=\"value2\"}} 101.17",
+                $"# TYPE counter_double counter\ncounter_double{{key1=\"value1\",key2=\"value2\"}} 101.17",
                 content.Substring(0, index));
 
             Assert.Equal('\n', content[content.Length - 1]);

@@ -25,6 +25,27 @@ namespace OpenTelemetry.Exporter.Prometheus
     {
         private static readonly string[] MetricTypes = new string[] { "untyped", "counter", "gauge", "histogram", "summary" };
 
+        public static int WriteMetrics(byte[] buffer, int cursor, Batch<Metric> metrics)
+        {
+            var spacing = false;
+
+            foreach (var metric in metrics)
+            {
+                if (spacing)
+                {
+                    buffer[cursor++] = ASCII_LINEFEED;
+                }
+                else
+                {
+                    spacing = true;
+                }
+
+                cursor = WriteMetric(buffer, cursor, metric);
+            }
+
+            return cursor;
+        }
+
         public static int WriteMetric(byte[] buffer, int cursor, Metric metric)
         {
             if (metric.Description != null)
@@ -45,7 +66,6 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                     // Counter and Gauge
                     cursor = WriteUnicodeStringNoEscape(buffer, cursor, metric.Name);
-                    buffer[cursor++] = unchecked((byte)' ');
                     buffer[cursor++] = unchecked((byte)'{');
 
                     for (var i = 0; i < keys.Length; i++)
@@ -84,66 +104,6 @@ namespace OpenTelemetry.Exporter.Prometheus
                     var values = metricPoint.Values;
                     var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
-                    // Histogram sum
-                    cursor = WriteUnicodeStringNoEscape(buffer, cursor, metric.Name);
-                    buffer[cursor++] = unchecked((byte)'_');
-                    buffer[cursor++] = unchecked((byte)'s');
-                    buffer[cursor++] = unchecked((byte)'u');
-                    buffer[cursor++] = unchecked((byte)'m');
-                    buffer[cursor++] = unchecked((byte)' ');
-                    buffer[cursor++] = unchecked((byte)'{');
-
-                    for (var i = 0; i < keys.Length; i++)
-                    {
-                        if (i > 0)
-                        {
-                            buffer[cursor++] = unchecked((byte)',');
-                        }
-
-                        cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
-                    }
-
-                    buffer[cursor++] = unchecked((byte)'}');
-                    buffer[cursor++] = unchecked((byte)' ');
-
-                    cursor = WriteDouble(buffer, cursor, metricPoint.DoubleValue);
-
-                    buffer[cursor++] = unchecked((byte)' ');
-                    cursor = WriteLong(buffer, cursor, timestamp);
-
-                    buffer[cursor++] = ASCII_LINEFEED;
-
-                    // Histogram count
-                    cursor = WriteUnicodeStringNoEscape(buffer, cursor, metric.Name);
-                    buffer[cursor++] = unchecked((byte)'_');
-                    buffer[cursor++] = unchecked((byte)'c');
-                    buffer[cursor++] = unchecked((byte)'o');
-                    buffer[cursor++] = unchecked((byte)'u');
-                    buffer[cursor++] = unchecked((byte)'n');
-                    buffer[cursor++] = unchecked((byte)'t');
-                    buffer[cursor++] = unchecked((byte)' ');
-                    buffer[cursor++] = unchecked((byte)'{');
-
-                    for (var i = 0; i < keys.Length; i++)
-                    {
-                        if (i > 0)
-                        {
-                            buffer[cursor++] = unchecked((byte)',');
-                        }
-
-                        cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
-                    }
-
-                    buffer[cursor++] = unchecked((byte)'}');
-                    buffer[cursor++] = unchecked((byte)' ');
-
-                    cursor = WriteLong(buffer, cursor, metricPoint.LongValue);
-
-                    buffer[cursor++] = unchecked((byte)' ');
-                    cursor = WriteLong(buffer, cursor, timestamp);
-
-                    buffer[cursor++] = ASCII_LINEFEED;
-
                     // Histogram buckets
                     var bucketCounts = metricPoint.BucketCounts;
                     var explicitBounds = metricPoint.ExplicitBounds;
@@ -160,7 +120,6 @@ namespace OpenTelemetry.Exporter.Prometheus
                         buffer[cursor++] = unchecked((byte)'k');
                         buffer[cursor++] = unchecked((byte)'e');
                         buffer[cursor++] = unchecked((byte)'t');
-                        buffer[cursor++] = unchecked((byte)' ');
                         buffer[cursor++] = unchecked((byte)'{');
 
                         for (var i = 0; i < keys.Length; i++)
@@ -197,6 +156,64 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                         buffer[cursor++] = ASCII_LINEFEED;
                     }
+
+                    // Histogram sum
+                    cursor = WriteUnicodeStringNoEscape(buffer, cursor, metric.Name);
+                    buffer[cursor++] = unchecked((byte)'_');
+                    buffer[cursor++] = unchecked((byte)'s');
+                    buffer[cursor++] = unchecked((byte)'u');
+                    buffer[cursor++] = unchecked((byte)'m');
+                    buffer[cursor++] = unchecked((byte)'{');
+
+                    for (var i = 0; i < keys.Length; i++)
+                    {
+                        if (i > 0)
+                        {
+                            buffer[cursor++] = unchecked((byte)',');
+                        }
+
+                        cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
+                    }
+
+                    buffer[cursor++] = unchecked((byte)'}');
+                    buffer[cursor++] = unchecked((byte)' ');
+
+                    cursor = WriteDouble(buffer, cursor, metricPoint.DoubleValue);
+
+                    buffer[cursor++] = unchecked((byte)' ');
+                    cursor = WriteLong(buffer, cursor, timestamp);
+
+                    buffer[cursor++] = ASCII_LINEFEED;
+
+                    // Histogram count
+                    cursor = WriteUnicodeStringNoEscape(buffer, cursor, metric.Name);
+                    buffer[cursor++] = unchecked((byte)'_');
+                    buffer[cursor++] = unchecked((byte)'c');
+                    buffer[cursor++] = unchecked((byte)'o');
+                    buffer[cursor++] = unchecked((byte)'u');
+                    buffer[cursor++] = unchecked((byte)'n');
+                    buffer[cursor++] = unchecked((byte)'t');
+                    buffer[cursor++] = unchecked((byte)'{');
+
+                    for (var i = 0; i < keys.Length; i++)
+                    {
+                        if (i > 0)
+                        {
+                            buffer[cursor++] = unchecked((byte)',');
+                        }
+
+                        cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
+                    }
+
+                    buffer[cursor++] = unchecked((byte)'}');
+                    buffer[cursor++] = unchecked((byte)' ');
+
+                    cursor = WriteLong(buffer, cursor, totalCount);
+
+                    buffer[cursor++] = unchecked((byte)' ');
+                    cursor = WriteLong(buffer, cursor, timestamp);
+
+                    buffer[cursor++] = ASCII_LINEFEED;
                 }
             }
 
