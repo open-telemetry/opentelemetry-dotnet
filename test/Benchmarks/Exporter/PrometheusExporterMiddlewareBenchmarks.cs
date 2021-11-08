@@ -27,6 +27,7 @@ using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Tests;
 
 namespace Benchmarks.Exporter
 {
@@ -45,11 +46,11 @@ namespace Benchmarks.Exporter
         [GlobalSetup]
         public void GlobalSetup()
         {
-            this.meter = new Meter("TestMeter", "1.0.0");
+            this.meter = new Meter(Utils.GetCurrentMethodName());
             this.responseStream = new MemoryStream(1024 * 1024);
 
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter("TestMeter")
+                .AddMeter(this.meter.Name)
                 .AddPrometheusExporter()
                 .Build();
 
