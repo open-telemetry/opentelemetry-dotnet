@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Exporter.Zipkin.Tests;
 using OpenTelemetry.Internal;
@@ -117,6 +118,85 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
             }
 
             if (expectedStatusCode == StatusCode.Error)
+            {
+                Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == string.Empty);
+            }
+            else
+            {
+                Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == "error");
+            }
+        }
+
+        [Theory]
+        [InlineData(ActivityStatusCode.Unset)]
+        [InlineData(ActivityStatusCode.Ok)]
+        [InlineData(ActivityStatusCode.Error)]
+        public void ToZipkinSpan_Activity_Status_And_StatusDescription_is_Set(ActivityStatusCode expectedStatusCode)
+        {
+            // Arrange
+            var activity = ZipkinExporterTests.CreateTestActivity();
+
+            activity.SetStatus(expectedStatusCode);
+
+            // Act
+            var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
+
+            // Assert
+
+            Assert.Equal(expectedStatusCode, activity.Status);
+
+            if (expectedStatusCode == ActivityStatusCode.Unset)
+            {
+                Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == SpanAttributeConstants.StatusCodeKey);
+            }
+            else
+            {
+                Assert.Equal(
+                    expectedStatusCode,
+                    zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            }
+
+            if (expectedStatusCode == ActivityStatusCode.Error)
+            {
+                Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == string.Empty);
+            }
+            else
+            {
+                Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == "error");
+            }
+        }
+
+        [Theory]
+        [InlineData(ActivityStatusCode.Ok, "ERROR")]
+        [InlineData(ActivityStatusCode.Error, "OK")]
+        public void ActivityStatusSetUsingTags_Takes_precedence_Over_Activity_Properties(ActivityStatusCode activityStatus, string statusCodeTagValue)
+        {
+            // Arrange
+            var activity = ZipkinExporterTests.CreateTestActivity();
+
+            activity.SetStatus(activityStatus);
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
+
+            // Act
+            var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
+
+            // Assert
+            Assert.Equal(
+                    statusCodeTagValue,
+                    zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+
+            if (statusCodeTagValue == "unset")
+            {
+                Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == SpanAttributeConstants.StatusCodeKey);
+            }
+            else
+            {
+                Assert.Equal(
+                    statusCodeTagValue,
+                    zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            }
+
+            if (statusCodeTagValue == "ERROR")
             {
                 Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == string.Empty);
             }

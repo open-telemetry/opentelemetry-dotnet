@@ -72,7 +72,32 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 }
             }
 
-            if (tagState.StatusCode == StatusCode.Error)
+            // Starting version 6.0.0 in System.Diagnostic.DiagnosticSource
+            // Status and StatusDescription can be set using activity.Setstatus(ActivityStatusCode, string)
+            // Look up activity.Status and activity.StatusDescription
+            // only if status was not set using ActivityExtensions in Api
+            if (!tagState.StatusCode.HasValue || tagState.StatusCode == StatusCode.Unset)
+            {
+                if (activity.Status == ActivityStatusCode.Ok || activity.Status == ActivityStatusCode.Error)
+                {
+                    PooledList<KeyValuePair<string, object>>.Add(
+                    ref tagState.Tags,
+                    new KeyValuePair<string, object>(
+                        SpanAttributeConstants.StatusCodeKey,
+                        activity.Status));
+
+                    if (activity.Status == ActivityStatusCode.Error)
+                    {
+                        // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
+                        PooledList<KeyValuePair<string, object>>.Add(
+                            ref tagState.Tags,
+                            new KeyValuePair<string, object>(
+                                ZipkinErrorFlagTagName,
+                                activity.StatusDescription ?? string.Empty));
+                    }
+                }
+            }
+            else if (tagState.StatusCode == StatusCode.Error)
             {
                 // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
                 PooledList<KeyValuePair<string, object>>.Add(
