@@ -342,11 +342,11 @@ namespace OpenTelemetry.Metrics
 
         private bool TrySetCollectPending()
         {
-            if (this.MetricPointStatus == MetricPointStatus.CandidateForRemoval || this.MetricPointStatus == MetricPointStatus.Unused)
+            if (this.MetricPointStatus == MetricPointStatus.NoPendingCollect || this.MetricPointStatus == MetricPointStatus.CandidateForRemoval || this.MetricPointStatus == MetricPointStatus.Unused)
             {
                 lock (this.lockObject)
                 {
-                    if (this.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
+                    if (this.MetricPointStatus == MetricPointStatus.NoPendingCollect || this.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
                     {
                         this.MetricPointStatus = MetricPointStatus.CollectPending;
                         return true;
