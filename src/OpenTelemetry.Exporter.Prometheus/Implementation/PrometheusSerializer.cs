@@ -195,6 +195,8 @@ namespace OpenTelemetry.Exporter.Prometheus
             Debug.Assert(metricName != null, $"{nameof(metricName)} was null.");
 
             cursor = WriteUnicodeStringNoEscape(buffer, cursor, "# HELP ");
+
+            // TODO: OpenTelemetry metric name is a superset of Prometheus metric name, need to convert/escape
             cursor = WriteUnicodeStringNoEscape(buffer, cursor, metricName);
 
             if (metricDescription != null)
@@ -215,7 +217,10 @@ namespace OpenTelemetry.Exporter.Prometheus
             Debug.Assert(metricType != null, $"{nameof(metricType)} was null.");
 
             cursor = WriteUnicodeStringNoEscape(buffer, cursor, "# TYPE ");
+
+            // TODO: OpenTelemetry metric name is a superset of Prometheus metric name, need to convert/escape
             cursor = WriteUnicodeStringNoEscape(buffer, cursor, metricName);
+
             buffer[cursor++] = unchecked((byte)' ');
             cursor = WriteUnicodeStringNoEscape(buffer, cursor, metricType);
 
