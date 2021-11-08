@@ -65,7 +65,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
                     // Counter and Gauge
-                    cursor = WriteUnicodeStringNoEscape(buffer, cursor, metric.Name);
+                    cursor = WriteMetricName(buffer, cursor, metric.Name);
                     buffer[cursor++] = unchecked((byte)'{');
 
                     for (var i = 0; i < keys.Length; i++)
@@ -91,6 +91,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     }
 
                     buffer[cursor++] = unchecked((byte)' ');
+
                     cursor = WriteLong(buffer, cursor, timestamp);
 
                     buffer[cursor++] = ASCII_LINEFEED;
@@ -112,15 +113,8 @@ namespace OpenTelemetry.Exporter.Prometheus
                     {
                         totalCount += bucketCounts[idxBound];
 
-                        cursor = WriteUnicodeStringNoEscape(buffer, cursor, metric.Name);
-                        buffer[cursor++] = unchecked((byte)'_');
-                        buffer[cursor++] = unchecked((byte)'b');
-                        buffer[cursor++] = unchecked((byte)'u');
-                        buffer[cursor++] = unchecked((byte)'c');
-                        buffer[cursor++] = unchecked((byte)'k');
-                        buffer[cursor++] = unchecked((byte)'e');
-                        buffer[cursor++] = unchecked((byte)'t');
-                        buffer[cursor++] = unchecked((byte)'{');
+                        cursor = WriteMetricName(buffer, cursor, metric.Name);
+                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
 
                         for (var i = 0; i < keys.Length; i++)
                         {
@@ -128,10 +122,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                             buffer[cursor++] = unchecked((byte)',');
                         }
 
-                        buffer[cursor++] = unchecked((byte)'l');
-                        buffer[cursor++] = unchecked((byte)'e');
-                        buffer[cursor++] = unchecked((byte)'=');
-                        buffer[cursor++] = unchecked((byte)'"');
+                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
 
                         if (idxBound < explicitBounds.Length)
                         {
@@ -139,31 +130,22 @@ namespace OpenTelemetry.Exporter.Prometheus
                         }
                         else
                         {
-                            buffer[cursor++] = unchecked((byte)'+');
-                            buffer[cursor++] = unchecked((byte)'I');
-                            buffer[cursor++] = unchecked((byte)'n');
-                            buffer[cursor++] = unchecked((byte)'f');
+                            cursor = WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
                         }
 
-                        buffer[cursor++] = unchecked((byte)'"');
-                        buffer[cursor++] = unchecked((byte)'}');
-                        buffer[cursor++] = unchecked((byte)' ');
+                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "\"} ");
 
                         cursor = WriteLong(buffer, cursor, totalCount);
-
                         buffer[cursor++] = unchecked((byte)' ');
+
                         cursor = WriteLong(buffer, cursor, timestamp);
 
                         buffer[cursor++] = ASCII_LINEFEED;
                     }
 
                     // Histogram sum
-                    cursor = WriteUnicodeStringNoEscape(buffer, cursor, metric.Name);
-                    buffer[cursor++] = unchecked((byte)'_');
-                    buffer[cursor++] = unchecked((byte)'s');
-                    buffer[cursor++] = unchecked((byte)'u');
-                    buffer[cursor++] = unchecked((byte)'m');
-                    buffer[cursor++] = unchecked((byte)'{');
+                    cursor = WriteMetricName(buffer, cursor, metric.Name);
+                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum{");
 
                     for (var i = 0; i < keys.Length; i++)
                     {
@@ -179,21 +161,15 @@ namespace OpenTelemetry.Exporter.Prometheus
                     buffer[cursor++] = unchecked((byte)' ');
 
                     cursor = WriteDouble(buffer, cursor, metricPoint.DoubleValue);
-
                     buffer[cursor++] = unchecked((byte)' ');
+
                     cursor = WriteLong(buffer, cursor, timestamp);
 
                     buffer[cursor++] = ASCII_LINEFEED;
 
                     // Histogram count
-                    cursor = WriteUnicodeStringNoEscape(buffer, cursor, metric.Name);
-                    buffer[cursor++] = unchecked((byte)'_');
-                    buffer[cursor++] = unchecked((byte)'c');
-                    buffer[cursor++] = unchecked((byte)'o');
-                    buffer[cursor++] = unchecked((byte)'u');
-                    buffer[cursor++] = unchecked((byte)'n');
-                    buffer[cursor++] = unchecked((byte)'t');
-                    buffer[cursor++] = unchecked((byte)'{');
+                    cursor = WriteMetricName(buffer, cursor, metric.Name);
+                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count{");
 
                     for (var i = 0; i < keys.Length; i++)
                     {
@@ -209,8 +185,8 @@ namespace OpenTelemetry.Exporter.Prometheus
                     buffer[cursor++] = unchecked((byte)' ');
 
                     cursor = WriteLong(buffer, cursor, totalCount);
-
                     buffer[cursor++] = unchecked((byte)' ');
+
                     cursor = WriteLong(buffer, cursor, timestamp);
 
                     buffer[cursor++] = ASCII_LINEFEED;

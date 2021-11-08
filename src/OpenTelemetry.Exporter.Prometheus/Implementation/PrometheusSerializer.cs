@@ -20,7 +20,6 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace OpenTelemetry.Exporter.Prometheus
 {
@@ -31,6 +30,8 @@ namespace OpenTelemetry.Exporter.Prometheus
     {
 #pragma warning disable SA1310 // Field name should not contain an underscore
         private const byte ASCII_QUOTATION_MARK = 0x22; // '"'
+        private const byte ASCII_FULL_STOP = 0x2E; // '.'
+        private const byte ASCII_HYPHEN_MINUS = 0x2D; // '-'
         private const byte ASCII_REVERSE_SOLIDUS = 0x5C; // '\\'
         private const byte ASCII_LINEFEED = 0x0A; // `\n`
 #pragma warning restore SA1310 // Field name should not contain an underscore
@@ -49,8 +50,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                 buffer[cursor++] = unchecked((byte)span[i]);
             }
 #else
-            var repr = value.ToString(CultureInfo.InvariantCulture);
-            cursor += Encoding.UTF8.GetBytes(repr, 0, repr.Length, buffer, cursor);
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString(CultureInfo.InvariantCulture));
 #endif
 
             return cursor;
@@ -70,17 +70,45 @@ namespace OpenTelemetry.Exporter.Prometheus
                 buffer[cursor++] = unchecked((byte)span[i]);
             }
 #else
-            var repr = value.ToString(CultureInfo.InvariantCulture);
-            cursor += Encoding.UTF8.GetBytes(repr, 0, repr.Length, buffer, cursor);
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString(CultureInfo.InvariantCulture));
 #endif
 
             return cursor;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int WriteUnicodeStringNoEscape(byte[] buffer, int cursor, string value)
+        public static int WriteAsciiStringNoEscape(byte[] buffer, int cursor, string value)
         {
-            cursor += Encoding.UTF8.GetBytes(value, 0, value.Length, buffer, cursor);
+            for (int i = 0; i < value.Length; i++)
+            {
+                buffer[cursor++] = unchecked((byte)value[i]);
+            }
+
+            return cursor;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int WriteUnicodeChar(byte[] buffer, int cursor, ushort ordinal)
+        {
+            if (ordinal <= 0x7F)
+            {
+                buffer[cursor++] = unchecked((byte)ordinal);
+            }
+            else if (ordinal <= 0x07FF)
+            {
+                buffer[cursor++] = unchecked((byte)(0b_1100_0000 | (ordinal >> 6)));
+                buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
+            }
+            else if (ordinal <= 0xFFFF)
+            {
+                buffer[cursor++] = unchecked((byte)(0b_1110_0000 | (ordinal >> 12)));
+                buffer[cursor++] = unchecked((byte)(0b_1000_0000 | ((ordinal >> 6) & 0b_0011_1111)));
+                buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
+            }
+            else
+            {
+                Debug.Assert(ordinal <= 0xFFFF, ".NET string should not go beyond Unicode BMP.");
+            }
 
             return cursor;
         }
@@ -102,26 +130,25 @@ namespace OpenTelemetry.Exporter.Prometheus
                         buffer[cursor++] = unchecked((byte)'n');
                         break;
                     default:
-                        if (ordinal <= 0x7F)
-                        {
-                            buffer[cursor++] = unchecked((byte)ordinal);
-                        }
-                        else if (ordinal <= 0x07FF)
-                        {
-                            buffer[cursor++] = unchecked((byte)(0b_1100_0000 | (ordinal >> 6)));
-                            buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
-                        }
-                        else if (ordinal <= 0xFFFF)
-                        {
-                            buffer[cursor++] = unchecked((byte)(0b_1110_0000 | (ordinal >> 12)));
-                            buffer[cursor++] = unchecked((byte)(0b_1000_0000 | ((ordinal >> 6) & 0b_0011_1111)));
-                            buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
-                        }
-                        else
-                        {
-                            Debug.Assert(ordinal <= 0xFFFF, ".NET string should not go beyond Unicode BMP.");
-                        }
+                        cursor = WriteUnicodeChar(buffer, cursor, ordinal);
+                        break;
+                }
+            }
 
+            return cursor;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int WriteLabelKey(byte[] buffer, int cursor, string value)
+        {
+            // TODO: needs to add proper escape logic here
+            for (int i = 0; i < value.Length; i++)
+            {
+                var ordinal = (ushort)value[i];
+                switch (ordinal)
+                {
+                    default:
+                        cursor = WriteUnicodeChar(buffer, cursor, ordinal);
                         break;
                 }
             }
@@ -150,26 +177,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                         buffer[cursor++] = unchecked((byte)'n');
                         break;
                     default:
-                        if (ordinal <= 0x7F)
-                        {
-                            buffer[cursor++] = unchecked((byte)ordinal);
-                        }
-                        else if (ordinal <= 0x07FF)
-                        {
-                            buffer[cursor++] = unchecked((byte)(0b_1100_0000 | (ordinal >> 6)));
-                            buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
-                        }
-                        else if (ordinal <= 0xFFFF)
-                        {
-                            buffer[cursor++] = unchecked((byte)(0b_1110_0000 | (ordinal >> 12)));
-                            buffer[cursor++] = unchecked((byte)(0b_1000_0000 | ((ordinal >> 6) & 0b_0011_1111)));
-                            buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
-                        }
-                        else
-                        {
-                            Debug.Assert(ordinal <= 0xFFFF, ".NET string should not go beyond Unicode BMP.");
-                        }
-
+                        cursor = WriteUnicodeChar(buffer, cursor, ordinal);
                         break;
                 }
             }
@@ -180,7 +188,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteLabel(byte[] buffer, int cursor, string labelKey, object labelValue)
         {
-            cursor = WriteUnicodeStringNoEscape(buffer, cursor, labelKey);
+            cursor = WriteLabelKey(buffer, cursor, labelKey);
             buffer[cursor++] = unchecked((byte)'=');
             buffer[cursor++] = unchecked((byte)'"');
             cursor = WriteLabelValue(buffer, cursor, labelValue?.ToString() ?? "null");
@@ -190,14 +198,33 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int WriteMetricName(byte[] buffer, int cursor, string value)
+        {
+            for (int i = 0; i < value.Length; i++)
+            {
+                var ordinal = (ushort)value[i];
+                switch (ordinal)
+                {
+                    case ASCII_FULL_STOP:
+                    case ASCII_HYPHEN_MINUS:
+                        buffer[cursor++] = unchecked((byte)'_');
+                        break;
+                    default:
+                        cursor = WriteUnicodeChar(buffer, cursor, ordinal);
+                        break;
+                }
+            }
+
+            return cursor;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteHelpText(byte[] buffer, int cursor, string metricName, string metricDescription = null)
         {
             Debug.Assert(metricName != null, $"{nameof(metricName)} was null.");
 
-            cursor = WriteUnicodeStringNoEscape(buffer, cursor, "# HELP ");
-
-            // TODO: OpenTelemetry metric name is a superset of Prometheus metric name, need to convert/escape
-            cursor = WriteUnicodeStringNoEscape(buffer, cursor, metricName);
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP ");
+            cursor = WriteMetricName(buffer, cursor, metricName);
 
             if (metricDescription != null)
             {
@@ -216,13 +243,10 @@ namespace OpenTelemetry.Exporter.Prometheus
             Debug.Assert(metricName != null, $"{nameof(metricName)} was null.");
             Debug.Assert(metricType != null, $"{nameof(metricType)} was null.");
 
-            cursor = WriteUnicodeStringNoEscape(buffer, cursor, "# TYPE ");
-
-            // TODO: OpenTelemetry metric name is a superset of Prometheus metric name, need to convert/escape
-            cursor = WriteUnicodeStringNoEscape(buffer, cursor, metricName);
-
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE ");
+            cursor = WriteMetricName(buffer, cursor, metricName);
             buffer[cursor++] = unchecked((byte)' ');
-            cursor = WriteUnicodeStringNoEscape(buffer, cursor, metricType);
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, metricType);
 
             buffer[cursor++] = ASCII_LINEFEED;
 
