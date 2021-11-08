@@ -22,7 +22,7 @@ using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    internal class Process
+    internal sealed class Process
     {
         public Process(string serviceName)
         {
@@ -46,8 +46,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         public string ServiceName { get; internal set; }
 
         internal Dictionary<string, JaegerTag> Tags { get; set; }
-
-        internal byte[] Message { get; set; }
 
         public override string ToString()
         {

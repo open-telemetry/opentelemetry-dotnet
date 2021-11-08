@@ -14,14 +14,33 @@
 // limitations under the License.
 // </copyright>
 
+#if NETSTANDARD2_0 || NET461
+using System;
+#endif
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    internal class EmitBatchArgs
+    internal sealed class EmitBatchArgs
     {
-        public static void Send(int seqId, Batch batch, TProtocol oprot)
+        public EmitBatchArgs(TProtocol protocol)
+        {
+            this.EmitBatchArgsBeginMessage = this.GenerateBeginMessage(protocol, out int seqIdPosition);
+            this.SeqIdPosition = seqIdPosition;
+            this.EmitBatchArgsEndMessage = this.GenerateEndMessage(protocol);
+        }
+
+        public byte[] EmitBatchArgsBeginMessage { get; }
+
+        public int SeqIdPosition { get; }
+
+        public byte[] EmitBatchArgsEndMessage { get; }
+
+        public int MinimumMessageSize => this.EmitBatchArgsBeginMessage.Length
+            + this.EmitBatchArgsEndMessage.Length;
+
+        /*public static void Write(int seqId, Batch batch, TProtocol oprot)
         {
             oprot.WriteMessageBegin(new TMessage("emitBatch", TMessageType.Oneway, seqId));
 
@@ -51,7 +70,40 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
 
             oprot.WriteMessageEnd();
-            oprot.Transport.Flush();
+        }*/
+
+        private byte[] GenerateBeginMessage(TProtocol oprot, out int seqIdPosition)
+        {
+            oprot.WriteMessageBegin(new TMessage("emitBatch", TMessageType.Oneway, 0), out seqIdPosition);
+
+            var struc = new TStruct("emitBatch_args");
+            oprot.WriteStructBegin(struc);
+
+            var field = new TField
+            {
+                Name = "batch",
+                Type = TType.Struct,
+                ID = 1,
+            };
+
+            oprot.WriteFieldBegin(field);
+
+            byte[] beginMessage = oprot.WrittenData.ToArray();
+            oprot.Clear();
+            return beginMessage;
+        }
+
+        private byte[] GenerateEndMessage(TProtocol oprot)
+        {
+            oprot.WriteFieldEnd();
+            oprot.WriteFieldStop();
+            oprot.WriteStructEnd();
+
+            oprot.WriteMessageEnd();
+
+            byte[] endMessage = oprot.WrittenData.ToArray();
+            oprot.Clear();
+            return endMessage;
         }
     }
 }

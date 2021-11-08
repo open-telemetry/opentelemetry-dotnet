@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
-using System.Net;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
@@ -22,9 +22,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     {
         bool Connected { get; }
 
-        EndPoint RemoteEndPoint { get; }
-
-        void Connect(string host, int port);
+        void Connect();
 
         void Close();
 
