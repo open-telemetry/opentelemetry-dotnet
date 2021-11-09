@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Added support for `Status` and `StatusDescription` properties on Activity
+  ([#2572](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2572))
+
 ## 1.2.0-beta1
 
 Released 2021-Oct-08
