@@ -284,7 +284,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP ");
             cursor = WriteMetricName(buffer, cursor, metricName, metricUnit);
 
-            if (metricDescription != null)
+            if (!string.IsNullOrEmpty(metricDescription))
             {
                 buffer[cursor++] = unchecked((byte)' ');
                 cursor = WriteUnicodeString(buffer, cursor, metricDescription);
