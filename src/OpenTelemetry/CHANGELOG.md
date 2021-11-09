@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Histogram bounds are validated when added to a View.
+  ([#2573](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2573))
+
 * Changed `BatchExportActivityProcessorOptions` constructor to throw
   `FormatException` if it fails to parse any of the supported environment
   variables.
