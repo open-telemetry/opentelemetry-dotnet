@@ -150,14 +150,17 @@ namespace Thrift.Protocol
             Transport.Write(PreAllocatedBuffer, 0, 2);
         }
 
-        public override void WriteUI32(uint ui32)
+        public override int WriteUI32(uint ui32, Span<byte> buffer)
         {
-            PreAllocatedBuffer[0] = (byte)(0xff & (ui32 >> 24));
-            PreAllocatedBuffer[1] = (byte)(0xff & (ui32 >> 16));
-            PreAllocatedBuffer[2] = (byte)(0xff & (ui32 >> 8));
-            PreAllocatedBuffer[3] = (byte)(0xff & ui32);
+            if (buffer.Length < 4)
+                return 0;
 
-            Transport.Write(PreAllocatedBuffer, 0, 4);
+            buffer[0] = (byte)(0xff & (ui32 >> 24));
+            buffer[1] = (byte)(0xff & (ui32 >> 16));
+            buffer[2] = (byte)(0xff & (ui32 >> 8));
+            buffer[3] = (byte)(0xff & ui32);
+
+            return 4;
         }
 
         public override void WriteI32(int i32)
@@ -199,7 +202,7 @@ namespace Thrift.Protocol
 
         public override void WriteBinary(byte[] bytes, int offset, int count)
         {
-            WriteI32(bytes.Length);
+            WriteI32(count);
             Transport.Write(bytes, offset, count);
         }
 

@@ -29,6 +29,7 @@ namespace OpenTelemetry.Exporter
 {
     public class JaegerExporter : BaseExporter<Activity>
     {
+        private readonly byte[] uInt32Storage = new byte[8];
         private readonly int maxPayloadSizeInBytes;
         private readonly IJaegerClient client;
         private readonly TProtocol batchWriter;
@@ -36,6 +37,7 @@ namespace OpenTelemetry.Exporter
         private readonly bool sendUsingEmitBatchArgs;
         private int minimumBatchSizeInBytes;
         private int currentBatchSizeInBytes;
+        private int spanStartPosition;
         private uint numberOfSpansInCurrentBatch;
         private uint sequenceId;
         private bool disposed;
@@ -61,7 +63,7 @@ namespace OpenTelemetry.Exporter
             }
             else if (options.Protocol == JaegerExportProtocol.HttpBinaryThrift)
             {
-                protocolFactory ??= new TBinaryProtocol.Factory(strictRead: false, strictWrite: false);
+                protocolFactory ??= new TBinaryProtocol.Factory();
                 client ??= new JaegerHttpClient(
                     options.Endpoint,
                     options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("JaegerExporterOptions was missing HttpClientFactory or it returned null."));
@@ -167,10 +169,15 @@ namespace OpenTelemetry.Exporter
             {
                 this.EmitBatchArgs = new EmitBatchArgs(this.batchWriter);
                 this.Batch.SpanCountPosition += this.EmitBatchArgs.EmitBatchArgsBeginMessage.Length;
+                this.batchWriter.WriteRaw(this.EmitBatchArgs.EmitBatchArgsBeginMessage);
             }
+
+            this.batchWriter.WriteRaw(this.Batch.BatchBeginMessage);
+            this.spanStartPosition = this.batchWriter.Position;
 
             this.minimumBatchSizeInBytes = this.EmitBatchArgs?.MinimumMessageSize ?? 0
                 + this.Batch.MinimumMessageSize;
+
             this.ResetBatch();
         }
 
@@ -218,7 +225,6 @@ namespace OpenTelemetry.Exporter
             base.Dispose(disposing);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SendCurrentBatch()
         {
             try
@@ -229,12 +235,10 @@ namespace OpenTelemetry.Exporter
                 {
                     this.batchWriter.WriteRaw(this.EmitBatchArgs.EmitBatchArgsEndMessage);
 
-                    this.batchWriter.Position = this.EmitBatchArgs.SeqIdPosition;
-                    this.batchWriter.WriteUI32(this.sequenceId++);
+                    this.WriteUInt32AtPosition(this.EmitBatchArgs.SeqIdPosition, ++this.sequenceId);
                 }
 
-                this.batchWriter.Position = this.Batch.SpanCountPosition;
-                this.batchWriter.WriteUI32(this.numberOfSpansInCurrentBatch);
+                this.WriteUInt32AtPosition(this.Batch.SpanCountPosition, this.numberOfSpansInCurrentBatch);
 
                 var writtenData = this.batchWriter.WrittenData;
 
@@ -242,22 +246,24 @@ namespace OpenTelemetry.Exporter
             }
             finally
             {
-                this.batchWriter.Clear();
                 this.ResetBatch();
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void WriteUInt32AtPosition(int position, uint value)
+        {
+            this.batchWriter.Position = position;
+            int numberOfBytes = this.batchWriter.WriteUI32(value, this.uInt32Storage);
+            this.batchWriter.WriteRaw(this.uInt32Storage, 0, numberOfBytes);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ResetBatch()
         {
             this.currentBatchSizeInBytes = this.minimumBatchSizeInBytes;
             this.numberOfSpansInCurrentBatch = 0;
-
-            if (this.sendUsingEmitBatchArgs)
-            {
-                this.batchWriter.WriteRaw(this.EmitBatchArgs.EmitBatchArgsBeginMessage);
-            }
-
-            this.batchWriter.WriteRaw(this.Batch.BatchBeginMessage);
+            this.batchWriter.Clear(this.spanStartPosition);
         }
     }
 }

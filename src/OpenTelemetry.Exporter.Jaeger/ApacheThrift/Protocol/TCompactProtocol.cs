@@ -71,6 +71,8 @@ namespace Thrift.Protocol
             count = 0
         };
 
+        private readonly byte[] EmptyUInt32Buffer = new byte[5];
+
         public TCompactProtocol(int initialCapacity = 8192)
             : base(initialCapacity)
         {
@@ -129,8 +131,8 @@ namespace Thrift.Protocol
             Transport.Write(PreAllocatedBuffer, 0, 2);
 
             seqIdPosition = (int)Transport.Position;
-            Int32ToVarInt((uint)message.SeqID, ref PreAllocatedVarInt);
-            Transport.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
+            // Write empty bytes to reserve the space for the seqId to be written later on.
+            Transport.Write(EmptyUInt32Buffer, 0, 5);
 
             WriteString(message.Name);
         }
@@ -236,8 +238,8 @@ namespace Thrift.Protocol
                 Transport.Write(PreAllocatedBuffer, 0, 1);
 
                 countPosition = (int)Transport.Position;
-                Int32ToVarInt((uint)list.Count, ref PreAllocatedVarInt);
-                Transport.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
+                // Write empty bytes to reserve the space for the count to be written later on.
+                Transport.Write(EmptyUInt32Buffer, 0, 5);
             }
         }
 
@@ -306,10 +308,22 @@ namespace Thrift.Protocol
             Transport.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
         }
 
-        public override void WriteUI32(uint ui32)
+        public override int WriteUI32(uint ui32, Span<byte> buffer)
         {
-            Int32ToVarInt(ui32, ref PreAllocatedVarInt);
-            Transport.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
+            if (buffer.Length < 5)
+                return 0;
+
+            buffer[0] = (byte)(0x80 | (ui32 & 0x7F));
+            ui32 >>= 7;
+            buffer[1] = (byte)(0x80 | (ui32 & 0x7F));
+            ui32 >>= 7;
+            buffer[2] = (byte)(0x80 | (ui32 & 0x7F));
+            ui32 >>= 7;
+            buffer[3] = (byte)(0x80 | (ui32 & 0x7F));
+            ui32 >>= 7;
+            buffer[4] = (byte)ui32;
+
+            return 5;
         }
 
         static private void Int64ToVarInt(ulong n, ref VarInt varint)

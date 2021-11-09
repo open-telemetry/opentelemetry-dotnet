@@ -58,10 +58,13 @@ namespace Thrift.Protocol
 
         public int Length => (int)Transport.Length;
 
-        public void Clear()
+        public void Clear(int offset = 0)
         {
-            Transport.Position = 0;
-            Transport.SetLength(0);
+            if (offset > Transport.Length)
+                throw new ArgumentOutOfRangeException(nameof(offset));
+
+            Transport.Position = offset;
+            Transport.SetLength(offset);
         }
 
         public virtual void Reset()
@@ -132,7 +135,7 @@ namespace Thrift.Protocol
 
         public abstract void WriteI32(int i32);
 
-        public abstract void WriteUI32(uint ui32);
+        public abstract int WriteUI32(uint ui32, Span<byte> buffer);
 
         public abstract void WriteI64(long i64);
 
@@ -145,7 +148,7 @@ namespace Thrift.Protocol
             {
                 Span<byte> buffer = stackalloc byte[256];
                 int numberOfBytes = Encoding.UTF8.GetBytes(s, buffer);
-                WriteBinary(buffer.Slice(numberOfBytes));
+                WriteBinary(buffer.Slice(0, numberOfBytes));
                 return;
             }
 #endif
@@ -171,6 +174,11 @@ namespace Thrift.Protocol
         public void WriteRaw(byte[] bytes)
         {
             this.Transport.Write(bytes, 0, bytes.Length);
+        }
+
+        public void WriteRaw(byte[] bytes, int offset, int count)
+        {
+            this.Transport.Write(bytes, offset, count);
         }
 
         public void WriteRaw(ArraySegment<byte> bytes)

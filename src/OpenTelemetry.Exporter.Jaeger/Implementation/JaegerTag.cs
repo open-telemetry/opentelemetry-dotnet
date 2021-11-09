@@ -91,8 +91,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     oprot.WriteString(this.VStr);
                     oprot.WriteFieldEnd();
                 }
-
-                if (this.VDouble.HasValue)
+                else if (this.VDouble.HasValue)
                 {
                     field.Name = "vDouble";
                     field.Type = TType.Double;
@@ -101,8 +100,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     oprot.WriteDouble(this.VDouble.Value);
                     oprot.WriteFieldEnd();
                 }
-
-                if (this.VBool.HasValue)
+                else if (this.VBool.HasValue)
                 {
                     field.Name = "vBool";
                     field.Type = TType.Bool;
@@ -111,8 +109,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     oprot.WriteBool(this.VBool.Value);
                     oprot.WriteFieldEnd();
                 }
-
-                if (this.VLong.HasValue)
+                else if (this.VLong.HasValue)
                 {
                     field.Name = "vLong";
                     field.Type = TType.I64;
@@ -121,8 +118,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     oprot.WriteI64(this.VLong.Value);
                     oprot.WriteFieldEnd();
                 }
-
-                if (this.VBinary != null)
+                else if (this.VBinary != null)
                 {
                     field.Name = "vBinary";
                     field.Type = TType.String;
