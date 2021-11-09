@@ -55,9 +55,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// </summary>
         /// <param name="httpContext"> context.</param>
         /// <returns>Task.</returns>
-#pragma warning disable CS1998 // This async method lacks 'await' operators and will run synchronously.
         public async Task InvokeAsync(HttpContext httpContext)
-#pragma warning restore CS1998 // This async method lacks 'await' operators and will run synchronously.
         {
             Debug.Assert(httpContext != null, "httpContext should not be null");
 
@@ -69,40 +67,49 @@ namespace OpenTelemetry.Exporter.Prometheus
                 return;
             }
 
+            var buffer = new byte[65536];
+            var count = 0;
+
             this.exporter.OnExport = (metrics) =>
             {
                 try
                 {
-                    WriteMetricsToResponse(this.exporter, metrics, response).ConfigureAwait(false).GetAwaiter().GetResult();
+                    count = PrometheusSerializer.WriteMetrics(buffer, 0, metrics);
                     return ExportResult.Success;
                 }
                 catch (Exception ex)
                 {
-                    if (!response.HasStarted)
-                    {
-                        response.StatusCode = 500;
-                    }
-
                     PrometheusExporterEventSource.Log.FailedExport(ex);
                     return ExportResult.Failure;
                 }
-                finally
-                {
-                    this.exporter.ReleaseSemaphore();
-                }
             };
 
-            this.exporter.Collect(Timeout.Infinite);
+            try
+            {
+                if (this.exporter.Collect(Timeout.Infinite))
+                {
+                    await WriteMetricsToResponse(buffer, count, response).ConfigureAwait(false);
+                }
+                else if (!response.HasStarted)
+                {
+                    response.StatusCode = 500;
+                }
+            }
+            finally
+            {
+                this.exporter.ReleaseSemaphore();
+            }
+
             this.exporter.OnExport = null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static async Task WriteMetricsToResponse(PrometheusExporter exporter, Batch<Metric> metrics, HttpResponse response)
+        internal static async Task WriteMetricsToResponse(byte[] buffer, int count, HttpResponse response)
         {
             response.StatusCode = 200;
             response.ContentType = PrometheusMetricsFormatHelper.ContentType;
 
-            await exporter.WriteMetricsCollection(metrics, response.Body, exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
+            await response.Body.WriteAsync(buffer, 0, count).ConfigureAwait(false);
         }
     }
 }
