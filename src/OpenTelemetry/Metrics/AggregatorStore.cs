@@ -368,7 +368,7 @@ namespace OpenTelemetry.Metrics
 
             // If the MetricPointStatus = CandidateForRemoval, it is possible that another thread freed and repurposed the MetricPoint.
             // We must check that the point being updated is the expected one.
-            if (StringArrayComparer.Equals(metricPoint.Keys, tagKeys) && ObjectArrayComparer.Equals(metricPoint.Values, tagValues))
+            if (index == 0 || (StringArrayComparer.Equals(metricPoint.Keys, tagKeys) && ObjectArrayComparer.Equals(metricPoint.Values, tagValues)))
             {
                 return metricPoint.Update(value);
             }
@@ -384,7 +384,7 @@ namespace OpenTelemetry.Metrics
 
             // If the MetricPointStatus = CandidateForRemoval, it is possible that another thread freed and repurposed the MetricPoint.
             // We must check that the point being updated is the expected one.
-            if (metricPoint.Keys == tagKeys && metricPoint.Values == tagValues)
+            if (index == 0 || (StringArrayComparer.Equals(metricPoint.Keys, tagKeys) && ObjectArrayComparer.Equals(metricPoint.Values, tagValues)))
             {
                 return metricPoint.Update(value);
             }
