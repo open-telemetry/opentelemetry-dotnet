@@ -149,7 +149,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
             else
             {
                 Assert.Equal(
-                    expectedStatusCode,
+                    StatusHelper.GetTagValueForActivityStatusCode(expectedStatusCode),
                     zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
             }
 
@@ -179,7 +179,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
 
             // Assert
             Assert.Equal(
-                    activityStatus,
+                    StatusHelper.GetTagValueForActivityStatusCode(activityStatus),
                     zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
 
             if (activityStatus == ActivityStatusCode.Error)

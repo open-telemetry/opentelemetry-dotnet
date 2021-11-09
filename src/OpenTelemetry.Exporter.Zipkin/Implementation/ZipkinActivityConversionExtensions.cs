@@ -81,7 +81,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 ref tagState.Tags,
                 new KeyValuePair<string, object>(
                     SpanAttributeConstants.StatusCodeKey,
-                    activity.Status));
+                    StatusHelper.GetTagValueForActivityStatusCode(activity.Status)));
 
                 if (activity.Status == ActivityStatusCode.Error)
                 {
