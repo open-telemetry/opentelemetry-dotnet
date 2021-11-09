@@ -54,7 +54,6 @@ namespace OpenTelemetry.Exporter.Prometheus
 #else
                 cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString(CultureInfo.InvariantCulture));
 #endif
-
             }
             else if (double.IsPositiveInfinity(value))
             {
