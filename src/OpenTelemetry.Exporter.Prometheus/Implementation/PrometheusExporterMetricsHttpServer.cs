@@ -83,7 +83,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     new CancellationTokenSource() :
                     CancellationTokenSource.CreateLinkedTokenSource(token);
 
-                this.workerThread = Task.Factory.StartNew(this.WorkerThread, default, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+                this.workerThread = Task.Factory.StartNew(this.WorkerProc, default, TaskCreationOptions.LongRunning, TaskScheduler.Default);
             }
         }
 
@@ -115,7 +115,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             }
         }
 
-        private void WorkerThread()
+        private void WorkerProc()
         {
             this.httpListener.Start();
 
@@ -128,13 +128,43 @@ namespace OpenTelemetry.Exporter.Prometheus
                     ctxTask.Wait(this.tokenSource.Token);
                     var ctx = ctxTask.Result;
 
-                    if (!this.exporter.TryEnterSemaphore())
+                    try
                     {
-                        ctx.Response.StatusCode = 429;
-                        ctx.Response.Close();
+                        ctx.Response.StatusCode = 200;
+                        ctx.Response.ContentType = PrometheusMetricsFormatHelper.ContentType;
+
+                        this.exporter.OnExport = (metrics) =>
+                        {
+                            try
+                            {
+                                var buffer = new byte[65536];
+                                var cursor = PrometheusSerializer.WriteMetrics(buffer, 0, metrics);
+                                ctx.Response.OutputStream.Write(buffer, 0, cursor - 0);
+                                return ExportResult.Success;
+                            }
+                            catch (Exception)
+                            {
+                                return ExportResult.Failure;
+                            }
+                        };
+
+                        this.exporter.Collect(Timeout.Infinite);
+                        this.exporter.OnExport = null;
+                    }
+                    catch (Exception ex)
+                    {
+                        PrometheusExporterEventSource.Log.FailedExport(ex);
+
+                        ctx.Response.StatusCode = 500;
                     }
 
-                    Task.Run(() => this.ProcessExportRequest(ctx));
+                    try
+                    {
+                        ctx.Response.Close();
+                    }
+                    catch
+                    {
+                    }
                 }
             }
             catch (OperationCanceledException ex)
@@ -152,37 +182,6 @@ namespace OpenTelemetry.Exporter.Prometheus
                 {
                     PrometheusExporterEventSource.Log.FailedShutdown(exFromFinally);
                 }
-            }
-        }
-
-        private async Task ProcessExportRequest(HttpListenerContext context)
-        {
-            try
-            {
-                this.exporter.Collect(Timeout.Infinite);
-
-                context.Response.StatusCode = 200;
-                context.Response.ContentType = PrometheusMetricsFormatHelper.ContentType;
-
-                await this.exporter.WriteMetricsCollection(context.Response.OutputStream, this.exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                PrometheusExporterEventSource.Log.FailedExport(ex);
-
-                context.Response.StatusCode = 500;
-            }
-            finally
-            {
-                try
-                {
-                    context.Response.Close();
-                }
-                catch
-                {
-                }
-
-                this.exporter.ReleaseSemaphore();
             }
         }
     }

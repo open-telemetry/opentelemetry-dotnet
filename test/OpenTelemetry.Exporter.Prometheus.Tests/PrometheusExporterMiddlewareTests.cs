@@ -62,9 +62,11 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
+            int index = content.LastIndexOf(' ');
+
             Assert.Equal(
-                $"# TYPE counter_double counter\ncounter_double{{key1=\"value1\",key2=\"value2\"}} 101.17 1633041000000\n",
-                content);
+                $"# TYPE counter_double counter\ncounter_double{{key1=\"value1\",key2=\"value2\"}} 101.17",
+                content.Substring(0, index));
 
             await host.StopAsync().ConfigureAwait(false);
         }
@@ -77,7 +79,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     .AddMeter(MeterName)
                     .AddPrometheusExporter(o =>
                     {
-                        o.GetUtcNowDateTimeOffset = () => new DateTimeOffset(2021, 9, 30, 22, 30, 0, TimeSpan.Zero);
                         if (o.StartHttpListener)
                         {
                             throw new InvalidOperationException("StartHttpListener should be false on .NET Core 3.1+.");

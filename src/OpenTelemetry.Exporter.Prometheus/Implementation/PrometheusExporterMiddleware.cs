@@ -67,34 +67,57 @@ namespace OpenTelemetry.Exporter.Prometheus
                 return;
             }
 
+            var buffer = new byte[65536];
+            var count = 0;
+
+            this.exporter.OnExport = (metrics) =>
+            {
+                try
+                {
+                    count = PrometheusSerializer.WriteMetrics(buffer, 0, metrics);
+                    return ExportResult.Success;
+                }
+                catch (Exception ex)
+                {
+                    PrometheusExporterEventSource.Log.FailedExport(ex);
+                    return ExportResult.Failure;
+                }
+            };
+
             try
             {
-                this.exporter.Collect(Timeout.Infinite);
-
-                await WriteMetricsToResponse(this.exporter, response).ConfigureAwait(false);
+                if (this.exporter.Collect(Timeout.Infinite))
+                {
+                    await WriteMetricsToResponse(buffer, count, response).ConfigureAwait(false);
+                }
+                else
+                {
+                    response.StatusCode = 500;
+                }
             }
             catch (Exception ex)
             {
+                PrometheusExporterEventSource.Log.FailedExport(ex);
                 if (!response.HasStarted)
                 {
                     response.StatusCode = 500;
                 }
-
-                PrometheusExporterEventSource.Log.FailedExport(ex);
             }
             finally
             {
                 this.exporter.ReleaseSemaphore();
             }
+
+            this.exporter.OnExport = null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static async Task WriteMetricsToResponse(PrometheusExporter exporter, HttpResponse response)
+        internal static async Task WriteMetricsToResponse(byte[] buffer, int count, HttpResponse response)
         {
             response.StatusCode = 200;
             response.ContentType = PrometheusMetricsFormatHelper.ContentType;
 
-            await exporter.WriteMetricsCollection(response.Body, exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
+            await response.Body.WriteAsync(buffer, 0, count).ConfigureAwait(false);
         }
     }
 }

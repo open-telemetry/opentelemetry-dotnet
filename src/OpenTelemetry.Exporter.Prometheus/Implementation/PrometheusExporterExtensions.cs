@@ -199,18 +199,20 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// Serialize metrics to prometheus format.
         /// </summary>
         /// <param name="exporter"><see cref="PrometheusExporter"/>.</param>
+        /// <param name="metrics">Metrics to be exported.</param>
         /// <param name="stream">Stream to write to.</param>
         /// <param name="getUtcNowDateTimeOffset">Optional function to resolve the current date &amp; time.</param>
         /// <returns><see cref="Task"/> to await the operation.</returns>
         public static async Task WriteMetricsCollection(
             this PrometheusExporter exporter,
+            Batch<Metric> metrics,
             Stream stream,
             Func<DateTimeOffset> getUtcNowDateTimeOffset)
         {
             byte[] buffer = ArrayPool<byte>.Shared.Rent(8192);
             try
             {
-                foreach (var metric in exporter.Metrics)
+                foreach (var metric in metrics)
                 {
                     if (!MetricInfoCache.TryGetValue(metric.Name, out MetricInfo metricInfo))
                     {
