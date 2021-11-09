@@ -226,6 +226,8 @@ namespace OpenTelemetry.Exporter.Prometheus
             cursor = WriteLabelKey(buffer, cursor, labelKey);
             buffer[cursor++] = unchecked((byte)'=');
             buffer[cursor++] = unchecked((byte)'"');
+
+            // In Prometheus, a label with an empty label value is considered equivalent to a label that does not exist.
             cursor = WriteLabelValue(buffer, cursor, labelValue?.ToString() ?? string.Empty);
             buffer[cursor++] = unchecked((byte)'"');
 
