@@ -125,7 +125,7 @@ namespace OpenTelemetry.Metrics
                             this.currentMetricPointBatch[this.batchSize] = i;
                             this.batchSize++;
                             break;
-                        case MetricPointStatus.NoPendingCollect:
+                        case MetricPointStatus.NoCollectPending:
                             metricPoint.MarkStale();
                             break;
                         case MetricPointStatus.CandidateForRemoval:

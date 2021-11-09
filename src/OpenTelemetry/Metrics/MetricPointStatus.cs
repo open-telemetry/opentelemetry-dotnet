@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics
 
         /// <summary>
         /// The <see cref="MetricPoint"/> has been updated since the previous Collect cycle.
-        /// Collect will move it to <see cref="NoPendingCollect"/>.
+        /// Collect will move it to <see cref="NoCollectPending"/>.
         /// </summary>
         CollectPending,
 
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Metrics
         /// It will be moved to <see cref="CandidateForRemoval"/> during the next Collect cycle.
         /// If an update occurs, status will be moved to <see cref="CollectPending"/>.
         /// </summary>
-        NoPendingCollect,
+        NoCollectPending,
 
         /// <summary>
         /// The <see cref="MetricPoint"/> has not been used since at least one Collect cycle.

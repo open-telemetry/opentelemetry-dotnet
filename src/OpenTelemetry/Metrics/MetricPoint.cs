@@ -211,7 +211,7 @@ namespace OpenTelemetry.Metrics
                             long initValue = Interlocked.Read(ref this.longVal);
                             this.LongValue = initValue - this.lastLongSum;
                             this.lastLongSum = initValue;
-                            this.MetricPointStatus = MetricPointStatus.NoPendingCollect;
+                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
                             if (initValue != Interlocked.Read(ref this.longVal))
                             {
                                 this.MetricPointStatus = MetricPointStatus.CollectPending;
@@ -220,7 +220,7 @@ namespace OpenTelemetry.Metrics
                         else
                         {
                             this.LongValue = Interlocked.Read(ref this.longVal);
-                            this.MetricPointStatus = MetricPointStatus.NoPendingCollect;
+                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
                             if (this.LongValue != Interlocked.Read(ref this.longVal))
                             {
                                 this.MetricPointStatus = MetricPointStatus.CollectPending;
@@ -243,7 +243,7 @@ namespace OpenTelemetry.Metrics
                             double initValue = Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity);
                             this.DoubleValue = initValue - this.lastDoubleSum;
                             this.lastDoubleSum = initValue;
-                            this.MetricPointStatus = MetricPointStatus.NoPendingCollect;
+                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
                             if (initValue != Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity))
                             {
                                 this.MetricPointStatus = MetricPointStatus.CollectPending;
@@ -257,7 +257,7 @@ namespace OpenTelemetry.Metrics
                             // the exchange (to 0.0) will never occur,
                             // but we get the original value atomically.
                             this.DoubleValue = Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity);
-                            this.MetricPointStatus = MetricPointStatus.NoPendingCollect;
+                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
                             if (this.DoubleValue != Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity))
                             {
                                 this.MetricPointStatus = MetricPointStatus.CollectPending;
@@ -270,7 +270,7 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.LongGauge:
                     {
                         this.LongValue = Interlocked.Read(ref this.longVal);
-                        this.MetricPointStatus = MetricPointStatus.NoPendingCollect;
+                        this.MetricPointStatus = MetricPointStatus.NoCollectPending;
                         if (this.LongValue != Interlocked.Read(ref this.longVal))
                         {
                             this.MetricPointStatus = MetricPointStatus.CollectPending;
@@ -287,7 +287,7 @@ namespace OpenTelemetry.Metrics
                         // the exchange (to 0.0) will never occur,
                         // but we get the original value atomically.
                         this.DoubleValue = Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity);
-                        this.MetricPointStatus = MetricPointStatus.NoPendingCollect;
+                        this.MetricPointStatus = MetricPointStatus.NoCollectPending;
                         if (this.DoubleValue != Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity))
                         {
                             this.MetricPointStatus = MetricPointStatus.CollectPending;
@@ -317,7 +317,7 @@ namespace OpenTelemetry.Metrics
                                 }
                             }
 
-                            this.MetricPointStatus = MetricPointStatus.NoPendingCollect;
+                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
                         }
 
                         break;
@@ -335,7 +335,7 @@ namespace OpenTelemetry.Metrics
                                 this.doubleVal = 0;
                             }
 
-                            this.MetricPointStatus = MetricPointStatus.NoPendingCollect;
+                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
                         }
 
                         break;
@@ -345,11 +345,11 @@ namespace OpenTelemetry.Metrics
 
         internal void MarkStale()
         {
-            if (this.MetricPointStatus == MetricPointStatus.NoPendingCollect)
+            if (this.MetricPointStatus == MetricPointStatus.NoCollectPending)
             {
                 lock (this.lockObject)
                 {
-                    if (this.MetricPointStatus == MetricPointStatus.NoPendingCollect)
+                    if (this.MetricPointStatus == MetricPointStatus.NoCollectPending)
                     {
                         this.MetricPointStatus = MetricPointStatus.CandidateForRemoval;
                     }
@@ -376,11 +376,11 @@ namespace OpenTelemetry.Metrics
 
         private bool TrySetCollectPending()
         {
-            if (this.MetricPointStatus == MetricPointStatus.NoPendingCollect || this.MetricPointStatus == MetricPointStatus.CandidateForRemoval || this.MetricPointStatus == MetricPointStatus.Unused)
+            if (this.MetricPointStatus == MetricPointStatus.NoCollectPending || this.MetricPointStatus == MetricPointStatus.CandidateForRemoval || this.MetricPointStatus == MetricPointStatus.Unused)
             {
                 lock (this.lockObject)
                 {
-                    if (this.MetricPointStatus == MetricPointStatus.NoPendingCollect || this.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
+                    if (this.MetricPointStatus == MetricPointStatus.NoCollectPending || this.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
                     {
                         this.MetricPointStatus = MetricPointStatus.CollectPending;
                         return true;
