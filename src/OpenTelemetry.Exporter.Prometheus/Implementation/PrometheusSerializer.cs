@@ -45,7 +45,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                 Span<char> span = stackalloc char[128];
 
                 var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
-                Debug.Assert(result, $"{nameof(result)} was not true.");
+                Debug.Assert(result, $"{nameof(result)} should be true.");
 
                 for (int i = 0; i < cchWritten; i++)
                 {
@@ -65,7 +65,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             }
             else
             {
-                Debug.Assert(double.IsNaN(value), $"{nameof(value)} not NaN.");
+                Debug.Assert(double.IsNaN(value), $"{nameof(value)} should be NaN.");
                 cursor = WriteAsciiStringNoEscape(buffer, cursor, "Nan");
             }
 
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             Span<char> span = stackalloc char[20];
 
             var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
-            Debug.Assert(result, $"{nameof(result)} was not true.");
+            Debug.Assert(result, $"{nameof(result)} should be true.");
 
             for (int i = 0; i < cchWritten; i++)
             {
@@ -157,15 +157,28 @@ namespace OpenTelemetry.Exporter.Prometheus
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteLabelKey(byte[] buffer, int cursor, string value)
         {
-            // TODO: needs to add proper escape logic here
+            Debug.Assert(!string.IsNullOrEmpty(value), $"{nameof(value)} should not be null or empty.");
+
+            var ordinal = (ushort)value[0];
+
+            if (ordinal >= (ushort)'0' && ordinal <= (ushort)'9')
+            {
+                buffer[cursor++] = unchecked((byte)'_');
+            }
+
             for (int i = 0; i < value.Length; i++)
             {
-                var ordinal = (ushort)value[i];
-                switch (ordinal)
+                ordinal = (ushort)value[i];
+
+                if ((ordinal >= (ushort)'A' && ordinal <= (ushort)'Z') ||
+                    (ordinal >= (ushort)'a' && ordinal <= (ushort)'z') ||
+                    (ordinal >= (ushort)'0' && ordinal <= (ushort)'9'))
                 {
-                    default:
-                        cursor = WriteUnicodeNoEscape(buffer, cursor, ordinal);
-                        break;
+                    cursor = WriteUnicodeNoEscape(buffer, cursor, ordinal);
+                }
+                else
+                {
+                    buffer[cursor++] = unchecked((byte)'_');
                 }
             }
 
@@ -175,6 +188,8 @@ namespace OpenTelemetry.Exporter.Prometheus
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteLabelValue(byte[] buffer, int cursor, string value)
         {
+            Debug.Assert(value != null, $"{nameof(value)} should not be null.");
+
             for (int i = 0; i < value.Length; i++)
             {
                 var ordinal = (ushort)value[i];
@@ -207,18 +222,20 @@ namespace OpenTelemetry.Exporter.Prometheus
             cursor = WriteLabelKey(buffer, cursor, labelKey);
             buffer[cursor++] = unchecked((byte)'=');
             buffer[cursor++] = unchecked((byte)'"');
-            cursor = WriteLabelValue(buffer, cursor, labelValue?.ToString() ?? "null");
+            cursor = WriteLabelValue(buffer, cursor, labelValue?.ToString() ?? string.Empty);
             buffer[cursor++] = unchecked((byte)'"');
 
             return cursor;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int WriteMetricName(byte[] buffer, int cursor, string value)
+        public static int WriteMetricName(byte[] buffer, int cursor, string metricName)
         {
-            for (int i = 0; i < value.Length; i++)
+            Debug.Assert(!string.IsNullOrEmpty(metricName), $"{nameof(metricName)} should not be null or empty.");
+
+            for (int i = 0; i < metricName.Length; i++)
             {
-                var ordinal = (ushort)value[i];
+                var ordinal = (ushort)metricName[i];
                 switch (ordinal)
                 {
                     case ASCII_FULL_STOP:
@@ -237,8 +254,6 @@ namespace OpenTelemetry.Exporter.Prometheus
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteHelpText(byte[] buffer, int cursor, string metricName, string metricDescription = null)
         {
-            Debug.Assert(metricName != null, $"{nameof(metricName)} was null.");
-
             cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP ");
             cursor = WriteMetricName(buffer, cursor, metricName);
 
@@ -256,8 +271,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteTypeInfo(byte[] buffer, int cursor, string metricName, string metricType)
         {
-            Debug.Assert(metricName != null, $"{nameof(metricName)} was null.");
-            Debug.Assert(metricType != null, $"{nameof(metricType)} was null.");
+            Debug.Assert(!string.IsNullOrEmpty(metricType), $"{nameof(metricType)} should not be null or empty.");
 
             cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE ");
             cursor = WriteMetricName(buffer, cursor, metricName);
