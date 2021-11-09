@@ -94,6 +94,16 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
+        [MemberData(nameof(MetricsTestData.InvalidHistogramBounds), MemberType = typeof(MetricsTestData))]
+        public void AddViewWithInvalidHistogramBoundsThrowsArgumentException(double[] bounds)
+        {
+            var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
+                .AddView("name1", new HistogramConfiguration { BucketBounds = bounds }));
+
+            Assert.Contains("Histogram bounds must be in ascending order with distinct values", ex.Message);
+        }
+
+        [Theory]
         [MemberData(nameof(MetricsTestData.ValidInstrumentNames), MemberType = typeof(MetricsTestData))]
         public void ViewWithValidNameExported(string viewNewName)
         {
