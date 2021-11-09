@@ -48,7 +48,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                         .AddMeter(meter.Name)
                         .AddPrometheusExporter(o =>
                         {
-                            o.GetUtcNowDateTimeOffset = () => new DateTimeOffset(2021, 9, 30, 22, 30, 0, TimeSpan.Zero);
 #if NET461
                             bool expectedDefaultState = true;
 #else
@@ -90,6 +89,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 new KeyValuePair<string, object>("key2", "value2"),
             };
 
+            var beginTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
             var counter = meter.CreateCounter<double>("counter_double");
             counter.Add(100.18D, tags);
             counter.Add(0.99D, tags);
@@ -98,13 +99,23 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             using var response = await client.GetAsync($"{address}metrics").ConfigureAwait(false);
 
+            var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
+            var index = content.LastIndexOf(' ');
+
             Assert.Equal(
-                $"# TYPE counter_double counter\ncounter_double{{key1=\"value1\",key2=\"value2\"}} 101.17 1633041000000\n",
-                content);
+                $"# TYPE counter_double counter\ncounter_double{{key1=\"value1\",key2=\"value2\"}} 101.17",
+                content.Substring(0, index));
+
+            Assert.Equal('\n', content[content.Length - 1]);
+
+            var timestamp = long.Parse(content.Substring(index, content.Length - index - 1));
+
+            Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
         }
     }
 }

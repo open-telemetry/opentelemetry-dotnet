@@ -81,6 +81,7 @@ namespace Benchmarks.Exporter
             this.meterProvider?.Dispose();
         }
 
+        /* TODO: revisit this after PrometheusExporter race condition is solved
         [Benchmark]
         public async Task WriteMetricsToResponse()
         {
@@ -91,6 +92,7 @@ namespace Benchmarks.Exporter
                 await PrometheusExporterMiddleware.WriteMetricsToResponse(this.exporter, this.context.Response).ConfigureAwait(false);
             }
         }
+        */
     }
 }
 #endif
