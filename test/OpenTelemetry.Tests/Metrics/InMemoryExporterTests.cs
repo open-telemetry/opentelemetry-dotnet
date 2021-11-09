@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests
@@ -26,7 +27,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact(Skip = "To be run after https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361 is fixed")]
         public void InMemoryExporterShouldDeepCopyMetricPoints()
         {
-            var meter = new Meter("InMemoryExporterTests", "1.0");
+            var meter = new Meter(Utils.GetCurrentMethodName());
 
             var exportedItems = new List<Metric>();
             using var inMemoryReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
@@ -35,7 +36,7 @@ namespace OpenTelemetry.Metrics.Tests
             };
 
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter("InMemoryExporterTests")
+            .AddMeter(meter.Name)
             .AddReader(inMemoryReader)
             .Build();
 
