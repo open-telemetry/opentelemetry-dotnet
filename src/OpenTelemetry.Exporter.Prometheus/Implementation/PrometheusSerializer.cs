@@ -105,7 +105,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int WriteUnicodeChar(byte[] buffer, int cursor, ushort ordinal)
+        public static int WriteUnicodeNoEscape(byte[] buffer, int cursor, ushort ordinal)
         {
             if (ordinal <= 0x7F)
             {
@@ -147,7 +147,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                         buffer[cursor++] = unchecked((byte)'n');
                         break;
                     default:
-                        cursor = WriteUnicodeChar(buffer, cursor, ordinal);
+                        cursor = WriteUnicodeNoEscape(buffer, cursor, ordinal);
                         break;
                 }
             }
@@ -165,7 +165,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                 switch (ordinal)
                 {
                     default:
-                        cursor = WriteUnicodeChar(buffer, cursor, ordinal);
+                        cursor = WriteUnicodeNoEscape(buffer, cursor, ordinal);
                         break;
                 }
             }
@@ -194,7 +194,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                         buffer[cursor++] = unchecked((byte)'n');
                         break;
                     default:
-                        cursor = WriteUnicodeChar(buffer, cursor, ordinal);
+                        cursor = WriteUnicodeNoEscape(buffer, cursor, ordinal);
                         break;
                 }
             }
@@ -227,7 +227,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                         buffer[cursor++] = unchecked((byte)'_');
                         break;
                     default:
-                        cursor = WriteUnicodeChar(buffer, cursor, ordinal);
+                        cursor = WriteUnicodeNoEscape(buffer, cursor, ordinal);
                         break;
                 }
             }
