@@ -26,13 +26,14 @@ namespace OpenTelemetry.Metrics
     {
         internal const int MaxMetricPoints = 2000;
         private static readonly ObjectArrayEqualityComparer ObjectArrayComparer = new ObjectArrayEqualityComparer();
+        private static readonly StringArrayEqualityComparer StringArrayComparer = new StringArrayEqualityComparer();
         private readonly object lockZeroTags = new object();
         private readonly HashSet<string> tagKeysInteresting;
         private readonly int tagsKeysInterestingCount;
 
         // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
         private readonly ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>> keyValue2MetricAggs =
-            new ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>>(new StringArrayEqualityComparer());
+            new ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>>(StringArrayComparer);
 
         private readonly AggregationTemporality temporality;
         private readonly bool outputDelta;
@@ -270,16 +271,18 @@ namespace OpenTelemetry.Metrics
             try
             {
                 int index;
+                string[] tagKeys;
+                object[] tagValues;
                 do
                 {
-                    index = this.FindMetricAggregatorsDefault(tags);
+                    index = this.FindMetricAggregatorsDefault(tags, out tagKeys, out tagValues);
                     if (index < 0)
                     {
                         // TODO: Measurement dropped due to MemoryPoint cap hit.
                         return;
                     }
                 }
-                while (!this.TryUpdateMetricPoint(index, value));
+                while (!this.TryUpdateMetricPoint(index, value, tagKeys, tagValues));
             }
             catch (Exception)
             {
@@ -292,16 +295,18 @@ namespace OpenTelemetry.Metrics
             try
             {
                 int index;
+                string[] tagKeys;
+                object[] tagValues;
                 do
                 {
-                    index = this.FindMetricAggregatorsCustomTag(tags);
+                    index = this.FindMetricAggregatorsCustomTag(tags, out tagKeys, out tagValues);
                     if (index < 0)
                     {
                         // TODO: Measurement dropped due to MemoryPoint cap hit.
                         return;
                     }
                 }
-                while (!this.TryUpdateMetricPoint(index, value));
+                while (!this.TryUpdateMetricPoint(index, value, tagKeys, tagValues));
             }
             catch (Exception)
             {
@@ -314,16 +319,18 @@ namespace OpenTelemetry.Metrics
             try
             {
                 int index;
+                string[] tagKeys;
+                object[] tagValues;
                 do
                 {
-                    index = this.FindMetricAggregatorsDefault(tags);
+                    index = this.FindMetricAggregatorsDefault(tags, out tagKeys, out tagValues);
                     if (index < 0)
                     {
                         // TODO: Measurement dropped due to MemoryPoint cap hit.
                         return;
                     }
                 }
-                while (!this.TryUpdateMetricPoint(index, value));
+                while (!this.TryUpdateMetricPoint(index, value, tagKeys, tagValues));
             }
             catch (Exception)
             {
@@ -336,16 +343,18 @@ namespace OpenTelemetry.Metrics
             try
             {
                 int index;
+                string[] tagKeys;
+                object[] tagValues;
                 do
                 {
-                    index = this.FindMetricAggregatorsCustomTag(tags);
+                    index = this.FindMetricAggregatorsCustomTag(tags, out tagKeys, out tagValues);
                     if (index < 0)
                     {
                         // TODO: Measurement dropped due to MemoryPoint cap hit.
                         return;
                     }
                 }
-                while (!this.TryUpdateMetricPoint(index, value));
+                while (!this.TryUpdateMetricPoint(index, value, tagKeys, tagValues));
             }
             catch (Exception)
             {
@@ -353,30 +362,52 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        private bool TryUpdateMetricPoint(int index, long value)
+        private bool TryUpdateMetricPoint(int index, long value, string[] tagKeys, object[] tagValues)
         {
             ref var metricPoint = ref this.metricPoints[index];
-            return metricPoint.Update(value);
+
+            // If the MetricPointStatus = CandidateForRemoval, it is possible that another thread freed and repurposed the MetricPoint.
+            // We must check that the point being updated is the expected one.
+            if (StringArrayComparer.Equals(metricPoint.Keys, tagKeys) && ObjectArrayComparer.Equals(metricPoint.Values, tagValues))
+            {
+                return metricPoint.Update(value);
+            }
+            else
+            {
+                return false;
+            }
         }
 
-        private bool TryUpdateMetricPoint(int index, double value)
+        private bool TryUpdateMetricPoint(int index, double value, string[] tagKeys, object[] tagValues)
         {
             ref var metricPoint = ref this.metricPoints[index];
-            return metricPoint.Update(value);
+
+            // If the MetricPointStatus = CandidateForRemoval, it is possible that another thread freed and repurposed the MetricPoint.
+            // We must check that the point being updated is the expected one.
+            if (metricPoint.Keys == tagKeys && metricPoint.Values == tagValues)
+            {
+                return metricPoint.Update(value);
+            }
+            else
+            {
+                return false;
+            }
         }
 
-        private int FindMetricAggregatorsDefault(ReadOnlySpan<KeyValuePair<string, object>> tags)
+        private int FindMetricAggregatorsDefault(ReadOnlySpan<KeyValuePair<string, object>> tags, out string[] tagKeys, out object[] tagValues)
         {
             int tagLength = tags.Length;
             if (tagLength == 0)
             {
                 this.InitializeZeroTagPointIfNotInitialized();
+                tagKeys = null;
+                tagValues = null;
                 return 0;
             }
 
             var storage = ThreadStaticStorage.GetStorage();
 
-            storage.SplitToKeysAndValues(tags, tagLength, out var tagKeys, out var tagValues);
+            storage.SplitToKeysAndValues(tags, tagLength, out tagKeys, out tagValues);
 
             if (tagLength > 1)
             {
@@ -386,12 +417,14 @@ namespace OpenTelemetry.Metrics
             return this.LookupAggregatorStore(tagKeys, tagValues, tagLength);
         }
 
-        private int FindMetricAggregatorsCustomTag(ReadOnlySpan<KeyValuePair<string, object>> tags)
+        private int FindMetricAggregatorsCustomTag(ReadOnlySpan<KeyValuePair<string, object>> tags, out string[] tagKeys, out object[] tagValues)
         {
             int tagLength = tags.Length;
             if (tagLength == 0 || this.tagsKeysInterestingCount == 0)
             {
                 this.InitializeZeroTagPointIfNotInitialized();
+                tagKeys = null;
+                tagValues = null;
                 return 0;
             }
 
@@ -400,7 +433,7 @@ namespace OpenTelemetry.Metrics
 
             var storage = ThreadStaticStorage.GetStorage();
 
-            storage.SplitToKeysAndValues(tags, tagLength, this.tagKeysInteresting, out var tagKeys, out var tagValues, out var actualLength);
+            storage.SplitToKeysAndValues(tags, tagLength, this.tagKeysInteresting, out tagKeys, out tagValues, out var actualLength);
 
             // Actual number of tags depend on how many
             // of the incoming tags has user opted to
