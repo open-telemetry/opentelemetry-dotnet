@@ -90,7 +90,15 @@ namespace OpenTelemetry.Exporter.Prometheus
                 {
                     await WriteMetricsToResponse(buffer, count, response).ConfigureAwait(false);
                 }
-                else if (!response.HasStarted)
+                else
+                {
+                    response.StatusCode = 500;
+                }
+            }
+            catch (Exception ex)
+            {
+                PrometheusExporterEventSource.Log.FailedExport(ex);
+                if (!response.HasStarted)
                 {
                     response.StatusCode = 500;
                 }
