@@ -37,21 +37,38 @@ namespace OpenTelemetry.Exporter.Prometheus
 #pragma warning restore SA1310 // Field name should not contain an underscore
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int WriteDouble(byte[] buffer, int cursor, double value) // TODO: handle +Inf and -Inf
+        public static int WriteDouble(byte[] buffer, int cursor, double value)
         {
-#if NETCOREAPP3_1_OR_GREATER
-            Span<char> span = stackalloc char[128];
-
-            var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
-            Debug.Assert(result, "result was not true");
-
-            for (int i = 0; i < cchWritten; i++)
+            if (double.IsFinite(value))
             {
-                buffer[cursor++] = unchecked((byte)span[i]);
-            }
+#if NETCOREAPP3_1_OR_GREATER
+                Span<char> span = stackalloc char[128];
+
+                var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
+                Debug.Assert(result, $"{nameof(result)} was not true.");
+
+                for (int i = 0; i < cchWritten; i++)
+                {
+                    buffer[cursor++] = unchecked((byte)span[i]);
+                }
 #else
-            cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString(CultureInfo.InvariantCulture));
+                cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString(CultureInfo.InvariantCulture));
 #endif
+
+            }
+            else if (double.IsPositiveInfinity(value))
+            {
+                cursor = WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
+            }
+            else if (double.IsNegativeInfinity(value))
+            {
+                cursor = WriteAsciiStringNoEscape(buffer, cursor, "-Inf");
+            }
+            else
+            {
+                Debug.Assert(double.IsNaN(value), $"{nameof(value)} not NaN.");
+                cursor = WriteAsciiStringNoEscape(buffer, cursor, "Nan");
+            }
 
             return cursor;
         }
@@ -63,7 +80,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             Span<char> span = stackalloc char[20];
 
             var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
-            Debug.Assert(result, "result was not true");
+            Debug.Assert(result, $"{nameof(result)} was not true.");
 
             for (int i = 0; i < cchWritten; i++)
             {
