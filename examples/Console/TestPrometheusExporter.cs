@@ -56,7 +56,6 @@ namespace Examples.Console
                 })
                 .Build();
 
-#pragma warning disable SA1000 // KeywordsMustBeSpacedCorrectly https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/3214
             ObservableGauge<long> gauge = MyMeter.CreateObservableGauge(
             "myGauge",
             () =>
@@ -82,7 +81,6 @@ namespace Examples.Console
                 }
             });
             writeMetricTask.Start();
-#pragma warning restore SA1000 // KeywordsMustBeSpacedCorrectly
 
             token.CancelAfter(totalDurationInMins * 60 * 1000);
 

@@ -23,7 +23,6 @@ using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Tests
 {
-#pragma warning disable SA1000 // KeywordsMustBeSpacedCorrectly https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/3214
     public class MetricViewTests
     {
         private const int MaxTimeToAllowForFlush = 10000;
@@ -559,5 +558,4 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(Aggregation.Drop, MetricStreamConfiguration.Drop.Aggregation);
         }
     }
-#pragma warning restore SA1000 // KeywordsMustBeSpacedCorrectly
 }
