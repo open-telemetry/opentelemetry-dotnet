@@ -29,7 +29,7 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <ProjectReference Include="$(RepoRoot)\test\TestApp.AspNetCore.6.0\TestApp.AspNetCore.6.0.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="6.0.0-rc.2.21480.10" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
