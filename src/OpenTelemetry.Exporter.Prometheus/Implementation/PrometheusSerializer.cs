@@ -178,7 +178,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     (ordinal >= (ushort)'a' && ordinal <= (ushort)'z') ||
                     (ordinal >= (ushort)'0' && ordinal <= (ushort)'9'))
                 {
-                    cursor = WriteUnicodeNoEscape(buffer, cursor, ordinal);
+                    buffer[cursor++] = unchecked((byte)ordinal);
                 }
                 else
                 {
@@ -235,7 +235,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int WriteMetricName(byte[] buffer, int cursor, string metricName)
+        public static int WriteMetricName(byte[] buffer, int cursor, string metricName, string metricUnit = null)
         {
             Debug.Assert(!string.IsNullOrEmpty(metricName), $"{nameof(metricName)} should not be null or empty.");
 
@@ -249,8 +249,29 @@ namespace OpenTelemetry.Exporter.Prometheus
                         buffer[cursor++] = unchecked((byte)'_');
                         break;
                     default:
-                        cursor = WriteUnicodeNoEscape(buffer, cursor, ordinal);
+                        buffer[cursor++] = unchecked((byte)ordinal);
                         break;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(metricUnit))
+            {
+                buffer[cursor++] = unchecked((byte)'_');
+
+                for (int i = 0; i < metricUnit.Length; i++)
+                {
+                    var ordinal = (ushort)metricUnit[i];
+
+                    if ((ordinal >= (ushort)'A' && ordinal <= (ushort)'Z') ||
+                        (ordinal >= (ushort)'a' && ordinal <= (ushort)'z') ||
+                        (ordinal >= (ushort)'0' && ordinal <= (ushort)'9'))
+                    {
+                        buffer[cursor++] = unchecked((byte)ordinal);
+                    }
+                    else
+                    {
+                        buffer[cursor++] = unchecked((byte)'_');
+                    }
                 }
             }
 
@@ -258,12 +279,12 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int WriteHelpText(byte[] buffer, int cursor, string metricName, string metricDescription = null)
+        public static int WriteHelpText(byte[] buffer, int cursor, string metricName, string metricUnit = null, string metricDescription = null)
         {
             cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP ");
-            cursor = WriteMetricName(buffer, cursor, metricName);
+            cursor = WriteMetricName(buffer, cursor, metricName, metricUnit);
 
-            if (metricDescription != null)
+            if (!string.IsNullOrEmpty(metricDescription))
             {
                 buffer[cursor++] = unchecked((byte)' ');
                 cursor = WriteUnicodeString(buffer, cursor, metricDescription);
@@ -275,12 +296,12 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int WriteTypeInfo(byte[] buffer, int cursor, string metricName, string metricType)
+        public static int WriteTypeInfo(byte[] buffer, int cursor, string metricName, string metricUnit, string metricType)
         {
             Debug.Assert(!string.IsNullOrEmpty(metricType), $"{nameof(metricType)} should not be null or empty.");
 
             cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE ");
-            cursor = WriteMetricName(buffer, cursor, metricName);
+            cursor = WriteMetricName(buffer, cursor, metricName, metricUnit);
             buffer[cursor++] = unchecked((byte)' ');
             cursor = WriteAsciiStringNoEscape(buffer, cursor, metricType);
 
