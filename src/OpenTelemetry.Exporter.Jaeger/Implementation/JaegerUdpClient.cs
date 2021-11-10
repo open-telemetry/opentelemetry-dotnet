@@ -38,11 +38,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public void Connect() => this.client.Connect(this.host, this.port);
 
-        public int Send(byte[] buffer)
-        {
-            return this.Send(buffer, 0, buffer?.Length ?? 0);
-        }
-
         public int Send(byte[] buffer, int offset, int count)
         {
             return this.client.Client.Send(buffer, offset, count, SocketFlags.None);

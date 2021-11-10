@@ -29,6 +29,8 @@ namespace OpenTelemetry.Exporter
 {
     public class JaegerExporter : BaseExporter<Activity>
     {
+        internal uint NumberOfSpansInCurrentBatch;
+
         private readonly byte[] uInt32Storage = new byte[8];
         private readonly int maxPayloadSizeInBytes;
         private readonly IJaegerClient client;
@@ -38,7 +40,6 @@ namespace OpenTelemetry.Exporter
         private int minimumBatchSizeInBytes;
         private int currentBatchSizeInBytes;
         private int spanStartPosition;
-        private uint numberOfSpansInCurrentBatch;
         private uint sequenceId;
         private bool disposed;
 
@@ -189,7 +190,7 @@ namespace OpenTelemetry.Exporter
             {
                 var spanTotalBytesNeeded = this.spanWriter.Length;
 
-                if (this.numberOfSpansInCurrentBatch > 0
+                if (this.NumberOfSpansInCurrentBatch > 0
                     && this.currentBatchSizeInBytes + spanTotalBytesNeeded >= this.maxPayloadSizeInBytes)
                 {
                     this.SendCurrentBatch();
@@ -198,7 +199,7 @@ namespace OpenTelemetry.Exporter
                 var spanData = this.spanWriter.WrittenData;
                 this.batchWriter.WriteRaw(spanData);
 
-                this.numberOfSpansInCurrentBatch++;
+                this.NumberOfSpansInCurrentBatch++;
                 this.currentBatchSizeInBytes += spanTotalBytesNeeded;
             }
             finally
@@ -207,25 +208,7 @@ namespace OpenTelemetry.Exporter
             }
         }
 
-        /// <inheritdoc/>
-        protected override void Dispose(bool disposing)
-        {
-            if (!this.disposed)
-            {
-                if (disposing)
-                {
-                    this.client.Dispose();
-                    this.batchWriter.Dispose();
-                    this.spanWriter.Dispose();
-                }
-
-                this.disposed = true;
-            }
-
-            base.Dispose(disposing);
-        }
-
-        private void SendCurrentBatch()
+        internal void SendCurrentBatch()
         {
             try
             {
@@ -238,7 +221,7 @@ namespace OpenTelemetry.Exporter
                     this.WriteUInt32AtPosition(this.EmitBatchArgs.SeqIdPosition, ++this.sequenceId);
                 }
 
-                this.WriteUInt32AtPosition(this.Batch.SpanCountPosition, this.numberOfSpansInCurrentBatch);
+                this.WriteUInt32AtPosition(this.Batch.SpanCountPosition, this.NumberOfSpansInCurrentBatch);
 
                 var writtenData = this.batchWriter.WrittenData;
 
@@ -248,6 +231,32 @@ namespace OpenTelemetry.Exporter
             {
                 this.ResetBatch();
             }
+        }
+
+        /// <inheritdoc/>
+        protected override void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                if (disposing)
+                {
+                    try
+                    {
+                        this.client.Close();
+                    }
+                    catch
+                    {
+                    }
+
+                    this.client.Dispose();
+                    this.batchWriter.Dispose();
+                    this.spanWriter.Dispose();
+                }
+
+                this.disposed = true;
+            }
+
+            base.Dispose(disposing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -262,7 +271,7 @@ namespace OpenTelemetry.Exporter
         private void ResetBatch()
         {
             this.currentBatchSizeInBytes = this.minimumBatchSizeInBytes;
-            this.numberOfSpansInCurrentBatch = 0;
+            this.NumberOfSpansInCurrentBatch = 0;
             this.batchWriter.Clear(this.spanStartPosition);
         }
     }

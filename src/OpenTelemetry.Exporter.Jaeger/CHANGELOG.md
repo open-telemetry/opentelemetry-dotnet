@@ -6,6 +6,9 @@
   `FormatException` if it fails to parse any of the supported environment
   variables.
 
+* Added support for sending spans directly to a Jaeger Collector over HTTP
+  ([#2574](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2574))
+
 ## 1.2.0-beta1
 
 Released 2021-Oct-08

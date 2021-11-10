@@ -20,7 +20,8 @@ using System.Diagnostics;
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
 using Jaeger::OpenTelemetry.Exporter;
-using Jaeger::Thrift.Transport;
+using Jaeger::OpenTelemetry.Exporter.Jaeger.Implementation;
+using Jaeger::Thrift.Protocol;
 using OpenTelemetry;
 using OpenTelemetry.Internal;
 
@@ -50,7 +51,8 @@ namespace Benchmarks.Exporter
         {
             using JaegerExporter exporter = new JaegerExporter(
                 new JaegerExporterOptions(),
-                new BlackHoleTransport())
+                new TCompactProtocol.Factory(),
+                new NoopJaegerClient())
             {
                 Process = new Jaeger::OpenTelemetry.Exporter.Jaeger.Implementation.Process("TestService"),
             };
@@ -68,26 +70,25 @@ namespace Benchmarks.Exporter
             exporter.Shutdown();
         }
 
-        private class BlackHoleTransport : TTransport
+        private sealed class NoopJaegerClient : IJaegerClient
         {
-            public override bool IsOpen => true;
+            public bool Connected => true;
 
-            public override void Close()
-            {
-                // do nothing
-            }
-
-            public override void Write(byte[] buffer, int offset, int length)
+            public void Close()
             {
             }
 
-            public override int Flush()
+            public void Connect()
             {
-                return 0;
             }
 
-            protected override void Dispose(bool disposing)
+            public void Dispose()
             {
+            }
+
+            public int Send(byte[] buffer, int offset, int count)
+            {
+                return count;
             }
         }
     }

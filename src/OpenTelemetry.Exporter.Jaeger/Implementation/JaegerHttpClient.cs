@@ -58,8 +58,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.disposed = true;
         }
 
-        public int Send(byte[] buffer) => this.Send(buffer, 0, buffer?.Length ?? 0);
-
         public int Send(byte[] buffer, int offset, int count)
         {
             // Prevent Jaeger's HTTP operations from being instrumented.
