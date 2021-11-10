@@ -30,6 +30,7 @@ namespace OpenTelemetry.Metrics
         internal const int MaxMetrics = 1000;
         internal int ShutdownCount;
         private readonly Metric[] metrics;
+        private readonly Metric[] metricsCurrentBatch;
         private readonly List<object> instrumentations = new List<object>();
         private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs;
         private readonly object collectLock = new object();
@@ -50,6 +51,7 @@ namespace OpenTelemetry.Metrics
             this.Resource = resource;
             this.viewConfigs = viewConfigs;
             this.metrics = new Metric[MaxMetrics];
+            this.metricsCurrentBatch = new Metric[MaxMetrics];
 
             AggregationTemporality temporality = AggregationTemporality.Cumulative;
 
@@ -135,7 +137,7 @@ namespace OpenTelemetry.Metrics
                         // which will apply defaults.
                         // Users can turn off this default
                         // by adding a view like below as the last view.
-                        // .AddView(instrumentName: "*", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+                        // .AddView(instrumentName: "*", MetricStreamConfiguration.Drop)
                         metricStreamConfigs.Add(null);
                     }
 
@@ -217,6 +219,8 @@ namespace OpenTelemetry.Metrics
                 this.listener.SetMeasurementEventCallback<int>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
                 this.listener.SetMeasurementEventCallback<short>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
                 this.listener.SetMeasurementEventCallback<byte>((instrument, value, tags, state) => this.MeasurementRecordedLong(instrument, value, tags, state));
+
+                this.listener.MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state);
             }
             else
             {
@@ -282,9 +286,10 @@ namespace OpenTelemetry.Metrics
                 this.listener.SetMeasurementEventCallback<int>((instrument, value, tags, state) => this.MeasurementRecordedLongSingleStream(instrument, value, tags, state));
                 this.listener.SetMeasurementEventCallback<short>((instrument, value, tags, state) => this.MeasurementRecordedLongSingleStream(instrument, value, tags, state));
                 this.listener.SetMeasurementEventCallback<byte>((instrument, value, tags, state) => this.MeasurementRecordedLongSingleStream(instrument, value, tags, state));
+
+                this.listener.MeasurementsCompleted = (instrument, state) => this.MeasurementsCompletedSingleStream(instrument, state);
             }
 
-            this.listener.MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state);
             this.listener.Start();
 
             static Regex GetWildcardRegex(IEnumerable<string> collection)
@@ -300,9 +305,31 @@ namespace OpenTelemetry.Metrics
 
         internal MetricReader Reader => this.reader;
 
+        internal void MeasurementsCompletedSingleStream(Instrument instrument, object state)
+        {
+            var metric = state as Metric;
+            if (metric == null)
+            {
+                // TODO: log
+                return;
+            }
+
+            metric.InstrumentDisposed = true;
+        }
+
         internal void MeasurementsCompleted(Instrument instrument, object state)
         {
-            Console.WriteLine($"Instrument {instrument.Meter.Name}:{instrument.Name} completed.");
+            var metrics = state as List<Metric>;
+            if (metrics == null)
+            {
+                // TODO: log
+                return;
+            }
+
+            foreach (var metric in metrics)
+            {
+                metric.InstrumentDisposed = true;
+            }
         }
 
         internal void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
@@ -412,12 +439,27 @@ namespace OpenTelemetry.Metrics
 
                     var indexSnapShot = Math.Min(this.metricIndex, MaxMetrics - 1);
                     var target = indexSnapShot + 1;
+                    int metricCountCurrentBatch = 0;
                     for (int i = 0; i < target; i++)
                     {
-                        this.metrics[i].SnapShot();
+                        var metric = this.metrics[i];
+                        if (metric != null)
+                        {
+                            if (metric.InstrumentDisposed)
+                            {
+                                metric.SnapShot();
+                                this.metrics[i] = null;
+                            }
+                            else
+                            {
+                                metric.SnapShot();
+                            }
+
+                            this.metricsCurrentBatch[metricCountCurrentBatch++] = metric;
+                        }
                     }
 
-                    return (target > 0) ? new Batch<Metric>(this.metrics, target) : default;
+                    return (metricCountCurrentBatch > 0) ? new Batch<Metric>(this.metricsCurrentBatch, metricCountCurrentBatch) : default;
                 }
                 catch (Exception)
                 {

@@ -106,6 +106,7 @@ namespace OpenTelemetry.Metrics
 
             this.aggStore = new AggregatorStore(aggType, temporality, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
             this.Temporality = temporality;
+            this.InstrumentDisposed = false;
         }
 
         public MetricType MetricType { get; private set; }
@@ -119,6 +120,8 @@ namespace OpenTelemetry.Metrics
         public string Unit { get; private set; }
 
         public Meter Meter { get; private set; }
+
+        internal bool InstrumentDisposed { get; set; }
 
         public BatchMetricPoint GetMetricPoints()
         {
