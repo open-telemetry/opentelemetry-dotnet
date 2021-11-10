@@ -105,11 +105,21 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-            var index = content.LastIndexOf(' ');
+            string[] lines = content.Split('\n');
 
             Assert.Equal(
-                $"# TYPE counter_double counter\ncounter_double{{key1=\"value1\",key2=\"value2\"}} 101.17",
-                content.Substring(0, index));
+                $"# HELP counter_double",
+                lines[0]);
+
+            Assert.Equal(
+                $"# TYPE counter_double counter",
+                lines[1]);
+
+            Assert.Contains(
+                $"counter_double{{key1=\"value1\",key2=\"value2\"}} 101.17",
+                lines[2]);
+
+            var index = content.LastIndexOf(' ');
 
             Assert.Equal('\n', content[content.Length - 1]);
 

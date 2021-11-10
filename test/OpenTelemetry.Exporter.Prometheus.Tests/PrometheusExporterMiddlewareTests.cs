@@ -52,21 +52,41 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             using var meter = new Meter(MeterName);
 
+            var beginTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
             var counter = meter.CreateCounter<double>("counter_double");
             counter.Add(100.18D, tags);
             counter.Add(0.99D, tags);
 
             using var response = await host.GetTestClient().GetAsync("/metrics").ConfigureAwait(false);
 
+            var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-            int index = content.LastIndexOf(' ');
+            string[] lines = content.Split('\n');
 
             Assert.Equal(
-                $"# TYPE counter_double counter\ncounter_double{{key1=\"value1\",key2=\"value2\"}} 101.17",
-                content.Substring(0, index));
+                $"# HELP counter_double",
+                lines[0]);
+
+            Assert.Equal(
+                $"# TYPE counter_double counter",
+                lines[1]);
+
+            Assert.Contains(
+                $"counter_double{{key1=\"value1\",key2=\"value2\"}} 101.17",
+                lines[2]);
+
+            var index = content.LastIndexOf(' ');
+
+            Assert.Equal('\n', content[content.Length - 1]);
+
+            var timestamp = long.Parse(content.Substring(index, content.Length - index - 1));
+
+            Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
 
             await host.StopAsync().ConfigureAwait(false);
         }
