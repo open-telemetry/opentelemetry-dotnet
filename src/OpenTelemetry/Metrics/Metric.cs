@@ -34,8 +34,8 @@ namespace OpenTelemetry.Metrics
             string[] tagKeysInteresting = null)
         {
             this.Name = metricName;
-            this.Description = metricDescription;
-            this.Unit = instrument.Unit;
+            this.Description = metricDescription ?? string.Empty;
+            this.Unit = instrument.Unit ?? string.Empty;
             this.Meter = instrument.Meter;
             AggregationType aggType = default;
             if (instrument.GetType() == typeof(ObservableCounter<long>)
