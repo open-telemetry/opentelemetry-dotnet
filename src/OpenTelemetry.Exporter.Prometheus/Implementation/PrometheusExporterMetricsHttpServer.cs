@@ -117,6 +117,9 @@ namespace OpenTelemetry.Exporter.Prometheus
 
         private void WorkerProc()
         {
+            var bufferSize = 85000; // encourage the object to live in LOH (large object heap)
+            var buffer = new byte[bufferSize];
+
             this.httpListener.Start();
 
             try
@@ -138,13 +141,32 @@ namespace OpenTelemetry.Exporter.Prometheus
                         {
                             try
                             {
-                                var buffer = new byte[65536];
-                                var cursor = PrometheusSerializer.WriteMetrics(buffer, 0, metrics);
+                                var cursor = 0;
+                                foreach (var metric in metrics)
+                                {
+                                    while (true)
+                                    {
+                                        try
+                                        {
+                                            cursor = PrometheusSerializer.WriteMetric(buffer, cursor, metric);
+                                            break;
+                                        }
+                                        catch (IndexOutOfRangeException)
+                                        {
+                                            bufferSize = bufferSize * 2;
+                                            var newBuffer = new byte[bufferSize];
+                                            buffer.CopyTo(newBuffer, 0);
+                                            buffer = newBuffer;
+                                        }
+                                    }
+                                }
+
                                 ctx.Response.OutputStream.Write(buffer, 0, cursor - 0);
                                 return ExportResult.Success;
                             }
-                            catch (Exception)
+                            catch (Exception ex)
                             {
+                                Console.WriteLine($"{ex}");
                                 return ExportResult.Failure;
                             }
                         };
