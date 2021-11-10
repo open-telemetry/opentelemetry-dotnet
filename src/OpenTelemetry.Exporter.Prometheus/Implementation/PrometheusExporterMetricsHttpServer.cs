@@ -131,7 +131,8 @@ namespace OpenTelemetry.Exporter.Prometheus
                     try
                     {
                         ctx.Response.StatusCode = 200;
-                        ctx.Response.ContentType = PrometheusMetricsFormatHelper.ContentType;
+                        ctx.Response.Headers.Add("Server", string.Empty);
+                        ctx.Response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
 
                         this.exporter.OnExport = (metrics) =>
                         {

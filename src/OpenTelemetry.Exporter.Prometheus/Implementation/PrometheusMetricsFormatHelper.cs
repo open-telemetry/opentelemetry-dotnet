@@ -27,8 +27,6 @@ namespace OpenTelemetry.Exporter.Prometheus
 {
     internal static class PrometheusMetricsFormatHelper
     {
-        public const string ContentType = "text/plain; version = 0.0.4";
-
 #if NETCOREAPP3_1_OR_GREATER
         private static readonly SpanAction<char, (string, Func<char, bool, bool>)> CreateName
             = (Span<char> data, (string name, Func<char, bool, bool> isCharacterAllowedFunc) state) =>

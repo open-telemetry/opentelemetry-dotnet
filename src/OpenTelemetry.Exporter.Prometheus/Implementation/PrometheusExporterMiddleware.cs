@@ -115,7 +115,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         internal static async Task WriteMetricsToResponse(byte[] buffer, int count, HttpResponse response)
         {
             response.StatusCode = 200;
-            response.ContentType = PrometheusMetricsFormatHelper.ContentType;
+            response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
 
             await response.Body.WriteAsync(buffer, 0, count).ConfigureAwait(false);
         }

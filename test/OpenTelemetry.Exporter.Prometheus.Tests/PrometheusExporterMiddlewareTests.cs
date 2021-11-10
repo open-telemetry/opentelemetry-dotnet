@@ -69,16 +69,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             string[] lines = content.Split('\n');
 
             Assert.Equal(
-                $"# HELP counter_double",
-                lines[0]);
-
-            Assert.Equal(
                 $"# TYPE counter_double counter",
-                lines[1]);
+                lines[0]);
 
             Assert.Contains(
                 $"counter_double{{key1=\"value1\",key2=\"value2\"}} 101.17",
-                lines[2]);
+                lines[1]);
 
             var index = content.LastIndexOf(' ');
 
