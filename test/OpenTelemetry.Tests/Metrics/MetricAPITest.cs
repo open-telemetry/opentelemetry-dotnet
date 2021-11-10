@@ -364,6 +364,55 @@ namespace OpenTelemetry.Metrics.Tests
         [Theory]
         [InlineData(AggregationTemporality.Cumulative)]
         [InlineData(AggregationTemporality.Delta)]
+        public void TestInstrumentDisposal(AggregationTemporality temporality)
+        {
+            var metricItems = new List<Metric>();
+            var metricExporter = new InMemoryExporter<Metric>(metricItems);
+            var metricReader = new BaseExportingMetricReader(metricExporter)
+            {
+                PreferredAggregationTemporality = temporality,
+            };
+
+            var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}.1");
+            var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}.2");
+            var counter1 = meter1.CreateCounter<long>("counterFromMeter1");
+            var counter2 = meter2.CreateCounter<long>("counterFromMeter2");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter1.Name)
+                .AddMeter(meter2.Name)
+                .AddReader(metricReader)
+                .Build();
+
+            counter1.Add(10, new KeyValuePair<string, object>("key", "value"));
+            counter2.Add(10, new KeyValuePair<string, object>("key", "value"));
+
+            metricReader.Collect();
+            Assert.Equal(2, metricItems.Count);
+            metricItems.Clear();
+
+            meter1.Dispose();
+
+            metricReader.Collect();
+            Assert.Equal(2, metricItems.Count);
+            metricItems.Clear();
+
+            metricReader.Collect();
+            Assert.Single(metricItems);
+            metricItems.Clear();
+
+            meter2.Dispose();
+
+            metricReader.Collect();
+            Assert.Single(metricItems);
+            metricItems.Clear();
+
+            metricReader.Collect();
+            Assert.Empty(metricItems);
+        }
+
+        [Theory]
+        [InlineData(AggregationTemporality.Cumulative)]
+        [InlineData(AggregationTemporality.Delta)]
         public void TestMetricPointCap(AggregationTemporality temporality)
         {
             var metricItems = new List<Metric>();
