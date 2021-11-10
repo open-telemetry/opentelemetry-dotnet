@@ -29,7 +29,7 @@ namespace Examples.Console
     {
         private static readonly Meter MyMeter = new Meter("TestMeter");
         private static readonly Counter<double> Counter = MyMeter.CreateCounter<double>("myCounter", description: "A counter for demonstration purpose.");
-        private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("myHistogram", description: "A histogram for demonstration purpose.");
+        private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("myHistogram");
         private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());
 
         internal static object Run(int port, int totalDurationInMins)
