@@ -117,6 +117,9 @@ namespace OpenTelemetry.Exporter.Prometheus
 
         private void WorkerProc()
         {
+            var bufferSize = 85000; // encourage the object to live in LOH (large object heap)
+            var buffer = new byte[bufferSize];
+
             this.httpListener.Start();
 
             try
@@ -138,8 +141,38 @@ namespace OpenTelemetry.Exporter.Prometheus
                         {
                             try
                             {
-                                var buffer = new byte[65536];
-                                var cursor = PrometheusSerializer.WriteMetrics(buffer, 0, metrics);
+                                var cursor = 0;
+                                foreach (var metric in metrics)
+                                {
+                                    while (true)
+                                    {
+                                        try
+                                        {
+                                            cursor = PrometheusSerializer.WriteMetric(buffer, cursor, metric);
+                                            break;
+                                        }
+                                        catch (IndexOutOfRangeException)
+                                        {
+                                            bufferSize = bufferSize * 2;
+
+                                            // there are two cases we might run into the following condition:
+                                            // 1. we have many metrics to be exported - in this case we probably want
+                                            //    to put some upper limit and allow the user to configure it.
+                                            // 2. we got an IndexOutOfRangeException which was triggered by some other
+                                            //    code instead of the buffer[cursor++] - in this case we should give up
+                                            //    at certain point rather than allocating like crazy.
+                                            if (bufferSize > 100 * 1024 * 1024)
+                                            {
+                                                throw;
+                                            }
+
+                                            var newBuffer = new byte[bufferSize];
+                                            buffer.CopyTo(newBuffer, 0);
+                                            buffer = newBuffer;
+                                        }
+                                    }
+                                }
+
                                 ctx.Response.OutputStream.Write(buffer, 0, cursor - 0);
                                 return ExportResult.Success;
                             }
