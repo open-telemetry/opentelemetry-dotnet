@@ -41,6 +41,7 @@ namespace OpenTelemetry.Metrics
         private readonly double[] histogramBounds;
         private readonly UpdateLongDelegate updateLongCallback;
         private readonly UpdateDoubleDelegate updateDoubleCallback;
+        private readonly ReaderWriterLockSlim rwlock;
         private int metricPointIndex = 0;
         private bool zeroTagMetricPointInitialized;
         private DateTimeOffset startTimeExclusive;
@@ -76,6 +77,8 @@ namespace OpenTelemetry.Metrics
                 this.tagKeysInteresting = hs;
                 this.tagsKeysInterestingCount = hs.Count;
             }
+
+            this.rwlock = new ReaderWriterLockSlim();
         }
 
         private delegate void UpdateLongDelegate(long value, ReadOnlySpan<KeyValuePair<string, object>> tags);
@@ -163,58 +166,67 @@ namespace OpenTelemetry.Metrics
                 }
             }
 
-            // GetOrAdd by TagValues at 2st Level of 2-level dictionary structure.
-            // Get back Metrics[].
-            if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
+            try
             {
-                aggregatorIndex = this.metricPointIndex;
-                if (aggregatorIndex >= MaxMetricPoints)
-                {
-                    // sorry! out of data points.
-                    // TODO: Once we support cleanup of
-                    // unused points (typically with delta)
-                    // we can re-claim them here.
-                    return -1;
-                }
+                this.rwlock.EnterUpgradeableReadLock();
 
-                lock (value2metrics)
+                // GetOrAdd by TagValues at 2st Level of 2-level dictionary structure.
+                // Get back Metrics[].
+                if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
                 {
-                    // check again after acquiring lock.
-                    if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
+                    aggregatorIndex = this.metricPointIndex;
+                    if (aggregatorIndex >= MaxMetricPoints)
                     {
-                        aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
-                        if (aggregatorIndex >= MaxMetricPoints)
+                        // sorry! out of data points.
+                        // TODO: Once we support cleanup of
+                        // unused points (typically with delta)
+                        // we can re-claim them here.
+                        return -1;
+                    }
+
+                    lock (value2metrics)
+                    {
+                        // check again after acquiring lock.
+                        if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
                         {
-                            // sorry! out of data points.
-                            // TODO: Once we support cleanup of
-                            // unused points (typically with delta)
-                            // we can re-claim them here.
-                            return -1;
+                            aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
+                            if (aggregatorIndex >= MaxMetricPoints)
+                            {
+                                // sorry! out of data points.
+                                // TODO: Once we support cleanup of
+                                // unused points (typically with delta)
+                                // we can re-claim them here.
+                                return -1;
+                            }
+
+                            // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                            if (seqKey == null)
+                            {
+                                seqKey = new string[length];
+                                tagKeys.CopyTo(seqKey, 0);
+                            }
+
+                            var seqVal = new object[length];
+                            tagValues.CopyTo(seqVal, 0);
+
+                            ref var metricPoint = ref this.metricPoints[aggregatorIndex];
+                            var dt = DateTimeOffset.UtcNow;
+                            metricPoint = new MetricPoint(this.aggType, dt, seqKey, seqVal, this.histogramBounds);
+
+                            // Add to dictionary *after* initializing MetricPoint
+                            // as other threads can start writing to the
+                            // MetricPoint, if dictionary entry found.
+                            value2metrics.TryAdd(seqVal, aggregatorIndex);
                         }
-
-                        // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                        if (seqKey == null)
-                        {
-                            seqKey = new string[length];
-                            tagKeys.CopyTo(seqKey, 0);
-                        }
-
-                        var seqVal = new object[length];
-                        tagValues.CopyTo(seqVal, 0);
-
-                        ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                        var dt = DateTimeOffset.UtcNow;
-                        metricPoint = new MetricPoint(this.aggType, dt, seqKey, seqVal, this.histogramBounds);
-
-                        // Add to dictionary *after* initializing MetricPoint
-                        // as other threads can start writing to the
-                        // MetricPoint, if dictionary entry found.
-                        value2metrics.TryAdd(seqVal, aggregatorIndex);
                     }
                 }
-            }
 
-            return aggregatorIndex;
+                return aggregatorIndex;
+            }
+            finally
+            {
+                this.rwlock.ExitUpgradeableReadLock();
+            }
         }
 
         private void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
