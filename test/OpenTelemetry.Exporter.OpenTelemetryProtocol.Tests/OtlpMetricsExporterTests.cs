@@ -20,7 +20,6 @@ using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Threading;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -56,6 +55,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new KeyValuePair<string, object>("key2", "value2"),
             };
 
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{includeServiceNameInResource}", "0.0.1");
+
             var metricReader = new BaseExportingMetricReader(new TestExporter<Metric>(RunTest))
             {
                 PreferredAggregationTemporality = AggregationTemporality.Delta,
@@ -63,11 +64,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
-                .AddMeter("TestMeter")
+                .AddMeter(meter.Name)
                 .AddReader(metricReader)
                 .Build();
-
-            using var meter = new Meter("TestMeter", "0.0.1");
 
             var counter = meter.CreateCounter<int>("counter");
 
@@ -102,7 +101,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Assert.Single(resourceMetric.InstrumentationLibraryMetrics);
                 var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.First();
                 Assert.Equal(string.Empty, instrumentationLibraryMetrics.SchemaUrl);
-                Assert.Equal("TestMeter", instrumentationLibraryMetrics.InstrumentationLibrary.Name);
+                Assert.Equal(meter.Name, instrumentationLibraryMetrics.InstrumentationLibrary.Name);
                 Assert.Equal("0.0.1", instrumentationLibraryMetrics.InstrumentationLibrary.Version);
 
                 Assert.Single(instrumentationLibraryMetrics.Metrics);

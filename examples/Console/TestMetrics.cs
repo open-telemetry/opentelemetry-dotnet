@@ -30,9 +30,11 @@ namespace Examples.Console
     {
         internal static object Run(MetricsOptions options)
         {
+            using var meter = new Meter("TestMeter");
+
             var providerBuilder = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("myservice"))
-                .AddMeter("TestMeter"); // All instruments from this meter are enabled.
+                .AddMeter(meter.Name); // All instruments from this meter are enabled.
 
             if (options.UseExporter.ToLower() == "otlp")
             {
@@ -82,8 +84,6 @@ namespace Examples.Console
 
             using var provider = providerBuilder.Build();
 
-            using var meter = new Meter("TestMeter", "0.0.1");
-
             Counter<int> counter = null;
             if (options.FlagCounter ?? true)
             {
@@ -98,7 +98,7 @@ namespace Examples.Console
 
             if (options.FlagGauge ?? false)
             {
-                var observableCounter = meter.CreateObservableGauge<int>("gauge", () =>
+                var observableCounter = meter.CreateObservableGauge("gauge", () =>
                 {
                     return new List<Measurement<int>>()
                     {

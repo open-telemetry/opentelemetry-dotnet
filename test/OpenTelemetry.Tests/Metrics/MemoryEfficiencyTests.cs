@@ -29,7 +29,7 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(AggregationTemporality.Delta)]
         public void ExportOnlyWhenPointChanged(AggregationTemporality temporality)
         {
-            using var meter = new Meter(Utils.GetCurrentMethodName(), "1.0");
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
 
             var exportedItems = new List<Metric>();
 

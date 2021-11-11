@@ -34,8 +34,8 @@ namespace OpenTelemetry.Metrics
             string[] tagKeysInteresting = null)
         {
             this.Name = metricName;
-            this.Description = metricDescription;
-            this.Unit = instrument.Unit;
+            this.Description = metricDescription ?? string.Empty;
+            this.Unit = instrument.Unit ?? string.Empty;
             this.Meter = instrument.Meter;
             AggregationType aggType = default;
             if (instrument.GetType() == typeof(ObservableCounter<long>)
@@ -106,6 +106,7 @@ namespace OpenTelemetry.Metrics
 
             this.aggStore = new AggregatorStore(aggType, temporality, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
             this.Temporality = temporality;
+            this.InstrumentDisposed = false;
         }
 
         public MetricType MetricType { get; private set; }
@@ -119,6 +120,8 @@ namespace OpenTelemetry.Metrics
         public string Unit { get; private set; }
 
         public Meter Meter { get; private set; }
+
+        internal bool InstrumentDisposed { get; set; }
 
         public BatchMetricPoint GetMetricPoints()
         {

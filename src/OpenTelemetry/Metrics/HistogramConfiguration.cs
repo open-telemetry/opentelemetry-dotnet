@@ -22,6 +22,12 @@ namespace OpenTelemetry.Metrics
     {
         private Aggregation aggregation = Aggregation.Histogram;
 
+        /// <summary>
+        /// Gets or sets the custom histogram bounds.
+        /// </summary>
+        /// <remarks>
+        /// The array must be in ascending order with distinct values.
+        /// </remarks>
         public double[] BucketBounds { get; set; }
 
         public override Aggregation Aggregation

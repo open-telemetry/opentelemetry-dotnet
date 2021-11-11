@@ -86,6 +86,15 @@ namespace OpenTelemetry.Metrics
                 throw new ArgumentException($"Custom view name {metricStreamConfiguration.Name} is invalid.", nameof(metricStreamConfiguration.Name));
             }
 
+            if (metricStreamConfiguration is HistogramConfiguration histogramConfiguration)
+            {
+                // Validate histogram bounds
+                if (histogramConfiguration.BucketBounds != null && !IsSortedAndDistinct(histogramConfiguration.BucketBounds))
+                {
+                    throw new ArgumentException($"Histogram bounds must be in ascending order with distinct values", nameof(histogramConfiguration.BucketBounds));
+                }
+            }
+
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
                 return meterProviderBuilderBase.AddView(instrumentName, metricStreamConfiguration);
@@ -147,6 +156,19 @@ namespace OpenTelemetry.Metrics
             }
 
             return null;
+        }
+
+        private static bool IsSortedAndDistinct(double[] values)
+        {
+            for (int i = 1; i < values.Length; i++)
+            {
+                if (values[i] <= values[i - 1])
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }
