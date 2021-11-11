@@ -184,40 +184,41 @@ namespace OpenTelemetry.Metrics
                         return -1;
                     }
 
-                    lock (value2metrics)
+                    aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
+                    if (aggregatorIndex >= MaxMetricPoints)
                     {
-                        // check again after acquiring lock.
-                        if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
-                        {
-                            aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
-                            if (aggregatorIndex >= MaxMetricPoints)
-                            {
-                                // sorry! out of data points.
-                                // TODO: Once we support cleanup of
-                                // unused points (typically with delta)
-                                // we can re-claim them here.
-                                return -1;
-                            }
+                        // sorry! out of data points.
+                        // TODO: Once we support cleanup of
+                        // unused points (typically with delta)
+                        // we can re-claim them here.
+                        return -1;
+                    }
 
-                            // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                            if (seqKey == null)
-                            {
-                                seqKey = new string[length];
-                                tagKeys.CopyTo(seqKey, 0);
-                            }
+                    // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                    if (seqKey == null)
+                    {
+                        seqKey = new string[length];
+                        tagKeys.CopyTo(seqKey, 0);
+                    }
 
-                            var seqVal = new object[length];
-                            tagValues.CopyTo(seqVal, 0);
+                    var seqVal = new object[length];
+                    tagValues.CopyTo(seqVal, 0);
 
-                            ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                            var dt = DateTimeOffset.UtcNow;
-                            metricPoint = new MetricPoint(this.aggType, dt, seqKey, seqVal, this.histogramBounds);
+                    ref var metricPoint = ref this.metricPoints[aggregatorIndex];
+                    var dt = DateTimeOffset.UtcNow;
+                    metricPoint = new MetricPoint(this.aggType, dt, seqKey, seqVal, this.histogramBounds);
 
-                            // Add to dictionary *after* initializing MetricPoint
-                            // as other threads can start writing to the
-                            // MetricPoint, if dictionary entry found.
-                            value2metrics.TryAdd(seqVal, aggregatorIndex);
-                        }
+                    // Add to dictionary *after* initializing MetricPoint
+                    // as other threads can start writing to the
+                    // MetricPoint, if dictionary entry found.
+                    try
+                    {
+                        this.rwlock.EnterWriteLock();
+                        value2metrics.TryAdd(seqVal, aggregatorIndex);
+                    }
+                    finally
+                    {
+                        this.rwlock.ExitWriteLock();
                     }
                 }
 
