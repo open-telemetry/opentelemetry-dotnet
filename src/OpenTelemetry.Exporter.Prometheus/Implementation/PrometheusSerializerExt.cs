@@ -68,13 +68,13 @@ namespace OpenTelemetry.Exporter.Prometheus
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
                     buffer[cursor++] = unchecked((byte)'{');
 
+                    cursor = WriteLabel(buffer, cursor, "library", metric.Meter.Name);
+                    buffer[cursor++] = unchecked((byte)',');
+                    cursor = WriteLabel(buffer, cursor, "version", metric.Meter.Version);
+
                     for (var i = 0; i < keys.Length; i++)
                     {
-                        if (i > 0)
-                        {
-                            buffer[cursor++] = unchecked((byte)',');
-                        }
-
+                        buffer[cursor++] = unchecked((byte)',');
                         cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
                     }
 
@@ -116,6 +116,11 @@ namespace OpenTelemetry.Exporter.Prometheus
                         cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
                         cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
 
+                        cursor = WriteLabel(buffer, cursor, "library", metric.Meter.Name);
+                        buffer[cursor++] = unchecked((byte)',');
+                        cursor = WriteLabel(buffer, cursor, "version", metric.Meter.Version);
+                        buffer[cursor++] = unchecked((byte)',');
+
                         for (var i = 0; i < keys.Length; i++)
                         {
                             cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
@@ -147,13 +152,13 @@ namespace OpenTelemetry.Exporter.Prometheus
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum{");
 
+                    cursor = WriteLabel(buffer, cursor, "library", metric.Meter.Name);
+                    buffer[cursor++] = unchecked((byte)',');
+                    cursor = WriteLabel(buffer, cursor, "version", metric.Meter.Version);
+
                     for (var i = 0; i < keys.Length; i++)
                     {
-                        if (i > 0)
-                        {
-                            buffer[cursor++] = unchecked((byte)',');
-                        }
-
+                        buffer[cursor++] = unchecked((byte)',');
                         cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
                     }
 
@@ -171,13 +176,13 @@ namespace OpenTelemetry.Exporter.Prometheus
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count{");
 
+                    cursor = WriteLabel(buffer, cursor, "library", metric.Meter.Name);
+                    buffer[cursor++] = unchecked((byte)',');
+                    cursor = WriteLabel(buffer, cursor, "version", metric.Meter.Version);
+
                     for (var i = 0; i < keys.Length; i++)
                     {
-                        if (i > 0)
-                        {
-                            buffer[cursor++] = unchecked((byte)',');
-                        }
-
+                        buffer[cursor++] = unchecked((byte)',');
                         cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
                     }
 
