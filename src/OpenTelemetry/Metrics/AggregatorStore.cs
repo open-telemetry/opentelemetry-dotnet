@@ -31,8 +31,8 @@ namespace OpenTelemetry.Metrics
         private readonly int tagsKeysInterestingCount;
 
         // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
-        private readonly ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>> keyValue2MetricAggs =
-            new ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>>(new StringArrayEqualityComparer());
+        private readonly ConcurrentDictionary<string[], Dictionary<object[], int>> keyValue2MetricAggs =
+            new ConcurrentDictionary<string[], Dictionary<object[], int>>(new StringArrayEqualityComparer());
 
         private readonly AggregationTemporality temporality;
         private readonly bool outputDelta;
@@ -159,7 +159,7 @@ namespace OpenTelemetry.Metrics
                 seqKey = new string[length];
                 tagKeys.CopyTo(seqKey, 0);
 
-                value2metrics = new ConcurrentDictionary<object[], int>(ObjectArrayComparer);
+                value2metrics = new Dictionary<object[], int>(ObjectArrayComparer);
                 if (!this.keyValue2MetricAggs.TryAdd(seqKey, value2metrics))
                 {
                     this.keyValue2MetricAggs.TryGetValue(seqKey, out value2metrics);
@@ -214,7 +214,7 @@ namespace OpenTelemetry.Metrics
                     try
                     {
                         this.rwlock.EnterWriteLock();
-                        value2metrics.TryAdd(seqVal, aggregatorIndex);
+                        value2metrics.Add(seqVal, aggregatorIndex);
                     }
                     finally
                     {
