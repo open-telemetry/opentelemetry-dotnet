@@ -102,6 +102,14 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         public bool EnableConnectionLevelAttributes { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether or not the <see cref="SqlClientInstrumentation"/> should stop the activity after the WriteCommandAfter event or the WriteConnectionCloseAfter event. Default value: WriteCommandAfter.
+        /// </summary>
+        /// <remarks>
+        /// The default behavior terminates the activity after the ExecuteCommand event which does not always depict the duration of the request until the whole dataset is returned.
+        /// </remarks>
+        public SqlClientActivityStopTriggerEvent ActivityStopTriggerEvent { get; set; }
+
+        /// <summary>
         /// Gets or sets an action to enrich an Activity.
         /// </summary>
         /// <remarks>

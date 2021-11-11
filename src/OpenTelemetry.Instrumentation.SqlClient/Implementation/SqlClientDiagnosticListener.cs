@@ -29,6 +29,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         public const string SqlDataAfterExecuteCommand = "System.Data.SqlClient.WriteCommandAfter";
         public const string SqlMicrosoftAfterExecuteCommand = "Microsoft.Data.SqlClient.WriteCommandAfter";
 
+        public const string SqlDataAfterConnectionClose = "System.Data.SqlClient.WriteConnectionCloseAfter";
+        public const string SqlMicrosoftAfterConnectionClose = "Microsoft.Data.SqlClient.WriteConnectionCloseAfter";
+
         public const string SqlDataWriteCommandError = "System.Data.SqlClient.WriteCommandError";
         public const string SqlMicrosoftWriteCommandError = "Microsoft.Data.SqlClient.WriteCommandError";
 
@@ -131,8 +134,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                     }
 
                     break;
-                case SqlDataAfterExecuteCommand:
-                case SqlMicrosoftAfterExecuteCommand:
+                case SqlDataAfterExecuteCommand when this.options.ActivityStopTriggerEvent == SqlClientActivityStopTriggerEvent.WriteCommandAfter:
+                case SqlMicrosoftAfterExecuteCommand when this.options.ActivityStopTriggerEvent == SqlClientActivityStopTriggerEvent.WriteCommandAfter:
+                case SqlDataAfterConnectionClose when this.options.ActivityStopTriggerEvent == SqlClientActivityStopTriggerEvent.WriteConnectionCloseAfter:
+                case SqlMicrosoftAfterConnectionClose when this.options.ActivityStopTriggerEvent == SqlClientActivityStopTriggerEvent.WriteConnectionCloseAfter:
                     {
                         if (activity == null)
                         {
