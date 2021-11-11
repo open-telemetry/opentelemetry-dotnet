@@ -168,7 +168,8 @@ namespace OpenTelemetry.Metrics
 
             try
             {
-                this.rwlock.EnterUpgradeableReadLock();
+                // this.rwlock.EnterUpgradeableReadLock();
+                this.rwlock.EnterReadLock();
 
                 // GetOrAdd by TagValues at 2st Level of 2-level dictionary structure.
                 // Get back Metrics[].
@@ -226,7 +227,8 @@ namespace OpenTelemetry.Metrics
             }
             finally
             {
-                this.rwlock.ExitUpgradeableReadLock();
+                // this.rwlock.ExitUpgradeableReadLock();
+                this.rwlock.ExitReadLock();
             }
         }
 
