@@ -129,12 +129,12 @@ namespace OpenTelemetry.Metrics
                         case MetricPointStatus.CollectPending:
                             this.metricPointLocks[i].EnterWriteLock();
                             metricPoint.TakeSnapShot(this.outputDelta);
-                            metricPoint.MetricPointStatus = MetricPointStatus.NoPendingUpdate;
+                            metricPoint.MetricPointStatus = MetricPointStatus.NoCollectPending;
                             this.metricPointLocks[i].ExitWriteLock();
                             this.currentMetricPointBatch[this.batchSize] = i;
                             this.batchSize++;
                             break;
-                        case MetricPointStatus.NoPendingUpdate:
+                        case MetricPointStatus.NoCollectPending:
                             this.metricPointLocks[i].EnterWriteLock();
                             metricPoint.MetricPointStatus = MetricPointStatus.CandidateForRemoval;
                             this.metricPointLocks[i].ExitWriteLock();
