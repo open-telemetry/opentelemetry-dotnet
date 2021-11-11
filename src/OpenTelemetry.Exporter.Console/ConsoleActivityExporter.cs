@@ -83,6 +83,16 @@ namespace OpenTelemetry.Exporter
                     }
                 }
 
+                if (activity.Status != ActivityStatusCode.Unset)
+                {
+                    this.WriteLine("Activity Status:");
+                    this.WriteLine($"Status: {activity.Status}");
+                    if (activity.StatusDescription != null)
+                    {
+                        this.WriteLine($"Status Description: {activity.StatusDescription}");
+                    }
+                }
+
                 this.WriteLine(string.Empty);
             }
 

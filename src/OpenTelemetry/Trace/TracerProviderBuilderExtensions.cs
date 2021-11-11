@@ -92,6 +92,21 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Disable status switch for Activity.
+        /// </summary>
+        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder DisableActivityStatusSwitch(this TracerProviderBuilder tracerProviderBuilder)
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            {
+                tracerProviderBuilderBase.DisableActivityStatusSwitch();
+            }
+
+            return tracerProviderBuilder;
+        }
+
+        /// <summary>
         /// Run the given actions to initialize the <see cref="TracerProvider"/>.
         /// </summary>
         /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
