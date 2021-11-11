@@ -6,6 +6,8 @@
   </Localization>
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
     <Rule Id="SA0001" Action="None" />
+    <!-- SA1000 KeywordsMustBeSpacedCorrectly https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/3214 -->
+    <Rule Id="SA1000" Action="None" />
     <Rule Id="SA1200" Action="None" />
     <Rule Id="SA1401" Action="None" />
     <Rule Id="SA1512" Action="None" />
