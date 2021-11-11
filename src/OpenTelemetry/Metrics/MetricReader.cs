@@ -15,7 +15,9 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Internal;
@@ -24,10 +26,16 @@ namespace OpenTelemetry.Metrics
 {
     public abstract class MetricReader : IDisposable
     {
+        internal const int MaxMetrics = 1000;
         private const AggregationTemporality CumulativeAndDelta = AggregationTemporality.Cumulative | AggregationTemporality.Delta;
+        private readonly Metric[] metrics = new Metric[MaxMetrics];
+        private readonly Metric[] metricsCurrentBatch = new Metric[MaxMetrics];
+        private readonly HashSet<string> metricStreamNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly object instrumentCreationLock = new object();
         private readonly object newTaskLock = new object();
         private readonly object onCollectLock = new object();
         private readonly TaskCompletionSource<bool> shutdownTcs = new TaskCompletionSource<bool>();
+        private int metricIndex = -1;
         private AggregationTemporality preferredAggregationTemporality = CumulativeAndDelta;
         private AggregationTemporality supportedAggregationTemporality = CumulativeAndDelta;
         private int shutdownCount;
@@ -174,6 +182,152 @@ namespace OpenTelemetry.Metrics
             this.ParentProvider = parentProvider;
         }
 
+        internal Metric AddMetricWithNoViews(Instrument instrument)
+        {
+            var metricName = instrument.Name;
+            lock (this.instrumentCreationLock)
+            {
+                if (this.metricStreamNames.Contains(metricName))
+                {
+                    OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Metric name conflicting with existing name.", "Either change the name of the instrument or change name using View.");
+                    return null;
+                }
+
+                var index = ++this.metricIndex;
+                if (index >= MaxMetrics)
+                {
+                    OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Maximum allowed Metrics for the provider exceeded.", "Use views to drop unused instruments. Or configure Provider to allow higher limit.");
+                    return null;
+                }
+                else
+                {
+                    var metric = new Metric(instrument, this.preferredAggregationTemporality, metricName, instrument.Description);
+                    this.metrics[index] = metric;
+                    this.metricStreamNames.Add(metricName);
+                    return metric;
+                }
+            }
+        }
+
+        internal void RecordSingleStreamLongMeasurement(Metric metric, long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            metric.UpdateLong(value, tags);
+        }
+
+        internal void RecordSingleStreamDoubleMeasurement(Metric metric, double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            metric.UpdateDouble(value, tags);
+        }
+
+        internal List<Metric> AddMetricsListWithViews(Instrument instrument, List<MetricStreamConfiguration> metricStreamConfigs)
+        {
+            var maxCountMetricsToBeCreated = metricStreamConfigs.Count;
+
+            // Create list with initial capacity as the max metric count.
+            // Due to duplicate/max limit, we may not end up using them
+            // all, and that memory is wasted until Meter disposed.
+            // TODO: Revisit to see if we need to do metrics.TrimExcess()
+            var metrics = new List<Metric>(maxCountMetricsToBeCreated);
+            lock (this.instrumentCreationLock)
+            {
+                for (int i = 0; i < maxCountMetricsToBeCreated; i++)
+                {
+                    var metricStreamConfig = metricStreamConfigs[i];
+                    var metricStreamName = metricStreamConfig?.Name ?? instrument.Name;
+
+                    if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricStreamName))
+                    {
+                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
+                            metricStreamName,
+                            instrument.Meter.Name,
+                            "Metric name is invalid.",
+                            "The name must comply with the OpenTelemetry specification.");
+
+                        continue;
+                    }
+
+                    if (this.metricStreamNames.Contains(metricStreamName))
+                    {
+                        // TODO: Log that instrument is ignored
+                        // as the resulting Metric name is conflicting
+                        // with existing name.
+                        continue;
+                    }
+
+                    if (metricStreamConfig?.Aggregation == Aggregation.Drop)
+                    {
+                        // TODO: Log that instrument is ignored
+                        // as user explicitly asked to drop it
+                        // with View.
+                        continue;
+                    }
+
+                    var index = ++this.metricIndex;
+                    if (index >= MaxMetrics)
+                    {
+                        // TODO: Log that instrument is ignored
+                        // as max number of Metrics have reached.
+                    }
+                    else
+                    {
+                        Metric metric;
+                        var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
+                        string[] tagKeysInteresting = metricStreamConfig?.TagKeys;
+                        double[] histogramBucketBounds = (metricStreamConfig is HistogramConfiguration histogramConfig
+                            && histogramConfig.BucketBounds != null) ? histogramConfig.BucketBounds : null;
+                        metric = new Metric(instrument, this.preferredAggregationTemporality, metricStreamName, metricDescription, histogramBucketBounds, tagKeysInteresting);
+
+                        this.metrics[index] = metric;
+                        metrics.Add(metric);
+                        this.metricStreamNames.Add(metricStreamName);
+                    }
+                }
+
+                return metrics;
+            }
+        }
+
+        internal void RecordLongMeasurement(List<Metric> metrics, long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            if (metrics.Count == 1)
+            {
+                // special casing the common path
+                // as this is faster than the
+                // foreach, when count is 1.
+                metrics[0].UpdateLong(value, tags);
+            }
+            else
+            {
+                foreach (var metric in metrics)
+                {
+                    metric.UpdateLong(value, tags);
+                }
+            }
+        }
+
+        internal void RecordDoubleMeasurement(List<Metric> metrics, double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
+        {
+            if (metrics.Count == 1)
+            {
+                // special casing the common path
+                // as this is faster than the
+                // foreach, when count is 1.
+                metrics[0].UpdateDouble(value, tags);
+            }
+            else
+            {
+                foreach (var metric in metrics)
+                {
+                    metric.UpdateDouble(value, tags);
+                }
+            }
+        }
+
+        internal void CompleteSingleStreamMeasurement(Metric metric)
+        {
+            metric.InstrumentDisposed = true;
+        }
+
         /// <summary>
         /// Processes a batch of metrics.
         /// </summary>
@@ -209,8 +363,10 @@ namespace OpenTelemetry.Metrics
         {
             var sw = Stopwatch.StartNew();
 
-            var collectMetric = this.ParentProvider.GetMetricCollect();
-            var metrics = collectMetric();
+            var collectObservableInstruments = this.ParentProvider.GetCollectObservableInstruments();
+            collectObservableInstruments();
+
+            var metrics = this.GetMetricsBatch();
 
             if (timeoutMilliseconds == Timeout.Infinite)
             {
@@ -283,6 +439,41 @@ namespace OpenTelemetry.Metrics
             string message = $"PreferredAggregationTemporality {preferred} and SupportedAggregationTemporality {supported} are incompatible";
             Guard.Zero((int)(preferred & supported), message, nameof(preferred));
             Guard.Range((int)preferred, nameof(preferred), max: (int)supported, maxName: nameof(supported), message: message);
+        }
+
+        private Batch<Metric> GetMetricsBatch()
+        {
+            try
+            {
+                var indexSnapShot = Math.Min(this.metricIndex, MaxMetrics - 1);
+                var target = indexSnapShot + 1;
+                int metricCountCurrentBatch = 0;
+                for (int i = 0; i < target; i++)
+                {
+                    var metric = this.metrics[i];
+                    if (metric != null)
+                    {
+                        if (metric.InstrumentDisposed)
+                        {
+                            metric.SnapShot();
+                            this.metrics[i] = null;
+                        }
+                        else
+                        {
+                            metric.SnapShot();
+                        }
+
+                        this.metricsCurrentBatch[metricCountCurrentBatch++] = metric;
+                    }
+                }
+
+                return (metricCountCurrentBatch > 0) ? new Batch<Metric>(this.metricsCurrentBatch, metricCountCurrentBatch) : default;
+            }
+            catch (Exception)
+            {
+                // TODO: Log
+                return default;
+            }
         }
     }
 }

@@ -50,11 +50,11 @@ namespace OpenTelemetry
             return Resource.Empty;
         }
 
-        public static Func<Batch<Metric>> GetMetricCollect(this BaseProvider baseProvider)
+        public static Action GetCollectObservableInstruments(this BaseProvider baseProvider)
         {
             if (baseProvider is MeterProviderSdk meterProviderSdk)
             {
-                return meterProviderSdk.Collect;
+                return meterProviderSdk.CollectObservableInstruments;
             }
 
             return null;
