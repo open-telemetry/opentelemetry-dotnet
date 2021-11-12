@@ -40,7 +40,7 @@ internal class TestPrometheusExporter
         global:
           scrape_interval: 1s
           evaluation_interval: 1s
-        
+
         scrape_configs:
           - job_name: "opentelemetry"
             static_configs:
