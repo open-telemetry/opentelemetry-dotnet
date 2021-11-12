@@ -61,8 +61,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             counter.Add(10, new KeyValuePair<string, object>("key", "value"));
 
-            deltaMetricReader1.Collect();
-            deltaMetricReader2.Collect();
+            meterProvider.ForceFlush();
 
             Assert.Single(exporterdMetricItems1);
             Assert.Single(exporterdMetricItems2);
@@ -75,8 +74,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             counter.Add(15, new KeyValuePair<string, object>("key", "value"));
 
-            deltaMetricReader1.Collect();
-            deltaMetricReader2.Collect();
+            meterProvider.ForceFlush();
 
             Assert.Single(exporterdMetricItems1);
             Assert.Single(exporterdMetricItems2);
