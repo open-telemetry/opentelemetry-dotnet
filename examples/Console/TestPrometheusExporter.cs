@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,73 +24,67 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
-namespace Examples.Console
+namespace Examples.Console;
+
+internal class TestPrometheusExporter
 {
-    internal class TestPrometheusExporter
+    private static readonly Meter MyMeter = new Meter("MyMeter");
+    private static readonly Counter<double> Counter = MyMeter.CreateCounter<double>("myCounter", description: "A counter for demonstration purpose.");
+    private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("myHistogram");
+    private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());
+
+    internal static object Run(int port)
     {
-        private static readonly Meter MyMeter = new Meter("TestMeter");
-        private static readonly Counter<double> Counter = MyMeter.CreateCounter<double>("myCounter", description: "A counter for demonstration purpose.");
-        private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("myHistogram");
-        private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());
+        /* prometheus.yml
 
-        internal static object Run(int port, int totalDurationInMins)
+        global:
+          scrape_interval: 1s
+          evaluation_interval: 1s
+
+        scrape_configs:
+          - job_name: "opentelemetry"
+            static_configs:
+              - targets: ["localhost:9184"]
+        */
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(MyMeter.Name)
+            .AddPrometheusExporter(opt =>
+            {
+                opt.StartHttpListener = true;
+                opt.HttpListenerPrefixes = new string[] { $"http://localhost:{port}/" };
+            })
+            .Build();
+
+        var process = Process.GetCurrentProcess();
+        MyMeter.CreateObservableCounter("thread.cpu_time", () => GetThreadCpuTime(process), "ms");
+
+        using var token = new CancellationTokenSource();
+
+        Task.Run(() =>
         {
-            /*
-            Following is sample prometheus.yml config. Adjust port,interval as needed.
-
-            scrape_configs:
-              # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
-              - job_name: 'OpenTelemetryTest'
-
-                # metrics_path defaults to '/metrics'
-                # scheme defaults to 'http'.
-
-                static_configs:
-                - targets: ['localhost:9184']
-            */
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(MyMeter.Name)
-                .AddPrometheusExporter(opt =>
-                {
-                    opt.StartHttpListener = true;
-                    opt.HttpListenerPrefixes = new string[] { $"http://localhost:{port}/" };
-                })
-                .Build();
-
-            ObservableGauge<long> gauge = MyMeter.CreateObservableGauge(
-            "myGauge",
-            () =>
+            while (!token.IsCancellationRequested)
             {
-                return new List<Measurement<long>>()
-                {
-                    new Measurement<long>(ThreadLocalRandom.Value.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2")),
-                    new Measurement<long>(ThreadLocalRandom.Value.Next(1, 1000), new("tag1", "value1"), new("tag2", "value3")),
-                };
-            },
-            description: "A gauge for demonstration purpose.");
+                Counter.Add(9.9, new("name", "apple"), new("color", "red"));
+                Counter.Add(99.9, new("name", "lemon"), new("color", "yellow"));
+                MyHistogram.Record(ThreadLocalRandom.Value.Next(1, 1500), new("tag1", "value1"), new("tag2", "value2"));
+                Task.Delay(10).Wait();
+            }
+        });
 
-            using var token = new CancellationTokenSource();
-            Task writeMetricTask = new Task(() =>
-            {
-                while (!token.IsCancellationRequested)
-                {
-                    Counter.Add(9.9, new("name", "apple"), new("color", "red"));
-                    Counter.Add(99.9, new("name", "lemon"), new("color", "yellow"));
-                    MyHistogram.Record(ThreadLocalRandom.Value.Next(1, 1500), new("tag1", "value1"), new("tag2", "value2"));
+        System.Console.WriteLine($"PrometheusExporter is listening on http://localhost:{port}/metrics/");
+        System.Console.WriteLine($"Press any key to exit...");
+        System.Console.ReadKey();
+        token.Cancel();
 
-                    Task.Delay(10).Wait();
-                }
-            });
-            writeMetricTask.Start();
+        return null;
+    }
 
-            token.CancelAfter(totalDurationInMins * 60 * 1000);
-
-            System.Console.WriteLine($"OpenTelemetry Prometheus Exporter is making metrics available at http://localhost:{port}/metrics/");
-            System.Console.WriteLine($"Press Enter key to exit now or will exit automatically after {totalDurationInMins} minutes.");
-            System.Console.ReadLine();
-            token.Cancel();
-            System.Console.WriteLine("Exiting...");
-            return null;
+    private static IEnumerable<Measurement<double>> GetThreadCpuTime(Process process)
+    {
+        foreach (ProcessThread thread in process.Threads)
+        {
+            yield return new(thread.TotalProcessorTime.TotalMilliseconds, new("ProcessId", process.Id), new("ThreadId", thread.Id));
         }
     }
 }
