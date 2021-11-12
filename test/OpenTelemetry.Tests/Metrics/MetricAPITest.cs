@@ -645,9 +645,15 @@ namespace OpenTelemetry.Metrics.Tests
         {
             // This test ensures that MeterProviderSdk can be set up without any reader
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{hasViews}");
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter.Name)
-                .Build();
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name);
+
+            if (hasViews)
+            {
+                meterProviderBuilder.AddView("counter", "renamedCounter");
+            }
+
+            using var meterProvider = meterProviderBuilder.Build();
 
             var counter = meter.CreateCounter<long>("counter");
 
