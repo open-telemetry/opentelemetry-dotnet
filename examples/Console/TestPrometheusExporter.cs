@@ -45,7 +45,7 @@ internal class TestPrometheusExporter
             .Build();
 
         var process = Process.GetCurrentProcess();
-        MyMeter.CreateObservableCounter("thread.cpu_time", () => GetThreadCpuTime(process), "seconds");
+        MyMeter.CreateObservableCounter("thread.cpu_time", () => GetThreadCpuTime(process), "ms");
 
         using var token = new CancellationTokenSource();
 
