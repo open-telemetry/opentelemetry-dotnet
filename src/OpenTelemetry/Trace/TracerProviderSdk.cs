@@ -403,7 +403,7 @@ namespace OpenTelemetry.Trace
             {
                 SamplingDecision.RecordAndSample => ActivitySamplingResult.AllDataAndRecorded,
                 SamplingDecision.RecordOnly => ActivitySamplingResult.AllData,
-                _ => ActivitySamplingResult.PropagationData
+                _ => ActivitySamplingResult.PropagationData,
             };
 
             if (activitySamplingResult != ActivitySamplingResult.PropagationData)

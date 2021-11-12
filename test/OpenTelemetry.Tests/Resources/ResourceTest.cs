@@ -518,9 +518,7 @@ namespace OpenTelemetry.Resources.Tests
             var endInd = endIndex == 0 ? keyValuePairs.Length - 1 : endIndex;
             for (var i = startIndex; i <= endInd; ++i)
             {
-                Assert.Contains(
-                    new KeyValuePair<string, object>(
-                    $"{KeyName}{i}", $"{ValueName}{i}"), keyValuePairs);
+                Assert.Contains(new KeyValuePair<string, object>($"{KeyName}{i}", $"{ValueName}{i}"), keyValuePairs);
             }
         }
 
