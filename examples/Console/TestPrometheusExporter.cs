@@ -35,6 +35,18 @@ internal class TestPrometheusExporter
 
     internal static object Run(int port)
     {
+        /* prometheus.yml
+
+        global:
+          scrape_interval: 1s
+          evaluation_interval: 1s
+        
+        scrape_configs:
+          - job_name: "opentelemetry"
+            static_configs:
+              - targets: ["localhost:9184"]
+        */
+
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(MyMeter.Name)
             .AddPrometheusExporter(opt =>
