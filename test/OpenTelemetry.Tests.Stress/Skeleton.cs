@@ -21,7 +21,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-// namespace OpenTelemetry.Tests.Stress;
+namespace OpenTelemetry.Tests.Stress;
 
 public partial class Program
 {
