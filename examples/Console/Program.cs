@@ -47,7 +47,7 @@ namespace Examples.Console
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
-                    (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port, options.DurationInMins),
+                    (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port),
                     (MetricsOptions options) => TestMetrics.Run(options),
                     (LogsOptions options) => TestLogs.Run(options),
                     (GrpcNetClientOptions options) => TestGrpcNetClient.Run(),
@@ -85,11 +85,8 @@ namespace Examples.Console
     [Verb("prometheus", HelpText = "Specify the options required to test Prometheus")]
     internal class PrometheusOptions
     {
-        [Option('p', "port", Default = 9184, HelpText = "The port to expose metrics. The endpoint will be http://localhost:port/metrics (This is the port from which your Prometheus server scraps metrics from.)", Required = false)]
+        [Option('p', "port", Default = 9184, HelpText = "The port to expose metrics. The endpoint will be http://localhost:port/metrics/ (this is the port from which your Prometheus server scraps metrics from.)", Required = false)]
         public int Port { get; set; }
-
-        [Option('d', "duration", Default = 2, HelpText = "Total duration in minutes to run the demo.", Required = false)]
-        public int DurationInMins { get; set; }
     }
 
     [Verb("metrics", HelpText = "Specify the options required to test Metrics")]
