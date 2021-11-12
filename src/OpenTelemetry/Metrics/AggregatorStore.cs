@@ -117,7 +117,22 @@ namespace OpenTelemetry.Metrics
                 {
                     if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
                     {
+                        // re-claim aggresively
+                        // TODO: introduce candidate for removal
+                        // and reclaim after no-used for entire collect() internal
+                        this.rwlock.EnterWriteLock();
+                        if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
+                        {
+                            var t = this.keyValue2MetricAggs[metricPoint.Keys];
+                            t.Remove(metricPoint.Values);
+                        }
 
+                        // TODO:
+                        // metricPoint.ResetAndPrepareForNewOwner
+                        // reset all fields, but make sure to not new [] arrays or anything.
+                        // to be done inside metric point
+
+                        this.rwlock.ExitWriteLock();
                     }
                     else
                     {
@@ -194,23 +209,11 @@ namespace OpenTelemetry.Metrics
                 {
                     lock (value2metrics)
                     {
-                        aggregatorIndex = this.metricPointIndex;
-                        if (aggregatorIndex >= MaxMetricPoints)
-                        {
-                            // sorry! out of data points.
-                            // TODO: Once we support cleanup of
-                            // unused points (typically with delta)
-                            // we can re-claim them here.
-                            return -1;
-                        }
-
                         aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
                         if (aggregatorIndex >= MaxMetricPoints)
                         {
                             // sorry! out of data points.
-                            // TODO: Once we support cleanup of
-                            // unused points (typically with delta)
-                            // we can re-claim them here.
+                            // TODO: Traverse through the points and fine the free one.
                             return -1;
                         }
 
