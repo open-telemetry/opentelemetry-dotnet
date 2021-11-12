@@ -638,6 +638,22 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(name, metric.Name);
         }
 
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void SetupSdkProviderWithNoReader(bool hasViews)
+        {
+            // This test ensures that MeterProviderSdk can be set up without any reader
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{hasViews}");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .Build();
+
+            var counter = meter.CreateCounter<long>("counter");
+
+            counter.Add(10, new KeyValuePair<string, object>("key", "value"));
+        }
+
         private static long GetLongSum(List<Metric> metrics)
         {
             long sum = 0;

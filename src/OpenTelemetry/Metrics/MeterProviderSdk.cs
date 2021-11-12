@@ -133,20 +133,23 @@ namespace OpenTelemetry.Metrics
                         metricStreamConfigs.Add(null);
                     }
 
-                    if (this.compositeMetricReader == null)
+                    if (this.reader != null)
                     {
-                        var metrics = this.reader.AddMetricsListWithViews(instrument, metricStreamConfigs);
-                        if (metrics.Count > 0)
+                        if (this.compositeMetricReader == null)
                         {
-                            listener.EnableMeasurementEvents(instrument, metrics);
+                            var metrics = this.reader.AddMetricsListWithViews(instrument, metricStreamConfigs);
+                            if (metrics.Count > 0)
+                            {
+                                listener.EnableMeasurementEvents(instrument, metrics);
+                            }
                         }
-                    }
-                    else
-                    {
-                        var metricsSuperList = this.compositeMetricReader.AddMetricsSuperListWithViews(instrument, metricStreamConfigs);
-                        if (metricsSuperList.Any(metrics => metrics.Count > 0))
+                        else
                         {
-                            listener.EnableMeasurementEvents(instrument, metricsSuperList);
+                            var metricsSuperList = this.compositeMetricReader.AddMetricsSuperListWithViews(instrument, metricStreamConfigs);
+                            if (metricsSuperList.Any(metrics => metrics.Count > 0))
+                            {
+                                listener.EnableMeasurementEvents(instrument, metricsSuperList);
+                            }
                         }
                     }
                 };
@@ -186,20 +189,23 @@ namespace OpenTelemetry.Metrics
                             return;
                         }
 
-                        if (this.compositeMetricReader == null)
+                        if (this.reader != null)
                         {
-                            var metric = this.reader.AddMetricWithNoViews(instrument);
-                            if (metric != null)
+                            if (this.compositeMetricReader == null)
                             {
-                                listener.EnableMeasurementEvents(instrument, metric);
+                                var metric = this.reader.AddMetricWithNoViews(instrument);
+                                if (metric != null)
+                                {
+                                    listener.EnableMeasurementEvents(instrument, metric);
+                                }
                             }
-                        }
-                        else
-                        {
-                            var metrics = this.compositeMetricReader.AddMetricsWithNoViews(instrument);
-                            if (metrics.Any(metric => metric != null))
+                            else
                             {
-                                listener.EnableMeasurementEvents(instrument, metrics);
+                                var metrics = this.compositeMetricReader.AddMetricsWithNoViews(instrument);
+                                if (metrics.Any(metric => metric != null))
+                                {
+                                    listener.EnableMeasurementEvents(instrument, metrics);
+                                }
                             }
                         }
                     }
