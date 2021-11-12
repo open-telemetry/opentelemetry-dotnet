@@ -21,6 +21,7 @@ namespace OpenTelemetry.Metrics
 {
     public struct MetricPoint
     {
+        private readonly ReaderWriterLockSlim rwlock;
         private long longVal;
         private long lastLongSum;
         private double doubleVal;
@@ -59,6 +60,7 @@ namespace OpenTelemetry.Metrics
             this.DoubleValue = default;
             this.doubleVal = default;
             this.lastDoubleSum = default;
+            this.rwlock = new ReaderWriterLockSlim();
 
             if (this.AggType == AggregationType.Histogram)
             {
@@ -99,11 +101,11 @@ namespace OpenTelemetry.Metrics
 
         public double[] ExplicitBounds { get; internal set; }
 
-        internal MetricPointStatus MetricPointStatus { get; set; }
+        internal MetricPointStatus MetricPointStatus { get; private set; }
 
         private readonly AggregationType AggType { get; }
 
-        internal void Update(long number)
+        internal bool Update(long number)
         {
             switch (this.AggType)
             {
@@ -132,9 +134,11 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
             }
+
+            return this.TrySetCollectPending();
         }
 
-        internal void Update(double number)
+        internal bool Update(double number)
         {
             switch (this.AggType)
             {
@@ -195,10 +199,16 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
             }
+
+            return this.TrySetCollectPending();
         }
 
         internal void TakeSnapShot(bool outputDelta)
         {
+            this.rwlock.EnterWriteLock();
+            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+            this.rwlock.ExitWriteLock();
+
             switch (this.AggType)
             {
                 case AggregationType.LongSumIncomingDelta:
@@ -303,6 +313,54 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
             }
+        }
+
+        internal void MarkStale()
+        {
+            if (this.MetricPointStatus == MetricPointStatus.NoCollectPending)
+            {
+                this.rwlock.EnterWriteLock();
+
+                if (this.MetricPointStatus == MetricPointStatus.NoCollectPending)
+                {
+                    this.MetricPointStatus = MetricPointStatus.CandidateForRemoval;
+                }
+
+                this.rwlock.ExitWriteLock();
+            }
+        }
+
+        internal bool TryFree()
+        {
+            if (this.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
+            {
+                this.rwlock.EnterWriteLock();
+
+                if (this.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
+                {
+                    this.MetricPointStatus = MetricPointStatus.Unset;
+                    return true;
+                }
+
+                this.rwlock.ExitWriteLock();
+            }
+
+            return false;
+        }
+
+        private bool TrySetCollectPending()
+        {
+            this.rwlock.EnterReadLock();
+
+            if (this.MetricPointStatus == MetricPointStatus.Unset)
+            {
+                this.rwlock.ExitReadLock();
+                return false;
+            }
+
+            this.MetricPointStatus = MetricPointStatus.CollectPending;
+            this.rwlock.ExitReadLock();
+            return true;
         }
     }
 }
