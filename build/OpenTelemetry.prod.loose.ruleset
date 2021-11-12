@@ -5,8 +5,7 @@
     <Description Resource="OpenTelemetrySDKRules_Description" />
   </Localization>
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
-    <!-- SA1000 KeywordsMustBeSpacedCorrectly https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/3214 -->
-    <Rule Id="SA1000" Action="None" />
+    <Rule Id="SA1000" Action="Warning" />
     <Rule Id="SA1001" Action="Warning" />
     <Rule Id="SA1002" Action="Warning" />
     <Rule Id="SA1003" Action="Warning" />
@@ -126,7 +125,7 @@
     <Rule Id="SA1515" Action="None" />
     <Rule Id="SA1516" Action="Warning" />
     <Rule Id="SA1517" Action="Warning" />
-    <Rule Id="SA1518" Action="Warning" />
+    <Rule Id="SA1518" Action="None" />
     <Rule Id="SA1519" Action="Warning" />
     <Rule Id="SA1520" Action="Warning" />
     <Rule Id="SA1600" Action="None" />
