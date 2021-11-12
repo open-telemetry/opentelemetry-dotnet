@@ -101,7 +101,8 @@ public partial class Program
                     output = $"Loops: {cntLoopsNew:n0}, Loops/Second: {nLoopsPerSecond:n0}, CPU Cycles/Loop: {nCpuCyclesPerLoop:n0}";
                     Console.Title = output;
                 }
-            }, () =>
+            },
+            () =>
             {
                 Parallel.For(0, concurrency, (i) =>
                 {
