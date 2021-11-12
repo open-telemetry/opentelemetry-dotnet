@@ -75,8 +75,8 @@ namespace OpenTelemetry.Exporter
             }
 
             this.client = client;
-            this.batchWriter = protocolFactory.GetProtocol(16384);
-            this.spanWriter = protocolFactory.GetProtocol(4096);
+            this.batchWriter = protocolFactory.GetProtocol(this.maxPayloadSizeInBytes * 2);
+            this.spanWriter = protocolFactory.GetProtocol(this.maxPayloadSizeInBytes);
 
             string serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.FirstOrDefault(
                 pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).Value;
