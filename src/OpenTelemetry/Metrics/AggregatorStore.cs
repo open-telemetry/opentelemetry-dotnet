@@ -251,7 +251,8 @@ namespace OpenTelemetry.Metrics
                     {
                         if (metricPoint.TryFree())
                         {
-                            // I think there's a concurrency issue here...
+                            // Concurrency issue here.
+                            // LookupAggregatorStore may have retrieved the MP we just freed.
                             var t = this.keyValue2MetricAggs[metricPoint.Keys];
                             t.TryRemove(metricPoint.Values, out var _);
                             index = i;
