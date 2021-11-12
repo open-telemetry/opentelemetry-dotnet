@@ -29,12 +29,12 @@ namespace OpenTelemetry.Exporter.Prometheus
     {
 #if NETCOREAPP3_1_OR_GREATER
         private static readonly SpanAction<char, (string, Func<char, bool, bool>)> CreateName
-            = (Span<char> data, (string name, Func<char, bool, bool> isCharacterAllowedFunc) state) =>
+            = (Span<char> data, (string Name, Func<char, bool, bool> IsCharacterAllowedFunc) state) =>
             {
-                for (var i = 0; i < state.name.Length; i++)
+                for (var i = 0; i < state.Name.Length; i++)
                 {
-                    var c = state.name[i];
-                    data[i] = state.isCharacterAllowedFunc(c, i == 0)
+                    var c = state.Name[i];
+                    data[i] = state.IsCharacterAllowedFunc(c, i == 0)
                         ? c
                         : '_';
                 }
