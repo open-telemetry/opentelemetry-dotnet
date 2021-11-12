@@ -22,7 +22,7 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
-// namespace OpenTelemetry.Tests.Stress;
+namespace OpenTelemetry.Tests.Stress;
 
 public partial class Program
 {
