@@ -33,7 +33,6 @@ namespace OpenTelemetry.Trace
         private readonly Dictionary<string, bool> legacyActivityOperationNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
-        private bool activityStatusSwitch = true;
 
         protected TracerProviderBuilderBase()
         {
@@ -170,7 +169,10 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder DisableActivityStatusSwitch()
         {
-            this.activityStatusSwitch = false;
+            if (BackwardCompatibilitySwitches.ActivityStatusSwitch)
+            {
+                BackwardCompatibilitySwitches.ActivityStatusSwitch = false;
+            }
 
             return this;
         }
@@ -199,11 +201,6 @@ namespace OpenTelemetry.Trace
         /// <returns><see cref="TracerProvider"/>.</returns>
         protected TracerProvider Build()
         {
-            if (this.activityStatusSwitch)
-            {
-                this.processors.Add(new ActivityStatusProcessor());
-            }
-
             return new TracerProviderSdk(
                 this.resourceBuilder.Build(),
                 this.sources,
