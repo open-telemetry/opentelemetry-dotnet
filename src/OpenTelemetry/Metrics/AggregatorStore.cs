@@ -37,12 +37,14 @@ namespace OpenTelemetry.Metrics
         private readonly AggregationTemporality temporality;
         private readonly bool outputDelta;
         private readonly MetricPoint[] metricPoints;
+        private readonly int[] currentMetricPointBatch;
         private readonly AggregationType aggType;
         private readonly double[] histogramBounds;
         private readonly UpdateLongDelegate updateLongCallback;
         private readonly UpdateDoubleDelegate updateDoubleCallback;
         private readonly ReaderWriterLockSlim rwlock;
         private int metricPointIndex = 0;
+        private long batchSize = 0;
         private bool zeroTagMetricPointInitialized;
         private DateTimeOffset startTimeExclusive;
         private DateTimeOffset endTimeInclusive;
@@ -54,6 +56,7 @@ namespace OpenTelemetry.Metrics
             string[] tagKeysInteresting = null)
         {
             this.metricPoints = new MetricPoint[MaxMetricPoints];
+            this.currentMetricPointBatch = new int[MaxMetricPoints];
             this.aggType = aggType;
             this.temporality = temporality;
             this.outputDelta = temporality == AggregationTemporality.Delta ? true : false;
@@ -97,17 +100,32 @@ namespace OpenTelemetry.Metrics
 
         internal void SnapShot()
         {
+            this.batchSize = 0;
+
             var indexSnapShot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
 
             for (int i = 0; i <= indexSnapShot; i++)
             {
                 ref var metricPoint = ref this.metricPoints[i];
-                if (metricPoint.StartTime == default)
+                if (this.temporality == AggregationTemporality.Cumulative)
                 {
-                    continue;
+                    metricPoint.TakeSnapShot(this.outputDelta);
+                    this.currentMetricPointBatch[this.batchSize] = i;
+                    this.batchSize++;
                 }
+                else
+                {
+                    if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
+                    {
 
-                metricPoint.TakeSnapShot(this.outputDelta);
+                    }
+                    else
+                    {
+                        metricPoint.TakeSnapShot(this.outputDelta);
+                        this.currentMetricPointBatch[this.batchSize] = i;
+                        this.batchSize++;
+                    }
+                }
             }
 
             if (this.temporality == AggregationTemporality.Delta)
@@ -168,66 +186,60 @@ namespace OpenTelemetry.Metrics
 
             try
             {
-                // this.rwlock.EnterUpgradeableReadLock();
                 this.rwlock.EnterReadLock();
 
                 // GetOrAdd by TagValues at 2st Level of 2-level dictionary structure.
                 // Get back Metrics[].
                 if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
                 {
-                    aggregatorIndex = this.metricPointIndex;
-                    if (aggregatorIndex >= MaxMetricPoints)
+                    lock (value2metrics)
                     {
-                        // sorry! out of data points.
-                        // TODO: Once we support cleanup of
-                        // unused points (typically with delta)
-                        // we can re-claim them here.
-                        return -1;
-                    }
+                        aggregatorIndex = this.metricPointIndex;
+                        if (aggregatorIndex >= MaxMetricPoints)
+                        {
+                            // sorry! out of data points.
+                            // TODO: Once we support cleanup of
+                            // unused points (typically with delta)
+                            // we can re-claim them here.
+                            return -1;
+                        }
 
-                    aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
-                    if (aggregatorIndex >= MaxMetricPoints)
-                    {
-                        // sorry! out of data points.
-                        // TODO: Once we support cleanup of
-                        // unused points (typically with delta)
-                        // we can re-claim them here.
-                        return -1;
-                    }
+                        aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
+                        if (aggregatorIndex >= MaxMetricPoints)
+                        {
+                            // sorry! out of data points.
+                            // TODO: Once we support cleanup of
+                            // unused points (typically with delta)
+                            // we can re-claim them here.
+                            return -1;
+                        }
 
-                    // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                    if (seqKey == null)
-                    {
-                        seqKey = new string[length];
-                        tagKeys.CopyTo(seqKey, 0);
-                    }
+                        // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                        if (seqKey == null)
+                        {
+                            seqKey = new string[length];
+                            tagKeys.CopyTo(seqKey, 0);
+                        }
 
-                    var seqVal = new object[length];
-                    tagValues.CopyTo(seqVal, 0);
+                        var seqVal = new object[length];
+                        tagValues.CopyTo(seqVal, 0);
 
-                    ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                    var dt = DateTimeOffset.UtcNow;
-                    metricPoint = new MetricPoint(this.aggType, dt, seqKey, seqVal, this.histogramBounds);
+                        ref var metricPoint = ref this.metricPoints[aggregatorIndex];
+                        var dt = DateTimeOffset.UtcNow;
+                        metricPoint = new MetricPoint(this.aggType, dt, seqKey, seqVal, this.histogramBounds);
 
-                    // Add to dictionary *after* initializing MetricPoint
-                    // as other threads can start writing to the
-                    // MetricPoint, if dictionary entry found.
-                    try
-                    {
-                        this.rwlock.EnterWriteLock();
+                        // Add to dictionary *after* initializing MetricPoint
+                        // as other threads can start writing to the
+                        // MetricPoint, if dictionary entry found.
                         value2metrics.Add(seqVal, aggregatorIndex);
-                    }
-                    finally
-                    {
-                        this.rwlock.ExitWriteLock();
                     }
                 }
 
+                this.metricPoints[aggregatorIndex].MarkCollectPending();
                 return aggregatorIndex;
             }
             finally
             {
-                // this.rwlock.ExitUpgradeableReadLock();
                 this.rwlock.ExitReadLock();
             }
         }
