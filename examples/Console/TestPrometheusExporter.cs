@@ -27,10 +27,10 @@ namespace Examples.Console
 {
     internal class TestPrometheusExporter
     {
-        private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
-        private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("myCounter");
+        private static readonly Meter MyMeter = new Meter("TestMeter");
+        private static readonly Counter<double> Counter = MyMeter.CreateCounter<double>("myCounter", description: "A counter for demonstration purpose.");
         private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("myHistogram");
-        private static readonly Random RandomGenerator = new Random();
+        private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());
 
         internal static object Run(int port, int totalDurationInMins)
         {
@@ -48,7 +48,7 @@ namespace Examples.Console
                 - targets: ['localhost:9184']
             */
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter("TestMeter")
+                .AddMeter(MyMeter.Name)
                 .AddPrometheusExporter(opt =>
                 {
                     opt.StartHttpListener = true;
@@ -56,38 +56,26 @@ namespace Examples.Console
                 })
                 .Build();
 
-            ObservableGauge<long> gauge = MyMeter.CreateObservableGauge<long>(
-            "Gauge",
+            ObservableGauge<long> gauge = MyMeter.CreateObservableGauge(
+            "myGauge",
             () =>
             {
-                var tag1 = new KeyValuePair<string, object>("tag1", "value1");
-                var tag2 = new KeyValuePair<string, object>("tag2", "value2");
-
                 return new List<Measurement<long>>()
                 {
-                    new Measurement<long>(RandomGenerator.Next(1, 1000), tag1, tag2),
+                    new Measurement<long>(ThreadLocalRandom.Value.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2")),
+                    new Measurement<long>(ThreadLocalRandom.Value.Next(1, 1000), new("tag1", "value1"), new("tag2", "value3")),
                 };
-            });
+            },
+            description: "A gauge for demonstration purpose.");
 
             using var token = new CancellationTokenSource();
             Task writeMetricTask = new Task(() =>
             {
                 while (!token.IsCancellationRequested)
                 {
-                    Counter.Add(
-                                10,
-                                new KeyValuePair<string, object>("tag1", "value1"),
-                                new KeyValuePair<string, object>("tag2", "value2"));
-
-                    Counter.Add(
-                                100,
-                                new KeyValuePair<string, object>("tag1", "anothervalue"),
-                                new KeyValuePair<string, object>("tag2", "somethingelse"));
-
-                    MyHistogram.Record(
-                            RandomGenerator.Next(1, 1500),
-                            new KeyValuePair<string, object>("tag1", "value1"),
-                            new KeyValuePair<string, object>("tag2", "value2"));
+                    Counter.Add(9.9, new("name", "apple"), new("color", "red"));
+                    Counter.Add(99.9, new("name", "lemon"), new("color", "yellow"));
+                    MyHistogram.Record(ThreadLocalRandom.Value.Next(1, 1500), new("tag1", "value1"), new("tag2", "value2"));
 
                     Task.Delay(10).Wait();
                 }

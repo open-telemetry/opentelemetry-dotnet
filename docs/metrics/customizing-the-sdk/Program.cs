@@ -60,7 +60,7 @@ public class Program
             // turn off the above default. i.e any
             // instrument which does not match any views
             // gets dropped.
-            // .AddView(instrumentName: "*", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+            // .AddView(instrumentName: "*", MetricStreamConfiguration.Drop)
             .AddConsoleExporter()
             .Build();
 
