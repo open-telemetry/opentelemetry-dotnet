@@ -18,7 +18,6 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using OpenTelemetry.Internal;
@@ -61,38 +60,23 @@ namespace OpenTelemetry.Exporter.Prometheus
 
             var response = httpContext.Response;
 
-            if (!this.exporter.TryEnterSemaphore())
-            {
-                response.StatusCode = 429;
-                return;
-            }
-
-            var buffer = new byte[65536];
-            var count = 0;
-
-            this.exporter.OnExport = (metrics) =>
-            {
-                try
-                {
-                    count = PrometheusSerializer.WriteMetrics(buffer, 0, metrics);
-                    return ExportResult.Success;
-                }
-                catch (Exception ex)
-                {
-                    PrometheusExporterEventSource.Log.FailedExport(ex);
-                    return ExportResult.Failure;
-                }
-            };
-
             try
             {
-                if (this.exporter.Collect(Timeout.Infinite))
+                var data = await PrometheusCollectManager.EnterCollect(this.exporter).ConfigureAwait(false);
+                try
                 {
-                    await WriteMetricsToResponse(buffer, count, response).ConfigureAwait(false);
+                    if (data.Count > 0)
+                    {
+                        await WriteMetricsToResponse(data.Array, data.Count, response).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        response.StatusCode = 500;
+                    }
                 }
-                else
+                finally
                 {
-                    response.StatusCode = 500;
+                    PrometheusCollectManager.ExitCollect();
                 }
             }
             catch (Exception ex)
@@ -102,10 +86,6 @@ namespace OpenTelemetry.Exporter.Prometheus
                 {
                     response.StatusCode = 500;
                 }
-            }
-            finally
-            {
-                this.exporter.ReleaseSemaphore();
             }
 
             this.exporter.OnExport = null;
