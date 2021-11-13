@@ -83,8 +83,5 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             return count;
         }
-
-        public override string ToString()
-            => this.endpoint.ToString();
     }
 }

@@ -55,8 +55,5 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             this.disposed = true;
         }
-
-        public override string ToString()
-            => $"{this.host}:{this.port}";
     }
 }
