@@ -28,8 +28,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
     public sealed class PrometheusExporterExtensionsTests
     {
-        private const string MeterName = "PrometheusExporterExtensionsTests.Meter";
-
         [Theory]
         [InlineData(nameof(WriteLongSum))]
         [InlineData(nameof(WriteDoubleSum))]
@@ -39,7 +37,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         [InlineData(nameof(WriteMultiple))]
         public void WriteMetricsCollectionTest(string writeActionMethodName)
         {
-            using var meter = new Meter(MeterName, "0.0.1");
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{writeActionMethodName}");
 
             MethodInfo writeAction = typeof(PrometheusExporterExtensionsTests).GetMethod(writeActionMethodName, BindingFlags.NonPublic | BindingFlags.Static);
             if (writeAction == null)
@@ -59,7 +57,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var testCompleted = false;
 
             using (var provider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(MeterName)
+                .AddMeter(meter.Name)
                 .AddReader(new BaseExportingMetricReader(new TestExporter<Metric>(RunTest)))
                 .Build())
             {
@@ -76,7 +74,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
                 using MemoryStream ms = new MemoryStream();
 
-                PrometheusExporterExtensions.WriteMetricsCollection(prometheusExporter, ms, () => new DateTimeOffset(2021, 9, 30, 22, 30, 0, TimeSpan.Zero)).GetAwaiter().GetResult();
+                PrometheusExporterExtensions.WriteMetricsCollection(prometheusExporter, metrics, ms, () => new DateTimeOffset(2021, 9, 30, 22, 30, 0, TimeSpan.Zero)).GetAwaiter().GetResult();
 
                 Assert.Equal(
                     expected,

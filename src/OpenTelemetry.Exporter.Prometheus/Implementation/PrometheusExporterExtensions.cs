@@ -143,20 +143,20 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                 if (TryGetMetric(ref enumerator, out var state))
                 {
-                    await WriteMetric(stream, getUtcNowDateTimeOffset, buffer, metricInfo, metricInfo.HistogramSumUtf8, state.keys, state.values, state.sum).ConfigureAwait(false);
+                    await WriteMetric(stream, getUtcNowDateTimeOffset, buffer, metricInfo, metricInfo.HistogramSumUtf8, state.Keys, state.Values, state.Sum).ConfigureAwait(false);
 
-                    await WriteMetric(stream, getUtcNowDateTimeOffset, buffer, metricInfo, metricInfo.HistogramCountUtf8, state.keys, state.values, state.count).ConfigureAwait(false);
+                    await WriteMetric(stream, getUtcNowDateTimeOffset, buffer, metricInfo, metricInfo.HistogramCountUtf8, state.Keys, state.Values, state.Count).ConfigureAwait(false);
 
-                    if (state.explicitBounds != null)
+                    if (state.ExplicitBounds != null)
                     {
                         long totalCount = 0;
-                        for (int i = 0; i < state.explicitBounds.Length + 1; i++)
+                        for (int i = 0; i < state.ExplicitBounds.Length + 1; i++)
                         {
-                            totalCount += state.bucketCounts[i];
+                            totalCount += state.BucketCounts[i];
 
-                            byte[] bucketValueUtf8 = i == state.explicitBounds.Length
+                            byte[] bucketValueUtf8 = i == state.ExplicitBounds.Length
                                 ? PrometheusHistogramBucketLabelPositiveInfinityUtf8
-                                : metricInfo.GetBucketUtf8(state.explicitBounds[i]);
+                                : metricInfo.GetBucketUtf8(state.ExplicitBounds[i]);
 
                             await WriteMetric(
                                 stream,
@@ -164,8 +164,8 @@ namespace OpenTelemetry.Exporter.Prometheus
                                 buffer,
                                 metricInfo,
                                 metricInfo.HistogramBucketUtf8,
-                                state.keys,
-                                state.values,
+                                state.Keys,
+                                state.Values,
                                 totalCount,
                                 additionalKvp: new KeyValuePair<byte[], byte[]>(PrometheusHistogramBucketLabelLessThanUtf8, bucketValueUtf8)).ConfigureAwait(false);
                         }
@@ -174,7 +174,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                 static bool TryGetMetric(
                     ref BatchMetricPoint.Enumerator enumerator,
-                    out (string[] keys, object[] values, double sum, long count, double[] explicitBounds, long[] bucketCounts) state)
+                    out (string[] Keys, object[] Values, double Sum, long Count, double[] ExplicitBounds, long[] BucketCounts) state)
                 {
                     if (!enumerator.MoveNext())
                     {
@@ -199,18 +199,20 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// Serialize metrics to prometheus format.
         /// </summary>
         /// <param name="exporter"><see cref="PrometheusExporter"/>.</param>
+        /// <param name="metrics">Metrics to be exported.</param>
         /// <param name="stream">Stream to write to.</param>
         /// <param name="getUtcNowDateTimeOffset">Optional function to resolve the current date &amp; time.</param>
         /// <returns><see cref="Task"/> to await the operation.</returns>
         public static async Task WriteMetricsCollection(
             this PrometheusExporter exporter,
+            Batch<Metric> metrics,
             Stream stream,
             Func<DateTimeOffset> getUtcNowDateTimeOffset)
         {
             byte[] buffer = ArrayPool<byte>.Shared.Rent(8192);
             try
             {
-                foreach (var metric in exporter.Metrics)
+                foreach (var metric in metrics)
                 {
                     if (!MetricInfoCache.TryGetValue(metric.Name, out MetricInfo metricInfo))
                     {

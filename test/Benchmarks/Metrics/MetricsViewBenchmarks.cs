@@ -21,6 +21,7 @@ using System.Threading;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Tests;
 
 /*
 BenchmarkDotNet=v0.12.1, OS=Windows 10.0.19043
@@ -78,7 +79,7 @@ namespace Benchmarks.Metrics
         [GlobalSetup]
         public void Setup()
         {
-            this.meter = new Meter("TestMeter");
+            this.meter = new Meter(Utils.GetCurrentMethodName());
             this.counter = this.meter.CreateCounter<long>("counter");
 
             if (this.ViewConfig == ViewConfiguration.NoView)

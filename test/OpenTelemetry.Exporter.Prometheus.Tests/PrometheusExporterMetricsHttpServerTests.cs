@@ -21,14 +21,13 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
     public class PrometheusExporterMetricsHttpServerTests
     {
-        private const string MeterName = "PrometheusExporterMetricsHttpServerTests.Meter";
-
         [Fact]
         public async Task PrometheusExporterMetricsHttpServerIntegration()
         {
@@ -38,16 +37,17 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             MeterProvider provider;
             string address = null;
 
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+
             while (true)
             {
                 try
                 {
                     port = random.Next(2000, 5000);
                     provider = Sdk.CreateMeterProviderBuilder()
-                        .AddMeter(MeterName)
+                        .AddMeter(meter.Name)
                         .AddPrometheusExporter(o =>
                         {
-                            o.GetUtcNowDateTimeOffset = () => new DateTimeOffset(2021, 9, 30, 22, 30, 0, TimeSpan.Zero);
 #if NET461
                             bool expectedDefaultState = true;
 #else
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 new KeyValuePair<string, object>("key2", "value2"),
             };
 
-            using var meter = new Meter(MeterName, "0.0.1");
+            var beginTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
             var counter = meter.CreateCounter<double>("counter_double");
             counter.Add(100.18D, tags);
@@ -99,13 +99,29 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             using var response = await client.GetAsync($"{address}metrics").ConfigureAwait(false);
 
+            var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
+            string[] lines = content.Split('\n');
+
             Assert.Equal(
-                $"# TYPE counter_double counter\ncounter_double{{key1=\"value1\",key2=\"value2\"}} 101.17 1633041000000\n",
-                content);
+                $"# TYPE counter_double counter",
+                lines[0]);
+
+            Assert.Contains(
+                $"counter_double{{key1=\"value1\",key2=\"value2\"}} 101.17",
+                lines[1]);
+
+            var index = content.LastIndexOf(' ');
+
+            Assert.Equal('\n', content[content.Length - 1]);
+
+            var timestamp = long.Parse(content.Substring(index, content.Length - index - 1));
+
+            Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
         }
     }
 }

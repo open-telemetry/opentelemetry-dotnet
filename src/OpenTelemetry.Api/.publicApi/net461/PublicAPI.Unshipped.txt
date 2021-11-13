@@ -1,3 +1,5 @@
+abstract OpenTelemetry.Metrics.MeterProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder
+abstract OpenTelemetry.Metrics.MeterProviderBuilder.AddMeter(params string[] names) -> OpenTelemetry.Metrics.MeterProviderBuilder
 OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Value.get -> object
 OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Value.set -> void
 OpenTelemetry.Context.IRuntimeContextSlotValueAccessor
@@ -9,6 +11,10 @@ OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Value.get -> object
 OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Value.set -> void
 OpenTelemetry.Metrics.IDeferredMeterProviderBuilder
 OpenTelemetry.Metrics.IDeferredMeterProviderBuilder.Configure(System.Action<System.IServiceProvider, OpenTelemetry.Metrics.MeterProviderBuilder> configure) -> OpenTelemetry.Metrics.MeterProviderBuilder
+OpenTelemetry.Metrics.MeterProvider
+OpenTelemetry.Metrics.MeterProvider.MeterProvider() -> void
+OpenTelemetry.Metrics.MeterProviderBuilder
+OpenTelemetry.Metrics.MeterProviderBuilder.MeterProviderBuilder() -> void
 override OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Get() -> T
 override OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Set(T value) -> void
 OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>
