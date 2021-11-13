@@ -37,31 +37,39 @@ take precedence over the environment variables.
 The `JaegerExporter` can be configured using the `JaegerExporterOptions`
 properties:
 
-* `Protocol`: The protocol to use. The default value is `UdpCompactThrift`.
+* `AgentHost`: The Jaeger Agent host (default `localhost`). Used for
+  `UdpCompactThrift` protocol.
 
-  | Protocol       | Description                   |
-  |----------------|-------------------------------|
-  |UdpCompactThrift| Apache Thrift compact over UDP to a Jaeger Agent.     |
-  |HttpBinaryThrift| Apache Thrift binary over HTTP to a Jaeger Collector. |
+* `AgentPort`: The Jaeger Agent port (default `6831`). Used for
+  `UdpCompactThrift` protocol.
 
-* `AgentHost`: The Jaeger Agent host (default `localhost`).
-* `AgentPort`: The Jaeger Agent port (default `6831`).
-* `Endpoint`: The Jaeger Collector HTTP endpoint (default
-  `http://localhost:14268`).
-* `MaxPayloadSizeInBytes`: The maximum size of each UDP packet that gets
-  sent to the agent (default `4096`).
-* `ExportProcessorType`: Whether the exporter should use
-  [Batch or Simple exporting processor](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#built-in-span-processors)
-  (default `ExportProcessorType.Batch`).
 * `BatchExportProcessorOptions`: Configuration options for the batch exporter.
-  Only used if ExportProcessorType is set to Batch.
+  Only used if `ExportProcessorType` is set to `Batch`.
+
+* `Endpoint`: The Jaeger Collector HTTP endpoint (default
+  `http://localhost:14268`). Used for `HttpBinaryThrift` protocol.
+
+* `ExportProcessorType`: Whether the exporter should use [Batch or Simple
+  exporting
+  processor](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#built-in-span-processors)
+  (default `ExportProcessorType.Batch`).
+
 * `HttpClientFactory`: A factory function called to create the `HttpClient`
   instance that will be used at runtime to transmit spans over HTTP when the
   `HttpBinaryThrift` protocol is configured. See [Configure
   HttpClient](#configure-httpclient) for more details.
 
-See the
-[`TestJaegerExporter.cs`](../../examples/Console/TestJaegerExporter.cs)
+* `MaxPayloadSizeInBytes`: The maximum size of each batch that gets sent to the
+  agent or collector (default `4096`).
+
+* `Protocol`: The protocol to use. The default value is `UdpCompactThrift`.
+
+  | Protocol       | Description                                           |
+  |----------------|-------------------------------------------------------|
+  |UdpCompactThrift| Apache Thrift compact over UDP to a Jaeger Agent.     |
+  |HttpBinaryThrift| Apache Thrift binary over HTTP to a Jaeger Collector. |
+
+See the [`TestJaegerExporter.cs`](../../examples/Console/TestJaegerExporter.cs)
 for an example of how to use the exporter.
 
 ## Environment Variables
@@ -69,12 +77,12 @@ for an example of how to use the exporter.
 The following environment variables can be used to override the default
 values of the `JaegerExporterOptions`.
 
-| Environment variable              | `JaegerExporterOptions` property |
-| --------------------------------- | -------------------------------- |
-| `OTEL_EXPORTER_JAEGER_PROTOCOL`   | `Protocol`                      |
-| `OTEL_EXPORTER_JAEGER_AGENT_HOST` | `AgentHost`                      |
-| `OTEL_EXPORTER_JAEGER_AGENT_PORT` | `AgentPort`                      |
-| `OTEL_EXPORTER_JAEGER_ENDPOINT` | `Endpoint`                      |
+| Environment variable               | `JaegerExporterOptions` property |
+| ---------------------------------- | -------------------------------- |
+| `OTEL_EXPORTER_JAEGER_AGENT_HOST`  | `AgentHost`                      |
+| `OTEL_EXPORTER_JAEGER_AGENT_PORT`  | `AgentPort`                      |
+| `OTEL_EXPORTER_JAEGER_ENDPOINT`    | `Endpoint`                       |
+| `OTEL_EXPORTER_JAEGER_PROTOCOL`    | `Protocol`                       |
 
 `FormatException` is thrown in case of an invalid value for any of the
 supported environment variables.
