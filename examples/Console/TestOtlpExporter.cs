@@ -99,7 +99,7 @@ namespace Examples.Console
             {
                 "grpc" => OtlpExportProtocol.Grpc,
                 "http/protobuf" => OtlpExportProtocol.HttpProtobuf,
-                _ => null
+                _ => null,
             };
     }
 }

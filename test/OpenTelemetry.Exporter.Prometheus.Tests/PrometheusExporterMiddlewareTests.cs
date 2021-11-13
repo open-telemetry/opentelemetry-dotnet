@@ -26,13 +26,14 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
     public sealed class PrometheusExporterMiddlewareTests
     {
-        private const string MeterName = "PrometheusExporterMiddlewareTests.Meter";
+        private static readonly string MeterName = Utils.GetCurrentMethodName();
 
         [Fact]
         public async Task PrometheusExporterMiddlewareIntegration()
@@ -49,7 +50,9 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 new KeyValuePair<string, object>("key2", "value2"),
             };
 
-            using var meter = new Meter(MeterName, "0.0.1");
+            using var meter = new Meter(MeterName);
+
+            var beginTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
             var counter = meter.CreateCounter<double>("counter_double");
             counter.Add(100.18D, tags);
@@ -57,13 +60,29 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             using var response = await host.GetTestClient().GetAsync("/metrics").ConfigureAwait(false);
 
+            var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
+            string[] lines = content.Split('\n');
+
             Assert.Equal(
-                $"# TYPE counter_double counter\ncounter_double{{key1=\"value1\",key2=\"value2\"}} 101.17 1633041000000\n",
-                content);
+                $"# TYPE counter_double counter",
+                lines[0]);
+
+            Assert.Contains(
+                $"counter_double{{key1=\"value1\",key2=\"value2\"}} 101.17",
+                lines[1]);
+
+            var index = content.LastIndexOf(' ');
+
+            Assert.Equal('\n', content[content.Length - 1]);
+
+            var timestamp = long.Parse(content.Substring(index, content.Length - index - 1));
+
+            Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
 
             await host.StopAsync().ConfigureAwait(false);
         }
@@ -76,7 +95,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     .AddMeter(MeterName)
                     .AddPrometheusExporter(o =>
                     {
-                        o.GetUtcNowDateTimeOffset = () => new DateTimeOffset(2021, 9, 30, 22, 30, 0, TimeSpan.Zero);
                         if (o.StartHttpListener)
                         {
                             throw new InvalidOperationException("StartHttpListener should be false on .NET Core 3.1+.");

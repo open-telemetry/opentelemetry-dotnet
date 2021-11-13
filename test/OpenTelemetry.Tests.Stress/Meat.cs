@@ -16,7 +16,7 @@
 
 using System.Runtime.CompilerServices;
 
-// namespace OpenTelemetry.Tests.Stress;
+namespace OpenTelemetry.Tests.Stress;
 
 public partial class Program
 {
