@@ -58,7 +58,7 @@ properties:
 * `HttpClientFactory`: A factory function called to create the `HttpClient`
   instance that will be used at runtime to transmit spans over HTTP when the
   `HttpBinaryThrift` protocol is configured. See [Configure
-  HttpClient](#Configure-HttpClient) for more details.
+  HttpClient](#configure-httpclient) for more details.
 
 See the
 [`TestJaegerExporter.cs`](../../examples/Console/TestJaegerExporter.cs)
