@@ -62,7 +62,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
             try
             {
-                var data = await PrometheusCollectManager.EnterCollect(this.exporter).ConfigureAwait(false);
+                var data = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
                 try
                 {
                     if (data.Count > 0)
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                 }
                 finally
                 {
-                    PrometheusCollectManager.ExitCollect();
+                    this.exporter.CollectionManager.ExitCollect();
                 }
             }
             catch (Exception ex)
