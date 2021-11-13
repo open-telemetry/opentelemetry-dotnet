@@ -37,9 +37,17 @@ take precedence over the environment variables.
 The `JaegerExporter` can be configured using the `JaegerExporterOptions`
 properties:
 
+* `Protocol`: The protocol to use. The default value is `UdpCompactThrift`.
+
+  | Protocol       | Description                   |
+  |----------------|-------------------------------|
+  |UdpCompactThrift| Apache Thrift compact over UDP to a Jaeger Agent.     |
+  |HttpBinaryThrift| Apache Thrift binary over HTTP to a Jaeger Collector. |
+
 * `AgentHost`: The Jaeger Agent host (default `localhost`).
-* `AgentPort`: The compact thrift protocol UDP port of the Jaeger Agent
-  (default `6831`).
+* `AgentPort`: The Jaeger Agent port (default `6831`).
+* `Endpoint`: The Jaeger Collector HTTP endpoint (default
+  `http://localhost:14268`).
 * `MaxPayloadSizeInBytes`: The maximum size of each UDP packet that gets
   sent to the agent (default `4096`).
 * `ExportProcessorType`: Whether the exporter should use
@@ -47,6 +55,10 @@ properties:
   (default `ExportProcessorType.Batch`).
 * `BatchExportProcessorOptions`: Configuration options for the batch exporter.
   Only used if ExportProcessorType is set to Batch.
+* `HttpClientFactory`: A factory function called to create the `HttpClient`
+  instance that will be used at runtime to transmit spans over HTTP when the
+  `HttpBinaryThrift` protocol is configured. See [Configure
+  HttpClient](#Configure-HttpClient) for more details.
 
 See the
 [`TestJaegerExporter.cs`](../../examples/Console/TestJaegerExporter.cs)
@@ -59,11 +71,45 @@ values of the `JaegerExporterOptions`.
 
 | Environment variable              | `JaegerExporterOptions` property |
 | --------------------------------- | -------------------------------- |
+| `OTEL_EXPORTER_JAEGER_PROTOCOL`   | `Protocol`                      |
 | `OTEL_EXPORTER_JAEGER_AGENT_HOST` | `AgentHost`                      |
 | `OTEL_EXPORTER_JAEGER_AGENT_PORT` | `AgentPort`                      |
+| `OTEL_EXPORTER_JAEGER_ENDPOINT` | `Endpoint`                      |
 
 `FormatException` is thrown in case of an invalid value for any of the
 supported environment variables.
+
+## Configure HttpClient
+
+The `HttpClientFactory` option is provided on `JaegerExporterOptions` for users
+who want to configure the `HttpClient` used by the `JaegerExporter` when
+`HttpBinaryThrift` protocol is used. Simply replace the function with your own
+implementation if you want to customize the generated `HttpClient`:
+
+```csharp
+services.AddOpenTelemetryTracing((builder) => builder
+    .AddJaegerExporter(o => o.HttpClientFactory = () =>
+    {
+        HttpClient client = new HttpClient();
+        client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value");
+        return client;
+    }));
+```
+
+For users using
+[IHttpClientFactory](https://docs.microsoft.com/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests)
+you may also customize the named "JaegerExporter" `HttpClient` using the
+built-in `AddHttpClient` extension:
+
+```csharp
+services.AddHttpClient(
+    "JaegerExporter",
+     configureClient: (client) =>
+        client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
+```
+
+Note: The single instance returned by `HttpClientFactory` is reused by all
+export requests.
 
 ## References
 
