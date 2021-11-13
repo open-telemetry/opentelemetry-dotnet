@@ -40,38 +40,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         public int MinimumMessageSize => this.EmitBatchArgsBeginMessage.Length
             + this.EmitBatchArgsEndMessage.Length;
 
-        /*public static void Write(int seqId, Batch batch, TProtocol oprot)
-        {
-            oprot.WriteMessageBegin(new TMessage("emitBatch", TMessageType.Oneway, seqId));
-
-            oprot.IncrementRecursionDepth();
-            try
-            {
-                var struc = new TStruct("emitBatch_args");
-                oprot.WriteStructBegin(struc);
-
-                var field = new TField
-                {
-                    Name = "batch",
-                    Type = TType.Struct,
-                    ID = 1,
-                };
-
-                oprot.WriteFieldBegin(field);
-                batch.Write(oprot);
-                oprot.WriteFieldEnd();
-
-                oprot.WriteFieldStop();
-                oprot.WriteStructEnd();
-            }
-            finally
-            {
-                oprot.DecrementRecursionDepth();
-            }
-
-            oprot.WriteMessageEnd();
-        }*/
-
         private byte[] GenerateBeginMessage(TProtocol oprot, out int seqIdPosition)
         {
             oprot.WriteMessageBegin(new TMessage("emitBatch", TMessageType.Oneway, 0), out seqIdPosition);

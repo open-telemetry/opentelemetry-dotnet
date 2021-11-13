@@ -40,52 +40,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         public int MinimumMessageSize => this.BatchBeginMessage.Length
             + this.BatchEndMessage.Length;
 
-        /*public void Write(TProtocol oprot)
-        {
-            oprot.IncrementRecursionDepth();
-            try
-            {
-                var struc = new TStruct("Batch");
-
-                oprot.WriteStructBegin(struc);
-
-                var field = new TField
-                {
-                    Name = "process",
-                    Type = TType.Struct,
-                    ID = 1,
-                };
-
-                oprot.WriteFieldBegin(field);
-                this.Process.Write(oprot);
-                oprot.WriteFieldEnd();
-
-                field.Name = "spans";
-                field.Type = TType.List;
-                field.ID = 2;
-
-                oprot.WriteFieldBegin(field);
-                {
-                    oprot.WriteListBegin(new TList(TType.Struct, this.spanMessages.Count));
-
-                    foreach (var s in this.spanMessages)
-                    {
-                        oprot.Transport.Write(s.BufferWriter.Buffer, s.Offset, s.Count);
-                    }
-
-                    oprot.WriteListEnd();
-                }
-
-                oprot.WriteFieldEnd();
-                oprot.WriteFieldStop();
-                oprot.WriteStructEnd();
-            }
-            finally
-            {
-                oprot.DecrementRecursionDepth();
-            }
-        }*/
-
         private byte[] GenerateBeginMessage(Process process, TProtocol oprot, out int spanCountPosition)
         {
             var struc = new TStruct("Batch");
