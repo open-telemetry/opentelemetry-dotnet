@@ -44,7 +44,7 @@ namespace Examples.AspNetCore
         {
             services.AddControllers();
 
-            // Enable HttpClientFactory integration.
+            // Enable HttpClientFactory integration for customization of the HttpClient used for export calls.
             services.AddHttpClient();
 
             services.AddSwaggerGen(c =>
@@ -73,7 +73,7 @@ namespace Examples.AspNetCore
                     services.Configure<JaegerExporterOptions>(this.Configuration.GetSection("Jaeger"));
 
                     // Customize the HttpClient that will be used when JaegerExporter is configured for HTTP transport.
-                    // services.AddHttpClient("JaegerExporter", configureClient: (client) => client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
+                    services.AddHttpClient("JaegerExporter", configureClient: (client) => client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
                     break;
                 case "zipkin":
                     services.AddOpenTelemetryTracing((builder) => builder
