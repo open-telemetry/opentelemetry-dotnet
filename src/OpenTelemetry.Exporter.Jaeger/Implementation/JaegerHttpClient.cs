@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 
@@ -30,8 +31,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public JaegerHttpClient(Uri endpoint, HttpClient httpClient)
         {
-            this.endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
-            this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            Debug.Assert(endpoint != null, "endpoint is null");
+            Debug.Assert(httpClient != null, "httpClient is null");
+
+            this.endpoint = endpoint;
+            this.httpClient = httpClient;
 
             this.httpClient.BaseAddress = this.endpoint;
         }
