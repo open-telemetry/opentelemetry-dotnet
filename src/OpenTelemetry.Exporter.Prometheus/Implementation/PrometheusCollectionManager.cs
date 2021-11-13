@@ -21,12 +21,14 @@ using System.Threading.Tasks;
 #if NETCOREAPP3_1_OR_GREATER
 using System.Threading.Tasks.Sources;
 #endif
+using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus
 {
     internal class PrometheusCollectionManager
     {
         private readonly PrometheusExporter exporter;
+        private readonly Func<Batch<Metric>, ExportResult> onCollectRef;
         private byte[] buffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
         private int globalLockState;
         private ArraySegment<byte> previousDataView;
@@ -47,6 +49,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         public PrometheusCollectionManager(PrometheusExporter exporter)
         {
             this.exporter = exporter;
+            this.onCollectRef = this.OnCollect;
         }
 
 #if NETCOREAPP3_1_OR_GREATER
@@ -85,18 +88,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 #endif
             }
 
-            // Wait for all readers to complete.
-            SpinWait readWait = default;
-            while (true)
-            {
-                if (Interlocked.CompareExchange(ref this.readerCount, 0, this.readerCount) != 0)
-                {
-                    readWait.SpinOnce();
-                    continue;
-                }
-
-                break;
-            }
+            this.WaitForReadersToComplete();
 
             // Start a collection on the current thread.
             this.previousDataViewExpirationAtUtc = null;
@@ -108,9 +100,8 @@ namespace OpenTelemetry.Exporter.Prometheus
             Interlocked.Increment(ref this.readerCount);
             this.ExitGlobalLock();
 
-            int count = this.ExecuteCollect();
-            this.previousDataView = new ArraySegment<byte>(this.buffer, 0, count);
-            if (count > 0)
+            bool result = this.ExecuteCollect();
+            if (result)
             {
                 this.previousDataViewExpirationAtUtc = DateTime.UtcNow.AddSeconds(10);
             }
@@ -163,57 +154,76 @@ namespace OpenTelemetry.Exporter.Prometheus
             this.globalLockState = 0;
         }
 
-        private int ExecuteCollect()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void WaitForReadersToComplete()
         {
-            int count = 0;
-
-            this.exporter.OnExport = (metrics) =>
+            SpinWait readWait = default;
+            while (true)
             {
-                try
+                if (Interlocked.CompareExchange(ref this.readerCount, 0, this.readerCount) != 0)
                 {
-                    foreach (var metric in metrics)
-                    {
-                        while (true)
-                        {
-                            try
-                            {
-                                count = PrometheusSerializer.WriteMetric(this.buffer, count, metric);
-                                break;
-                            }
-                            catch (IndexOutOfRangeException)
-                            {
-                                int bufferSize = this.buffer.Length * 2;
-
-                                // there are two cases we might run into the following condition:
-                                // 1. we have many metrics to be exported - in this case we probably want
-                                //    to put some upper limit and allow the user to configure it.
-                                // 2. we got an IndexOutOfRangeException which was triggered by some other
-                                //    code instead of the buffer[cursor++] - in this case we should give up
-                                //    at certain point rather than allocating like crazy.
-                                if (bufferSize > 100 * 1024 * 1024)
-                                {
-                                    throw;
-                                }
-
-                                var newBuffer = new byte[bufferSize];
-                                this.buffer.CopyTo(newBuffer, 0);
-                                this.buffer = newBuffer;
-                            }
-                        }
-                    }
-
-                    return ExportResult.Success;
+                    readWait.SpinOnce();
+                    continue;
                 }
-                catch (Exception)
-                {
-                    return ExportResult.Failure;
-                }
-            };
 
+                break;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool ExecuteCollect()
+        {
+            this.exporter.OnExport = this.onCollectRef;
             bool result = this.exporter.Collect(Timeout.Infinite);
             this.exporter.OnExport = null;
+            return result;
+        }
 
-            return result ? count : 0;
+        private ExportResult OnCollect(Batch<Metric> metrics)
+        {
+            int cursor = 0;
+
+            try
+            {
+                foreach (var metric in metrics)
+                {
+                    while (true)
+                    {
+                        try
+                        {
+                            cursor = PrometheusSerializer.WriteMetric(this.buffer, cursor, metric);
+                            break;
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            int bufferSize = this.buffer.Length * 2;
+
+                            // there are two cases we might run into the following condition:
+                            // 1. we have many metrics to be exported - in this case we probably want
+                            //    to put some upper limit and allow the user to configure it.
+                            // 2. we got an IndexOutOfRangeException which was triggered by some other
+                            //    code instead of the buffer[cursor++] - in this case we should give up
+                            //    at certain point rather than allocating like crazy.
+                            if (bufferSize > 100 * 1024 * 1024)
+                            {
+                                throw;
+                            }
+
+                            var newBuffer = new byte[bufferSize];
+                            this.buffer.CopyTo(newBuffer, 0);
+                            this.buffer = newBuffer;
+                        }
+                    }
+                }
+
+                this.previousDataView = new ArraySegment<byte>(this.buffer, 0, cursor);
+                return ExportResult.Success;
+            }
+            catch (Exception)
+            {
+                this.previousDataView = new ArraySegment<byte>(Array.Empty<byte>(), 0, 0);
+                return ExportResult.Failure;
+            }
         }
 
 #if NETCOREAPP3_1_OR_GREATER

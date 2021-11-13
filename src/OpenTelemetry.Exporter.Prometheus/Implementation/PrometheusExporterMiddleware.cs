@@ -71,7 +71,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     }
                     else
                     {
-                        response.StatusCode = 500;
+                        throw new InvalidOperationException("Collection failure.");
                     }
                 }
                 finally
