@@ -19,7 +19,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 using Microsoft.AspNetCore.Http;
@@ -38,6 +37,7 @@ namespace Benchmarks.Exporter
         private MemoryStream responseStream;
         private MeterProvider meterProvider;
         private PrometheusExporter exporter;
+        private PrometheusExporterMiddleware prometheusExporterMiddleware;
         private DefaultHttpContext context;
 
         [Params(1, 1000, 10000)]
@@ -70,7 +70,7 @@ namespace Benchmarks.Exporter
                 throw new InvalidOperationException("PrometheusExporter could not be found on MeterProvider.");
             }
 
-            this.exporter.Collect(Timeout.Infinite);
+            this.prometheusExporterMiddleware = new PrometheusExporterMiddleware(this.exporter);
         }
 
         [GlobalCleanup]
@@ -81,18 +81,16 @@ namespace Benchmarks.Exporter
             this.meterProvider?.Dispose();
         }
 
-        /* TODO: revisit this after PrometheusExporter race condition is solved
         [Benchmark]
-        public async Task WriteMetricsToResponse()
+        public async Task PrometheusExporterMiddlewareInvoke()
         {
             this.responseStream.Position = 0;
 
             for (int i = 0; i < this.NumberOfExportCalls; i++)
             {
-                await PrometheusExporterMiddleware.WriteMetricsToResponse(this.exporter, this.context.Response).ConfigureAwait(false);
+                await this.prometheusExporterMiddleware.InvokeAsync(this.context).ConfigureAwait(false);
             }
         }
-        */
     }
 }
 #endif

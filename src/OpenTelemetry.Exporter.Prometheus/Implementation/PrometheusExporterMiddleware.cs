@@ -17,7 +17,6 @@
 #if NETCOREAPP3_1_OR_GREATER
 using System;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using OpenTelemetry.Internal;
@@ -49,6 +48,11 @@ namespace OpenTelemetry.Exporter.Prometheus
             this.exporter = exporter;
         }
 
+        internal PrometheusExporterMiddleware(PrometheusExporter exporter)
+        {
+            this.exporter = exporter;
+        }
+
         /// <summary>
         /// Invoke.
         /// </summary>
@@ -67,7 +71,10 @@ namespace OpenTelemetry.Exporter.Prometheus
                 {
                     if (data.Count > 0)
                     {
-                        await WriteMetricsToResponse(data.Array, data.Count, response).ConfigureAwait(false);
+                        response.StatusCode = 200;
+                        response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
+
+                        await response.Body.WriteAsync(data.Array, 0, data.Count).ConfigureAwait(false);
                     }
                     else
                     {
@@ -89,15 +96,6 @@ namespace OpenTelemetry.Exporter.Prometheus
             }
 
             this.exporter.OnExport = null;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static async Task WriteMetricsToResponse(byte[] buffer, int count, HttpResponse response)
-        {
-            response.StatusCode = 200;
-            response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
-
-            await response.Body.WriteAsync(buffer, 0, count).ConfigureAwait(false);
         }
     }
 }
