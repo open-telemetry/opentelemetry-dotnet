@@ -1,4 +1,4 @@
-// <copyright file="PrometheusExporterMetricsHttpServerTests.cs" company="OpenTelemetry Authors">
+// <copyright file="PrometheusExporterHttpServerTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,10 +26,10 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
-    public class PrometheusExporterMetricsHttpServerTests
+    public class PrometheusExporterHttpServerTests
     {
         [Fact]
-        public async Task PrometheusExporterMetricsHttpServerIntegration()
+        public async Task PrometheusExporterHttpServerIntegration()
         {
             Random random = new Random();
             int port = 0;
