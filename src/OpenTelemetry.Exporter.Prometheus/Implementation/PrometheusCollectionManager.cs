@@ -18,9 +18,6 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-#if NETCOREAPP3_1_OR_GREATER
-using System.Threading.Tasks.Sources;
-#endif
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus
@@ -35,17 +32,8 @@ namespace OpenTelemetry.Exporter.Prometheus
         private ArraySegment<byte> previousDataView;
         private DateTime? previousDataViewExpirationAtUtc;
         private int readerCount;
-#if NETCOREAPP3_1_OR_GREATER
         private bool collectionRunning;
-#pragma warning disable SA1214 // Readonly fields should appear before non-readonly fields
-        private readonly ManualResetValueTaskSource<ArraySegment<byte>> collectionTcs = new ManualResetValueTaskSource<ArraySegment<byte>>()
-        {
-            RunContinuationsAsynchronously = false,
-        };
-#pragma warning restore SA1214 // Readonly fields should appear before non-readonly fields
-#else
         private TaskCompletionSource<ArraySegment<byte>> collectionTcs;
-#endif
 
         public PrometheusCollectionManager(PrometheusExporter exporter)
         {
@@ -75,16 +63,17 @@ namespace OpenTelemetry.Exporter.Prometheus
             }
 
             // If a collection is already running, return a task to wait on the result.
-#if NETCOREAPP3_1_OR_GREATER
             if (this.collectionRunning)
-#else
-            if (this.collectionTcs != null)
-#endif
             {
+                if (this.collectionTcs == null)
+                {
+                    this.collectionTcs = new TaskCompletionSource<ArraySegment<byte>>(TaskCreationOptions.RunContinuationsAsynchronously);
+                }
+
                 Interlocked.Increment(ref this.readerCount);
                 this.ExitGlobalLock();
 #if NETCOREAPP3_1_OR_GREATER
-                return new ValueTask<ArraySegment<byte>>(this.collectionTcs, this.collectionTcs.Version);
+                return new ValueTask<ArraySegment<byte>>(this.collectionTcs.Task);
 #else
                 return this.collectionTcs.Task;
 #endif
@@ -93,31 +82,26 @@ namespace OpenTelemetry.Exporter.Prometheus
             this.WaitForReadersToComplete();
 
             // Start a collection on the current thread.
-            this.previousDataViewExpirationAtUtc = null;
-#if NETCOREAPP3_1_OR_GREATER
             this.collectionRunning = true;
-#else
-            this.collectionTcs = new TaskCompletionSource<ArraySegment<byte>>(TaskCreationOptions.RunContinuationsAsynchronously);
-#endif
+            this.previousDataViewExpirationAtUtc = null;
             Interlocked.Increment(ref this.readerCount);
             this.ExitGlobalLock();
 
             bool result = this.ExecuteCollect();
             if (result && this.scrapeResponseCacheDurationInMilliseconds > 0)
             {
-                this.previousDataViewExpirationAtUtc = DateTime.UtcNow.AddSeconds(this.scrapeResponseCacheDurationInMilliseconds);
+                this.previousDataViewExpirationAtUtc = DateTime.UtcNow.AddMilliseconds(this.scrapeResponseCacheDurationInMilliseconds);
             }
-
-            this.collectionTcs.SetResult(this.previousDataView);
 
             this.EnterGlobalLock();
 
-#if NETCOREAPP3_1_OR_GREATER
-            this.collectionTcs.Reset();
             this.collectionRunning = false;
-#else
-            this.collectionTcs = null;
-#endif
+
+            if (this.collectionTcs != null)
+            {
+                this.collectionTcs.SetResult(this.previousDataView);
+                this.collectionTcs = null;
+            }
 
             this.ExitGlobalLock();
 
@@ -227,31 +211,5 @@ namespace OpenTelemetry.Exporter.Prometheus
                 return ExportResult.Failure;
             }
         }
-
-#if NETCOREAPP3_1_OR_GREATER
-        private sealed class ManualResetValueTaskSource<T> : IValueTaskSource<T>
-        {
-            private ManualResetValueTaskSourceCore<T> core; // mutable struct; do not make this readonly
-
-            public bool RunContinuationsAsynchronously
-            {
-                get => this.core.RunContinuationsAsynchronously;
-                set => this.core.RunContinuationsAsynchronously = value;
-            }
-
-            public short Version => this.core.Version;
-
-            public void Reset() => this.core.Reset();
-
-            public void SetResult(T result) => this.core.SetResult(result);
-
-            public T GetResult(short token) => this.core.GetResult(token);
-
-            public ValueTaskSourceStatus GetStatus(short token) => this.core.GetStatus(token);
-
-            public void OnCompleted(Action<object> continuation, object state, short token, ValueTaskSourceOnCompletedFlags flags)
-                => this.core.OnCompleted(continuation, state, token, flags);
-        }
-#endif
     }
 }
