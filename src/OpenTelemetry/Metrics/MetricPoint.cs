@@ -121,6 +121,7 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
             }
+
             this.MarkCollectPending();
         }
 
@@ -185,6 +186,7 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
             }
+
             this.MarkCollectPending();
         }
 
