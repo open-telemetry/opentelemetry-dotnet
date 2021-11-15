@@ -1,4 +1,4 @@
-// <copyright file="PrometheusExporterMetricsHttpServer.cs" company="OpenTelemetry Authors">
+// <copyright file="PrometheusExporterHttpServer.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,9 +23,9 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
-    /// A HTTP listener used to expose Prometheus metrics.
+    /// An HTTP listener used to expose Prometheus metrics.
     /// </summary>
-    internal sealed class PrometheusExporterMetricsHttpServer : IDisposable
+    internal sealed class PrometheusExporterHttpServer : IDisposable
     {
         private readonly PrometheusExporter exporter;
         private readonly HttpListener httpListener = new HttpListener();
@@ -35,10 +35,10 @@ namespace OpenTelemetry.Exporter.Prometheus
         private Task workerThread;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PrometheusExporterMetricsHttpServer"/> class.
+        /// Initializes a new instance of the <see cref="PrometheusExporterHttpServer"/> class.
         /// </summary>
         /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
-        public PrometheusExporterMetricsHttpServer(PrometheusExporter exporter)
+        public PrometheusExporterHttpServer(PrometheusExporter exporter)
         {
             Guard.Null(exporter, nameof(exporter));
 
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <summary>
         /// Start exporter.
         /// </summary>
-        /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the htto server.</param>
+        /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the HTTP server.</param>
         public void Start(CancellationToken token = default)
         {
             lock (this.syncObject)

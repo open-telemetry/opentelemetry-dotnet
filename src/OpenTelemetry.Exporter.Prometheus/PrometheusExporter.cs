@@ -30,7 +30,7 @@ namespace OpenTelemetry.Exporter
         internal const string HttpListenerStartFailureExceptionMessage = "PrometheusExporter http listener could not be started.";
         internal readonly PrometheusExporterOptions Options;
         internal Batch<Metric> Metrics; // TODO: this is no longer needed, we can remove it later
-        private readonly PrometheusExporterMetricsHttpServer metricsHttpServer;
+        private readonly PrometheusExporterHttpServer metricsHttpServer;
         private Func<int, bool> funcCollect;
         private Func<Batch<Metric>, ExportResult> funcExport;
         private bool disposed;
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter
             {
                 try
                 {
-                    this.metricsHttpServer = new PrometheusExporterMetricsHttpServer(this);
+                    this.metricsHttpServer = new PrometheusExporterHttpServer(this);
                     this.metricsHttpServer.Start();
                 }
                 catch (Exception ex)
