@@ -14,14 +14,11 @@
 // limitations under the License.
 // </copyright>
 
-extern alias InMemory;
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.IO;
 using BenchmarkDotNet.Attributes;
-using InMemory::OpenTelemetry.Metrics;
 using OpenTelemetry;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
