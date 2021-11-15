@@ -1,5 +1,7 @@
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.AspNetCoreInstrumentationOptions() -> void
+OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnableGrpcAspNetCoreSupport.get -> bool
+OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.EnableGrpcAspNetCoreSupport.set -> void
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.Enrich.get -> System.Action<System.Diagnostics.Activity, string, object>
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.Enrich.set -> void
 OpenTelemetry.Instrumentation.AspNetCore.AspNetCoreInstrumentationOptions.Filter.get -> System.Func<Microsoft.AspNetCore.Http.HttpContext, bool>
