@@ -164,20 +164,6 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Disables status switch for activity.
-        /// </summary>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        internal TracerProviderBuilder DisableActivityStatusSwitch()
-        {
-            if (BackwardCompatibilitySwitches.ActivityStatusSwitch)
-            {
-                BackwardCompatibilitySwitches.ActivityStatusSwitch = false;
-            }
-
-            return this;
-        }
-
-        /// <summary>
         /// Adds instrumentation to the provider.
         /// </summary>
         /// <param name="instrumentationName">Instrumentation name.</param>

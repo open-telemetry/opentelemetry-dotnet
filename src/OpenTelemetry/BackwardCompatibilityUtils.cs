@@ -14,55 +14,58 @@
 // limitations under the License.
 // </copyright>
 
-using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry
 {
     internal static class BackwardCompatibilityUtils
     {
-        internal const string UnsetStatusCodeTagValue = "UNSET";
-        internal const string OkStatusCodeTagValue = "OK";
-        internal const string ErrorStatusCodeTagValue = "ERROR";
-
         internal static void SetActivityStatusUsingTags(Activity activity)
         {
-            ActivityStatusCode statusCode = ActivityStatusCode.Unset;
-            string statusDescription = null;
-            foreach (var tag in activity.TagObjects)
-            {
-                if (tag.Key == SpanAttributeConstants.StatusCodeKey)
-                {
-                    statusCode = GetActivityStatusCode((string)tag.Value);
-                }
+            var tagState = default(TagEnumerationState);
 
-                if (tag.Key == SpanAttributeConstants.StatusDescriptionKey)
-                {
-                    statusDescription = (string)tag.Value;
-                }
-            }
+            activity.EnumerateTags(ref tagState);
 
-            if (statusCode != ActivityStatusCode.Unset)
+            if (tagState.StatusCode != ActivityStatusCode.Unset)
             {
-                activity.SetStatus(statusCode, statusDescription);
+                activity.SetStatus(tagState.StatusCode, tagState.StatusDescription);
             }
         }
 
-        private static ActivityStatusCode GetActivityStatusCode(string statusCodeTagValue)
+        internal struct TagEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>
         {
-            return statusCodeTagValue switch
+            public ActivityStatusCode StatusCode { get; set; }
+
+            public string StatusDescription { get; set; }
+
+            public bool ForEach(KeyValuePair<string, object> activityTag)
             {
-                /*
-                 * Note: Order here does matter for perf. Unset is
-                 * first because assumption is most spans will be
-                 * Unset, then Error. Ok is not set by the SDK.
-                 */
-                string _ when UnsetStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => ActivityStatusCode.Unset,
-                string _ when ErrorStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => ActivityStatusCode.Error,
-                string _ when OkStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => ActivityStatusCode.Ok,
-                _ => ActivityStatusCode.Unset,
-            };
+                if (activityTag.Value == null)
+                {
+                    return true;
+                }
+
+                string key = activityTag.Key;
+
+                if (activityTag.Value is string strVal)
+                {
+                    if (key == SpanAttributeConstants.StatusCodeKey)
+                    {
+                        this.StatusCode = StatusHelper.GetActivityStatusCodeForTagValue(strVal);
+                        return true;
+                    }
+                    else if (key == SpanAttributeConstants.StatusDescriptionKey)
+                    {
+                        this.StatusDescription = strVal;
+                        return true;
+                    }
+                }
+
+                return true;
+            }
         }
     }
 }

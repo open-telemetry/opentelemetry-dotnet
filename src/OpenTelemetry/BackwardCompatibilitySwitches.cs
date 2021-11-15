@@ -16,11 +16,13 @@
 
 namespace OpenTelemetry
 {
-    internal static class BackwardCompatibilitySwitches
+    public static class BackwardCompatibilitySwitches
     {
         /// <summary>
-        /// Gets or sets a value indicating whether activity status switch is enabled or not.
+        /// Gets or sets a value indicating whether activity status switch is enabled
+        /// If true then activity Status and StatusDescription properties will be set
+        /// using tags otel.status_code and otel.status_description respecitvely.
         /// </summary>
-        internal static bool ActivityStatusSwitch { get; set; } = true;
+        public static bool ActivityStatusSwitch { get; set; } = true;
     }
 }
