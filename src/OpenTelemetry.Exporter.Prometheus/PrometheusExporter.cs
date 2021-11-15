@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Threading;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
 
@@ -31,7 +30,6 @@ namespace OpenTelemetry.Exporter
         internal const string HttpListenerStartFailureExceptionMessage = "PrometheusExporter http listener could not be started.";
         internal readonly PrometheusExporterOptions Options;
         internal Batch<Metric> Metrics; // TODO: this is no longer needed, we can remove it later
-        private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
         private readonly PrometheusExporterHttpServer metricsHttpServer;
         private Func<int, bool> funcCollect;
         private Func<Batch<Metric>, ExportResult> funcExport;
@@ -57,6 +55,8 @@ namespace OpenTelemetry.Exporter
                     throw new InvalidOperationException(HttpListenerStartFailureExceptionMessage, ex);
                 }
             }
+
+            this.CollectionManager = new PrometheusCollectionManager(this);
         }
 
         public Func<int, bool> Collect
@@ -71,19 +71,11 @@ namespace OpenTelemetry.Exporter
             set => this.funcExport = value;
         }
 
+        internal PrometheusCollectionManager CollectionManager { get; }
+
         public override ExportResult Export(in Batch<Metric> metrics)
         {
             return this.OnExport(metrics);
-        }
-
-        internal bool TryEnterSemaphore()
-        {
-            return this.semaphore.Wait(0);
-        }
-
-        internal void ReleaseSemaphore()
-        {
-            this.semaphore.Release();
         }
 
         protected override void Dispose(bool disposing)
@@ -93,7 +85,6 @@ namespace OpenTelemetry.Exporter
                 if (disposing)
                 {
                     this.metricsHttpServer?.Dispose();
-                    this.semaphore.Dispose();
                 }
 
                 this.disposed = true;
