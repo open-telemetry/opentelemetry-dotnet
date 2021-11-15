@@ -16,7 +16,9 @@
 
 using System;
 using System.Diagnostics.Metrics;
+#if NET461
 using System.Linq;
+#endif
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Metrics;
@@ -42,6 +44,16 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     throw new InvalidOperationException("PrometheusExporter could not be found on MeterProvider.");
                 }
 
+                int runningCollectCount = 0;
+                var collectFunc = exporter.Collect;
+                exporter.Collect = (timeout) =>
+                {
+                    bool result = collectFunc(timeout);
+                    runningCollectCount++;
+                    Thread.Sleep(5000);
+                    return result;
+                };
+
                 var counter = meter.CreateCounter<int>("counter_int", description: "Prometheus help text goes here \n escaping.");
                 counter.Add(100);
 
@@ -64,10 +76,28 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
                 await Task.WhenAll(collectTasks).ConfigureAwait(false);
 
+                Assert.Equal(1, runningCollectCount);
+
                 byte[] firstBatch = collectTasks[0].Result;
                 for (int i = 1; i < collectTasks.Length; i++)
                 {
                     Assert.Equal(firstBatch, collectTasks[i].Result);
+                }
+
+                counter.Add(100);
+
+                // This should use the cache and ignore the second counter update.
+                var task = exporter.CollectionManager.EnterCollect();
+                Assert.True(task.IsCompleted);
+                ArraySegment<byte> data = await task.ConfigureAwait(false);
+                try
+                {
+                    Assert.Equal(1, runningCollectCount);
+                    Assert.Equal(firstBatch, data);
+                }
+                finally
+                {
+                    exporter.CollectionManager.ExitCollect();
                 }
 
                 Thread.Sleep(exporter.Options.ScrapeResponseCacheDurationInMilliseconds);
@@ -92,6 +122,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
                 await Task.WhenAll(collectTasks).ConfigureAwait(false);
 
+                Assert.Equal(2, runningCollectCount);
                 Assert.NotEqual(firstBatch, collectTasks[0].Result);
 
                 firstBatch = collectTasks[0].Result;
