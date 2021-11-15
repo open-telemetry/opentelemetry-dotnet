@@ -28,6 +28,7 @@ namespace OpenTelemetry.Exporter.Prometheus
     internal class PrometheusCollectionManager
     {
         private readonly PrometheusExporter exporter;
+        private readonly int scrapeResponseCacheDurationInMilliseconds;
         private readonly Func<Batch<Metric>, ExportResult> onCollectRef;
         private byte[] buffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
         private int globalLockState;
@@ -49,6 +50,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         public PrometheusCollectionManager(PrometheusExporter exporter)
         {
             this.exporter = exporter;
+            this.scrapeResponseCacheDurationInMilliseconds = this.exporter.Options.ScrapeResponseCacheDurationInMilliseconds;
             this.onCollectRef = this.OnCollect;
         }
 
@@ -82,7 +84,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                 Interlocked.Increment(ref this.readerCount);
                 this.ExitGlobalLock();
 #if NETCOREAPP3_1_OR_GREATER
-                return new ValueTask<ArraySegment<byte>>(this.collectionTcs, 0);
+                return new ValueTask<ArraySegment<byte>>(this.collectionTcs, this.collectionTcs.Version);
 #else
                 return this.collectionTcs.Task;
 #endif
@@ -101,9 +103,9 @@ namespace OpenTelemetry.Exporter.Prometheus
             this.ExitGlobalLock();
 
             bool result = this.ExecuteCollect();
-            if (result)
+            if (result && this.scrapeResponseCacheDurationInMilliseconds > 0)
             {
-                this.previousDataViewExpirationAtUtc = DateTime.UtcNow.AddSeconds(10);
+                this.previousDataViewExpirationAtUtc = DateTime.UtcNow.AddSeconds(this.scrapeResponseCacheDurationInMilliseconds);
             }
 
             this.collectionTcs.SetResult(this.previousDataView);
@@ -236,6 +238,8 @@ namespace OpenTelemetry.Exporter.Prometheus
                 get => this.core.RunContinuationsAsynchronously;
                 set => this.core.RunContinuationsAsynchronously = value;
             }
+
+            public short Version => this.core.Version;
 
             public void Reset() => this.core.Reset();
 
