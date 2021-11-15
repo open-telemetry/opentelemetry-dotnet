@@ -27,7 +27,7 @@ namespace OpenTelemetry.Exporter
         internal const string DefaultScrapeEndpointPath = "/metrics";
         internal Func<DateTimeOffset> GetUtcNowDateTimeOffset = () => DateTimeOffset.UtcNow;
 
-        private int scrapeResponseCacheDurationInMilliseconds = 10 * 1000;
+        private int scrapeResponseCacheDurationMilliseconds = 10 * 1000;
 
 #if NETCOREAPP3_1_OR_GREATER
         /// <summary>
@@ -57,9 +57,9 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 10,000 (10 seconds).
         /// </summary>
-        public int ScrapeResponseCacheDurationInMilliseconds
+        public int ScrapeResponseCacheDurationMilliseconds
         {
-            get => this.scrapeResponseCacheDurationInMilliseconds;
+            get => this.scrapeResponseCacheDurationMilliseconds;
             set
             {
                 if (value < 0)
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Exporter
                     throw new ArgumentOutOfRangeException(nameof(value), "Value should be greater than or equal to zero.");
                 }
 
-                this.scrapeResponseCacheDurationInMilliseconds = value;
+                this.scrapeResponseCacheDurationMilliseconds = value;
             }
         }
     }

@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         public PrometheusCollectionManager(PrometheusExporter exporter)
         {
             this.exporter = exporter;
-            this.scrapeResponseCacheDurationInMilliseconds = this.exporter.Options.ScrapeResponseCacheDurationInMilliseconds;
+            this.scrapeResponseCacheDurationInMilliseconds = this.exporter.Options.ScrapeResponseCacheDurationMilliseconds;
             this.onCollectRef = this.OnCollect;
         }
 
@@ -50,7 +50,8 @@ namespace OpenTelemetry.Exporter.Prometheus
         {
             this.EnterGlobalLock();
 
-            // If we are within 10 seconds of the last successful collect, return the previous view.
+            // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
+            // last successful collect, return the previous view.
             if (this.previousDataViewExpirationAtUtc.HasValue && this.previousDataViewExpirationAtUtc >= DateTime.UtcNow)
             {
                 Interlocked.Increment(ref this.readerCount);
