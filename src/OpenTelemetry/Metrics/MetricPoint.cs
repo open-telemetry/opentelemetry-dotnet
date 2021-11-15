@@ -34,7 +34,7 @@ namespace OpenTelemetry.Metrics
             string[] keys,
             object[] values,
             double[] histogramBounds,
-            MetricPointStatus status)
+            MetricPointStatus status = MetricPointStatus.Unused)
         {
             this.AggType = aggType;
             this.StartTime = startTime;
@@ -347,6 +347,21 @@ namespace OpenTelemetry.Metrics
         internal void MarkCollectPending()
         {
             this.MetricPointStatus = MetricPointStatus.CollectPending;
+        }
+
+        internal void MarkCandidateForRemoval()
+        {
+            this.MetricPointStatus = MetricPointStatus.CandidateForRemoval;
+        }
+
+        internal void MarkUnused()
+        {
+            this.MetricPointStatus = MetricPointStatus.Unused;
+        }
+
+        internal void MarkUpdatePending()
+        {
+            this.MetricPointStatus = MetricPointStatus.UpdatePending;
         }
     }
 }

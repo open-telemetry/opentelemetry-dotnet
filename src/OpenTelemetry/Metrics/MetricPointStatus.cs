@@ -19,6 +19,18 @@ namespace OpenTelemetry.Metrics
     internal enum MetricPointStatus
     {
         /// <summary>
+        /// Unused <see cref="MetricPoint"/>.
+        /// </summary>
+        Unused,
+
+        /// <summary>
+        /// This <see cref="MetricPoint"/> has just been created and its value has not yet
+        /// been set for the first time. Once its value is set then the status will be updated
+        /// to <see cref="CollectPending"/>.
+        /// </summary>
+        UpdatePending,
+
+        /// <summary>
         /// This status is applied to <see cref="MetricPoint"/>s with status <see cref="CollectPending"/> after a Collect.
         /// If an update occurs, status will be moved to <see cref="CollectPending"/>.
         /// </summary>
@@ -29,5 +41,11 @@ namespace OpenTelemetry.Metrics
         /// Collect will move it to <see cref="NoCollectPending"/>.
         /// </summary>
         CollectPending,
+
+        /// <summary>
+        /// The <see cref="MetricPoint"/> has not been used since at least one Collect cycle.
+        /// <see cref="MetricPoint"/>s with this status are removed after Collect.
+        /// </summary>
+        CandidateForRemoval,
     }
 }

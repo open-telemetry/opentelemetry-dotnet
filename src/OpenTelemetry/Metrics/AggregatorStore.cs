@@ -115,30 +115,40 @@ namespace OpenTelemetry.Metrics
                 }
                 else
                 {
-                    if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
+                    switch (metricPoint.MetricPointStatus)
                     {
-                        // re-claim aggresively
-                        // TODO: introduce candidate for removal
-                        // and reclaim after no-used for entire collect() internal
-                        this.rwlock.EnterWriteLock();
-                        if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
-                        {
-                            var t = this.keyValue2MetricAggs[metricPoint.Keys];
-                            t.Remove(metricPoint.Values);
-                        }
+                        case MetricPointStatus.CollectPending:
+                            metricPoint.TakeSnapShot(this.outputDelta);
+                            this.currentMetricPointBatch[this.batchSize] = i;
+                            this.batchSize++;
+                            break;
 
-                        // TODO:
-                        // metricPoint.ResetAndPrepareForNewOwner
-                        // reset all fields, but make sure to not new [] arrays or anything.
-                        // to be done inside metric point
+                        case MetricPointStatus.NoCollectPending:
+                            metricPoint.MarkCandidateForRemoval();
+                            break;
 
-                        this.rwlock.ExitWriteLock();
-                    }
-                    else
-                    {
-                        metricPoint.TakeSnapShot(this.outputDelta);
-                        this.currentMetricPointBatch[this.batchSize] = i;
-                        this.batchSize++;
+                        case MetricPointStatus.CandidateForRemoval:
+                            try
+                            {
+                                this.rwlock.EnterWriteLock();
+                                if (metricPoint.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
+                                {
+                                    var t = this.keyValue2MetricAggs[metricPoint.Keys];
+                                    t.Remove(metricPoint.Values);
+                                    metricPoint.MarkUnused();
+                                }
+                            }
+                            finally
+                            {
+                                this.rwlock.ExitWriteLock();
+                            }
+
+                            break;
+
+                        case MetricPointStatus.UpdatePending:
+                        case MetricPointStatus.Unused:
+                        default:
+                            break;
                     }
                 }
             }
@@ -157,8 +167,7 @@ namespace OpenTelemetry.Metrics
 
         internal BatchMetricPoint GetMetricPoints()
         {
-            var indexSnapShot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
-            return new BatchMetricPoint(this.metricPoints, indexSnapShot + 1, this.startTimeExclusive, this.endTimeInclusive);
+            return new BatchMetricPoint(this.metricPoints, this.currentMetricPointBatch, this.batchSize, this.startTimeExclusive, this.endTimeInclusive);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -209,36 +218,45 @@ namespace OpenTelemetry.Metrics
                 {
                     lock (value2metrics)
                     {
-                        aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
-                        if (aggregatorIndex >= MaxMetricPoints)
+                        if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
                         {
-                            // sorry! out of data points.
-                            // TODO: Traverse through the points and fine the free one.
-                            return -1;
+                            aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
+                            if (aggregatorIndex >= MaxMetricPoints)
+                            {
+                                // sorry! out of data points.
+                                // TODO: Traverse through the points and find the free one.
+                                return -1;
+                            }
+
+                            // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                            if (seqKey == null)
+                            {
+                                seqKey = new string[length];
+                                tagKeys.CopyTo(seqKey, 0);
+                            }
+
+                            var seqVal = new object[length];
+                            tagValues.CopyTo(seqVal, 0);
+
+                            ref var metricPoint = ref this.metricPoints[aggregatorIndex];
+                            var dt = DateTimeOffset.UtcNow;
+                            metricPoint = new MetricPoint(
+                                this.aggType,
+                                dt,
+                                seqKey,
+                                seqVal,
+                                this.histogramBounds,
+                                MetricPointStatus.UpdatePending);
+
+                            // Add to dictionary *after* initializing MetricPoint
+                            // as other threads can start writing to the
+                            // MetricPoint, if dictionary entry found.
+                            value2metrics.Add(seqVal, aggregatorIndex);
                         }
-
-                        // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                        if (seqKey == null)
-                        {
-                            seqKey = new string[length];
-                            tagKeys.CopyTo(seqKey, 0);
-                        }
-
-                        var seqVal = new object[length];
-                        tagValues.CopyTo(seqVal, 0);
-
-                        ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                        var dt = DateTimeOffset.UtcNow;
-                        metricPoint = new MetricPoint(this.aggType, dt, seqKey, seqVal, this.histogramBounds);
-
-                        // Add to dictionary *after* initializing MetricPoint
-                        // as other threads can start writing to the
-                        // MetricPoint, if dictionary entry found.
-                        value2metrics.Add(seqVal, aggregatorIndex);
                     }
                 }
 
-                this.metricPoints[aggregatorIndex].MarkCollectPending();
+                this.metricPoints[aggregatorIndex].MarkUpdatePending();
                 return aggregatorIndex;
             }
             finally
