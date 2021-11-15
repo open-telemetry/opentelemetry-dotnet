@@ -83,11 +83,13 @@ namespace OpenTelemetry
         protected override bool OnForceFlush(int timeoutMilliseconds)
         {
             var result = true;
-            var sw = Stopwatch.StartNew();
+            var sw = timeoutMilliseconds == Timeout.Infinite
+                ? null
+                : Stopwatch.StartNew();
 
             for (var cur = this.head; cur != null; cur = cur.Next)
             {
-                if (timeoutMilliseconds == Timeout.Infinite)
+                if (sw == null)
                 {
                     result = cur.Value.ForceFlush(Timeout.Infinite) && result;
                 }
@@ -107,11 +109,13 @@ namespace OpenTelemetry
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
             var result = true;
-            var sw = Stopwatch.StartNew();
+            var sw = timeoutMilliseconds == Timeout.Infinite
+                ? null
+                : Stopwatch.StartNew();
 
             for (var cur = this.head; cur != null; cur = cur.Next)
             {
-                if (timeoutMilliseconds == Timeout.Infinite)
+                if (sw == null)
                 {
                     result = cur.Value.Shutdown(Timeout.Infinite) && result;
                 }
