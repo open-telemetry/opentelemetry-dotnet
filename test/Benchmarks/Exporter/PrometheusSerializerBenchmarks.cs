@@ -14,15 +14,17 @@
 // limitations under the License.
 // </copyright>
 
+extern alias Prometheus;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.IO;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
-using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
+using Prometheus::OpenTelemetry.Exporter.Prometheus;
 
 namespace Benchmarks.Exporter
 {
