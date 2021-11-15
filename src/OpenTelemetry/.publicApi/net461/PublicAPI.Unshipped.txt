@@ -1,4 +1,5 @@
 abstract OpenTelemetry.Metrics.MetricReader.ProcessMetrics(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric> metrics, int timeoutMilliseconds) -> bool
+OpenTelemetry.BackwardCompatibilitySwitches
 OpenTelemetry.BaseExporter<T>.ForceFlush(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Batch<T>.Batch(T[] items, int count) -> void
 OpenTelemetry.Batch<T>.Count.get -> long
@@ -120,6 +121,8 @@ override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddMeter(params string[]
 override OpenTelemetry.Metrics.PeriodicExportingMetricReader.Dispose(bool disposing) -> void
 override OpenTelemetry.Metrics.PeriodicExportingMetricReader.OnShutdown(int timeoutMilliseconds) -> bool
 readonly OpenTelemetry.Metrics.BaseExportingMetricReader.exporter -> OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric>
+static OpenTelemetry.BackwardCompatibilitySwitches.ActivityStatusSwitch.get -> bool
+static OpenTelemetry.BackwardCompatibilitySwitches.ActivityStatusSwitch.set -> void
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddReader(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, OpenTelemetry.Metrics.MetricReader reader) -> OpenTelemetry.Metrics.MeterProviderBuilder
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddView(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, string instrumentName, OpenTelemetry.Metrics.MetricStreamConfiguration metricStreamConfiguration) -> OpenTelemetry.Metrics.MeterProviderBuilder
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddView(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, string instrumentName, string name) -> OpenTelemetry.Metrics.MeterProviderBuilder
