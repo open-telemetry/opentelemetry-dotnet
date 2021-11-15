@@ -57,6 +57,9 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 10,000 (10 seconds).
         /// </summary>
+        /// <remarks>
+        /// Note: Specify 0 to disable response caching.
+        /// </remarks>
         public int ScrapeResponseCacheDurationMilliseconds
         {
             get => this.scrapeResponseCacheDurationMilliseconds;

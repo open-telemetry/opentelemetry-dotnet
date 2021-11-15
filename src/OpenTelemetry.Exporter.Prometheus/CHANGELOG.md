@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-* Added response caching feature & `ScrapeResponseCacheDurationMilliseconds`
-  option
+* Added scrape endpoint response caching feature &
+  `ScrapeResponseCacheDurationMilliseconds` option
   ([#2610](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2610))
 
 ## 1.2.0-beta1
