@@ -21,7 +21,7 @@ namespace OpenTelemetry
         /// <summary>
         /// Gets or sets a value indicating whether activity status switch is enabled
         /// If true then activity Status and StatusDescription properties will be set
-        /// using tags otel.status_code and otel.status_description respecitvely.
+        /// using tags otel.status_code and otel.status_description respectively.
         /// </summary>
         public static bool ActivityStatusSwitch { get; set; } = true;
     }
