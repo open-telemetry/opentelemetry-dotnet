@@ -35,7 +35,7 @@ namespace OpenTelemetry
 
             if (BackwardCompatibilitySwitches.ActivityStatusSwitch && data.Status == ActivityStatusCode.Unset)
             {
-                BackwardCompatibilityUtils.SetActivityStatusUsingTags(data);
+                BackwardCompatibilityHelper.SetActivityStatusUsingTags(data);
             }
 
             this.OnExport(data);
