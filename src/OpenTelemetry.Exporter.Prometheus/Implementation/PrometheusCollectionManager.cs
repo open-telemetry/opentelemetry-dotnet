@@ -22,7 +22,7 @@ using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus
 {
-    internal class PrometheusCollectionManager
+    internal sealed class PrometheusCollectionManager
     {
         private readonly PrometheusExporter exporter;
         private readonly int scrapeResponseCacheDurationInMilliseconds;
