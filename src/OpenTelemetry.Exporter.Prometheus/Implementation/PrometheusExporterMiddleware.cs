@@ -17,8 +17,6 @@
 #if NETCOREAPP3_1_OR_GREATER
 using System;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using OpenTelemetry.Internal;
@@ -50,6 +48,11 @@ namespace OpenTelemetry.Exporter.Prometheus
             this.exporter = exporter;
         }
 
+        internal PrometheusExporterMiddleware(PrometheusExporter exporter)
+        {
+            this.exporter = exporter;
+        }
+
         /// <summary>
         /// Invoke.
         /// </summary>
@@ -61,38 +64,26 @@ namespace OpenTelemetry.Exporter.Prometheus
 
             var response = httpContext.Response;
 
-            if (!this.exporter.TryEnterSemaphore())
-            {
-                response.StatusCode = 429;
-                return;
-            }
-
-            var buffer = new byte[65536];
-            var count = 0;
-
-            this.exporter.OnExport = (metrics) =>
-            {
-                try
-                {
-                    count = PrometheusSerializer.WriteMetrics(buffer, 0, metrics);
-                    return ExportResult.Success;
-                }
-                catch (Exception ex)
-                {
-                    PrometheusExporterEventSource.Log.FailedExport(ex);
-                    return ExportResult.Failure;
-                }
-            };
-
             try
             {
-                if (this.exporter.Collect(Timeout.Infinite))
+                var data = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+                try
                 {
-                    await WriteMetricsToResponse(buffer, count, response).ConfigureAwait(false);
+                    if (data.Count > 0)
+                    {
+                        response.StatusCode = 200;
+                        response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
+
+                        await response.Body.WriteAsync(data.Array, 0, data.Count).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Collection failure.");
+                    }
                 }
-                else
+                finally
                 {
-                    response.StatusCode = 500;
+                    this.exporter.CollectionManager.ExitCollect();
                 }
             }
             catch (Exception ex)
@@ -103,21 +94,8 @@ namespace OpenTelemetry.Exporter.Prometheus
                     response.StatusCode = 500;
                 }
             }
-            finally
-            {
-                this.exporter.ReleaseSemaphore();
-            }
 
             this.exporter.OnExport = null;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static async Task WriteMetricsToResponse(byte[] buffer, int count, HttpResponse response)
-        {
-            response.StatusCode = 200;
-            response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
-
-            await response.Body.WriteAsync(buffer, 0, count).ConfigureAwait(false);
         }
     }
 }

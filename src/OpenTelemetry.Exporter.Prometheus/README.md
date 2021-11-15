@@ -92,6 +92,11 @@ properties:
   either the http listener or the middleware registered by
   `UseOpenTelemetryPrometheusScrapingEndpoint`. Default value: `/metrics`.
 
+* `ScrapeResponseCacheDurationMilliseconds`: Configures scrape endpoint response
+  caching. Multiple scrape requests within the cache duration time period will
+  receive the same previously generated response. The default value is 10
+  seconds. Set to 0 to disable response caching.
+
 See
 [`TestPrometheusExporter.cs`](../../examples/Console/TestPrometheusExporter.cs)
 for example use.

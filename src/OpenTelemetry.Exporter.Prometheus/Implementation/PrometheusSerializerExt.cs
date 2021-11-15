@@ -66,19 +66,25 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                     // Counter and Gauge
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
-                    buffer[cursor++] = unchecked((byte)'{');
 
-                    for (var i = 0; i < keys.Length; i++)
+                    int numberOfKeys = keys?.Length ?? 0;
+                    if (numberOfKeys > 0)
                     {
-                        if (i > 0)
+                        buffer[cursor++] = unchecked((byte)'{');
+
+                        for (var i = 0; i < keys.Length; i++)
                         {
-                            buffer[cursor++] = unchecked((byte)',');
+                            if (i > 0)
+                            {
+                                buffer[cursor++] = unchecked((byte)',');
+                            }
+
+                            cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
                         }
 
-                        cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
+                        buffer[cursor++] = unchecked((byte)'}');
                     }
 
-                    buffer[cursor++] = unchecked((byte)'}');
                     buffer[cursor++] = unchecked((byte)' ');
 
                     if (((int)metric.MetricType & 0b_0000_1111) == 0x0a /* I8 */)
