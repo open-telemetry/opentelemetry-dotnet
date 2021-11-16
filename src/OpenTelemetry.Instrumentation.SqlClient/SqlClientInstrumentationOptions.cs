@@ -107,7 +107,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// <remarks>
         /// The default behavior terminates the activity after the ExecuteCommand event which does not always depict the duration of the request until the whole dataset is returned.
         /// </remarks>
-        public SqlClientActivityStopTriggerEvent ActivityStopTriggerEvent { get; set; }
+        public SqlClientActivityBehavior ActivityBehavior { get; set; }
 
         /// <summary>
         /// Gets or sets an action to enrich an Activity.

@@ -29,6 +29,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         public const string SqlDataAfterExecuteCommand = "System.Data.SqlClient.WriteCommandAfter";
         public const string SqlMicrosoftAfterExecuteCommand = "Microsoft.Data.SqlClient.WriteCommandAfter";
 
+        public const string SqlDataBeforeConnectionOpen = "System.Data.SqlClient.WriteConnectionOpenBefore";
+        public const string SqlMicrosoftBeforeConnectionOpen = "Microsoft.Data.SqlClient.WriteConnectionOpenBefore";
+
         public const string SqlDataAfterConnectionClose = "System.Data.SqlClient.WriteConnectionCloseAfter";
         public const string SqlMicrosoftAfterConnectionClose = "Microsoft.Data.SqlClient.WriteConnectionCloseAfter";
 
@@ -56,8 +59,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         {
             switch (name)
             {
-                case SqlDataBeforeExecuteCommand:
-                case SqlMicrosoftBeforeExecuteCommand:
+                case SqlDataBeforeConnectionOpen when this.options.ActivityBehavior == SqlClientActivityBehavior.Connection:
+                case SqlMicrosoftBeforeConnectionOpen when this.options.ActivityBehavior == SqlClientActivityBehavior.Connection:
                     {
                         // SqlClient does not create an Activity. So the activity coming in here will be null or the root span.
                         activity = SqlActivitySourceHelper.ActivitySource.StartActivity(
@@ -65,6 +68,42 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             ActivityKind.Client,
                             default(ActivityContext),
                             SqlActivitySourceHelper.CreationTags);
+
+                        if (activity == null)
+                        {
+                            // There is no listener or it decided not to sample the current request.
+                            return;
+                        }
+
+                        if (activity.IsAllDataRequested)
+                        {
+                            _ = this.connectionFetcher.TryFetch(payload, out var connection);
+                            _ = this.databaseFetcher.TryFetch(connection, out var database);
+
+                            activity.DisplayName = (string)database;
+
+                            _ = this.dataSourceFetcher.TryFetch(connection, out var dataSource);
+
+                            activity.SetTag(SemanticConventions.AttributeDbName, (string)database);
+
+                            this.options.AddConnectionLevelDetailsToActivity((string)dataSource, activity);
+                        }
+                    }
+
+                    break;
+                case SqlDataBeforeExecuteCommand:
+                case SqlMicrosoftBeforeExecuteCommand:
+                    {
+                        // If ActivityBehavior is Connection, the activity has already started
+                        if (this.options.ActivityBehavior != SqlClientActivityBehavior.Connection)
+                        {
+                            // SqlClient does not create an Activity. So the activity coming in here will be null or the root span.
+                            activity = SqlActivitySourceHelper.ActivitySource.StartActivity(
+                                SqlActivitySourceHelper.ActivityName,
+                                ActivityKind.Client,
+                                default(ActivityContext),
+                                SqlActivitySourceHelper.CreationTags);
+                        }
 
                         if (activity == null)
                         {
@@ -134,10 +173,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                     }
 
                     break;
-                case SqlDataAfterExecuteCommand when this.options.ActivityStopTriggerEvent == SqlClientActivityStopTriggerEvent.WriteCommandAfter:
-                case SqlMicrosoftAfterExecuteCommand when this.options.ActivityStopTriggerEvent == SqlClientActivityStopTriggerEvent.WriteCommandAfter:
-                case SqlDataAfterConnectionClose when this.options.ActivityStopTriggerEvent == SqlClientActivityStopTriggerEvent.WriteConnectionCloseAfter:
-                case SqlMicrosoftAfterConnectionClose when this.options.ActivityStopTriggerEvent == SqlClientActivityStopTriggerEvent.WriteConnectionCloseAfter:
+                case SqlDataAfterExecuteCommand when this.options.ActivityBehavior == SqlClientActivityBehavior.Command:
+                case SqlMicrosoftAfterExecuteCommand when this.options.ActivityBehavior == SqlClientActivityBehavior.Command:
+                case SqlDataAfterConnectionClose when this.options.ActivityBehavior == SqlClientActivityBehavior.Connection:
+                case SqlMicrosoftAfterConnectionClose when this.options.ActivityBehavior == SqlClientActivityBehavior.Connection:
                     {
                         if (activity == null)
                         {
