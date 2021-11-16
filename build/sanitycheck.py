@@ -63,7 +63,7 @@ def sanitycheck(pattern, allow_utf8 = False, allow_eol = (CRLF, LF)):
 
 retval = 0
 retval += sanitycheck('.editorconfig', allow_eol = (LF,))
-retval += sanitycheck('**/dockerfile', allow_eol = (LF,))
+retval += sanitycheck('**/Dockerfile', allow_eol = (LF,))
 retval += sanitycheck('**/*.cmd', allow_eol = (CRLF,))
 retval += sanitycheck('**/*.config', allow_utf8 = True, allow_eol = (LF,))
 retval += sanitycheck('**/*.cs', allow_utf8 = True, allow_eol = (LF,))
