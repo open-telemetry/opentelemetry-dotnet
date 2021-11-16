@@ -18,17 +18,14 @@
 // under the License.
 
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using Thrift.Protocol.Entities;
-using Thrift.Transport;
 
 namespace Thrift.Protocol
 {
     // ReSharper disable once InconsistentNaming
-    internal class TCompactProtocol : TProtocol
+    internal sealed class TCompactProtocol : TProtocol
     {
         private const byte ProtocolId = 0x82;
         private const byte Version = 1;
@@ -74,8 +71,10 @@ namespace Thrift.Protocol
             count = 0
         };
 
-        public TCompactProtocol(TTransport trans)
-            : base(trans)
+        private readonly byte[] EmptyUInt32Buffer = new byte[5];
+
+        public TCompactProtocol(int initialCapacity = 8192)
+            : base(initialCapacity)
         {
             TTypeToCompactType[(int)TType.Stop] = Types.Stop;
             TTypeToCompactType[(int)TType.Bool] = Types.BooleanTrue;
@@ -105,20 +104,35 @@ namespace Thrift.Protocol
             CompactTypeToTType[Types.Struct] = TType.Struct;
         }
 
-        public void Reset()
+        public override void Reset()
         {
             _lastField.Clear();
             _lastFieldId = 0;
+
+            base.Reset();
         }
 
         public override void WriteMessageBegin(TMessage message)
         {
             PreAllocatedBuffer[0] = ProtocolId;
             PreAllocatedBuffer[1] = (byte)((Version & VersionMask) | (((uint)message.Type << TypeShiftAmount) & TypeMask));
-            Trans.Write(PreAllocatedBuffer, 0, 2);
+            Transport.Write(PreAllocatedBuffer, 0, 2);
 
             Int32ToVarInt((uint)message.SeqID, ref PreAllocatedVarInt);
-            Trans.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
+            Transport.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
+
+            WriteString(message.Name);
+        }
+
+        public override void WriteMessageBegin(TMessage message, out int seqIdPosition)
+        {
+            PreAllocatedBuffer[0] = ProtocolId;
+            PreAllocatedBuffer[1] = (byte)((Version & VersionMask) | (((uint)message.Type << TypeShiftAmount) & TypeMask));
+            Transport.Write(PreAllocatedBuffer, 0, 2);
+
+            seqIdPosition = (int)Transport.Position;
+            // Write empty bytes to reserve the space for the seqId to be written later on.
+            Transport.Write(EmptyUInt32Buffer, 0, 5);
 
             WriteString(message.Name);
         }
@@ -149,7 +163,6 @@ namespace Thrift.Protocol
             if (fieldType == NoTypeOverride)
                 fieldType = GetCompactType(field.Type);
 
-
             // check if we can use delta encoding for the field id
             if (field.ID > _lastFieldId)
             {
@@ -158,7 +171,7 @@ namespace Thrift.Protocol
                 {
                     // Write them together
                     PreAllocatedBuffer[0] = (byte)((delta << 4) | fieldType);
-                    Trans.Write(PreAllocatedBuffer, 0, 1);
+                    Transport.Write(PreAllocatedBuffer, 0, 1);
                     _lastFieldId = field.ID;
                     return;
                 }
@@ -166,7 +179,7 @@ namespace Thrift.Protocol
 
             // Write them separate
             PreAllocatedBuffer[0] = fieldType;
-            Trans.Write(PreAllocatedBuffer, 0, 1);
+            Transport.Write(PreAllocatedBuffer, 0, 1);
             WriteI16(field.ID);
             _lastFieldId = field.ID;
         }
@@ -190,46 +203,47 @@ namespace Thrift.Protocol
         public override void WriteFieldStop()
         {
             PreAllocatedBuffer[0] = Types.Stop;
-            Trans.Write(PreAllocatedBuffer, 0, 1);
-        }
-
-        protected void WriteCollectionBegin(TType elemType, int size)
-        {
-            /*
-            Abstract method for writing the start of lists and sets. List and sets on
-             the wire differ only by the exType indicator.
-            */
-
-            if (size <= 14)
-            {
-                PreAllocatedBuffer[0] = (byte)((size << 4) | GetCompactType(elemType));
-                Trans.Write(PreAllocatedBuffer, 0, 1);
-            }
-            else
-            {
-                PreAllocatedBuffer[0] = (byte)(0xf0 | GetCompactType(elemType));
-                Trans.Write(PreAllocatedBuffer, 0, 1);
-
-                Int32ToVarInt((uint)size, ref PreAllocatedVarInt);
-                Trans.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
-            }
+            Transport.Write(PreAllocatedBuffer, 0, 1);
         }
 
         public override void WriteListBegin(TList list)
         {
-            WriteCollectionBegin(list.ElementType, list.Count);
+            if (list.Count <= 14)
+            {
+                PreAllocatedBuffer[0] = (byte)((list.Count << 4) | GetCompactType(list.ElementType));
+                Transport.Write(PreAllocatedBuffer, 0, 1);
+            }
+            else
+            {
+                PreAllocatedBuffer[0] = (byte)(0xf0 | GetCompactType(list.ElementType));
+                Transport.Write(PreAllocatedBuffer, 0, 1);
+
+                Int32ToVarInt((uint)list.Count, ref PreAllocatedVarInt);
+                Transport.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
+            }
+        }
+
+        public override void WriteListBegin(TList list, out int countPosition)
+        {
+            /*
+            Note: Compact sizing disabled because size might not be known initially.
+            if (list.Count <= 14)
+            {
+                PreAllocatedBuffer[0] = (byte)((list.Count << 4) | GetCompactType(list.ElementType));
+                Transport.Write(PreAllocatedBuffer, 0, 1);
+            }
+            else*/
+            {
+                PreAllocatedBuffer[0] = (byte)(0xf0 | GetCompactType(list.ElementType));
+                Transport.Write(PreAllocatedBuffer, 0, 1);
+
+                countPosition = (int)Transport.Position;
+                // Write empty bytes to reserve the space for the count to be written later on.
+                Transport.Write(EmptyUInt32Buffer, 0, 5);
+            }
         }
 
         public override void WriteListEnd()
-        {
-        }
-
-        public override void WriteSetBegin(TSet set)
-        {
-            WriteCollectionBegin(set.ElementType, set.Count);
-        }
-
-        public override void WriteSetEnd()
         {
         }
 
@@ -253,20 +267,20 @@ namespace Thrift.Protocol
             {
                 // we're not part of a field, so just write the value.
                 PreAllocatedBuffer[0] = b ? Types.BooleanTrue : Types.BooleanFalse;
-                Trans.Write(PreAllocatedBuffer, 0, 1);
+                Transport.Write(PreAllocatedBuffer, 0, 1);
             }
         }
 
         public override void WriteByte(sbyte b)
         {
             PreAllocatedBuffer[0] = (byte)b;
-            Trans.Write(PreAllocatedBuffer, 0, 1);
+            Transport.Write(PreAllocatedBuffer, 0, 1);
         }
 
         public override void WriteI16(short i16)
         {
             Int32ToVarInt(IntToZigzag(i16), ref PreAllocatedVarInt);
-            Trans.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
+            Transport.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
         }
 
         private static void Int32ToVarInt(uint n, ref VarInt varint)
@@ -291,7 +305,25 @@ namespace Thrift.Protocol
         public override void WriteI32(int i32)
         {
             Int32ToVarInt(IntToZigzag(i32), ref PreAllocatedVarInt);
-            Trans.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
+            Transport.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
+        }
+
+        public override int WriteUI32(uint ui32, Span<byte> buffer)
+        {
+            if (buffer.Length < 5)
+                return 0;
+
+            buffer[0] = (byte)(0x80 | (ui32 & 0x7F));
+            ui32 >>= 7;
+            buffer[1] = (byte)(0x80 | (ui32 & 0x7F));
+            ui32 >>= 7;
+            buffer[2] = (byte)(0x80 | (ui32 & 0x7F));
+            ui32 >>= 7;
+            buffer[3] = (byte)(0x80 | (ui32 & 0x7F));
+            ui32 >>= 7;
+            buffer[4] = (byte)ui32;
+
+            return 5;
         }
 
         static private void Int64ToVarInt(ulong n, ref VarInt varint)
@@ -315,58 +347,29 @@ namespace Thrift.Protocol
         public override void WriteI64(long i64)
         {
             Int64ToVarInt(LongToZigzag(i64), ref PreAllocatedVarInt);
-            Trans.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
+            Transport.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
         }
 
         public override void WriteDouble(double d)
         {
             FixedLongToBytes(BitConverter.DoubleToInt64Bits(d), PreAllocatedBuffer, 0);
-            Trans.Write(PreAllocatedBuffer, 0, 8);
+            Transport.Write(PreAllocatedBuffer, 0, 8);
         }
 
-        public override void WriteString(string str)
+#if NETSTANDARD2_1_OR_GREATER
+        public override void WriteBinary(ReadOnlySpan<byte> bytes)
         {
-            var buf = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetByteCount(str));
-            try
-            {
-                var numberOfBytes = Encoding.UTF8.GetBytes(str, 0, str.Length, buf, 0);
-
-                Int32ToVarInt((uint)numberOfBytes, ref PreAllocatedVarInt);
-                Trans.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
-                Trans.Write(buf, 0, numberOfBytes);
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(buf);
-            }
+            Int32ToVarInt((uint)bytes.Length, ref PreAllocatedVarInt);
+            Transport.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
+            Transport.Write(bytes);
         }
+#endif
 
         public override void WriteBinary(byte[] bytes, int offset, int count)
         {
             Int32ToVarInt((uint)count, ref PreAllocatedVarInt);
-            Trans.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
-            Trans.Write(bytes, offset, count);
-        }
-
-        public override void WriteMapBegin(TMap map)
-        {
-            if (map.Count == 0)
-            {
-                PreAllocatedBuffer[0] = 0;
-                Trans.Write(PreAllocatedBuffer, 0, 1);
-            }
-            else
-            {
-                Int32ToVarInt((uint)map.Count, ref PreAllocatedVarInt);
-                Trans.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
-
-                PreAllocatedBuffer[0] = (byte)((GetCompactType(map.KeyType) << 4) | GetCompactType(map.ValueType));
-                Trans.Write(PreAllocatedBuffer, 0, 1);
-            }
-        }
-
-        public override void WriteMapEnd()
-        {
+            Transport.Write(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count);
+            Transport.Write(bytes, offset, count);
         }
 
         private static byte GetCompactType(TType ttype)
@@ -400,11 +403,11 @@ namespace Thrift.Protocol
             buf[off + 7] = (byte)((n >> 56) & 0xff);
         }
 
-        public class Factory : TProtocolFactory
+        public sealed class Factory : TProtocolFactory
         {
-            public override TProtocol GetProtocol(TTransport trans)
+            public override TProtocol GetProtocol(int initialCapacity = 8192)
             {
-                return new TCompactProtocol(trans);
+                return new TCompactProtocol(initialCapacity);
             }
         }
 

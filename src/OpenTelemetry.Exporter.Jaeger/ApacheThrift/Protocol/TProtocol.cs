@@ -19,9 +19,9 @@
 
 using System;
 using System.Buffers;
+using System.IO;
 using System.Text;
 using Thrift.Protocol.Entities;
-using Thrift.Transport;
 
 namespace Thrift.Protocol
 {
@@ -29,25 +29,53 @@ namespace Thrift.Protocol
     internal abstract class TProtocol : IDisposable
     {
         public const int DefaultRecursionDepth = 64;
+
         private bool _isDisposed;
-        protected int RecursionDepth;
 
-        protected TTransport Trans;
-
-        protected TProtocol(TTransport trans)
+        protected TProtocol(int initialCapacity = 8192)
         {
-            Trans = trans;
+            Transport = new MemoryStream(initialCapacity);
             RecursionLimit = DefaultRecursionDepth;
             RecursionDepth = 0;
         }
 
-        public TTransport Transport => Trans;
+        protected MemoryStream Transport { get; }
+
+        protected int RecursionDepth { get; set; }
 
         protected int RecursionLimit { get; set; }
+
+        public ArraySegment<byte> WrittenData
+        {
+            get => new ArraySegment<byte>(Transport.GetBuffer(), 0, (int)Transport.Length);
+        }
+
+        public int Position
+        {
+            get => (int)Transport.Position;
+            set => Transport.Position = value;
+        }
+
+        public int Length => (int)Transport.Length;
+
+        public void Clear(int offset = 0)
+        {
+            if (offset > Transport.Length)
+                throw new ArgumentOutOfRangeException(nameof(offset));
+
+            Transport.Position = offset;
+            Transport.SetLength(offset);
+        }
+
+        public virtual void Reset()
+        {
+            RecursionDepth = 0;
+        }
 
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         public void IncrementRecursionDepth()
@@ -71,13 +99,15 @@ namespace Thrift.Protocol
             {
                 if (disposing)
                 {
-                    (Trans as IDisposable)?.Dispose();
+                    Transport.Dispose();
                 }
             }
             _isDisposed = true;
         }
 
         public abstract void WriteMessageBegin(TMessage message);
+
+        public abstract void WriteMessageBegin(TMessage message, out int seqIdPosition);
 
         public abstract void WriteMessageEnd();
 
@@ -91,17 +121,11 @@ namespace Thrift.Protocol
 
         public abstract void WriteFieldStop();
 
-        public abstract void WriteMapBegin(TMap map);
-
-        public abstract void WriteMapEnd();
-
         public abstract void WriteListBegin(TList list);
 
+        public abstract void WriteListBegin(TList list, out int countPosition);
+
         public abstract void WriteListEnd();
-
-        public abstract void WriteSetBegin(TSet set);
-
-        public abstract void WriteSetEnd();
 
         public abstract void WriteBool(bool b);
 
@@ -111,12 +135,23 @@ namespace Thrift.Protocol
 
         public abstract void WriteI32(int i32);
 
+        public abstract int WriteUI32(uint ui32, Span<byte> buffer);
+
         public abstract void WriteI64(long i64);
 
         public abstract void WriteDouble(double d);
 
         public virtual void WriteString(string s)
         {
+#if NETSTANDARD2_1_OR_GREATER
+            if (s.Length <= 128)
+            {
+                Span<byte> buffer = stackalloc byte[256];
+                int numberOfBytes = Encoding.UTF8.GetBytes(s, buffer);
+                WriteBinary(buffer.Slice(0, numberOfBytes));
+                return;
+            }
+#endif
             var buf = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetByteCount(s));
             try
             {
@@ -130,6 +165,25 @@ namespace Thrift.Protocol
             }
         }
 
+#if NETSTANDARD2_1_OR_GREATER
+        public abstract void WriteBinary(ReadOnlySpan<byte> bytes);
+#endif
+
         public abstract void WriteBinary(byte[] bytes, int offset, int count);
+
+        public void WriteRaw(byte[] bytes)
+        {
+            this.Transport.Write(bytes, 0, bytes.Length);
+        }
+
+        public void WriteRaw(byte[] bytes, int offset, int count)
+        {
+            this.Transport.Write(bytes, offset, count);
+        }
+
+        public void WriteRaw(ArraySegment<byte> bytes)
+        {
+            this.Transport.Write(bytes.Array, bytes.Offset, bytes.Count);
+        }
     }
 }
