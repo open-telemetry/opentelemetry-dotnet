@@ -1,0 +1,9 @@
+OpenTelemetry.Exporter.JaegerExporterOptions.Endpoint.get -> System.Uri
+OpenTelemetry.Exporter.JaegerExporterOptions.Endpoint.set -> void
+OpenTelemetry.Exporter.JaegerExporterOptions.HttpClientFactory.get -> System.Func<System.Net.Http.HttpClient>
+OpenTelemetry.Exporter.JaegerExporterOptions.HttpClientFactory.set -> void
+OpenTelemetry.Exporter.JaegerExporterOptions.Protocol.get -> OpenTelemetry.Exporter.JaegerExportProtocol
+OpenTelemetry.Exporter.JaegerExporterOptions.Protocol.set -> void
+OpenTelemetry.Exporter.JaegerExportProtocol
+OpenTelemetry.Exporter.JaegerExportProtocol.HttpBinaryThrift = 1 -> OpenTelemetry.Exporter.JaegerExportProtocol
+OpenTelemetry.Exporter.JaegerExportProtocol.UdpCompactThrift = 0 -> OpenTelemetry.Exporter.JaegerExportProtocol
