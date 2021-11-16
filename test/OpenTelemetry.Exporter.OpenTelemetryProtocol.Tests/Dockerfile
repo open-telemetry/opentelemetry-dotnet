@@ -1,4 +1,4 @@
-﻿# Create a container for running the OpenTelemetry Collector integration tests.
+# Create a container for running the OpenTelemetry Collector integration tests.
 # This should be run from the root of the repo:
 # docker build --file test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/Dockerfile
 
