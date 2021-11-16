@@ -130,7 +130,9 @@ namespace OpenTelemetry
 
             var triggers = new WaitHandle[] { this.dataExportedNotification, this.shutdownTrigger };
 
-            var sw = Stopwatch.StartNew();
+            var sw = timeoutMilliseconds == Timeout.Infinite
+                ? null
+                : Stopwatch.StartNew();
 
             // There is a chance that the export thread finished processing all the data from the queue,
             // and signaled before we enter wait here, use polling to prevent being blocked indefinitely.
@@ -138,7 +140,7 @@ namespace OpenTelemetry
 
             while (true)
             {
-                if (timeoutMilliseconds == Timeout.Infinite)
+                if (sw == null)
                 {
                     try
                     {

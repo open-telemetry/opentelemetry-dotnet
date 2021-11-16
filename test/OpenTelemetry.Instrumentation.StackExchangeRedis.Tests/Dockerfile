@@ -1,6 +1,6 @@
-﻿# Create a container for running the OpenTelemetry Redis integration tests.
+# Create a container for running the OpenTelemetry Redis integration tests.
 # This should be run from the root of the repo:
-# docker build --file test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/dockerfile .
+# docker build --file test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/Dockerfile .
 
 ARG SDK_VERSION=6.0
 FROM mcr.microsoft.com/dotnet/sdk:6.0-focal AS build

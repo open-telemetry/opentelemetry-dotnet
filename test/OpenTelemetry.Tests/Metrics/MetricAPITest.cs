@@ -594,7 +594,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [MemberData(nameof(MetricsTestData.InvalidInstrumentNames), MemberType = typeof(MetricsTestData))]
+        [MemberData(nameof(MetricTestData.InvalidInstrumentNames), MemberType = typeof(MetricTestData))]
         public void InstrumentWithInvalidNameIsIgnoredTest(string instrumentName)
         {
             var exportedItems = new List<Metric>();
@@ -616,7 +616,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [MemberData(nameof(MetricsTestData.ValidInstrumentNames), MemberType = typeof(MetricsTestData))]
+        [MemberData(nameof(MetricTestData.ValidInstrumentNames), MemberType = typeof(MetricTestData))]
         public void InstrumentWithValidNameIsExportedTest(string name)
         {
             var exportedItems = new List<Metric>();

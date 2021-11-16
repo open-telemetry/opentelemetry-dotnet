@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using System.Net.Http;
+using System.Reflection;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
@@ -31,7 +33,6 @@ namespace OpenTelemetry.Trace
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public static TracerProviderBuilder AddJaegerExporter(this TracerProviderBuilder builder, Action<JaegerExporterOptions> configure = null)
         {
             Guard.Null(builder, nameof(builder));
@@ -40,16 +41,54 @@ namespace OpenTelemetry.Trace
             {
                 return deferredTracerProviderBuilder.Configure((sp, builder) =>
                 {
-                    AddJaegerExporter(builder, sp.GetOptions<JaegerExporterOptions>(), configure);
+                    AddJaegerExporter(builder, sp.GetOptions<JaegerExporterOptions>(), configure, sp);
                 });
             }
 
-            return AddJaegerExporter(builder, new JaegerExporterOptions(), configure);
+            return AddJaegerExporter(builder, new JaegerExporterOptions(), configure, serviceProvider: null);
         }
 
-        private static TracerProviderBuilder AddJaegerExporter(TracerProviderBuilder builder, JaegerExporterOptions options, Action<JaegerExporterOptions> configure = null)
+        private static TracerProviderBuilder AddJaegerExporter(
+            TracerProviderBuilder builder,
+            JaegerExporterOptions options,
+            Action<JaegerExporterOptions> configure,
+            IServiceProvider serviceProvider)
         {
             configure?.Invoke(options);
+
+            if (options.Protocol == JaegerExportProtocol.HttpBinaryThrift && options.HttpClientFactory == null)
+            {
+                if (serviceProvider != null)
+                {
+                    options.HttpClientFactory = () =>
+                    {
+                        Type httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
+                        if (httpClientFactoryType != null)
+                        {
+                            object httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
+                            if (httpClientFactory != null)
+                            {
+                                MethodInfo createClientMethod = httpClientFactoryType.GetMethod(
+                                    "CreateClient",
+                                    BindingFlags.Public | BindingFlags.Instance,
+                                    binder: null,
+                                    new Type[] { typeof(string) },
+                                    modifiers: null);
+                                if (createClientMethod != null)
+                                {
+                                    return (HttpClient)createClientMethod.Invoke(httpClientFactory, new object[] { "JaegerExporter" });
+                                }
+                            }
+                        }
+
+                        return new HttpClient();
+                    };
+                }
+                else
+                {
+                    options.HttpClientFactory = () => new HttpClient();
+                }
+            }
 
             var jaegerExporter = new JaegerExporter(options);
 

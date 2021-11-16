@@ -23,20 +23,24 @@ using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 using Thrift.Protocol;
-using Thrift.Transport;
 using Process = OpenTelemetry.Exporter.Jaeger.Implementation.Process;
 
 namespace OpenTelemetry.Exporter
 {
     public class JaegerExporter : BaseExporter<Activity>
     {
+        internal uint NumberOfSpansInCurrentBatch;
+
+        private readonly byte[] uInt32Storage = new byte[8];
         private readonly int maxPayloadSizeInBytes;
-        private readonly TProtocolFactory protocolFactory;
-        private readonly TTransport clientTransport;
-        private readonly JaegerThriftClient thriftClient;
-        private readonly InMemoryTransport memoryTransport;
-        private readonly TProtocol memoryProtocol;
-        private int batchByteSize;
+        private readonly IJaegerClient client;
+        private readonly TProtocol batchWriter;
+        private readonly TProtocol spanWriter;
+        private readonly bool sendUsingEmitBatchArgs;
+        private int minimumBatchSizeInBytes;
+        private int currentBatchSizeInBytes;
+        private int spanStartPosition;
+        private uint sequenceId;
         private bool disposed;
 
         public JaegerExporter(JaegerExporterOptions options)
@@ -44,23 +48,46 @@ namespace OpenTelemetry.Exporter
         {
         }
 
-        internal JaegerExporter(JaegerExporterOptions options, TTransport clientTransport = null)
+        internal JaegerExporter(JaegerExporterOptions options, TProtocolFactory protocolFactory = null, IJaegerClient client = null)
         {
             Guard.Null(options, nameof(options));
 
-            this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? JaegerExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
-            this.protocolFactory = new TCompactProtocol.Factory();
-            this.clientTransport = clientTransport ?? new JaegerThriftClientTransport(options.AgentHost, options.AgentPort);
-            this.thriftClient = new JaegerThriftClient(this.protocolFactory.GetProtocol(this.clientTransport));
-            this.memoryTransport = new InMemoryTransport(16000);
-            this.memoryProtocol = this.protocolFactory.GetProtocol(this.memoryTransport);
+            this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0)
+                ? JaegerExporterOptions.DefaultMaxPayloadSizeInBytes
+                : options.MaxPayloadSizeInBytes.Value;
 
-            string serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.Where(
-                    pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).FirstOrDefault().Value;
+            if (options.Protocol == JaegerExportProtocol.UdpCompactThrift)
+            {
+                protocolFactory ??= new TCompactProtocol.Factory();
+                client ??= new JaegerUdpClient(options.AgentHost, options.AgentPort);
+                this.sendUsingEmitBatchArgs = true;
+            }
+            else if (options.Protocol == JaegerExportProtocol.HttpBinaryThrift)
+            {
+                protocolFactory ??= new TBinaryProtocol.Factory();
+                client ??= new JaegerHttpClient(
+                    options.Endpoint,
+                    options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("JaegerExporterOptions was missing HttpClientFactory or it returned null."));
+            }
+            else
+            {
+                throw new NotSupportedException();
+            }
+
+            this.client = client;
+            this.batchWriter = protocolFactory.GetProtocol(this.maxPayloadSizeInBytes * 2);
+            this.spanWriter = protocolFactory.GetProtocol(this.maxPayloadSizeInBytes);
+
+            string serviceName = (string)this.ParentProvider.GetDefaultResource().Attributes.FirstOrDefault(
+                pair => pair.Key == ResourceSemanticConventions.AttributeServiceName).Value;
             this.Process = new Process(serviceName);
+
+            client.Connect();
         }
 
         internal Process Process { get; set; }
+
+        internal EmitBatchArgs EmitBatchArgs { get; private set; }
 
         internal Batch Batch { get; private set; }
 
@@ -76,7 +103,9 @@ namespace OpenTelemetry.Exporter
 
                 foreach (var activity in activityBatch)
                 {
-                    this.AppendSpan(activity.ToJaegerSpan());
+                    var jaegerSpan = activity.ToJaegerSpan();
+                    this.AppendSpan(jaegerSpan);
+                    jaegerSpan.Return();
                 }
 
                 this.SendCurrentBatch();
@@ -136,34 +165,72 @@ namespace OpenTelemetry.Exporter
                 process.ServiceName = serviceName;
             }
 
-            this.Process.Message = this.BuildThriftMessage(this.Process).ToArray();
-            this.Batch = new Batch(this.Process);
-            this.batchByteSize = this.Process.Message.Length;
+            this.Batch = new Batch(this.Process, this.batchWriter);
+            if (this.sendUsingEmitBatchArgs)
+            {
+                this.EmitBatchArgs = new EmitBatchArgs(this.batchWriter);
+                this.Batch.SpanCountPosition += this.EmitBatchArgs.EmitBatchArgsBeginMessage.Length;
+                this.batchWriter.WriteRaw(this.EmitBatchArgs.EmitBatchArgsBeginMessage);
+            }
+
+            this.batchWriter.WriteRaw(this.Batch.BatchBeginMessage);
+            this.spanStartPosition = this.batchWriter.Position;
+
+            this.minimumBatchSizeInBytes = this.EmitBatchArgs?.MinimumMessageSize ?? 0
+                + this.Batch.MinimumMessageSize;
+
+            this.ResetBatch();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AppendSpan(JaegerSpan jaegerSpan)
         {
-            var spanMessage = this.BuildThriftMessage(jaegerSpan);
-
-            jaegerSpan.Return();
-
-            var spanTotalBytesNeeded = spanMessage.Count;
-
-            if (this.batchByteSize + spanTotalBytesNeeded >= this.maxPayloadSizeInBytes)
+            jaegerSpan.Write(this.spanWriter);
+            try
             {
-                this.SendCurrentBatch();
+                var spanTotalBytesNeeded = this.spanWriter.Length;
 
-                // SendCurrentBatch clears/invalidates the BufferWriter in InMemoryTransport.
-                // The new spanMessage is still located in it, though. It might get overwritten later
-                // when spans are written in the buffer for the next batch.
-                // Move spanMessage to the beginning of the BufferWriter to avoid data corruption.
-                this.memoryTransport.Write(spanMessage.BufferWriter.Buffer, spanMessage.Offset, spanMessage.Count);
-                spanMessage = this.memoryTransport.ToBuffer();
+                if (this.NumberOfSpansInCurrentBatch > 0
+                    && this.currentBatchSizeInBytes + spanTotalBytesNeeded >= this.maxPayloadSizeInBytes)
+                {
+                    this.SendCurrentBatch();
+                }
+
+                var spanData = this.spanWriter.WrittenData;
+                this.batchWriter.WriteRaw(spanData);
+
+                this.NumberOfSpansInCurrentBatch++;
+                this.currentBatchSizeInBytes += spanTotalBytesNeeded;
             }
+            finally
+            {
+                this.spanWriter.Clear();
+            }
+        }
 
-            this.Batch.Add(spanMessage);
-            this.batchByteSize += spanTotalBytesNeeded;
+        internal void SendCurrentBatch()
+        {
+            try
+            {
+                this.batchWriter.WriteRaw(this.Batch.BatchEndMessage);
+
+                if (this.sendUsingEmitBatchArgs)
+                {
+                    this.batchWriter.WriteRaw(this.EmitBatchArgs.EmitBatchArgsEndMessage);
+
+                    this.WriteUInt32AtPosition(this.EmitBatchArgs.SeqIdPosition, ++this.sequenceId);
+                }
+
+                this.WriteUInt32AtPosition(this.Batch.SpanCountPosition, this.NumberOfSpansInCurrentBatch);
+
+                var writtenData = this.batchWriter.WrittenData;
+
+                this.client.Send(writtenData.Array, writtenData.Offset, writtenData.Count);
+            }
+            finally
+            {
+                this.ResetBatch();
+            }
         }
 
         /// <inheritdoc/>
@@ -173,10 +240,17 @@ namespace OpenTelemetry.Exporter
             {
                 if (disposing)
                 {
-                    this.thriftClient.Dispose();
-                    this.clientTransport.Dispose();
-                    this.memoryTransport.Dispose();
-                    this.memoryProtocol.Dispose();
+                    try
+                    {
+                        this.client.Close();
+                    }
+                    catch
+                    {
+                    }
+
+                    this.client.Dispose();
+                    this.batchWriter.Dispose();
+                    this.spanWriter.Dispose();
                 }
 
                 this.disposed = true;
@@ -186,34 +260,19 @@ namespace OpenTelemetry.Exporter
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SendCurrentBatch()
+        private void WriteUInt32AtPosition(int position, uint value)
         {
-            try
-            {
-                this.thriftClient.SendBatch(this.Batch);
-            }
-            finally
-            {
-                this.Batch.Clear();
-                this.batchByteSize = this.Process.Message.Length;
-                this.memoryTransport.Reset();
-            }
+            this.batchWriter.Position = position;
+            int numberOfBytes = this.batchWriter.WriteUI32(value, this.uInt32Storage);
+            this.batchWriter.WriteRaw(this.uInt32Storage, 0, numberOfBytes);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private BufferWriterMemory BuildThriftMessage(Process process)
+        private void ResetBatch()
         {
-            process.Write(this.memoryProtocol);
-
-            return this.memoryTransport.ToBuffer();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private BufferWriterMemory BuildThriftMessage(in JaegerSpan jaegerSpan)
-        {
-            jaegerSpan.Write(this.memoryProtocol);
-
-            return this.memoryTransport.ToBuffer();
+            this.currentBatchSizeInBytes = this.minimumBatchSizeInBytes;
+            this.NumberOfSpansInCurrentBatch = 0;
+            this.batchWriter.Clear(this.spanStartPosition);
         }
     }
 }

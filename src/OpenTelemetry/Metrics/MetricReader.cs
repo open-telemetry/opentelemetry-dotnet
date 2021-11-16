@@ -361,14 +361,16 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         protected virtual bool OnCollect(int timeoutMilliseconds)
         {
-            var sw = Stopwatch.StartNew();
+            var sw = timeoutMilliseconds == Timeout.Infinite
+                ? null
+                : Stopwatch.StartNew();
 
             var collectObservableInstruments = this.ParentProvider.GetCollectObservableInstruments();
             collectObservableInstruments();
 
             var metrics = this.GetMetricsBatch();
 
-            if (timeoutMilliseconds == Timeout.Infinite)
+            if (sw == null)
             {
                 return this.ProcessMetrics(metrics, Timeout.Infinite);
             }

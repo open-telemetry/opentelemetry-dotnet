@@ -15,6 +15,9 @@
 * Exposed public `Batch(T[] items, int count)` constructor on `Batch<T>` struct
   ([#2542](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2542))
 
+* Added wildcard support for AddMeter.
+  ([#2459](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2459))
+
 * Add support for multiple Metric readers
   ([#2596](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2596))
 
