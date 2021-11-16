@@ -1,4 +1,4 @@
-// <copyright file="PrometheusExporterMetricsHttpServer.cs" company="OpenTelemetry Authors">
+// <copyright file="PrometheusExporterHttpServer.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,9 +23,9 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
-    /// A HTTP listener used to expose Prometheus metrics.
+    /// An HTTP listener used to expose Prometheus metrics.
     /// </summary>
-    internal sealed class PrometheusExporterMetricsHttpServer : IDisposable
+    internal sealed class PrometheusExporterHttpServer : IDisposable
     {
         private readonly PrometheusExporter exporter;
         private readonly HttpListener httpListener = new HttpListener();
@@ -35,10 +35,10 @@ namespace OpenTelemetry.Exporter.Prometheus
         private Task workerThread;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PrometheusExporterMetricsHttpServer"/> class.
+        /// Initializes a new instance of the <see cref="PrometheusExporterHttpServer"/> class.
         /// </summary>
         /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
-        public PrometheusExporterMetricsHttpServer(PrometheusExporter exporter)
+        public PrometheusExporterHttpServer(PrometheusExporter exporter)
         {
             Guard.Null(exporter, nameof(exporter));
 
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <summary>
         /// Start exporter.
         /// </summary>
-        /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the htto server.</param>
+        /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the HTTP server.</param>
         public void Start(CancellationToken token = default)
         {
             lock (this.syncObject)
@@ -117,9 +117,6 @@ namespace OpenTelemetry.Exporter.Prometheus
 
         private void WorkerProc()
         {
-            var bufferSize = 85000; // encourage the object to live in LOH (large object heap)
-            var buffer = new byte[bufferSize];
-
             this.httpListener.Start();
 
             try
@@ -131,74 +128,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     ctxTask.Wait(this.tokenSource.Token);
                     var ctx = ctxTask.Result;
 
-                    try
-                    {
-                        ctx.Response.StatusCode = 200;
-                        ctx.Response.Headers.Add("Server", string.Empty);
-                        ctx.Response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
-
-                        this.exporter.OnExport = (metrics) =>
-                        {
-                            try
-                            {
-                                var cursor = 0;
-                                foreach (var metric in metrics)
-                                {
-                                    while (true)
-                                    {
-                                        try
-                                        {
-                                            cursor = PrometheusSerializer.WriteMetric(buffer, cursor, metric);
-                                            break;
-                                        }
-                                        catch (IndexOutOfRangeException)
-                                        {
-                                            bufferSize = bufferSize * 2;
-
-                                            // there are two cases we might run into the following condition:
-                                            // 1. we have many metrics to be exported - in this case we probably want
-                                            //    to put some upper limit and allow the user to configure it.
-                                            // 2. we got an IndexOutOfRangeException which was triggered by some other
-                                            //    code instead of the buffer[cursor++] - in this case we should give up
-                                            //    at certain point rather than allocating like crazy.
-                                            if (bufferSize > 100 * 1024 * 1024)
-                                            {
-                                                throw;
-                                            }
-
-                                            var newBuffer = new byte[bufferSize];
-                                            buffer.CopyTo(newBuffer, 0);
-                                            buffer = newBuffer;
-                                        }
-                                    }
-                                }
-
-                                ctx.Response.OutputStream.Write(buffer, 0, cursor - 0);
-                                return ExportResult.Success;
-                            }
-                            catch (Exception)
-                            {
-                                return ExportResult.Failure;
-                            }
-                        };
-
-                        this.exporter.Collect(Timeout.Infinite);
-                        this.exporter.OnExport = null;
-                    }
-                    catch (Exception ex)
-                    {
-                        PrometheusExporterEventSource.Log.FailedExport(ex);
-
-                        ctx.Response.StatusCode = 500;
-                    }
-
-                    try
-                    {
-                        ctx.Response.Close();
-                    }
-                    catch
-                    {
-                    }
+                    Task.Run(() => this.ProcessRequestAsync(ctx));
                 }
             }
             catch (OperationCanceledException ex)
@@ -216,6 +146,48 @@ namespace OpenTelemetry.Exporter.Prometheus
                 {
                     PrometheusExporterEventSource.Log.FailedShutdown(exFromFinally);
                 }
+            }
+        }
+
+        private async Task ProcessRequestAsync(HttpListenerContext context)
+        {
+            try
+            {
+                var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+                try
+                {
+                    if (collectionResponse.View.Count > 0)
+                    {
+                        context.Response.StatusCode = 200;
+                        context.Response.Headers.Add("Server", string.Empty);
+                        context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
+                        context.Response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
+
+                        await context.Response.OutputStream.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Collection failure.");
+                    }
+                }
+                finally
+                {
+                    this.exporter.CollectionManager.ExitCollect();
+                }
+            }
+            catch (Exception ex)
+            {
+                PrometheusExporterEventSource.Log.FailedExport(ex);
+
+                context.Response.StatusCode = 500;
+            }
+
+            try
+            {
+                context.Response.Close();
+            }
+            catch
+            {
             }
         }
     }

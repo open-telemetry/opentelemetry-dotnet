@@ -93,7 +93,7 @@ namespace OpenTelemetry.Exporter
             {
                 OtlpExportProtocol.Grpc => new OtlpGrpcTraceExportClient(options),
                 OtlpExportProtocol.HttpProtobuf => new OtlpHttpTraceExportClient(options),
-                _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported.")
+                _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
             };
 
         public static OtlpExportProtocol? ToOtlpExportProtocol(this string protocol) =>
@@ -101,7 +101,7 @@ namespace OpenTelemetry.Exporter
             {
                 "grpc" => OtlpExportProtocol.Grpc,
                 "http/protobuf" => OtlpExportProtocol.HttpProtobuf,
-                _ => null
+                _ => null,
             };
 
         internal static void AppendExportPath(this OtlpExporterOptions options, Uri initialEndpoint, string exportRelativePath)

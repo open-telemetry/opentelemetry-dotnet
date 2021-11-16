@@ -25,27 +25,6 @@ namespace OpenTelemetry.Exporter.Prometheus
     {
         private static readonly string[] MetricTypes = new string[] { "untyped", "counter", "gauge", "histogram", "summary" };
 
-        public static int WriteMetrics(byte[] buffer, int cursor, Batch<Metric> metrics)
-        {
-            var spacing = false;
-
-            foreach (var metric in metrics)
-            {
-                if (spacing)
-                {
-                    buffer[cursor++] = ASCII_LINEFEED;
-                }
-                else
-                {
-                    spacing = true;
-                }
-
-                cursor = WriteMetric(buffer, cursor, metric);
-            }
-
-            return cursor;
-        }
-
         public static int WriteMetric(byte[] buffer, int cursor, Metric metric)
         {
             if (!string.IsNullOrWhiteSpace(metric.Description))
@@ -66,19 +45,25 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                     // Counter and Gauge
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
-                    buffer[cursor++] = unchecked((byte)'{');
 
-                    for (var i = 0; i < keys.Length; i++)
+                    int numberOfKeys = keys?.Length ?? 0;
+                    if (numberOfKeys > 0)
                     {
-                        if (i > 0)
+                        buffer[cursor++] = unchecked((byte)'{');
+
+                        for (var i = 0; i < keys.Length; i++)
                         {
-                            buffer[cursor++] = unchecked((byte)',');
+                            if (i > 0)
+                            {
+                                buffer[cursor++] = unchecked((byte)',');
+                            }
+
+                            cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
                         }
 
-                        cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
+                        buffer[cursor++] = unchecked((byte)'}');
                     }
 
-                    buffer[cursor++] = unchecked((byte)'}');
                     buffer[cursor++] = unchecked((byte)' ');
 
                     if (((int)metric.MetricType & 0b_0000_1111) == 0x0a /* I8 */)
@@ -192,6 +177,8 @@ namespace OpenTelemetry.Exporter.Prometheus
                     buffer[cursor++] = ASCII_LINEFEED;
                 }
             }
+
+            buffer[cursor++] = ASCII_LINEFEED;
 
             return cursor;
         }
