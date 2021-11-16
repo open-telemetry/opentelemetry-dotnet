@@ -25,27 +25,6 @@ namespace OpenTelemetry.Exporter.Prometheus
     {
         private static readonly string[] MetricTypes = new string[] { "untyped", "counter", "gauge", "histogram", "summary" };
 
-        public static int WriteMetrics(byte[] buffer, int cursor, Batch<Metric> metrics)
-        {
-            var spacing = false;
-
-            foreach (var metric in metrics)
-            {
-                if (spacing)
-                {
-                    buffer[cursor++] = ASCII_LINEFEED;
-                }
-                else
-                {
-                    spacing = true;
-                }
-
-                cursor = WriteMetric(buffer, cursor, metric);
-            }
-
-            return cursor;
-        }
-
         public static int WriteMetric(byte[] buffer, int cursor, Metric metric)
         {
             if (!string.IsNullOrWhiteSpace(metric.Description))
@@ -198,6 +177,8 @@ namespace OpenTelemetry.Exporter.Prometheus
                     buffer[cursor++] = ASCII_LINEFEED;
                 }
             }
+
+            buffer[cursor++] = ASCII_LINEFEED;
 
             return cursor;
         }

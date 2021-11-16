@@ -54,7 +54,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [MemberData(nameof(MetricsTestData.InvalidInstrumentNames), MemberType = typeof(MetricsTestData))]
+        [MemberData(nameof(MetricTestData.InvalidInstrumentNames), MemberType = typeof(MetricTestData))]
         public void AddViewWithInvalidNameThrowsArgumentException(string viewNewName)
         {
             var exportedItems = new List<Metric>();
@@ -93,7 +93,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [MemberData(nameof(MetricsTestData.InvalidHistogramBounds), MemberType = typeof(MetricsTestData))]
+        [MemberData(nameof(MetricTestData.InvalidHistogramBounds), MemberType = typeof(MetricTestData))]
         public void AddViewWithInvalidHistogramBoundsThrowsArgumentException(double[] bounds)
         {
             var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
@@ -103,7 +103,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [MemberData(nameof(MetricsTestData.ValidInstrumentNames), MemberType = typeof(MetricsTestData))]
+        [MemberData(nameof(MetricTestData.ValidInstrumentNames), MemberType = typeof(MetricTestData))]
         public void ViewWithValidNameExported(string viewNewName)
         {
             var exportedItems = new List<Metric>();
@@ -168,7 +168,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [MemberData(nameof(MetricsTestData.InvalidInstrumentNames), MemberType = typeof(MetricsTestData))]
+        [MemberData(nameof(MetricTestData.InvalidInstrumentNames), MemberType = typeof(MetricTestData))]
         public void ViewWithInvalidNameIgnoredConditionally(string viewNewName)
         {
             using var meter1 = new Meter("ViewToRenameMetricConditionallyTest");
@@ -205,7 +205,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [MemberData(nameof(MetricsTestData.ValidInstrumentNames), MemberType = typeof(MetricsTestData))]
+        [MemberData(nameof(MetricTestData.ValidInstrumentNames), MemberType = typeof(MetricTestData))]
         public void ViewWithValidNameConditionally(string viewNewName)
         {
             using var meter1 = new Meter("ViewToRenameMetricConditionallyTest");
