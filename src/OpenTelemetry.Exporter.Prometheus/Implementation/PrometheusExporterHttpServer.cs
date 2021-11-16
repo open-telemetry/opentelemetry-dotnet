@@ -153,16 +153,17 @@ namespace OpenTelemetry.Exporter.Prometheus
         {
             try
             {
-                var data = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+                var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
                 try
                 {
-                    if (data.Count > 0)
+                    if (collectionResponse.View.Count > 0)
                     {
                         context.Response.StatusCode = 200;
                         context.Response.Headers.Add("Server", string.Empty);
+                        context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
                         context.Response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
 
-                        await context.Response.OutputStream.WriteAsync(data.Array, 0, data.Count).ConfigureAwait(false);
+                        await context.Response.OutputStream.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
                     }
                     else
                     {
