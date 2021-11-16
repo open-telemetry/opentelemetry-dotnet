@@ -203,7 +203,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     }
                 }
 
-                this.previousDataView = new ArraySegment<byte>(this.buffer, 0, cursor);
+                this.previousDataView = new ArraySegment<byte>(this.buffer, 0, Math.Max(cursor - 1, 0));
                 return ExportResult.Success;
             }
             catch (Exception)

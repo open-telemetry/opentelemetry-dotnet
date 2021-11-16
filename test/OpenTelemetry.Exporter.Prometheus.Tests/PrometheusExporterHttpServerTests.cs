@@ -89,8 +89,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 new KeyValuePair<string, object>("key2", "value2"),
             };
 
-            var beginTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-
             var counter = meter.CreateCounter<double>("counter_double");
             counter.Add(100.18D, tags);
             counter.Add(0.99D, tags);
@@ -99,29 +97,11 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             using var response = await client.GetAsync($"{address}metrics").ConfigureAwait(false);
 
-            var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-            string[] lines = content.Split('\n');
-
-            Assert.Equal(
-                $"# TYPE counter_double counter",
-                lines[0]);
-
-            Assert.Contains(
-                $"counter_double{{key1=\"value1\",key2=\"value2\"}} 101.17",
-                lines[1]);
-
-            var index = content.LastIndexOf(' ');
-
-            Assert.Equal('\n', content[content.Length - 1]);
-
-            var timestamp = long.Parse(content.Substring(index, content.Length - index - 1));
-
-            Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
+            Assert.Matches(
+                "^# TYPE counter_double counter\ncounter_double{key1='value1',key2='value2'} 101.17 \\d+\n$".Replace('\'', '"'),
+                await response.Content.ReadAsStringAsync().ConfigureAwait(false));
         }
     }
 }
