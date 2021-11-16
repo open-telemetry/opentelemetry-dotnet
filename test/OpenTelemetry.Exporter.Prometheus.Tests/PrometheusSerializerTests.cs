@@ -44,7 +44,10 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
             Assert.Matches(
-                "^# TYPE test_gauge gauge\ntest_gauge 123 \\d+\n$",
+                ("^"
+                    + "# TYPE test_gauge gauge\n"
+                    + "test_gauge 123 \\d+\n"
+                    + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
 
@@ -66,7 +69,11 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
             Assert.Matches(
-                "^# HELP test_gauge Hello, world!\n# TYPE test_gauge gauge\ntest_gauge 123 \\d+\n$",
+                ("^"
+                    + "# HELP test_gauge Hello, world!\n"
+                    + "# TYPE test_gauge gauge\n"
+                    + "test_gauge 123 \\d+\n"
+                    + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
 
@@ -88,7 +95,10 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
             Assert.Matches(
-                "^# TYPE test_gauge_seconds gauge\ntest_gauge_seconds 123 \\d+\n$",
+                ("^"
+                    + "# TYPE test_gauge_seconds gauge\n"
+                    + "test_gauge_seconds 123 \\d+\n"
+                    + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
 
@@ -111,12 +121,47 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
             Assert.Matches(
-                "^# TYPE test_counter counter\ntest_counter{tagKey='tagValue'} 123 \\d+\n$".Replace('\'', '"'),
+                ("^"
+                    + "# TYPE test_counter counter\n"
+                    + "test_counter{tagKey='tagValue'} 123 \\d+\n"
+                    + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
 
         [Fact]
-        public void DoubleInfinites()
+        public void DoubleGaugeSubnormal()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            meter.CreateObservableGauge("test_gauge", () => new List<Measurement<double>>
+            {
+                new(double.NegativeInfinity, new("x", "1"), new("y", "2")),
+                new(double.PositiveInfinity, new("x", "3"), new("y", "4")),
+                new(double.NaN, new("x", "5"), new("y", "6")),
+            });
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_gauge gauge\n"
+                    + "test_gauge{x='1',y='2'} -Inf \\d+\n"
+                    + "test_gauge{x='3',y='4'} \\+Inf \\d+\n"
+                    + "test_gauge{x='5',y='6'} Nan \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
+        public void DoubleSumInfinites()
         {
             var buffer = new byte[85000];
             var metrics = new List<Metric>();
@@ -135,7 +180,129 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
             Assert.Matches(
-                "^# TYPE test_counter counter\ntest_counter \\+Inf \\d+\n$",
+                ("^"
+                    + "# TYPE test_counter counter\n"
+                    + "test_counter \\+Inf \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
+        public void HistogramFinites()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var histogram = meter.CreateHistogram<double>("test_histogram");
+            histogram.Record(18, new("x", "1"), new("y", "2"));
+            histogram.Record(100, new("x", "1"), new("y", "2"));
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_histogram histogram\n"
+                    + "test_histogram_bucket{x='1',y='2',le='0'} 0 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='5'} 0 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='10'} 0 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='25'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='50'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='75'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='100'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='250'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='500'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='1000'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='\\+Inf'} 2 \\d+\n"
+                    + "test_histogram_sum{x='1',y='2'} 118 \\d+\n"
+                    + "test_histogram_count{x='1',y='2'} 2 \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
+        public void HistogramInfinites()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var histogram = meter.CreateHistogram<double>("test_histogram");
+            histogram.Record(18, new("x", "1"), new("y", "2"));
+            histogram.Record(double.PositiveInfinity, new("x", "1"), new("y", "2"));
+            histogram.Record(double.PositiveInfinity, new("x", "1"), new("y", "2"));
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_histogram histogram\n"
+                    + "test_histogram_bucket{x='1',y='2',le='0'} 0 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='5'} 0 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='10'} 0 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='25'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='50'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='75'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='100'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='250'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='500'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='1000'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='\\+Inf'} 3 \\d+\n"
+                    + "test_histogram_sum{x='1',y='2'} \\+Inf \\d+\n"
+                    + "test_histogram_count{x='1',y='2'} 3 \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
+        public void HistogramNaN()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var histogram = meter.CreateHistogram<double>("test_histogram");
+            histogram.Record(18, new("x", "1"), new("y", "2"));
+            histogram.Record(double.PositiveInfinity, new("x", "1"), new("y", "2"));
+            histogram.Record(double.NaN, new("x", "1"), new("y", "2"));
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_histogram histogram\n"
+                    + "test_histogram_bucket{x='1',y='2',le='0'} 0 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='5'} 0 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='10'} 0 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='25'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='50'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='75'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='100'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='250'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='500'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='1000'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',y='2',le='\\+Inf'} 3 \\d+\n"
+                    + "test_histogram_sum{x='1',y='2'} Nan \\d+\n"
+                    + "test_histogram_count{x='1',y='2'} 3 \\d+\n"
+                    + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
     }
