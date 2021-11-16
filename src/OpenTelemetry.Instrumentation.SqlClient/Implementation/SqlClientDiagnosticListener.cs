@@ -64,7 +64,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                     {
                         // SqlClient does not create an Activity. So the activity coming in here will be null or the root span.
                         activity = SqlActivitySourceHelper.ActivitySource.StartActivity(
-                            SqlActivitySourceHelper.ActivityName,
+                            SqlActivitySourceHelper.ActivityNameConnection,
                             ActivityKind.Client,
                             default(ActivityContext),
                             SqlActivitySourceHelper.CreationTags);
@@ -94,7 +94,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 case SqlDataBeforeExecuteCommand:
                 case SqlMicrosoftBeforeExecuteCommand:
                     {
-                        // If ActivityBehavior is Connection, the activity has already started
+                        // If ActivityBehavior is Connection, the activity has already started, don't start another one.
                         if (this.options.ActivityBehavior != SqlClientActivityBehavior.Connection)
                         {
                             // SqlClient does not create an Activity. So the activity coming in here will be null or the root span.

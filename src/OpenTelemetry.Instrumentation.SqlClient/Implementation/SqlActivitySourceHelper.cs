@@ -28,6 +28,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
     {
         public const string ActivitySourceName = "OpenTelemetry.SqlClient";
         public const string ActivityName = ActivitySourceName + ".Execute";
+        public const string ActivityNameConnection = ActivitySourceName + ".Connection";
 
         public const string MicrosoftSqlServerDatabaseSystemName = "mssql";
 
