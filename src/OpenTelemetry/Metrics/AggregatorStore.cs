@@ -220,11 +220,8 @@ namespace OpenTelemetry.Metrics
                     {
                         if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
                         {
-                            aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
-                            if (aggregatorIndex >= MaxMetricPoints)
+                            if (!this.TryGetUnusedMetricPoint(out aggregatorIndex))
                             {
-                                // sorry! out of data points.
-                                // TODO: Traverse through the points and find the free one.
                                 return -1;
                             }
 
@@ -256,13 +253,45 @@ namespace OpenTelemetry.Metrics
                     }
                 }
 
-                this.metricPoints[aggregatorIndex].MarkUpdatePending();
+                if (this.metricPoints[aggregatorIndex].MetricPointStatus == MetricPointStatus.CandidateForRemoval)
+                {
+                    this.metricPoints[aggregatorIndex].MarkUpdatePending();
+                }
+
                 return aggregatorIndex;
             }
             finally
             {
                 this.rwlock.ExitReadLock();
             }
+        }
+
+        private bool TryGetUnusedMetricPoint(out int index)
+        {
+            if (this.metricPointIndex < MaxMetricPoints)
+            {
+                index = Interlocked.Increment(ref this.metricPointIndex);
+                if (index < MaxMetricPoints)
+                {
+                    return true;
+                }
+            }
+
+            if (this.temporality == AggregationTemporality.Delta)
+            {
+                for (int i = 1; i < MaxMetricPoints; i++)
+                {
+                    ref var metricPoint = ref this.metricPoints[i];
+                    if (metricPoint.MetricPointStatus == MetricPointStatus.Unused)
+                    {
+                        index = i;
+                        return true;
+                    }
+                }
+            }
+
+            index = -1;
+            return false;
         }
 
         private void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
