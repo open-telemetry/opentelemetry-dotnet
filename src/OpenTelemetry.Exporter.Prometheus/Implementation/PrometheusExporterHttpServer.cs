@@ -1,4 +1,4 @@
-// <copyright file="PrometheusExporterMetricsHttpServer.cs" company="OpenTelemetry Authors">
+// <copyright file="PrometheusExporterHttpServer.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,9 +23,9 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
-    /// A HTTP listener used to expose Prometheus metrics.
+    /// An HTTP listener used to expose Prometheus metrics.
     /// </summary>
-    internal sealed class PrometheusExporterMetricsHttpServer : IDisposable
+    internal sealed class PrometheusExporterHttpServer : IDisposable
     {
         private readonly PrometheusExporter exporter;
         private readonly HttpListener httpListener = new HttpListener();
@@ -35,10 +35,10 @@ namespace OpenTelemetry.Exporter.Prometheus
         private Task workerThread;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PrometheusExporterMetricsHttpServer"/> class.
+        /// Initializes a new instance of the <see cref="PrometheusExporterHttpServer"/> class.
         /// </summary>
         /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
-        public PrometheusExporterMetricsHttpServer(PrometheusExporter exporter)
+        public PrometheusExporterHttpServer(PrometheusExporter exporter)
         {
             Guard.Null(exporter, nameof(exporter));
 
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <summary>
         /// Start exporter.
         /// </summary>
-        /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the htto server.</param>
+        /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the HTTP server.</param>
         public void Start(CancellationToken token = default)
         {
             lock (this.syncObject)
@@ -128,43 +128,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     ctxTask.Wait(this.tokenSource.Token);
                     var ctx = ctxTask.Result;
 
-                    try
-                    {
-                        ctx.Response.StatusCode = 200;
-                        ctx.Response.ContentType = PrometheusMetricsFormatHelper.ContentType;
-
-                        this.exporter.OnExport = (metrics) =>
-                        {
-                            try
-                            {
-                                var buffer = new byte[65536];
-                                var cursor = PrometheusSerializer.WriteMetrics(buffer, 0, metrics);
-                                ctx.Response.OutputStream.Write(buffer, 0, cursor - 0);
-                                return ExportResult.Success;
-                            }
-                            catch (Exception)
-                            {
-                                return ExportResult.Failure;
-                            }
-                        };
-
-                        this.exporter.Collect(Timeout.Infinite);
-                        this.exporter.OnExport = null;
-                    }
-                    catch (Exception ex)
-                    {
-                        PrometheusExporterEventSource.Log.FailedExport(ex);
-
-                        ctx.Response.StatusCode = 500;
-                    }
-
-                    try
-                    {
-                        ctx.Response.Close();
-                    }
-                    catch
-                    {
-                    }
+                    Task.Run(() => this.ProcessRequestAsync(ctx));
                 }
             }
             catch (OperationCanceledException ex)
@@ -182,6 +146,47 @@ namespace OpenTelemetry.Exporter.Prometheus
                 {
                     PrometheusExporterEventSource.Log.FailedShutdown(exFromFinally);
                 }
+            }
+        }
+
+        private async Task ProcessRequestAsync(HttpListenerContext context)
+        {
+            try
+            {
+                var data = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+                try
+                {
+                    if (data.Count > 0)
+                    {
+                        context.Response.StatusCode = 200;
+                        context.Response.Headers.Add("Server", string.Empty);
+                        context.Response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
+
+                        await context.Response.OutputStream.WriteAsync(data.Array, 0, data.Count).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Collection failure.");
+                    }
+                }
+                finally
+                {
+                    this.exporter.CollectionManager.ExitCollect();
+                }
+            }
+            catch (Exception ex)
+            {
+                PrometheusExporterEventSource.Log.FailedExport(ex);
+
+                context.Response.StatusCode = 500;
+            }
+
+            try
+            {
+                context.Response.Close();
+            }
+            catch
+            {
             }
         }
     }

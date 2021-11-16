@@ -21,7 +21,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-// namespace OpenTelemetry.Tests.Stress;
+namespace OpenTelemetry.Tests.Stress;
 
 public partial class Program
 {
@@ -101,7 +101,8 @@ public partial class Program
                     output = $"Loops: {cntLoopsNew:n0}, Loops/Second: {nLoopsPerSecond:n0}, CPU Cycles/Loop: {nCpuCyclesPerLoop:n0}";
                     Console.Title = output;
                 }
-            }, () =>
+            },
+            () =>
             {
                 Parallel.For(0, concurrency, (i) =>
                 {

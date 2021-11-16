@@ -30,7 +30,7 @@ public class Program
     {
         var process = Process.GetCurrentProcess();
 
-        MyMeter.CreateObservableCounter("Thread.CpuTime", () => GetThreadCpuTime(process), "seconds");
+        MyMeter.CreateObservableCounter("Thread.CpuTime", () => GetThreadCpuTime(process), "ms");
 
         MyMeter.CreateObservableGauge("Thread.State", () => GetThreadState(process));
     }

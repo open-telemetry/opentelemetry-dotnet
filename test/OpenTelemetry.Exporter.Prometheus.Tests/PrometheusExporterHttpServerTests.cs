@@ -1,4 +1,4 @@
-// <copyright file="PrometheusExporterMetricsHttpServerTests.cs" company="OpenTelemetry Authors">
+// <copyright file="PrometheusExporterHttpServerTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,10 +26,10 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
-    public class PrometheusExporterMetricsHttpServerTests
+    public class PrometheusExporterHttpServerTests
     {
         [Fact]
-        public async Task PrometheusExporterMetricsHttpServerIntegration()
+        public async Task PrometheusExporterHttpServerIntegration()
         {
             Random random = new Random();
             int port = 0;
@@ -89,8 +89,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 new KeyValuePair<string, object>("key2", "value2"),
             };
 
-            var beginTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-
             var counter = meter.CreateCounter<double>("counter_double");
             counter.Add(100.18D, tags);
             counter.Add(0.99D, tags);
@@ -99,23 +97,11 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             using var response = await client.GetAsync($"{address}metrics").ConfigureAwait(false);
 
-            var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-            var index = content.LastIndexOf(' ');
-
-            Assert.Equal(
-                $"# TYPE counter_double counter\ncounter_double{{key1=\"value1\",key2=\"value2\"}} 101.17",
-                content.Substring(0, index));
-
-            Assert.Equal('\n', content[content.Length - 1]);
-
-            var timestamp = long.Parse(content.Substring(index, content.Length - index - 1));
-
-            Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
+            Assert.Matches(
+                "^# TYPE counter_double counter\ncounter_double{key1='value1',key2='value2'} 101.17 \\d+\n$".Replace('\'', '"'),
+                await response.Content.ReadAsStringAsync().ConfigureAwait(false));
         }
     }
 }
