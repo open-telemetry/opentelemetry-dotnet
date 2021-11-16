@@ -98,6 +98,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             using var response = await client.GetAsync($"{address}metrics").ConfigureAwait(false);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.True(response.Content.Headers.Contains("Last-Modified"));
+            Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
 
             Assert.Matches(
                 "^# TYPE counter_double counter\ncounter_double{key1='value1',key2='value2'} 101.17 \\d+\n$".Replace('\'', '"'),

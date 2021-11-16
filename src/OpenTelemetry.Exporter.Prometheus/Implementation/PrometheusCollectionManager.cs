@@ -30,10 +30,10 @@ namespace OpenTelemetry.Exporter.Prometheus
         private byte[] buffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
         private int globalLockState;
         private ArraySegment<byte> previousDataView;
-        private DateTime? previousDataViewExpirationAtUtc;
+        private DateTime? previousDataViewGeneratedAtUtc;
         private int readerCount;
         private bool collectionRunning;
-        private TaskCompletionSource<ArraySegment<byte>> collectionTcs;
+        private TaskCompletionSource<CollectionResponse> collectionTcs;
 
         public PrometheusCollectionManager(PrometheusExporter exporter)
         {
@@ -43,23 +43,25 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
 #if NETCOREAPP3_1_OR_GREATER
-        public ValueTask<ArraySegment<byte>> EnterCollect()
+        public ValueTask<CollectionResponse> EnterCollect()
 #else
-        public Task<ArraySegment<byte>> EnterCollect()
+        public Task<CollectionResponse> EnterCollect()
 #endif
         {
             this.EnterGlobalLock();
 
             // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
             // last successful collect, return the previous view.
-            if (this.previousDataViewExpirationAtUtc.HasValue && this.previousDataViewExpirationAtUtc >= DateTime.UtcNow)
+            if (this.previousDataViewGeneratedAtUtc.HasValue
+                && this.scrapeResponseCacheDurationInMilliseconds > 0
+                && this.previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationInMilliseconds) >= DateTime.UtcNow)
             {
                 Interlocked.Increment(ref this.readerCount);
                 this.ExitGlobalLock();
 #if NETCOREAPP3_1_OR_GREATER
-                return new ValueTask<ArraySegment<byte>>(this.previousDataView);
+                return new ValueTask<CollectionResponse>(new CollectionResponse(this.previousDataView, this.previousDataViewGeneratedAtUtc.Value, fromCache: true));
 #else
-                return Task.FromResult(this.previousDataView);
+                return Task.FromResult(new CollectionResponse(this.previousDataView, this.previousDataViewGeneratedAtUtc.Value, fromCache: true));
 #endif
             }
 
@@ -68,13 +70,13 @@ namespace OpenTelemetry.Exporter.Prometheus
             {
                 if (this.collectionTcs == null)
                 {
-                    this.collectionTcs = new TaskCompletionSource<ArraySegment<byte>>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    this.collectionTcs = new TaskCompletionSource<CollectionResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
                 }
 
                 Interlocked.Increment(ref this.readerCount);
                 this.ExitGlobalLock();
 #if NETCOREAPP3_1_OR_GREATER
-                return new ValueTask<ArraySegment<byte>>(this.collectionTcs.Task);
+                return new ValueTask<CollectionResponse>(this.collectionTcs.Task);
 #else
                 return this.collectionTcs.Task;
 #endif
@@ -84,14 +86,20 @@ namespace OpenTelemetry.Exporter.Prometheus
 
             // Start a collection on the current thread.
             this.collectionRunning = true;
-            this.previousDataViewExpirationAtUtc = null;
+            this.previousDataViewGeneratedAtUtc = null;
             Interlocked.Increment(ref this.readerCount);
             this.ExitGlobalLock();
 
+            CollectionResponse response;
             bool result = this.ExecuteCollect();
-            if (result && this.scrapeResponseCacheDurationInMilliseconds > 0)
+            if (result)
             {
-                this.previousDataViewExpirationAtUtc = DateTime.UtcNow.AddMilliseconds(this.scrapeResponseCacheDurationInMilliseconds);
+                this.previousDataViewGeneratedAtUtc = DateTime.UtcNow;
+                response = new CollectionResponse(this.previousDataView, this.previousDataViewGeneratedAtUtc.Value, fromCache: false);
+            }
+            else
+            {
+                response = default;
             }
 
             this.EnterGlobalLock();
@@ -100,16 +108,16 @@ namespace OpenTelemetry.Exporter.Prometheus
 
             if (this.collectionTcs != null)
             {
-                this.collectionTcs.SetResult(this.previousDataView);
+                this.collectionTcs.SetResult(response);
                 this.collectionTcs = null;
             }
 
             this.ExitGlobalLock();
 
 #if NETCOREAPP3_1_OR_GREATER
-            return new ValueTask<ArraySegment<byte>>(this.previousDataView);
+            return new ValueTask<CollectionResponse>(response);
 #else
-            return Task.FromResult(this.previousDataView);
+            return Task.FromResult(response);
 #endif
         }
 
@@ -211,6 +219,22 @@ namespace OpenTelemetry.Exporter.Prometheus
                 this.previousDataView = new ArraySegment<byte>(Array.Empty<byte>(), 0, 0);
                 return ExportResult.Failure;
             }
+        }
+
+        public readonly struct CollectionResponse
+        {
+            public CollectionResponse(ArraySegment<byte> view, DateTime generatedAtUtc, bool fromCache)
+            {
+                this.View = view;
+                this.GeneratedAtUtc = generatedAtUtc;
+                this.FromCache = fromCache;
+            }
+
+            public ArraySegment<byte> View { get; }
+
+            public DateTime GeneratedAtUtc { get; }
+
+            public bool FromCache { get; }
         }
     }
 }

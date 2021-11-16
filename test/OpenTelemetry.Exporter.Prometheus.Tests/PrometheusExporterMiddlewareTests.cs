@@ -63,6 +63,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.True(response.Content.Headers.Contains("Last-Modified"));
+            Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
 
             string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
