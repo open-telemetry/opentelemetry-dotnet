@@ -224,7 +224,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     + "test_histogram_count{x='1',y='2'} 2 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
-       }
+        }
 
         [Fact]
         public void HistogramInfinites()
@@ -264,7 +264,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     + "test_histogram_count{x='1',y='2'} 3 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
-       }
+        }
 
         [Fact]
         public void HistogramNaN()
@@ -304,6 +304,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     + "test_histogram_count{x='1',y='2'} 3 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
-       }
+        }
     }
 }
