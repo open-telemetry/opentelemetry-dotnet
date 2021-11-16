@@ -57,15 +57,19 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 var counter = meter.CreateCounter<int>("counter_int", description: "Prometheus help text goes here \n escaping.");
                 counter.Add(100);
 
-                Task<byte[]>[] collectTasks = new Task<byte[]>[10];
+                Task<Response>[] collectTasks = new Task<Response>[10];
                 for (int i = 0; i < collectTasks.Length; i++)
                 {
                     collectTasks[i] = Task.Run(async () =>
                     {
-                        ArraySegment<byte> data = await exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+                        var response = await exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
                         try
                         {
-                            return data.ToArray();
+                            return new Response
+                            {
+                                CollectionResponse = response,
+                                ViewPayload = response.View.ToArray(),
+                            };
                         }
                         finally
                         {
@@ -78,10 +82,14 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
                 Assert.Equal(1, runningCollectCount);
 
-                byte[] firstBatch = collectTasks[0].Result;
+                var firstResponse = collectTasks[0].Result;
+
+                Assert.False(firstResponse.CollectionResponse.FromCache);
+
                 for (int i = 1; i < collectTasks.Length; i++)
                 {
-                    Assert.Equal(firstBatch, collectTasks[i].Result);
+                    Assert.Equal(firstResponse.ViewPayload, collectTasks[i].Result.ViewPayload);
+                    Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, collectTasks[i].Result.CollectionResponse.GeneratedAtUtc);
                 }
 
                 counter.Add(100);
@@ -89,11 +97,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 // This should use the cache and ignore the second counter update.
                 var task = exporter.CollectionManager.EnterCollect();
                 Assert.True(task.IsCompleted);
-                ArraySegment<byte> data = await task.ConfigureAwait(false);
+                var response = await task.ConfigureAwait(false);
                 try
                 {
                     Assert.Equal(1, runningCollectCount);
-                    Assert.Equal(firstBatch, data);
+                    Assert.True(response.FromCache);
+                    Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, response.GeneratedAtUtc);
                 }
                 finally
                 {
@@ -108,10 +117,14 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 {
                     collectTasks[i] = Task.Run(async () =>
                     {
-                        ArraySegment<byte> data = await exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+                        var response = await exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
                         try
                         {
-                            return data.ToArray();
+                            return new Response
+                            {
+                                CollectionResponse = response,
+                                ViewPayload = response.View.ToArray(),
+                            };
                         }
                         finally
                         {
@@ -123,14 +136,26 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 await Task.WhenAll(collectTasks).ConfigureAwait(false);
 
                 Assert.Equal(2, runningCollectCount);
-                Assert.NotEqual(firstBatch, collectTasks[0].Result);
+                Assert.NotEqual(firstResponse.ViewPayload, collectTasks[0].Result.ViewPayload);
+                Assert.NotEqual(firstResponse.CollectionResponse.GeneratedAtUtc, collectTasks[0].Result.CollectionResponse.GeneratedAtUtc);
 
-                firstBatch = collectTasks[0].Result;
+                firstResponse = collectTasks[0].Result;
+
+                Assert.False(firstResponse.CollectionResponse.FromCache);
+
                 for (int i = 1; i < collectTasks.Length; i++)
                 {
-                    Assert.Equal(firstBatch, collectTasks[i].Result);
+                    Assert.Equal(firstResponse.ViewPayload, collectTasks[i].Result.ViewPayload);
+                    Assert.Equal(firstResponse.CollectionResponse.GeneratedAtUtc, collectTasks[i].Result.CollectionResponse.GeneratedAtUtc);
                 }
             }
+        }
+
+        private class Response
+        {
+            public PrometheusCollectionManager.CollectionResponse CollectionResponse;
+
+            public byte[] ViewPayload;
         }
     }
 }
