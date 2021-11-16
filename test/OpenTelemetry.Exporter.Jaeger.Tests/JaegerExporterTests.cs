@@ -127,20 +127,25 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             jaegerExporter.AppendSpan(CreateTestJaegerSpan());
 
             // Assert
-            Assert.Equal(1, jaegerExporter.Batch.Count);
+            Assert.Equal(1U, jaegerExporter.NumberOfSpansInCurrentBatch);
         }
 
-        [Fact]
-        public void JaegerTraceExporter_SpansSplitToBatches_SpansIncludedInBatches()
+        [Theory]
+        [InlineData("Compact", 1500)]
+        [InlineData("Binary", 2200)]
+        public void JaegerTraceExporter_SpansSplitToBatches_SpansIncludedInBatches(string protocolType, int maxPayloadSizeInBytes)
         {
-            // Arrange
-            var memoryTransport = new InMemoryTransport();
-            using var jaegerExporter = new JaegerExporter(
-                new JaegerExporterOptions { MaxPayloadSizeInBytes = 1500 }, memoryTransport);
-            jaegerExporter.SetResourceAndInitializeBatch(Resource.Empty);
+            TProtocolFactory protocolFactory = protocolType == "Compact"
+                ? new TCompactProtocol.Factory()
+                : new TBinaryProtocol.Factory();
+            var client = new TestJaegerClient();
 
-            var tempTransport = new InMemoryTransport(initialCapacity: 3000);
-            var protocol = new TCompactProtocol(tempTransport);
+            // Arrange
+            using var jaegerExporter = new JaegerExporter(
+                new JaegerExporterOptions { MaxPayloadSizeInBytes = maxPayloadSizeInBytes },
+                protocolFactory,
+                client);
+            jaegerExporter.SetResourceAndInitializeBatch(Resource.Empty);
 
             // Create six spans, each taking more space than the previous one
             var spans = new JaegerSpan[6];
@@ -153,10 +158,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
                     });
             }
 
+            var protocol = protocolFactory.GetProtocol();
             var serializedSpans = spans.Select(s =>
             {
                 s.Write(protocol);
-                return tempTransport.ToArray();
+                var data = protocol.WrittenData.ToArray();
+                protocol.Clear();
+                return data;
             }).ToArray();
 
             // Act
@@ -164,10 +172,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             foreach (var span in spans)
             {
                 jaegerExporter.AppendSpan(span);
-                var sentBatch = memoryTransport.ToArray();
-                if (sentBatch.Length > 0)
+                var sentBatch = client.LastWrittenData;
+                if (sentBatch != null)
                 {
                     sentBatches.Add(sentBatch);
+                    client.LastWrittenData = null;
                 }
             }
 
@@ -190,9 +199,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
                 "Expected span data not found in sent batch");
 
             // jaegerExporter.Batch should contain the two remaining spans
-            Assert.Equal(2, jaegerExporter.Batch.Count);
-            jaegerExporter.Batch.Write(protocol);
-            var serializedBatch = tempTransport.ToArray();
+            Assert.Equal(2U, jaegerExporter.NumberOfSpansInCurrentBatch);
+            jaegerExporter.SendCurrentBatch();
+            Assert.True(client.LastWrittenData != null);
+            var serializedBatch = client.LastWrittenData;
             Assert.True(
                 ContainsSequence(serializedBatch, serializedSpans[4]),
                 "Expected span data not found in unsent batch");
@@ -226,6 +236,31 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             }
 
             return false;
+        }
+
+        private sealed class TestJaegerClient : IJaegerClient
+        {
+            public bool Connected => true;
+
+            public byte[] LastWrittenData { get; set; }
+
+            public void Close()
+            {
+            }
+
+            public void Connect()
+            {
+            }
+
+            public void Dispose()
+            {
+            }
+
+            public int Send(byte[] buffer, int offset, int count)
+            {
+                this.LastWrittenData = new ArraySegment<byte>(buffer, offset, count).ToArray();
+                return count;
+            }
         }
     }
 }
