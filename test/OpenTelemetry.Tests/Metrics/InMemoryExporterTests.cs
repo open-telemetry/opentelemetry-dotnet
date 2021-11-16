@@ -27,28 +27,25 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact(Skip = "To be run after https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361 is fixed")]
         public void InMemoryExporterShouldDeepCopyMetricPoints()
         {
-            var meter = new Meter(Utils.GetCurrentMethodName());
+            var metrics = new List<Metric>();
 
-            var exportedItems = new List<Metric>();
-            using var inMemoryReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
-            {
-                PreferredAggregationTemporality = AggregationTemporality.Delta,
-            };
-
+            using var meter = new Meter(Utils.GetCurrentMethodName());
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddReader(inMemoryReader)
-            .Build();
+                .AddMeter(meter.Name)
+                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(metrics))
+                {
+                    PreferredAggregationTemporality = AggregationTemporality.Delta,
+                })
+                .Build();
 
             var counter = meter.CreateCounter<long>("meter");
 
             // Emit 10 for the MetricPoint with a single key-vaue pair: ("tag1", "value1")
             counter.Add(10, new KeyValuePair<string, object>("tag1", "value1"));
 
-            // Pull metric data from AggregatorStore
-            inMemoryReader.Collect();
+            meterProvider.ForceFlush();
 
-            var metric = exportedItems[0]; // Only one Metric object is added to the collection at this point
+            var metric = metrics[0]; // Only one Metric object is added to the collection at this point
             var metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
             ref var metricPointForFirstExport = ref metricPointsEnumerator.Current;
@@ -57,10 +54,9 @@ namespace OpenTelemetry.Metrics.Tests
             // Emit 25 for the MetricPoint with a single key-vaue pair: ("tag1", "value1")
             counter.Add(25, new KeyValuePair<string, object>("tag1", "value1"));
 
-            // Pull metric data from AggregatorStore
-            inMemoryReader.Collect();
+            meterProvider.ForceFlush();
 
-            metric = exportedItems[1]; // Second Metric object is added to the collection at this point
+            metric = metrics[1]; // Second Metric object is added to the collection at this point
             metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
             var metricPointForSecondExport = metricPointsEnumerator.Current;

@@ -9,6 +9,8 @@ OpenTelemetry.Exporter.PrometheusExporterOptions.HttpListenerPrefixes.set -> voi
 OpenTelemetry.Exporter.PrometheusExporterOptions.PrometheusExporterOptions() -> void
 OpenTelemetry.Exporter.PrometheusExporterOptions.ScrapeEndpointPath.get -> string
 OpenTelemetry.Exporter.PrometheusExporterOptions.ScrapeEndpointPath.set -> void
+OpenTelemetry.Exporter.PrometheusExporterOptions.ScrapeResponseCacheDurationMilliseconds.get -> int
+OpenTelemetry.Exporter.PrometheusExporterOptions.ScrapeResponseCacheDurationMilliseconds.set -> void
 OpenTelemetry.Exporter.PrometheusExporterOptions.StartHttpListener.get -> bool
 OpenTelemetry.Exporter.PrometheusExporterOptions.StartHttpListener.set -> void
 OpenTelemetry.Metrics.PrometheusExporterMeterProviderBuilderExtensions
