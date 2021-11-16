@@ -1,4 +1,4 @@
-// <copyright file="JaegerThriftClient.cs" company="OpenTelemetry Authors">
+// <copyright file="ShimExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,24 +14,23 @@
 // limitations under the License.
 // </copyright>
 
-using Thrift;
-using Thrift.Protocol;
-
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+#if NETSTANDARD2_0 || NET461
+namespace System
 {
-    internal sealed class JaegerThriftClient : TBaseClient
+    internal static class ShimExtensions
     {
-        public JaegerThriftClient(TProtocol outputProtocol)
-            : base(outputProtocol)
+        public static byte[] ToArray(this ArraySegment<byte> arraySegment)
         {
-        }
+            int count = arraySegment.Count;
+            if (count == 0)
+            {
+                return Array.Empty<byte>();
+            }
 
-        internal void SendBatch(Batch batch)
-        {
-            EmitBatchArgs.Send(
-                this.SeqId,
-                batch,
-                this.OutputProtocol);
+            var array = new byte[count];
+            Array.Copy(arraySegment.Array, arraySegment.Offset, array, 0, count);
+            return array;
         }
     }
 }
+#endif
