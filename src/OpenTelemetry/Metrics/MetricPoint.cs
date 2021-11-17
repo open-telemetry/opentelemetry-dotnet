@@ -121,15 +121,17 @@ namespace OpenTelemetry.Metrics
                     }
             }
 
-            // There is a race with SnapShot:
-            // Update updates value
-            // SnapShot snapshots the value
-            // SnapShot sets status to NoCollectPending
-            // Update sets status to CollectPending -- this is not right as the SnapShot
+            // There is a race with Snapshot:
+            // Update() updates the value
+            // Snapshot snapshots the value
+            // Snapshot sets status to NoCollectPending
+            // Update sets status to CollectPending -- this is not right as the Snapshot
             // already included the updated value.
-            // In the absence of any new Update call until next SnapShot,
+            // In the absence of any new Update call until next Snapshot,
             // this results in exporting an Update even though
             // it had no update.
+            // TODO: For Delta, this can be mitigated
+            // by ignoring Zero points
             this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 
@@ -195,15 +197,17 @@ namespace OpenTelemetry.Metrics
                     }
             }
 
-            // There is a race with SnapShot:
-            // Update updates value
-            // SnapShot snapshots the value
-            // SnapShot sets status to NoCollectPending
-            // Update sets status to CollectPending -- this is not right as the SnapShot
+            // There is a race with Snapshot:
+            // Update() updates the value
+            // Snapshot snapshots the value
+            // Snapshot sets status to NoCollectPending
+            // Update sets status to CollectPending -- this is not right as the Snapshot
             // already included the updated value.
-            // In the absence of any new Update call until next SnapShot,
+            // In the absence of any new Update call until next Snapshot,
             // this results in exporting an Update even though
             // it had no update.
+            // TODO: For Delta, this can be mitigated
+            // by ignoring Zero points
             this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 

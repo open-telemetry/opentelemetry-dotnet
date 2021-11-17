@@ -108,8 +108,7 @@ namespace OpenTelemetry.Metrics
                 this.SnapShotCumulative(indexSnapShot);
             }
 
-            DateTimeOffset dt = DateTimeOffset.UtcNow;
-            this.endTimeInclusive = dt;
+            this.endTimeInclusive = DateTimeOffset.UtcNow;
             return this.batchSize;
         }
 
