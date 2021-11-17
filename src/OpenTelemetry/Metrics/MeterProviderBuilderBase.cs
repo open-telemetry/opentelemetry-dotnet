@@ -29,10 +29,14 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public abstract class MeterProviderBuilderBase : MeterProviderBuilder
     {
+        internal const int MaxMetrics = 1000;
+        internal const int MaxMetricPointsPerMetric = 2000;
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private readonly List<string> meterSources = new List<string>();
         private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs = new List<Func<Instrument, MetricStreamConfiguration>>();
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
+        private int metricStreamLimit = MaxMetrics;
+        private int metricPointLimit = MaxMetricPointsPerMetric;
 
         protected MeterProviderBuilderBase()
         {
@@ -105,6 +109,22 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
+        internal MeterProviderBuilder SetMetricStreamLimit(int metricStreamLimit)
+        {
+            Guard.Range(metricStreamLimit, min: 1);
+
+            this.metricStreamLimit = metricStreamLimit;
+            return this;
+        }
+
+        internal MeterProviderBuilder SetMetricPointPerMetricStreamLimit(int metricPointLimit)
+        {
+            Guard.Range(metricPointLimit, min: 1);
+
+            this.metricPointLimit = metricPointLimit;
+            return this;
+        }
+
         internal MeterProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
             Debug.Assert(resourceBuilder != null, $"{nameof(resourceBuilder)} must not be null");
@@ -124,6 +144,8 @@ namespace OpenTelemetry.Metrics
                 this.meterSources,
                 this.instrumentationFactories,
                 this.viewConfigs,
+                this.metricStreamLimit,
+                this.metricPointLimit,
                 this.MetricReaders.ToArray());
         }
 

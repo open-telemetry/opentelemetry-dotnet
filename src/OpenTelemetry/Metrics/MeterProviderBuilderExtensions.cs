@@ -122,6 +122,53 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
+        /// Sets the maximum number of Metric streams supported by the MeterProvider.
+        /// When no Views are configured, every instrument will result in one metric stream,
+        /// so this control the numbers of instruments supported.
+        /// When Views are configued, a single instrument can result in multiple metric stream,
+        /// so this controls the number of streams.
+        /// </summary>
+        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
+        /// <param name="metricStreamLimit">The number of metric streams allowed.</param>
+        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        /// <remarks>
+        /// If an instrument is created, but disposed later, this will still be contributing to the limit.
+        /// This may change in the future.
+        /// </remarks>
+        public static MeterProviderBuilder SetMetricStreamLimit(this MeterProviderBuilder meterProviderBuilder, int metricStreamLimit)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                meterProviderBuilderBase.SetMetricStreamLimit(metricStreamLimit);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Sets the maximum number of MetricPoints allowed per metric stream.
+        /// This limis the number of unique combination of key value pairs used
+        /// for reporting measurement.
+        /// </summary>
+        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
+        /// <param name="metricPointLimit">The maximum number of metric points allowed per metric stream.</param>
+        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        /// <remarks>
+        /// If a particular combination of key value pair is used atleast once,
+        /// it will still be contributing to the limit.
+        /// This may change in the future.
+        /// </remarks>
+        public static MeterProviderBuilder SetMetricPointPerMetricStreamLimit(this MeterProviderBuilder meterProviderBuilder, int metricPointLimit)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                meterProviderBuilderBase.SetMetricPointPerMetricStreamLimit(metricPointLimit);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
         /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
         /// this provider is built from. Overwrites currently set ResourceBuilder.
         /// </summary>
