@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Metrics with the same name but from different meters is allowed.
+* Metrics with the same name but from different meters are allowed.
   ([#2634](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2634))
 
 * Metrics SDK will not provide inactive Metrics to delta exporter.
