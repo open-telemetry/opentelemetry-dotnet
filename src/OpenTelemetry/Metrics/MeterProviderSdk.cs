@@ -443,19 +443,23 @@ namespace OpenTelemetry.Metrics
                     for (int i = 0; i < target; i++)
                     {
                         var metric = this.metrics[i];
+                        int metricPointSize = 0;
                         if (metric != null)
                         {
                             if (metric.InstrumentDisposed)
                             {
-                                metric.SnapShot();
+                                metricPointSize = metric.SnapShot();
                                 this.metrics[i] = null;
                             }
                             else
                             {
-                                metric.SnapShot();
+                                metricPointSize = metric.SnapShot();
                             }
 
-                            this.metricsCurrentBatch[metricCountCurrentBatch++] = metric;
+                            if (metricPointSize > 0)
+                            {
+                                this.metricsCurrentBatch[metricCountCurrentBatch++] = metric;
+                            }
                         }
                     }
 

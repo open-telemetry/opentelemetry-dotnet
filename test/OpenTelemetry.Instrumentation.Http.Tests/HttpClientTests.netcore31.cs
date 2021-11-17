@@ -180,14 +180,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
             else
             {
-                Assert.Single(requestMetrics);
-                var metricPoints = new List<MetricPoint>();
-                foreach (var p in requestMetrics[0].GetMetricPoints())
-                {
-                    metricPoints.Add(p);
-                }
-
-                Assert.Empty(metricPoints);
+                Assert.Empty(requestMetrics);
             }
         }
 
