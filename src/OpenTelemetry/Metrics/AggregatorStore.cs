@@ -37,11 +37,13 @@ namespace OpenTelemetry.Metrics
         private readonly AggregationTemporality temporality;
         private readonly bool outputDelta;
         private readonly MetricPoint[] metricPoints;
+        private readonly int[] currentMetricPointBatch;
         private readonly AggregationType aggType;
         private readonly double[] histogramBounds;
         private readonly UpdateLongDelegate updateLongCallback;
         private readonly UpdateDoubleDelegate updateDoubleCallback;
         private int metricPointIndex = 0;
+        private int batchSize = 0;
         private bool zeroTagMetricPointInitialized;
         private DateTimeOffset startTimeExclusive;
         private DateTimeOffset endTimeInclusive;
@@ -53,6 +55,7 @@ namespace OpenTelemetry.Metrics
             string[] tagKeysInteresting = null)
         {
             this.metricPoints = new MetricPoint[MaxMetricPoints];
+            this.currentMetricPointBatch = new int[MaxMetricPoints];
             this.aggType = aggType;
             this.temporality = temporality;
             this.outputDelta = temporality == AggregationTemporality.Delta ? true : false;
@@ -92,10 +95,46 @@ namespace OpenTelemetry.Metrics
             this.updateDoubleCallback(value, tags);
         }
 
-        internal void SnapShot()
+        internal int SnapShot()
         {
+            this.batchSize = 0;
             var indexSnapShot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
+            if (this.temporality == AggregationTemporality.Delta)
+            {
+                this.SnapShotDelta(indexSnapShot);
+            }
+            else
+            {
+                this.SnapShotCumulative(indexSnapShot);
+            }
 
+            this.endTimeInclusive = DateTimeOffset.UtcNow;
+            return this.batchSize;
+        }
+
+        internal void SnapShotDelta(int indexSnapShot)
+        {
+            for (int i = 0; i <= indexSnapShot; i++)
+            {
+                ref var metricPoint = ref this.metricPoints[i];
+                if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
+                {
+                    continue;
+                }
+
+                metricPoint.TakeSnapShot(this.outputDelta);
+                this.currentMetricPointBatch[this.batchSize] = i;
+                this.batchSize++;
+            }
+
+            if (this.endTimeInclusive != default)
+            {
+                this.startTimeExclusive = this.endTimeInclusive;
+            }
+        }
+
+        internal void SnapShotCumulative(int indexSnapShot)
+        {
             for (int i = 0; i <= indexSnapShot; i++)
             {
                 ref var metricPoint = ref this.metricPoints[i];
@@ -105,24 +144,14 @@ namespace OpenTelemetry.Metrics
                 }
 
                 metricPoint.TakeSnapShot(this.outputDelta);
+                this.currentMetricPointBatch[this.batchSize] = i;
+                this.batchSize++;
             }
-
-            if (this.temporality == AggregationTemporality.Delta)
-            {
-                if (this.endTimeInclusive != default)
-                {
-                    this.startTimeExclusive = this.endTimeInclusive;
-                }
-            }
-
-            DateTimeOffset dt = DateTimeOffset.UtcNow;
-            this.endTimeInclusive = dt;
         }
 
         internal BatchMetricPoint GetMetricPoints()
         {
-            var indexSnapShot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
-            return new BatchMetricPoint(this.metricPoints, indexSnapShot + 1, this.startTimeExclusive, this.endTimeInclusive);
+            return new BatchMetricPoint(this.metricPoints, this.currentMetricPointBatch, this.batchSize, this.startTimeExclusive, this.endTimeInclusive);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

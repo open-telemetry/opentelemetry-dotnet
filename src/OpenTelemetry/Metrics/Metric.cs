@@ -138,9 +138,9 @@ namespace OpenTelemetry.Metrics
             this.aggStore.Update(value, tags);
         }
 
-        internal void SnapShot()
+        internal int SnapShot()
         {
-            this.aggStore.SnapShot();
+            return this.aggStore.SnapShot();
         }
     }
 }
