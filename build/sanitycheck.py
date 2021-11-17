@@ -62,6 +62,8 @@ def sanitycheck(pattern, allow_utf8 = False, allow_eol = (CRLF, LF)):
     return error_count
 
 retval = 0
+retval += sanitycheck('.editorconfig', allow_eol = (LF,))
+retval += sanitycheck('**/Dockerfile', allow_eol = (LF,))
 retval += sanitycheck('**/*.cmd', allow_eol = (CRLF,))
 retval += sanitycheck('**/*.config', allow_utf8 = True, allow_eol = (LF,))
 retval += sanitycheck('**/*.cs', allow_utf8 = True, allow_eol = (LF,))
@@ -75,6 +77,8 @@ retval += sanitycheck('**/*.props', allow_eol = (LF,))
 retval += sanitycheck('**/*.py', allow_eol = (LF,))
 retval += sanitycheck('**/*.ruleset', allow_utf8 = True, allow_eol = (LF,))
 retval += sanitycheck('**/*.sln', allow_utf8 = True, allow_eol = (LF,))
+retval += sanitycheck('**/*.targets', allow_eol = (LF,))
 retval += sanitycheck('**/*.xml', allow_eol = (LF,))
+retval += sanitycheck('**/*.yml', allow_eol = (LF,))
 
 sys.exit(retval)

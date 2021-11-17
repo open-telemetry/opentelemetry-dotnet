@@ -48,7 +48,12 @@ namespace OpenTelemetry.Trace
 
         private static TracerProviderBuilder AddOtlpExporter(TracerProviderBuilder builder, OtlpExporterOptions exporterOptions, Action<OtlpExporterOptions> configure = null)
         {
+            var originalEndpoint = exporterOptions.Endpoint;
+
             configure?.Invoke(exporterOptions);
+
+            exporterOptions.AppendExportPath(originalEndpoint, OtlpExporterOptions.TracesExportPath);
+
             var otlpExporter = new OtlpTraceExporter(exporterOptions);
 
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
