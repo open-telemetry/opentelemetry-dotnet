@@ -6,12 +6,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient
     public enum SqlClientActivityBehavior
     {
         /// <summary>
-        /// Denotes that the activity should stop on the WriteCommandAfter event.
+        /// Denotes that the activity should start before executing the command and stop after executing.
         /// </summary>
         Command,
 
         /// <summary>
-        /// Denotes that the activity should stop on the WriteConnectionCloseAfter event.
+        /// Denotes that the activity should start before opening the connection and  stop after closing the connection.
         /// </summary>
         Connection,
     }
