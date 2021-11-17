@@ -24,7 +24,7 @@ namespace OpenTelemetry.Metrics.Tests
 {
     public class MemoryEfficiencyTests
     {
-        [Theory(Skip = "To be run after https://github.com/open-telemetry/opentelemetry-dotnet/issues/2524 is fixed")]
+        [Theory]
         [InlineData(AggregationTemporality.Cumulative)]
         [InlineData(AggregationTemporality.Delta)]
         public void ExportOnlyWhenPointChanged(AggregationTemporality temporality)
@@ -50,7 +50,14 @@ namespace OpenTelemetry.Metrics.Tests
 
             exportedItems.Clear();
             meterProvider.ForceFlush();
-            Assert.Empty(exportedItems);
+            if (temporality == AggregationTemporality.Cumulative)
+            {
+                Assert.Single(exportedItems);
+            }
+            else
+            {
+                Assert.Empty(exportedItems);
+            }
         }
     }
 }
