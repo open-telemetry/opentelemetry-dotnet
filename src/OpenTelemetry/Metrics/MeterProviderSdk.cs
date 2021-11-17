@@ -437,8 +437,8 @@ namespace OpenTelemetry.Metrics
                         OpenTelemetrySdkEventSource.Log.MetricObserverCallbackException(exception);
                     }
 
-                    var indexSnapShot = Math.Min(this.metricIndex, MaxMetrics - 1);
-                    var target = indexSnapShot + 1;
+                    var indexSnapshot = Math.Min(this.metricIndex, MaxMetrics - 1);
+                    var target = indexSnapshot + 1;
                     int metricCountCurrentBatch = 0;
                     for (int i = 0; i < target; i++)
                     {
@@ -448,12 +448,12 @@ namespace OpenTelemetry.Metrics
                         {
                             if (metric.InstrumentDisposed)
                             {
-                                metricPointSize = metric.SnapShot();
+                                metricPointSize = metric.Snapshot();
                                 this.metrics[i] = null;
                             }
                             else
                             {
-                                metricPointSize = metric.SnapShot();
+                                metricPointSize = metric.Snapshot();
                             }
 
                             if (metricPointSize > 0)

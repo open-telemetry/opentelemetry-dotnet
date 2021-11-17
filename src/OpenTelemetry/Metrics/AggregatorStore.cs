@@ -95,26 +95,26 @@ namespace OpenTelemetry.Metrics
             this.updateDoubleCallback(value, tags);
         }
 
-        internal int SnapShot()
+        internal int Snapshot()
         {
             this.batchSize = 0;
-            var indexSnapShot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
+            var indexSnapshot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
             if (this.temporality == AggregationTemporality.Delta)
             {
-                this.SnapShotDelta(indexSnapShot);
+                this.SnapshotDelta(indexSnapshot);
             }
             else
             {
-                this.SnapShotCumulative(indexSnapShot);
+                this.SnapshotCumulative(indexSnapshot);
             }
 
             this.endTimeInclusive = DateTimeOffset.UtcNow;
             return this.batchSize;
         }
 
-        internal void SnapShotDelta(int indexSnapShot)
+        internal void SnapshotDelta(int indexSnapshot)
         {
-            for (int i = 0; i <= indexSnapShot; i++)
+            for (int i = 0; i <= indexSnapshot; i++)
             {
                 ref var metricPoint = ref this.metricPoints[i];
                 if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
@@ -122,7 +122,7 @@ namespace OpenTelemetry.Metrics
                     continue;
                 }
 
-                metricPoint.TakeSnapShot(this.outputDelta);
+                metricPoint.TakeSnapshot(this.outputDelta);
                 this.currentMetricPointBatch[this.batchSize] = i;
                 this.batchSize++;
             }
@@ -133,9 +133,9 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal void SnapShotCumulative(int indexSnapShot)
+        internal void SnapshotCumulative(int indexSnapshot)
         {
-            for (int i = 0; i <= indexSnapShot; i++)
+            for (int i = 0; i <= indexSnapshot; i++)
             {
                 ref var metricPoint = ref this.metricPoints[i];
                 if (metricPoint.StartTime == default)
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Metrics
                     continue;
                 }
 
-                metricPoint.TakeSnapShot(this.outputDelta);
+                metricPoint.TakeSnapshot(this.outputDelta);
                 this.currentMetricPointBatch[this.batchSize] = i;
                 this.batchSize++;
             }
