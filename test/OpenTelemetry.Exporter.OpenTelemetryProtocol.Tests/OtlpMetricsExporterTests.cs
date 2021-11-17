@@ -57,15 +57,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{includeServiceNameInResource}", "0.0.1");
 
-            var metricReader = new BaseExportingMetricReader(new TestExporter<Metric>(RunTest))
-            {
-                PreferredAggregationTemporality = AggregationTemporality.Delta,
-            };
+            var exportedItems = new List<Metric>();
 
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddMeter(meter.Name)
-                .AddReader(metricReader)
+                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems)) { PreferredAggregationTemporality = AggregationTemporality.Delta })
                 .Build();
 
             var counter = meter.CreateCounter<int>("counter");
@@ -74,8 +71,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var testCompleted = false;
 
-            // Invokes the TestExporter which will invoke RunTest
-            metricReader.Collect();
+            provider.ForceFlush();
+
+            var batch = new Batch<Metric>(exportedItems.ToArray(), exportedItems.Count);
+            RunTest(batch);
 
             Assert.True(testCompleted);
 
