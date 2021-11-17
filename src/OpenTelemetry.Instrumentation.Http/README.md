@@ -144,14 +144,14 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 {
                     if (eventName.Equals("OnStartActivity"))
                     {
-                        if (rawObject is HttpWebRequest request)
+                        if (rawObject is HttpRequestMessage request)
                         {
                             activity.SetTag("requestVersion", request.Version);
                         }
                     }
                     else if (eventName.Equals("OnStopActivity"))
                     {
-                        if (rawObject is HttpWebResponse response)
+                        if (rawObject is HttpResponseMessage response)
                         {
                             activity.SetTag("responseVersion", response.Version);
                         }
