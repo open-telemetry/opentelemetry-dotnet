@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Set activity `Status` and `StatusDescription` using status tags.
+  ([2605](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2605))
+
 * Histogram bounds are validated when added to a View.
   ([#2573](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2573))
 
