@@ -239,8 +239,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .Build();
 
             var histogram = meter.CreateHistogram<double>("test_histogram");
-            histogram.Record(18, new KeyValuePair<string, object?>("x", "1"));
-            histogram.Record(100, new KeyValuePair<string, object?>("x", "1"));
+            histogram.Record(18, new KeyValuePair<string, object>("x", "1"));
+            histogram.Record(100, new KeyValuePair<string, object>("x", "1"));
 
             provider.ForceFlush();
 
