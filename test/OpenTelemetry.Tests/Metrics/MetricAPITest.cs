@@ -85,7 +85,7 @@ namespace OpenTelemetry.Metrics.Tests
             meter.CreateObservableGauge<long>("myBadGauge", observeValues: () => throw new Exception("gauge read error"));
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-            Assert.Equal(2, exportedItems.Count);
+            Assert.Single(exportedItems);
             var metric = exportedItems[0];
             Assert.Equal("myGauge", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
@@ -99,16 +99,6 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(100, metricPoint.LongValue);
             Assert.NotNull(metricPoint.Keys);
             Assert.NotNull(metricPoint.Values);
-
-            metric = exportedItems[1];
-            Assert.Equal("myBadGauge", metric.Name);
-            metricPoints.Clear();
-            foreach (ref var mp in metric.GetMetricPoints())
-            {
-                metricPoints.Add(mp);
-            }
-
-            Assert.Empty(metricPoints);
         }
 
         [Theory]
@@ -142,6 +132,7 @@ namespace OpenTelemetry.Metrics.Tests
             // Metric stream will remain one.
             var anotherCounterSameName = meter1.CreateCounter<long>("name1");
             anotherCounterSameName.Add(10);
+            counterLong.Add(10);
             metricItems.Clear();
             metricReader.Collect();
             Assert.Single(metricItems);
@@ -151,6 +142,7 @@ namespace OpenTelemetry.Metrics.Tests
             // (the Meter name is not part of stream name)
             var anotherCounterSameNameDiffMeter = meter2.CreateCounter<long>("name1");
             anotherCounterSameNameDiffMeter.Add(10);
+            counterLong.Add(10);
             metricItems.Clear();
             metricReader.Collect();
             Assert.Single(metricItems);
@@ -390,22 +382,30 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(2, metricItems.Count);
             metricItems.Clear();
 
+            counter1.Add(10, new KeyValuePair<string, object>("key", "value"));
+            counter2.Add(10, new KeyValuePair<string, object>("key", "value"));
             meter1.Dispose();
 
             metricReader.Collect();
             Assert.Equal(2, metricItems.Count);
             metricItems.Clear();
 
+            counter1.Add(10, new KeyValuePair<string, object>("key", "value"));
+            counter2.Add(10, new KeyValuePair<string, object>("key", "value"));
             metricReader.Collect();
             Assert.Single(metricItems);
             metricItems.Clear();
 
+            counter1.Add(10, new KeyValuePair<string, object>("key", "value"));
+            counter2.Add(10, new KeyValuePair<string, object>("key", "value"));
             meter2.Dispose();
 
             metricReader.Collect();
             Assert.Single(metricItems);
             metricItems.Clear();
 
+            counter1.Add(10, new KeyValuePair<string, object>("key", "value"));
+            counter2.Add(10, new KeyValuePair<string, object>("key", "value"));
             metricReader.Collect();
             Assert.Empty(metricItems);
         }
@@ -458,8 +458,20 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(AggregatorStore.MaxMetricPoints, MetricPointCount());
 
             metricItems.Clear();
+            counterLong.Add(10);
+            for (int i = 0; i < AggregatorStore.MaxMetricPoints + 1; i++)
+            {
+                counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
+            }
+
             metricReader.Collect();
             Assert.Equal(AggregatorStore.MaxMetricPoints, MetricPointCount());
+
+            counterLong.Add(10);
+            for (int i = 0; i < AggregatorStore.MaxMetricPoints + 1; i++)
+            {
+                counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
+            }
 
             // These updates would be dropped.
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueA"));

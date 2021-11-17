@@ -46,6 +46,7 @@ namespace OpenTelemetry.Metrics
             this.DoubleValue = default;
             this.doubleVal = default;
             this.lastDoubleSum = default;
+            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
             if (this.AggType == AggregationType.Histogram)
             {
@@ -86,6 +87,8 @@ namespace OpenTelemetry.Metrics
 
         public double[] ExplicitBounds { get; internal set; }
 
+        internal MetricPointStatus MetricPointStatus { get; private set; }
+
         private readonly AggregationType AggType { get; }
 
         internal void Update(long number)
@@ -117,6 +120,19 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
             }
+
+            // There is a race with Snapshot:
+            // Update() updates the value
+            // Snapshot snapshots the value
+            // Snapshot sets status to NoCollectPending
+            // Update sets status to CollectPending -- this is not right as the Snapshot
+            // already included the updated value.
+            // In the absence of any new Update call until next Snapshot,
+            // this results in exporting an Update even though
+            // it had no update.
+            // TODO: For Delta, this can be mitigated
+            // by ignoring Zero points
+            this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 
         internal void Update(double number)
@@ -180,6 +196,19 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
             }
+
+            // There is a race with Snapshot:
+            // Update() updates the value
+            // Snapshot snapshots the value
+            // Snapshot sets status to NoCollectPending
+            // Update sets status to CollectPending -- this is not right as the Snapshot
+            // already included the updated value.
+            // In the absence of any new Update call until next Snapshot,
+            // this results in exporting an Update even though
+            // it had no update.
+            // TODO: For Delta, this can be mitigated
+            // by ignoring Zero points
+            this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 
         internal void TakeSnapShot(bool outputDelta)
@@ -194,6 +223,14 @@ namespace OpenTelemetry.Metrics
                             long initValue = Interlocked.Read(ref this.longVal);
                             this.LongValue = initValue - this.lastLongSum;
                             this.lastLongSum = initValue;
+                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                            // Check again if value got updated, if yes reset status.
+                            // This ensures no Updates get Lost.
+                            if (initValue != Interlocked.Read(ref this.longVal))
+                            {
+                                this.MetricPointStatus = MetricPointStatus.CollectPending;
+                            }
                         }
                         else
                         {
@@ -216,6 +253,14 @@ namespace OpenTelemetry.Metrics
                             double initValue = Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity);
                             this.DoubleValue = initValue - this.lastDoubleSum;
                             this.lastDoubleSum = initValue;
+                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                            // Check again if value got updated, if yes reset status.
+                            // This ensures no Updates get Lost.
+                            if (initValue != Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity))
+                            {
+                                this.MetricPointStatus = MetricPointStatus.CollectPending;
+                            }
                         }
                         else
                         {
@@ -233,6 +278,15 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.LongGauge:
                     {
                         this.LongValue = Interlocked.Read(ref this.longVal);
+                        this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                        // Check again if value got updated, if yes reset status.
+                        // This ensures no Updates get Lost.
+                        if (this.LongValue != Interlocked.Read(ref this.longVal))
+                        {
+                            this.MetricPointStatus = MetricPointStatus.CollectPending;
+                        }
+
                         break;
                     }
 
@@ -244,6 +298,15 @@ namespace OpenTelemetry.Metrics
                         // the exchange (to 0.0) will never occur,
                         // but we get the original value atomically.
                         this.DoubleValue = Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity);
+                        this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                        // Check again if value got updated, if yes reset status.
+                        // This ensures no Updates get Lost.
+                        if (this.DoubleValue != Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity))
+                        {
+                            this.MetricPointStatus = MetricPointStatus.CollectPending;
+                        }
+
                         break;
                     }
 
@@ -267,6 +330,8 @@ namespace OpenTelemetry.Metrics
                                     this.bucketCounts[i] = 0;
                                 }
                             }
+
+                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
                         }
 
                         break;
@@ -283,6 +348,8 @@ namespace OpenTelemetry.Metrics
                                 this.longVal = 0;
                                 this.doubleVal = 0;
                             }
+
+                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
                         }
 
                         break;
