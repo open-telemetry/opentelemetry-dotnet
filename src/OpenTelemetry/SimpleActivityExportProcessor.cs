@@ -33,12 +33,7 @@ namespace OpenTelemetry
                 return;
             }
 
-            if (BackwardCompatibilitySwitches.ActivityStatusSwitch && data.Status == ActivityStatusCode.Unset)
-            {
-                BackwardCompatibilityHelper.SetActivityStatusUsingTags(data);
-            }
-
-            this.OnExport(data);
+            base.OnEnd(data);
         }
     }
 }

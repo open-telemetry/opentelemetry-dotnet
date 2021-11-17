@@ -14,15 +14,19 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
+
 namespace OpenTelemetry
 {
     public static class BackwardCompatibilitySwitches
     {
         /// <summary>
-        /// Gets or sets a value indicating whether activity status switch is enabled
-        /// If true then activity Status and StatusDescription properties will be set
-        /// using tags otel.status_code and otel.status_description respectively.
+        /// Gets or sets a value indicating whether or not activity status migration is enabled. Default value: true.
         /// </summary>
-        public static bool ActivityStatusSwitch { get; set; } = true;
+        /// <remarks>
+        /// If true then <see cref="Activity.Status"/> and <see cref="Activity.StatusDescription"/> properties (added in .NET 6) will be set
+        /// from `otel.status_code` and `otel.status_description` tag values respectively prior to export.
+        /// </remarks>
+        public static bool StatusTagMigrationEnabled { get; set; } = true;
     }
 }

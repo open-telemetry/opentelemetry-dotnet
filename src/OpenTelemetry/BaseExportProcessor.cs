@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry
@@ -47,6 +48,16 @@ namespace OpenTelemetry
 
         public override void OnEnd(T data)
         {
+            var activity = data as Activity;
+
+            if (activity != null)
+            {
+                if (BackwardCompatibilitySwitches.StatusTagMigrationEnabled && activity.Status == ActivityStatusCode.Unset)
+                {
+                    BackwardCompatibilityHelper.SetActivityStatusUsingTags(activity);
+                }
+            }
+
             this.OnExport(data);
         }
 

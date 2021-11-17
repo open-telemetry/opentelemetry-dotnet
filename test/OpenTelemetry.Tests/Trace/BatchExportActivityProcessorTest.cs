@@ -19,12 +19,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Internal;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
 {
     public class BatchExportActivityProcessorTest
     {
+        private const string ActivitySourceName = "BatchActivityExportProcessorTest";
+
         [Fact]
         public void CheckNullExporter()
         {
@@ -195,6 +198,51 @@ namespace OpenTelemetry.Trace.Tests
             processor.Shutdown();
 
             Assert.Equal(3, processor.ProcessedCount); // Verify batch was drained even though nothing was exported.
+        }
+
+        [Theory]
+        [InlineData("OK", null, true)]
+        [InlineData("ERROR", "Error Description", true)]
+        [InlineData("OK", null, false)]
+        [InlineData("ERROR", "Error Description", false)]
+        public void ActivityStatusIsSetIfStatusMigrationIsEnabled(string statusCode, string statusDescription, bool isStatusMigrationEnabled)
+        {
+            var sampler = new AlwaysOnSampler();
+            var exportedItems = new List<Activity>();
+            var processor = new BatchActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems));
+            using var activitySource = new ActivitySource(ActivitySourceName);
+
+            // Set status migration - it is enabled by default.
+            BackwardCompatibilitySwitches.StatusTagMigrationEnabled = isStatusMigrationEnabled;
+            using var sdk = Sdk.CreateTracerProviderBuilder()
+                .AddSource(ActivitySourceName)
+                .SetSampler(sampler)
+                .AddProcessor(processor)
+                .Build();
+
+            using (var activity = activitySource.StartActivity("Activity"))
+            {
+                activity?.SetTag("otel.status_code", statusCode);
+                if (statusDescription != null)
+                {
+                    activity?.SetTag("otel.status_description", statusDescription);
+                }
+            }
+
+            processor.ForceFlush();
+            ActivityStatusCode expectedStatusForTagValue = StatusHelper.GetActivityStatusCodeForTagValue(statusCode);
+
+            if (isStatusMigrationEnabled)
+            {
+                Assert.Equal(expectedStatusForTagValue, exportedItems[0].Status);
+                Assert.Equal(statusDescription, exportedItems[0].StatusDescription);
+            }
+            else
+            {
+                Assert.Equal(ActivityStatusCode.Unset, exportedItems[0].Status);
+                Assert.NotEqual(expectedStatusForTagValue, exportedItems[0].Status);
+                Assert.Null(exportedItems[0].StatusDescription);
+            }
         }
     }
 }

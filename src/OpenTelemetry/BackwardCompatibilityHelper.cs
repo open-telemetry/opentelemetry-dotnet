@@ -29,7 +29,11 @@ namespace OpenTelemetry
 
             activity.EnumerateTags(ref tagState);
 
-            if (tagState.StatusCode != ActivityStatusCode.Unset)
+            if (tagState.StatusCode == ActivityStatusCode.Ok)
+            {
+                activity.SetStatus(tagState.StatusCode);
+            }
+            else if (tagState.StatusCode == ActivityStatusCode.Error)
             {
                 activity.SetStatus(tagState.StatusCode, tagState.StatusDescription);
             }
@@ -55,11 +59,25 @@ namespace OpenTelemetry
                     if (key == SpanAttributeConstants.StatusCodeKey)
                     {
                         this.StatusCode = StatusHelper.GetActivityStatusCodeForTagValue(strVal);
+                        if (this.StatusCode != ActivityStatusCode.Error)
+                        {
+                            // Description is only valid for Error
+                            // No need to look further for description.
+                            return false;
+                        }
+
                         return true;
                     }
                     else if (key == SpanAttributeConstants.StatusDescriptionKey)
                     {
                         this.StatusDescription = strVal;
+                        if (this.StatusCode != ActivityStatusCode.Unset)
+                        {
+                            // We now have both Status and StatusDescription
+                            // No need to look further for other tags.
+                            return false;
+                        }
+
                         return true;
                     }
                 }
