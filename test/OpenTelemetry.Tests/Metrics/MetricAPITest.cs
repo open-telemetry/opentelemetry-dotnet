@@ -102,9 +102,11 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [InlineData(AggregationTemporality.Cumulative)]
-        [InlineData(AggregationTemporality.Delta)]
-        public void StreamNamesDuplicatesAreNotAllowedTest(AggregationTemporality temporality)
+        [InlineData(AggregationTemporality.Cumulative, true)]
+        [InlineData(AggregationTemporality.Cumulative, false)]
+        [InlineData(AggregationTemporality.Delta, true)]
+        [InlineData(AggregationTemporality.Delta, false)]
+        public void StreamNamesDuplicatesAreNotAllowedTest(AggregationTemporality temporality, bool hasView)
         {
             var metricItems = new List<Metric>();
             var metricExporter = new InMemoryExporter<Metric>(metricItems);
@@ -115,11 +117,17 @@ namespace OpenTelemetry.Metrics.Tests
             };
             using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.1.{temporality}");
             using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.2.{temporality}");
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter1.Name)
                 .AddMeter(meter2.Name)
-                .AddReader(metricReader)
-                .Build();
+                .AddReader(metricReader);
+
+            if (hasView)
+            {
+                meterProviderBuilder.AddView("name1", new MetricStreamConfiguration() { Description = "description" });
+            }
+
+            using var meterProvider = meterProviderBuilder.Build();
 
             // Expecting one metric stream.
             var counterLong = meter1.CreateCounter<long>("name1");
@@ -137,15 +145,14 @@ namespace OpenTelemetry.Metrics.Tests
             metricReader.Collect();
             Assert.Single(metricItems);
 
-            // The following will also be ignored
-            // as the name is same.
-            // (the Meter name is not part of stream name)
+            // The following will not be ignored
+            // as it is the same metric name but different meter.
             var anotherCounterSameNameDiffMeter = meter2.CreateCounter<long>("name1");
             anotherCounterSameNameDiffMeter.Add(10);
             counterLong.Add(10);
             metricItems.Clear();
             metricReader.Collect();
-            Assert.Single(metricItems);
+            Assert.Equal(2, metricItems.Count);
         }
 
         [Theory]
