@@ -211,7 +211,7 @@ namespace OpenTelemetry.Metrics
             this.MetricPointStatus = MetricPointStatus.CollectPending;
         }
 
-        internal void TakeSnapShot(bool outputDelta)
+        internal void TakeSnapshot(bool outputDelta)
         {
             switch (this.AggType)
             {
