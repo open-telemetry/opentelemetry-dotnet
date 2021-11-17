@@ -95,7 +95,7 @@ properties:
 * `ScrapeResponseCacheDurationMilliseconds`: Configures scrape endpoint response
   caching. Multiple scrape requests within the cache duration time period will
   receive the same previously generated response. The default value is `10000`
-  (10 seconds). Set to 0 to disable response caching.
+  (10 seconds). Set to `0` to disable response caching.
 
 See
 [`TestPrometheusExporter.cs`](../../examples/Console/TestPrometheusExporter.cs)
