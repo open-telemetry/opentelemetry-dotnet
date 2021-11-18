@@ -129,17 +129,17 @@ namespace OpenTelemetry.Metrics
         /// so this control the number of streams.
         /// </summary>
         /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
-        /// <param name="metricStreamLimit">The number of metric streams allowed.</param>
+        /// <param name="maxMetricStreams">Maximum number of metric streams allowed.</param>
         /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
         /// <remarks>
         /// If an instrument is created, but disposed later, this will still be contributing to the limit.
         /// This may change in the future.
         /// </remarks>
-        public static MeterProviderBuilder SetMaxMetricStreams(this MeterProviderBuilder meterProviderBuilder, int metricStreamLimit)
+        public static MeterProviderBuilder SetMaxMetricStreams(this MeterProviderBuilder meterProviderBuilder, int maxMetricStreams)
         {
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                meterProviderBuilderBase.SetMaxMetricStreams(metricStreamLimit);
+                meterProviderBuilderBase.SetMaxMetricStreams(maxMetricStreams);
             }
 
             return meterProviderBuilder;
@@ -151,18 +151,18 @@ namespace OpenTelemetry.Metrics
         /// for reporting measurements.
         /// </summary>
         /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
-        /// <param name="metricPointLimit">The maximum number of metric points allowed per metric stream.</param>
+        /// <param name="maxMetricPointsPerMetricStream">Maximum maximum number of metric points allowed per metric stream.</param>
         /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
         /// <remarks>
         /// If a particular combination of key value pair is used at least once,
         /// it will still be contributing to the limit.
         /// This may change in the future.
         /// </remarks>
-        public static MeterProviderBuilder SetMaxMetricPointsPerMetricStream(this MeterProviderBuilder meterProviderBuilder, int metricPointLimit)
+        public static MeterProviderBuilder SetMaxMetricPointsPerMetricStream(this MeterProviderBuilder meterProviderBuilder, int maxMetricPointsPerMetricStream)
         {
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                meterProviderBuilderBase.SetMaxMetricPointsPerMetricStream(metricPointLimit);
+                meterProviderBuilderBase.SetMaxMetricPointsPerMetricStream(maxMetricPointsPerMetricStream);
             }
 
             return meterProviderBuilder;

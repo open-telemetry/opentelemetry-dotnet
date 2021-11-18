@@ -29,14 +29,14 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public abstract class MeterProviderBuilderBase : MeterProviderBuilder
     {
-        internal const int MaxMetrics = 1000;
-        internal const int MaxMetricPointsPerMetric = 2000;
+        internal const int MaxMetricsDefault = 1000;
+        internal const int MaxMetricPointsPerMetricDefault = 2000;
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private readonly List<string> meterSources = new List<string>();
         private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs = new List<Func<Instrument, MetricStreamConfiguration>>();
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
-        private int metricStreamLimit = MaxMetrics;
-        private int metricPointLimit = MaxMetricPointsPerMetric;
+        private int maxMetricStreams = MaxMetricsDefault;
+        private int maxMetricPointsPerMetricStream = maxMetricPointsPerMetricStreamPerMetricDefault;
 
         protected MeterProviderBuilderBase()
         {
@@ -109,19 +109,19 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        internal MeterProviderBuilder SetMaxMetricStreams(int metricStreamLimit)
+        internal MeterProviderBuilder SetMaxMetricStreams(int maxMetricStreams)
         {
-            Guard.Range(metricStreamLimit, min: 1);
+            Guard.Range(maxMetricStreams, min: 1);
 
-            this.metricStreamLimit = metricStreamLimit;
+            this.maxMetricStreams = maxMetricStreams;
             return this;
         }
 
-        internal MeterProviderBuilder SetMaxMetricPointsPerMetricStream(int metricPointLimit)
+        internal MeterProviderBuilder SetmaxMetricPointsPerMetricStreamPerMetricStream(int maxMetricPointsPerMetricStream)
         {
-            Guard.Range(metricPointLimit, min: 1);
+            Guard.Range(maxMetricPointsPerMetricStream, min: 1);
 
-            this.metricPointLimit = metricPointLimit;
+            this.maxMetricPointsPerMetricStream = maxMetricPointsPerMetricStream;
             return this;
         }
 
@@ -145,7 +145,7 @@ namespace OpenTelemetry.Metrics
                 this.instrumentationFactories,
                 this.viewConfigs,
                 this.metricStreamLimit,
-                this.metricPointLimit,
+                this.maxMetricPointsPerMetricStream,
                 this.MetricReaders.ToArray());
         }
 
