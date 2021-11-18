@@ -50,7 +50,7 @@ namespace OpenTelemetry
             return Resource.Empty;
         }
 
-        public static Action GetCollectObservableInstruments(this BaseProvider baseProvider)
+        public static Action GetObservableInstrumentCollectCallback(this BaseProvider baseProvider)
         {
             if (baseProvider is MeterProviderSdk meterProviderSdk)
             {

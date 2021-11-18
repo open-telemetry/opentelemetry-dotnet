@@ -214,7 +214,7 @@ namespace OpenTelemetry.Metrics
                 ? null
                 : Stopwatch.StartNew();
 
-            var collectObservableInstruments = this.ParentProvider.GetCollectObservableInstruments();
+            var collectObservableInstruments = this.ParentProvider.GetObservableInstrumentCollectCallback();
             collectObservableInstruments();
 
             var metrics = this.GetMetricsBatch();

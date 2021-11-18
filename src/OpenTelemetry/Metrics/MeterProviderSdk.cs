@@ -66,10 +66,7 @@ namespace OpenTelemetry.Metrics
                 }
             }
 
-            if (this.reader is CompositeMetricReader)
-            {
-                this.compositeMetricReader = this.reader as CompositeMetricReader;
-            }
+            this.compositeMetricReader = this.reader as CompositeMetricReader;
 
             if (instrumentationFactories.Any())
             {
@@ -245,28 +242,53 @@ namespace OpenTelemetry.Metrics
 
         internal void MeasurementsCompletedSingleStream(Instrument instrument, object state)
         {
-            var metric = state as Metric;
-            if (metric == null)
-            {
-                // TODO: log
-                return;
-            }
+            Debug.Assert(instrument != null, "instrument must be non-null.");
 
-            metric.InstrumentDisposed = true;
+            if (this.compositeMetricReader == null)
+            {
+                if (state is not Metric metric)
+                {
+                    // TODO: log
+                    return;
+                }
+
+                this.reader.CompleteSingleStreamMeasurement(metric);
+            }
+            else
+            {
+                if (state is not List<Metric> metrics)
+                {
+                    // TODO: log
+                    return;
+                }
+
+                this.compositeMetricReader.CompleteSingleStreamMeasurements(metrics);
+            }
         }
 
         internal void MeasurementsCompleted(Instrument instrument, object state)
         {
-            var metrics = state as List<Metric>;
-            if (metrics == null)
-            {
-                // TODO: log
-                return;
-            }
+            Debug.Assert(instrument != null, "instrument must be non-null.");
 
-            foreach (var metric in metrics)
+            if (this.compositeMetricReader == null)
             {
-                metric.InstrumentDisposed = true;
+                if (state is not List<Metric> metrics)
+                {
+                    // TODO: log
+                    return;
+                }
+
+                this.reader.CompleteMeasurement(metrics);
+            }
+            else
+            {
+                if (state is not List<List<Metric>> metricsSuperList)
+                {
+                    // TODO: log
+                    return;
+                }
+
+                this.compositeMetricReader.CompleteMesaurements(metricsSuperList);
             }
         }
 
@@ -454,6 +476,7 @@ namespace OpenTelemetry.Metrics
                     // Wait for up to 5 seconds grace period
                     this.reader?.Shutdown(5000);
                     this.reader?.Dispose();
+                    this.compositeMetricReader?.Dispose();
 
                     this.listener.Dispose();
                 }

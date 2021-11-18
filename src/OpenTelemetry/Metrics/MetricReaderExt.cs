@@ -35,16 +35,6 @@ namespace OpenTelemetry.Metrics
 
         internal Metric AddMetricWithNoViews(Instrument instrument)
         {
-            if (!MeterProviderBuilderSdk.IsValidInstrumentName(instrument.Name))
-            {
-                OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
-                    instrument.Name,
-                    instrument.Meter.Name,
-                    "Instrument name is invalid.",
-                    "The name must comply with the OpenTelemetry specification");
-                return null;
-            }
-
             var meterName = instrument.Meter.Name;
             var metricName = instrument.Name;
             var metricStreamName = $"{meterName}.{metricName}";
@@ -191,6 +181,14 @@ namespace OpenTelemetry.Metrics
         internal void CompleteSingleStreamMeasurement(Metric metric)
         {
             metric.InstrumentDisposed = true;
+        }
+
+        internal void CompleteMeasurement(List<Metric> metrics)
+        {
+            foreach (var metric in metrics)
+            {
+                metric.InstrumentDisposed = true;
+            }
         }
 
         private Batch<Metric> GetMetricsBatch()
