@@ -86,12 +86,12 @@ namespace OpenTelemetry.Metrics
                 throw new ArgumentException($"Custom view name {metricStreamConfiguration.Name} is invalid.", nameof(metricStreamConfiguration.Name));
             }
 
-            if (metricStreamConfiguration is HistogramConfiguration histogramConfiguration)
+            if (metricStreamConfiguration is ExplicitBucketHistogramConfiguration histogramConfiguration)
             {
-                // Validate histogram bounds
-                if (histogramConfiguration.BucketBounds != null && !IsSortedAndDistinct(histogramConfiguration.BucketBounds))
+                // Validate histogram boundaries
+                if (histogramConfiguration.Boundaries != null && !IsSortedAndDistinct(histogramConfiguration.Boundaries))
                 {
-                    throw new ArgumentException($"Histogram bounds must be in ascending order with distinct values", nameof(histogramConfiguration.BucketBounds));
+                    throw new ArgumentException($"Histogram boundaries must be in ascending order with distinct values", nameof(histogramConfiguration.Boundaries));
                 }
             }
 
