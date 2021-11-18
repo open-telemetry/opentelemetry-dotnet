@@ -27,9 +27,9 @@ namespace OpenTelemetry.Exporter
         public ConsoleExporterOutputTargets Targets { get; set; } = ConsoleExporterOutputTargets.Console;
 
         /// <summary>
-        /// Gets or sets the metric export interval in milliseconds. The default value is <c>Timeout.Infinite</c>.
+        /// Gets or sets the metric export interval in milliseconds. The default value is 60000.
         /// </summary>
-        public int MetricExportIntervalMilliseconds { get; set; } = Timeout.Infinite;
+        public int MetricExportIntervalMilliseconds { get; set; } = 60000;
 
         /// <summary>
         /// Gets or sets the AggregationTemporality used for Histogram
