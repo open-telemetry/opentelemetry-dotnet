@@ -33,8 +33,8 @@ public class Program
             // Rename an instrument to new name.
             .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
 
-            // Change Histogram bounds
-            .AddView(instrumentName: "MyHistogram", new HistogramConfiguration() { BucketBounds = new double[] { 10, 20 } })
+            // Change Histogram boundaries
+            .AddView(instrumentName: "MyHistogram", new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 } })
 
             // For the instrument "MyCounterCustomTags", aggregate with only the keys "tag1", "tag2".
             .AddView(instrumentName: "MyCounterCustomTags", new MetricStreamConfiguration() { TagKeys = new string[] { "tag1", "tag2" } })
@@ -48,7 +48,7 @@ public class Program
                  if (instrument.Meter.Name.Equals("CompanyA.ProductB.Library2") &&
                      instrument.GetType().Name.Contains("Histogram"))
                  {
-                     return new HistogramConfiguration() { BucketBounds = new double[] { 10, 20 } };
+                     return new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 } };
                  }
 
                  return null;
