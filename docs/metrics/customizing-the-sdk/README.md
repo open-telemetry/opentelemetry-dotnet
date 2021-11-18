@@ -234,14 +234,14 @@ bounds. This requires the use of `ExplicitBucketHistogramConfiguration`.
    // (20, +inf)
    .AddView(
       instrumentName: "MyHistogram",
-      new ExplicitBucketHistogramConfiguration{ BucketBounds = new double[] { 10, 20 } })
+      new ExplicitBucketHistogramConfiguration{ Boundaries = new double[] { 10, 20 } })
 
-   // If you provide an empty `double` array as `BucketBounds` to the `ExplicitBucketHistogramConfiguration`,
+   // If you provide an empty `double` array as `Boundaries` to the `ExplicitBucketHistogramConfiguration`,
    // the SDK will only export the sum and count for the measurements.
    // There are no buckets exported in this case.
    .AddView(
       instrumentName: "MyHistogram",
-      new ExplicitBucketHistogramConfiguration { BucketBounds = new double[] { } })
+      new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { } })
 ```
 
 ```csharp
@@ -254,7 +254,7 @@ bounds. This requires the use of `ExplicitBucketHistogramConfiguration`.
             // `ExplicitBucketHistogramConfiguration` is a child class of `MetricStreamConfiguration`
             return new ExplicitBucketHistogramConfiguration
             {
-               BucketBounds = new double[] { 10, 20 },
+               Boundaries = new double[] { 10, 20 },
             };
          }
 
