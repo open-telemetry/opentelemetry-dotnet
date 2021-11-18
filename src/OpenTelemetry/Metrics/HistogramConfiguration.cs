@@ -18,7 +18,7 @@ using System;
 
 namespace OpenTelemetry.Metrics
 {
-    public class HistogramConfiguration : MetricStreamConfiguration
+    public class ExplicitBucketHistogramConfiguration : MetricStreamConfiguration
     {
         private Aggregation aggregation = Aggregation.Histogram;
 
