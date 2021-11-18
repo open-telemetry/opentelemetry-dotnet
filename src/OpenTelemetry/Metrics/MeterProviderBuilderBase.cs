@@ -117,7 +117,7 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        internal MeterProviderBuilder SetmaxMetricPointsPerMetricStreamPerMetricStream(int maxMetricPointsPerMetricStream)
+        internal MeterProviderBuilder SetMaxMetricPointsPerMetricStream(int maxMetricPointsPerMetricStream)
         {
             Guard.Range(maxMetricPointsPerMetricStream, min: 1);
 
