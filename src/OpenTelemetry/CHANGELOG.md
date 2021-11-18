@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-* HistogramConfiguration renamed to ExplicitBucketHistogramConfiguration.
-* BucketBounds renamed to Boundaries for HistogramConfiguration.
+* Renamed `HistogramConfiguration` to `ExplicitBucketHistogramConfiguration`
+  and changed its member `BucketBounds` to `Boundaries`.
   ([#2638](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2638))
 
 * Metrics with the same name but from different meters are allowed.
