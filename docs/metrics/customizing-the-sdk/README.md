@@ -220,15 +220,15 @@ with the metric are of interest to you.
 
 #### Specify custom boundaries for Histogram
 
-By default, the bounds used for a Histogram are [`{ 0, 5, 10, 25, 50, 75, 100,
+By default, the boundaries used for a Histogram are [`{ 0, 5, 10, 25, 50, 75, 100,
 250, 500,
 1000}`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#explicit-bucket-histogram-aggregation).
-Views can be used to provide custom bounds for a Histogram. The measurements are
-then aggregated using the custom bounds provided instead of the the default
-bounds. This requires the use of `ExplicitBucketHistogramConfiguration`.
+Views can be used to provide custom boundaries for a Histogram. The measurements are
+then aggregated using the custom boundaries provided instead of the the default
+boundaries. This requires the use of `ExplicitBucketHistogramConfiguration`.
 
 ```csharp
-   // Change Histogram bounds to count measurements under the following buckets:
+   // Change Histogram boundaries to count measurements under the following buckets:
    // (-inf, 10]
    // (10, 20]
    // (20, +inf)
