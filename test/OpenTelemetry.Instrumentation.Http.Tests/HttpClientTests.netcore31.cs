@@ -25,6 +25,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Moq;
 using Newtonsoft.Json;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -55,15 +56,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
-
-            void ProcessExport(Batch<Metric> batch)
-            {
-                foreach (var metricItem in batch)
-                {
-                    metricItems.Add(metricItem);
-                }
-            }
+            var metricExporter = new InMemoryExporter<Metric>(metricItems);
 
             var metricReader = new BaseExportingMetricReader(metricExporter)
             {
@@ -187,14 +180,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
             else
             {
-                Assert.Single(requestMetrics);
-                var metricPoints = new List<MetricPoint>();
-                foreach (var p in requestMetrics[0].GetMetricPoints())
-                {
-                    metricPoints.Add(p);
-                }
-
-                Assert.Empty(metricPoints);
+                Assert.Empty(requestMetrics);
             }
         }
 

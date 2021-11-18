@@ -1,4 +1,4 @@
-// <copyright file="PrometheusExporterMetricsHttpServerTests.cs" company="OpenTelemetry Authors">
+// <copyright file="PrometheusExporterHttpServerTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,16 +21,15 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
-    public class PrometheusExporterMetricsHttpServerTests
+    public class PrometheusExporterHttpServerTests
     {
-        private const string MeterName = "PrometheusExporterMetricsHttpServerTests.Meter";
-
         [Fact]
-        public async Task PrometheusExporterMetricsHttpServerIntegration()
+        public async Task PrometheusExporterHttpServerIntegration()
         {
             Random random = new Random();
             int port = 0;
@@ -38,16 +37,17 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             MeterProvider provider;
             string address = null;
 
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+
             while (true)
             {
                 try
                 {
                     port = random.Next(2000, 5000);
                     provider = Sdk.CreateMeterProviderBuilder()
-                        .AddMeter(MeterName)
+                        .AddMeter(meter.Name)
                         .AddPrometheusExporter(o =>
                         {
-                            o.GetUtcNowDateTimeOffset = () => new DateTimeOffset(2021, 9, 30, 22, 30, 0, TimeSpan.Zero);
 #if NET461
                             bool expectedDefaultState = true;
 #else
@@ -89,8 +89,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 new KeyValuePair<string, object>("key2", "value2"),
             };
 
-            using var meter = new Meter(MeterName, "0.0.1");
-
             var counter = meter.CreateCounter<double>("counter_double");
             counter.Add(100.18D, tags);
             counter.Add(0.99D, tags);
@@ -100,12 +98,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             using var response = await client.GetAsync($"{address}metrics").ConfigureAwait(false);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.True(response.Content.Headers.Contains("Last-Modified"));
+            Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
 
-            string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-            Assert.Equal(
-                $"# TYPE counter_double counter\ncounter_double{{key1=\"value1\",key2=\"value2\"}} 101.17 1633041000000\n",
-                content);
+            Assert.Matches(
+                "^# TYPE counter_double counter\ncounter_double{key1='value1',key2='value2'} 101.17 \\d+\n$".Replace('\'', '"'),
+                await response.Content.ReadAsStringAsync().ConfigureAwait(false));
         }
     }
 }

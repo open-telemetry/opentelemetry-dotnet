@@ -1,4 +1,4 @@
-// <copyright file="PrometheusExporterMetricsHttpServer.cs" company="OpenTelemetry Authors">
+// <copyright file="PrometheusExporterHttpServer.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,9 +23,9 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
-    /// A HTTP listener used to expose Prometheus metrics.
+    /// An HTTP listener used to expose Prometheus metrics.
     /// </summary>
-    internal sealed class PrometheusExporterMetricsHttpServer : IDisposable
+    internal sealed class PrometheusExporterHttpServer : IDisposable
     {
         private readonly PrometheusExporter exporter;
         private readonly HttpListener httpListener = new HttpListener();
@@ -35,10 +35,10 @@ namespace OpenTelemetry.Exporter.Prometheus
         private Task workerThread;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PrometheusExporterMetricsHttpServer"/> class.
+        /// Initializes a new instance of the <see cref="PrometheusExporterHttpServer"/> class.
         /// </summary>
         /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
-        public PrometheusExporterMetricsHttpServer(PrometheusExporter exporter)
+        public PrometheusExporterHttpServer(PrometheusExporter exporter)
         {
             Guard.Null(exporter, nameof(exporter));
 
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <summary>
         /// Start exporter.
         /// </summary>
-        /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the htto server.</param>
+        /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the HTTP server.</param>
         public void Start(CancellationToken token = default)
         {
             lock (this.syncObject)
@@ -83,7 +83,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     new CancellationTokenSource() :
                     CancellationTokenSource.CreateLinkedTokenSource(token);
 
-                this.workerThread = Task.Factory.StartNew(this.WorkerThread, default, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+                this.workerThread = Task.Factory.StartNew(this.WorkerProc, default, TaskCreationOptions.LongRunning, TaskScheduler.Default);
             }
         }
 
@@ -115,7 +115,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             }
         }
 
-        private void WorkerThread()
+        private void WorkerProc()
         {
             this.httpListener.Start();
 
@@ -128,13 +128,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     ctxTask.Wait(this.tokenSource.Token);
                     var ctx = ctxTask.Result;
 
-                    if (!this.exporter.TryEnterSemaphore())
-                    {
-                        ctx.Response.StatusCode = 429;
-                        ctx.Response.Close();
-                    }
-
-                    Task.Run(() => this.ProcessExportRequest(ctx));
+                    Task.Run(() => this.ProcessRequestAsync(ctx));
                 }
             }
             catch (OperationCanceledException ex)
@@ -155,16 +149,31 @@ namespace OpenTelemetry.Exporter.Prometheus
             }
         }
 
-        private async Task ProcessExportRequest(HttpListenerContext context)
+        private async Task ProcessRequestAsync(HttpListenerContext context)
         {
             try
             {
-                this.exporter.Collect(Timeout.Infinite);
+                var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+                try
+                {
+                    if (collectionResponse.View.Count > 0)
+                    {
+                        context.Response.StatusCode = 200;
+                        context.Response.Headers.Add("Server", string.Empty);
+                        context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
+                        context.Response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
 
-                context.Response.StatusCode = 200;
-                context.Response.ContentType = PrometheusMetricsFormatHelper.ContentType;
-
-                await this.exporter.WriteMetricsCollection(context.Response.OutputStream, this.exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
+                        await context.Response.OutputStream.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Collection failure.");
+                    }
+                }
+                finally
+                {
+                    this.exporter.CollectionManager.ExitCollect();
+                }
             }
             catch (Exception ex)
             {
@@ -172,17 +181,13 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                 context.Response.StatusCode = 500;
             }
-            finally
-            {
-                try
-                {
-                    context.Response.Close();
-                }
-                catch
-                {
-                }
 
-                this.exporter.ReleaseSemaphore();
+            try
+            {
+                context.Response.Close();
+            }
+            catch
+            {
             }
         }
     }

@@ -1,4 +1,4 @@
-// <copyright file="JaegerThriftClient.cs" company="OpenTelemetry Authors">
+// <copyright file="Program.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,24 +14,20 @@
 // limitations under the License.
 // </copyright>
 
-using Thrift;
-using Thrift.Protocol;
+using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Hosting;
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace TestApp.AspNetCore._6._0
 {
-    internal sealed class JaegerThriftClient : TBaseClient
+    public class Program
     {
-        public JaegerThriftClient(TProtocol outputProtocol)
-            : base(outputProtocol)
+        public static void Main(string[] args)
         {
+            CreateWebHostBuilder(args).Build().Run();
         }
 
-        internal void SendBatch(Batch batch)
-        {
-            EmitBatchArgs.Send(
-                this.SeqId,
-                batch,
-                this.OutputProtocol);
-        }
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
+            WebHost.CreateDefaultBuilder(args)
+                .UseStartup<Startup>();
     }
 }

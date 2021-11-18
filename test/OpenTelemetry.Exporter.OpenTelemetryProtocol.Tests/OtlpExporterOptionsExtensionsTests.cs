@@ -131,5 +131,68 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.Equal(expectedUri, resultUri.AbsoluteUri);
         }
+
+        [Fact]
+        public void AppendExportPath_EndpointNotSet_EnvironmentVariableNotDefined_NotAppended()
+        {
+            ClearEndpointEnvVar();
+
+            var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+
+            options.AppendExportPath(options.Endpoint, "test/path");
+
+            Assert.Equal("http://localhost:4317/", options.Endpoint.AbsoluteUri);
+        }
+
+        [Fact]
+        public void AppendExportPath_EndpointNotSet_EnvironmentVariableDefined_Appended()
+        {
+            Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
+
+            var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+
+            options.AppendExportPath(options.Endpoint, "test/path");
+
+            Assert.Equal("http://test:8888/test/path", options.Endpoint.AbsoluteUri);
+
+            ClearEndpointEnvVar();
+        }
+
+        [Fact]
+        public void AppendExportPath_EndpointSetEqualToEnvironmentVariable_EnvironmentVariableDefined_NotAppended()
+        {
+            Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
+
+            var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+            var originalEndpoint = options.Endpoint;
+            options.Endpoint = new Uri("http://test:8888");
+
+            options.AppendExportPath(originalEndpoint, "test/path");
+
+            Assert.Equal("http://test:8888/", options.Endpoint.AbsoluteUri);
+
+            ClearEndpointEnvVar();
+        }
+
+        [Theory]
+        [InlineData("http://localhost:4317/")]
+        [InlineData("http://test:8888/")]
+        public void AppendExportPath_EndpointSet_EnvironmentVariableNotDefined_NotAppended(string endpoint)
+        {
+            ClearEndpointEnvVar();
+
+            var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+            var originalEndpoint = options.Endpoint;
+            options.Endpoint = new Uri(endpoint);
+
+            options.AppendExportPath(originalEndpoint, "test/path");
+
+            Assert.Equal(endpoint, options.Endpoint.AbsoluteUri);
+        }
+
+        private static void ClearEndpointEnvVar()
+        {
+            Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, null);
+        }
     }
 }

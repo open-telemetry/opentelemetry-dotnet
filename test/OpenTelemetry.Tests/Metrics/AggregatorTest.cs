@@ -47,7 +47,7 @@ namespace OpenTelemetry.Metrics.Tests
             histogramPoint.Update(1000);
             histogramPoint.Update(1001);
             histogramPoint.Update(10000000);
-            histogramPoint.TakeSnapShot(true);
+            histogramPoint.TakeSnapshot(true);
 
             Assert.Equal(22, histogramPoint.LongValue);
             for (int i = 0; i < histogramPoint.BucketCounts.Length; i++)
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Metrics.Tests
             histogramPoint.Update(11);
             histogramPoint.Update(19);
 
-            histogramPoint.TakeSnapShot(true);
+            histogramPoint.TakeSnapshot(true);
 
             // Sum of all recordings
             Assert.Equal(40, histogramPoint.DoubleValue);
@@ -100,7 +100,7 @@ namespace OpenTelemetry.Metrics.Tests
             histogramPoint.Update(11);
             histogramPoint.Update(19);
 
-            histogramPoint.TakeSnapShot(true);
+            histogramPoint.TakeSnapshot(true);
 
             // Sum of all recordings
             Assert.Equal(40, histogramPoint.DoubleValue);

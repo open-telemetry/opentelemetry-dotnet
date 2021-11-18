@@ -17,8 +17,6 @@
 #if NETCOREAPP3_1_OR_GREATER
 using System;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using OpenTelemetry.Internal;
@@ -50,6 +48,11 @@ namespace OpenTelemetry.Exporter.Prometheus
             this.exporter = exporter;
         }
 
+        internal PrometheusExporterMiddleware(PrometheusExporter exporter)
+        {
+            this.exporter = exporter;
+        }
+
         /// <summary>
         /// Invoke.
         /// </summary>
@@ -61,40 +64,39 @@ namespace OpenTelemetry.Exporter.Prometheus
 
             var response = httpContext.Response;
 
-            if (!this.exporter.TryEnterSemaphore())
-            {
-                response.StatusCode = 429;
-                return;
-            }
-
             try
             {
-                this.exporter.Collect(Timeout.Infinite);
+                var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+                try
+                {
+                    if (collectionResponse.View.Count > 0)
+                    {
+                        response.StatusCode = 200;
+                        response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
+                        response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
 
-                await WriteMetricsToResponse(this.exporter, response).ConfigureAwait(false);
+                        await response.Body.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Collection failure.");
+                    }
+                }
+                finally
+                {
+                    this.exporter.CollectionManager.ExitCollect();
+                }
             }
             catch (Exception ex)
             {
+                PrometheusExporterEventSource.Log.FailedExport(ex);
                 if (!response.HasStarted)
                 {
                     response.StatusCode = 500;
                 }
-
-                PrometheusExporterEventSource.Log.FailedExport(ex);
             }
-            finally
-            {
-                this.exporter.ReleaseSemaphore();
-            }
-        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static async Task WriteMetricsToResponse(PrometheusExporter exporter, HttpResponse response)
-        {
-            response.StatusCode = 200;
-            response.ContentType = PrometheusMetricsFormatHelper.ContentType;
-
-            await exporter.WriteMetricsCollection(response.Body, exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
+            this.exporter.OnExport = null;
         }
     }
 }

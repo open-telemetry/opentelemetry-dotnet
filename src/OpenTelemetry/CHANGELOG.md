@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+* Metrics with the same name but from different meters are allowed.
+  ([#2634](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2634))
+
+* Metrics SDK will not provide inactive Metrics to delta exporter.
+  ([#2629](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2629))
+
+* Histogram bounds are validated when added to a View.
+  ([#2573](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2573))
+
 * Changed `BatchExportActivityProcessorOptions` constructor to throw
   `FormatException` if it fails to parse any of the supported environment
   variables.
@@ -11,6 +20,9 @@
 
 * Exposed public `Batch(T[] items, int count)` constructor on `Batch<T>` struct
   ([#2542](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2542))
+
+* Added wildcard support for AddMeter.
+([#2459](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2459))
 
 ## 1.2.0-beta1
 
@@ -24,6 +36,10 @@ Released 2021-Oct-08
 
 * TracerProviderBuilder.AddLegacySource now supports wildcard activity names.
   ([#2183](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2183))
+
+* Instrument and View names are validated
+  [according with the spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument).
+  ([#2470](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2470))
 
 ## 1.2.0-alpha4
 

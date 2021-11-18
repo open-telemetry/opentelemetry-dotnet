@@ -1,11 +1,11 @@
-﻿# Create a container for running the OpenTelemetry SQL Client integration tests.
+# Create a container for running the OpenTelemetry SQL Client integration tests.
 # This should be run from the root of the repo:
-# docker build --file test/OpenTelemetry.Instrumentation.SqlClient.Tests/dockerfile .
+# docker build --file test/OpenTelemetry.Instrumentation.SqlClient.Tests/Dockerfile .
 
-ARG SDK_VERSION=5.0
-FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS build
+ARG SDK_VERSION=6.0
+FROM mcr.microsoft.com/dotnet/sdk:6.0-focal AS build
 ARG PUBLISH_CONFIGURATION=Release
-ARG PUBLISH_FRAMEWORK=net5.0
+ARG PUBLISH_FRAMEWORK=net6.0
 WORKDIR /repo
 COPY . ./
 RUN ls -la /repo
