@@ -153,12 +153,14 @@ namespace OpenTelemetry.Metrics
                         for (int i = 0; i < maxCountMetricsToBeCreated; i++)
                         {
                             var metricStreamConfig = metricStreamConfigs[i];
-                            var metricStreamName = metricStreamConfig?.Name ?? instrument.Name;
+                            var meterName = instrument.Meter.Name;
+                            var metricName = metricStreamConfig?.Name ?? instrument.Name;
+                            var metricStreamName = $"{meterName}.{metricName}";
 
-                            if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricStreamName))
+                            if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricName))
                             {
                                 OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
-                                    metricStreamName,
+                                    metricName,
                                     instrument.Meter.Name,
                                     "Metric name is invalid.",
                                     "The name must comply with the OpenTelemetry specification.");
@@ -195,7 +197,7 @@ namespace OpenTelemetry.Metrics
                                 string[] tagKeysInteresting = metricStreamConfig?.TagKeys;
                                 double[] histogramBucketBounds = (metricStreamConfig is HistogramConfiguration histogramConfig
                                     && histogramConfig.BucketBounds != null) ? histogramConfig.BucketBounds : null;
-                                metric = new Metric(instrument, temporality, metricStreamName, metricDescription, histogramBucketBounds, tagKeysInteresting);
+                                metric = new Metric(instrument, temporality, metricName, metricDescription, histogramBucketBounds, tagKeysInteresting);
 
                                 this.metrics[index] = metric;
                                 metrics.Add(metric);
@@ -245,11 +247,13 @@ namespace OpenTelemetry.Metrics
                             return;
                         }
 
+                        var meterName = instrument.Meter.Name;
                         var metricName = instrument.Name;
+                        var metricStreamName = $"{meterName}.{metricName}";
                         Metric metric = null;
                         lock (this.instrumentCreationLock)
                         {
-                            if (this.metricStreamNames.Contains(metricName))
+                            if (this.metricStreamNames.Contains(metricStreamName))
                             {
                                 OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Metric name conflicting with existing name.", "Either change the name of the instrument or change name using View.");
                                 return;
@@ -265,7 +269,7 @@ namespace OpenTelemetry.Metrics
                             {
                                 metric = new Metric(instrument, temporality, metricName, instrument.Description);
                                 this.metrics[index] = metric;
-                                this.metricStreamNames.Add(metricName);
+                                this.metricStreamNames.Add(metricStreamName);
                             }
                         }
 
