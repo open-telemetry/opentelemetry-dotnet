@@ -106,7 +106,50 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(AggregationTemporality.Cumulative, false)]
         [InlineData(AggregationTemporality.Delta, true)]
         [InlineData(AggregationTemporality.Delta, false)]
-        public void StreamNamesDuplicatesAreNotAllowedTest(AggregationTemporality temporality, bool hasView)
+        public void DuplicateInstrumentNamesFromSameMeterAreNotAllowed(AggregationTemporality temporality, bool hasView)
+        {
+            var metricItems = new List<Metric>();
+            var metricExporter = new InMemoryExporter<Metric>(metricItems);
+
+            var metricReader = new BaseExportingMetricReader(metricExporter)
+            {
+                PreferredAggregationTemporality = temporality,
+            };
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(metricReader);
+
+            if (hasView)
+            {
+                meterProviderBuilder.AddView("name1", new MetricStreamConfiguration() { Description = "description" });
+            }
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            // Expecting one metric stream.
+            var counterLong = meter.CreateCounter<long>("name1");
+            counterLong.Add(10);
+            metricReader.Collect();
+            Assert.Single(metricItems);
+
+            // The following will be ignored as
+            // metric of same name exists.
+            // Metric stream will remain one.
+            var anotherCounterSameName = meter.CreateCounter<long>("name1");
+            anotherCounterSameName.Add(10);
+            counterLong.Add(10);
+            metricItems.Clear();
+            metricReader.Collect();
+            Assert.Single(metricItems);
+        }
+
+        [Theory]
+        [InlineData(AggregationTemporality.Cumulative, true)]
+        [InlineData(AggregationTemporality.Cumulative, false)]
+        [InlineData(AggregationTemporality.Delta, true)]
+        [InlineData(AggregationTemporality.Delta, false)]
+        public void DuplicateInstrumentNamesFromDifferentMetersAreAllowed(AggregationTemporality temporality, bool hasView)
         {
             var metricItems = new List<Metric>();
             var metricExporter = new InMemoryExporter<Metric>(metricItems);
@@ -132,16 +175,6 @@ namespace OpenTelemetry.Metrics.Tests
             // Expecting one metric stream.
             var counterLong = meter1.CreateCounter<long>("name1");
             counterLong.Add(10);
-            metricReader.Collect();
-            Assert.Single(metricItems);
-
-            // The following will be ignored as
-            // metric of same name exists.
-            // Metric stream will remain one.
-            var anotherCounterSameName = meter1.CreateCounter<long>("name1");
-            anotherCounterSameName.Add(10);
-            counterLong.Add(10);
-            metricItems.Clear();
             metricReader.Collect();
             Assert.Single(metricItems);
 
