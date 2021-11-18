@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Globalization;
 using System.Text;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -25,6 +24,7 @@ namespace OpenTelemetry.Exporter
     [AggregationTemporality(AggregationTemporality.Cumulative | AggregationTemporality.Delta, AggregationTemporality.Cumulative)]
     public class ConsoleMetricExporter : ConsoleExporter<Metric>
     {
+        private byte[] buffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
         private Resource resource;
 
         public ConsoleMetricExporter(ConsoleExporterOptions options)
@@ -43,12 +43,13 @@ namespace OpenTelemetry.Exporter
                     {
                         if (resourceAttribute.Key.Equals("service.name"))
                         {
-                            Console.WriteLine("Service.Name" + resourceAttribute.Value);
+                            this.WriteLine("Service.Name" + resourceAttribute.Value);
                         }
                     }
                 }
             }
 
+            /*
             foreach (var metric in batch)
             {
                 var msg = new StringBuilder($"\nExport ");
@@ -165,8 +166,51 @@ namespace OpenTelemetry.Exporter
                     Console.WriteLine(msg);
                 }
             }
+            */
 
-            return ExportResult.Success;
+            int cursor = 0;
+
+            try
+            {
+                foreach (var metric in batch)
+                {
+                    while (true)
+                    {
+                        try
+                        {
+                            cursor = OpenTelemetry.Exporter.Prometheus.PrometheusSerializer.WriteMetric(this.buffer, cursor, metric);
+                            break;
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            int bufferSize = this.buffer.Length * 2;
+
+                            // there are two cases we might run into the following condition:
+                            // 1. we have many metrics to be exported - in this case we probably want
+                            //    to put some upper limit and allow the user to configure it.
+                            // 2. we got an IndexOutOfRangeException which was triggered by some other
+                            //    code instead of the buffer[cursor++] - in this case we should give up
+                            //    at certain point rather than allocating like crazy.
+                            if (bufferSize > 100 * 1024 * 1024)
+                            {
+                                throw;
+                            }
+
+                            var newBuffer = new byte[bufferSize];
+                            this.buffer.CopyTo(newBuffer, 0);
+                            this.buffer = newBuffer;
+                        }
+                    }
+                }
+
+                this.WriteLine(Encoding.UTF8.GetString(this.buffer, 0, Math.Max(cursor - 1, 0)));
+
+                return ExportResult.Success;
+            }
+            catch (Exception ex)
+            {
+                return ExportResult.Failure;
+            }
         }
     }
 }

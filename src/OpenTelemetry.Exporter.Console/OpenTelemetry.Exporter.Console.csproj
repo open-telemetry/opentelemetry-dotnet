@@ -17,6 +17,8 @@
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\ServiceProviderExtensions.cs" Link="Includes\ServiceProviderExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\Implementation\PrometheusSerializer.cs" Link="Includes\PrometheusSerializer.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\Implementation\PrometheusSerializerExt.cs" Link="Includes\PrometheusSerializerExt.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
   </ItemGroup>
 
