@@ -1,4 +1,4 @@
-// <copyright file="HistogramConfiguration.cs" company="OpenTelemetry Authors">
+// <copyright file="ExplicitBucketHistogramConfiguration.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,17 +18,18 @@ using System;
 
 namespace OpenTelemetry.Metrics
 {
-    public class HistogramConfiguration : MetricStreamConfiguration
+    public class ExplicitBucketHistogramConfiguration : MetricStreamConfiguration
     {
         private Aggregation aggregation = Aggregation.Histogram;
 
         /// <summary>
-        /// Gets or sets the custom histogram bounds.
+        /// Gets or sets the values representing explicit histogram bucket
+        /// boundary values.
         /// </summary>
         /// <remarks>
         /// The array must be in ascending order with distinct values.
         /// </remarks>
-        public double[] BucketBounds { get; set; }
+        public double[] Boundaries { get; set; }
 
         public override Aggregation Aggregation
         {
