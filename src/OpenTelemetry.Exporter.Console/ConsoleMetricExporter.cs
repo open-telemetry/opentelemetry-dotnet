@@ -207,7 +207,7 @@ namespace OpenTelemetry.Exporter
 
                 return ExportResult.Success;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ExportResult.Failure;
             }
