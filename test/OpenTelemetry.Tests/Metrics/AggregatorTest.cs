@@ -59,8 +59,8 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void HistogramDistributeToAllBucketsCustom()
         {
-            var bounds = new double[] { 10, 20 };
-            var histogramPoint = new MetricPoint(AggregationType.Histogram, DateTimeOffset.Now, null, null, bounds);
+            var boundaries = new double[] { 10, 20 };
+            var histogramPoint = new MetricPoint(AggregationType.Histogram, DateTimeOffset.Now, null, null, boundaries);
 
             // 5 recordings <=10
             histogramPoint.Update(-10);
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             // Count  = # of recordings
             Assert.Equal(7, histogramPoint.LongValue);
-            Assert.Equal(bounds.Length + 1, histogramPoint.BucketCounts.Length);
+            Assert.Equal(boundaries.Length + 1, histogramPoint.BucketCounts.Length);
             Assert.Equal(5, histogramPoint.BucketCounts[0]);
             Assert.Equal(2, histogramPoint.BucketCounts[1]);
             Assert.Equal(0, histogramPoint.BucketCounts[2]);
@@ -89,8 +89,8 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void HistogramWithOnlySumCount()
         {
-            var bounds = new double[] { };
-            var histogramPoint = new MetricPoint(AggregationType.HistogramSumCount, DateTimeOffset.Now, null, null, bounds);
+            var boundaries = new double[] { };
+            var histogramPoint = new MetricPoint(AggregationType.HistogramSumCount, DateTimeOffset.Now, null, null, boundaries);
 
             histogramPoint.Update(-10);
             histogramPoint.Update(0);

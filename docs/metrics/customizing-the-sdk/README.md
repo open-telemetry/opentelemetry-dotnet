@@ -218,14 +218,14 @@ with the metric are of interest to you.
       })
 ```
 
-#### Specify custom bounds for Histogram
+#### Specify custom boundaries for Histogram
 
 By default, the bounds used for a Histogram are [`{ 0, 5, 10, 25, 50, 75, 100,
 250, 500,
 1000}`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#explicit-bucket-histogram-aggregation).
 Views can be used to provide custom bounds for a Histogram. The measurements are
 then aggregated using the custom bounds provided instead of the the default
-bounds. This requires the use of `HistogramConfiguration`.
+bounds. This requires the use of `ExplicitBucketHistogramConfiguration`.
 
 ```csharp
    // Change Histogram bounds to count measurements under the following buckets:
@@ -234,14 +234,14 @@ bounds. This requires the use of `HistogramConfiguration`.
    // (20, +inf)
    .AddView(
       instrumentName: "MyHistogram",
-      new HistogramConfiguration{ BucketBounds = new double[] { 10, 20 } })
+      new ExplicitBucketHistogramConfiguration{ BucketBounds = new double[] { 10, 20 } })
 
-   // If you provide an empty `double` array as `BucketBounds` to the `HistogramConfiguration`,
+   // If you provide an empty `double` array as `BucketBounds` to the `ExplicitBucketHistogramConfiguration`,
    // the SDK will only export the sum and count for the measurements.
    // There are no buckets exported in this case.
    .AddView(
       instrumentName: "MyHistogram",
-      new HistogramConfiguration { BucketBounds = new double[] { } })
+      new ExplicitBucketHistogramConfiguration { BucketBounds = new double[] { } })
 ```
 
 ```csharp
@@ -251,8 +251,8 @@ bounds. This requires the use of `HistogramConfiguration`.
          if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
             instrument.Name == "MyHistogram")
          {
-            // `HistogramConfiguration` is a child class of `MetricStreamConfiguration`
-            return new HistogramConfiguration
+            // `ExplicitBucketHistogramConfiguration` is a child class of `MetricStreamConfiguration`
+            return new ExplicitBucketHistogramConfiguration
             {
                BucketBounds = new double[] { 10, 20 },
             };
