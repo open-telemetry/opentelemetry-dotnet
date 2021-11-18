@@ -184,10 +184,12 @@ namespace OpenTelemetry.Metrics
 
         internal Metric AddMetricWithNoViews(Instrument instrument)
         {
+            var meterName = instrument.Meter.Name;
             var metricName = instrument.Name;
+            var metricStreamName = $"{meterName}.{metricName}";
             lock (this.instrumentCreationLock)
             {
-                if (this.metricStreamNames.Contains(metricName))
+                if (this.metricStreamNames.Contains(metricStreamName))
                 {
                     OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Metric name conflicting with existing name.", "Either change the name of the instrument or change name using View.");
                     return null;
@@ -203,7 +205,7 @@ namespace OpenTelemetry.Metrics
                 {
                     var metric = new Metric(instrument, this.preferredAggregationTemporality, metricName, instrument.Description);
                     this.metrics[index] = metric;
-                    this.metricStreamNames.Add(metricName);
+                    this.metricStreamNames.Add(metricStreamName);
                     return metric;
                 }
             }
@@ -233,12 +235,14 @@ namespace OpenTelemetry.Metrics
                 for (int i = 0; i < maxCountMetricsToBeCreated; i++)
                 {
                     var metricStreamConfig = metricStreamConfigs[i];
-                    var metricStreamName = metricStreamConfig?.Name ?? instrument.Name;
+                    var meterName = instrument.Meter.Name;
+                    var metricName = metricStreamConfig?.Name ?? instrument.Name;
+                    var metricStreamName = $"{meterName}.{metricName}";
 
-                    if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricStreamName))
+                    if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricName))
                     {
                         OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
-                            metricStreamName,
+                            metricName,
                             instrument.Meter.Name,
                             "Metric name is invalid.",
                             "The name must comply with the OpenTelemetry specification.");
@@ -273,9 +277,9 @@ namespace OpenTelemetry.Metrics
                         Metric metric;
                         var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
                         string[] tagKeysInteresting = metricStreamConfig?.TagKeys;
-                        double[] histogramBucketBounds = (metricStreamConfig is HistogramConfiguration histogramConfig
-                            && histogramConfig.BucketBounds != null) ? histogramConfig.BucketBounds : null;
-                        metric = new Metric(instrument, this.preferredAggregationTemporality, metricStreamName, metricDescription, histogramBucketBounds, tagKeysInteresting);
+                        double[] histogramBucketBounds = (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfig
+                            && histogramConfig.Boundaries != null) ? histogramConfig.Boundaries : null;
+                        metric = new Metric(instrument, this.preferredAggregationTemporality, metricName, metricDescription, histogramBucketBounds, tagKeysInteresting);
 
                         this.metrics[index] = metric;
                         metrics.Add(metric);
@@ -447,25 +451,29 @@ namespace OpenTelemetry.Metrics
         {
             try
             {
-                var indexSnapShot = Math.Min(this.metricIndex, MaxMetrics - 1);
-                var target = indexSnapShot + 1;
+                var indexSnapshot = Math.Min(this.metricIndex, MaxMetrics - 1);
+                var target = indexSnapshot + 1;
                 int metricCountCurrentBatch = 0;
                 for (int i = 0; i < target; i++)
                 {
                     var metric = this.metrics[i];
+                    int metricPointSize = 0;
                     if (metric != null)
                     {
                         if (metric.InstrumentDisposed)
                         {
-                            metric.SnapShot();
+                            metricPointSize = metric.Snapshot();
                             this.metrics[i] = null;
                         }
                         else
                         {
-                            metric.SnapShot();
+                            metricPointSize = metric.Snapshot();
                         }
 
-                        this.metricsCurrentBatch[metricCountCurrentBatch++] = metric;
+                        if (metricPointSize > 0)
+                        {
+                            this.metricsCurrentBatch[metricCountCurrentBatch++] = metric;
+                        }
                     }
                 }
 
