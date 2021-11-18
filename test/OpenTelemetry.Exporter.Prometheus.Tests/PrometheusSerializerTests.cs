@@ -27,7 +27,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
     public sealed class PrometheusSerializerTests
     {
         [Fact]
-        public void ZeroDimension()
+        public void GaugeZeroDimension()
         {
             var buffer = new byte[85000];
             var metrics = new List<Metric>();
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
-        public void ZeroDimensionWithDescription()
+        public void GaugeZeroDimensionWithDescription()
         {
             var buffer = new byte[85000];
             var metrics = new List<Metric>();
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
-        public void ZeroDimensionWithUnit()
+        public void GaugeZeroDimensionWithUnit()
         {
             var buffer = new byte[85000];
             var metrics = new List<Metric>();
@@ -103,7 +103,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
-        public void OneDimension()
+        public void GaugeOneDimension()
         {
             var buffer = new byte[85000];
             var metrics = new List<Metric>();
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
-        public void DoubleGaugeSubnormal()
+        public void GaugeDoubleSubnormal()
         {
             var buffer = new byte[85000];
             var metrics = new List<Metric>();
@@ -161,7 +161,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
-        public void DoubleSumInfinites()
+        public void SumDoubleInfinites()
         {
             var buffer = new byte[85000];
             var metrics = new List<Metric>();
@@ -188,7 +188,85 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
-        public void HistogramFinites()
+        public void HistogramZeroDimension()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var histogram = meter.CreateHistogram<double>("test_histogram");
+            histogram.Record(18);
+            histogram.Record(100);
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_histogram histogram\n"
+                    + "test_histogram_bucket{le='0'} 0 \\d+\n"
+                    + "test_histogram_bucket{le='5'} 0 \\d+\n"
+                    + "test_histogram_bucket{le='10'} 0 \\d+\n"
+                    + "test_histogram_bucket{le='25'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='50'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='75'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='100'} 2 \\d+\n"
+                    + "test_histogram_bucket{le='250'} 2 \\d+\n"
+                    + "test_histogram_bucket{le='500'} 2 \\d+\n"
+                    + "test_histogram_bucket{le='1000'} 2 \\d+\n"
+                    + "test_histogram_bucket{le='\\+Inf'} 2 \\d+\n"
+                    + "test_histogram_sum 118 \\d+\n"
+                    + "test_histogram_count 2 \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
+        public void HistogramOneDimension()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var histogram = meter.CreateHistogram<double>("test_histogram");
+            histogram.Record(18, new KeyValuePair<string, object>("x", "1"));
+            histogram.Record(100, new KeyValuePair<string, object>("x", "1"));
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_histogram histogram\n"
+                    + "test_histogram_bucket{x='1',le='0'} 0 \\d+\n"
+                    + "test_histogram_bucket{x='1',le='5'} 0 \\d+\n"
+                    + "test_histogram_bucket{x='1',le='10'} 0 \\d+\n"
+                    + "test_histogram_bucket{x='1',le='25'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',le='50'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',le='75'} 1 \\d+\n"
+                    + "test_histogram_bucket{x='1',le='100'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',le='250'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',le='500'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',le='1000'} 2 \\d+\n"
+                    + "test_histogram_bucket{x='1',le='\\+Inf'} 2 \\d+\n"
+                    + "test_histogram_sum{x='1'} 118 \\d+\n"
+                    + "test_histogram_count{x='1'} 2 \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
+        public void HistogramTwoDimensions()
         {
             var buffer = new byte[85000];
             var metrics = new List<Metric>();
@@ -239,9 +317,9 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .Build();
 
             var histogram = meter.CreateHistogram<double>("test_histogram");
-            histogram.Record(18, new("x", "1"), new("y", "2"));
-            histogram.Record(double.PositiveInfinity, new("x", "1"), new("y", "2"));
-            histogram.Record(double.PositiveInfinity, new("x", "1"), new("y", "2"));
+            histogram.Record(18);
+            histogram.Record(double.PositiveInfinity);
+            histogram.Record(double.PositiveInfinity);
 
             provider.ForceFlush();
 
@@ -249,19 +327,19 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             Assert.Matches(
                 ("^"
                     + "# TYPE test_histogram histogram\n"
-                    + "test_histogram_bucket{x='1',y='2',le='0'} 0 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='5'} 0 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='10'} 0 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='25'} 1 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='50'} 1 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='75'} 1 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='100'} 1 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='250'} 1 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='500'} 1 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='1000'} 1 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='\\+Inf'} 3 \\d+\n"
-                    + "test_histogram_sum{x='1',y='2'} \\+Inf \\d+\n"
-                    + "test_histogram_count{x='1',y='2'} 3 \\d+\n"
+                    + "test_histogram_bucket{le='0'} 0 \\d+\n"
+                    + "test_histogram_bucket{le='5'} 0 \\d+\n"
+                    + "test_histogram_bucket{le='10'} 0 \\d+\n"
+                    + "test_histogram_bucket{le='25'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='50'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='75'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='100'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='250'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='500'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='1000'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='\\+Inf'} 3 \\d+\n"
+                    + "test_histogram_sum \\+Inf \\d+\n"
+                    + "test_histogram_count 3 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
@@ -279,9 +357,9 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .Build();
 
             var histogram = meter.CreateHistogram<double>("test_histogram");
-            histogram.Record(18, new("x", "1"), new("y", "2"));
-            histogram.Record(double.PositiveInfinity, new("x", "1"), new("y", "2"));
-            histogram.Record(double.NaN, new("x", "1"), new("y", "2"));
+            histogram.Record(18);
+            histogram.Record(double.PositiveInfinity);
+            histogram.Record(double.NaN);
 
             provider.ForceFlush();
 
@@ -289,19 +367,19 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             Assert.Matches(
                 ("^"
                     + "# TYPE test_histogram histogram\n"
-                    + "test_histogram_bucket{x='1',y='2',le='0'} 0 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='5'} 0 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='10'} 0 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='25'} 1 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='50'} 1 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='75'} 1 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='100'} 1 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='250'} 1 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='500'} 1 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='1000'} 1 \\d+\n"
-                    + "test_histogram_bucket{x='1',y='2',le='\\+Inf'} 3 \\d+\n"
-                    + "test_histogram_sum{x='1',y='2'} Nan \\d+\n"
-                    + "test_histogram_count{x='1',y='2'} 3 \\d+\n"
+                    + "test_histogram_bucket{le='0'} 0 \\d+\n"
+                    + "test_histogram_bucket{le='5'} 0 \\d+\n"
+                    + "test_histogram_bucket{le='10'} 0 \\d+\n"
+                    + "test_histogram_bucket{le='25'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='50'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='75'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='100'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='250'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='500'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='1000'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='\\+Inf'} 3 \\d+\n"
+                    + "test_histogram_sum Nan \\d+\n"
+                    + "test_histogram_count 3 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
