@@ -285,6 +285,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
         }
 
+        /*
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static OtlpMetrics.Exemplar ToOtlpExemplar(this IExemplar exemplar)
         {
@@ -330,6 +331,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             return otlpExemplar;
         }
+        */
 
         private static Action<RepeatedField<OtlpMetrics.Metric>, int> CreateRepeatedFieldOfMetricSetCountAction()
         {
