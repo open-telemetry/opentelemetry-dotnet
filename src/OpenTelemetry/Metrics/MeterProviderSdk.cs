@@ -196,7 +196,7 @@ namespace OpenTelemetry.Metrics
                                 var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
                                 string[] tagKeysInteresting = metricStreamConfig?.TagKeys;
                                 double[] histogramBucketBounds = (metricStreamConfig is HistogramConfiguration histogramConfig
-                                    && histogramConfig.BucketBounds != null) ? histogramConfig.BucketBounds : null;
+                                    && histogramConfig.Boundaries != null) ? histogramConfig.Boundaries : null;
                                 metric = new Metric(instrument, temporality, metricName, metricDescription, histogramBucketBounds, tagKeysInteresting);
 
                                 this.metrics[index] = metric;

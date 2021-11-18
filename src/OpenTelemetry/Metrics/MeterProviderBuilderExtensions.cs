@@ -89,9 +89,9 @@ namespace OpenTelemetry.Metrics
             if (metricStreamConfiguration is HistogramConfiguration histogramConfiguration)
             {
                 // Validate histogram bounds
-                if (histogramConfiguration.BucketBounds != null && !IsSortedAndDistinct(histogramConfiguration.BucketBounds))
+                if (histogramConfiguration.Boundaries != null && !IsSortedAndDistinct(histogramConfiguration.Boundaries))
                 {
-                    throw new ArgumentException($"Histogram bounds must be in ascending order with distinct values", nameof(histogramConfiguration.BucketBounds));
+                    throw new ArgumentException($"Histogram bounds must be in ascending order with distinct values", nameof(histogramConfiguration.Boundaries));
                 }
             }
 
