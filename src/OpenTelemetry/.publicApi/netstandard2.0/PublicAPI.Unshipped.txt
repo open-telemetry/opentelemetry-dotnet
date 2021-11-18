@@ -29,9 +29,6 @@ OpenTelemetry.Metrics.BatchMetricPoint.Enumerator.Enumerator() -> void
 OpenTelemetry.Metrics.BatchMetricPoint.Enumerator.MoveNext() -> bool
 OpenTelemetry.Metrics.BatchMetricPoint.Enumerator.Reset() -> void
 OpenTelemetry.Metrics.BatchMetricPoint.GetEnumerator() -> OpenTelemetry.Metrics.BatchMetricPoint.Enumerator
-OpenTelemetry.Metrics.DataValue
-OpenTelemetry.Metrics.DataValue.DataValue() -> void
-OpenTelemetry.Metrics.DataValue.Value.get -> object
 OpenTelemetry.Metrics.ExportModes
 OpenTelemetry.Metrics.ExportModes.Pull = 2 -> OpenTelemetry.Metrics.ExportModes
 OpenTelemetry.Metrics.ExportModes.Push = 1 -> OpenTelemetry.Metrics.ExportModes
@@ -42,16 +39,6 @@ OpenTelemetry.Metrics.HistogramConfiguration
 OpenTelemetry.Metrics.HistogramConfiguration.BucketBounds.get -> double[]
 OpenTelemetry.Metrics.HistogramConfiguration.BucketBounds.set -> void
 OpenTelemetry.Metrics.HistogramConfiguration.HistogramConfiguration() -> void
-OpenTelemetry.Metrics.IDataPoint
-OpenTelemetry.Metrics.IDataPoint.Tags.get -> System.Collections.Generic.KeyValuePair<string, object>[]
-OpenTelemetry.Metrics.IDataPoint.Timestamp.get -> System.DateTimeOffset
-OpenTelemetry.Metrics.IDataValue
-OpenTelemetry.Metrics.IDataValue.Value.get -> object
-OpenTelemetry.Metrics.IExemplar
-OpenTelemetry.Metrics.IExemplar.FilteredTags.get -> System.Collections.Generic.KeyValuePair<string, object>[]
-OpenTelemetry.Metrics.IExemplar.SpanId.get -> System.Diagnostics.ActivitySpanId
-OpenTelemetry.Metrics.IExemplar.Timestamp.get -> System.DateTimeOffset
-OpenTelemetry.Metrics.IExemplar.TraceId.get -> System.Diagnostics.ActivityTraceId
 OpenTelemetry.Metrics.IPullMetricExporter
 OpenTelemetry.Metrics.IPullMetricExporter.Collect.get -> System.Func<int, bool>
 OpenTelemetry.Metrics.IPullMetricExporter.Collect.set -> void
