@@ -36,7 +36,7 @@ namespace OpenTelemetry.Metrics
         private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs = new List<Func<Instrument, MetricStreamConfiguration>>();
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
         private int maxMetricStreams = MaxMetricsDefault;
-        private int maxMetricPointsPerMetricStream = maxMetricPointsPerMetricStreamPerMetricDefault;
+        private int maxMetricPointsPerMetricStream = MaxMetricPointsPerMetricDefault;
 
         protected MeterProviderBuilderBase()
         {
@@ -144,7 +144,7 @@ namespace OpenTelemetry.Metrics
                 this.meterSources,
                 this.instrumentationFactories,
                 this.viewConfigs,
-                this.metricStreamLimit,
+                this.maxMetricStreams,
                 this.maxMetricPointsPerMetricStream,
                 this.MetricReaders.ToArray());
         }
