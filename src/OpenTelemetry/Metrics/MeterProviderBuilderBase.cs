@@ -109,7 +109,7 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        internal MeterProviderBuilder SetMetricStreamLimit(int metricStreamLimit)
+        internal MeterProviderBuilder SetMaxMetricStreams(int metricStreamLimit)
         {
             Guard.Range(metricStreamLimit, min: 1);
 
@@ -117,7 +117,7 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        internal MeterProviderBuilder SetMetricPointPerMetricStreamLimit(int metricPointLimit)
+        internal MeterProviderBuilder SetMaxMetricPointsPerMetricStream(int metricPointLimit)
         {
             Guard.Range(metricPointLimit, min: 1);
 

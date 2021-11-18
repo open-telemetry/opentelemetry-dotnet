@@ -135,11 +135,11 @@ namespace OpenTelemetry.Metrics
         /// If an instrument is created, but disposed later, this will still be contributing to the limit.
         /// This may change in the future.
         /// </remarks>
-        public static MeterProviderBuilder SetMetricStreamLimit(this MeterProviderBuilder meterProviderBuilder, int metricStreamLimit)
+        public static MeterProviderBuilder SetMaxMetricStreams(this MeterProviderBuilder meterProviderBuilder, int metricStreamLimit)
         {
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                meterProviderBuilderBase.SetMetricStreamLimit(metricStreamLimit);
+                meterProviderBuilderBase.SetMaxMetricStreams(metricStreamLimit);
             }
 
             return meterProviderBuilder;
@@ -158,11 +158,11 @@ namespace OpenTelemetry.Metrics
         /// it will still be contributing to the limit.
         /// This may change in the future.
         /// </remarks>
-        public static MeterProviderBuilder SetMetricPointPerMetricStreamLimit(this MeterProviderBuilder meterProviderBuilder, int metricPointLimit)
+        public static MeterProviderBuilder SetMaxMetricPointsPerMetricStream(this MeterProviderBuilder meterProviderBuilder, int metricPointLimit)
         {
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                meterProviderBuilderBase.SetMetricPointPerMetricStreamLimit(metricPointLimit);
+                meterProviderBuilderBase.SetMaxMetricPointsPerMetricStream(metricPointLimit);
             }
 
             return meterProviderBuilder;
