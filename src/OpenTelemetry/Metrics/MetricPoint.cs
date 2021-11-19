@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace OpenTelemetry.Metrics
@@ -37,8 +38,7 @@ namespace OpenTelemetry.Metrics
         {
             this.AggType = aggType;
             this.StartTime = startTime;
-            this.Keys = keys;
-            this.Values = values;
+            this.Attributes = new MetricPointAttributes(keys, values);
             this.EndTime = default;
             this.LongValue = default;
             this.longVal = default;
@@ -70,9 +70,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public string[] Keys { get; internal set; }
-
-        public object[] Values { get; internal set; }
+        public MetricPointAttributes Attributes { get; }
 
         public DateTimeOffset StartTime { get; internal set; }
 
@@ -287,6 +285,54 @@ namespace OpenTelemetry.Metrics
 
                         break;
                     }
+            }
+        }
+    }
+
+    public readonly struct MetricPointAttributes
+    {
+        private readonly string[] keys;
+        private readonly object[] values;
+
+        internal MetricPointAttributes(string[] keys, object[] values)
+        {
+            this.keys = keys;
+            this.values = values;
+        }
+
+        public int Count => keys?.Length ?? 0;
+
+        public Enumerator GetEnumerator() => new Enumerator(this);
+
+        public struct Enumerator
+        {
+            private readonly MetricPointAttributes metricPointAttributes;
+            private int index;
+
+            internal Enumerator(MetricPointAttributes metricPointAttributes)
+            {
+                this.metricPointAttributes = metricPointAttributes;
+                this.index = 0;
+                this.Current = default;
+            }
+
+            public KeyValuePair<string, object> Current { get; private set; }
+
+            public bool MoveNext()
+            {
+                int index = this.index;
+
+                if (index < this.metricPointAttributes.Count)
+                {
+                    this.Current = new KeyValuePair<string, object>(
+                        this.metricPointAttributes.keys[index],
+                        this.metricPointAttributes.values[index]);
+
+                    this.index++;
+                    return true;
+                }
+
+                return false;
             }
         }
     }
