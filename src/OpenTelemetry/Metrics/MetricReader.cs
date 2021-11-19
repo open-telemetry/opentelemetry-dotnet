@@ -22,7 +22,10 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
-    public abstract class MetricReader : IDisposable
+    /// <summary>
+    /// MetricReader which does not deal with individual metrics.
+    /// </summary>
+    public abstract partial class MetricReader : IDisposable
     {
         private const AggregationTemporality CumulativeAndDelta = AggregationTemporality.Cumulative | AggregationTemporality.Delta;
         private readonly object newTaskLock = new object();
@@ -211,8 +214,10 @@ namespace OpenTelemetry.Metrics
                 ? null
                 : Stopwatch.StartNew();
 
-            var collectMetric = this.ParentProvider.GetMetricCollect();
-            var metrics = collectMetric();
+            var collectObservableInstruments = this.ParentProvider.GetObservableInstrumentCollectCallback();
+            collectObservableInstruments();
+
+            var metrics = this.GetMetricsBatch();
 
             if (sw == null)
             {

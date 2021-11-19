@@ -121,7 +121,6 @@ static OpenTelemetry.Metrics.MetricTypeExtensions.IsGauge(this OpenTelemetry.Met
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsHistogram(this OpenTelemetry.Metrics.MetricType self) -> bool
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsLong(this OpenTelemetry.Metrics.MetricType self) -> bool
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsSum(this OpenTelemetry.Metrics.MetricType self) -> bool
-static OpenTelemetry.ProviderExtensions.GetMetricCollect(this OpenTelemetry.BaseProvider baseProvider) -> System.Func<OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric>>
 static OpenTelemetry.Sdk.CreateMeterProviderBuilder() -> OpenTelemetry.Metrics.MeterProviderBuilder
 static readonly OpenTelemetry.Metrics.MetricStreamConfiguration.Drop -> OpenTelemetry.Metrics.MetricStreamConfiguration
 virtual OpenTelemetry.BaseExporter<T>.OnForceFlush(int timeoutMilliseconds) -> bool
