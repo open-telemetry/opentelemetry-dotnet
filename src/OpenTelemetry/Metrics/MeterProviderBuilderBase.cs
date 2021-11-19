@@ -71,11 +71,6 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilder AddReader(MetricReader reader)
         {
-            if (this.MetricReaders.Count >= 1)
-            {
-                throw new InvalidOperationException("Only one Metricreader is allowed.");
-            }
-
             this.MetricReaders.Add(reader);
             return this;
         }
