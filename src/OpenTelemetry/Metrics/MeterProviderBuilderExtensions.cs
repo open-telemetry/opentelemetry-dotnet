@@ -154,9 +154,9 @@ namespace OpenTelemetry.Metrics
         /// <param name="maxMetricPointsPerMetricStream">Maximum maximum number of metric points allowed per metric stream.</param>
         /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
         /// <remarks>
-        /// If a particular combination of key value pair is used at least once,
-        /// it will still be contributing to the limit.
-        /// This may change in the future.
+        /// If a particular key/value pair combination is used at least once,
+        /// it will contribute to the limit for the life of the process.
+        /// This may change in the future. See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/2360.
         /// </remarks>
         public static MeterProviderBuilder SetMaxMetricPointsPerMetricStream(this MeterProviderBuilder meterProviderBuilder, int maxMetricPointsPerMetricStream)
         {
