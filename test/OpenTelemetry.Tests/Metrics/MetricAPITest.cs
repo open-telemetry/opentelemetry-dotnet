@@ -489,26 +489,26 @@ namespace OpenTelemetry.Metrics.Tests
             // for no tag point!
             // This may be changed later.
             counterLong.Add(10);
-            for (int i = 0; i < AggregatorStore.MaxMetricPoints + 1; i++)
+            for (int i = 0; i < MeterProviderBuilderBase.MaxMetricPointsPerMetricDefault + 1; i++)
             {
                 counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
             }
 
             metricReader.Collect();
-            Assert.Equal(AggregatorStore.MaxMetricPoints, MetricPointCount());
+            Assert.Equal(MeterProviderBuilderBase.MaxMetricPointsPerMetricDefault, MetricPointCount());
 
             metricItems.Clear();
             counterLong.Add(10);
-            for (int i = 0; i < AggregatorStore.MaxMetricPoints + 1; i++)
+            for (int i = 0; i < MeterProviderBuilderBase.MaxMetricPointsPerMetricDefault + 1; i++)
             {
                 counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
             }
 
             metricReader.Collect();
-            Assert.Equal(AggregatorStore.MaxMetricPoints, MetricPointCount());
+            Assert.Equal(MeterProviderBuilderBase.MaxMetricPointsPerMetricDefault, MetricPointCount());
 
             counterLong.Add(10);
-            for (int i = 0; i < AggregatorStore.MaxMetricPoints + 1; i++)
+            for (int i = 0; i < MeterProviderBuilderBase.MaxMetricPointsPerMetricDefault + 1; i++)
             {
                 counterLong.Add(10, new KeyValuePair<string, object>("key", "value" + i));
             }
@@ -519,7 +519,7 @@ namespace OpenTelemetry.Metrics.Tests
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueC"));
             metricItems.Clear();
             metricReader.Collect();
-            Assert.Equal(AggregatorStore.MaxMetricPoints, MetricPointCount());
+            Assert.Equal(MeterProviderBuilderBase.MaxMetricPointsPerMetricDefault, MetricPointCount());
         }
 
         [Fact]

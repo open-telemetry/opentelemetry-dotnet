@@ -29,10 +29,14 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public abstract class MeterProviderBuilderBase : MeterProviderBuilder
     {
+        internal const int MaxMetricsDefault = 1000;
+        internal const int MaxMetricPointsPerMetricDefault = 2000;
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private readonly List<string> meterSources = new List<string>();
         private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs = new List<Func<Instrument, MetricStreamConfiguration>>();
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
+        private int maxMetricStreams = MaxMetricsDefault;
+        private int maxMetricPointsPerMetricStream = MaxMetricPointsPerMetricDefault;
 
         protected MeterProviderBuilderBase()
         {
@@ -100,6 +104,22 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
+        internal MeterProviderBuilder SetMaxMetricStreams(int maxMetricStreams)
+        {
+            Guard.Range(maxMetricStreams, min: 1);
+
+            this.maxMetricStreams = maxMetricStreams;
+            return this;
+        }
+
+        internal MeterProviderBuilder SetMaxMetricPointsPerMetricStream(int maxMetricPointsPerMetricStream)
+        {
+            Guard.Range(maxMetricPointsPerMetricStream, min: 1);
+
+            this.maxMetricPointsPerMetricStream = maxMetricPointsPerMetricStream;
+            return this;
+        }
+
         internal MeterProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
             Debug.Assert(resourceBuilder != null, $"{nameof(resourceBuilder)} must not be null");
@@ -119,6 +139,8 @@ namespace OpenTelemetry.Metrics
                 this.meterSources,
                 this.instrumentationFactories,
                 this.viewConfigs,
+                this.maxMetricStreams,
+                this.maxMetricPointsPerMetricStream,
                 this.MetricReaders.ToArray());
         }
 
