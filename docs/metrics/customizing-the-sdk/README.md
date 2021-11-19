@@ -64,7 +64,7 @@ instruments must be explicitly added to the meter provider.
 `AddMeter` method on `MeterProviderBuilder` can be used to add a `Meter` to the
 provider. The name of the `Meter` (case-insensitive) must be provided as an
 argument to this method. `AddMeter` can be called multiple times to add more
-than one meters. It also supports wild-card subscription model. It is important
+than one meters. It also supports wildcard subscription model. It is important
 to note that *all* the instruments from the meter will be enabled, when a
 `Meter` is added. To selectively drop some instruments from a `Meter`, use the
 [View](#view) feature, as shown [here](#drop-an-instrument).
