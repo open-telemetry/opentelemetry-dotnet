@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Threading;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter
