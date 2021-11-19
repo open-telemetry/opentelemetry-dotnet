@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+* Renamed `HistogramConfiguration` to `ExplicitBucketHistogramConfiguration`
+  and changed its member `BucketBounds` to `Boundaries`.
+  ([#2638](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2638))
+
+* Metrics with the same name but from different meters are allowed.
+  ([#2634](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2634))
+
+* Metrics SDK will not provide inactive Metrics to delta exporter.
+  ([#2629](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2629))
+
 * Histogram bounds are validated when added to a View.
   ([#2573](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2573))
 
