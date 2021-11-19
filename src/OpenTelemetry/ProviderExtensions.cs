@@ -50,16 +50,6 @@ namespace OpenTelemetry
             return Resource.Empty;
         }
 
-        public static Func<Batch<Metric>> GetMetricCollect(this BaseProvider baseProvider)
-        {
-            if (baseProvider is MeterProviderSdk meterProviderSdk)
-            {
-                return meterProviderSdk.Collect;
-            }
-
-            return null;
-        }
-
         /// <summary>
         /// Gets the <see cref="Resource"/> associated with the <see cref="BaseProvider"/>.
         /// </summary>
@@ -68,6 +58,16 @@ namespace OpenTelemetry
         public static Resource GetDefaultResource(this BaseProvider baseProvider)
         {
             return ResourceBuilder.CreateDefault().Build();
+        }
+
+        internal static Action GetObservableInstrumentCollectCallback(this BaseProvider baseProvider)
+        {
+            if (baseProvider is MeterProviderSdk meterProviderSdk)
+            {
+                return meterProviderSdk.CollectObservableInstruments;
+            }
+
+            return null;
         }
     }
 }
