@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-beta2
+
+Released 2021-Nov-19
+
 * Renamed `HistogramConfiguration` to `ExplicitBucketHistogramConfiguration`
   and changed its member `BucketBounds` to `Boundaries`.
   ([#2638](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2638))
