@@ -96,6 +96,9 @@ namespace OpenTelemetry.Metrics
 
             this.listener = new MeterListener();
             var viewConfigCount = this.viewConfigs.Count;
+
+            // We expect that all the readers to be added are provided before MeterProviderSdk is built.
+            // If there are no readers added, we do not enable measurements for the instruments.
             if (viewConfigCount > 0)
             {
                 this.listener.InstrumentPublished = (instrument, listener) =>
