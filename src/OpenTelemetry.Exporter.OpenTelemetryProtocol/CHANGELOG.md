@@ -5,7 +5,7 @@
 * Changed `OtlpExporterOptions` constructor to throw
   `FormatException` if it fails to parse any of the supported environment
   variables.
-  
+
 * Changed `OtlpExporterOptions.MetricExportIntervalMilliseconds` to default
   60000 milliseconds.
   ([#2641](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2641))
