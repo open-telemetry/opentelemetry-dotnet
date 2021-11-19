@@ -64,7 +64,10 @@ instruments must be explicitly added to the meter provider.
 `AddMeter` method on `MeterProviderBuilder` can be used to add a `Meter` to the
 provider. The name of the `Meter` (case-insensitive) must be provided as an
 argument to this method. `AddMeter` can be called multiple times to add more
-than one meters. It also supports wild-card subscription model.
+than one meters. It also supports wildcard subscription model. It is important
+to note that *all* the instruments from the meter will be enabled, when a
+`Meter` is added. To selectively drop some instruments from a `Meter`, use the
+[View](#view) feature, as shown [here](#drop-an-instrument).
 
 It is **not** possible to add meters *once* the provider is built by the
 `Build()` method on the `MeterProviderBuilder`.
@@ -267,6 +270,48 @@ default boundaries. This requires the use of `ExplicitBucketHistogramConfigurati
 for Views.
 
 See [Program.cs](./Program.cs) for a complete example.
+
+### Changing maximum Metric Streams
+
+Every instrument results in the creation of a single Metric stream. With Views,
+it is possible to produce more than one Metric stream from a single instrument.
+To protect the SDK from unbounded memory usage, SDK limits the maximum number of
+metric streams. All the measurements from the instruments created after reaching
+this limit will be dropped. The default is 1000, and `SetMaxMetricStreams` can
+be used to override the default.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter("*")
+    .SetMaxMetricStreams(100)
+    .Build();
+```
+
+### Changing maximum MetricPoints per MetricStream
+
+A Metric stream can contain as many Metric points as the number of unique
+combination of keys and values. To protect the SDK from unbounded memory usage,
+SDK limits the maximum number of metric points per metric stream, to a default
+of 2000. Once the limit is hit, any new key/value combination for that metric is
+ignored. `SetMaxMetricPointsPerMetricStream` can be used to override the
+default.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter("*")
+    .SetMaxMetricPointsPerMetricStream(10000)
+    .Build();
+```
+
+**NOTE:** The above limit is *per* metric stream, and applies to all the metric
+streams. There is no ability to apply different limits for each instrument at
+this moment.
 
 ### Instrumentation
 
