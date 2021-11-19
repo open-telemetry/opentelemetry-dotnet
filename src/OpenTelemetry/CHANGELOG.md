@@ -31,6 +31,9 @@
 * Add support for multiple Metric readers
   ([#2596](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2596))
 
+* Add ability to configure MaxMetricStreams, MaxMetricPointsPerMetricStream
+  ([#2635](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2635))
+
 ## 1.2.0-beta1
 
 Released 2021-Oct-08

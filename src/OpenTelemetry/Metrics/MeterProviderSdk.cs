@@ -41,6 +41,8 @@ namespace OpenTelemetry.Metrics
             IEnumerable<string> meterSources,
             List<MeterProviderBuilderBase.InstrumentationFactory> instrumentationFactories,
             List<Func<Instrument, MetricStreamConfiguration>> viewConfigs,
+            int maxMetricStreams,
+            int maxMetricPointsPerMetricStream,
             IEnumerable<MetricReader> readers)
         {
             this.Resource = resource;
@@ -51,6 +53,8 @@ namespace OpenTelemetry.Metrics
                 Guard.Null(reader, nameof(reader));
 
                 reader.SetParentProvider(this);
+                reader.SetMaxMetricStreams(maxMetricStreams);
+                reader.SetMaxMetricPointsPerMetricStream(maxMetricPointsPerMetricStream);
 
                 if (this.reader == null)
                 {
