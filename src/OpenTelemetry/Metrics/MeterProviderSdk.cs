@@ -53,6 +53,8 @@ namespace OpenTelemetry.Metrics
                 Guard.Null(reader, nameof(reader));
 
                 reader.SetParentProvider(this);
+                reader.SetMaxMetricStreams(maxMetricStreams);
+                reader.SetMaxMetricPointsPerMetricStream(maxMetricPointsPerMetricStream);
 
                 if (this.reader == null)
                 {

@@ -26,11 +26,12 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public abstract partial class MetricReader
     {
-        internal const int MaxMetrics = 1000;
-        private readonly Metric[] metrics = new Metric[MaxMetrics];
-        private readonly Metric[] metricsCurrentBatch = new Metric[MaxMetrics];
         private readonly HashSet<string> metricStreamNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly object instrumentCreationLock = new object();
+        private int maxMetricStreams;
+        private int maxMetricPointsPerMetricStream;
+        private Metric[] metrics;
+        private Metric[] metricsCurrentBatch;
         private int metricIndex = -1;
 
         internal Metric AddMetricWithNoViews(Instrument instrument)
@@ -47,14 +48,14 @@ namespace OpenTelemetry.Metrics
                 }
 
                 var index = ++this.metricIndex;
-                if (index >= MaxMetrics)
+                if (index >= this.maxMetricStreams)
                 {
                     OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Maximum allowed Metrics for the provider exceeded.", "Use views to drop unused instruments. Or configure Provider to allow higher limit.");
                     return null;
                 }
                 else
                 {
-                    var metric = new Metric(instrument, this.preferredAggregationTemporality, metricName, instrument.Description);
+                    var metric = new Metric(instrument, this.preferredAggregationTemporality, metricName, instrument.Description, this.maxMetricPointsPerMetricStream);
                     this.metrics[index] = metric;
                     this.metricStreamNames.Add(metricStreamName);
                     return metric;
@@ -118,7 +119,7 @@ namespace OpenTelemetry.Metrics
                     }
 
                     var index = ++this.metricIndex;
-                    if (index >= MaxMetrics)
+                    if (index >= this.maxMetricStreams)
                     {
                         // TODO: Log that instrument is ignored
                         // as max number of Metrics have reached.
@@ -130,7 +131,7 @@ namespace OpenTelemetry.Metrics
                         string[] tagKeysInteresting = metricStreamConfig?.TagKeys;
                         double[] histogramBucketBounds = (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfig
                             && histogramConfig.Boundaries != null) ? histogramConfig.Boundaries : null;
-                        metric = new Metric(instrument, this.preferredAggregationTemporality, metricName, metricDescription, histogramBucketBounds, tagKeysInteresting);
+                        metric = new Metric(instrument, this.preferredAggregationTemporality, metricName, metricDescription, this.maxMetricPointsPerMetricStream, histogramBucketBounds, tagKeysInteresting);
 
                         this.metrics[index] = metric;
                         metrics.Add(metric);
@@ -191,11 +192,23 @@ namespace OpenTelemetry.Metrics
             }
         }
 
+        internal void SetMaxMetricStreams(int maxMetricStreams)
+        {
+            this.maxMetricStreams = maxMetricStreams;
+            this.metrics = new Metric[maxMetricStreams];
+            this.metricsCurrentBatch = new Metric[maxMetricStreams];
+        }
+
+        internal void SetMaxMetricPointsPerMetricStream(int maxMetricPointsPerMetricStream)
+        {
+            this.maxMetricPointsPerMetricStream = maxMetricPointsPerMetricStream;
+        }
+
         private Batch<Metric> GetMetricsBatch()
         {
             try
             {
-                var indexSnapshot = Math.Min(this.metricIndex, MaxMetrics - 1);
+                var indexSnapshot = Math.Min(this.metricIndex, this.maxMetricStreams - 1);
                 var target = indexSnapshot + 1;
                 int metricCountCurrentBatch = 0;
                 for (int i = 0; i < target; i++)
