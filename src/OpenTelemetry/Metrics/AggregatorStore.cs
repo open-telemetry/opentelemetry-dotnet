@@ -41,7 +41,7 @@ namespace OpenTelemetry.Metrics
         private readonly double[] histogramBounds;
         private readonly UpdateLongDelegate updateLongCallback;
         private readonly UpdateDoubleDelegate updateDoubleCallback;
-        private readonly int metricPointLimit;
+        private readonly int maxMetricPoints;
         private int metricPointIndex = 0;
         private int batchSize = 0;
         private bool zeroTagMetricPointInitialized;
@@ -51,13 +51,13 @@ namespace OpenTelemetry.Metrics
         internal AggregatorStore(
             AggregationType aggType,
             AggregationTemporality temporality,
-            int metricPointLimit,
+            int maxMetricPoints,
             double[] histogramBounds,
             string[] tagKeysInteresting = null)
         {
-            this.metricPointLimit = metricPointLimit;
-            this.metricPoints = new MetricPoint[metricPointLimit];
-            this.currentMetricPointBatch = new int[metricPointLimit];
+            this.maxMetricPoints = maxMetricPoints;
+            this.metricPoints = new MetricPoint[maxMetricPoints];
+            this.currentMetricPointBatch = new int[maxMetricPoints];
             this.aggType = aggType;
             this.temporality = temporality;
             this.outputDelta = temporality == AggregationTemporality.Delta ? true : false;
@@ -100,7 +100,7 @@ namespace OpenTelemetry.Metrics
         internal int Snapshot()
         {
             this.batchSize = 0;
-            var indexSnapshot = Math.Min(this.metricPointIndex, this.metricPointLimit - 1);
+            var indexSnapshot = Math.Min(this.metricPointIndex, this.maxMetricPoints - 1);
             if (this.temporality == AggregationTemporality.Delta)
             {
                 this.SnapshotDelta(indexSnapshot);
@@ -199,7 +199,7 @@ namespace OpenTelemetry.Metrics
             if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
             {
                 aggregatorIndex = this.metricPointIndex;
-                if (aggregatorIndex >= this.metricPointLimit)
+                if (aggregatorIndex >= this.maxMetricPoints)
                 {
                     // sorry! out of data points.
                     // TODO: Once we support cleanup of
@@ -214,7 +214,7 @@ namespace OpenTelemetry.Metrics
                     if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
                     {
                         aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
-                        if (aggregatorIndex >= this.metricPointLimit)
+                        if (aggregatorIndex >= this.maxMetricPoints)
                         {
                             // sorry! out of data points.
                             // TODO: Once we support cleanup of
