@@ -309,7 +309,7 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .Build();
 ```
 **NOTE:** The above limit is *per* metric stream, and applies to all the metric
-streams. There is no ability to apply different limits for each instrument.
+streams. There is no ability to apply different limits for each instrument at this moment.
 
 ### Instrumentation
 
