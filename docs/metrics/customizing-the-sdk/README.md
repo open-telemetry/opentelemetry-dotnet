@@ -308,8 +308,10 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .SetMaxMetricPointsPerMetricStream(10000)
     .Build();
 ```
+
 **NOTE:** The above limit is *per* metric stream, and applies to all the metric
-streams. There is no ability to apply different limits for each instrument at this moment.
+streams. There is no ability to apply different limits for each instrument at
+this moment.
 
 ### Instrumentation
 
