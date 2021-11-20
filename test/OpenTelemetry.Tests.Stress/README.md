@@ -18,7 +18,7 @@
 Open a console, run the following command from the current folder:
 
 ```sh
-dotnet run --framework net5.0 --configuration Release
+dotnet run --framework net6.0 --configuration Release
 ```
 
 Once the application started, you will see the performance number updates from
@@ -42,6 +42,28 @@ Running (concurrency = 1), press <Esc> to stop...
 ```
 <!-- markdownlint-enable MD013 -->
 
+The stress test metrics are exposed via
+[PrometheusExporter](../../src/OpenTelemetry.Exporter.Prometheus/README.md),
+which can be accessed via
+[http://localhost:9184/metrics/](http://localhost:9184/metrics/):
+
+```text
+# TYPE Process_NonpagedSystemMemorySize64 gauge
+Process_NonpagedSystemMemorySize64 31651 1637385964580
+
+# TYPE Process_PagedSystemMemorySize64 gauge
+Process_PagedSystemMemorySize64 238672 1637385964580
+
+# TYPE Process_PagedMemorySize64 gauge
+Process_PagedMemorySize64 16187392 1637385964580
+
+# TYPE Process_WorkingSet64 gauge
+Process_WorkingSet64 29753344 1637385964580
+
+# TYPE Process_VirtualMemorySize64 gauge
+Process_VirtualMemorySize64 2204045848576 1637385964580
+```
+
 ## Writing your own stress test
 
 Create a simple console application with the following code:
@@ -53,7 +75,7 @@ public partial class Program
 {
     public static void Main()
     {
-        Stress(concurrency: 10);
+        Stress(concurrency: 10, prometheusPort: 9184);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -76,9 +98,12 @@ Now you are ready to run your own stress test.
 
 Some useful notes:
 
-* You can specify the concurrency using `Stress(concurrency)`, the default value
-  is the number of CPU cores. Keep in mind that concurrency level does not equal
-  to the number of threads.
+* You can specify the concurrency using `Stress(concurrency: {concurrency
+  number})`, the default value is the number of CPU cores. Keep in mind that
+  concurrency level does not equal to the number of threads.
+* You can specify a local PrometheusExporter listening port using
+  `Stress(prometheusPort: {port number})`, the default value is `0`, which will
+  turn off the PrometheusExporter.
 * You want to put `[MethodImpl(MethodImplOptions.AggressiveInlining)]` on
   `Run()`, this helps to reduce extra flushes on the CPU instruction cache.
 * You might want to run the stress test under `Release` mode rather than `Debug`
