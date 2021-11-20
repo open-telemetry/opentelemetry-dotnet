@@ -58,7 +58,7 @@ public partial class Program
             concurrency = Environment.ProcessorCount;
         }
 
-        using var stressProvider = prometheusPort != 0 ? Sdk.CreateMeterProviderBuilder()
+        using var meterProvider = prometheusPort != 0 ? Sdk.CreateMeterProviderBuilder()
             .AddMeter(StressMeter.Name)
             .AddPrometheusExporter(options =>
             {

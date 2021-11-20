@@ -40,7 +40,7 @@ public partial class Program
             DimensionValues[i] = $"DimValue{i}";
         }
 
-        using var testProvider = Sdk.CreateMeterProviderBuilder()
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(TestMeter.Name)
             .AddPrometheusExporter(options =>
             {
