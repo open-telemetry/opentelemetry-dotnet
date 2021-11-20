@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Threading;
 
 namespace OpenTelemetry.Metrics
@@ -36,6 +37,8 @@ namespace OpenTelemetry.Metrics
             object[] values,
             double[] histogramBounds)
         {
+            Debug.Assert((keys?.Length ?? 0) == (values?.Length ?? 0), "Key and value array lengths did not match.");
+
             this.aggType = aggType;
             this.StartTime = startTime;
             this.Tags = new ReadOnlyTagCollection(keys, values);
