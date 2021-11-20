@@ -15,15 +15,14 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using OpenTelemetry;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
-using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Tests.Stress;
-
 public partial class Program
 {
     private const int ArraySize = 10;
@@ -39,8 +38,12 @@ public partial class Program
             DimensionValues[i] = $"DimValue{i}";
         }
 
+        var exportedItems = new List<Metric>();
+        var reader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems));
+
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(TestMeter.Name)
+            .AddReader(reader)
             .Build();
         Stress();
     }
