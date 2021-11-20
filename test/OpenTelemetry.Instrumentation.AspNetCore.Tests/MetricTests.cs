@@ -113,10 +113,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(1, bucket.Count);
             */
 
-            var attributes = new KeyValuePair<string, object>[metricPoint.Keys.Length];
-            for (int i = 0; i < attributes.Length; i++)
+            var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
+            int i = 0;
+            foreach (var tag in metricPoint.Tags)
             {
-                attributes[i] = new KeyValuePair<string, object>(metricPoint.Keys[i], metricPoint.Values[i]);
+                attributes[i++] = tag;
             }
 
             var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, "GET");

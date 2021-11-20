@@ -15,19 +15,19 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Threading;
 
 namespace OpenTelemetry.Metrics
 {
     public struct MetricPoint
     {
+        private readonly AggregationType aggType;
+        private readonly object lockObject;
+        private readonly long[] bucketCounts;
         private long longVal;
         private long lastLongSum;
         private double doubleVal;
         private double lastDoubleSum;
-        private object lockObject;
-        private long[] bucketCounts;
 
         internal MetricPoint(
             AggregationType aggType,
@@ -36,9 +36,9 @@ namespace OpenTelemetry.Metrics
             object[] values,
             double[] histogramBounds)
         {
-            this.AggType = aggType;
+            this.aggType = aggType;
             this.StartTime = startTime;
-            this.Attributes = new MetricPointAttributes(keys, values);
+            this.Tags = new ReadOnlyTagCollection(keys, values);
             this.EndTime = default;
             this.LongValue = default;
             this.longVal = default;
@@ -48,14 +48,14 @@ namespace OpenTelemetry.Metrics
             this.lastDoubleSum = default;
             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
-            if (this.AggType == AggregationType.Histogram)
+            if (this.aggType == AggregationType.Histogram)
             {
                 this.ExplicitBounds = histogramBounds;
                 this.BucketCounts = new long[this.ExplicitBounds.Length + 1];
                 this.bucketCounts = new long[this.ExplicitBounds.Length + 1];
                 this.lockObject = new object();
             }
-            else if (this.AggType == AggregationType.HistogramSumCount)
+            else if (this.aggType == AggregationType.HistogramSumCount)
             {
                 this.ExplicitBounds = null;
                 this.BucketCounts = null;
@@ -71,7 +71,10 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public MetricPointAttributes Attributes { get; }
+        /// <summary>
+        /// Gets the tags associated with the metric point.
+        /// </summary>
+        public ReadOnlyTagCollection Tags { get; }
 
         public DateTimeOffset StartTime { get; internal set; }
 
@@ -87,11 +90,9 @@ namespace OpenTelemetry.Metrics
 
         internal MetricPointStatus MetricPointStatus { get; private set; }
 
-        private readonly AggregationType AggType { get; }
-
         internal void Update(long number)
         {
-            switch (this.AggType)
+            switch (this.aggType)
             {
                 case AggregationType.LongSumIncomingDelta:
                     {
@@ -135,7 +136,7 @@ namespace OpenTelemetry.Metrics
 
         internal void Update(double number)
         {
-            switch (this.AggType)
+            switch (this.aggType)
             {
                 case AggregationType.DoubleSumIncomingDelta:
                     {
@@ -211,7 +212,7 @@ namespace OpenTelemetry.Metrics
 
         internal void TakeSnapshot(bool outputDelta)
         {
-            switch (this.AggType)
+            switch (this.aggType)
             {
                 case AggregationType.LongSumIncomingDelta:
                 case AggregationType.LongSumIncomingCumulative:
@@ -352,54 +353,6 @@ namespace OpenTelemetry.Metrics
 
                         break;
                     }
-            }
-        }
-    }
-
-    public readonly struct MetricPointAttributes
-    {
-        private readonly string[] keys;
-        private readonly object[] values;
-
-        internal MetricPointAttributes(string[] keys, object[] values)
-        {
-            this.keys = keys;
-            this.values = values;
-        }
-
-        public int Count => keys?.Length ?? 0;
-
-        public Enumerator GetEnumerator() => new Enumerator(this);
-
-        public struct Enumerator
-        {
-            private readonly MetricPointAttributes metricPointAttributes;
-            private int index;
-
-            internal Enumerator(MetricPointAttributes metricPointAttributes)
-            {
-                this.metricPointAttributes = metricPointAttributes;
-                this.index = 0;
-                this.Current = default;
-            }
-
-            public KeyValuePair<string, object> Current { get; private set; }
-
-            public bool MoveNext()
-            {
-                int index = this.index;
-
-                if (index < this.metricPointAttributes.Count)
-                {
-                    this.Current = new KeyValuePair<string, object>(
-                        this.metricPointAttributes.keys[index],
-                        this.metricPointAttributes.values[index]);
-
-                    this.index++;
-                    return true;
-                }
-
-                return false;
             }
         }
     }

@@ -60,11 +60,10 @@ OpenTelemetry.Metrics.MetricPoint.BucketCounts.get -> long[]
 OpenTelemetry.Metrics.MetricPoint.DoubleValue.get -> double
 OpenTelemetry.Metrics.MetricPoint.EndTime.get -> System.DateTimeOffset
 OpenTelemetry.Metrics.MetricPoint.ExplicitBounds.get -> double[]
-OpenTelemetry.Metrics.MetricPoint.Keys.get -> string[]
 OpenTelemetry.Metrics.MetricPoint.LongValue.get -> long
 OpenTelemetry.Metrics.MetricPoint.MetricPoint() -> void
 OpenTelemetry.Metrics.MetricPoint.StartTime.get -> System.DateTimeOffset
-OpenTelemetry.Metrics.MetricPoint.Values.get -> object[]
+OpenTelemetry.Metrics.MetricPoint.Tags.get -> OpenTelemetry.ReadOnlyTagCollection
 OpenTelemetry.Metrics.MetricReader
 OpenTelemetry.Metrics.MetricReader.Collect(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Metrics.MetricReader.Dispose() -> void
@@ -92,6 +91,14 @@ OpenTelemetry.Metrics.MetricType.LongSum = 26 -> OpenTelemetry.Metrics.MetricTyp
 OpenTelemetry.Metrics.MetricTypeExtensions
 OpenTelemetry.Metrics.PeriodicExportingMetricReader
 OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric> exporter, int exportIntervalMilliseconds = 60000, int exportTimeoutMilliseconds = 30000) -> void
+OpenTelemetry.ReadOnlyTagCollection
+OpenTelemetry.ReadOnlyTagCollection.Count.get -> int
+OpenTelemetry.ReadOnlyTagCollection.Enumerator
+OpenTelemetry.ReadOnlyTagCollection.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string, object>
+OpenTelemetry.ReadOnlyTagCollection.Enumerator.Enumerator() -> void
+OpenTelemetry.ReadOnlyTagCollection.Enumerator.MoveNext() -> bool
+OpenTelemetry.ReadOnlyTagCollection.GetEnumerator() -> OpenTelemetry.ReadOnlyTagCollection.Enumerator
+OpenTelemetry.ReadOnlyTagCollection.ReadOnlyTagCollection() -> void
 OpenTelemetry.Trace.BatchExportActivityProcessorOptions
 OpenTelemetry.Trace.BatchExportActivityProcessorOptions.BatchExportActivityProcessorOptions() -> void
 override OpenTelemetry.BaseExportProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> bool
