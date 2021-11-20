@@ -39,25 +39,25 @@ namespace OpenTelemetry.Exporter.Prometheus
             {
                 foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
-                    var keys = metricPoint.Keys;
-                    var values = metricPoint.Values;
+                    var tags = metricPoint.Tags;
                     var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
                     // Counter and Gauge
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
 
-                    if (keys != null && keys.Length > 0)
+                    if (tags.Count > 0)
                     {
                         buffer[cursor++] = unchecked((byte)'{');
 
-                        for (var i = 0; i < keys.Length; i++)
+                        int i = 0;
+                        foreach (var tag in tags)
                         {
-                            if (i > 0)
+                            if (i++ > 0)
                             {
                                 buffer[cursor++] = unchecked((byte)',');
                             }
 
-                            cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
+                            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
                         }
 
                         buffer[cursor++] = unchecked((byte)'}');
@@ -85,8 +85,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             {
                 foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
-                    var keys = metricPoint.Keys;
-                    var values = metricPoint.Values;
+                    var tags = metricPoint.Tags;
                     var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
                     // Histogram buckets
@@ -100,13 +99,10 @@ namespace OpenTelemetry.Exporter.Prometheus
                         cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
                         cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
 
-                        if (keys != null)
+                        foreach (var tag in tags)
                         {
-                            for (var i = 0; i < keys.Length; i++)
-                            {
-                                cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
-                                buffer[cursor++] = unchecked((byte)',');
-                            }
+                            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+                            buffer[cursor++] = unchecked((byte)',');
                         }
 
                         cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
@@ -134,18 +130,19 @@ namespace OpenTelemetry.Exporter.Prometheus
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
 
-                    if (keys != null && keys.Length > 0)
+                    if (tags.Count > 0)
                     {
                         buffer[cursor++] = unchecked((byte)'{');
 
-                        for (var i = 0; i < keys.Length; i++)
+                        int i = 0;
+                        foreach (var tag in tags)
                         {
-                            if (i > 0)
+                            if (i++ > 0)
                             {
                                 buffer[cursor++] = unchecked((byte)',');
                             }
 
-                            cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
+                            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
                         }
 
                         buffer[cursor++] = unchecked((byte)'}');
@@ -164,18 +161,19 @@ namespace OpenTelemetry.Exporter.Prometheus
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
 
-                    if (keys != null && keys.Length > 0)
+                    if (tags.Count > 0)
                     {
                         buffer[cursor++] = unchecked((byte)'{');
 
-                        for (var i = 0; i < keys.Length; i++)
+                        int i = 0;
+                        foreach (var tag in tags)
                         {
-                            if (i > 0)
+                            if (i++ > 0)
                             {
                                 buffer[cursor++] = unchecked((byte)',');
                             }
 
-                            cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
+                            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
                         }
 
                         buffer[cursor++] = unchecked((byte)'}');
