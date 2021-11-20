@@ -15,13 +15,10 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using OpenTelemetry;
 using OpenTelemetry.Metrics;
-using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Tests.Stress;
 
