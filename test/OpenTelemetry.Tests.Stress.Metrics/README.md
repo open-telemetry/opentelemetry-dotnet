@@ -1,7 +1,7 @@
 # OpenTelemetry Stress Tests for Metrics
 
-This is Stress Test specifically for the Metrics based on the
-[OpenTelemetry.Tests.Stress](../OpenTelemetry.Tests.Stress/README.md).
+This is Stress Test specifically for Metrics SDK, and is
+based on the [OpenTelemetry.Tests.Stress](../OpenTelemetry.Tests.Stress/README.md).
 
 * [Running the stress test](#running-the-stress-test)
 
