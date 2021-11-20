@@ -28,7 +28,6 @@ namespace OpenTelemetry.Tests.Stress;
 public partial class Program
 {
     private const int ArraySize = 10;
-    private static readonly Meter StressMeter = new Meter("OpenTelemetry.Tests.Stress");
     private static readonly Meter TestMeter = new Meter(Utils.GetCurrentMethodName());
     private static readonly Counter<long> TestCounter = TestMeter.CreateCounter<long>("TestCounter");
     private static readonly string[] DimensionValues = new string[ArraySize];
@@ -41,23 +40,6 @@ public partial class Program
             DimensionValues[i] = $"DimValue{i}";
         }
 
-        var process = Process.GetCurrentProcess();
-        StressMeter.CreateObservableGauge("Process.NonpagedSystemMemorySize64", () => process.NonpagedSystemMemorySize64);
-        StressMeter.CreateObservableGauge("Process.PagedSystemMemorySize64", () => process.PagedSystemMemorySize64);
-        StressMeter.CreateObservableGauge("Process.PagedMemorySize64", () => process.PagedMemorySize64);
-        StressMeter.CreateObservableGauge("Process.WorkingSet64", () => process.WorkingSet64);
-        StressMeter.CreateObservableGauge("Process.VirtualMemorySize64", () => process.VirtualMemorySize64);
-
-        using var stressProvider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(StressMeter.Name)
-            .AddPrometheusExporter(options =>
-            {
-                options.StartHttpListener = true;
-                options.HttpListenerPrefixes = new string[] { $"http://localhost:9184/" };
-                options.ScrapeResponseCacheDurationMilliseconds = 0;
-            })
-            .Build();
-
         using var testProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(TestMeter.Name)
             .AddPrometheusExporter(options =>
@@ -68,7 +50,7 @@ public partial class Program
             })
             .Build();
 
-        Stress();
+        Stress(prometheusPort: 9184);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
