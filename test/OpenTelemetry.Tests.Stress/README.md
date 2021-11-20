@@ -98,12 +98,12 @@ Now you are ready to run your own stress test.
 
 Some useful notes:
 
-* You can specify the concurrency using `Stress(concurrency: <concurrency
-  number>)`, the default value is the number of CPU cores. Keep in mind that
+* You can specify the concurrency using `Stress(concurrency: {concurrency
+  number})`, the default value is the number of CPU cores. Keep in mind that
   concurrency level does not equal to the number of threads.
-* You can specify the PrometheusExporter port using `Stress(prometheusPort:
-  <port number>)`, the default value is `0`, which will turn off the
-  PrometheusExporter.
+* You can specify a local PrometheusExporter listening port using
+  `Stress(prometheusPort: {port number})`, the default value is `0`, which will
+  turn off the PrometheusExporter.
 * You want to put `[MethodImpl(MethodImplOptions.AggressiveInlining)]` on
   `Run()`, this helps to reduce extra flushes on the CPU instruction cache.
 * You might want to run the stress test under `Release` mode rather than `Debug`
