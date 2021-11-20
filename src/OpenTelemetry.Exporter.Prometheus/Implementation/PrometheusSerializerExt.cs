@@ -97,7 +97,6 @@ namespace OpenTelemetry.Exporter.Prometheus
                         var bucketCounts = metricPoint.BucketCounts;
                         var explicitBounds = metricPoint.ExplicitBounds;
                         long totalCount = 0;
-
                         for (int idxBound = 0; idxBound < explicitBounds.Length + 1; idxBound++)
                         {
                             totalCount += bucketCounts[idxBound];
