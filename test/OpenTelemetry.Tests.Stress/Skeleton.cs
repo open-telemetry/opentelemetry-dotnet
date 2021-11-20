@@ -75,7 +75,15 @@ public partial class Program
         Parallel.Invoke(
             () =>
             {
-                Console.WriteLine($"Running (concurrency = {concurrency}), press <Esc> to stop...");
+                Console.Write($"Running (concurrency = {concurrency}");
+
+                if (prometheusPort != 0)
+                {
+                    Console.Write($", prometheusEndpoint = http://localhost:{prometheusPort}/metrics/");
+                }
+
+                Console.WriteLine("), press <Esc> to stop...");
+
                 var bOutput = false;
                 var watch = new Stopwatch();
                 while (true)

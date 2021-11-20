@@ -18,7 +18,7 @@
 Open a console, run the following command from the current folder:
 
 ```sh
-dotnet run --framework net5.0 --configuration Release
+dotnet run --framework net6.0 --configuration Release
 ```
 
 Once the application started, you will see the performance number updates from
