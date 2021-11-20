@@ -43,6 +43,17 @@ namespace OpenTelemetry.Exporter
                 this.WriteLine($"Activity.Kind:        {activity.Kind}");
                 this.WriteLine($"Activity.StartTime:   {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
                 this.WriteLine($"Activity.Duration:    {activity.Duration}");
+
+                if (activity.Status != ActivityStatusCode.Unset)
+                {
+                    this.WriteLine($"Activity.Status: {activity.Status}");
+                }
+
+                if (activity.StatusDescription != null)
+                {
+                    this.WriteLine($"Activity.StatusDescription: {activity.StatusDescription}");
+                }
+
                 if (activity.TagObjects.Any())
                 {
                     this.WriteLine("Activity.TagObjects:");
