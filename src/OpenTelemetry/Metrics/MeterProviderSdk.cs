@@ -27,18 +27,13 @@ namespace OpenTelemetry.Metrics
 {
     internal sealed class MeterProviderSdk : MeterProvider
     {
-        internal const int MaxMetrics = 1000;
         internal int ShutdownCount;
-        private readonly Metric[] metrics;
-        private readonly Metric[] metricsCurrentBatch;
         private readonly List<object> instrumentations = new List<object>();
         private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs;
         private readonly object collectLock = new object();
-        private readonly object instrumentCreationLock = new object();
-        private readonly HashSet<string> metricStreamNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly MeterListener listener;
         private readonly MetricReader reader;
-        private int metricIndex = -1;
+        private readonly CompositeMetricReader compositeMetricReader;
         private bool disposed;
 
         internal MeterProviderSdk(
@@ -46,24 +41,20 @@ namespace OpenTelemetry.Metrics
             IEnumerable<string> meterSources,
             List<MeterProviderBuilderBase.InstrumentationFactory> instrumentationFactories,
             List<Func<Instrument, MetricStreamConfiguration>> viewConfigs,
+            int maxMetricStreams,
+            int maxMetricPointsPerMetricStream,
             IEnumerable<MetricReader> readers)
         {
             this.Resource = resource;
             this.viewConfigs = viewConfigs;
-            this.metrics = new Metric[MaxMetrics];
-            this.metricsCurrentBatch = new Metric[MaxMetrics];
-
-            AggregationTemporality temporality = AggregationTemporality.Cumulative;
 
             foreach (var reader in readers)
             {
                 Guard.Null(reader, nameof(reader));
 
                 reader.SetParentProvider(this);
-
-                // TODO: Actually support multiple readers.
-                // Currently the last reader's temporality wins.
-                temporality = reader.PreferredAggregationTemporality;
+                reader.SetMaxMetricStreams(maxMetricStreams);
+                reader.SetMaxMetricPointsPerMetricStream(maxMetricPointsPerMetricStream);
 
                 if (this.reader == null)
                 {
@@ -78,6 +69,8 @@ namespace OpenTelemetry.Metrics
                     this.reader = new CompositeMetricReader(new[] { this.reader, reader });
                 }
             }
+
+            this.compositeMetricReader = this.reader as CompositeMetricReader;
 
             if (instrumentationFactories.Any())
             {
@@ -107,6 +100,9 @@ namespace OpenTelemetry.Metrics
 
             this.listener = new MeterListener();
             var viewConfigCount = this.viewConfigs.Count;
+
+            // We expect that all the readers to be added are provided before MeterProviderSdk is built.
+            // If there are no readers added, we do not enable measurements for the instruments.
             if (viewConfigCount > 0)
             {
                 this.listener.InstrumentPublished = (instrument, listener) =>
@@ -141,71 +137,23 @@ namespace OpenTelemetry.Metrics
                         metricStreamConfigs.Add(null);
                     }
 
-                    var maxCountMetricsToBeCreated = metricStreamConfigs.Count;
-
-                    // Create list with initial capacity as the max metric count.
-                    // Due to duplicate/max limit, we may not end up using them
-                    // all, and that memory is wasted until Meter disposed.
-                    // TODO: Revisit to see if we need to do metrics.TrimExcess()
-                    var metrics = new List<Metric>(maxCountMetricsToBeCreated);
-                    lock (this.instrumentCreationLock)
+                    if (this.reader != null)
                     {
-                        for (int i = 0; i < maxCountMetricsToBeCreated; i++)
+                        if (this.compositeMetricReader == null)
                         {
-                            var metricStreamConfig = metricStreamConfigs[i];
-                            var metricStreamName = metricStreamConfig?.Name ?? instrument.Name;
-
-                            if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricStreamName))
+                            var metrics = this.reader.AddMetricsListWithViews(instrument, metricStreamConfigs);
+                            if (metrics.Count > 0)
                             {
-                                OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
-                                    metricStreamName,
-                                    instrument.Meter.Name,
-                                    "Metric name is invalid.",
-                                    "The name must comply with the OpenTelemetry specification.");
-
-                                continue;
-                            }
-
-                            if (this.metricStreamNames.Contains(metricStreamName))
-                            {
-                                // TODO: Log that instrument is ignored
-                                // as the resulting Metric name is conflicting
-                                // with existing name.
-                                continue;
-                            }
-
-                            if (metricStreamConfig?.Aggregation == Aggregation.Drop)
-                            {
-                                // TODO: Log that instrument is ignored
-                                // as user explicitly asked to drop it
-                                // with View.
-                                continue;
-                            }
-
-                            var index = ++this.metricIndex;
-                            if (index >= MaxMetrics)
-                            {
-                                // TODO: Log that instrument is ignored
-                                // as max number of Metrics have reached.
-                            }
-                            else
-                            {
-                                Metric metric;
-                                var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
-                                string[] tagKeysInteresting = metricStreamConfig?.TagKeys;
-                                double[] histogramBucketBounds = (metricStreamConfig is HistogramConfiguration histogramConfig
-                                    && histogramConfig.BucketBounds != null) ? histogramConfig.BucketBounds : null;
-                                metric = new Metric(instrument, temporality, metricStreamName, metricDescription, histogramBucketBounds, tagKeysInteresting);
-
-                                this.metrics[index] = metric;
-                                metrics.Add(metric);
-                                this.metricStreamNames.Add(metricStreamName);
+                                listener.EnableMeasurementEvents(instrument, metrics);
                             }
                         }
-
-                        if (metrics.Count > 0)
+                        else
                         {
-                            listener.EnableMeasurementEvents(instrument, metrics);
+                            var metricsSuperList = this.compositeMetricReader.AddMetricsSuperListWithViews(instrument, metricStreamConfigs);
+                            if (metricsSuperList.Any(metrics => metrics.Count > 0))
+                            {
+                                listener.EnableMeasurementEvents(instrument, metricsSuperList);
+                            }
                         }
                     }
                 };
@@ -245,31 +193,25 @@ namespace OpenTelemetry.Metrics
                             return;
                         }
 
-                        var metricName = instrument.Name;
-                        Metric metric = null;
-                        lock (this.instrumentCreationLock)
+                        if (this.reader != null)
                         {
-                            if (this.metricStreamNames.Contains(metricName))
+                            if (this.compositeMetricReader == null)
                             {
-                                OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Metric name conflicting with existing name.", "Either change the name of the instrument or change name using View.");
-                                return;
-                            }
-
-                            var index = ++this.metricIndex;
-                            if (index >= MaxMetrics)
-                            {
-                                OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Maximum allowed Metrics for the provider exceeded.", "Use views to drop unused instruments. Or configure Provider to allow higher limit.");
-                                return;
+                                var metric = this.reader.AddMetricWithNoViews(instrument);
+                                if (metric != null)
+                                {
+                                    listener.EnableMeasurementEvents(instrument, metric);
+                                }
                             }
                             else
                             {
-                                metric = new Metric(instrument, temporality, metricName, instrument.Description);
-                                this.metrics[index] = metric;
-                                this.metricStreamNames.Add(metricName);
+                                var metrics = this.compositeMetricReader.AddMetricsWithNoViews(instrument);
+                                if (metrics.Any(metric => metric != null))
+                                {
+                                    listener.EnableMeasurementEvents(instrument, metrics);
+                                }
                             }
                         }
-
-                        listener.EnableMeasurementEvents(instrument, metric);
                     }
                     catch (Exception)
                     {
@@ -307,164 +249,175 @@ namespace OpenTelemetry.Metrics
 
         internal void MeasurementsCompletedSingleStream(Instrument instrument, object state)
         {
-            var metric = state as Metric;
-            if (metric == null)
-            {
-                // TODO: log
-                return;
-            }
+            Debug.Assert(instrument != null, "instrument must be non-null.");
 
-            metric.InstrumentDisposed = true;
+            if (this.compositeMetricReader == null)
+            {
+                if (state is not Metric metric)
+                {
+                    // TODO: log
+                    return;
+                }
+
+                this.reader.CompleteSingleStreamMeasurement(metric);
+            }
+            else
+            {
+                if (state is not List<Metric> metrics)
+                {
+                    // TODO: log
+                    return;
+                }
+
+                this.compositeMetricReader.CompleteSingleStreamMeasurements(metrics);
+            }
         }
 
         internal void MeasurementsCompleted(Instrument instrument, object state)
         {
-            var metrics = state as List<Metric>;
-            if (metrics == null)
-            {
-                // TODO: log
-                return;
-            }
+            Debug.Assert(instrument != null, "instrument must be non-null.");
 
-            foreach (var metric in metrics)
+            if (this.compositeMetricReader == null)
             {
-                metric.InstrumentDisposed = true;
+                if (state is not List<Metric> metrics)
+                {
+                    // TODO: log
+                    return;
+                }
+
+                this.reader.CompleteMeasurement(metrics);
+            }
+            else
+            {
+                if (state is not List<List<Metric>> metricsSuperList)
+                {
+                    // TODO: log
+                    return;
+                }
+
+                this.compositeMetricReader.CompleteMesaurements(metricsSuperList);
             }
         }
 
         internal void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
-            // Get Instrument State
-            var metrics = state as List<Metric>;
-
             Debug.Assert(instrument != null, "instrument must be non-null.");
-            if (metrics == null)
-            {
-                // TODO: log
-                return;
-            }
 
-            if (metrics.Count == 1)
+            if (this.compositeMetricReader == null)
             {
-                // special casing the common path
-                // as this is faster than the
-                // foreach, when count is 1.
-                metrics[0].UpdateDouble(value, tagsRos);
+                if (state is not List<Metric> metrics)
+                {
+                    // TODO: log
+                    return;
+                }
+
+                this.reader.RecordDoubleMeasurement(metrics, value, tagsRos);
             }
             else
             {
-                foreach (var metric in metrics)
+                if (state is not List<List<Metric>> metricsSuperList)
                 {
-                    metric.UpdateDouble(value, tagsRos);
+                    // TODO: log
+                    return;
                 }
+
+                this.compositeMetricReader.RecordDoubleMeasurements(metricsSuperList, value, tagsRos);
             }
         }
 
         internal void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
-            // Get Instrument State
-            var metrics = state as List<Metric>;
-
             Debug.Assert(instrument != null, "instrument must be non-null.");
-            if (metrics == null)
-            {
-                // TODO: log
-                return;
-            }
 
-            if (metrics.Count == 1)
+            if (this.compositeMetricReader == null)
             {
-                // special casing the common path
-                // as this is faster than the
-                // foreach, when count is 1.
-                metrics[0].UpdateLong(value, tagsRos);
+                if (state is not List<Metric> metrics)
+                {
+                    // TODO: log
+                    return;
+                }
+
+                this.reader.RecordLongMeasurement(metrics, value, tagsRos);
             }
             else
             {
-                foreach (var metric in metrics)
+                if (state is not List<List<Metric>> metricsSuperList)
                 {
-                    metric.UpdateLong(value, tagsRos);
+                    // TODO: log
+                    return;
                 }
+
+                this.compositeMetricReader.RecordLongMeasurements(metricsSuperList, value, tagsRos);
             }
         }
 
         internal void MeasurementRecordedLongSingleStream(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
-            // Get Instrument State
-            var metric = state as Metric;
-
             Debug.Assert(instrument != null, "instrument must be non-null.");
-            if (metric == null)
-            {
-                // TODO: log
-                return;
-            }
 
-            metric.UpdateLong(value, tagsRos);
+            if (this.compositeMetricReader == null)
+            {
+                if (state is not Metric metric)
+                {
+                    // TODO: log
+                    return;
+                }
+
+                this.reader.RecordSingleStreamLongMeasurement(metric, value, tagsRos);
+            }
+            else
+            {
+                if (state is not List<Metric> metrics)
+                {
+                    // TODO: log
+                    return;
+                }
+
+                this.compositeMetricReader.RecordSingleStreamLongMeasurements(metrics, value, tagsRos);
+            }
         }
 
         internal void MeasurementRecordedDoubleSingleStream(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
-            // Get Instrument State
-            var metric = state as Metric;
-
             Debug.Assert(instrument != null, "instrument must be non-null.");
-            if (metric == null)
-            {
-                // TODO: log
-                return;
-            }
 
-            metric.UpdateDouble(value, tagsRos);
+            if (this.compositeMetricReader == null)
+            {
+                if (state is not Metric metric)
+                {
+                    // TODO: log
+                    return;
+                }
+
+                this.reader.RecordSingleStreamDoubleMeasurement(metric, value, tagsRos);
+            }
+            else
+            {
+                if (state is not List<Metric> metrics)
+                {
+                    // TODO: log
+                    return;
+                }
+
+                this.compositeMetricReader.RecordSingleStreamDoubleMeasurements(metrics, value, tagsRos);
+            }
         }
 
-        internal Batch<Metric> Collect()
+        internal void CollectObservableInstruments()
         {
             lock (this.collectLock)
             {
+                // Record all observable instruments
                 try
                 {
-                    // Record all observable instruments
-                    try
-                    {
-                        this.listener.RecordObservableInstruments();
-                    }
-                    catch (Exception exception)
-                    {
-                        // TODO:
-                        // It doesn't looks like we can find which instrument callback
-                        // threw.
-                        OpenTelemetrySdkEventSource.Log.MetricObserverCallbackException(exception);
-                    }
-
-                    var indexSnapShot = Math.Min(this.metricIndex, MaxMetrics - 1);
-                    var target = indexSnapShot + 1;
-                    int metricCountCurrentBatch = 0;
-                    for (int i = 0; i < target; i++)
-                    {
-                        var metric = this.metrics[i];
-                        if (metric != null)
-                        {
-                            if (metric.InstrumentDisposed)
-                            {
-                                metric.SnapShot();
-                                this.metrics[i] = null;
-                            }
-                            else
-                            {
-                                metric.SnapShot();
-                            }
-
-                            this.metricsCurrentBatch[metricCountCurrentBatch++] = metric;
-                        }
-                    }
-
-                    return (metricCountCurrentBatch > 0) ? new Batch<Metric>(this.metricsCurrentBatch, metricCountCurrentBatch) : default;
+                    this.listener.RecordObservableInstruments();
                 }
-                catch (Exception)
+                catch (Exception exception)
                 {
-                    // TODO: Log
-                    return default;
+                    // TODO:
+                    // It doesn't looks like we can find which instrument callback
+                    // threw.
+                    OpenTelemetrySdkEventSource.Log.MetricObserverCallbackException(exception);
                 }
             }
         }
@@ -530,6 +483,7 @@ namespace OpenTelemetry.Metrics
                     // Wait for up to 5 seconds grace period
                     this.reader?.Shutdown(5000);
                     this.reader?.Dispose();
+                    this.compositeMetricReader?.Dispose();
 
                     this.listener.Dispose();
                 }

@@ -21,7 +21,6 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using Google.Protobuf;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Metrics;
 using OtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
@@ -285,6 +284,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
         }
 
+        /*
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static OtlpMetrics.Exemplar ToOtlpExemplar(this IExemplar exemplar)
         {
@@ -330,6 +330,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             return otlpExemplar;
         }
+        */
 
         private static Action<RepeatedField<OtlpMetrics.Metric>, int> CreateRepeatedFieldOfMetricSetCountAction()
         {
