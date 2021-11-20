@@ -39,9 +39,9 @@ namespace OpenTelemetry.Metrics
 
             var exporter = new ConsoleMetricExporter(options);
 
-            var reader = options.MetricExportIntervalMilliseconds == Timeout.Infinite
+            var reader = options.MetricReaderExportType == MetricReaderExportType.Simple
                 ? new BaseExportingMetricReader(exporter)
-                : new PeriodicExportingMetricReader(exporter, options.MetricExportIntervalMilliseconds);
+                : new PeriodicExportingMetricReader(exporter, options.PeriodicExporterOptions.ExportIntervalMilliseconds);
 
             reader.PreferredAggregationTemporality = options.AggregationTemporality;
 
