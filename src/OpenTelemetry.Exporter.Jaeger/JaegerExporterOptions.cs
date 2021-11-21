@@ -115,9 +115,9 @@ namespace OpenTelemetry.Exporter
         /// instance can be resolved through the application <see
         /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be
         /// created through the factory with the name "JaegerExporter" otherwise
-        /// an <see cref="HttpClient"/> will be instantiated directly."/></item>
+        /// an <see cref="HttpClient"/> will be instantiated directly.</item>
         /// </list>
         /// </remarks>
-        public Func<HttpClient> HttpClientFactory { get; set; }
+        public Func<HttpClient> HttpClientFactory { get; set; } = () => new HttpClient();
     }
 }

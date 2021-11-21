@@ -84,10 +84,6 @@ namespace OpenTelemetry.Trace
                         return new HttpClient();
                     };
                 }
-                else
-                {
-                    options.HttpClientFactory = () => new HttpClient();
-                }
             }
 
             var jaegerExporter = new JaegerExporter(options);
