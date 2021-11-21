@@ -93,13 +93,13 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [MemberData(nameof(MetricTestData.InvalidHistogramBounds), MemberType = typeof(MetricTestData))]
-        public void AddViewWithInvalidHistogramBoundsThrowsArgumentException(double[] bounds)
+        [MemberData(nameof(MetricTestData.InvalidHistogramBoundaries), MemberType = typeof(MetricTestData))]
+        public void AddViewWithInvalidHistogramBoundsThrowsArgumentException(double[] boundaries)
         {
             var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
-                .AddView("name1", new HistogramConfiguration { BucketBounds = bounds }));
+                .AddView("name1", new ExplicitBucketHistogramConfiguration { Boundaries = boundaries }));
 
-            Assert.Contains("Histogram bounds must be in ascending order with distinct values", ex.Message);
+            Assert.Contains("Histogram boundaries must be in ascending order with distinct values", ex.Message);
         }
 
         [Theory]
@@ -355,11 +355,11 @@ namespace OpenTelemetry.Metrics.Tests
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
             var exportedItems = new List<Metric>();
-            var bounds = new double[] { 10, 20 };
+            var boundaries = new double[] { 10, 20 };
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("MyHistogram", new HistogramConfiguration() { Name = "MyHistogramDefaultBound" })
-                .AddView("MyHistogram", new HistogramConfiguration() { BucketBounds = bounds })
+                .AddView("MyHistogram", new ExplicitBucketHistogramConfiguration() { Name = "MyHistogramDefaultBound" })
+                .AddView("MyHistogram", new ExplicitBucketHistogramConfiguration() { Boundaries = boundaries })
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
@@ -409,7 +409,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             Assert.Equal(40, histogramPoint.DoubleValue);
             Assert.Equal(7, histogramPoint.LongValue);
-            Assert.Equal(bounds.Length + 1, histogramPoint.BucketCounts.Length);
+            Assert.Equal(boundaries.Length + 1, histogramPoint.BucketCounts.Length);
             Assert.Equal(5, histogramPoint.BucketCounts[0]);
             Assert.Equal(2, histogramPoint.BucketCounts[1]);
             Assert.Equal(0, histogramPoint.BucketCounts[2]);
