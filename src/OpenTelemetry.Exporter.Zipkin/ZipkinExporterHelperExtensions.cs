@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace
         {
             configure?.Invoke(options);
 
-            if (serviceProvider != null)
+            if (serviceProvider != null && options.HttpClientFactory == ZipkinExporterOptions.DefaultHttpClientFactory)
             {
                 options.HttpClientFactory = () =>
                 {

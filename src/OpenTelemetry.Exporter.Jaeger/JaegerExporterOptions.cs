@@ -40,6 +40,8 @@ namespace OpenTelemetry.Exporter
         internal const string OTelAgentPortEnvVarKey = "OTEL_EXPORTER_JAEGER_AGENT_PORT";
         internal const string OTelEndpointEnvVarKey = "OTEL_EXPORTER_JAEGER_ENDPOINT";
 
+        internal static readonly Func<HttpClient> DefaultHttpClientFactory = () => new HttpClient();
+
         public JaegerExporterOptions()
         {
             if (EnvironmentVariableHelper.LoadString(OtelProtocolEnvVarKey, out string protocolEnvVar)
@@ -118,6 +120,6 @@ namespace OpenTelemetry.Exporter
         /// an <see cref="HttpClient"/> will be instantiated directly.</item>
         /// </list>
         /// </remarks>
-        public Func<HttpClient> HttpClientFactory { get; set; } = () => new HttpClient();
+        public Func<HttpClient> HttpClientFactory { get; set; } = DefaultHttpClientFactory;
     }
 }

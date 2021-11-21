@@ -37,6 +37,8 @@ namespace OpenTelemetry.Exporter
         internal const string ZipkinEndpointEnvVar = "OTEL_EXPORTER_ZIPKIN_ENDPOINT";
         internal const string DefaultZipkinEndpoint = "http://localhost:9411/api/v2/spans";
 
+        internal static readonly Func<HttpClient> DefaultHttpClientFactory = () => new HttpClient();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ZipkinExporterOptions"/> class.
         /// Initializes zipkin endpoint.
@@ -91,6 +93,6 @@ namespace OpenTelemetry.Exporter
         /// created through the factory with the name "ZipkinExporter" otherwise
         /// an <see cref="HttpClient"/> will be instantiated directly.
         /// </remarks>
-        public Func<HttpClient> HttpClientFactory { get; set; } = () => new HttpClient();
+        public Func<HttpClient> HttpClientFactory { get; set; } = DefaultHttpClientFactory;
     }
 }
