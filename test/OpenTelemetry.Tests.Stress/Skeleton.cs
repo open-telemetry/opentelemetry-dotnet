@@ -58,8 +58,33 @@ public partial class Program
             concurrency = Environment.ProcessorCount;
         }
 
+        using var meter = new Meter("OpenTelemetry.Tests.Stress." + Guid.NewGuid().ToString("D"));
+        var cntLoopsTotal = 0UL;
+        meter.CreateObservableCounter(
+            "OpenTelemetry.Tests.Stress.Loops",
+            () => unchecked((long)cntLoopsTotal),
+            description: "The total number of `Run()` invocations that are completed.");
+        var dLoopsPerSecond = 0D;
+        meter.CreateObservableGauge(
+            "OpenTelemetry.Tests.Stress.LoopsPerSecond",
+            () => dLoopsPerSecond,
+            description: "The rate of `Run()` invocations based on a small sliding window of few hundreds of milliseconds.");
+        var dCpuCyclesPerLoop = 0D;
+#if NET462
+        if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+#else
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+#endif
+        {
+            meter.CreateObservableGauge(
+                "OpenTelemetry.Tests.Stress.CpuCyclesPerLoop",
+                () => dCpuCyclesPerLoop,
+                description: "The average CPU cycles for each `Run()` invocation, based on a small sliding window of few hundreds of milliseconds.");
+        }
+
         using var meterProvider = prometheusPort != 0 ? Sdk.CreateMeterProviderBuilder()
             .AddMeter(StressMeter.Name)
+            .AddMeter(meter.Name)
             .AddPrometheusExporter(options =>
             {
                 options.StartHttpListener = true;
@@ -120,16 +145,16 @@ public partial class Program
                     Thread.Sleep(200);
                     watch.Stop();
 
-                    var cntLoopsNew = (ulong)statistics.Sum();
+                    cntLoopsTotal = (ulong)statistics.Sum();
                     var cntCpuCyclesNew = GetCpuCycles();
 
-                    var nLoops = cntLoopsNew - cntLoopsOld;
+                    var nLoops = cntLoopsTotal - cntLoopsOld;
                     var nCpuCycles = cntCpuCyclesNew - cntCpuCyclesOld;
 
-                    var nLoopsPerSecond = (double)nLoops / ((double)watch.ElapsedMilliseconds / 1000.0);
-                    var nCpuCyclesPerLoop = nLoops == 0 ? 0 : nCpuCycles / nLoops;
+                    dLoopsPerSecond = (double)nLoops / ((double)watch.ElapsedMilliseconds / 1000.0);
+                    dCpuCyclesPerLoop = nLoops == 0 ? 0 : nCpuCycles / nLoops;
 
-                    output = $"Loops: {cntLoopsNew:n0}, Loops/Second: {nLoopsPerSecond:n0}, CPU Cycles/Loop: {nCpuCyclesPerLoop:n0}";
+                    output = $"Loops: {cntLoopsTotal:n0}, Loops/Second: {dLoopsPerSecond:n0}, CPU Cycles/Loop: {dCpuCyclesPerLoop:n0}";
                     Console.Title = output;
                 }
             },
@@ -147,7 +172,7 @@ public partial class Program
             });
 
         watchForTotal.Stop();
-        var cntLoopsTotal = (ulong)statistics.Sum();
+        cntLoopsTotal = (ulong)statistics.Sum();
         var totalLoopsPerSecond = (double)cntLoopsTotal / ((double)watchForTotal.ElapsedMilliseconds / 1000.0);
         var cntCpuCyclesTotal = GetCpuCycles();
         var cpuCyclesPerLoopTotal = cntLoopsTotal == 0 ? 0 : cntCpuCyclesTotal / cntLoopsTotal;
