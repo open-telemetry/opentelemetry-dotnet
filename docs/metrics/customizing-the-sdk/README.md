@@ -64,7 +64,10 @@ instruments must be explicitly added to the meter provider.
 `AddMeter` method on `MeterProviderBuilder` can be used to add a `Meter` to the
 provider. The name of the `Meter` (case-insensitive) must be provided as an
 argument to this method. `AddMeter` can be called multiple times to add more
-than one meters. It also supports wild-card subscription model.
+than one meters. It also supports wildcard subscription model. It is important
+to note that *all* the instruments from the meter will be enabled, when a
+`Meter` is added. To selectively drop some instruments from a `Meter`, use the
+[View](#view) feature, as shown [here](#drop-an-instrument).
 
 It is **not** possible to add meters *once* the provider is built by the
 `Build()` method on the `MeterProviderBuilder`.
@@ -218,30 +221,31 @@ with the metric are of interest to you.
       })
 ```
 
-#### Specify custom bounds for Histogram
+#### Specify custom boundaries for Histogram
 
-By default, the bounds used for a Histogram are [`{ 0, 5, 10, 25, 50, 75, 100,
+By default, the boundaries used for a Histogram are [`{ 0, 5, 10, 25, 50, 75, 100,
 250, 500,
 1000}`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#explicit-bucket-histogram-aggregation).
-Views can be used to provide custom bounds for a Histogram. The measurements are
-then aggregated using the custom bounds provided instead of the the default
-bounds. This requires the use of `HistogramConfiguration`.
+Views can be used to provide custom boundaries for a Histogram. The measurements
+are then aggregated using the custom boundaries provided instead of the the
+default boundaries. This requires the use of `ExplicitBucketHistogramConfiguration`.
 
 ```csharp
-   // Change Histogram bounds to count measurements under the following buckets:
+   // Change Histogram boundaries to count measurements under the following buckets:
    // (-inf, 10]
    // (10, 20]
    // (20, +inf)
    .AddView(
       instrumentName: "MyHistogram",
-      new HistogramConfiguration{ BucketBounds = new double[] { 10, 20 } })
+      new ExplicitBucketHistogramConfiguration
+        { Boundaries = new double[] { 10, 20 } })
 
-   // If you provide an empty `double` array as `BucketBounds` to the `HistogramConfiguration`,
+   // If you provide an empty `double` array as `Boundaries` to the `ExplicitBucketHistogramConfiguration`,
    // the SDK will only export the sum and count for the measurements.
    // There are no buckets exported in this case.
    .AddView(
       instrumentName: "MyHistogram",
-      new HistogramConfiguration { BucketBounds = new double[] { } })
+      new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { } })
 ```
 
 ```csharp
@@ -251,10 +255,10 @@ bounds. This requires the use of `HistogramConfiguration`.
          if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
             instrument.Name == "MyHistogram")
          {
-            // `HistogramConfiguration` is a child class of `MetricStreamConfiguration`
-            return new HistogramConfiguration
+            // `ExplicitBucketHistogramConfiguration` is a child class of `MetricStreamConfiguration`
+            return new ExplicitBucketHistogramConfiguration
             {
-               BucketBounds = new double[] { 10, 20 },
+               Boundaries = new double[] { 10, 20 },
             };
          }
 
@@ -266,6 +270,48 @@ bounds. This requires the use of `HistogramConfiguration`.
 for Views.
 
 See [Program.cs](./Program.cs) for a complete example.
+
+### Changing maximum Metric Streams
+
+Every instrument results in the creation of a single Metric stream. With Views,
+it is possible to produce more than one Metric stream from a single instrument.
+To protect the SDK from unbounded memory usage, SDK limits the maximum number of
+metric streams. All the measurements from the instruments created after reaching
+this limit will be dropped. The default is 1000, and `SetMaxMetricStreams` can
+be used to override the default.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter("*")
+    .SetMaxMetricStreams(100)
+    .Build();
+```
+
+### Changing maximum MetricPoints per MetricStream
+
+A Metric stream can contain as many Metric points as the number of unique
+combination of keys and values. To protect the SDK from unbounded memory usage,
+SDK limits the maximum number of metric points per metric stream, to a default
+of 2000. Once the limit is hit, any new key/value combination for that metric is
+ignored. `SetMaxMetricPointsPerMetricStream` can be used to override the
+default.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter("*")
+    .SetMaxMetricPointsPerMetricStream(10000)
+    .Build();
+```
+
+**NOTE:** The above limit is *per* metric stream, and applies to all the metric
+streams. There is no ability to apply different limits for each instrument at
+this moment.
 
 ### Instrumentation
 

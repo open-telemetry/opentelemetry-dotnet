@@ -109,9 +109,9 @@ namespace OpenTelemetry.Exporter
         public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
 
         /// <summary>
-        /// Gets or sets the metric export interval in milliseconds. The default value is 1000 milliseconds.
+        /// Gets or sets the metric export interval in milliseconds. The default value is 60000.
         /// </summary>
-        public int MetricExportIntervalMilliseconds { get; set; } = 1000;
+        public int MetricExportIntervalMilliseconds { get; set; } = 60000;
 
         /// <summary>
         /// Gets or sets the AggregationTemporality used for Histogram

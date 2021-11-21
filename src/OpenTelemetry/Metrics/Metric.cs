@@ -30,6 +30,7 @@ namespace OpenTelemetry.Metrics
             AggregationTemporality temporality,
             string metricName,
             string metricDescription,
+            int maxMetricPointsPerMetricStream,
             double[] histogramBounds = null,
             string[] tagKeysInteresting = null)
         {
@@ -104,7 +105,7 @@ namespace OpenTelemetry.Metrics
                 // TODO: Log and assign some invalid Enum.
             }
 
-            this.aggStore = new AggregatorStore(aggType, temporality, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
+            this.aggStore = new AggregatorStore(aggType, temporality, maxMetricPointsPerMetricStream, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
             this.Temporality = temporality;
             this.InstrumentDisposed = false;
         }
@@ -138,9 +139,9 @@ namespace OpenTelemetry.Metrics
             this.aggStore.Update(value, tags);
         }
 
-        internal void SnapShot()
+        internal int Snapshot()
         {
-            this.aggStore.SnapShot();
+            return this.aggStore.Snapshot();
         }
     }
 }

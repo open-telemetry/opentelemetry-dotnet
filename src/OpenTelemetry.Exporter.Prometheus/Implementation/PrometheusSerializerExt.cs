@@ -39,26 +39,25 @@ namespace OpenTelemetry.Exporter.Prometheus
             {
                 foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
-                    var keys = metricPoint.Keys;
-                    var values = metricPoint.Values;
+                    var tags = metricPoint.Tags;
                     var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
                     // Counter and Gauge
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
 
-                    int numberOfKeys = keys?.Length ?? 0;
-                    if (numberOfKeys > 0)
+                    if (tags.Count > 0)
                     {
                         buffer[cursor++] = unchecked((byte)'{');
 
-                        for (var i = 0; i < keys.Length; i++)
+                        int i = 0;
+                        foreach (var tag in tags)
                         {
-                            if (i > 0)
+                            if (i++ > 0)
                             {
                                 buffer[cursor++] = unchecked((byte)',');
                             }
 
-                            cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
+                            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
                         }
 
                         buffer[cursor++] = unchecked((byte)'}');
@@ -86,8 +85,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             {
                 foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
-                    var keys = metricPoint.Keys;
-                    var values = metricPoint.Values;
+                    var tags = metricPoint.Tags;
                     var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
                     // Histogram buckets
@@ -101,9 +99,9 @@ namespace OpenTelemetry.Exporter.Prometheus
                         cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
                         cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
 
-                        for (var i = 0; i < keys.Length; i++)
+                        foreach (var tag in tags)
                         {
-                            cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
+                            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
                             buffer[cursor++] = unchecked((byte)',');
                         }
 
@@ -130,19 +128,26 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                     // Histogram sum
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
-                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum{");
+                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
 
-                    for (var i = 0; i < keys.Length; i++)
+                    if (tags.Count > 0)
                     {
-                        if (i > 0)
+                        buffer[cursor++] = unchecked((byte)'{');
+
+                        int i = 0;
+                        foreach (var tag in tags)
                         {
-                            buffer[cursor++] = unchecked((byte)',');
+                            if (i++ > 0)
+                            {
+                                buffer[cursor++] = unchecked((byte)',');
+                            }
+
+                            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
                         }
 
-                        cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
+                        buffer[cursor++] = unchecked((byte)'}');
                     }
 
-                    buffer[cursor++] = unchecked((byte)'}');
                     buffer[cursor++] = unchecked((byte)' ');
 
                     cursor = WriteDouble(buffer, cursor, metricPoint.DoubleValue);
@@ -154,19 +159,26 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                     // Histogram count
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
-                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count{");
+                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
 
-                    for (var i = 0; i < keys.Length; i++)
+                    if (tags.Count > 0)
                     {
-                        if (i > 0)
+                        buffer[cursor++] = unchecked((byte)'{');
+
+                        int i = 0;
+                        foreach (var tag in tags)
                         {
-                            buffer[cursor++] = unchecked((byte)',');
+                            if (i++ > 0)
+                            {
+                                buffer[cursor++] = unchecked((byte)',');
+                            }
+
+                            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
                         }
 
-                        cursor = WriteLabel(buffer, cursor, keys[i], values[i]);
+                        buffer[cursor++] = unchecked((byte)'}');
                     }
 
-                    buffer[cursor++] = unchecked((byte)'}');
                     buffer[cursor++] = unchecked((byte)' ');
 
                     cursor = WriteLong(buffer, cursor, totalCount);
