@@ -187,7 +187,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                     buffer[cursor++] = unchecked((byte)' ');
 
-                    cursor = WriteLong(buffer, cursor, totalCount);
+                    cursor = WriteLong(buffer, cursor, metricPoint.LongValue);
                     buffer[cursor++] = unchecked((byte)' ');
 
                     cursor = WriteLong(buffer, cursor, timestamp);
