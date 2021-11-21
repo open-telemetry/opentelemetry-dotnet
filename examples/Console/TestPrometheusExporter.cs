@@ -29,6 +29,7 @@ namespace Examples.Console;
 internal class TestPrometheusExporter
 {
     private static readonly Meter MyMeter = new Meter("MyMeter");
+    private static readonly Meter MyMeter2 = new Meter("MyMeter2");
     private static readonly Counter<double> Counter = MyMeter.CreateCounter<double>("myCounter", description: "A counter for demonstration purpose.");
     private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("myHistogram");
     private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());
@@ -49,15 +50,25 @@ internal class TestPrometheusExporter
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(MyMeter.Name)
-            .AddPrometheusExporter(opt =>
+            .AddMeter(MyMeter2.Name)
+            .AddPrometheusExporter(options =>
             {
-                opt.StartHttpListener = true;
-                opt.HttpListenerPrefixes = new string[] { $"http://localhost:{port}/" };
+                options.StartHttpListener = true;
+                options.HttpListenerPrefixes = new string[] { $"http://localhost:{port}/" };
+                options.ScrapeResponseCacheDurationMilliseconds = 0;
             })
             .Build();
 
         var process = Process.GetCurrentProcess();
         MyMeter.CreateObservableCounter("thread.cpu_time", () => GetThreadCpuTime(process), "ms");
+
+        // If the same Instrument name+unit combination happened under different Meters, PrometheusExporter
+        // exporter will output duplicated metric names. Related issues and PRs:
+        // * https://github.com/open-telemetry/opentelemetry-specification/pull/2017
+        // * https://github.com/open-telemetry/opentelemetry-specification/pull/2035
+        // * https://github.com/open-telemetry/opentelemetry-dotnet/pull/2593
+        //
+        // MyMeter2.CreateObservableCounter("thread.cpu_time", () => GetThreadCpuTime(process), "ms");
 
         using var token = new CancellationTokenSource();
 
