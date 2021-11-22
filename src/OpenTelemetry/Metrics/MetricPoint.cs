@@ -87,7 +87,7 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                throw new InvalidOperationException($"{nameof(this.GetBucketCounts)} is not supported for this metric type.");
+                throw new NotSupportedException($"{nameof(this.GetBucketCounts)} is not supported for this metric type.");
             }
         }
 
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                throw new InvalidOperationException($"{nameof(this.GetExplicitBounds)} is not supported for this metric type.");
+                throw new NotSupportedException($"{nameof(this.GetExplicitBounds)} is not supported for this metric type.");
             }
         }
 
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                throw new InvalidOperationException($"{nameof(this.GetHistogramCount)} is not supported for this metric type.");
+                throw new NotSupportedException($"{nameof(this.GetHistogramCount)} is not supported for this metric type.");
             }
         }
 
@@ -123,7 +123,7 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                throw new InvalidOperationException($"{nameof(this.GetHistogramSum)} is not supported for this metric type.");
+                throw new NotSupportedException($"{nameof(this.GetHistogramSum)} is not supported for this metric type.");
             }
         }
 
