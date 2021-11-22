@@ -37,7 +37,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         {
             if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
             {
-                // Accessing activity.Id here will cause the Id to be initialized
+                // Accessing activity.Id here will cause the Id to be calculated and cached
                 // before the sampler runs. This will result in Id not reflecting the
                 // correct sampling flags
                 // https://github.com/dotnet/runtime/issues/61857
