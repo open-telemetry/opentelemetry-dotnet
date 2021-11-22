@@ -159,8 +159,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 Assert.Single(metricPoints);
                 var metricPoint = metricPoints[0];
-                Assert.Equal(1L, metricPoint.LongValue);
-                Assert.Equal(activity.Duration.TotalMilliseconds, metricPoint.DoubleValue);
+
+                var count = metricPoint.GetHistogramCount();
+                var sum = metricPoint.GetHistogramSum();
+
+                Assert.Equal(1L, count);
+                Assert.Equal(activity.Duration.TotalMilliseconds, sum);
 
                 var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
                 int i = 0;

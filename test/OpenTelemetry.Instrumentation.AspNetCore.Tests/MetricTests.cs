@@ -100,8 +100,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Single(metricPoints);
 
             var metricPoint = metricPoints[0];
-            Assert.Equal(1L, metricPoint.LongValue);
-            Assert.True(metricPoint.DoubleValue > 0);
+
+            var count = metricPoint.GetHistogramCount();
+            var sum = metricPoint.GetHistogramSum();
+
+            Assert.Equal(1L, count);
+            Assert.True(sum > 0);
 
             /*
             var bucket = metric.Buckets

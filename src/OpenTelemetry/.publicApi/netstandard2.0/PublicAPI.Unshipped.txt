@@ -56,10 +56,12 @@ OpenTelemetry.Metrics.Metric.Name.get -> string
 OpenTelemetry.Metrics.Metric.Temporality.get -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.Metric.Unit.get -> string
 OpenTelemetry.Metrics.MetricPoint
-OpenTelemetry.Metrics.MetricPoint.BucketCounts.get -> long[]
 OpenTelemetry.Metrics.MetricPoint.DoubleValue.get -> double
 OpenTelemetry.Metrics.MetricPoint.EndTime.get -> System.DateTimeOffset
-OpenTelemetry.Metrics.MetricPoint.ExplicitBounds.get -> double[]
+OpenTelemetry.Metrics.MetricPoint.GetBucketCounts() -> long[]
+OpenTelemetry.Metrics.MetricPoint.GetExplicitBounds() -> double[]
+OpenTelemetry.Metrics.MetricPoint.GetHistogramCount() -> long
+OpenTelemetry.Metrics.MetricPoint.GetHistogramSum() -> double
 OpenTelemetry.Metrics.MetricPoint.LongValue.get -> long
 OpenTelemetry.Metrics.MetricPoint.MetricPoint() -> void
 OpenTelemetry.Metrics.MetricPoint.StartTime.get -> System.DateTimeOffset
