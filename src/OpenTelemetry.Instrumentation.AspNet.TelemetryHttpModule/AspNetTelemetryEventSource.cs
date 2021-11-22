@@ -39,7 +39,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
             {
                 // Accessing activity.Id here will cause the Id to be calculated and cached
                 // before the sampler runs. This will result in Id not reflecting the
-                // correct sampling flags
+                // correct sampling flags.
                 // https://github.com/dotnet/runtime/issues/61857
                 string activityId = null;
                 if (activity == null)
