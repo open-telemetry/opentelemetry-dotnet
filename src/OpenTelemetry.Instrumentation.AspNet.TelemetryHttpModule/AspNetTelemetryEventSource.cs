@@ -41,9 +41,17 @@ namespace OpenTelemetry.Instrumentation.AspNet
                 // before the sampler runs. This will result in Id not reflecting the
                 // correct sampling flags
                 // https://github.com/dotnet/runtime/issues/61857
-                var activityId = string.Concat("00-", activity.TraceId.ToHexString(), "-", activity.SpanId.ToHexString());
-                activityId = string.Concat(activityId, (activity.ActivityTraceFlags & ActivityTraceFlags.Recorded) != 0 ? "-01" : "-00");
-                this.ActivityStarted(activityId);
+                string activityId = null;
+                if (activity == null)
+                {
+                    this.ActivityStarted(activityId);
+                }
+                else
+                {
+                    activityId = string.Concat("00-", activity.TraceId.ToHexString(), "-", activity.SpanId.ToHexString());
+                    activityId = string.Concat(activityId, (activity.ActivityTraceFlags & ActivityTraceFlags.Recorded) != 0 ? "-01" : "-00");
+                    this.ActivityStarted(activityId);
+                }
             }
         }
 
