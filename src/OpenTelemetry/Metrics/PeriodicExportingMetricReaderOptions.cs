@@ -1,4 +1,4 @@
-// <copyright file="PeriodicExporterOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="PeriodicExportingMetricReaderOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-public class PeriodicExporterOptions
+public class PeriodicExportingMetricReaderOptions
 {
     public int ExportIntervalMilliseconds { get; set; } = 60000;
 }

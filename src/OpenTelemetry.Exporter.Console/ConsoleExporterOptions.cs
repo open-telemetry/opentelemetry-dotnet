@@ -27,7 +27,7 @@ namespace OpenTelemetry.Exporter
 
         public MetricReaderType MetricReaderType { get; set; } = MetricReaderType.Simple;
 
-        public PeriodicExporterOptions PeriodicExporterOptions { get; set; } = new PeriodicExporterOptions();
+        public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions { get; set; } = new PeriodicExportingMetricReaderOptions();
 
         /// <summary>
         /// Gets or sets the AggregationTemporality used for Histogram
