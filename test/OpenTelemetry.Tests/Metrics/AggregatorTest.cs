@@ -118,8 +118,8 @@ namespace OpenTelemetry.Metrics.Tests
             // Count  = # of recordings
             Assert.Equal(7, count);
 
-            Assert.Throws<InvalidOperationException>(() => histogramPoint.GetBucketCounts());
-            Assert.Throws<InvalidOperationException>(() => histogramPoint.GetExplicitBounds());
+            Assert.Throws<NotSupportedException>(() => histogramPoint.GetBucketCounts());
+            Assert.Throws<NotSupportedException>(() => histogramPoint.GetExplicitBounds());
         }
     }
 }
