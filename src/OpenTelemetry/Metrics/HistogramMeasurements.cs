@@ -24,6 +24,8 @@ namespace OpenTelemetry.Metrics
 
         internal readonly double[] ExplicitBounds;
 
+        internal readonly object LockObject;
+
         internal long CountVal;
 
         internal long Count;
@@ -37,6 +39,7 @@ namespace OpenTelemetry.Metrics
             this.ExplicitBounds = histogramBounds;
             this.BucketCounts = histogramBounds != null ? new long[histogramBounds.Length + 1] : null;
             this.AggregatedBucketCounts = histogramBounds != null ? new long[histogramBounds.Length + 1] : null;
+            this.LockObject = new object();
         }
     }
 }

@@ -24,7 +24,6 @@ namespace OpenTelemetry.Metrics
     {
         private readonly AggregationType aggType;
         private readonly HistogramMeasurements histogramMeasurements;
-        private readonly object lockObjectForHistogram;
         private long longVal;
         private long lastLongSum;
         private double doubleVal;
@@ -54,17 +53,14 @@ namespace OpenTelemetry.Metrics
             if (this.aggType == AggregationType.Histogram)
             {
                 this.histogramMeasurements = new HistogramMeasurements(histogramBounds);
-                this.lockObjectForHistogram = new object();
             }
             else if (this.aggType == AggregationType.HistogramSumCount)
             {
                 this.histogramMeasurements = new HistogramMeasurements(null);
-                this.lockObjectForHistogram = new object();
             }
             else
             {
                 this.histogramMeasurements = null;
-                this.lockObjectForHistogram = null;
             }
         }
 
@@ -215,7 +211,7 @@ namespace OpenTelemetry.Metrics
                             }
                         }
 
-                        lock (this.lockObjectForHistogram)
+                        lock (this.histogramMeasurements.LockObject)
                         {
                             this.histogramMeasurements.CountVal++;
                             this.histogramMeasurements.SumVal += number;
@@ -227,7 +223,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramSumCount:
                     {
-                        lock (this.lockObjectForHistogram)
+                        lock (this.histogramMeasurements.LockObject)
                         {
                             this.histogramMeasurements.CountVal++;
                             this.histogramMeasurements.SumVal += number;
@@ -352,7 +348,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        lock (this.lockObjectForHistogram)
+                        lock (this.histogramMeasurements.LockObject)
                         {
                             this.histogramMeasurements.Count = this.histogramMeasurements.CountVal;
                             this.histogramMeasurements.Sum = this.histogramMeasurements.SumVal;
@@ -379,7 +375,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramSumCount:
                     {
-                        lock (this.lockObjectForHistogram)
+                        lock (this.histogramMeasurements.LockObject)
                         {
                             this.histogramMeasurements.Count = this.histogramMeasurements.CountVal;
                             this.histogramMeasurements.Sum = this.histogramMeasurements.SumVal;
