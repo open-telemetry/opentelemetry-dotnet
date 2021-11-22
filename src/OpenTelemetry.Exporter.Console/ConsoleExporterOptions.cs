@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter
         /// </summary>
         public ConsoleExporterOutputTargets Targets { get; set; } = ConsoleExporterOutputTargets.Console;
 
-        public MetricReaderExportType MetricReaderExportType { get; set; } = MetricReaderExportType.Simple;
+        public MetricReaderType MetricReaderType { get; set; } = MetricReaderType.Simple;
 
         public PeriodicExporterOptions PeriodicExporterOptions { get; set; } = new PeriodicExporterOptions();
 
