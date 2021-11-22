@@ -6,7 +6,7 @@
   `Keys`+`Values`
   ([#2642](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2642))
 
-* Added new public methods in `MetricPoint`: `GetBucketCounts`,
+* Refactored `MetricPoint` and added public methods: `GetBucketCounts`,
   `GetExplicitBounds`, `GetHistogramCount`, and `GetHistogramSum`
   ([#2657](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2657))
 
