@@ -18,7 +18,7 @@ namespace OpenTelemetry.Metrics
 {
     public enum MetricReaderType
     {
-        Simple,
+        Manual,
         Periodic,
     }
 }

@@ -39,7 +39,7 @@ namespace OpenTelemetry.Metrics
 
             var exporter = new ConsoleMetricExporter(options);
 
-            var reader = options.MetricReaderType == MetricReaderType.Simple
+            var reader = options.MetricReaderType == MetricReaderType.Manual
                 ? new BaseExportingMetricReader(exporter)
                 : new PeriodicExportingMetricReader(exporter, options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
 
