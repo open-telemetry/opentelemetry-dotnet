@@ -101,7 +101,7 @@ namespace OpenTelemetry.Exporter
 
                         bool isFirstIteration = true;
                         double previousExplicitBound = default;
-                        foreach (var histogramMeasurement in metricPoint.HistogramBuckets)
+                        foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                         {
                             if (isFirstIteration)
                             {

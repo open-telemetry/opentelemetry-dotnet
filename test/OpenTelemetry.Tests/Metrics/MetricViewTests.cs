@@ -397,7 +397,7 @@ namespace OpenTelemetry.Metrics.Tests
             int index = 0;
             int actualCount = 0;
             var expectedBucketCounts = new long[] { 2, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0 };
-            foreach (var histogramMeasurement in histogramPoint.HistogramBuckets)
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
             {
                 Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
                 index++;
@@ -424,7 +424,7 @@ namespace OpenTelemetry.Metrics.Tests
             index = 0;
             actualCount = 0;
             expectedBucketCounts = new long[] { 5, 2, 0 };
-            foreach (var histogramMeasurement in histogramPoint.HistogramBuckets)
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
             {
                 Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
                 index++;
