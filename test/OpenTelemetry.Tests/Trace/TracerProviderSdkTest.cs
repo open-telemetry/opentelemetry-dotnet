@@ -647,6 +647,7 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.True(activity.IsAllDataRequested);
             Assert.True(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+            Assert.EndsWith("01", activity.Id);
 
             activity.Stop();
         }
@@ -665,6 +666,7 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.False(activity.IsAllDataRequested);
             Assert.False(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+            Assert.EndsWith("00", activity.Id);
 
             activity.Stop();
         }
@@ -688,6 +690,7 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.Equal(isAllDataRequested, activity.IsAllDataRequested);
             Assert.Equal(hasRecordedFlag, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+            Assert.EndsWith(hasRecordedFlag ? "01" : "00", activity.Id);
 
             activity.Stop();
         }
@@ -762,6 +765,7 @@ namespace OpenTelemetry.Trace.Tests
             activity.Start();
             Assert.Equal(expectedIsAllDataRequested, activity.IsAllDataRequested);
             Assert.Equal(hasRecordedFlag, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+            Assert.EndsWith(hasRecordedFlag ? "01" : "00", activity.Id);
             activity.Stop();
         }
 
@@ -792,6 +796,7 @@ namespace OpenTelemetry.Trace.Tests
             activity.Start();
             Assert.True(activity.IsAllDataRequested);
             Assert.True(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+            Assert.EndsWith("01", activity.Id);
             activity.Stop();
         }
 
@@ -822,6 +827,7 @@ namespace OpenTelemetry.Trace.Tests
             activity.Start();
             Assert.False(activity.IsAllDataRequested);
             Assert.False(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+            Assert.EndsWith("00", activity.Id);
             activity.Stop();
         }
 
