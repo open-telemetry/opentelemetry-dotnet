@@ -2,12 +2,6 @@ abstract OpenTelemetry.Metrics.MetricReader.ProcessMetrics(in OpenTelemetry.Batc
 OpenTelemetry.BaseExporter<T>.ForceFlush(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Batch<T>.Batch(T[] items, int count) -> void
 OpenTelemetry.Batch<T>.Count.get -> long
-OpenTelemetry.Metrics.Aggregation
-OpenTelemetry.Metrics.Aggregation.Default = 0 -> OpenTelemetry.Metrics.Aggregation
-OpenTelemetry.Metrics.Aggregation.Drop = 1 -> OpenTelemetry.Metrics.Aggregation
-OpenTelemetry.Metrics.Aggregation.Histogram = 4 -> OpenTelemetry.Metrics.Aggregation
-OpenTelemetry.Metrics.Aggregation.LastValue = 3 -> OpenTelemetry.Metrics.Aggregation
-OpenTelemetry.Metrics.Aggregation.Sum = 2 -> OpenTelemetry.Metrics.Aggregation
 OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporality.Cumulative = 1 -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporality.Delta = 2 -> OpenTelemetry.Metrics.AggregationTemporality
@@ -109,8 +103,6 @@ override OpenTelemetry.Metrics.BaseExportingMetricReader.Dispose(bool disposing)
 override OpenTelemetry.Metrics.BaseExportingMetricReader.OnCollect(int timeoutMilliseconds) -> bool
 override OpenTelemetry.Metrics.BaseExportingMetricReader.OnShutdown(int timeoutMilliseconds) -> bool
 override OpenTelemetry.Metrics.BaseExportingMetricReader.ProcessMetrics(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric> metrics, int timeoutMilliseconds) -> bool
-override OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.Aggregation.get -> OpenTelemetry.Metrics.Aggregation
-override OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.Aggregation.set -> void
 override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder
 override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddMeter(params string[] names) -> OpenTelemetry.Metrics.MeterProviderBuilder
 override OpenTelemetry.Metrics.PeriodicExportingMetricReader.Dispose(bool disposing) -> void
@@ -138,5 +130,3 @@ virtual OpenTelemetry.BaseExporter<T>.OnForceFlush(int timeoutMilliseconds) -> b
 virtual OpenTelemetry.Metrics.MetricReader.Dispose(bool disposing) -> void
 virtual OpenTelemetry.Metrics.MetricReader.OnCollect(int timeoutMilliseconds) -> bool
 virtual OpenTelemetry.Metrics.MetricReader.OnShutdown(int timeoutMilliseconds) -> bool
-virtual OpenTelemetry.Metrics.MetricStreamConfiguration.Aggregation.get -> OpenTelemetry.Metrics.Aggregation
-virtual OpenTelemetry.Metrics.MetricStreamConfiguration.Aggregation.set -> void
