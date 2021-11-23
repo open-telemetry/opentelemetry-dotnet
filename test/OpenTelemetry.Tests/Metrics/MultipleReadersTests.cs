@@ -32,18 +32,18 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(AggregationTemporality.Cumulative, true)]
         public void SdkSupportsMultipleReaders(AggregationTemporality aggregationTemporality, bool hasViews)
         {
-            var exporterdMetricItems1 = new List<Metric>();
-            using var deltaMetricExporter1 = new InMemoryExporter<Metric>(exporterdMetricItems1);
-            using var deltaMetricReader1 = new BaseExportingMetricReader(deltaMetricExporter1)
+            var exportedItems1 = new List<Metric>();
+            using var deltaExporter1 = new InMemoryExporter<Metric>(exportedItems1);
+            using var deltaReader1 = new BaseExportingMetricReader(deltaExporter1)
             {
-                PreferredAggregationTemporality = AggregationTemporality.Delta,
+                Temporality = AggregationTemporality.Delta,
             };
 
-            var exporterdMetricItems2 = new List<Metric>();
-            using var deltaMetricExporter2 = new InMemoryExporter<Metric>(exporterdMetricItems2);
-            using var deltaMetricReader2 = new BaseExportingMetricReader(deltaMetricExporter2)
+            var exportedItems2 = new List<Metric>();
+            using var deltaExporter2 = new InMemoryExporter<Metric>(exportedItems2);
+            using var deltaReader2 = new BaseExportingMetricReader(deltaExporter2)
             {
-                PreferredAggregationTemporality = aggregationTemporality,
+                Temporality = aggregationTemporality,
             };
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{aggregationTemporality}.{hasViews}");
 
@@ -56,8 +56,8 @@ namespace OpenTelemetry.Metrics.Tests
 
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(deltaMetricReader1)
-                .AddReader(deltaMetricReader2);
+                .AddReader(deltaReader1)
+                .AddReader(deltaReader2);
 
             if (hasViews)
             {
@@ -70,41 +70,41 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush();
 
-            Assert.Equal(2, exporterdMetricItems1.Count);
-            Assert.Equal(2, exporterdMetricItems2.Count);
+            Assert.Equal(2, exportedItems1.Count);
+            Assert.Equal(2, exportedItems2.Count);
 
             // Check value exported for Counter
-            this.AssertLongSumValueForMetric(exporterdMetricItems1[0], 10);
-            this.AssertLongSumValueForMetric(exporterdMetricItems2[0], 10);
+            this.AssertLongSumValueForMetric(exportedItems1[0], 10);
+            this.AssertLongSumValueForMetric(exportedItems2[0], 10);
 
             // Check value exported for Gauge
-            this.AssertLongSumValueForMetric(exporterdMetricItems1[1], 100);
-            this.AssertLongSumValueForMetric(exporterdMetricItems2[1], 200);
+            this.AssertLongSumValueForMetric(exportedItems1[1], 100);
+            this.AssertLongSumValueForMetric(exportedItems2[1], 200);
 
-            exporterdMetricItems1.Clear();
-            exporterdMetricItems2.Clear();
+            exportedItems1.Clear();
+            exportedItems2.Clear();
 
             counter.Add(15, new KeyValuePair<string, object>("key", "value"));
 
             meterProvider.ForceFlush();
 
-            Assert.Equal(2, exporterdMetricItems1.Count);
-            Assert.Equal(2, exporterdMetricItems2.Count);
+            Assert.Equal(2, exportedItems1.Count);
+            Assert.Equal(2, exportedItems2.Count);
 
             // Check value exported for Counter
-            this.AssertLongSumValueForMetric(exporterdMetricItems1[0], 15);
+            this.AssertLongSumValueForMetric(exportedItems1[0], 15);
             if (aggregationTemporality == AggregationTemporality.Delta)
             {
-                this.AssertLongSumValueForMetric(exporterdMetricItems2[0], 15);
+                this.AssertLongSumValueForMetric(exportedItems2[0], 15);
             }
             else
             {
-                this.AssertLongSumValueForMetric(exporterdMetricItems2[0], 25);
+                this.AssertLongSumValueForMetric(exportedItems2[0], 25);
             }
 
             // Check value exported for Gauge
-            this.AssertLongSumValueForMetric(exporterdMetricItems1[1], 300);
-            this.AssertLongSumValueForMetric(exporterdMetricItems2[1], 400);
+            this.AssertLongSumValueForMetric(exportedItems1[1], 300);
+            this.AssertLongSumValueForMetric(exportedItems2[1], 400);
         }
 
         private void AssertLongSumValueForMetric(Metric metric, long value)
