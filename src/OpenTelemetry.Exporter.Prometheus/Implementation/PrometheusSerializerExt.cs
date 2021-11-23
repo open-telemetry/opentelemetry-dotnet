@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
             if (metric.MetricType != MetricType.Histogram)
             {
-                foreach (ref var metricPoint in metric.GetMetricPoints())
+                foreach (ref var metricPoint in metric.GetMetricPointsAccessor())
                 {
                     var tags = metricPoint.Tags;
                     var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             }
             else
             {
-                foreach (ref var metricPoint in metric.GetMetricPoints())
+                foreach (ref var metricPoint in metric.GetMetricPointsAccessor())
                 {
                     var tags = metricPoint.Tags;
                     var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();

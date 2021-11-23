@@ -46,7 +46,7 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush();
 
             var metric = metrics[0]; // Only one Metric object is added to the collection at this point
-            var metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
+            var metricPointsEnumerator = metric.GetMetricPointsAccessor().GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
             ref var metricPointForFirstExport = ref metricPointsEnumerator.Current;
             Assert.Equal(10, metricPointForFirstExport.LongValue);
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush();
 
             metric = metrics[1]; // Second Metric object is added to the collection at this point
-            metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
+            metricPointsEnumerator = metric.GetMetricPointsAccessor().GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
             var metricPointForSecondExport = metricPointsEnumerator.Current;
             Assert.Equal(25, metricPointForSecondExport.LongValue);

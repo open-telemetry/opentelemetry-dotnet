@@ -58,7 +58,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0];
             Assert.Equal("myGauge", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref var mp in metric.GetMetricPointsAccessor())
             {
                 metricPoints.Add(mp);
             }
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0];
             Assert.Equal("myGauge", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref var mp in metric.GetMetricPointsAccessor())
             {
                 metricPoints.Add(mp);
             }
@@ -462,7 +462,7 @@ namespace OpenTelemetry.Metrics.Tests
 
                 foreach (var metric in metricItems)
                 {
-                    foreach (ref var metricPoint in metric.GetMetricPoints())
+                    foreach (ref var metricPoint in metric.GetMetricPointsAccessor())
                     {
                         count++;
                     }
@@ -715,7 +715,7 @@ namespace OpenTelemetry.Metrics.Tests
             long sum = 0;
             foreach (var metric in metrics)
             {
-                foreach (ref var metricPoint in metric.GetMetricPoints())
+                foreach (ref var metricPoint in metric.GetMetricPointsAccessor())
                 {
                     sum += metricPoint.LongValue;
                 }
@@ -729,7 +729,7 @@ namespace OpenTelemetry.Metrics.Tests
             double sum = 0;
             foreach (var metric in metrics)
             {
-                foreach (ref var metricPoint in metric.GetMetricPoints())
+                foreach (ref var metricPoint in metric.GetMetricPointsAccessor())
                 {
                     sum += metricPoint.DoubleValue;
                 }

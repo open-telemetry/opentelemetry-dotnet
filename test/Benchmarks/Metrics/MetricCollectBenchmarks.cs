@@ -69,7 +69,7 @@ namespace Benchmarks.Metrics
                     if (this.UseWithRef)
                     {
                         // The performant way of iterating.
-                        foreach (ref var metricPoint in metric.GetMetricPoints())
+                        foreach (ref var metricPoint in metric.GetMetricPointsAccessor())
                         {
                             sum += metricPoint.LongValue;
                         }
@@ -78,7 +78,7 @@ namespace Benchmarks.Metrics
                     {
                         // The non-performant way of iterating.
                         // This is still "correct", but less performant.
-                        foreach (var metricPoint in metric.GetMetricPoints())
+                        foreach (var metricPoint in metric.GetMetricPointsAccessor())
                         {
                             sum += metricPoint.LongValue;
                         }

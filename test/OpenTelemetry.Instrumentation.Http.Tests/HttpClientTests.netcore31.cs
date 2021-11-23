@@ -152,7 +152,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.True(metric.MetricType == MetricType.Histogram);
 
                 var metricPoints = new List<MetricPoint>();
-                foreach (var p in metric.GetMetricPoints())
+                foreach (var p in metric.GetMetricPointsAccessor())
                 {
                     metricPoints.Add(p);
                 }

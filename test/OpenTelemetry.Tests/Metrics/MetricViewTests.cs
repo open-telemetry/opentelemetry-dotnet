@@ -380,7 +380,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("MyHistogram", metricCustom.Name);
 
             List<MetricPoint> metricPointsDefault = new List<MetricPoint>();
-            foreach (ref var mp in metricDefault.GetMetricPoints())
+            foreach (ref var mp in metricDefault.GetMetricPointsAccessor())
             {
                 metricPointsDefault.Add(mp);
             }
@@ -404,7 +404,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(0, bucketCounts[5]);
 
             List<MetricPoint> metricPointsCustom = new List<MetricPoint>();
-            foreach (ref var mp in metricCustom.GetMetricPoints())
+            foreach (ref var mp in metricCustom.GetMetricPointsAccessor())
             {
                 metricPointsCustom.Add(mp);
             }
@@ -456,7 +456,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0];
             Assert.Equal("NameOnly", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref var mp in metric.GetMetricPointsAccessor())
             {
                 metricPoints.Add(mp);
             }
@@ -467,7 +467,7 @@ namespace OpenTelemetry.Metrics.Tests
             metric = exportedItems[1];
             Assert.Equal("SizeOnly", metric.Name);
             metricPoints.Clear();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref var mp in metric.GetMetricPointsAccessor())
             {
                 metricPoints.Add(mp);
             }
@@ -478,7 +478,7 @@ namespace OpenTelemetry.Metrics.Tests
             metric = exportedItems[2];
             Assert.Equal("NoTags", metric.Name);
             metricPoints.Clear();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref var mp in metric.GetMetricPointsAccessor())
             {
                 metricPoints.Add(mp);
             }
