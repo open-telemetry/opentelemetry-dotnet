@@ -246,8 +246,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             };
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
-                            dataPoint.Count = (ulong)metricPoint.LongValue;
-                            dataPoint.Sum = metricPoint.DoubleValue;
+                            dataPoint.Count = (ulong)metricPoint.GetHistogramCount();
+                            dataPoint.Sum = metricPoint.GetHistogramSum();
 
                             foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                             {
