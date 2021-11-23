@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Metrics
 {
-    internal class HistogramMeasurements
+    public class HistogramMeasurements
     {
         internal readonly long[] BucketCounts;
 
@@ -40,6 +40,45 @@ namespace OpenTelemetry.Metrics
             this.BucketCounts = histogramBounds != null ? new long[histogramBounds.Length + 1] : null;
             this.AggregatedBucketCounts = histogramBounds != null ? new long[histogramBounds.Length + 1] : null;
             this.LockObject = new object();
+        }
+
+        public Enumerator GetEnumerator() => new(this);
+
+        public struct Enumerator
+        {
+            private readonly bool isHistogramSumCount;
+            private readonly int numberOfBuckets;
+            private readonly int numberofExplicitBounds;
+            private readonly HistogramMeasurements histogramMeasurements;
+            private int index;
+
+            internal Enumerator(HistogramMeasurements histogramMeasurements)
+            {
+                this.histogramMeasurements = histogramMeasurements;
+                this.index = 0;
+                this.Current = default;
+                this.isHistogramSumCount = histogramMeasurements.ExplicitBounds == null;
+                this.numberOfBuckets = this.isHistogramSumCount ? default : histogramMeasurements.BucketCounts.Length;
+                this.numberofExplicitBounds = this.isHistogramSumCount ? default : histogramMeasurements.ExplicitBounds.Length;
+            }
+
+            public HistogramMeasurement Current { get; private set; }
+
+            public bool MoveNext()
+            {
+                if (!this.isHistogramSumCount && this.index < this.numberOfBuckets)
+                {
+                    double explicitBound = this.index < this.numberofExplicitBounds
+                        ? this.histogramMeasurements.ExplicitBounds[this.index]
+                        : double.PositiveInfinity;
+                    long bucketCount = this.histogramMeasurements.AggregatedBucketCounts[this.index];
+                    this.Current = new HistogramMeasurement(explicitBound, bucketCount);
+                    this.index++;
+                    return true;
+                }
+
+                return false;
+            }
         }
     }
 }
