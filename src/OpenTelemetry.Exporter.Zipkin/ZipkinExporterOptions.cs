@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Net.Http;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -35,6 +36,8 @@ namespace OpenTelemetry.Exporter
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
         internal const string ZipkinEndpointEnvVar = "OTEL_EXPORTER_ZIPKIN_ENDPOINT";
         internal const string DefaultZipkinEndpoint = "http://localhost:9411/api/v2/spans";
+
+        internal static readonly Func<HttpClient> DefaultHttpClientFactory = () => new HttpClient();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZipkinExporterOptions"/> class.
@@ -73,5 +76,23 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is BatchExporter.
         /// </summary>
         public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
+
+        /// <summary>
+        /// Gets or sets the factory function called to create the <see
+        /// cref="HttpClient"/> instance that will be used at runtime to
+        /// transmit spans over HTTP. The returned instance will be reused for
+        /// all export invocations.
+        /// </summary>
+        /// <remarks>
+        /// Note: The default behavior when using the <see
+        /// cref="ZipkinExporterHelperExtensions.AddZipkinExporter(TracerProviderBuilder,
+        /// Action{ZipkinExporterOptions})"/> extension is if an <a
+        /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpclientfactory">IHttpClientFactory</a>
+        /// instance can be resolved through the application <see
+        /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be
+        /// created through the factory with the name "ZipkinExporter" otherwise
+        /// an <see cref="HttpClient"/> will be instantiated directly.
+        /// </remarks>
+        public Func<HttpClient> HttpClientFactory { get; set; } = DefaultHttpClientFactory;
     }
 }
