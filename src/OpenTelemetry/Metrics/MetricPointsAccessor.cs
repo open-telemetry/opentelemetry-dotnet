@@ -1,4 +1,4 @@
-// <copyright file="BatchMetricPoint.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricPointsAccessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
-    public readonly struct BatchMetricPoint : IDisposable
+    public readonly struct MetricPointsAccessor : IDisposable
     {
         private readonly MetricPoint[] metricsPoints;
         private readonly int[] metricPointsToProcess;
@@ -28,7 +28,7 @@ namespace OpenTelemetry.Metrics
         private readonly DateTimeOffset start;
         private readonly DateTimeOffset end;
 
-        internal BatchMetricPoint(MetricPoint[] metricsPoints, int[] metricPointsToProcess, long targetCount, DateTimeOffset start, DateTimeOffset end)
+        internal MetricPointsAccessor(MetricPoint[] metricsPoints, int[] metricPointsToProcess, long targetCount, DateTimeOffset start, DateTimeOffset end)
         {
             Guard.Null(metricsPoints, nameof(metricsPoints));
 
