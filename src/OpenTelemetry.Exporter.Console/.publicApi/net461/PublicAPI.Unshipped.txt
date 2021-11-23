@@ -1,7 +1,9 @@
 OpenTelemetry.Exporter.ConsoleExporterOptions.AggregationTemporality.get -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Exporter.ConsoleExporterOptions.AggregationTemporality.set -> void
-OpenTelemetry.Exporter.ConsoleExporterOptions.MetricExportIntervalMilliseconds.get -> int
-OpenTelemetry.Exporter.ConsoleExporterOptions.MetricExportIntervalMilliseconds.set -> void
+OpenTelemetry.Exporter.ConsoleExporterOptions.MetricReaderType.get -> OpenTelemetry.Metrics.MetricReaderType
+OpenTelemetry.Exporter.ConsoleExporterOptions.MetricReaderType.set -> void
+OpenTelemetry.Exporter.ConsoleExporterOptions.PeriodicExportingMetricReaderOptions.get -> OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
+OpenTelemetry.Exporter.ConsoleExporterOptions.PeriodicExportingMetricReaderOptions.set -> void
 OpenTelemetry.Exporter.ConsoleMetricExporter
 OpenTelemetry.Exporter.ConsoleMetricExporter.ConsoleMetricExporter(OpenTelemetry.Exporter.ConsoleExporterOptions options) -> void
 OpenTelemetry.Metrics.ConsoleExporterMetricsExtensions
