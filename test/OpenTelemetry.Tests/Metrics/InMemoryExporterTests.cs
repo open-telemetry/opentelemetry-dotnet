@@ -27,14 +27,14 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact(Skip = "To be run after https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361 is fixed")]
         public void InMemoryExporterShouldDeepCopyMetricPoints()
         {
-            var metrics = new List<Metric>();
+            var exportedItems = new List<Metric>();
 
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(metrics))
+                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
                 {
-                    PreferredAggregationTemporality = AggregationTemporality.Delta,
+                    Temporality = AggregationTemporality.Delta,
                 })
                 .Build();
 
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush();
 
-            var metric = metrics[0]; // Only one Metric object is added to the collection at this point
+            var metric = exportedItems[0]; // Only one Metric object is added to the collection at this point
             var metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
             ref var metricPointForFirstExport = ref metricPointsEnumerator.Current;
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush();
 
-            metric = metrics[1]; // Second Metric object is added to the collection at this point
+            metric = exportedItems[1]; // Second Metric object is added to the collection at this point
             metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
             var metricPointForSecondExport = metricPointsEnumerator.Current;

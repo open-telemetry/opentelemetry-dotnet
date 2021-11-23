@@ -27,34 +27,36 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public abstract partial class MetricReader : IDisposable
     {
-        private const AggregationTemporality CumulativeAndDelta = AggregationTemporality.Cumulative | AggregationTemporality.Delta;
+        private const AggregationTemporality AggregationTemporalityUnspecified = (AggregationTemporality)0;
         private readonly object newTaskLock = new object();
         private readonly object onCollectLock = new object();
         private readonly TaskCompletionSource<bool> shutdownTcs = new TaskCompletionSource<bool>();
-        private AggregationTemporality preferredAggregationTemporality = CumulativeAndDelta;
-        private AggregationTemporality supportedAggregationTemporality = CumulativeAndDelta;
+        private AggregationTemporality temporality = AggregationTemporalityUnspecified;
         private int shutdownCount;
         private TaskCompletionSource<bool> collectionTcs;
 
         public BaseProvider ParentProvider { get; private set; }
 
-        public AggregationTemporality PreferredAggregationTemporality
+        public AggregationTemporality Temporality
         {
-            get => this.preferredAggregationTemporality;
-            set
+            get
             {
-                ValidateAggregationTemporality(value, this.supportedAggregationTemporality);
-                this.preferredAggregationTemporality = value;
-            }
-        }
+                if (this.temporality == AggregationTemporalityUnspecified)
+                {
+                    this.temporality = AggregationTemporality.Cumulative;
+                }
 
-        public AggregationTemporality SupportedAggregationTemporality
-        {
-            get => this.supportedAggregationTemporality;
+                return this.temporality;
+            }
+
             set
             {
-                ValidateAggregationTemporality(this.preferredAggregationTemporality, value);
-                this.supportedAggregationTemporality = value;
+                if (this.temporality != AggregationTemporalityUnspecified)
+                {
+                    throw new NotSupportedException($"The temporality cannot be modified (the current value is {this.temporality}).");
+                }
+
+                this.temporality = value;
             }
         }
 
@@ -267,29 +269,6 @@ namespace OpenTelemetry.Metrics
         /// </param>
         protected virtual void Dispose(bool disposing)
         {
-        }
-
-        private static void ValidateAggregationTemporality(AggregationTemporality preferred, AggregationTemporality supported)
-        {
-            Guard.Zero((int)(preferred & CumulativeAndDelta), $"PreferredAggregationTemporality has an invalid value {preferred}", nameof(preferred));
-            Guard.Zero((int)(supported & CumulativeAndDelta), $"SupportedAggregationTemporality has an invalid value {supported}", nameof(supported));
-
-            /*
-            | Preferred  | Supported  | Valid |
-            | ---------- | ---------- | ----- |
-            | Both       | Both       | true  |
-            | Both       | Cumulative | false |
-            | Both       | Delta      | false |
-            | Cumulative | Both       | true  |
-            | Cumulative | Cumulative | true  |
-            | Cumulative | Delta      | false |
-            | Delta      | Both       | true  |
-            | Delta      | Cumulative | false |
-            | Delta      | Delta      | true  |
-            */
-            string message = $"PreferredAggregationTemporality {preferred} and SupportedAggregationTemporality {supported} are incompatible";
-            Guard.Zero((int)(preferred & supported), message, nameof(preferred));
-            Guard.Range((int)preferred, nameof(preferred), max: (int)supported, maxName: nameof(supported), message: message);
         }
     }
 }

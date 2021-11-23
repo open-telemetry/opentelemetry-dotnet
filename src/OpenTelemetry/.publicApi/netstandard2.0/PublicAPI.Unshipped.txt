@@ -6,10 +6,8 @@ OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporality.Cumulative = 1 -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporality.Delta = 2 -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporalityAttribute
-OpenTelemetry.Metrics.AggregationTemporalityAttribute.AggregationTemporalityAttribute(OpenTelemetry.Metrics.AggregationTemporality supported) -> void
-OpenTelemetry.Metrics.AggregationTemporalityAttribute.AggregationTemporalityAttribute(OpenTelemetry.Metrics.AggregationTemporality supported, OpenTelemetry.Metrics.AggregationTemporality preferred) -> void
-OpenTelemetry.Metrics.AggregationTemporalityAttribute.Preferred.get -> OpenTelemetry.Metrics.AggregationTemporality
-OpenTelemetry.Metrics.AggregationTemporalityAttribute.Supported.get -> OpenTelemetry.Metrics.AggregationTemporality
+OpenTelemetry.Metrics.AggregationTemporalityAttribute.AggregationTemporalityAttribute(OpenTelemetry.Metrics.AggregationTemporality temporality) -> void
+OpenTelemetry.Metrics.AggregationTemporalityAttribute.Temporality.get -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.BaseExportingMetricReader
 OpenTelemetry.Metrics.BaseExportingMetricReader.BaseExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric> exporter) -> void
 OpenTelemetry.Metrics.BaseExportingMetricReader.SupportedExportModes.get -> OpenTelemetry.Metrics.ExportModes
@@ -74,11 +72,9 @@ OpenTelemetry.Metrics.MetricReader.Collect(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Metrics.MetricReader.Dispose() -> void
 OpenTelemetry.Metrics.MetricReader.MetricReader() -> void
 OpenTelemetry.Metrics.MetricReader.ParentProvider.get -> OpenTelemetry.BaseProvider
-OpenTelemetry.Metrics.MetricReader.PreferredAggregationTemporality.get -> OpenTelemetry.Metrics.AggregationTemporality
-OpenTelemetry.Metrics.MetricReader.PreferredAggregationTemporality.set -> void
 OpenTelemetry.Metrics.MetricReader.Shutdown(int timeoutMilliseconds = -1) -> bool
-OpenTelemetry.Metrics.MetricReader.SupportedAggregationTemporality.get -> OpenTelemetry.Metrics.AggregationTemporality
-OpenTelemetry.Metrics.MetricReader.SupportedAggregationTemporality.set -> void
+OpenTelemetry.Metrics.MetricReader.Temporality.get -> OpenTelemetry.Metrics.AggregationTemporality
+OpenTelemetry.Metrics.MetricReader.Temporality.set -> void
 OpenTelemetry.Metrics.MetricReaderType
 OpenTelemetry.Metrics.MetricReaderType.Manual = 0 -> OpenTelemetry.Metrics.MetricReaderType
 OpenTelemetry.Metrics.MetricReaderType.Periodic = 1 -> OpenTelemetry.Metrics.MetricReaderType

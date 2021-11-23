@@ -55,7 +55,7 @@ namespace OpenTelemetry.Metrics
                 }
                 else
                 {
-                    var metric = new Metric(instrument, this.preferredAggregationTemporality, metricName, instrument.Description, this.maxMetricPointsPerMetricStream);
+                    var metric = new Metric(instrument, this.Temporality, metricName, instrument.Description, this.maxMetricPointsPerMetricStream);
                     this.metrics[index] = metric;
                     this.metricStreamNames.Add(metricStreamName);
                     return metric;
@@ -131,7 +131,7 @@ namespace OpenTelemetry.Metrics
                         string[] tagKeysInteresting = metricStreamConfig?.TagKeys;
                         double[] histogramBucketBounds = (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfig
                             && histogramConfig.Boundaries != null) ? histogramConfig.Boundaries : null;
-                        metric = new Metric(instrument, this.preferredAggregationTemporality, metricName, metricDescription, this.maxMetricPointsPerMetricStream, histogramBucketBounds, tagKeysInteresting);
+                        metric = new Metric(instrument, this.Temporality, metricName, metricDescription, this.maxMetricPointsPerMetricStream, histogramBucketBounds, tagKeysInteresting);
 
                         this.metrics[index] = metric;
                         metrics.Add(metric);
