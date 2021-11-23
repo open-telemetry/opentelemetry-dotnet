@@ -66,8 +66,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Single(metricPoints);
             var metricPoint = metricPoints[0];
             Assert.Equal(100, metricPoint.LongValue);
-            Assert.NotNull(metricPoint.Keys);
-            Assert.NotNull(metricPoint.Values);
+            Assert.True(metricPoint.Tags.Count > 0);
         }
 
         [Fact]
@@ -97,8 +96,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Single(metricPoints);
             var metricPoint = metricPoints[0];
             Assert.Equal(100, metricPoint.LongValue);
-            Assert.NotNull(metricPoint.Keys);
-            Assert.NotNull(metricPoint.Values);
+            Assert.True(metricPoint.Tags.Count > 0);
         }
 
         [Theory]
