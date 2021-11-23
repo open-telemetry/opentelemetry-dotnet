@@ -111,7 +111,7 @@ namespace OpenTelemetry.Internal
                 // correct sampling flags
                 // https://github.com/dotnet/runtime/issues/61857
                 var activityId = string.Concat("00-", activity.TraceId.ToHexString(), "-", activity.SpanId.ToHexString());
-                activityId = string.Concat(activityId, (activity.ActivityTraceFlags & ActivityTraceFlags.Recorded) != 0 ? "-01" : "-00");
+                activityId = string.Concat(activityId, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded) ? "-01" : "-00");
                 this.ActivityStarted(activity.OperationName, activityId);
             }
         }
