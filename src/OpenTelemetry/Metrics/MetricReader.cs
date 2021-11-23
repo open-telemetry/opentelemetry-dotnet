@@ -53,7 +53,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (this.temporality != AggregationTemporalityUnspecified)
                 {
-                    throw new NotSupportedException(); // TODO: add details
+                    throw new NotSupportedException($"The temporality cannot be modified (the current value is {this.temporality}).");
                 }
 
                 this.temporality = value;

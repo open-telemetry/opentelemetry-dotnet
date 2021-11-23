@@ -14,6 +14,9 @@
 aggregation is not implemented yet.
 ([#2660](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2660))
 
+* Refactored temporality setting to align with the latest spec.
+  ([#2666](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2666))
+
 ## 1.2.0-beta2
 
 Released 2021-Nov-19
