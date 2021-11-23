@@ -91,7 +91,7 @@ namespace OpenTelemetry.Metrics
                 // Validate histogram boundaries
                 if (histogramConfiguration.Boundaries != null && !IsSortedAndDistinct(histogramConfiguration.Boundaries))
                 {
-                    throw new ArgumentException($"Histogram boundaries must be in ascending order with distinct values", nameof(histogramConfiguration.Boundaries));
+                    throw new ArgumentException($"Histogram boundaries must be in ascending order with distinct values, and cannot contain double.NaN, double.PositiveInfinity or NegativeInfinity", nameof(histogramConfiguration.Boundaries));
                 }
             }
 
@@ -213,6 +213,16 @@ namespace OpenTelemetry.Metrics
                 {
                     return false;
                 }
+
+                if (double.IsInfinity(values[i - 1]) || double.IsNaN(values[i - 1]))
+                {
+                    return false;
+                }
+            }
+
+            if (double.IsInfinity(values[values.Length - 1]) || double.IsNaN(values[values.Length - 1]))
+            {
+                return false;
             }
 
             return true;
