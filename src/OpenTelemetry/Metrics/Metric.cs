@@ -124,9 +124,9 @@ namespace OpenTelemetry.Metrics
 
         internal bool InstrumentDisposed { get; set; }
 
-        public MetricPointsAccessor GetMetricPointsAccessor()
+        public BatchMetricPoint GetMetricPoints()
         {
-            return this.aggStore.GetMetricPointsAccessor();
+            return this.aggStore.GetMetricPoints();
         }
 
         internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)

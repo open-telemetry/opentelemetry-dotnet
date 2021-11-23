@@ -76,7 +76,7 @@ namespace OpenTelemetry.Exporter
 
                 Console.WriteLine(msg.ToString());
 
-                foreach (ref var metricPoint in metric.GetMetricPointsAccessor())
+                foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
                     string valueDisplay = string.Empty;
                     StringBuilder tagsBuilder = new StringBuilder();

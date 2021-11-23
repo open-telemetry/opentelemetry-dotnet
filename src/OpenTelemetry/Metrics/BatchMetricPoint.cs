@@ -20,7 +20,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
-    public readonly struct MetricPointsAccessor : IDisposable
+    public readonly struct BatchMetricPoint : IDisposable
     {
         private readonly MetricPoint[] metricsPoints;
         private readonly int[] metricPointsToProcess;
@@ -28,7 +28,7 @@ namespace OpenTelemetry.Metrics
         private readonly DateTimeOffset start;
         private readonly DateTimeOffset end;
 
-        internal MetricPointsAccessor(MetricPoint[] metricsPoints, int[] metricPointsToProcess, long targetCount, DateTimeOffset start, DateTimeOffset end)
+        internal BatchMetricPoint(MetricPoint[] metricsPoints, int[] metricPointsToProcess, long targetCount, DateTimeOffset start, DateTimeOffset end)
         {
             Guard.Null(metricsPoints, nameof(metricsPoints));
 
