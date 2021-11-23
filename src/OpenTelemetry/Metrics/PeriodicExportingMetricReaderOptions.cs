@@ -1,4 +1,4 @@
-// <copyright file="ExplicitBucketHistogramConfiguration.cs" company="OpenTelemetry Authors">
+// <copyright file="PeriodicExportingMetricReaderOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +16,11 @@
 
 namespace OpenTelemetry.Metrics
 {
-    public class ExplicitBucketHistogramConfiguration : MetricStreamConfiguration
+    public class PeriodicExportingMetricReaderOptions
     {
         /// <summary>
-        /// Gets or sets the values representing explicit histogram bucket
-        /// boundary values.
+        /// Gets or sets the metric export interval in milliseconds. The default value is <c>60000</c>.
         /// </summary>
-        /// <remarks>
-        /// The array must be in ascending order with distinct values.
-        /// </remarks>
-        public double[] Boundaries { get; set; }
+        public int ExportIntervalMilliseconds { get; set; } = 60000;
     }
 }

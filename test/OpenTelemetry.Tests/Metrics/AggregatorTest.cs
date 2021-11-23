@@ -49,10 +49,13 @@ namespace OpenTelemetry.Metrics.Tests
             histogramPoint.Update(10000000);
             histogramPoint.TakeSnapshot(true);
 
-            Assert.Equal(22, histogramPoint.LongValue);
-            for (int i = 0; i < histogramPoint.BucketCounts.Length; i++)
+            var count = histogramPoint.GetHistogramCount();
+            var bucketCounts = histogramPoint.GetBucketCounts();
+
+            Assert.Equal(22, count);
+            for (int i = 0; i < bucketCounts.Length; i++)
             {
-                Assert.Equal(2, histogramPoint.BucketCounts[i]);
+                Assert.Equal(2, bucketCounts[i]);
             }
         }
 
@@ -75,15 +78,19 @@ namespace OpenTelemetry.Metrics.Tests
 
             histogramPoint.TakeSnapshot(true);
 
+            var count = histogramPoint.GetHistogramCount();
+            var sum = histogramPoint.GetHistogramSum();
+            var bucketCounts = histogramPoint.GetBucketCounts();
+
             // Sum of all recordings
-            Assert.Equal(40, histogramPoint.DoubleValue);
+            Assert.Equal(40, sum);
 
             // Count  = # of recordings
-            Assert.Equal(7, histogramPoint.LongValue);
-            Assert.Equal(boundaries.Length + 1, histogramPoint.BucketCounts.Length);
-            Assert.Equal(5, histogramPoint.BucketCounts[0]);
-            Assert.Equal(2, histogramPoint.BucketCounts[1]);
-            Assert.Equal(0, histogramPoint.BucketCounts[2]);
+            Assert.Equal(7, count);
+            Assert.Equal(boundaries.Length + 1, bucketCounts.Length);
+            Assert.Equal(5, bucketCounts[0]);
+            Assert.Equal(2, bucketCounts[1]);
+            Assert.Equal(0, bucketCounts[2]);
         }
 
         [Fact]
@@ -102,13 +109,17 @@ namespace OpenTelemetry.Metrics.Tests
 
             histogramPoint.TakeSnapshot(true);
 
+            var count = histogramPoint.GetHistogramCount();
+            var sum = histogramPoint.GetHistogramSum();
+
             // Sum of all recordings
-            Assert.Equal(40, histogramPoint.DoubleValue);
+            Assert.Equal(40, sum);
 
             // Count  = # of recordings
-            Assert.Equal(7, histogramPoint.LongValue);
-            Assert.Null(histogramPoint.BucketCounts);
-            Assert.Null(histogramPoint.ExplicitBounds);
+            Assert.Equal(7, count);
+
+            Assert.Throws<NotSupportedException>(() => histogramPoint.GetBucketCounts());
+            Assert.Throws<NotSupportedException>(() => histogramPoint.GetExplicitBounds());
         }
     }
 }
