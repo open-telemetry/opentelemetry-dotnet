@@ -45,10 +45,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     });
             }
 
-            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{includeServiceNameInResource}", "0.0.1");
-
             var metrics = new List<Metric>();
 
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{includeServiceNameInResource}", "0.0.1");
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddMeter(meter.Name)
