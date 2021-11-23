@@ -47,7 +47,6 @@ namespace OpenTelemetry.Metrics
         public struct Enumerator
         {
             private readonly int numberOfBuckets;
-            private readonly int numberofExplicitBounds;
             private readonly HistogramBuckets histogramMeasurements;
             private int index;
 
@@ -56,8 +55,7 @@ namespace OpenTelemetry.Metrics
                 this.histogramMeasurements = histogramMeasurements;
                 this.index = 0;
                 this.Current = default;
-                this.numberOfBuckets = histogramMeasurements.ExplicitBounds == null ? 0 : histogramMeasurements.BucketCounts.Length;
-                this.numberofExplicitBounds = histogramMeasurements.ExplicitBounds == null ? 0 : histogramMeasurements.ExplicitBounds.Length;
+                this.numberOfBuckets = histogramMeasurements.AggregatedBucketCounts == null ? 0 : histogramMeasurements.AggregatedBucketCounts.Length;
             }
 
             public HistogramBucket Current { get; private set; }
@@ -66,7 +64,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (this.index < this.numberOfBuckets)
                 {
-                    double explicitBound = this.index < this.numberofExplicitBounds
+                    double explicitBound = this.index < this.numberOfBuckets - 1
                         ? this.histogramMeasurements.ExplicitBounds[this.index]
                         : double.PositiveInfinity;
                     long bucketCount = this.histogramMeasurements.AggregatedBucketCounts[this.index];
