@@ -333,7 +333,6 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var exportedItems = new List<Metric>();
 
-
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
             int i = 1;
             var counterLong = meter.CreateObservableCounter(
