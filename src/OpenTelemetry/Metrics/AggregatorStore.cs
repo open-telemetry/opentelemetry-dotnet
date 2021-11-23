@@ -151,9 +151,9 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal BatchMetricPoint GetMetricPoints()
+        internal MetricPointsAccessor GetMetricPoints()
         {
-            return new BatchMetricPoint(this.metricPoints, this.currentMetricPointBatch, this.batchSize, this.startTimeExclusive, this.endTimeInclusive);
+            return new MetricPointsAccessor(this.metricPoints, this.currentMetricPointBatch, this.batchSize, this.startTimeExclusive, this.endTimeInclusive);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
