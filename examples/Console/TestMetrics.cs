@@ -77,7 +77,7 @@ namespace Examples.Console
                 providerBuilder
                     .AddConsoleExporter(o =>
                     {
-                        o.PeriodicExporterOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
+                        o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
                         o.AggregationTemporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                     });
             }
