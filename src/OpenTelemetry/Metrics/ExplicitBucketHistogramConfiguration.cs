@@ -30,20 +30,5 @@ namespace OpenTelemetry.Metrics
         /// The array must be in ascending order with distinct values.
         /// </remarks>
         public double[] Boundaries { get; set; }
-
-        public override Aggregation Aggregation
-        {
-            get => this.aggregation;
-
-            set
-            {
-                if (value != Aggregation.Histogram)
-                {
-                    throw new ArgumentException($"Aggregation must be Histogram.");
-                }
-
-                this.aggregation = value;
-            }
-        }
     }
 }
