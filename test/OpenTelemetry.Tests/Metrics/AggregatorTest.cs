@@ -54,7 +54,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(22, count);
 
             int actualCount = 0;
-            foreach (var histogramMeasurement in histogramPoint.HistogramMeasurements)
+            foreach (var histogramMeasurement in histogramPoint.HistogramBuckets)
             {
                 Assert.Equal(2, histogramMeasurement.BucketCount);
                 actualCount++;
@@ -92,7 +92,7 @@ namespace OpenTelemetry.Metrics.Tests
             int index = 0;
             int actualCount = 0;
             var expectedBucketCounts = new long[] { 5, 2, 0 };
-            foreach (var histogramMeasurement in histogramPoint.HistogramMeasurements)
+            foreach (var histogramMeasurement in histogramPoint.HistogramBuckets)
             {
                 Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
                 index++;
@@ -128,7 +128,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(7, count);
 
             // There should be no enumeration of BucketCounts and ExplicitBounds for HistogramSumCount
-            var enumerator = histogramPoint.HistogramMeasurements.GetEnumerator();
+            var enumerator = histogramPoint.HistogramBuckets.GetEnumerator();
             Assert.False(enumerator.MoveNext());
         }
     }

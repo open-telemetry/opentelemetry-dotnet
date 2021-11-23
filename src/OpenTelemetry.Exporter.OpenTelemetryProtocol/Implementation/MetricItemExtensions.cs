@@ -249,7 +249,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             dataPoint.Count = (ulong)metricPoint.LongValue;
                             dataPoint.Sum = metricPoint.DoubleValue;
 
-                            foreach (var histogramMeasurement in metricPoint.HistogramMeasurements)
+                            foreach (var histogramMeasurement in metricPoint.HistogramBuckets)
                             {
                                 dataPoint.BucketCounts.Add((ulong)histogramMeasurement.BucketCount);
                                 if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)

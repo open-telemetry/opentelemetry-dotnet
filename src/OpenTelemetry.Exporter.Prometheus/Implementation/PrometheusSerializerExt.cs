@@ -92,7 +92,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
                     long totalCount = 0;
-                    foreach (var histogramMeasurement in metricPoint.HistogramMeasurements)
+                    foreach (var histogramMeasurement in metricPoint.HistogramBuckets)
                     {
                         totalCount += histogramMeasurement.BucketCount;
 
