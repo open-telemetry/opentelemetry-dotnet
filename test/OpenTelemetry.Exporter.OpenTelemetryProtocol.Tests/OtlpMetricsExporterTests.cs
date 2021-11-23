@@ -14,20 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
-using System.Threading;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
-using GrpcCore = Grpc.Core;
 using OtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
-using OtlpMetrics = Opentelemetry.Proto.Metrics.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
@@ -49,100 +45,45 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     });
             }
 
-            var tags = new KeyValuePair<string, object>[]
-            {
-                new KeyValuePair<string, object>("key1", "value1"),
-                new KeyValuePair<string, object>("key2", "value2"),
-            };
-
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{includeServiceNameInResource}", "0.0.1");
 
-            var exportedItems = new List<Metric>();
+            var metrics = new List<Metric>();
 
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddMeter(meter.Name)
-                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
-                {
-                    Temporality = AggregationTemporality.Delta,
-                })
+                .AddInMemoryExporter(metrics)
                 .Build();
 
             var counter = meter.CreateCounter<int>("counter");
-
-            counter.Add(100, tags);
-
-            var testCompleted = false;
+            counter.Add(100);
 
             provider.ForceFlush();
 
-            var batch = new Batch<Metric>(exportedItems.ToArray(), exportedItems.Count);
-            RunTest(batch);
+            var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
 
-            Assert.True(testCompleted);
+            var request = new OtlpCollector.ExportMetricsServiceRequest();
+            request.AddMetrics(resourceBuilder.Build().ToOtlpResource(), batch);
 
-            void RunTest(Batch<Metric> metrics)
+            Assert.Single(request.ResourceMetrics);
+            var resourceMetric = request.ResourceMetrics.First();
+            var oltpResource = resourceMetric.Resource;
+
+            if (includeServiceNameInResource)
             {
-                var request = new OtlpCollector.ExportMetricsServiceRequest();
-                request.AddMetrics(resourceBuilder.Build().ToOtlpResource(), metrics);
-
-                Assert.Single(request.ResourceMetrics);
-                var resourceMetric = request.ResourceMetrics.First();
-                var oltpResource = resourceMetric.Resource;
-
-                if (includeServiceNameInResource)
-                {
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service-name");
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceNamespace && kvp.Value.StringValue == "ns1");
-                }
-                else
-                {
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
-                }
-
-                Assert.Single(resourceMetric.InstrumentationLibraryMetrics);
-                var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.First();
-                Assert.Equal(string.Empty, instrumentationLibraryMetrics.SchemaUrl);
-                Assert.Equal(meter.Name, instrumentationLibraryMetrics.InstrumentationLibrary.Name);
-                Assert.Equal("0.0.1", instrumentationLibraryMetrics.InstrumentationLibrary.Version);
-
-                Assert.Single(instrumentationLibraryMetrics.Metrics);
-
-                foreach (var metric in instrumentationLibraryMetrics.Metrics)
-                {
-                    Assert.Equal(string.Empty, metric.Description);
-                    Assert.Equal(string.Empty, metric.Unit);
-                    Assert.Equal("counter", metric.Name);
-
-                    Assert.Equal(OtlpMetrics.Metric.DataOneofCase.Sum, metric.DataCase);
-                    Assert.True(metric.Sum.IsMonotonic);
-                    Assert.Equal(OtlpMetrics.AggregationTemporality.Delta, metric.Sum.AggregationTemporality);
-
-                    Assert.Single(metric.Sum.DataPoints);
-                    var dataPoint = metric.Sum.DataPoints.First();
-                    Assert.True(dataPoint.StartTimeUnixNano > 0);
-                    Assert.True(dataPoint.TimeUnixNano > 0);
-                    Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsInt, dataPoint.ValueCase);
-                    Assert.Equal(100, dataPoint.AsInt);
-
-#pragma warning disable CS0612 // Type or member is obsolete
-                    Assert.Empty(dataPoint.Labels);
-#pragma warning restore CS0612 // Type or member is obsolete
-                    OtlpTestHelpers.AssertOtlpAttributes(tags.ToList(), dataPoint.Attributes);
-
-                    Assert.Empty(dataPoint.Exemplars);
-                }
-
-                testCompleted = true;
+                Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service-name");
+                Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceNamespace && kvp.Value.StringValue == "ns1");
             }
-        }
-
-        private class NoopMetricsServiceClient : OtlpCollector.MetricsService.IMetricsServiceClient
-        {
-            public OtlpCollector.ExportMetricsServiceResponse Export(OtlpCollector.ExportMetricsServiceRequest request, GrpcCore.Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default)
+            else
             {
-                return null;
+                Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
             }
+
+            Assert.Single(resourceMetric.InstrumentationLibraryMetrics);
+            var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.First();
+            Assert.Equal(string.Empty, instrumentationLibraryMetrics.SchemaUrl);
+            Assert.Equal(meter.Name, instrumentationLibraryMetrics.InstrumentationLibrary.Name);
+            Assert.Equal("0.0.1", instrumentationLibraryMetrics.InstrumentationLibrary.Version);
         }
     }
 }
