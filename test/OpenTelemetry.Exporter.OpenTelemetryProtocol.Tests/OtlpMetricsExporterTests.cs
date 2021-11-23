@@ -264,6 +264,100 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 #pragma warning restore CS0612 // Type or member is obsolete
         }
 
+        [Theory]
+        [InlineData("test_histogram", null, null, 123, null, AggregationTemporality.Cumulative, true)]
+        [InlineData("test_histogram", null, null, null, 123.45, AggregationTemporality.Cumulative, true)]
+        [InlineData("test_histogram", null, null, 123, null, AggregationTemporality.Delta, true)]
+        [InlineData("test_histogram", "description", "unit", 123, null, AggregationTemporality.Cumulative, true)]
+        [InlineData("test_histogram", null, null, 123, null, AggregationTemporality.Delta, true, "key1", "value1", "key2", 123)]
+        public void TestHistogramToOltpMetric(string name, string description, string unit, long? longValue, double? doubleValue, AggregationTemporality aggregationTemporality, bool isMonotonic, params object[] keysValues)
+        {
+            var metrics = new List<Metric>();
+
+            var metricReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(metrics));
+            metricReader.Temporality = aggregationTemporality;
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(metricReader)
+                .Build();
+
+            var attributes = ToAttributes(keysValues).ToArray();
+            if (longValue.HasValue)
+            {
+                var histogram = meter.CreateHistogram<long>(name, unit, description);
+                histogram.Record(longValue.Value, attributes);
+            }
+            else
+            {
+                var histogram = meter.CreateHistogram<double>(name, unit, description);
+                histogram.Record(doubleValue.Value, attributes);
+            }
+
+            provider.ForceFlush();
+
+            var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
+
+            var request = new OtlpCollector.ExportMetricsServiceRequest();
+            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
+
+            var resourceMetric = request.ResourceMetrics.Single();
+            var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.Single();
+            var actual = instrumentationLibraryMetrics.Metrics.Single();
+
+            Assert.Equal(name, actual.Name);
+            Assert.Equal(description ?? string.Empty, actual.Description);
+            Assert.Equal(unit ?? string.Empty, actual.Unit);
+
+            Assert.Equal(OtlpMetrics.Metric.DataOneofCase.Histogram, actual.DataCase);
+
+            Assert.Null(actual.Gauge);
+            Assert.Null(actual.Sum);
+            Assert.NotNull(actual.Histogram);
+            Assert.Null(actual.ExponentialHistogram);
+            Assert.Null(actual.Summary);
+
+            var otlpAggregationTemporality = aggregationTemporality == AggregationTemporality.Cumulative
+                ? OtlpMetrics.AggregationTemporality.Cumulative
+                : OtlpMetrics.AggregationTemporality.Delta;
+            Assert.Equal(otlpAggregationTemporality, actual.Histogram.AggregationTemporality);
+
+            Assert.Single(actual.Histogram.DataPoints);
+            var dataPoint = actual.Histogram.DataPoints.First();
+            Assert.True(dataPoint.StartTimeUnixNano > 0);
+            Assert.True(dataPoint.TimeUnixNano > 0);
+
+            Assert.Equal(1UL, dataPoint.Count);
+
+            if (longValue.HasValue)
+            {
+                Assert.Equal((double)longValue, dataPoint.Sum);
+            }
+            else
+            {
+                Assert.Equal(doubleValue, dataPoint.Sum);
+            }
+
+            if (attributes.Length > 0)
+            {
+                OtlpTestHelpers.AssertOtlpAttributes(attributes, dataPoint.Attributes);
+            }
+            else
+            {
+                Assert.Empty(dataPoint.Attributes);
+            }
+
+            Assert.Empty(dataPoint.Exemplars);
+
+#pragma warning disable CS0612 // Type or member is obsolete
+            Assert.Null(actual.IntGauge);
+            Assert.Null(actual.IntSum);
+            Assert.Null(actual.IntHistogram);
+            Assert.Empty(dataPoint.Labels);
+#pragma warning restore CS0612 // Type or member is obsolete
+        }
+
         private static IEnumerable<KeyValuePair<string, object>> ToAttributes(object[] keysValues)
         {
             var keys = keysValues?.Where((_, index) => index % 2 == 0).ToArray();
