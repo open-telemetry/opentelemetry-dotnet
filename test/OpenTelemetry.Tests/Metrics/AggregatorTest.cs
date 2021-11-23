@@ -50,12 +50,14 @@ namespace OpenTelemetry.Metrics.Tests
             histogramPoint.TakeSnapshot(true);
 
             var count = histogramPoint.GetHistogramCount();
-            var bucketCounts = histogramPoint.GetBucketCounts();
 
             Assert.Equal(22, count);
-            for (int i = 0; i < bucketCounts.Length; i++)
+
+            int actualCount = 0;
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
             {
-                Assert.Equal(2, bucketCounts[i]);
+                Assert.Equal(2, histogramMeasurement.BucketCount);
+                actualCount++;
             }
         }
 
@@ -80,17 +82,24 @@ namespace OpenTelemetry.Metrics.Tests
 
             var count = histogramPoint.GetHistogramCount();
             var sum = histogramPoint.GetHistogramSum();
-            var bucketCounts = histogramPoint.GetBucketCounts();
 
             // Sum of all recordings
             Assert.Equal(40, sum);
 
             // Count  = # of recordings
             Assert.Equal(7, count);
-            Assert.Equal(boundaries.Length + 1, bucketCounts.Length);
-            Assert.Equal(5, bucketCounts[0]);
-            Assert.Equal(2, bucketCounts[1]);
-            Assert.Equal(0, bucketCounts[2]);
+
+            int index = 0;
+            int actualCount = 0;
+            var expectedBucketCounts = new long[] { 5, 2, 0 };
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
+            {
+                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+                index++;
+                actualCount++;
+            }
+
+            Assert.Equal(boundaries.Length + 1, actualCount);
         }
 
         [Fact]
@@ -118,8 +127,9 @@ namespace OpenTelemetry.Metrics.Tests
             // Count  = # of recordings
             Assert.Equal(7, count);
 
-            Assert.Throws<NotSupportedException>(() => histogramPoint.GetBucketCounts());
-            Assert.Throws<NotSupportedException>(() => histogramPoint.GetExplicitBounds());
+            // There should be no enumeration of BucketCounts and ExplicitBounds for HistogramSumCount
+            var enumerator = histogramPoint.GetHistogramBuckets().GetEnumerator();
+            Assert.False(enumerator.MoveNext());
         }
     }
 }
