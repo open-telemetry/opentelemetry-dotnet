@@ -52,7 +52,7 @@ namespace OpenTelemetry.Exporter
 
             this.options = options;
             this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? ZipkinExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
-            this.httpClient = client ?? new HttpClient();
+            this.httpClient = client ?? options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("ZipkinExporter was missing HttpClientFactory or it returned null.");
         }
 
         internal ZipkinEndpoint LocalEndpoint { get; private set; }

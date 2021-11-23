@@ -16,10 +16,13 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <DotNetCliToolReference Include="dotnet-xunit" Version="$(DotNetXUnitCliVer)" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsHostingPkgVer)" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="3.1.20" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.Hosting\OpenTelemetry.Extensions.Hosting.csproj" />
 
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="Includes\EventSourceTestHelper.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestActivityProcessor.cs" Link="Includes\TestActivityProcessor.cs" />

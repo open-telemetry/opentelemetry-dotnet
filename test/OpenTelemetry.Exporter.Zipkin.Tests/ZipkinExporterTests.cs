@@ -21,7 +21,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -181,6 +183,73 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             {
                 Environment.SetEnvironmentVariable(ZipkinExporterOptions.ZipkinEndpointEnvVar, null);
             }
+        }
+
+        [Fact]
+        public void UserHttpFactoryCalled()
+        {
+            ZipkinExporterOptions options = new ZipkinExporterOptions();
+
+            var defaultFactory = options.HttpClientFactory;
+
+            int invocations = 0;
+            options.HttpClientFactory = () =>
+            {
+                invocations++;
+                return defaultFactory();
+            };
+
+            using (var exporter = new ZipkinExporter(options))
+            {
+                Assert.Equal(1, invocations);
+            }
+
+            using (var provider = Sdk.CreateTracerProviderBuilder()
+                .AddZipkinExporter(o => o.HttpClientFactory = options.HttpClientFactory)
+                .Build())
+            {
+                Assert.Equal(2, invocations);
+            }
+
+            using var client = new HttpClient();
+
+            using (var exporter = new ZipkinExporter(options, client))
+            {
+                // Factory not called when client is passed as a param.
+                Assert.Equal(2, invocations);
+            }
+
+            options.HttpClientFactory = null;
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                using var exporter = new ZipkinExporter(options);
+            });
+
+            options.HttpClientFactory = () => null;
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                using var exporter = new ZipkinExporter(options);
+            });
+        }
+
+        [Fact]
+        public void ServiceProviderHttpClientFactoryInvoked()
+        {
+            IServiceCollection services = new ServiceCollection();
+
+            services.AddHttpClient();
+
+            int invocations = 0;
+
+            services.AddHttpClient("ZipkinExporter", configureClient: (client) => invocations++);
+
+            services.AddOpenTelemetryTracing(builder => builder.AddZipkinExporter());
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            var tracerProvider = serviceProvider.GetRequiredService<TracerProvider>();
+
+            Assert.Equal(1, invocations);
         }
 
         [Theory]
