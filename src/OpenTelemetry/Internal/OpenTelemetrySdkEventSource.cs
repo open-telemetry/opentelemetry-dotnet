@@ -106,7 +106,8 @@ namespace OpenTelemetry.Internal
             if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
             {
                 // Accessing activity.Id here will cause the Id to be initialized
-                // before the sampler runs. This will result in Id not reflecting the
+                // before the sampler runs in case where the activity is created using legacy way
+                // i.e. new Activity("Operation name"). This will result in Id not reflecting the
                 // correct sampling flags
                 // https://github.com/dotnet/runtime/issues/61857
                 var activityId = string.Concat("00-", activity.TraceId.ToHexString(), "-", activity.SpanId.ToHexString());
