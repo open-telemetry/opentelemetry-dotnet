@@ -11,8 +11,13 @@
   ([#2657](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2657))
 
 * Remove MetricStreamConfiguration.Aggregation, as the feature to customize
-aggregation is not implemented yet.
-([#2660](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2660))
+  aggregation is not implemented yet.
+  ([#2660](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2660))
+
+* Refactored `HistogramMeasurements` to provide an enumerator for enumerating
+  the BucketCounts and ExplicitBounds. Removed `GetBucketCounts` and
+  `GetExplicitBounds` methods from `MetricPoint`.
+  ([#2664](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2664))
 
 ## 1.2.0-beta2
 
