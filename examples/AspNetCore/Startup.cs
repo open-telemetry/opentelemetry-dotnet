@@ -134,7 +134,13 @@ namespace Examples.AspNetCore
                         builder.AddOtlpExporter();
                         break;
                     default:
-                        builder.AddConsoleExporter();
+                        builder.AddConsoleExporter(options =>
+                        {
+                            // The ConsoleMetricExporter defaults to a manual collect cycle.
+                            // This configuration causes metrics to be exported to stdout on a 10s interval.
+                            options.MetricReaderType = MetricReaderType.Periodic;
+                            options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10000;
+                        });
                         break;
                 }
             });
