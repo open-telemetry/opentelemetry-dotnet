@@ -75,8 +75,8 @@ OpenTelemetry.Metrics.MetricReader.Shutdown(int timeoutMilliseconds = -1) -> boo
 OpenTelemetry.Metrics.MetricReader.SupportedAggregationTemporality.get -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.MetricReader.SupportedAggregationTemporality.set -> void
 OpenTelemetry.Metrics.MetricReaderType
-OpenTelemetry.MetricReaderType.Manual = 0 -> OpenTelemetry.MetricReaderType
-OpenTelemetry.MetricReaderType.Periodic = 1 -> OpenTelemetry.MetricReaderType
+OpenTelemetry.Metrics.MetricReaderType.Manual = 0 -> OpenTelemetry.Metrics.MetricReaderType
+OpenTelemetry.Metrics.MetricReaderType.Periodic = 1 -> OpenTelemetry.Metrics.MetricReaderType
 OpenTelemetry.Metrics.MetricStreamConfiguration
 OpenTelemetry.Metrics.MetricStreamConfiguration.Description.get -> string
 OpenTelemetry.Metrics.MetricStreamConfiguration.Description.set -> void
