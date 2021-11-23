@@ -270,7 +270,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData("test_histogram", null, null, 123, null, AggregationTemporality.Delta, true)]
         [InlineData("test_histogram", "description", "unit", 123, null, AggregationTemporality.Cumulative, true)]
         [InlineData("test_histogram", null, null, 123, null, AggregationTemporality.Delta, true, "key1", "value1", "key2", 123)]
-        public void TestHistogramToOltpMetric(string name, string description, string unit, long? longValue, double? doubleValue, AggregationTemporality aggregationTemporality, bool isMonotonic, params object[] keysValues)
+        public void TestHistogramToOltpMetric(string name, string description, string unit, long? longValue, double? doubleValue, AggregationTemporality aggregationTemporality, params object[] keysValues)
         {
             var metrics = new List<Metric>();
 
