@@ -10,6 +10,10 @@
   `GetExplicitBounds`, `GetHistogramCount`, and `GetHistogramSum`
   ([#2657](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2657))
 
+* Remove MetricStreamConfiguration.Aggregation, as the feature to customize
+aggregation is not implemented yet.
+([#2660](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2660))
+
 ## 1.2.0-beta2
 
 Released 2021-Nov-19
