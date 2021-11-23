@@ -6,12 +6,16 @@
   `Keys`+`Values`
   ([#2642](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2642))
 
+* Refactored `MetricPoint` and added public methods: `GetBucketCounts`,
+  `GetExplicitBounds`, `GetHistogramCount`, and `GetHistogramSum`
+  ([#2657](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2657))
+
 ## 1.2.0-beta2
 
 Released 2021-Nov-19
 
-* Renamed `HistogramConfiguration` to `ExplicitBucketHistogramConfiguration`
-  and changed its member `BucketBounds` to `Boundaries`.
+* Renamed `HistogramConfiguration` to `ExplicitBucketHistogramConfiguration` and
+  changed its member `BucketBounds` to `Boundaries`.
   ([#2638](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2638))
 
 * Metrics with the same name but from different meters are allowed.

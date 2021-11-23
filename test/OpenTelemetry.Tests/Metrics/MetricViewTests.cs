@@ -388,15 +388,20 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Single(metricPointsDefault);
             var histogramPoint = metricPointsDefault[0];
 
-            Assert.Equal(40, histogramPoint.DoubleValue);
-            Assert.Equal(7, histogramPoint.LongValue);
-            Assert.Equal(Metric.DefaultHistogramBounds.Length + 1, histogramPoint.BucketCounts.Length);
-            Assert.Equal(2, histogramPoint.BucketCounts[0]);
-            Assert.Equal(1, histogramPoint.BucketCounts[1]);
-            Assert.Equal(2, histogramPoint.BucketCounts[2]);
-            Assert.Equal(2, histogramPoint.BucketCounts[3]);
-            Assert.Equal(0, histogramPoint.BucketCounts[4]);
-            Assert.Equal(0, histogramPoint.BucketCounts[5]);
+            var count = histogramPoint.GetHistogramCount();
+            var sum = histogramPoint.GetHistogramSum();
+            var bucketCounts = histogramPoint.GetBucketCounts();
+            var explicitBounds = histogramPoint.GetExplicitBounds();
+
+            Assert.Equal(40, sum);
+            Assert.Equal(7, count);
+            Assert.Equal(Metric.DefaultHistogramBounds.Length + 1, bucketCounts.Length);
+            Assert.Equal(2, bucketCounts[0]);
+            Assert.Equal(1, bucketCounts[1]);
+            Assert.Equal(2, bucketCounts[2]);
+            Assert.Equal(2, bucketCounts[3]);
+            Assert.Equal(0, bucketCounts[4]);
+            Assert.Equal(0, bucketCounts[5]);
 
             List<MetricPoint> metricPointsCustom = new List<MetricPoint>();
             foreach (ref var mp in metricCustom.GetMetricPoints())
@@ -407,12 +412,17 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Single(metricPointsCustom);
             histogramPoint = metricPointsCustom[0];
 
-            Assert.Equal(40, histogramPoint.DoubleValue);
-            Assert.Equal(7, histogramPoint.LongValue);
-            Assert.Equal(boundaries.Length + 1, histogramPoint.BucketCounts.Length);
-            Assert.Equal(5, histogramPoint.BucketCounts[0]);
-            Assert.Equal(2, histogramPoint.BucketCounts[1]);
-            Assert.Equal(0, histogramPoint.BucketCounts[2]);
+            count = histogramPoint.GetHistogramCount();
+            sum = histogramPoint.GetHistogramSum();
+            bucketCounts = histogramPoint.GetBucketCounts();
+            explicitBounds = histogramPoint.GetExplicitBounds();
+
+            Assert.Equal(40, sum);
+            Assert.Equal(7, count);
+            Assert.Equal(boundaries.Length + 1, bucketCounts.Length);
+            Assert.Equal(5, bucketCounts[0]);
+            Assert.Equal(2, bucketCounts[1]);
+            Assert.Equal(0, bucketCounts[2]);
         }
 
         [Fact]
