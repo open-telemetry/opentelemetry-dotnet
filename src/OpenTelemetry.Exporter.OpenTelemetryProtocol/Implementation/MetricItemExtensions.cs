@@ -156,7 +156,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
-                            AddAttributes(metricPoint.Keys, metricPoint.Values, dataPoint.Attributes);
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
                             dataPoint.AsInt = metricPoint.LongValue;
                             sum.DataPoints.Add(dataPoint);
@@ -180,7 +180,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
-                            AddAttributes(metricPoint.Keys, metricPoint.Values, dataPoint.Attributes);
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
                             dataPoint.AsDouble = metricPoint.DoubleValue;
                             sum.DataPoints.Add(dataPoint);
@@ -201,7 +201,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
-                            AddAttributes(metricPoint.Keys, metricPoint.Values, dataPoint.Attributes);
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
                             dataPoint.AsInt = metricPoint.LongValue;
                             gauge.DataPoints.Add(dataPoint);
@@ -222,7 +222,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
-                            AddAttributes(metricPoint.Keys, metricPoint.Values, dataPoint.Attributes);
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
                             dataPoint.AsDouble = metricPoint.DoubleValue;
                             gauge.DataPoints.Add(dataPoint);
@@ -245,18 +245,20 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
-                            AddAttributes(metricPoint.Keys, metricPoint.Values, dataPoint.Attributes);
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
                             dataPoint.Count = (ulong)metricPoint.LongValue;
                             dataPoint.Sum = metricPoint.DoubleValue;
 
-                            if (metricPoint.BucketCounts != null)
+                            var bucketCounts = metricPoint.GetBucketCounts();
+                            if (bucketCounts != null)
                             {
-                                for (int i = 0; i < metricPoint.BucketCounts.Length; i++)
+                                var explicitBounds = metricPoint.GetExplicitBounds();
+                                for (int i = 0; i < bucketCounts.Length; i++)
                                 {
-                                    dataPoint.BucketCounts.Add((ulong)metricPoint.BucketCounts[i]);
-                                    if (i < metricPoint.BucketCounts.Length - 1)
+                                    dataPoint.BucketCounts.Add((ulong)bucketCounts[i]);
+                                    if (i < bucketCounts.Length - 1)
                                     {
-                                        dataPoint.ExplicitBounds.Add(metricPoint.ExplicitBounds[i]);
+                                        dataPoint.ExplicitBounds.Add(explicitBounds[i]);
                                     }
                                 }
                             }
@@ -272,15 +274,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             return otlpMetric;
         }
 
-        private static void AddAttributes(string[] keys, object[] values, RepeatedField<OtlpCommon.KeyValue> attributes)
+        private static void AddAttributes(ReadOnlyTagCollection tags, RepeatedField<OtlpCommon.KeyValue> attributes)
         {
-            if (keys != null)
+            foreach (var tag in tags)
             {
-                for (int i = 0; i < keys.Length; i++)
-                {
-                    KeyValuePair<string, object> tag = new KeyValuePair<string, object>(keys[i], values[i]);
-                    attributes.Add(tag.ToOtlpAttribute());
-                }
+                attributes.Add(tag.ToOtlpAttribute());
             }
         }
 

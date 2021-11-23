@@ -80,15 +80,12 @@ namespace OpenTelemetry.Exporter
                 {
                     string valueDisplay = string.Empty;
                     StringBuilder tagsBuilder = new StringBuilder();
-                    if (metricPoint.Keys != null)
+                    foreach (var tag in metricPoint.Tags)
                     {
-                        for (int i = 0; i < metricPoint.Keys.Length; i++)
-                        {
-                            tagsBuilder.Append(metricPoint.Keys[i]);
-                            tagsBuilder.Append(':');
-                            tagsBuilder.Append(metricPoint.Values[i]);
-                            tagsBuilder.Append(' ');
-                        }
+                        tagsBuilder.Append(tag.Key);
+                        tagsBuilder.Append(':');
+                        tagsBuilder.Append(tag.Value);
+                        tagsBuilder.Append(' ');
                     }
 
                     var tags = tagsBuilder.ToString().TrimEnd();
@@ -98,38 +95,42 @@ namespace OpenTelemetry.Exporter
                     if (metricType.IsHistogram())
                     {
                         var bucketsBuilder = new StringBuilder();
-                        bucketsBuilder.Append($"Sum: {metricPoint.DoubleValue} Count: {metricPoint.LongValue} \n");
+                        var sum = metricPoint.GetHistogramSum();
+                        var count = metricPoint.GetHistogramCount();
+                        bucketsBuilder.Append($"Sum: {sum} Count: {count} \n");
 
-                        if (metricPoint.ExplicitBounds != null)
+                        var explicitBounds = metricPoint.GetExplicitBounds();
+                        if (explicitBounds != null)
                         {
-                            for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
+                            var bucketCounts = metricPoint.GetBucketCounts();
+                            for (int i = 0; i < explicitBounds.Length + 1; i++)
                             {
                                 if (i == 0)
                                 {
                                     bucketsBuilder.Append("(-Infinity,");
-                                    bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
+                                    bucketsBuilder.Append(explicitBounds[i]);
                                     bucketsBuilder.Append(']');
                                     bucketsBuilder.Append(':');
-                                    bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                                    bucketsBuilder.Append(bucketCounts[i]);
                                 }
-                                else if (i == metricPoint.ExplicitBounds.Length)
+                                else if (i == explicitBounds.Length)
                                 {
                                     bucketsBuilder.Append('(');
-                                    bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
+                                    bucketsBuilder.Append(explicitBounds[i - 1]);
                                     bucketsBuilder.Append(',');
                                     bucketsBuilder.Append("+Infinity]");
                                     bucketsBuilder.Append(':');
-                                    bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                                    bucketsBuilder.Append(bucketCounts[i]);
                                 }
                                 else
                                 {
                                     bucketsBuilder.Append('(');
-                                    bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
+                                    bucketsBuilder.Append(explicitBounds[i - 1]);
                                     bucketsBuilder.Append(',');
-                                    bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
+                                    bucketsBuilder.Append(explicitBounds[i]);
                                     bucketsBuilder.Append(']');
                                     bucketsBuilder.Append(':');
-                                    bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                                    bucketsBuilder.Append(bucketCounts[i]);
                                 }
 
                                 bucketsBuilder.AppendLine();

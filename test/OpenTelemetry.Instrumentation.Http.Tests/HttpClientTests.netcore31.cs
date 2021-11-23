@@ -159,13 +159,18 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 Assert.Single(metricPoints);
                 var metricPoint = metricPoints[0];
-                Assert.Equal(1L, metricPoint.LongValue);
-                Assert.Equal(activity.Duration.TotalMilliseconds, metricPoint.DoubleValue);
 
-                var attributes = new KeyValuePair<string, object>[metricPoint.Keys.Length];
-                for (int i = 0; i < attributes.Length; i++)
+                var count = metricPoint.GetHistogramCount();
+                var sum = metricPoint.GetHistogramSum();
+
+                Assert.Equal(1L, count);
+                Assert.Equal(activity.Duration.TotalMilliseconds, sum);
+
+                var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
+                int i = 0;
+                foreach (var tag in metricPoint.Tags)
                 {
-                    attributes[i] = new KeyValuePair<string, object>(metricPoint.Keys[i], metricPoint.Values[i]);
+                    attributes[i++] = tag;
                 }
 
                 var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, tc.Method);
