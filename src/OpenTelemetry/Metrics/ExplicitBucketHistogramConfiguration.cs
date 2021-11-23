@@ -20,8 +20,6 @@ namespace OpenTelemetry.Metrics
 {
     public class ExplicitBucketHistogramConfiguration : MetricStreamConfiguration
     {
-        private Aggregation aggregation = Aggregation.Histogram;
-
         /// <summary>
         /// Gets or sets the values representing explicit histogram bucket
         /// boundary values.
