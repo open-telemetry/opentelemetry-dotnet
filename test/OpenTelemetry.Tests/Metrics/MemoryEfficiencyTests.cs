@@ -38,7 +38,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddReader(
                     new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
                     {
-                        PreferredAggregationTemporality = temporality,
+                        Temporality = temporality,
                     })
                 .Build();
 

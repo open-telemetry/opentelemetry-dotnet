@@ -38,8 +38,7 @@ namespace OpenTelemetry.Metrics
             if (attributes.Length > 0)
             {
                 var attr = (AggregationTemporalityAttribute)attributes[attributes.Length - 1];
-                this.PreferredAggregationTemporality = attr.Preferred;
-                this.SupportedAggregationTemporality = attr.Supported;
+                this.Temporality = attr.Temporality;
             }
 
             attributes = exportorType.GetCustomAttributes(typeof(ExportModesAttribute), true);

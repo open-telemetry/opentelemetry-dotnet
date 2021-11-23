@@ -21,6 +21,9 @@
   `GetExplicitBounds` methods from `MetricPoint`.
   ([#2664](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2664))
 
+* Refactored temporality setting to align with the latest spec.
+  ([#2666](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2666))
+
 * Removed the public properties `LongValue`, `DoubleValue`, `StartTime`, and
   `EndTime` and added public methods `GetLongSum`, `GetDoubleSum`,
   `GetLastLongValue`, `GetLastDoubleValue`, `GetStartTime`, and `GetEndTime`.

@@ -62,7 +62,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddMeter(meter.Name)
-                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems)) { PreferredAggregationTemporality = AggregationTemporality.Delta })
+                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                {
+                    Temporality = AggregationTemporality.Delta,
+                })
                 .Build();
 
             var counter = meter.CreateCounter<int>("counter");
