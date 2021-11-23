@@ -17,7 +17,7 @@
 namespace OpenTelemetry.Metrics
 {
     // TODO: can be optimized like MetricType
-    public enum Aggregation
+    internal enum Aggregation
     {
 #pragma warning disable SA1602 // Enumeration items should be documented
         Default,
