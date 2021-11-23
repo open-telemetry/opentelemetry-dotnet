@@ -13,16 +13,16 @@ OpenTelemetry.Metrics.AggregationTemporalityAttribute.Supported.get -> OpenTelem
 OpenTelemetry.Metrics.BaseExportingMetricReader
 OpenTelemetry.Metrics.BaseExportingMetricReader.BaseExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric> exporter) -> void
 OpenTelemetry.Metrics.BaseExportingMetricReader.SupportedExportModes.get -> OpenTelemetry.Metrics.ExportModes
-OpenTelemetry.Metrics.BatchMetricPoint
-OpenTelemetry.Metrics.BatchMetricPoint.BatchMetricPoint() -> void
-OpenTelemetry.Metrics.BatchMetricPoint.Dispose() -> void
-OpenTelemetry.Metrics.BatchMetricPoint.Enumerator
-OpenTelemetry.Metrics.BatchMetricPoint.Enumerator.Current.get -> OpenTelemetry.Metrics.MetricPoint
-OpenTelemetry.Metrics.BatchMetricPoint.Enumerator.Dispose() -> void
-OpenTelemetry.Metrics.BatchMetricPoint.Enumerator.Enumerator() -> void
-OpenTelemetry.Metrics.BatchMetricPoint.Enumerator.MoveNext() -> bool
-OpenTelemetry.Metrics.BatchMetricPoint.Enumerator.Reset() -> void
-OpenTelemetry.Metrics.BatchMetricPoint.GetEnumerator() -> OpenTelemetry.Metrics.BatchMetricPoint.Enumerator
+OpenTelemetry.Metrics.MetricPointsAccessor
+OpenTelemetry.Metrics.MetricPointsAccessor.MetricPointsAccessor() -> void
+OpenTelemetry.Metrics.MetricPointsAccessor.Dispose() -> void
+OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator
+OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.Current.get -> OpenTelemetry.Metrics.MetricPoint
+OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.Dispose() -> void
+OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.Enumerator() -> void
+OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.MoveNext() -> bool
+OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.Reset() -> void
+OpenTelemetry.Metrics.MetricPointsAccessor.GetEnumerator() -> OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator
 OpenTelemetry.Metrics.ExportModes
 OpenTelemetry.Metrics.ExportModes.Pull = 2 -> OpenTelemetry.Metrics.ExportModes
 OpenTelemetry.Metrics.ExportModes.Push = 1 -> OpenTelemetry.Metrics.ExportModes
@@ -43,7 +43,7 @@ OpenTelemetry.Metrics.MeterProviderBuilderExtensions
 OpenTelemetry.Metrics.MeterProviderExtensions
 OpenTelemetry.Metrics.Metric
 OpenTelemetry.Metrics.Metric.Description.get -> string
-OpenTelemetry.Metrics.Metric.GetMetricPoints() -> OpenTelemetry.Metrics.BatchMetricPoint
+OpenTelemetry.Metrics.Metric.GetMetricPoints() -> OpenTelemetry.Metrics.MetricPointsAccessor
 OpenTelemetry.Metrics.Metric.Meter.get -> System.Diagnostics.Metrics.Meter
 OpenTelemetry.Metrics.Metric.MetricType.get -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.Metric.Name.get -> string
