@@ -91,11 +91,11 @@ namespace OpenTelemetry.Exporter.Prometheus
                     var tags = metricPoint.Tags;
                     var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
-                    if (metricPoint.BucketCounts != null)
+                    var bucketCounts = metricPoint.GetBucketCounts();
+                    if (bucketCounts != null)
                     {
                         // Histogram buckets
-                        var bucketCounts = metricPoint.BucketCounts;
-                        var explicitBounds = metricPoint.ExplicitBounds;
+                        var explicitBounds = metricPoint.GetExplicitBounds();
                         long totalCount = 0;
                         for (int idxBound = 0; idxBound < explicitBounds.Length + 1; idxBound++)
                         {
@@ -133,6 +133,9 @@ namespace OpenTelemetry.Exporter.Prometheus
                     }
 
                     // Histogram sum
+                    var count = metricPoint.GetHistogramCount();
+                    var sum = metricPoint.GetHistogramSum();
+
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
 
@@ -156,7 +159,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                     buffer[cursor++] = unchecked((byte)' ');
 
-                    cursor = WriteDouble(buffer, cursor, metricPoint.DoubleValue);
+                    cursor = WriteDouble(buffer, cursor, sum);
                     buffer[cursor++] = unchecked((byte)' ');
 
                     cursor = WriteLong(buffer, cursor, timestamp);
@@ -187,7 +190,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                     buffer[cursor++] = unchecked((byte)' ');
 
-                    cursor = WriteLong(buffer, cursor, metricPoint.LongValue);
+                    cursor = WriteLong(buffer, cursor, count);
                     buffer[cursor++] = unchecked((byte)' ');
 
                     cursor = WriteLong(buffer, cursor, timestamp);
