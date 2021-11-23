@@ -249,14 +249,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             dataPoint.Count = (ulong)metricPoint.LongValue;
                             dataPoint.Sum = metricPoint.DoubleValue;
 
-                            if (metricPoint.BucketCounts != null)
+                            var bucketCounts = metricPoint.GetBucketCounts();
+                            if (bucketCounts != null)
                             {
-                                for (int i = 0; i < metricPoint.BucketCounts.Length; i++)
+                                var explicitBounds = metricPoint.GetExplicitBounds();
+                                for (int i = 0; i < bucketCounts.Length; i++)
                                 {
-                                    dataPoint.BucketCounts.Add((ulong)metricPoint.BucketCounts[i]);
-                                    if (i < metricPoint.BucketCounts.Length - 1)
+                                    dataPoint.BucketCounts.Add((ulong)bucketCounts[i]);
+                                    if (i < bucketCounts.Length - 1)
                                     {
-                                        dataPoint.ExplicitBounds.Add(metricPoint.ExplicitBounds[i]);
+                                        dataPoint.ExplicitBounds.Add(explicitBounds[i]);
                                     }
                                 }
                             }
