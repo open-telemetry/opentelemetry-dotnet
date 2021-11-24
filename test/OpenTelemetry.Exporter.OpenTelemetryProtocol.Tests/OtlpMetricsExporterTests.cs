@@ -90,7 +90,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData("test_gauge", null, null, 123, null)]
         [InlineData("test_gauge", null, null, null, 123.45)]
         [InlineData("test_gauge", "description", "unit", 123, null)]
-        public void TestGaugeToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, params object[] keysValues)
+        public void TestGaugeToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue)
         {
             var metrics = new List<Metric>();
 
@@ -100,7 +100,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 .AddInMemoryExporter(metrics)
                 .Build();
 
-            var attributes = ToAttributes(keysValues).ToArray();
             if (longValue.HasValue)
             {
                 meter.CreateObservableGauge(name, () => longValue.Value, unit, description);
@@ -149,14 +148,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Assert.Equal(doubleValue, dataPoint.AsDouble);
             }
 
-            if (attributes.Length > 0)
-            {
-                OtlpTestHelpers.AssertOtlpAttributes(attributes, dataPoint.Attributes);
-            }
-            else
-            {
-                Assert.Empty(dataPoint.Attributes);
-            }
+            Assert.Empty(dataPoint.Attributes);
 
             Assert.Empty(dataPoint.Exemplars);
 
