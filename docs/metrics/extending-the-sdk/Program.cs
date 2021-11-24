@@ -28,6 +28,8 @@ public class Program
 
     static Program()
     {
+        var process = Process.GetCurrentProcess();
+
         MyMeter.CreateObservableGauge(
             "MyProcessWorkingSetGauge",
             () => new List<Measurement<long>>()
