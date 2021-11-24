@@ -229,7 +229,9 @@ By default, the boundaries used for a Histogram are [`{ 0, 5, 10, 25, 50, 75, 10
 Views can be used to provide custom boundaries for a Histogram. The measurements
 are then aggregated using the custom boundaries provided instead of the the
 default boundaries. This requires the use of `ExplicitBucketHistogramConfiguration`.
+[Monday 08:36 PM] Reiley Yang
 
+<!-- markdownlint-disable MD013 -->
 ```csharp
     // Change Histogram boundaries to count measurements under the following buckets:
     // (-inf, 10]
@@ -246,6 +248,7 @@ default boundaries. This requires the use of `ExplicitBucketHistogramConfigurati
         instrumentName: "MyHistogram",
         new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { } })
 ```
+<!-- markdownlint-enable MD013 -->
 
 ```csharp
     // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
