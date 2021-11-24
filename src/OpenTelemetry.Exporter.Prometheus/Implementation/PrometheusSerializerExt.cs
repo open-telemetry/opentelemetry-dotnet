@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                 foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
                     var tags = metricPoint.Tags;
-                    var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
+                    var timestamp = metricPoint.GetEndTime().ToUnixTimeMilliseconds();
 
                     // Counter and Gauge
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
@@ -70,11 +70,25 @@ namespace OpenTelemetry.Exporter.Prometheus
                     // for each MetricPoint
                     if (((int)metric.MetricType & 0b_0000_1111) == 0x0a /* I8 */)
                     {
-                        cursor = WriteLong(buffer, cursor, metricPoint.LongValue);
+                        if (metric.MetricType.IsSum())
+                        {
+                            cursor = WriteLong(buffer, cursor, metricPoint.GetCounterSumLong());
+                        }
+                        else
+                        {
+                            cursor = WriteLong(buffer, cursor, metricPoint.GetGaugeLastValueLong());
+                        }
                     }
                     else
                     {
-                        cursor = WriteDouble(buffer, cursor, metricPoint.DoubleValue);
+                        if (metric.MetricType.IsSum())
+                        {
+                            cursor = WriteDouble(buffer, cursor, metricPoint.GetCounterSumDouble());
+                        }
+                        else
+                        {
+                            cursor = WriteDouble(buffer, cursor, metricPoint.GetGaugeLastValueDouble());
+                        }
                     }
 
                     buffer[cursor++] = unchecked((byte)' ');
@@ -89,7 +103,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                 foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
                     var tags = metricPoint.Tags;
-                    var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
+                    var timestamp = metricPoint.GetEndTime().ToUnixTimeMilliseconds();
 
                     long totalCount = 0;
                     foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())

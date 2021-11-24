@@ -21,7 +21,13 @@ OpenTelemetry.Metrics.HistogramBuckets.Enumerator.Current.get -> OpenTelemetry.M
 OpenTelemetry.Metrics.HistogramBuckets.Enumerator.Enumerator() -> void
 OpenTelemetry.Metrics.HistogramBuckets.Enumerator.MoveNext() -> bool
 OpenTelemetry.Metrics.HistogramBuckets.GetEnumerator() -> OpenTelemetry.Metrics.HistogramBuckets.Enumerator
+OpenTelemetry.Metrics.MetricPoint.GetCounterSumDouble() -> double
+OpenTelemetry.Metrics.MetricPoint.GetCounterSumLong() -> long
+OpenTelemetry.Metrics.MetricPoint.GetEndTime() -> System.DateTimeOffset
+OpenTelemetry.Metrics.MetricPoint.GetGaugeLastValueDouble() -> double
+OpenTelemetry.Metrics.MetricPoint.GetGaugeLastValueLong() -> long
 OpenTelemetry.Metrics.MetricPoint.GetHistogramBuckets() -> OpenTelemetry.Metrics.HistogramBuckets
+OpenTelemetry.Metrics.MetricPoint.GetStartTime() -> System.DateTimeOffset
 OpenTelemetry.Metrics.MetricPointsAccessor
 OpenTelemetry.Metrics.MetricPointsAccessor.MetricPointsAccessor() -> void
 OpenTelemetry.Metrics.MetricPointsAccessor.Dispose() -> void
@@ -59,13 +65,9 @@ OpenTelemetry.Metrics.Metric.Name.get -> string
 OpenTelemetry.Metrics.Metric.Temporality.get -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.Metric.Unit.get -> string
 OpenTelemetry.Metrics.MetricPoint
-OpenTelemetry.Metrics.MetricPoint.DoubleValue.get -> double
-OpenTelemetry.Metrics.MetricPoint.EndTime.get -> System.DateTimeOffset
 OpenTelemetry.Metrics.MetricPoint.GetHistogramCount() -> long
 OpenTelemetry.Metrics.MetricPoint.GetHistogramSum() -> double
-OpenTelemetry.Metrics.MetricPoint.LongValue.get -> long
 OpenTelemetry.Metrics.MetricPoint.MetricPoint() -> void
-OpenTelemetry.Metrics.MetricPoint.StartTime.get -> System.DateTimeOffset
 OpenTelemetry.Metrics.MetricPoint.Tags.get -> OpenTelemetry.ReadOnlyTagCollection
 OpenTelemetry.Metrics.MetricReader
 OpenTelemetry.Metrics.MetricReader.Collect(int timeoutMilliseconds = -1) -> bool

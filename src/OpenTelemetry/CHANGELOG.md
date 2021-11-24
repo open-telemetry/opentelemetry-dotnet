@@ -24,6 +24,12 @@
 * Refactored temporality setting to align with the latest spec.
   ([#2666](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2666))
 
+* Removed the public properties `LongValue`, `DoubleValue`, `StartTime`, and
+  `EndTime` in favor of their counterpart public methods `GetCounterSumLong`,
+  `GetCounterSumDouble`, `GetGaugeLastValueLong`, `GetGaugeLastValueDouble`,
+  `GetStartTime`, and `GetEndTime`.
+  ([#2667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2667))
+
 ## 1.2.0-beta2
 
 Released 2021-Nov-19
