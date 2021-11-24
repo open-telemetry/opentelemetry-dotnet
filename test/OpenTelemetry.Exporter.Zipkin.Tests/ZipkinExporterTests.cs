@@ -112,7 +112,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
             var zipkinExporter = new ZipkinExporter(exporterOptions);
             var exportActivityProcessor = new BatchActivityExportProcessor(zipkinExporter);
 
-            var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+            var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .AddProcessor(testActivityProcessor)
                 .AddProcessor(exportActivityProcessor)
