@@ -38,20 +38,17 @@ public partial class Program
     {
         var sourceName = "OpenTelemetry.Tests.Stress." + Guid.NewGuid().ToString("D");
 
-        using (var activitySource = new ActivitySource(sourceName))
-        using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddSource(activitySource.Name)
-            .AddProcessor(new BatchActivityExportProcessor(new InMemoryExporter<Activity>(new List<Activity>())))
-            .AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(new List<Activity>())))
-            .Build())
-        using (var loggerFactory = LoggerFactory.Create(builder =>
+        // logs
+        using var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder.AddOpenTelemetry(options => options
                 .AddProcessor(new BatchLogRecordExportProcessor(new InMemoryExporter<LogRecord>(new List<LogRecord>())))
                 .AddProcessor(new SimpleLogRecordExportProcessor(new InMemoryExporter<LogRecord>(new List<LogRecord>()))));
-        }))
-        using (var meter = new Meter(sourceName))
-        using (var meterProvider = Sdk.CreateMeterProviderBuilder()
+        });
+
+        // metrics
+        using var meter = new Meter(sourceName);
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
             .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(new List<Metric>()))
             {
@@ -69,20 +66,28 @@ public partial class Program
             {
                 Temporality = AggregationTemporality.Delta,
             })
-            .Build())
+            .Build();
+
+        // traces
+        using var activitySource = new ActivitySource(sourceName);
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySource.Name)
+            .AddProcessor(new BatchActivityExportProcessor(new InMemoryExporter<Activity>(new List<Activity>())))
+            .AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(new List<Activity>())))
+            .Build();
+
+        // put it together
+        var counter = meter.CreateCounter<long>("meter");
+        var logger = loggerFactory.CreateLogger(sourceName);
+
+        using (var parent = activitySource.StartActivity("parent"))
+        using (var child = activitySource.StartActivity("child"))
         {
-            var counter = meter.CreateCounter<long>("meter");
-            var logger = loggerFactory.CreateLogger(sourceName);
+            child?.SetTag("foo", 1);
+            child?.SetTag("bar", "Hello, World!");
 
-            using (var parent = activitySource.StartActivity("parent"))
-            using (var child = activitySource.StartActivity("child"))
-            {
-                child?.SetTag("foo", 1);
-                child?.SetTag("bar", "Hello, World!");
-
-                counter.Add(1, new("a", 1), new("b", 2));
-                logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
-            }
+            counter.Add(1, new("a", 1), new("b", 2));
+            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
         }
     }
 }
