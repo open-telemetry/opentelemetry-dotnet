@@ -174,9 +174,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .AddReader(
-                    new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                    new BaseExportingMetricReader(new InMemoryExporter<Metric>(metrics))
                     {
-                        Temporality = temporality,
+                        Temporality = aggregationTemporality,
                     })
                 .Build();
 
