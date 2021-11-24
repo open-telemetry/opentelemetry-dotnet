@@ -173,10 +173,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(metrics))
-                 {
-                     Temporality = aggregationTemporality,
-                 })
+                .AddReader(
+                    new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                    {
+                        Temporality = temporality,
+                    })
                 .Build();
 
             var attributes = ToAttributes(keysValues).ToArray();
