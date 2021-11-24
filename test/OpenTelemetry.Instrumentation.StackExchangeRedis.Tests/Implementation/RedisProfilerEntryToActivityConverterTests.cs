@@ -30,7 +30,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
     public class RedisProfilerEntryToActivityConverterTests : IDisposable
     {
         private readonly ConnectionMultiplexer connection;
-        private readonly IDisposable sdk;
+        private readonly IDisposable tracerProvider;
 
         public RedisProfilerEntryToActivityConverterTests()
         {
@@ -42,14 +42,14 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 
             this.connection = ConnectionMultiplexer.Connect(connectionOptions);
 
-            this.sdk = Sdk.CreateTracerProviderBuilder()
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddRedisInstrumentation(this.connection)
                 .Build();
         }
 
         public void Dispose()
         {
-            this.sdk.Dispose();
+            this.tracerProvider.Dispose();
             this.connection.Dispose();
         }
 
