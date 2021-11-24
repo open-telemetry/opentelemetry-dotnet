@@ -28,24 +28,14 @@ public class Program
 
     static Program()
     {
-        var process = Process.GetCurrentProcess();
-
-        MyMeter.CreateObservableGauge(
-            "MyProcessWorkingSetGauge",
-            () => new List<Measurement<long>>()
-            {
-                new(process.WorkingSet64, new("process.id", process.Id), new("process.bitness", IntPtr.Size << 3)),
-            });
+        MyMeter.CreateObservableGauge("MyProcessWorkingSetGauge", () => IntPtr.Size << 3);
     }
 
     public static void Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter("MyCompany.MyProduct.MyLibrary")
-            /*
-            TODO: revisit once this exception is removed "System.InvalidOperationException: Only one Metricreader is allowed.".
             .AddReader(new MyReader())
-            */
             .AddMyExporter()
             .Build();
 
