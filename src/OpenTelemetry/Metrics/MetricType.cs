@@ -23,10 +23,13 @@ namespace OpenTelemetry.Metrics
     {
         /*
         Type:
-            0x10: Sum
-            0x20: Gauge
-            0x30: Histogram
-            0x40: Summary (reserved)
+            0x10 0b00010000: Sum
+            0x20 0b00100000: Gauge
+            0x40 0b01000000: Histogram
+            0x50 0b01010000: HistogramWithBuckets
+            0x60 0b01100000: HistogramWithMinMax
+            0x70 0b01110000: HistogramWithMinMaxAndBuckets
+            0x80 0b10000000: Summary (reserved)
 
         Point kind:
             0x04: I1 (signed 1-byte integer)
@@ -62,8 +65,27 @@ namespace OpenTelemetry.Metrics
         DoubleGauge = 0x2d,
 
         /// <summary>
-        /// Histogram.
+        /// Histogram. (Sum and Count).
         /// </summary>
-        Histogram = 0x30,
+        Histogram = 0x40,
+
+        /*
+        /// <summary>
+        /// Histogram with Min and Max.
+        /// </summary>
+        HistogramWithMinMax = 0x60,
+        */
+
+        /// <summary>
+        /// Histogram with Buckets.
+        /// </summary>
+        HistogramWithBuckets = 0x50,
+
+        /*
+        /// <summary>
+        /// Histogram with Min, Max and Buckets.
+        /// </summary>
+        HistogramWithMinMaxAndBuckets = HistogramWithMinMax & HistogramWithBuckets,
+        */
     }
 }
