@@ -9,8 +9,10 @@ OpenTelemetry.Exporter.OtlpExporterOptions.ExportProcessorType.get -> OpenTeleme
 OpenTelemetry.Exporter.OtlpExporterOptions.ExportProcessorType.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.Headers.get -> string
 OpenTelemetry.Exporter.OtlpExporterOptions.Headers.set -> void
-OpenTelemetry.Exporter.OtlpExporterOptions.MetricExportIntervalMilliseconds.get -> int
-OpenTelemetry.Exporter.OtlpExporterOptions.MetricExportIntervalMilliseconds.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.MetricReaderType.get -> OpenTelemetry.Metrics.MetricReaderType
+OpenTelemetry.Exporter.OtlpExporterOptions.MetricReaderType.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.PeriodicExportingMetricReaderOptions.get -> OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
+OpenTelemetry.Exporter.OtlpExporterOptions.PeriodicExportingMetricReaderOptions.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.OtlpExporterOptions() -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.Protocol.get -> OpenTelemetry.Exporter.OtlpExportProtocol
 OpenTelemetry.Exporter.OtlpExporterOptions.Protocol.set -> void
