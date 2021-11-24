@@ -41,7 +41,7 @@ namespace Examples.Console
             //
             // dotnet run grpc
 
-            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddGrpcClientInstrumentation()
                 .AddSource("grpc-net-client-test")
                 .AddConsoleExporter()
