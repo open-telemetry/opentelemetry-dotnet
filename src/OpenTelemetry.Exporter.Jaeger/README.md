@@ -112,7 +112,7 @@ built-in `AddHttpClient` extension:
 ```csharp
 services.AddHttpClient(
     "JaegerExporter",
-     configureClient: (client) =>
+    configureClient: (client) =>
         client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
 ```
 

@@ -119,22 +119,22 @@ particularly useful if there are conflicting instrument names, and you do not
 own the instrument to create it with a different name.
 
 ```csharp
-   // Rename an instrument to new name.
-   .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
+    // Rename an instrument to new name.
+    .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
 ```
 
 ```csharp
-   // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
-   .AddView((instrument) =>
-      {
-         if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
+    // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
+    .AddView((instrument) =>
+    {
+        if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
             instrument.Name == "MyCounter")
-         {
+        {
             return new MetricStreamConfiguration() { Name = "MyCounterRenamed" };
-         }
+        }
 
-         return null;
-      })
+        return null;
+    })
 ```
 
 #### Drop an instrument
@@ -145,22 +145,22 @@ instrument from a Meter. If the goal is to drop every instrument from a `Meter`,
 then it is recommended to simply not add that `Meter` using `AddMeter`.
 
 ```csharp
-   // Drop the instrument "MyCounterDrop".
-   .AddView(instrumentName: "MyCounterDrop", MetricStreamConfiguration.Drop)
+    // Drop the instrument "MyCounterDrop".
+    .AddView(instrumentName: "MyCounterDrop", MetricStreamConfiguration.Drop)
 ```
 
 ```csharp
-   // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
-   .AddView((instrument) =>
-      {
-         if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
+    // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
+    .AddView((instrument) =>
+    {
+        if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
             instrument.Name == "MyCounterDrop")
-         {
+        {
             return MetricStreamConfiguration.Drop;
-         }
+        }
 
-         return null;
-      })
+        return null;
+    })
 ```
 
 #### Select specific tags
@@ -173,52 +173,52 @@ with the metric are of interest to you.
 
 ```csharp
     // Only choose "name" as the dimension for the metric "MyFruitCounter"
-   .AddView(
-      instrumentName: "MyFruitCounter",
-      metricStreamConfiguration: new MetricStreamConfiguration
-      {
-         TagKeys = new string[] { "name" },
-      })
+    .AddView(
+        instrumentName: "MyFruitCounter",
+        metricStreamConfiguration: new MetricStreamConfiguration
+        {
+            TagKeys = new string[] { "name" },
+        })
 
-   ...
-   // Only the dimension "name" is selected, "color" is dropped
-   MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
-   MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
-   MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
-   ...
+    ...
+    // Only the dimension "name" is selected, "color" is dropped
+    MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
+    MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
+    MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
+    ...
 
-   // If you provide an empty `string` array as `TagKeys` to the `MetricStreamConfiguration`
-   // the SDK will drop all the dimensions associated with the metric
-   .AddView(
-      instrumentName: "MyFruitCounter",
-      metricStreamConfiguration: new MetricStreamConfiguration
-      {
-         TagKeys = new string[] { },
-      })
+    // If you provide an empty `string` array as `TagKeys` to the `MetricStreamConfiguration`
+    // the SDK will drop all the dimensions associated with the metric
+    .AddView(
+        instrumentName: "MyFruitCounter",
+        metricStreamConfiguration: new MetricStreamConfiguration
+        {
+            TagKeys = new string[] { },
+        })
 
-   ...
-   // both "name" and "color" are dropped
-   MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
-   MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
-   MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
-   ...
+    ...
+    // both "name" and "color" are dropped
+    MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
+    MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
+    MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
+    ...
 ```
 
 ```csharp
-   // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
-   .AddView((instrument) =>
-      {
-         if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
+    // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
+    .AddView((instrument) =>
+    {
+        if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
             instrument.Name == "MyFruitCounter")
-         {
+        {
             return new MetricStreamConfiguration
             {
-               TagKeys = new string[] { "name" },
+                TagKeys = new string[] { "name" },
             };
-         }
+        }
 
-         return null;
-      })
+        return null;
+    })
 ```
 
 #### Specify custom boundaries for Histogram
@@ -229,41 +229,43 @@ By default, the boundaries used for a Histogram are [`{ 0, 5, 10, 25, 50, 75, 10
 Views can be used to provide custom boundaries for a Histogram. The measurements
 are then aggregated using the custom boundaries provided instead of the the
 default boundaries. This requires the use of `ExplicitBucketHistogramConfiguration`.
+[Monday 08:36 PM] Reiley Yang
 
+<!-- markdownlint-disable MD013 -->
 ```csharp
-   // Change Histogram boundaries to count measurements under the following buckets:
-   // (-inf, 10]
-   // (10, 20]
-   // (20, +inf)
-   .AddView(
-      instrumentName: "MyHistogram",
-      new ExplicitBucketHistogramConfiguration
-        { Boundaries = new double[] { 10, 20 } })
+    // Change Histogram boundaries to count measurements under the following buckets:
+    // (-inf, 10]
+    // (10, 20]
+    // (20, +inf)
+    .AddView(
+        instrumentName: "MyHistogram",
+        new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { 10, 20 } })
 
-   // If you provide an empty `double` array as `Boundaries` to the `ExplicitBucketHistogramConfiguration`,
-   // the SDK will only export the sum and count for the measurements.
-   // There are no buckets exported in this case.
-   .AddView(
-      instrumentName: "MyHistogram",
-      new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { } })
+    // If you provide an empty `double` array as `Boundaries` to the `ExplicitBucketHistogramConfiguration`,
+    // the SDK will only export the sum and count for the measurements.
+    // There are no buckets exported in this case.
+    .AddView(
+        instrumentName: "MyHistogram",
+        new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { } })
 ```
+<!-- markdownlint-enable MD013 -->
 
 ```csharp
-   // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
-   .AddView((instrument) =>
-      {
-         if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
+    // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
+    .AddView((instrument) =>
+    {
+        if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
             instrument.Name == "MyHistogram")
-         {
+        {
             // `ExplicitBucketHistogramConfiguration` is a child class of `MetricStreamConfiguration`
             return new ExplicitBucketHistogramConfiguration
             {
-               Boundaries = new double[] { 10, 20 },
+                Boundaries = new double[] { 10, 20 },
             };
-         }
+        }
 
-         return null;
-      })
+        return null;
+    })
 ```
 
 **NOTE:** The SDK currently does not support any changes to `Aggregation` type
