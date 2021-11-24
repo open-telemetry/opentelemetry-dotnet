@@ -43,11 +43,10 @@ using OpenTelemetry.Trace;
 
 public void ConfigureServices(IServiceCollection services)
 {
-    services.AddOpenTelemetryTracing(
-        (builder) => builder
-            .AddAspNetCoreInstrumentation()
-            .AddJaegerExporter()
-            );
+    services.AddOpenTelemetryTracing((builder) => builder
+        .AddAspNetCoreInstrumentation()
+        .AddJaegerExporter()
+    );
 }
 ```
 
@@ -65,19 +64,18 @@ method of you applications `Startup` class as shown below.
 ```csharp
 // Configure
 services.Configure<AspNetCoreInstrumentationOptions>(options =>
-        {
-            options.Filter = (httpContext) =>
-            {
-                // only collect telemetry about HTTP GET requests
-                return httpContext.Request.Method.Equals("GET");
-            };
-        });
+{
+    options.Filter = (httpContext) =>
+    {
+        // only collect telemetry about HTTP GET requests
+        return httpContext.Request.Method.Equals("GET");
+    };
+});
 
-services.AddOpenTelemetryTracing(
-        (builder) => builder
-            .AddAspNetCoreInstrumentation()
-            .AddJaegerExporter()
-            );
+services.AddOpenTelemetryTracing((builder) => builder
+    .AddAspNetCoreInstrumentation()
+    .AddJaegerExporter()
+);
 ```
 
 ### Filter
@@ -93,17 +91,14 @@ The following code snippet shows how to use `Filter` to only allow GET
 requests.
 
 ```csharp
-services.AddOpenTelemetryTracing(
-    (builder) => builder
-    .AddAspNetCoreInstrumentation(
-        (options) => options.Filter =
-            (httpContext) =>
-            {
-                // only collect telemetry about HTTP GET requests
-                return httpContext.Request.Method.Equals("GET");
-            })
+services.AddOpenTelemetryTracing((builder) => builder
+    .AddAspNetCoreInstrumentation((options) => options.Filter = httpContext =>
+    {
+        // only collect telemetry about HTTP GET requests
+        return httpContext.Request.Method.Equals("GET");
+    })
     .AddJaegerExporter()
-    );
+);
 ```
 
 It is important to note that this `Filter` option is specific to this
@@ -126,8 +121,7 @@ The following code snippet shows how to add additional tags using `Enrich`.
 ```csharp
 services.AddOpenTelemetryTracing((builder) =>
 {
-    builder
-    .AddAspNetCoreInstrumentation((options) => options.Enrich
+    builder.AddAspNetCoreInstrumentation((options) => options.Enrich
         = (activity, eventName, rawObject) =>
     {
         if (eventName.Equals("OnStartActivity"))
