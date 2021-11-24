@@ -1,4 +1,4 @@
-# OpenTelemetry Stress Tests for Providers
+# OpenTelemetry Razzle
 
 This stress test is intended to verify that there is no memory leak in the key
 components across logs, metrics and traces. It is based on the
