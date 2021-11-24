@@ -72,22 +72,22 @@ namespace OpenTelemetry.Exporter.Prometheus
                     {
                         if (metric.MetricType.IsSum())
                         {
-                            cursor = WriteLong(buffer, cursor, metricPoint.GetLongSum());
+                            cursor = WriteLong(buffer, cursor, metricPoint.GetCounterSumLong());
                         }
                         else
                         {
-                            cursor = WriteLong(buffer, cursor, metricPoint.GetLastLongValue());
+                            cursor = WriteLong(buffer, cursor, metricPoint.GetGaugeLastValueLong());
                         }
                     }
                     else
                     {
                         if (metric.MetricType.IsSum())
                         {
-                            cursor = WriteDouble(buffer, cursor, metricPoint.GetDoubleSum());
+                            cursor = WriteDouble(buffer, cursor, metricPoint.GetCounterSumDouble());
                         }
                         else
                         {
-                            cursor = WriteDouble(buffer, cursor, metricPoint.GetLastDoubleValue());
+                            cursor = WriteDouble(buffer, cursor, metricPoint.GetGaugeLastValueDouble());
                         }
                     }
 

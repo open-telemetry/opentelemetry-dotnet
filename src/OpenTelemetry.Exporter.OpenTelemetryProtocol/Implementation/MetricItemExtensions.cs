@@ -158,7 +158,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
-                            dataPoint.AsInt = metricPoint.GetLongSum();
+                            dataPoint.AsInt = metricPoint.GetCounterSumLong();
                             sum.DataPoints.Add(dataPoint);
                         }
 
@@ -182,7 +182,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
-                            dataPoint.AsDouble = metricPoint.GetDoubleSum();
+                            dataPoint.AsDouble = metricPoint.GetCounterSumDouble();
                             sum.DataPoints.Add(dataPoint);
                         }
 
@@ -203,7 +203,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
-                            dataPoint.AsInt = metricPoint.GetLastLongValue();
+                            dataPoint.AsInt = metricPoint.GetGaugeLastValueLong();
                             gauge.DataPoints.Add(dataPoint);
                         }
 
@@ -224,7 +224,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
-                            dataPoint.AsDouble = metricPoint.GetLastDoubleValue();
+                            dataPoint.AsDouble = metricPoint.GetGaugeLastValueDouble();
                             gauge.DataPoints.Add(dataPoint);
                         }
 

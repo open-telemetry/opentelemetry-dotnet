@@ -86,7 +86,7 @@ namespace OpenTelemetry.Metrics
             return this.EndTime;
         }
 
-        public long GetLongSum()
+        public long GetCounterSumLong()
         {
             if (this.aggType == AggregationType.LongSumIncomingDelta || this.aggType == AggregationType.LongSumIncomingCumulative)
             {
@@ -94,11 +94,11 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                throw new NotSupportedException($"{nameof(this.GetLongSum)} is not supported for this metric type.");
+                throw new NotSupportedException($"{nameof(this.GetCounterSumLong)} is not supported for this metric type.");
             }
         }
 
-        public double GetDoubleSum()
+        public double GetCounterSumDouble()
         {
             if (this.aggType == AggregationType.DoubleSumIncomingDelta || this.aggType == AggregationType.DoubleSumIncomingCumulative)
             {
@@ -106,11 +106,11 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                throw new NotSupportedException($"{nameof(this.GetDoubleSum)} is not supported for this metric type.");
+                throw new NotSupportedException($"{nameof(this.GetCounterSumDouble)} is not supported for this metric type.");
             }
         }
 
-        public long GetLastLongValue()
+        public long GetGaugeLastValueLong()
         {
             if (this.aggType == AggregationType.LongGauge)
             {
@@ -118,11 +118,11 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                throw new NotSupportedException($"{nameof(this.GetLastLongValue)} is not supported for this metric type.");
+                throw new NotSupportedException($"{nameof(this.GetGaugeLastValueLong)} is not supported for this metric type.");
             }
         }
 
-        public double GetLastDoubleValue()
+        public double GetGaugeLastValueDouble()
         {
             if (this.aggType == AggregationType.DoubleGauge)
             {
@@ -130,7 +130,7 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                throw new NotSupportedException($"{nameof(this.GetLastDoubleValue)} is not supported for this metric type.");
+                throw new NotSupportedException($"{nameof(this.GetGaugeLastValueDouble)} is not supported for this metric type.");
             }
         }
 

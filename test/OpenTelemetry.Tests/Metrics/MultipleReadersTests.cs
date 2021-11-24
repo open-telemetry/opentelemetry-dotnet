@@ -115,11 +115,11 @@ namespace OpenTelemetry.Metrics.Tests
             ref var metricPointForFirstExport = ref metricPointsEnumerator.Current;
             if (metric.MetricType.IsSum())
             {
-                Assert.Equal(value, metricPointForFirstExport.GetLongSum());
+                Assert.Equal(value, metricPointForFirstExport.GetCounterSumLong());
             }
             else
             {
-                Assert.Equal(value, metricPointForFirstExport.GetLastLongValue());
+                Assert.Equal(value, metricPointForFirstExport.GetGaugeLastValueLong());
             }
         }
     }

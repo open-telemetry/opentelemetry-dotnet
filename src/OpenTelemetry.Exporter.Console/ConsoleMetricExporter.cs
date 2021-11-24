@@ -140,22 +140,22 @@ namespace OpenTelemetry.Exporter
                     {
                         if (metricType.IsSum())
                         {
-                            valueDisplay = metricPoint.GetDoubleSum().ToString(CultureInfo.InvariantCulture);
+                            valueDisplay = metricPoint.GetCounterSumDouble().ToString(CultureInfo.InvariantCulture);
                         }
                         else
                         {
-                            valueDisplay = metricPoint.GetLastDoubleValue().ToString(CultureInfo.InvariantCulture);
+                            valueDisplay = metricPoint.GetGaugeLastValueDouble().ToString(CultureInfo.InvariantCulture);
                         }
                     }
                     else if (metricType.IsLong())
                     {
                         if (metricType.IsSum())
                         {
-                            valueDisplay = metricPoint.GetLongSum().ToString(CultureInfo.InvariantCulture);
+                            valueDisplay = metricPoint.GetCounterSumLong().ToString(CultureInfo.InvariantCulture);
                         }
                         else
                         {
-                            valueDisplay = metricPoint.GetLastLongValue().ToString(CultureInfo.InvariantCulture);
+                            valueDisplay = metricPoint.GetGaugeLastValueLong().ToString(CultureInfo.InvariantCulture);
                         }
                     }
 
