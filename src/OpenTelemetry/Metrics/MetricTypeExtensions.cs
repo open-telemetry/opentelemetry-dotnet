@@ -22,11 +22,12 @@ namespace OpenTelemetry.Metrics
     {
 #pragma warning disable SA1310 // field should not contain an underscore
 
-        internal const MetricType METRIC_TYPE_MASK = (MetricType)0xf0;
+        internal const MetricType METRIC_TYPE_MASK = (MetricType)0xff0;
 
         internal const MetricType METRIC_TYPE_SUM = (MetricType)0x10;
         internal const MetricType METRIC_TYPE_GAUGE = (MetricType)0x20;
-        internal const MetricType METRIC_TYPE_HISTOGRAM = (MetricType)0x30;
+        internal const MetricType METRIC_TYPE_HISTOGRAM = (MetricType)0x80;
+        internal const MetricType METRIC_TYPE_HISTOGRAM_BUCKETS = (MetricType)0x90;
         /* internal const byte METRIC_TYPE_SUMMARY = 0x40; // not used */
 
         internal const MetricType POINT_KIND_MASK = (MetricType)0x0f;
@@ -57,9 +58,15 @@ namespace OpenTelemetry.Metrics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsHistogramWithBuckets(this MetricType self)
+        {
+            return (self & METRIC_TYPE_HISTOGRAM_BUCKETS) == METRIC_TYPE_HISTOGRAM_BUCKETS;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsHistogram(this MetricType self)
         {
-            return (self & METRIC_TYPE_MASK) == METRIC_TYPE_HISTOGRAM;
+            return (self & METRIC_TYPE_HISTOGRAM) == METRIC_TYPE_HISTOGRAM;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

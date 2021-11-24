@@ -73,19 +73,17 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         Histogram = 0x80,
 
-/*
-        /// <summary>
-        /// Histogram with Min and Max.
-        /// </summary>
-        HistogramWithMinMax = 0x90,
-*/
-
         /// <summary>
         /// Histogram with Buckets.
         /// </summary>
-        HistogramWithBuckets = 0xA0,
+        HistogramWithBuckets = 0x90,
 
-/*
+        /*
+        /// <summary>
+        /// Histogram with Min and Max.
+        /// </summary>
+        HistogramWithMinMax = 0xA0,
+
         /// <summary>
         /// Histogram with Min, Max and Buckets.
         /// </summary>
@@ -100,6 +98,6 @@ namespace OpenTelemetry.Metrics
         /// Summary.
         /// </summary>
         Summary = 0x100,
-*/
+        */
     }
 }

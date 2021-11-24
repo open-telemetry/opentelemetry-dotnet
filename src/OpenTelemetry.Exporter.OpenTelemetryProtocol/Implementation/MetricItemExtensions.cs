@@ -249,6 +249,30 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             dataPoint.Count = (ulong)metricPoint.GetHistogramCount();
                             dataPoint.Sum = metricPoint.GetHistogramSum();
 
+                            histogram.DataPoints.Add(dataPoint);
+                        }
+
+                        otlpMetric.Histogram = histogram;
+                        break;
+                    }
+
+                case MetricType.HistogramWithBuckets:
+                    {
+                        var histogram = new OtlpMetrics.Histogram();
+                        histogram.AggregationTemporality = temporality;
+
+                        foreach (ref var metricPoint in metric.GetMetricPoints())
+                        {
+                            var dataPoint = new OtlpMetrics.HistogramDataPoint
+                            {
+                                StartTimeUnixNano = (ulong)metricPoint.GetStartTime().ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.GetEndTime().ToUnixTimeNanoseconds(),
+                            };
+
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
+                            dataPoint.Count = (ulong)metricPoint.GetHistogramCount();
+                            dataPoint.Sum = metricPoint.GetHistogramSum();
+
                             foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                             {
                                 dataPoint.BucketCounts.Add((ulong)histogramMeasurement.BucketCount);
