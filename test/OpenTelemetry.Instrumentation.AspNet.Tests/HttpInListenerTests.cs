@@ -58,7 +58,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             string filter = null,
             bool recordException = false)
         {
-            IDisposable openTelemetry = null;
+            IDisposable tracerProvider = null;
             RouteData routeData;
             switch (routeType)
             {
