@@ -18,74 +18,46 @@ using System;
 
 namespace OpenTelemetry.Metrics
 {
-    [Flags]
-    public enum MetricType : byte
+    public enum MetricType : short
     {
-        /*
-        Type:
-            0x10 0b00010000: Sum
-            0x20 0b00100000: Gauge
-            0x40 0b01000000: Histogram
-            0x50 0b01010000: HistogramWithBuckets
-            0x60 0b01100000: HistogramWithMinMax
-            0x70 0b01110000: HistogramWithMinMaxAndBuckets
-            0x80 0b10000000: Summary (reserved)
-
-        Point kind:
-            0x04: I1 (signed 1-byte integer)
-            0x05: U1 (unsigned 1-byte integer)
-            0x06: I2 (signed 2-byte integer)
-            0x07: U2 (unsigned 2-byte integer)
-            0x08: I4 (signed 4-byte integer)
-            0x09: U4 (unsigned 4-byte integer)
-            0x0a: I8 (signed 8-byte integer)
-            0x0b: U8 (unsigned 8-byte integer)
-            0x0c: R4 (4-byte floating point)
-            0x0d: R8 (8-byte floating point)
-        */
-
         /// <summary>
         /// Sum of Long type.
         /// </summary>
-        LongSum = 0x1a,
+        LongSum = 1,
 
         /// <summary>
         /// Sum of Double type.
         /// </summary>
-        DoubleSum = 0x1d,
+        DoubleSum = 2,
 
         /// <summary>
         /// Gauge of Long type.
         /// </summary>
-        LongGauge = 0x2a,
+        LongGauge = 3,
 
         /// <summary>
         /// Gauge of Double type.
         /// </summary>
-        DoubleGauge = 0x2d,
+        DoubleGauge = 4,
 
         /// <summary>
         /// Histogram. (Sum and Count).
         /// </summary>
-        Histogram = 0x40,
+        Histogram = 5,
 
-        /*
         /// <summary>
         /// Histogram with Min and Max.
         /// </summary>
-        HistogramWithMinMax = 0x60,
-        */
+        HistogramWithMinMax = 6,
 
         /// <summary>
         /// Histogram with Buckets.
         /// </summary>
-        HistogramWithBuckets = 0x50,
+        HistogramWithBuckets = 7,
 
-        /*
         /// <summary>
         /// Histogram with Min, Max and Buckets.
         /// </summary>
-        HistogramWithMinMaxAndBuckets = HistogramWithMinMax & HistogramWithBuckets,
-        */
+        HistogramWithMinMaxAndBuckets = 8,
     }
 }
