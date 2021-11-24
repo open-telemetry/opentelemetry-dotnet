@@ -71,7 +71,7 @@ namespace Benchmarks.Metrics
                         // The performant way of iterating.
                         foreach (ref var metricPoint in metric.GetMetricPoints())
                         {
-                            sum += metricPoint.LongValue;
+                            sum += metricPoint.GetCounterSumDouble();
                         }
                     }
                     else
@@ -80,7 +80,7 @@ namespace Benchmarks.Metrics
                         // This is still "correct", but less performant.
                         foreach (var metricPoint in metric.GetMetricPoints())
                         {
-                            sum += metricPoint.LongValue;
+                            sum += metricPoint.GetCounterSumDouble();
                         }
                     }
                 }

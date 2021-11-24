@@ -138,18 +138,32 @@ namespace OpenTelemetry.Exporter
                     }
                     else if (metricType.IsDouble())
                     {
-                        valueDisplay = metricPoint.DoubleValue.ToString(CultureInfo.InvariantCulture);
+                        if (metricType.IsSum())
+                        {
+                            valueDisplay = metricPoint.GetCounterSumDouble().ToString(CultureInfo.InvariantCulture);
+                        }
+                        else
+                        {
+                            valueDisplay = metricPoint.GetGaugeLastValueDouble().ToString(CultureInfo.InvariantCulture);
+                        }
                     }
                     else if (metricType.IsLong())
                     {
-                        valueDisplay = metricPoint.LongValue.ToString(CultureInfo.InvariantCulture);
+                        if (metricType.IsSum())
+                        {
+                            valueDisplay = metricPoint.GetCounterSumLong().ToString(CultureInfo.InvariantCulture);
+                        }
+                        else
+                        {
+                            valueDisplay = metricPoint.GetGaugeLastValueLong().ToString(CultureInfo.InvariantCulture);
+                        }
                     }
 
                     msg = new StringBuilder();
                     msg.Append('(');
-                    msg.Append(metricPoint.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                    msg.Append(metricPoint.GetStartTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                     msg.Append(", ");
-                    msg.Append(metricPoint.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                    msg.Append(metricPoint.GetEndTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                     msg.Append("] ");
                     msg.Append(tags);
                     if (tags != string.Empty)
