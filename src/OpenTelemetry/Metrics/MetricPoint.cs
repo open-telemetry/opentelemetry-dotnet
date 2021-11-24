@@ -22,11 +22,16 @@ namespace OpenTelemetry.Metrics
 {
     public struct MetricPoint
     {
+        internal DateTimeOffset StartTime;
+        internal DateTimeOffset EndTime;
+
         private readonly AggregationType aggType;
-        private readonly HistogramMeasurements histogramMeasurements;
+        private readonly HistogramBuckets histogramBuckets;
         private long longVal;
+        private long longValue;
         private long lastLongSum;
         private double doubleVal;
+        private double doubleValue;
         private double lastDoubleSum;
 
         internal MetricPoint(
@@ -42,25 +47,25 @@ namespace OpenTelemetry.Metrics
             this.StartTime = startTime;
             this.Tags = new ReadOnlyTagCollection(keys, values);
             this.EndTime = default;
-            this.LongValue = default;
+            this.longValue = default;
             this.longVal = default;
             this.lastLongSum = default;
-            this.DoubleValue = default;
+            this.doubleValue = default;
             this.doubleVal = default;
             this.lastDoubleSum = default;
             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
             if (this.aggType == AggregationType.Histogram)
             {
-                this.histogramMeasurements = new HistogramMeasurements(histogramBounds);
+                this.histogramBuckets = new HistogramBuckets(histogramBounds);
             }
             else if (this.aggType == AggregationType.HistogramSumCount)
             {
-                this.histogramMeasurements = new HistogramMeasurements(null);
+                this.histogramBuckets = new HistogramBuckets(null);
             }
             else
             {
-                this.histogramMeasurements = null;
+                this.histogramBuckets = null;
             }
         }
 
@@ -69,37 +74,63 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         public ReadOnlyTagCollection Tags { get; }
 
-        public DateTimeOffset StartTime { get; internal set; }
-
-        public DateTimeOffset EndTime { get; internal set; }
-
-        public long LongValue { get; internal set; }
-
-        public double DoubleValue { get; internal set; }
-
         internal MetricPointStatus MetricPointStatus { get; private set; }
 
-        public long[] GetBucketCounts()
+        public DateTimeOffset GetStartTime()
         {
-            if (this.aggType == AggregationType.Histogram)
+            return this.StartTime;
+        }
+
+        public DateTimeOffset GetEndTime()
+        {
+            return this.EndTime;
+        }
+
+        public long GetCounterSumLong()
+        {
+            if (this.aggType == AggregationType.LongSumIncomingDelta || this.aggType == AggregationType.LongSumIncomingCumulative)
             {
-                return this.histogramMeasurements.AggregatedBucketCounts;
+                return this.longValue;
             }
             else
             {
-                throw new NotSupportedException($"{nameof(this.GetBucketCounts)} is not supported for this metric type.");
+                throw new NotSupportedException($"{nameof(this.GetCounterSumLong)} is not supported for this metric type.");
             }
         }
 
-        public double[] GetExplicitBounds()
+        public double GetCounterSumDouble()
         {
-            if (this.aggType == AggregationType.Histogram)
+            if (this.aggType == AggregationType.DoubleSumIncomingDelta || this.aggType == AggregationType.DoubleSumIncomingCumulative)
             {
-                return this.histogramMeasurements.ExplicitBounds;
+                return this.doubleValue;
             }
             else
             {
-                throw new NotSupportedException($"{nameof(this.GetExplicitBounds)} is not supported for this metric type.");
+                throw new NotSupportedException($"{nameof(this.GetCounterSumDouble)} is not supported for this metric type.");
+            }
+        }
+
+        public long GetGaugeLastValueLong()
+        {
+            if (this.aggType == AggregationType.LongGauge)
+            {
+                return this.longValue;
+            }
+            else
+            {
+                throw new NotSupportedException($"{nameof(this.GetGaugeLastValueLong)} is not supported for this metric type.");
+            }
+        }
+
+        public double GetGaugeLastValueDouble()
+        {
+            if (this.aggType == AggregationType.DoubleGauge)
+            {
+                return this.doubleValue;
+            }
+            else
+            {
+                throw new NotSupportedException($"{nameof(this.GetGaugeLastValueDouble)} is not supported for this metric type.");
             }
         }
 
@@ -107,7 +138,7 @@ namespace OpenTelemetry.Metrics
         {
             if (this.aggType == AggregationType.Histogram || this.aggType == AggregationType.HistogramSumCount)
             {
-                return this.histogramMeasurements.Count;
+                return this.histogramBuckets.Count;
             }
             else
             {
@@ -119,11 +150,23 @@ namespace OpenTelemetry.Metrics
         {
             if (this.aggType == AggregationType.Histogram || this.aggType == AggregationType.HistogramSumCount)
             {
-                return this.histogramMeasurements.Sum;
+                return this.histogramBuckets.Sum;
             }
             else
             {
                 throw new NotSupportedException($"{nameof(this.GetHistogramSum)} is not supported for this metric type.");
+            }
+        }
+
+        public HistogramBuckets GetHistogramBuckets()
+        {
+            if (this.aggType == AggregationType.Histogram || this.aggType == AggregationType.HistogramSumCount)
+            {
+                return this.histogramBuckets;
+            }
+            else
+            {
+                throw new NotSupportedException($"{nameof(this.GetHistogramBuckets)} is not supported for this metric type.");
             }
         }
 
@@ -202,20 +245,20 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.Histogram:
                     {
                         int i;
-                        for (i = 0; i < this.histogramMeasurements.ExplicitBounds.Length; i++)
+                        for (i = 0; i < this.histogramBuckets.ExplicitBounds.Length; i++)
                         {
                             // Upper bound is inclusive
-                            if (number <= this.histogramMeasurements.ExplicitBounds[i])
+                            if (number <= this.histogramBuckets.ExplicitBounds[i])
                             {
                                 break;
                             }
                         }
 
-                        lock (this.histogramMeasurements.LockObject)
+                        lock (this.histogramBuckets.LockObject)
                         {
-                            this.histogramMeasurements.CountVal++;
-                            this.histogramMeasurements.SumVal += number;
-                            this.histogramMeasurements.BucketCounts[i]++;
+                            this.histogramBuckets.CountVal++;
+                            this.histogramBuckets.SumVal += number;
+                            this.histogramBuckets.BucketCounts[i]++;
                         }
 
                         break;
@@ -223,10 +266,10 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramSumCount:
                     {
-                        lock (this.histogramMeasurements.LockObject)
+                        lock (this.histogramBuckets.LockObject)
                         {
-                            this.histogramMeasurements.CountVal++;
-                            this.histogramMeasurements.SumVal += number;
+                            this.histogramBuckets.CountVal++;
+                            this.histogramBuckets.SumVal += number;
                         }
 
                         break;
@@ -257,7 +300,7 @@ namespace OpenTelemetry.Metrics
                         if (outputDelta)
                         {
                             long initValue = Interlocked.Read(ref this.longVal);
-                            this.LongValue = initValue - this.lastLongSum;
+                            this.longValue = initValue - this.lastLongSum;
                             this.lastLongSum = initValue;
                             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
@@ -270,7 +313,7 @@ namespace OpenTelemetry.Metrics
                         }
                         else
                         {
-                            this.LongValue = Interlocked.Read(ref this.longVal);
+                            this.longValue = Interlocked.Read(ref this.longVal);
                         }
 
                         break;
@@ -287,7 +330,7 @@ namespace OpenTelemetry.Metrics
                             // the exchange (to 0.0) will never occur,
                             // but we get the original value atomically.
                             double initValue = Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity);
-                            this.DoubleValue = initValue - this.lastDoubleSum;
+                            this.doubleValue = initValue - this.lastDoubleSum;
                             this.lastDoubleSum = initValue;
                             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
@@ -305,7 +348,7 @@ namespace OpenTelemetry.Metrics
                             // As long as the value is not -ve infinity,
                             // the exchange (to 0.0) will never occur,
                             // but we get the original value atomically.
-                            this.DoubleValue = Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity);
+                            this.doubleValue = Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity);
                         }
 
                         break;
@@ -313,12 +356,12 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.LongGauge:
                     {
-                        this.LongValue = Interlocked.Read(ref this.longVal);
+                        this.longValue = Interlocked.Read(ref this.longVal);
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                         // Check again if value got updated, if yes reset status.
                         // This ensures no Updates get Lost.
-                        if (this.LongValue != Interlocked.Read(ref this.longVal))
+                        if (this.longValue != Interlocked.Read(ref this.longVal))
                         {
                             this.MetricPointStatus = MetricPointStatus.CollectPending;
                         }
@@ -333,12 +376,12 @@ namespace OpenTelemetry.Metrics
                         // As long as the value is not -ve infinity,
                         // the exchange (to 0.0) will never occur,
                         // but we get the original value atomically.
-                        this.DoubleValue = Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity);
+                        this.doubleValue = Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity);
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                         // Check again if value got updated, if yes reset status.
                         // This ensures no Updates get Lost.
-                        if (this.DoubleValue != Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity))
+                        if (this.doubleValue != Interlocked.CompareExchange(ref this.doubleVal, 0.0, double.NegativeInfinity))
                         {
                             this.MetricPointStatus = MetricPointStatus.CollectPending;
                         }
@@ -348,22 +391,22 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        lock (this.histogramMeasurements.LockObject)
+                        lock (this.histogramBuckets.LockObject)
                         {
-                            this.histogramMeasurements.Count = this.histogramMeasurements.CountVal;
-                            this.histogramMeasurements.Sum = this.histogramMeasurements.SumVal;
+                            this.histogramBuckets.Count = this.histogramBuckets.CountVal;
+                            this.histogramBuckets.Sum = this.histogramBuckets.SumVal;
                             if (outputDelta)
                             {
-                                this.histogramMeasurements.CountVal = 0;
-                                this.histogramMeasurements.SumVal = 0;
+                                this.histogramBuckets.CountVal = 0;
+                                this.histogramBuckets.SumVal = 0;
                             }
 
-                            for (int i = 0; i < this.histogramMeasurements.BucketCounts.Length; i++)
+                            for (int i = 0; i < this.histogramBuckets.BucketCounts.Length; i++)
                             {
-                                this.histogramMeasurements.AggregatedBucketCounts[i] = this.histogramMeasurements.BucketCounts[i];
+                                this.histogramBuckets.AggregatedBucketCounts[i] = this.histogramBuckets.BucketCounts[i];
                                 if (outputDelta)
                                 {
-                                    this.histogramMeasurements.BucketCounts[i] = 0;
+                                    this.histogramBuckets.BucketCounts[i] = 0;
                                 }
                             }
 
@@ -375,14 +418,14 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramSumCount:
                     {
-                        lock (this.histogramMeasurements.LockObject)
+                        lock (this.histogramBuckets.LockObject)
                         {
-                            this.histogramMeasurements.Count = this.histogramMeasurements.CountVal;
-                            this.histogramMeasurements.Sum = this.histogramMeasurements.SumVal;
+                            this.histogramBuckets.Count = this.histogramBuckets.CountVal;
+                            this.histogramBuckets.Sum = this.histogramBuckets.SumVal;
                             if (outputDelta)
                             {
-                                this.histogramMeasurements.CountVal = 0;
-                                this.histogramMeasurements.SumVal = 0;
+                                this.histogramBuckets.CountVal = 0;
+                                this.histogramBuckets.SumVal = 0;
                             }
 
                             this.MetricPointStatus = MetricPointStatus.NoCollectPending;

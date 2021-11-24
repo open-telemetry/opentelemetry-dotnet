@@ -71,8 +71,10 @@ namespace Benchmarks.Metrics
             this.meter = new Meter(Utils.GetCurrentMethodName());
 
             var exportedItems = new List<Metric>();
-            var reader = new PeriodicExportingMetricReader(new InMemoryExporter<Metric>(exportedItems), 1000);
-            reader.PreferredAggregationTemporality = this.AggregationTemporality;
+            var reader = new PeriodicExportingMetricReader(new InMemoryExporter<Metric>(exportedItems), 1000)
+            {
+                Temporality = this.AggregationTemporality,
+            };
             this.provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name) // All instruments from this meter are enabled.
                 .AddReader(reader)

@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var testSampler = new TestSampler();
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var sdk = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .SetSampler(testSampler)
                 .Build();
@@ -123,7 +123,7 @@ namespace OpenTelemetry.Trace.Tests
             };
 
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var sdk = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .SetSampler(testSampler)
                 .Build();
@@ -144,7 +144,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var testSampler = new TestSampler();
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var sdk = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource(ActivitySourceName)
                     .SetSampler(testSampler)
                     .Build();
@@ -204,7 +204,7 @@ namespace OpenTelemetry.Trace.Tests
 
             var testSampler = new TestSampler();
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var sdk = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource(ActivitySourceName)
                     .SetSampler(testSampler)
                     .Build();

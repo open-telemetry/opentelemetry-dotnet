@@ -42,7 +42,7 @@ namespace OpenTelemetry.Metrics
                 ? new BaseExportingMetricReader(exporter)
                 : new PeriodicExportingMetricReader(exporter, options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
 
-            reader.PreferredAggregationTemporality = options.AggregationTemporality;
+            reader.Temporality = options.AggregationTemporality;
 
             return builder.AddReader(reader);
         }

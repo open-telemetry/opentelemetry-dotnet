@@ -42,10 +42,7 @@ public class Program
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter("MyCompany.MyProduct.MyLibrary")
-            /*
-            TODO: revisit once this exception is removed "System.InvalidOperationException: Only one Metricreader is allowed.".
             .AddReader(new MyReader())
-            */
             .AddMyExporter()
             .Build();
 

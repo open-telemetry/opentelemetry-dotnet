@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                 foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
                     var tags = metricPoint.Tags;
-                    var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
+                    var timestamp = metricPoint.GetEndTime().ToUnixTimeMilliseconds();
 
                     // Counter and Gauge
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
@@ -70,11 +70,25 @@ namespace OpenTelemetry.Exporter.Prometheus
                     // for each MetricPoint
                     if (((int)metric.MetricType & 0b_0000_1111) == 0x0a /* I8 */)
                     {
-                        cursor = WriteLong(buffer, cursor, metricPoint.LongValue);
+                        if (metric.MetricType.IsSum())
+                        {
+                            cursor = WriteLong(buffer, cursor, metricPoint.GetCounterSumLong());
+                        }
+                        else
+                        {
+                            cursor = WriteLong(buffer, cursor, metricPoint.GetGaugeLastValueLong());
+                        }
                     }
                     else
                     {
-                        cursor = WriteDouble(buffer, cursor, metricPoint.DoubleValue);
+                        if (metric.MetricType.IsSum())
+                        {
+                            cursor = WriteDouble(buffer, cursor, metricPoint.GetCounterSumDouble());
+                        }
+                        else
+                        {
+                            cursor = WriteDouble(buffer, cursor, metricPoint.GetGaugeLastValueDouble());
+                        }
                     }
 
                     buffer[cursor++] = unchecked((byte)' ');
@@ -89,53 +103,44 @@ namespace OpenTelemetry.Exporter.Prometheus
                 foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
                     var tags = metricPoint.Tags;
-                    var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
+                    var timestamp = metricPoint.GetEndTime().ToUnixTimeMilliseconds();
 
-                    var bucketCounts = metricPoint.GetBucketCounts();
-                    if (bucketCounts != null)
+                    long totalCount = 0;
+                    foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                     {
-                        // Histogram buckets
-                        var explicitBounds = metricPoint.GetExplicitBounds();
-                        long totalCount = 0;
-                        for (int idxBound = 0; idxBound < explicitBounds.Length + 1; idxBound++)
+                        totalCount += histogramMeasurement.BucketCount;
+
+                        cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
+                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
+
+                        foreach (var tag in tags)
                         {
-                            totalCount += bucketCounts[idxBound];
-
-                            cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
-                            cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
-
-                            foreach (var tag in tags)
-                            {
-                                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                                buffer[cursor++] = unchecked((byte)',');
-                            }
-
-                            cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
-
-                            if (idxBound < explicitBounds.Length)
-                            {
-                                cursor = WriteDouble(buffer, cursor, explicitBounds[idxBound]);
-                            }
-                            else
-                            {
-                                cursor = WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
-                            }
-
-                            cursor = WriteAsciiStringNoEscape(buffer, cursor, "\"} ");
-
-                            cursor = WriteLong(buffer, cursor, totalCount);
-                            buffer[cursor++] = unchecked((byte)' ');
-
-                            cursor = WriteLong(buffer, cursor, timestamp);
-
-                            buffer[cursor++] = ASCII_LINEFEED;
+                            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+                            buffer[cursor++] = unchecked((byte)',');
                         }
+
+                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
+
+                        if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
+                        {
+                            cursor = WriteDouble(buffer, cursor, histogramMeasurement.ExplicitBound);
+                        }
+                        else
+                        {
+                            cursor = WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
+                        }
+
+                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "\"} ");
+
+                        cursor = WriteLong(buffer, cursor, totalCount);
+                        buffer[cursor++] = unchecked((byte)' ');
+
+                        cursor = WriteLong(buffer, cursor, timestamp);
+
+                        buffer[cursor++] = ASCII_LINEFEED;
                     }
 
                     // Histogram sum
-                    var count = metricPoint.GetHistogramCount();
-                    var sum = metricPoint.GetHistogramSum();
-
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
 
@@ -159,7 +164,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                     buffer[cursor++] = unchecked((byte)' ');
 
-                    cursor = WriteDouble(buffer, cursor, sum);
+                    cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
                     buffer[cursor++] = unchecked((byte)' ');
 
                     cursor = WriteLong(buffer, cursor, timestamp);
@@ -190,7 +195,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                     buffer[cursor++] = unchecked((byte)' ');
 
-                    cursor = WriteLong(buffer, cursor, count);
+                    cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
                     buffer[cursor++] = unchecked((byte)' ');
 
                     cursor = WriteLong(buffer, cursor, timestamp);

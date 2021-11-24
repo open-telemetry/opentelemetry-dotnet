@@ -44,15 +44,15 @@ public class Program
 
             // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
             .AddView((instrument) =>
-             {
-                 if (instrument.Meter.Name.Equals("CompanyA.ProductB.Library2") &&
-                     instrument.GetType().Name.Contains("Histogram"))
-                 {
-                     return new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 } };
-                 }
+            {
+                if (instrument.Meter.Name.Equals("CompanyA.ProductB.Library2") &&
+                    instrument.GetType().Name.Contains("Histogram"))
+                {
+                    return new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 } };
+                }
 
-                 return null;
-             })
+                return null;
+            })
 
             // An instrument which does not match any views
             // gets processed with default behavior. (SDK default)
