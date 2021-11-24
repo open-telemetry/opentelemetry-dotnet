@@ -113,7 +113,14 @@ namespace OpenTelemetry.Metrics.Tests
             var metricPointsEnumerator = metricPoints.GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
             ref var metricPointForFirstExport = ref metricPointsEnumerator.Current;
-            Assert.Equal(value, metricPointForFirstExport.LongValue);
+            if (metric.MetricType.IsSum())
+            {
+                Assert.Equal(value, metricPointForFirstExport.GetCounterSumLong());
+            }
+            else
+            {
+                Assert.Equal(value, metricPointForFirstExport.GetGaugeLastValueLong());
+            }
         }
     }
 }

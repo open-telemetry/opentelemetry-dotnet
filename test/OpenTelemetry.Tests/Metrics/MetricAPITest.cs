@@ -65,7 +65,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             Assert.Single(metricPoints);
             var metricPoint = metricPoints[0];
-            Assert.Equal(100, metricPoint.LongValue);
+            Assert.Equal(100, metricPoint.GetGaugeLastValueLong());
             Assert.True(metricPoint.Tags.Count > 0);
         }
 
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             Assert.Single(metricPoints);
             var metricPoint = metricPoints[0];
-            Assert.Equal(100, metricPoint.LongValue);
+            Assert.Equal(100, metricPoint.GetGaugeLastValueLong());
             Assert.True(metricPoint.Tags.Count > 0);
         }
 
@@ -698,7 +698,14 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
-                    sum += metricPoint.LongValue;
+                    if (metric.MetricType.IsSum())
+                    {
+                        sum += metricPoint.GetCounterSumLong();
+                    }
+                    else
+                    {
+                        sum += metricPoint.GetGaugeLastValueLong();
+                    }
                 }
             }
 
@@ -712,7 +719,14 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
-                    sum += metricPoint.DoubleValue;
+                    if (metric.MetricType.IsSum())
+                    {
+                        sum += metricPoint.GetCounterSumDouble();
+                    }
+                    else
+                    {
+                        sum += metricPoint.GetGaugeLastValueDouble();
+                    }
                 }
             }
 
