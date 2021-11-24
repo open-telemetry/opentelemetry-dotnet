@@ -332,6 +332,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Assert.Equal(doubleValue, dataPoint.Sum);
             }
 
+            int bucketIndex;
+            for (bucketIndex = 0; bucketIndex < dataPoint.ExplicitBounds.Count; ++bucketIndex)
+            {
+                if (dataPoint.Sum <= dataPoint.ExplicitBounds[bucketIndex])
+                {
+                    break;
+                }
+
+                Assert.Equal(0UL, dataPoint.BucketCounts[bucketIndex]);
+            }
+
+            Assert.Equal(1UL, dataPoint.BucketCounts[bucketIndex]);
+
             if (attributes.Length > 0)
             {
                 OtlpTestHelpers.AssertOtlpAttributes(attributes, dataPoint.Attributes);
