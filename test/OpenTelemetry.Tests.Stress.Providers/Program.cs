@@ -38,17 +38,18 @@ public partial class Program
     {
         var sourceName = "OpenTelemetry.Tests.Stress." + Guid.NewGuid().ToString("D");
 
+        using (var activitySource = new ActivitySource(sourceName))
+        using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySource.Name)
+            .AddProcessor(new BatchActivityExportProcessor(new InMemoryExporter<Activity>(new List<Activity>())))
+            .AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(new List<Activity>())))
+            .Build())
         using (var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder.AddOpenTelemetry(options => options
                 .AddProcessor(new BatchLogRecordExportProcessor(new InMemoryExporter<LogRecord>(new List<LogRecord>())))
                 .AddProcessor(new SimpleLogRecordExportProcessor(new InMemoryExporter<LogRecord>(new List<LogRecord>()))));
         }))
-        {
-            var logger = loggerFactory.CreateLogger(sourceName);
-            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
-        }
-
         using (var meter = new Meter(sourceName))
         using (var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
@@ -71,21 +72,16 @@ public partial class Program
             .Build())
         {
             var counter = meter.CreateCounter<long>("meter");
-            counter.Add(1, new("a", 1), new("b", 2));
-        }
+            var logger = loggerFactory.CreateLogger(sourceName);
 
-        using (var activitySource = new ActivitySource(sourceName))
-        using (var sdk = Sdk.CreateTracerProviderBuilder()
-            .AddSource(activitySource.Name)
-            .AddProcessor(new BatchActivityExportProcessor(new InMemoryExporter<Activity>(new List<Activity>())))
-            .AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(new List<Activity>())))
-            .Build())
-        {
             using (var parent = activitySource.StartActivity("parent"))
             using (var child = activitySource.StartActivity("child"))
             {
                 child?.SetTag("foo", 1);
                 child?.SetTag("bar", "Hello, World!");
+
+                counter.Add(1, new("a", 1), new("b", 2));
+                logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
             }
         }
     }
