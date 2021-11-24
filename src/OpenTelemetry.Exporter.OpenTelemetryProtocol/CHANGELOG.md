@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Added configuration options for `MetricReaderType` to allow for configuring
+  the `OtlpMetricExporter` to export either manually or periodically.
+  ([#TBD](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TBD))
+
 ## 1.2.0-beta2
 
 Released 2021-Nov-19
