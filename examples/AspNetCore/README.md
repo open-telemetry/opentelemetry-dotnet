@@ -18,7 +18,8 @@ The following exporters are configured for viewing the metrics:
 
 ## Running the example
 
-Running instances of the following services are required to view exports:
+Running instances of the following services are required to view the exported
+data:
 
 * Jaeger
 * OTEL Collector
@@ -49,14 +50,17 @@ With everything running:
 
 * [Invoke the API](http://localhost:5000/WeatherForecast) to create new data.
 * If you have run Jaeger with default settings:
-  * View your traces with Jaeger [here](http://localhost:16686/)
+  * View your traces with Jaeger by accessing the local endpoint
+  [http://localhost:16686/](http://localhost:16686/).
 * If you have run OTEL Collector with default settings:
   * View your traces and metrics by checking the logs. If running through
   `docker-compose`, you can execute `docker-compose logs otlp` to view the logs.
 * If you have run Prometheus with default settings:
-  * View your metrics with Prometheus [here](http://localhost:9090/graph)
+  * View your metrics with Prometheus by accessing the local endpoint
+  [http://localhost:9090/graph](http://localhost:9090/graph).
 * If you have run Zipkin with default settings:
-  * View your traces with Zipkin [here](http://localhost:9411/zipkin)
+  * View your traces with Zipkin by accessing the local endpoint
+  [http://localhost:9411/zipkin](http://localhost:9411/zipkin).
 
 ## References
 
