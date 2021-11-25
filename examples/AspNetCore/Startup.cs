@@ -102,7 +102,8 @@ namespace Examples.AspNetCore
                 {
                     var hostname = Environment.GetEnvironmentVariable("OTLP_HOSTNAME") ?? "localhost";
                     options.Endpoint = new Uri($"http://{hostname}:4317");
-                }));
+                })
+                .AddPrometheusExporter());
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -120,6 +121,8 @@ namespace Examples.AspNetCore
             });
 
             app.UseRouting();
+
+            app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
             app.UseEndpoints(endpoints =>
             {

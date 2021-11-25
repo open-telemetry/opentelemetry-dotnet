@@ -18,6 +18,13 @@ services:
       - 14268:14268
       - 16686:16686
 
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
   aspnetcore:
     build:
       context: ../..
@@ -29,7 +36,7 @@ services:
       - OTLP_HOSTNAME=otlp
       - JAEGER_HOSTNAME=jaeger
     ports:
-      - 5000:80
+      - 5000:5000
     depends_on:
       - zipkin
       - otlp
