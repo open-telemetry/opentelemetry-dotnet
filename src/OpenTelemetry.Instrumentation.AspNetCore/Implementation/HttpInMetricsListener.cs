@@ -29,14 +29,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         private Histogram<double> httpServerDuration;
 
-        private Counter<long> httpRequestCount;
+        private Counter<long> httpServerCompletedRequests;
 
         public HttpInMetricsListener(string name, Meter meter)
             : base(name)
         {
             this.meter = meter;
             this.httpServerDuration = meter.CreateHistogram<double>("http.server.duration", "ms", "measures the duration of the inbound HTTP request");
-            this.httpRequestCount = meter.CreateCounter<long>("http.server.completed_requests", "requests", "measures the number of concurrent HTTP requests that are completed");
+            this.httpServerCompletedRequests = meter.CreateCounter<long>("http.server.completed_requests", "requests", "measures the number of concurrent HTTP requests that are completed");
         }
 
         public override void OnStopActivity(Activity activity, object payload)
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             };
 
             this.httpServerDuration.Record(activity.Duration.TotalMilliseconds, tags);
-            this.httpRequestCount.Add(1, tags);
+            this.httpServerCompletedRequests.Add(1, tags);
         }
     }
 }
