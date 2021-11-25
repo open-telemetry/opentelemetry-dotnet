@@ -55,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task RequestMetricIsCaptured()
+        public async Task RequestDurationMetricIsCaptured()
         {
             var metricItems = new List<Metric>();
             var metricExporter = new InMemoryExporter<Metric>(metricItems);
@@ -106,6 +106,85 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             Assert.Equal(1L, count);
             Assert.True(sum > 0);
+
+            /*
+            var bucket = metric.Buckets
+                .Where(b =>
+                    metric.PopulationSum > b.LowBoundary &&
+                    metric.PopulationSum <= b.HighBoundary)
+                .FirstOrDefault();
+            Assert.NotEqual(default, bucket);
+            Assert.Equal(1, bucket.Count);
+            */
+
+            var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
+            int i = 0;
+            foreach (var tag in metricPoint.Tags)
+            {
+                attributes[i++] = tag;
+            }
+
+            var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, "GET");
+            var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
+            var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, 200);
+            var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "HTTP/1.1");
+            Assert.Contains(method, attributes);
+            Assert.Contains(scheme, attributes);
+            Assert.Contains(statusCode, attributes);
+            Assert.Contains(flavor, attributes);
+            Assert.Equal(4, attributes.Length);
+        }
+
+        [Fact]
+        public async Task RequestCompletedMetricIsCaptured()
+        {
+            var metricItems = new List<Metric>();
+            var metricExporter = new InMemoryExporter<Metric>(metricItems);
+
+            var metricReader = new BaseExportingMetricReader(metricExporter)
+            {
+                Temporality = AggregationTemporality.Cumulative,
+            };
+            this.meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddAspNetCoreInstrumentation()
+                .AddReader(metricReader)
+                .Build();
+
+            using (var client = this.factory.CreateClient())
+            {
+                var response = await client.GetAsync("/api/values");
+                response.EnsureSuccessStatusCode();
+            }
+
+            // We need to let End callback execute as it is executed AFTER response was returned.
+            // In unit tests environment there may be a lot of parallel unit tests executed, so
+            // giving some breezing room for the End callback to complete
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            this.meterProvider.Dispose();
+
+            var requestMetrics = metricItems
+                .Where(item => item.Name == "http.server.completed_requests")
+                .ToArray();
+
+            Assert.True(requestMetrics.Length == 1);
+
+            var metric = requestMetrics[0];
+            Assert.NotNull(metric);
+            Assert.True(metric.MetricType == MetricType.LongSum);
+            var metricPoints = new List<MetricPoint>();
+            foreach (var p in metric.GetMetricPoints())
+            {
+                metricPoints.Add(p);
+            }
+
+            Assert.Single(metricPoints);
+
+            var metricPoint = metricPoints[0];
+
+            var sum = metricPoint.GetCounterSumLong();
+
+            Assert.Equal(1L, sum);
 
             /*
             var bucket = metric.Buckets
