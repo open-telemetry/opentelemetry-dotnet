@@ -191,7 +191,10 @@ namespace OpenTelemetry.Metrics
         /// Returns <c>true</c> when metrics processing succeeded; otherwise,
         /// <c>false</c>.
         /// </returns>
-        protected abstract bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds);
+        internal virtual bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
+        {
+            return true;
+        }
 
         /// <summary>
         /// Called by <c>Collect</c>. This function should block the current
