@@ -19,23 +19,29 @@ using System;
 namespace OpenTelemetry.Metrics
 {
     [Flags]
-    public enum MetricType : short
+    public enum MetricType : int
     {
         /*
-        Type:
-            0x10  0b0000 0001 0000 SUM
-            0x20  0b0000 0010 0000 GAUGE
+        Type (bits 4,5,6,7,8,9,10,11):
+            0x10  0b0000 0000 0000 0000 0000 0000 0001 0000 SUM
+            0x20  0b0000 0000 0000 0000 0000 0000 0010 0000 GAUGE
 
-            0x80  0b0000 1000 0000 Histogram
-            0x90  0b0000 1001 0000 HistogramWithBuckets
-            0xA0  0b0000 1010 0000 HistogramWithMinMax
-            0xB0  0b0000 1011 0000 HistogramWithMinMaxAndBuckets
+            0x40  0b0000 0000 0000 0000 0000 0000 0100 0000 Histogram
+            0xC0  0b0000 0000 0000 0000 0000 0000 1100 0000 Reserved HistogramWithMinMax
 
-            0xC0  0b0000 1100 0000 Exponential Histogram
+            0x80  0b0000 0000 0000 0000 0000 0000 1000 0000 Reserved MinMax
 
-            0x100 0b0001 0000 0000 Summary
+            0x50  0b0000 0000 0000 0000 0000 0000 0101 0000 Reserved Exponential Histogram
+            0x60  0b0000 0000 0000 0000 0000 0000 0110 0000 Reserved Exponential Histogram
+            0x70  0b0000 0000 0000 0000 0000 0000 0111 0000 Reserved Exponential Histogram
 
-        Point kind:
+            0x100 0b0000 0000 0000 0000 0000 0001 0000 0000 Reserved Summary
+
+        Temporality (bits 29, 30):
+            0b 0001
+            0b 0010
+
+        Point kind (bits 0,1,2,3):
             0x04: I1 (signed 1-byte integer)
             0x05: U1 (unsigned 1-byte integer)
             0x06: I2 (signed 2-byte integer)
@@ -71,28 +77,13 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Histogram. (Sum and Count).
         /// </summary>
-        Histogram = 0x80,
-
-        /// <summary>
-        /// Histogram with Buckets.
-        /// </summary>
-        HistogramWithBuckets = 0x90,
+        Histogram = 0x40,
 
         /*
         /// <summary>
         /// Histogram with Min and Max.
         /// </summary>
-        HistogramWithMinMax = 0xA0,
-
-        /// <summary>
-        /// Histogram with Min, Max and Buckets.
-        /// </summary>
-        HistogramWithMinMaxAndBuckets = 0xB0,
-
-        /// <summary>
-        /// Exponential Histogram.
-        /// </summary>
-        ExponentialHistogram = 0xC0,
+        HistogramWithMinMax = 0xC0,
 
         /// <summary>
         /// Summary.

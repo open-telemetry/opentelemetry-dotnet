@@ -88,16 +88,16 @@ namespace OpenTelemetry.Metrics
                 || instrument.GetType() == typeof(Histogram<float>)
                 || instrument.GetType() == typeof(Histogram<double>))
             {
+                this.MetricType = MetricType.Histogram;
+
                 if (histogramBounds != null
                     && histogramBounds.Length == 0)
                 {
                     aggType = AggregationType.HistogramSumCount;
-                    this.MetricType = MetricType.Histogram;
                 }
                 else
                 {
                     aggType = AggregationType.Histogram;
-                    this.MetricType = MetricType.HistogramWithBuckets;
                 }
             }
             else
