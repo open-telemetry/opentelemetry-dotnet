@@ -26,11 +26,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         public static readonly OpenTelemetryProtocolExporterEventSource Log = new OpenTelemetryProtocolExporterEventSource();
 
         [NonEvent]
-        public void FailedToReachCollector(Exception ex)
+        public void FailedToReachCollector(Uri collectorUri, Exception ex)
         {
             if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                this.FailedToReachCollector(ex.ToInvariantString());
+                this.FailedToReachCollector(collectorUri, ex.ToInvariantString());
             }
         }
 
@@ -43,10 +43,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
         }
 
-        [Event(2, Message = "Exporter failed send data to collector. Data will not be sent. Exception: {0}", Level = EventLevel.Error)]
-        public void FailedToReachCollector(string ex)
+        [Event(2, Message = "Exporter failed send data to collector on {0}. Data will not be sent. Exception: {1}", Level = EventLevel.Error)]
+        public void FailedToReachCollector(Uri collectorUri, string ex)
         {
-            this.WriteEvent(2, ex);
+            this.WriteEvent(2, collectorEndpoint, ex);
         }
 
         [Event(3, Message = "Could not translate activity from class '{0}' and method '{1}', span will not be recorded.", Level = EventLevel.Informational)]
