@@ -44,9 +44,6 @@ namespace Examples.AspNetCore
         {
             services.AddControllers();
 
-            // Enable HttpClientFactory integration for customization of the HttpClient used for export calls.
-            services.AddHttpClient();
-
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
@@ -59,66 +56,27 @@ namespace Examples.AspNetCore
                 }
             });
 
-            // Switch between Zipkin/Jaeger/OTLP by setting UseExporter in appsettings.json.
-            var tracingExporter = this.Configuration.GetValue<string>("UseTracingExporter").ToLowerInvariant();
-            switch (tracingExporter)
+            services.AddOpenTelemetryTracing((builder) => builder
+                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: "aspnetcore", serviceNamespace: "example"))
+                .AddAspNetCoreInstrumentation()
+                .AddConsoleExporter()
+                .AddZipkinExporter(b =>
+                {
+                    var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
+                    b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
+                }));
+
+            // For options which can be bound from IConfiguration.
+            services.Configure<AspNetCoreInstrumentationOptions>(this.Configuration.GetSection("AspNetCoreInstrumentation"));
+
+            // For options which can be configured from code only.
+            services.Configure<AspNetCoreInstrumentationOptions>(options =>
             {
-                case "jaeger":
-                    services.AddOpenTelemetryTracing((builder) => builder
-                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(this.Configuration.GetValue<string>("Jaeger:ServiceName")))
-                        .AddAspNetCoreInstrumentation()
-                        .AddHttpClientInstrumentation()
-                        .AddJaegerExporter());
-
-                    services.Configure<JaegerExporterOptions>(this.Configuration.GetSection("Jaeger"));
-
-                    // Customize the HttpClient that will be used when JaegerExporter is configured for HTTP transport.
-                    services.AddHttpClient("JaegerExporter", configureClient: (client) => client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
-                    break;
-                case "zipkin":
-                    services.AddOpenTelemetryTracing((builder) => builder
-                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(this.Configuration.GetValue<string>("Zipkin:ServiceName")))
-                        .AddAspNetCoreInstrumentation()
-                        .AddHttpClientInstrumentation()
-                        .AddZipkinExporter());
-
-                    services.Configure<ZipkinExporterOptions>(this.Configuration.GetSection("Zipkin"));
-                    break;
-                case "otlp":
-                    // Adding the OtlpExporter creates a GrpcChannel.
-                    // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
-                    // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
-                    AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
-                    services.AddOpenTelemetryTracing((builder) => builder
-                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(this.Configuration.GetValue<string>("Otlp:ServiceName")))
-                        .AddAspNetCoreInstrumentation()
-                        .AddHttpClientInstrumentation()
-                        .AddOtlpExporter(otlpOptions =>
-                        {
-                            otlpOptions.Endpoint = new Uri(this.Configuration.GetValue<string>("Otlp:Endpoint"));
-                        }));
-                    break;
-                default:
-                    services.AddOpenTelemetryTracing((builder) => builder
-                        .AddAspNetCoreInstrumentation()
-                        .AddHttpClientInstrumentation()
-                        .AddConsoleExporter());
-
-                    // For options which can be bound from IConfiguration.
-                    services.Configure<AspNetCoreInstrumentationOptions>(this.Configuration.GetSection("AspNetCoreInstrumentation"));
-
-                    // For options which can be configured from code only.
-                    services.Configure<AspNetCoreInstrumentationOptions>(options =>
-                    {
-                        options.Filter = (req) =>
-                        {
-                            return req.Request.Host != null;
-                        };
-                    });
-
-                    break;
-            }
+                options.Filter = (req) =>
+                {
+                    return req.Request.Host.HasValue;
+                };
+            });
 
             var metricsExporter = this.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
             services.AddOpenTelemetryMetrics(builder =>
@@ -152,8 +110,6 @@ namespace Examples.AspNetCore
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            app.UseHttpsRedirection();
 
             app.UseSwagger();
 

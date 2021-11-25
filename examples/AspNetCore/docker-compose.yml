@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  zipkin:
+    image: openzipkin/zipkin
+    ports:
+      - 9411:9411
+
+  aspnetcore:
+    build:
+      context: ../..
+      dockerfile: ./examples/AspNetCore/Dockerfile
+    image: opentelemetry-example-aspnetcore
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ZIPKIN_HOSTNAME=zipkin
+    ports:
+      - 5000:80
+    depends_on:
+      - zipkin
