@@ -60,15 +60,21 @@ namespace Examples.AspNetCore
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: "aspnetcore", serviceNamespace: "example"))
                 .AddAspNetCoreInstrumentation()
                 .AddConsoleExporter()
-                .AddZipkinExporter(b =>
+                .AddZipkinExporter(options =>
                 {
-                    var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
-                    b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
+                    var hostname = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
+                    options.Endpoint = new Uri($"http://{hostname}:9411/api/v2/spans");
                 })
-                .AddOtlpExporter(otlpOptions =>
+                .AddOtlpExporter(options =>
                 {
-                    var otlpHostName = Environment.GetEnvironmentVariable("OTLP_HOSTNAME") ?? "localhost";
-                    otlpOptions.Endpoint = new Uri($"http://{otlpHostName}:4317");
+                    var hostname = Environment.GetEnvironmentVariable("OTLP_HOSTNAME") ?? "localhost";
+                    options.Endpoint = new Uri($"http://{hostname}:4317");
+                })
+                .AddJaegerExporter(options =>
+                {
+                    var hostname = Environment.GetEnvironmentVariable("JAEGER_HOSTNAME") ?? "localhost";
+                    options.AgentHost = hostname;
+                    options.Endpoint = new Uri($"http://{hostname}:14268");
                 }));
 
             // For options which can be bound from IConfiguration.
@@ -83,23 +89,20 @@ namespace Examples.AspNetCore
                 };
             });
 
-            var metricsExporter = this.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
-            services.AddOpenTelemetryMetrics(builder =>
-            {
-                builder.AddAspNetCoreInstrumentation()
-                    .AddConsoleExporter(options =>
-                    {
-                        // The ConsoleMetricExporter defaults to a manual collect cycle.
-                        // This configuration causes metrics to be exported to stdout on a 10s interval.
-                        options.MetricReaderType = MetricReaderType.Periodic;
-                        options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10000;
-                    })
-                    .AddOtlpExporter(otlpOptions =>
-                    {
-                        var otlpHostName = Environment.GetEnvironmentVariable("OTLP_HOSTNAME") ?? "localhost";
-                        otlpOptions.Endpoint = new Uri($"http://{otlpHostName}:4317");
-                    });
-            });
+            services.AddOpenTelemetryMetrics(builder => builder
+                .AddAspNetCoreInstrumentation()
+                .AddConsoleExporter(options =>
+                {
+                    // The ConsoleMetricExporter defaults to a manual collect cycle.
+                    // This configuration causes metrics to be exported to stdout on a 10s interval.
+                    options.MetricReaderType = MetricReaderType.Periodic;
+                    options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10000;
+                })
+                .AddOtlpExporter(options =>
+                {
+                    var hostname = Environment.GetEnvironmentVariable("OTLP_HOSTNAME") ?? "localhost";
+                    options.Endpoint = new Uri($"http://{hostname}:4317");
+                }));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -117,12 +120,6 @@ namespace Examples.AspNetCore
             });
 
             app.UseRouting();
-
-            var metricsExporter = this.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
-            if (metricsExporter == "prometheus")
-            {
-                app.UseOpenTelemetryPrometheusScrapingEndpoint();
-            }
 
             app.UseEndpoints(endpoints =>
             {

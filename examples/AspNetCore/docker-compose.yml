@@ -11,6 +11,13 @@ services:
     ports:
       - 4317:4317
 
+  jaeger:
+    image: jaegertracing/all-in-one
+    ports:
+      - 6831:6831
+      - 14268:14268
+      - 16686:16686
+
   aspnetcore:
     build:
       context: ../..
@@ -20,6 +27,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ZIPKIN_HOSTNAME=zipkin
       - OTLP_HOSTNAME=otlp
+      - JAEGER_HOSTNAME=jaeger
     ports:
       - 5000:80
     depends_on:
