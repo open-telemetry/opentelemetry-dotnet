@@ -64,6 +64,11 @@ namespace Examples.AspNetCore
                 {
                     var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
                     b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
+                })
+                .AddOtlpExporter(otlpOptions =>
+                {
+                    var otlpHostName = Environment.GetEnvironmentVariable("OTLP_HOSTNAME") ?? "localhost";
+                    otlpOptions.Endpoint = new Uri($"http://{otlpHostName}:4317");
                 }));
 
             // For options which can be bound from IConfiguration.
@@ -81,26 +86,19 @@ namespace Examples.AspNetCore
             var metricsExporter = this.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
             services.AddOpenTelemetryMetrics(builder =>
             {
-                builder.AddAspNetCoreInstrumentation();
-
-                switch (metricsExporter)
-                {
-                    case "prometheus":
-                        builder.AddPrometheusExporter();
-                        break;
-                    case "otlp":
-                        builder.AddOtlpExporter();
-                        break;
-                    default:
-                        builder.AddConsoleExporter(options =>
-                        {
-                            // The ConsoleMetricExporter defaults to a manual collect cycle.
-                            // This configuration causes metrics to be exported to stdout on a 10s interval.
-                            options.MetricReaderType = MetricReaderType.Periodic;
-                            options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10000;
-                        });
-                        break;
-                }
+                builder.AddAspNetCoreInstrumentation()
+                    .AddConsoleExporter(options =>
+                    {
+                        // The ConsoleMetricExporter defaults to a manual collect cycle.
+                        // This configuration causes metrics to be exported to stdout on a 10s interval.
+                        options.MetricReaderType = MetricReaderType.Periodic;
+                        options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10000;
+                    })
+                    .AddOtlpExporter(otlpOptions =>
+                    {
+                        var otlpHostName = Environment.GetEnvironmentVariable("OTLP_HOSTNAME") ?? "localhost";
+                        otlpOptions.Endpoint = new Uri($"http://{otlpHostName}:4317");
+                    });
             });
         }
 

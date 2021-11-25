@@ -6,6 +6,11 @@ services:
     ports:
       - 9411:9411
 
+  otlp:
+    image: otel/opentelemetry-collector
+    ports:
+      - 4317:4317
+
   aspnetcore:
     build:
       context: ../..
@@ -14,7 +19,9 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ZIPKIN_HOSTNAME=zipkin
+      - OTLP_HOSTNAME=otlp
     ports:
       - 5000:80
     depends_on:
       - zipkin
+      - otlp
