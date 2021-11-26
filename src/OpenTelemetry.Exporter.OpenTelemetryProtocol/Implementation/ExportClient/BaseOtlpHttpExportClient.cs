@@ -18,19 +18,29 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
 {
     /// <summary>Base class for sending OTLP export request over HTTP.</summary>
     /// <typeparam name="TRequest">Type of export request.</typeparam>
-    internal abstract class BaseOtlpHttpExportClient<TRequest> : BaseOtlpExportClient, IExportClient<TRequest>
+    internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequest>
     {
         protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient = null)
-            : base(options)
         {
+            Guard.Null(options, nameof(options));
+            Guard.InvalidTimeout(options.TimeoutMilliseconds, nameof(options.TimeoutMilliseconds));
+
+#if !NETSTANDARD2_1 && !NET5_0_OR_GREATER
+            ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options);
+#endif
+
+            this.Options = options;
             this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
             this.HttpClient = httpClient ?? new HttpClient { Timeout = TimeSpan.FromMilliseconds(this.Options.TimeoutMilliseconds) };
         }
+
+        internal OtlpExporterOptions Options { get; }
 
         internal HttpClient HttpClient { get; }
 
