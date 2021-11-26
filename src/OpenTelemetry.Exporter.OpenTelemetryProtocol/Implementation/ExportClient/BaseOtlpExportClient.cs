@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
                         "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", out var unencryptedIsSupported) == false
                     || unencryptedIsSupported == false)
                 {
-                    throw new NotSupportedException(
+                    throw new InvalidOperationException(
                         "'System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport' must be enabled for using HTTP with .NET 3.1");
                 }
             }

@@ -79,7 +79,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Endpoint = new Uri($"http://{CollectorEndpoint}"),
             };
 
-            Assert.Throws<NotSupportedException>(() => new OtlpTraceExporter(exporterOptions));
+            Assert.Throws<InvalidOperationException>(() => new OtlpTraceExporter(exporterOptions));
         }
 
         [Trait("CategoryName", "CollectorIntegrationTests")]
@@ -94,7 +94,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Endpoint = new Uri($"http://{CollectorEndpoint}"),
             };
 
-            Assert.Throws<NotSupportedException>(() => new OtlpTraceExporter(exporterOptions));
+            Assert.Throws<InvalidOperationException>(() => new OtlpTraceExporter(exporterOptions));
         }
 #endif
     }
