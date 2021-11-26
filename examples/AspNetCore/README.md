@@ -22,7 +22,7 @@ Running instances of the following services are required to view the exported
 data:
 
 * Jaeger
-* OTEL Collector
+* OTel Collector
 * Prometheus
 * Zipkin
 
@@ -52,7 +52,7 @@ With everything running:
 * If you have run Jaeger with default settings:
   * View your traces with Jaeger by accessing the local endpoint
   [http://localhost:16686/](http://localhost:16686/).
-* If you have run OTEL Collector with default settings:
+* If you have run OTel Collector with default settings:
   * View your traces and metrics by checking the logs. If running through
   `docker-compose`, you can execute `docker-compose logs otlp` to view the logs.
 * If you have run Prometheus with default settings:
@@ -67,6 +67,6 @@ With everything running:
 * [Docker Desktop](https://www.docker.com/products/docker-desktop)
 * [Jaeger](https://jaegertracing.io/)
 * [OpenTelemetry Project](https://opentelemetry.io/)
-* [OTEL Collector](https://opentelemetry.io/docs/collector/getting-started/#docker)
+* [OTel Collector](https://opentelemetry.io/docs/collector/getting-started/#docker)
 * [Prometheus](https://prometheus.io/)
 * [Zipkin](https://zipkin.io)
