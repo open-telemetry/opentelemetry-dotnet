@@ -21,6 +21,12 @@ namespace OpenTelemetry.Metrics
     [Flags]
     public enum AggregationTemporality : int
     {
+        /*
+            Temporality (bits 28, 29):
+            0x10000000 0b0001 0000 0000 0000 0000 0000 0000 0000 Cumulative
+            0x20000000 0b0010 0000 0000 0000 0000 0000 0000 0000 Delta
+        */
+
         /// <summary>
         /// Cumulative.
         /// </summary>
