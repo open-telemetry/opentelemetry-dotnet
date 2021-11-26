@@ -3,8 +3,8 @@ OpenTelemetry.BaseExporter<T>.ForceFlush(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Batch<T>.Batch(T[] items, int count) -> void
 OpenTelemetry.Batch<T>.Count.get -> long
 OpenTelemetry.Metrics.AggregationTemporality
-OpenTelemetry.Metrics.AggregationTemporality.Cumulative = 1 -> OpenTelemetry.Metrics.AggregationTemporality
-OpenTelemetry.Metrics.AggregationTemporality.Delta = 2 -> OpenTelemetry.Metrics.AggregationTemporality
+OpenTelemetry.Metrics.AggregationTemporality.Cumulative = 268435456 -> OpenTelemetry.Metrics.AggregationTemporality
+OpenTelemetry.Metrics.AggregationTemporality.Delta = 536870912 -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporalityAttribute
 OpenTelemetry.Metrics.AggregationTemporalityAttribute.AggregationTemporalityAttribute(OpenTelemetry.Metrics.AggregationTemporality temporality) -> void
 OpenTelemetry.Metrics.AggregationTemporalityAttribute.Temporality.get -> OpenTelemetry.Metrics.AggregationTemporality

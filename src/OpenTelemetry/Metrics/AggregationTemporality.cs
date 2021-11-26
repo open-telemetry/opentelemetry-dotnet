@@ -19,16 +19,16 @@ using System;
 namespace OpenTelemetry.Metrics
 {
     [Flags]
-    public enum AggregationTemporality : byte
+    public enum AggregationTemporality : int
     {
         /// <summary>
         /// Cumulative.
         /// </summary>
-        Cumulative = 0b1,
+        Cumulative = 0x10000000,
 
         /// <summary>
         /// Delta.
         /// </summary>
-        Delta = 0b10,
+        Delta = 0x20000000,
     }
 }

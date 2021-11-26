@@ -23,35 +23,31 @@ namespace OpenTelemetry.Metrics
     {
         /*
         Type (bits 4,5,6,7,8,9,10,11):
-            0x10  0b0000 0000 0000 0000 0000 0000 0001 0000 SUM
-            0x20  0b0000 0000 0000 0000 0000 0000 0010 0000 GAUGE
+            0x10 0b0000 0000 0000 0000 0000 0000 0001 0000 SUM
+            0x20 0b0000 0000 0000 0000 0000 0000 0010 0000 GAUGE
+            0x40 0b0000 0000 0000 0000 0000 0000 0100 0000 Histogram
+            0xC0 0b0000 0000 0000 0000 0000 0000 1100 0000 HistogramWithMinMax (reserved)
+            0x80 0b0000 0000 0000 0000 0000 0000 1000 0000 MinMax (reserved)
+            0x50 0b0000 0000 0000 0000 0000 0000 0101 0000 Exponential Histogram (reserved)
+            0x60 0b0000 0000 0000 0000 0000 0000 0110 0000 Exponential Histogram (reserved)
+            0x70 0b0000 0000 0000 0000 0000 0000 0111 0000 Exponential Histogram (reserved)
+            0x100 0b0000 0000 0000 0000 0000 0001 0000 0000 Summary (reserved)
 
-            0x40  0b0000 0000 0000 0000 0000 0000 0100 0000 Histogram
-            0xC0  0b0000 0000 0000 0000 0000 0000 1100 0000 Reserved HistogramWithMinMax
-
-            0x80  0b0000 0000 0000 0000 0000 0000 1000 0000 Reserved MinMax
-
-            0x50  0b0000 0000 0000 0000 0000 0000 0101 0000 Reserved Exponential Histogram
-            0x60  0b0000 0000 0000 0000 0000 0000 0110 0000 Reserved Exponential Histogram
-            0x70  0b0000 0000 0000 0000 0000 0000 0111 0000 Reserved Exponential Histogram
-
-            0x100 0b0000 0000 0000 0000 0000 0001 0000 0000 Reserved Summary
-
-        Temporality (bits 29, 30):
-            0b 0001
-            0b 0010
+        Temporality (bits 28, 29): Reserved
+            0x10000000 0b0001 0000 0000 0000 0000 0000 0000 0000 Cumulative
+            0x20000000 0b0010 0000 0000 0000 0000 0000 0000 0000 Delta
 
         Point kind (bits 0,1,2,3):
-            0x04: I1 (signed 1-byte integer)
-            0x05: U1 (unsigned 1-byte integer)
-            0x06: I2 (signed 2-byte integer)
-            0x07: U2 (unsigned 2-byte integer)
-            0x08: I4 (signed 4-byte integer)
-            0x09: U4 (unsigned 4-byte integer)
-            0x0a: I8 (signed 8-byte integer)
-            0x0b: U8 (unsigned 8-byte integer)
-            0x0c: R4 (4-byte floating point)
-            0x0d: R8 (8-byte floating point)
+            0x04 0b0100 I1 (signed 1-byte integer)
+            0x05 0b0101 U1 (unsigned 1-byte integer)
+            0x06 0b0110 I2 (signed 2-byte integer)
+            0x07 0b0111 U2 (unsigned 2-byte integer)
+            0x08 0b1000 I4 (signed 4-byte integer)
+            0x09 0b1001 U4 (unsigned 4-byte integer)
+            0x0a 0b1010 I8 (signed 8-byte integer)
+            0x0b 0b1011 U8 (unsigned 8-byte integer)
+            0x0c 0b1100 R4 (4-byte floating point)
+            0x0d 0b1101 R8 (8-byte floating point)
         */
 
         /// <summary>
