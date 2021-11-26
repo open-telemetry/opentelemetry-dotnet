@@ -78,7 +78,7 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc/>
-        protected override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
+        internal override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
         {
             // TODO: Do we need to consider timeout here?
             return this.exporter.Export(metrics) == ExportResult.Success;
