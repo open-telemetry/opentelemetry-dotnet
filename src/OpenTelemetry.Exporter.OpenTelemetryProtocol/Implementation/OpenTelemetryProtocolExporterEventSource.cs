@@ -43,7 +43,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 this.ExportMethodException(ex.ToInvariantString());
             }
         }
-        
+
         [Event(2, Message = "Exporter failed send data to collector to {0} endpoint. Data will not be sent. Exception: {1}", Level = EventLevel.Error)]
         public void FailedToReachCollector(string rawCollectorUri, string ex)
         {

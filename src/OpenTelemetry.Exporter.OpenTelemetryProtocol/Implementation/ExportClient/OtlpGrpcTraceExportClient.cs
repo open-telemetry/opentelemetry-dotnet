@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         public override bool SendExportRequest(OtlpCollector.ExportTraceServiceRequest request, CancellationToken cancellationToken = default)
         {
             var deadline = DateTime.UtcNow.AddMilliseconds(this.Options.TimeoutMilliseconds);
-            
+
             try
             {
                 this.traceClient.Export(request, headers: this.Headers, deadline: deadline);
