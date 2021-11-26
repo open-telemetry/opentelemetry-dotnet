@@ -42,7 +42,7 @@ public class Program
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter("MyCompany.MyProduct.MyLibrary")
-            .AddReader(new MyReader())
+            .AddReader(new BaseExportingMetricReader(new MyExporter("ExporterX")))
             .AddMyExporter()
             .Build();
 
