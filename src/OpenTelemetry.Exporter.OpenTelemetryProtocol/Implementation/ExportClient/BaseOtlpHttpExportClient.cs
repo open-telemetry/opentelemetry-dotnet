@@ -29,7 +29,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient = null)
         {
             Guard.Null(options, nameof(options));
-            Guard.InvalidTimeout(options.TimeoutMilliseconds, nameof(options.TimeoutMilliseconds));
+            Guard.InvalidTimeout(options.TimeoutMilliseconds, $"{nameof(options)}.{nameof(options.TimeoutMilliseconds)}");
 
 #if !NETSTANDARD2_1 && !NET5_0_OR_GREATER
             ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options);
