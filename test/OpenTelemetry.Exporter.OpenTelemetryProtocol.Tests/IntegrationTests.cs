@@ -62,5 +62,40 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Single(delegatingExporter.ExportResults);
             Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
         }
+
+#if NETCOREAPP3_1
+        [Trait("CategoryName", "CollectorIntegrationTests")]
+        [SkipUnlessEnvVarFoundFact(CollectorEndpointEnvVarName)]
+        public void ExportResultIsFailedBecauseEncryptedHttpSupportIsDisabled()
+        {
+            // Adding the OtlpExporter creates a GrpcChannel.
+            // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
+            // We want to fail fast so we are disabling it
+            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", false);
+
+            var exporterOptions = new OtlpExporterOptions
+            {
+                Endpoint = new Uri($"http://{CollectorEndpoint}"),
+            };
+
+            Assert.Throws<NotSupportedException>(() => new OtlpTraceExporter(exporterOptions));
+        }
+
+        [Trait("CategoryName", "CollectorIntegrationTests")]
+        [SkipUnlessEnvVarFoundFact(CollectorEndpointEnvVarName)]
+        public void ExportResultIsFailedBecauseEncryptedHttpSupportIsNotConfigured()
+        {
+            // Adding the OtlpExporter creates a GrpcChannel.
+            // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
+            // We want to fail fast so not setting it to ensure it fails
+            var exporterOptions = new OtlpExporterOptions
+            {
+                Endpoint = new Uri($"http://{CollectorEndpoint}"),
+            };
+
+            Assert.Throws<NotSupportedException>(() => new OtlpTraceExporter(exporterOptions));
+        }
+#endif
     }
 }
