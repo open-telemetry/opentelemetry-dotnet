@@ -26,14 +26,6 @@ namespace OpenTelemetry.Metrics
 
         internal readonly object LockObject;
 
-        internal long CountVal;
-
-        internal long Count;
-
-        internal double SumVal;
-
-        internal double Sum;
-
         internal HistogramBuckets(double[] histogramBounds)
         {
             this.ExplicitBounds = histogramBounds;
