@@ -23,7 +23,8 @@ namespace OpenTelemetry.Exporter.Prometheus
     /// </summary>
     internal static partial class PrometheusSerializer
     {
-        private static readonly string[] MetricTypes = new string[] { "untyped", "counter", "gauge", "untyped", "histogram", "histogram", "histogram", "histogram", "summary" };
+        private static readonly string[] MetricTypes = new string[]
+        { "untyped", "counter", "gauge", "untyped", "histogram", "histogram", "histogram", "histogram", "summary" };
 
         public static int WriteMetric(byte[] buffer, int cursor, Metric metric)
         {
