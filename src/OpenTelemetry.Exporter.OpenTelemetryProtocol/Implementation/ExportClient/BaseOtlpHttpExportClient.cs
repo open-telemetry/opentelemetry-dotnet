@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
@@ -26,14 +25,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     /// <typeparam name="TRequest">Type of export request.</typeparam>
     internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequest>
     {
-        protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient = null)
+        protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient)
         {
             Guard.Null(options, nameof(options));
+            Guard.Null(httpClient, nameof(httpClient));
             Guard.InvalidTimeout(options.TimeoutMilliseconds, $"{nameof(options)}.{nameof(options.TimeoutMilliseconds)}");
 
             this.Options = options;
             this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
-            this.HttpClient = httpClient ?? new HttpClient { Timeout = TimeSpan.FromMilliseconds(this.Options.TimeoutMilliseconds) };
+            this.HttpClient = httpClient;
         }
 
         internal OtlpExporterOptions Options { get; }

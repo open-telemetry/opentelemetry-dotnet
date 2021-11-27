@@ -92,7 +92,9 @@ namespace OpenTelemetry.Exporter
             options.Protocol switch
             {
                 OtlpExportProtocol.Grpc => new OtlpGrpcTraceExportClient(options),
-                OtlpExportProtocol.HttpProtobuf => new OtlpHttpTraceExportClient(options),
+                OtlpExportProtocol.HttpProtobuf => new OtlpHttpTraceExportClient(
+                    options,
+                    options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
                 _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
             };
 

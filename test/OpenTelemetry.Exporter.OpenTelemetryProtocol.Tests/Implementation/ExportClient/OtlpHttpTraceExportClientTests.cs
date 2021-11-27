@@ -59,7 +59,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Expo
                 Headers = $"{header1.Name}={header1.Value}, {header2.Name} = {header2.Value}",
             };
 
-            var client = new OtlpHttpTraceExportClient(options);
+            var client = new OtlpHttpTraceExportClient(options, options.HttpClientFactory());
 
             Assert.NotNull(client.HttpClient);
 
