@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.Prometheus
     {
         private static readonly string[] MetricTypes = new string[]
         {
-            "untyped", "counter", "gauge", "untyped", "histogram", "histogram", "histogram", "histogram", "summary",
+            "untyped", "counter", "gauge", "summary", "histogram", "histogram", "histogram", "histogram", "untyped",
         };
 
         public static int WriteMetric(byte[] buffer, int cursor, Metric metric)
