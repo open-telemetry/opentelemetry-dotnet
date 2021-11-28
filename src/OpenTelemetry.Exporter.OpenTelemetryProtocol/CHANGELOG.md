@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Support `HttpProtobuf` protocol with metrics & added `HttpClientFactory`
+  option
+  ([#2696](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2696))
+
 ## 1.2.0-beta2
 
 Released 2021-Nov-19
