@@ -29,21 +29,21 @@ using OtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
 {
-    /// <summary>Class for sending OTLP trace export request over HTTP.</summary>
+    /// <summary>Class for sending OTLP metrics export request over HTTP.</summary>
     internal sealed class OtlpHttpMetricsExportClient : BaseOtlpHttpExportClient<OtlpCollector.ExportMetricsServiceRequest>
     {
         internal const string MediaContentType = "application/x-protobuf";
-        private readonly Uri exportTracesUri;
+        private readonly Uri exportMetricsUri;
 
         public OtlpHttpMetricsExportClient(OtlpExporterOptions options, HttpClient httpClient)
             : base(options, httpClient)
         {
-            this.exportTracesUri = this.Options.Endpoint;
+            this.exportMetricsUri = this.Options.Endpoint;
         }
 
         protected override HttpRequestMessage CreateHttpRequest(OtlpCollector.ExportMetricsServiceRequest exportRequest)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, this.exportTracesUri);
+            var request = new HttpRequestMessage(HttpMethod.Post, this.exportMetricsUri);
             foreach (var header in this.Headers)
             {
                 request.Headers.Add(header.Key, header.Value);
