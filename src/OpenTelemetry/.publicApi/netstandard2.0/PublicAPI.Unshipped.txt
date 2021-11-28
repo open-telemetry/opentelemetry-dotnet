@@ -29,13 +29,10 @@ OpenTelemetry.Metrics.MetricPoint.GetHistogramBuckets() -> OpenTelemetry.Metrics
 OpenTelemetry.Metrics.MetricPoint.GetStartTime() -> System.DateTimeOffset
 OpenTelemetry.Metrics.MetricPointsAccessor
 OpenTelemetry.Metrics.MetricPointsAccessor.MetricPointsAccessor() -> void
-OpenTelemetry.Metrics.MetricPointsAccessor.Dispose() -> void
 OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator
 OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.Current.get -> OpenTelemetry.Metrics.MetricPoint
-OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.Dispose() -> void
 OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.Enumerator() -> void
 OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.MoveNext() -> bool
-OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.Reset() -> void
 OpenTelemetry.Metrics.MetricPointsAccessor.GetEnumerator() -> OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator
 OpenTelemetry.Metrics.ExportModes
 OpenTelemetry.Metrics.ExportModes.Pull = 2 -> OpenTelemetry.Metrics.ExportModes
