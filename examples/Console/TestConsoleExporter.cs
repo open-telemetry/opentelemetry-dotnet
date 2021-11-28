@@ -37,7 +37,7 @@ namespace Examples.Console
         {
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use Console exporter.
-            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("console-test"))
                     .AddProcessor(new MyProcessor()) // This must be added before ConsoleExporter

@@ -390,7 +390,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     endCalled = true;
                 };
 
-            var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+            var tracerProvider = Sdk.CreateTracerProviderBuilder()
                             .AddSource(ActivitySourceName)
                             .AddProcessor(testActivityProcessor)
                             .AddOtlpExporter()

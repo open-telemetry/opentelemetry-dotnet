@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Added configuration options for `MetricReaderType` to allow for configuring
+  the `OtlpMetricExporter` to export either manually or periodically.
+  ([#2674](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2674))
+
 * Support `HttpProtobuf` protocol with metrics & added `HttpClientFactory`
   option
   ([#2696](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2696))

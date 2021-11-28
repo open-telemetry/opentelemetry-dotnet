@@ -58,7 +58,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             string filter = null,
             bool recordException = false)
         {
-            IDisposable openTelemetry = null;
+            IDisposable tracerProvider = null;
             RouteData routeData;
             switch (routeType)
             {
@@ -118,7 +118,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             List<Activity> exportedItems = new List<Activity>(16);
 
             Sdk.SetDefaultTextMapPropagator(new TraceContextPropagator());
-            using (openTelemetry = Sdk.CreateTracerProviderBuilder()
+            using (tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddAspNetInstrumentation((options) =>
                 {
                     options.Filter = httpContext =>
@@ -275,7 +275,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             Sdk.SetDefaultTextMapPropagator(propagator.Object);
-            using (var openTelemetry = Sdk.CreateTracerProviderBuilder()
+            using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new TestSampler(samplingDecision))
                 .AddAspNetInstrumentation()
                 .AddProcessor(activityProcessor.Object).Build())
@@ -312,7 +312,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             bool isFilterCalled = false;
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             Sdk.SetDefaultTextMapPropagator(propagator.Object);
-            using (var openTelemetry = Sdk.CreateTracerProviderBuilder()
+            using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddAspNetInstrumentation(options =>
                 {
                     options.Filter = context =>
