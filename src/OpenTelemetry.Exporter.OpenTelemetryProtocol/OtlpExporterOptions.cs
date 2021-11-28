@@ -138,8 +138,8 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Gets or sets the factory function called to create the <see
         /// cref="HttpClient"/> instance that will be used at runtime to
-        /// transmit spans over HTTP. The returned instance will be reused for
-        /// all export invocations.
+        /// transmit telemetry over HTTP. The returned instance will be reused
+        /// for all export invocations.
         /// </summary>
         /// <remarks>
         /// Notes:

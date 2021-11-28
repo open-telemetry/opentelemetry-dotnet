@@ -38,8 +38,8 @@ setters take precedence over the environment variables.
 * `Headers`: Optional headers for the connection.
 
 * `HttpClientFactory`: A factory function called to create the `HttpClient`
-  instance that will be used at runtime to transmit spans/metrics over HTTP when
-  the `HttpProtobuf` protocol is configured. See [Configure
+  instance that will be used at runtime to transmit telemetry over HTTP when the
+  `HttpProtobuf` protocol is configured. See [Configure
   HttpClient](#configure-httpclient) for more details.
 
 * `TimeoutMilliseconds` : Max waiting time for the backend to process a batch.
