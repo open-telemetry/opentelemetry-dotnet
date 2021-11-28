@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -55,6 +56,71 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             TracerProviderBuilder builder = null;
             Assert.Throws<ArgumentNullException>(() => builder.AddOtlpExporter());
+        }
+
+        [Fact]
+        public void UserHttpFactoryCalled()
+        {
+            OtlpExporterOptions options = new OtlpExporterOptions();
+
+            var defaultFactory = options.HttpClientFactory;
+
+            int invocations = 0;
+            options.Protocol = OtlpExportProtocol.HttpProtobuf;
+            options.HttpClientFactory = () =>
+            {
+                invocations++;
+                return defaultFactory();
+            };
+
+            using (var exporter = new OtlpTraceExporter(options))
+            {
+                Assert.Equal(1, invocations);
+            }
+
+            using (var provider = Sdk.CreateTracerProviderBuilder()
+                .AddOtlpExporter(o =>
+                {
+                    o.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    o.HttpClientFactory = options.HttpClientFactory;
+                })
+                .Build())
+            {
+                Assert.Equal(2, invocations);
+            }
+
+            options.HttpClientFactory = null;
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                using var exporter = new OtlpTraceExporter(options);
+            });
+
+            options.HttpClientFactory = () => null;
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                using var exporter = new OtlpTraceExporter(options);
+            });
+        }
+
+        [Fact]
+        public void ServiceProviderHttpClientFactoryInvoked()
+        {
+            IServiceCollection services = new ServiceCollection();
+
+            services.AddHttpClient();
+
+            int invocations = 0;
+
+            services.AddHttpClient("OtlpTraceExporter", configureClient: (client) => invocations++);
+
+            services.AddOpenTelemetryTracing(builder => builder.AddOtlpExporter(
+                o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            var tracerProvider = serviceProvider.GetRequiredService<TracerProvider>();
+
+            Assert.Equal(1, invocations);
         }
 
         [Theory]

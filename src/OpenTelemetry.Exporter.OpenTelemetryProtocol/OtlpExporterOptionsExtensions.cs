@@ -21,7 +21,8 @@ using OpenTelemetry.Internal;
 #if NETSTANDARD2_1 || NET5_0_OR_GREATER
 using Grpc.Net.Client;
 #endif
-using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
+using MetricsOtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
+using TraceOtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter
 {
@@ -88,11 +89,21 @@ namespace OpenTelemetry.Exporter
             return headers;
         }
 
-        public static IExportClient<OtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options) =>
+        public static IExportClient<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options) =>
             options.Protocol switch
             {
                 OtlpExportProtocol.Grpc => new OtlpGrpcTraceExportClient(options),
                 OtlpExportProtocol.HttpProtobuf => new OtlpHttpTraceExportClient(
+                    options,
+                    options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
+                _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
+            };
+
+        public static IExportClient<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportClient(this OtlpExporterOptions options) =>
+            options.Protocol switch
+            {
+                OtlpExportProtocol.Grpc => new OtlpGrpcMetricsExportClient(options),
+                OtlpExportProtocol.HttpProtobuf => new OtlpHttpMetricsExportClient(
                     options,
                     options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
                 _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
