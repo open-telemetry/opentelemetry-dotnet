@@ -20,6 +20,8 @@ OpenTelemetry.Metrics.HistogramBuckets.Enumerator.Current.get -> OpenTelemetry.M
 OpenTelemetry.Metrics.HistogramBuckets.Enumerator.Enumerator() -> void
 OpenTelemetry.Metrics.HistogramBuckets.Enumerator.MoveNext() -> bool
 OpenTelemetry.Metrics.HistogramBuckets.GetEnumerator() -> OpenTelemetry.Metrics.HistogramBuckets.Enumerator
+OpenTelemetry.Metrics.HistogramConfiguration
+OpenTelemetry.Metrics.HistogramConfiguration.HistogramConfiguration() -> void
 OpenTelemetry.Metrics.MetricPoint.GetSumDouble() -> double
 OpenTelemetry.Metrics.MetricPoint.GetSumLong() -> long
 OpenTelemetry.Metrics.MetricPoint.GetEndTime() -> System.DateTimeOffset
