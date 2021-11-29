@@ -700,7 +700,7 @@ namespace OpenTelemetry.Metrics.Tests
                 {
                     if (metric.MetricType.IsSum())
                     {
-                        sum += metricPoint.GetCounterSumLong();
+                        sum += metricPoint.GetSumLong();
                     }
                     else
                     {
@@ -721,7 +721,7 @@ namespace OpenTelemetry.Metrics.Tests
                 {
                     if (metric.MetricType.IsSum())
                     {
-                        sum += metricPoint.GetCounterSumDouble();
+                        sum += metricPoint.GetSumDouble();
                     }
                     else
                     {
