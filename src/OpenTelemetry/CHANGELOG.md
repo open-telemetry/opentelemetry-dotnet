@@ -29,8 +29,8 @@
   ([#2666](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2666))
 
 * Removed the public properties `LongValue`, `DoubleValue`, `StartTime`, and
-  `EndTime` in favor of their counterpart public methods `GetCounterSumLong`,
-  `GetCounterSumDouble`, `GetGaugeLastValueLong`, `GetGaugeLastValueDouble`,
+  `EndTime` in favor of their counterpart public methods `GetSumLong`,
+  `GetSumDouble`, `GetGaugeLastValueLong`, `GetGaugeLastValueDouble`,
   `GetStartTime`, and `GetEndTime`.
   ([#2667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2667))
 
