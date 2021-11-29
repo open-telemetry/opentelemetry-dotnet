@@ -158,7 +158,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
-                            dataPoint.AsInt = metricPoint.GetCounterSumLong();
+                            dataPoint.AsInt = metricPoint.GetSumLong();
                             sum.DataPoints.Add(dataPoint);
                         }
 
@@ -182,7 +182,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
-                            dataPoint.AsDouble = metricPoint.GetCounterSumDouble();
+                            dataPoint.AsDouble = metricPoint.GetSumDouble();
                             sum.DataPoints.Add(dataPoint);
                         }
 
