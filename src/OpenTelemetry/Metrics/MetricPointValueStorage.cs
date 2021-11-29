@@ -1,4 +1,4 @@
-// <copyright file="AggregationTemporalityAttribute.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricPointValueStorage.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,20 +14,23 @@
 // limitations under the License.
 // </copyright>
 
-using System;
+using System.Runtime.InteropServices;
 
 namespace OpenTelemetry.Metrics
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public sealed class AggregationTemporalityAttribute : Attribute
+    [StructLayout(LayoutKind.Explicit)]
+    internal struct MetricPointValueStorage
     {
-        private AggregationTemporality temporality;
+        [FieldOffset(0)]
+        public long CurrentAsLong;
 
-        public AggregationTemporalityAttribute(AggregationTemporality temporality)
-        {
-            this.temporality = temporality;
-        }
+        [FieldOffset(0)]
+        public double CurrentAsDouble;
 
-        public AggregationTemporality Temporality => this.temporality;
+        [FieldOffset(8)]
+        public long SnapshotAsLong;
+
+        [FieldOffset(8)]
+        public double SnapshotAsDouble;
     }
 }

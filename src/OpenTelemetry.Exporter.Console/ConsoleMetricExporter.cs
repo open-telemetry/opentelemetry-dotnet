@@ -22,7 +22,6 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
 {
-    [AggregationTemporality(AggregationTemporality.Cumulative | AggregationTemporality.Delta, AggregationTemporality.Cumulative)]
     public class ConsoleMetricExporter : ConsoleExporter<Metric>
     {
         private Resource resource;
@@ -99,60 +98,72 @@ namespace OpenTelemetry.Exporter
                         var count = metricPoint.GetHistogramCount();
                         bucketsBuilder.Append($"Sum: {sum} Count: {count} \n");
 
-                        var explicitBounds = metricPoint.GetExplicitBounds();
-                        if (explicitBounds != null)
+                        bool isFirstIteration = true;
+                        double previousExplicitBound = default;
+                        foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                         {
-                            var bucketCounts = metricPoint.GetBucketCounts();
-                            for (int i = 0; i < explicitBounds.Length + 1; i++)
+                            if (isFirstIteration)
                             {
-                                if (i == 0)
+                                bucketsBuilder.Append("(-Infinity,");
+                                bucketsBuilder.Append(histogramMeasurement.ExplicitBound);
+                                bucketsBuilder.Append(']');
+                                bucketsBuilder.Append(':');
+                                bucketsBuilder.Append(histogramMeasurement.BucketCount);
+                                previousExplicitBound = histogramMeasurement.ExplicitBound;
+                                isFirstIteration = false;
+                            }
+                            else
+                            {
+                                bucketsBuilder.Append('(');
+                                bucketsBuilder.Append(previousExplicitBound);
+                                bucketsBuilder.Append(',');
+                                if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
                                 {
-                                    bucketsBuilder.Append("(-Infinity,");
-                                    bucketsBuilder.Append(explicitBounds[i]);
-                                    bucketsBuilder.Append(']');
-                                    bucketsBuilder.Append(':');
-                                    bucketsBuilder.Append(bucketCounts[i]);
-                                }
-                                else if (i == explicitBounds.Length)
-                                {
-                                    bucketsBuilder.Append('(');
-                                    bucketsBuilder.Append(explicitBounds[i - 1]);
-                                    bucketsBuilder.Append(',');
-                                    bucketsBuilder.Append("+Infinity]");
-                                    bucketsBuilder.Append(':');
-                                    bucketsBuilder.Append(bucketCounts[i]);
+                                    bucketsBuilder.Append(histogramMeasurement.ExplicitBound);
                                 }
                                 else
                                 {
-                                    bucketsBuilder.Append('(');
-                                    bucketsBuilder.Append(explicitBounds[i - 1]);
-                                    bucketsBuilder.Append(',');
-                                    bucketsBuilder.Append(explicitBounds[i]);
-                                    bucketsBuilder.Append(']');
-                                    bucketsBuilder.Append(':');
-                                    bucketsBuilder.Append(bucketCounts[i]);
+                                    bucketsBuilder.Append("+Infinity");
                                 }
 
-                                bucketsBuilder.AppendLine();
+                                bucketsBuilder.Append(']');
+                                bucketsBuilder.Append(':');
+                                bucketsBuilder.Append(histogramMeasurement.BucketCount);
                             }
+
+                            bucketsBuilder.AppendLine();
                         }
 
                         valueDisplay = bucketsBuilder.ToString();
                     }
                     else if (metricType.IsDouble())
                     {
-                        valueDisplay = metricPoint.DoubleValue.ToString(CultureInfo.InvariantCulture);
+                        if (metricType.IsSum())
+                        {
+                            valueDisplay = metricPoint.GetSumDouble().ToString(CultureInfo.InvariantCulture);
+                        }
+                        else
+                        {
+                            valueDisplay = metricPoint.GetGaugeLastValueDouble().ToString(CultureInfo.InvariantCulture);
+                        }
                     }
                     else if (metricType.IsLong())
                     {
-                        valueDisplay = metricPoint.LongValue.ToString(CultureInfo.InvariantCulture);
+                        if (metricType.IsSum())
+                        {
+                            valueDisplay = metricPoint.GetSumLong().ToString(CultureInfo.InvariantCulture);
+                        }
+                        else
+                        {
+                            valueDisplay = metricPoint.GetGaugeLastValueLong().ToString(CultureInfo.InvariantCulture);
+                        }
                     }
 
                     msg = new StringBuilder();
                     msg.Append('(');
-                    msg.Append(metricPoint.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                    msg.Append(metricPoint.GetStartTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                     msg.Append(", ");
-                    msg.Append(metricPoint.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                    msg.Append(metricPoint.GetEndTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                     msg.Append("] ");
                     msg.Append(tags);
                     if (tags != string.Empty)

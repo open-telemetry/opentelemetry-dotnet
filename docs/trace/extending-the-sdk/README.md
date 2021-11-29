@@ -251,13 +251,13 @@ When using such a filtering processor, instead of using extension method to
 register the exporter, they must be registered manually as shown below:
 
 ```csharp
-    using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-        .SetSampler(new MySampler())
-        .AddSource("OTel.Demo")
-        .AddProcessor(new MyFilteringProcessor(
-            new SimpleActivityExportProcessor(new MyExporter("ExporterX")),
-            (act) => true))
-        .Build();
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .SetSampler(new MySampler())
+    .AddSource("OTel.Demo")
+    .AddProcessor(new MyFilteringProcessor(
+        new SimpleActivityExportProcessor(new MyExporter("ExporterX")),
+        (act) => true))
+    .Build();
 ```
 
 Most [instrumentation libraries](#instrumentation-library) shipped from this

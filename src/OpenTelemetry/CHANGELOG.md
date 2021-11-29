@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Prevent accessing activity Id before sampler runs in case of legacy
+  activities.
+  ([2659](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2659))
+
 * Added `ReadOnlyTagCollection` and expose `Tags` on `MetricPoint` instead of
   `Keys`+`Values`
   ([#2642](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2642))
@@ -11,8 +15,27 @@
   ([#2657](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2657))
 
 * Remove MetricStreamConfiguration.Aggregation, as the feature to customize
-aggregation is not implemented yet.
-([#2660](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2660))
+  aggregation is not implemented yet.
+  ([#2660](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2660))
+
+* Removed the public property `HistogramMeasurements` and added a public method
+  `GetHistogramBuckets` instead. Renamed the class `HistogramMeasurements` to
+  `HistogramBuckets` and added an enumerator of type `HistogramBucket` for
+  enumerating `BucketCounts` and `ExplicitBounds`. Removed `GetBucketCounts` and
+  `GetExplicitBounds` methods from `MetricPoint`.
+  ([#2664](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2664))
+
+* Refactored temporality setting to align with the latest spec.
+  ([#2666](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2666))
+
+* Removed the public properties `LongValue`, `DoubleValue`, `StartTime`, and
+  `EndTime` in favor of their counterpart public methods `GetSumLong`,
+  `GetSumDouble`, `GetGaugeLastValueLong`, `GetGaugeLastValueDouble`,
+  `GetStartTime`, and `GetEndTime`.
+  ([#2667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2667))
+
+* MetricType modified to reserve bits for future types.
+  ([#2693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2693))
 
 ## 1.2.0-beta2
 

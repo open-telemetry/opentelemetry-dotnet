@@ -1,7 +1,9 @@
 OpenTelemetry.Exporter.OtlpExporterOptions.AggregationTemporality.get -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Exporter.OtlpExporterOptions.AggregationTemporality.set -> void
-OpenTelemetry.Exporter.OtlpExporterOptions.MetricExportIntervalMilliseconds.get -> int
-OpenTelemetry.Exporter.OtlpExporterOptions.MetricExportIntervalMilliseconds.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.MetricReaderType.get -> OpenTelemetry.Metrics.MetricReaderType
+OpenTelemetry.Exporter.OtlpExporterOptions.MetricReaderType.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.PeriodicExportingMetricReaderOptions.get -> OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
+OpenTelemetry.Exporter.OtlpExporterOptions.PeriodicExportingMetricReaderOptions.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.Protocol.get -> OpenTelemetry.Exporter.OtlpExportProtocol
 OpenTelemetry.Exporter.OtlpExporterOptions.Protocol.set -> void
 OpenTelemetry.Exporter.OtlpExportProtocol

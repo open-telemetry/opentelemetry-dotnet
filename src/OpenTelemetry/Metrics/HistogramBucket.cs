@@ -1,4 +1,4 @@
-// <copyright file="AggregationTemporalityAttribute.cs" company="OpenTelemetry Authors">
+// <copyright file="HistogramBucket.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,20 +14,18 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
 namespace OpenTelemetry.Metrics
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public sealed class AggregationTemporalityAttribute : Attribute
+    public readonly struct HistogramBucket
     {
-        private AggregationTemporality temporality;
-
-        public AggregationTemporalityAttribute(AggregationTemporality temporality)
+        internal HistogramBucket(double explicitBound, long bucketCount)
         {
-            this.temporality = temporality;
+            this.ExplicitBound = explicitBound;
+            this.BucketCount = bucketCount;
         }
 
-        public AggregationTemporality Temporality => this.temporality;
+        public double ExplicitBound { get; }
+
+        public long BucketCount { get; }
     }
 }

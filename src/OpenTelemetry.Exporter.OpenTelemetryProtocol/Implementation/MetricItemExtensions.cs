@@ -152,13 +152,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         {
                             var dataPoint = new OtlpMetrics.NumberDataPoint
                             {
-                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
-                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
+                                StartTimeUnixNano = (ulong)metricPoint.GetStartTime().ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.GetEndTime().ToUnixTimeNanoseconds(),
                             };
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
-                            dataPoint.AsInt = metricPoint.LongValue;
+                            dataPoint.AsInt = metricPoint.GetSumLong();
                             sum.DataPoints.Add(dataPoint);
                         }
 
@@ -176,13 +176,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         {
                             var dataPoint = new OtlpMetrics.NumberDataPoint
                             {
-                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
-                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
+                                StartTimeUnixNano = (ulong)metricPoint.GetStartTime().ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.GetEndTime().ToUnixTimeNanoseconds(),
                             };
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
-                            dataPoint.AsDouble = metricPoint.DoubleValue;
+                            dataPoint.AsDouble = metricPoint.GetSumDouble();
                             sum.DataPoints.Add(dataPoint);
                         }
 
@@ -197,13 +197,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         {
                             var dataPoint = new OtlpMetrics.NumberDataPoint
                             {
-                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
-                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
+                                StartTimeUnixNano = (ulong)metricPoint.GetStartTime().ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.GetEndTime().ToUnixTimeNanoseconds(),
                             };
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
-                            dataPoint.AsInt = metricPoint.LongValue;
+                            dataPoint.AsInt = metricPoint.GetGaugeLastValueLong();
                             gauge.DataPoints.Add(dataPoint);
                         }
 
@@ -218,13 +218,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         {
                             var dataPoint = new OtlpMetrics.NumberDataPoint
                             {
-                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
-                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
+                                StartTimeUnixNano = (ulong)metricPoint.GetStartTime().ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.GetEndTime().ToUnixTimeNanoseconds(),
                             };
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
-                            dataPoint.AsDouble = metricPoint.DoubleValue;
+                            dataPoint.AsDouble = metricPoint.GetGaugeLastValueDouble();
                             gauge.DataPoints.Add(dataPoint);
                         }
 
@@ -241,25 +241,20 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         {
                             var dataPoint = new OtlpMetrics.HistogramDataPoint
                             {
-                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
-                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
+                                StartTimeUnixNano = (ulong)metricPoint.GetStartTime().ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.GetEndTime().ToUnixTimeNanoseconds(),
                             };
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
-                            dataPoint.Count = (ulong)metricPoint.LongValue;
-                            dataPoint.Sum = metricPoint.DoubleValue;
+                            dataPoint.Count = (ulong)metricPoint.GetHistogramCount();
+                            dataPoint.Sum = metricPoint.GetHistogramSum();
 
-                            var bucketCounts = metricPoint.GetBucketCounts();
-                            if (bucketCounts != null)
+                            foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                             {
-                                var explicitBounds = metricPoint.GetExplicitBounds();
-                                for (int i = 0; i < bucketCounts.Length; i++)
+                                dataPoint.BucketCounts.Add((ulong)histogramMeasurement.BucketCount);
+                                if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
                                 {
-                                    dataPoint.BucketCounts.Add((ulong)bucketCounts[i]);
-                                    if (i < bucketCounts.Length - 1)
-                                    {
-                                        dataPoint.ExplicitBounds.Add(explicitBounds[i]);
-                                    }
+                                    dataPoint.ExplicitBounds.Add(histogramMeasurement.ExplicitBound);
                                 }
                             }
 

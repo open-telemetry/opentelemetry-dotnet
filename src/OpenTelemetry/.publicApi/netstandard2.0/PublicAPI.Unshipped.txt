@@ -1,4 +1,3 @@
-abstract OpenTelemetry.Metrics.MetricReader.ProcessMetrics(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric> metrics, int timeoutMilliseconds) -> bool
 OpenTelemetry.BaseExporter<T>.ForceFlush(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Batch<T>.Batch(T[] items, int count) -> void
 OpenTelemetry.Batch<T>.Count.get -> long
@@ -6,22 +5,34 @@ OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporality.Cumulative = 1 -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporality.Delta = 2 -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporalityAttribute
-OpenTelemetry.Metrics.AggregationTemporalityAttribute.AggregationTemporalityAttribute(OpenTelemetry.Metrics.AggregationTemporality supported) -> void
-OpenTelemetry.Metrics.AggregationTemporalityAttribute.AggregationTemporalityAttribute(OpenTelemetry.Metrics.AggregationTemporality supported, OpenTelemetry.Metrics.AggregationTemporality preferred) -> void
-OpenTelemetry.Metrics.AggregationTemporalityAttribute.Preferred.get -> OpenTelemetry.Metrics.AggregationTemporality
-OpenTelemetry.Metrics.AggregationTemporalityAttribute.Supported.get -> OpenTelemetry.Metrics.AggregationTemporality
+OpenTelemetry.Metrics.AggregationTemporalityAttribute.AggregationTemporalityAttribute(OpenTelemetry.Metrics.AggregationTemporality temporality) -> void
+OpenTelemetry.Metrics.AggregationTemporalityAttribute.Temporality.get -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.BaseExportingMetricReader
 OpenTelemetry.Metrics.BaseExportingMetricReader.BaseExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric> exporter) -> void
 OpenTelemetry.Metrics.BaseExportingMetricReader.SupportedExportModes.get -> OpenTelemetry.Metrics.ExportModes
+OpenTelemetry.Metrics.HistogramBucket
+OpenTelemetry.Metrics.HistogramBucket.BucketCount.get -> long
+OpenTelemetry.Metrics.HistogramBucket.ExplicitBound.get -> double
+OpenTelemetry.Metrics.HistogramBucket.HistogramBucket() -> void
+OpenTelemetry.Metrics.HistogramBuckets
+OpenTelemetry.Metrics.HistogramBuckets.Enumerator
+OpenTelemetry.Metrics.HistogramBuckets.Enumerator.Current.get -> OpenTelemetry.Metrics.HistogramBucket
+OpenTelemetry.Metrics.HistogramBuckets.Enumerator.Enumerator() -> void
+OpenTelemetry.Metrics.HistogramBuckets.Enumerator.MoveNext() -> bool
+OpenTelemetry.Metrics.HistogramBuckets.GetEnumerator() -> OpenTelemetry.Metrics.HistogramBuckets.Enumerator
+OpenTelemetry.Metrics.MetricPoint.GetSumDouble() -> double
+OpenTelemetry.Metrics.MetricPoint.GetSumLong() -> long
+OpenTelemetry.Metrics.MetricPoint.GetEndTime() -> System.DateTimeOffset
+OpenTelemetry.Metrics.MetricPoint.GetGaugeLastValueDouble() -> double
+OpenTelemetry.Metrics.MetricPoint.GetGaugeLastValueLong() -> long
+OpenTelemetry.Metrics.MetricPoint.GetHistogramBuckets() -> OpenTelemetry.Metrics.HistogramBuckets
+OpenTelemetry.Metrics.MetricPoint.GetStartTime() -> System.DateTimeOffset
 OpenTelemetry.Metrics.MetricPointsAccessor
 OpenTelemetry.Metrics.MetricPointsAccessor.MetricPointsAccessor() -> void
-OpenTelemetry.Metrics.MetricPointsAccessor.Dispose() -> void
 OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator
 OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.Current.get -> OpenTelemetry.Metrics.MetricPoint
-OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.Dispose() -> void
 OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.Enumerator() -> void
 OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.MoveNext() -> bool
-OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.Reset() -> void
 OpenTelemetry.Metrics.MetricPointsAccessor.GetEnumerator() -> OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator
 OpenTelemetry.Metrics.ExportModes
 OpenTelemetry.Metrics.ExportModes.Pull = 2 -> OpenTelemetry.Metrics.ExportModes
@@ -50,26 +61,18 @@ OpenTelemetry.Metrics.Metric.Name.get -> string
 OpenTelemetry.Metrics.Metric.Temporality.get -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.Metric.Unit.get -> string
 OpenTelemetry.Metrics.MetricPoint
-OpenTelemetry.Metrics.MetricPoint.DoubleValue.get -> double
-OpenTelemetry.Metrics.MetricPoint.EndTime.get -> System.DateTimeOffset
-OpenTelemetry.Metrics.MetricPoint.GetBucketCounts() -> long[]
-OpenTelemetry.Metrics.MetricPoint.GetExplicitBounds() -> double[]
 OpenTelemetry.Metrics.MetricPoint.GetHistogramCount() -> long
 OpenTelemetry.Metrics.MetricPoint.GetHistogramSum() -> double
-OpenTelemetry.Metrics.MetricPoint.LongValue.get -> long
 OpenTelemetry.Metrics.MetricPoint.MetricPoint() -> void
-OpenTelemetry.Metrics.MetricPoint.StartTime.get -> System.DateTimeOffset
 OpenTelemetry.Metrics.MetricPoint.Tags.get -> OpenTelemetry.ReadOnlyTagCollection
 OpenTelemetry.Metrics.MetricReader
 OpenTelemetry.Metrics.MetricReader.Collect(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Metrics.MetricReader.Dispose() -> void
 OpenTelemetry.Metrics.MetricReader.MetricReader() -> void
 OpenTelemetry.Metrics.MetricReader.ParentProvider.get -> OpenTelemetry.BaseProvider
-OpenTelemetry.Metrics.MetricReader.PreferredAggregationTemporality.get -> OpenTelemetry.Metrics.AggregationTemporality
-OpenTelemetry.Metrics.MetricReader.PreferredAggregationTemporality.set -> void
 OpenTelemetry.Metrics.MetricReader.Shutdown(int timeoutMilliseconds = -1) -> bool
-OpenTelemetry.Metrics.MetricReader.SupportedAggregationTemporality.get -> OpenTelemetry.Metrics.AggregationTemporality
-OpenTelemetry.Metrics.MetricReader.SupportedAggregationTemporality.set -> void
+OpenTelemetry.Metrics.MetricReader.Temporality.get -> OpenTelemetry.Metrics.AggregationTemporality
+OpenTelemetry.Metrics.MetricReader.Temporality.set -> void
 OpenTelemetry.Metrics.MetricReaderType
 OpenTelemetry.Metrics.MetricReaderType.Manual = 0 -> OpenTelemetry.Metrics.MetricReaderType
 OpenTelemetry.Metrics.MetricReaderType.Periodic = 1 -> OpenTelemetry.Metrics.MetricReaderType
@@ -84,7 +87,7 @@ OpenTelemetry.Metrics.MetricStreamConfiguration.TagKeys.set -> void
 OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.DoubleGauge = 45 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.DoubleSum = 29 -> OpenTelemetry.Metrics.MetricType
-OpenTelemetry.Metrics.MetricType.Histogram = 48 -> OpenTelemetry.Metrics.MetricType
+OpenTelemetry.Metrics.MetricType.Histogram = 64 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.LongGauge = 42 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.LongSum = 26 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricTypeExtensions
@@ -109,7 +112,6 @@ override OpenTelemetry.BatchExportProcessor<T>.Dispose(bool disposing) -> void
 override OpenTelemetry.Metrics.BaseExportingMetricReader.Dispose(bool disposing) -> void
 override OpenTelemetry.Metrics.BaseExportingMetricReader.OnCollect(int timeoutMilliseconds) -> bool
 override OpenTelemetry.Metrics.BaseExportingMetricReader.OnShutdown(int timeoutMilliseconds) -> bool
-override OpenTelemetry.Metrics.BaseExportingMetricReader.ProcessMetrics(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric> metrics, int timeoutMilliseconds) -> bool
 override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder
 override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddMeter(params string[] names) -> OpenTelemetry.Metrics.MeterProviderBuilder
 override OpenTelemetry.Metrics.PeriodicExportingMetricReader.Dispose(bool disposing) -> void

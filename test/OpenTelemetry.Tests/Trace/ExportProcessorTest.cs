@@ -33,7 +33,7 @@ namespace OpenTelemetry.Trace.Tests
             var exportedItems = new List<Activity>();
             var processor = new TestActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems));
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var sdk = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .SetSampler(sampler)
                 .AddProcessor(processor)
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Trace.Tests
             var exportedItems = new List<Activity>();
             var processor = new TestActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems));
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var sdk = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .SetSampler(sampler)
                 .AddProcessor(processor)
@@ -77,7 +77,7 @@ namespace OpenTelemetry.Trace.Tests
             var exportedItems = new List<Activity>();
             var processor = new TestActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems));
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var sdk = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .SetSampler(sampler)
                 .AddProcessor(processor)

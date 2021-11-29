@@ -390,18 +390,21 @@ namespace OpenTelemetry.Metrics.Tests
 
             var count = histogramPoint.GetHistogramCount();
             var sum = histogramPoint.GetHistogramSum();
-            var bucketCounts = histogramPoint.GetBucketCounts();
-            var explicitBounds = histogramPoint.GetExplicitBounds();
 
             Assert.Equal(40, sum);
             Assert.Equal(7, count);
-            Assert.Equal(Metric.DefaultHistogramBounds.Length + 1, bucketCounts.Length);
-            Assert.Equal(2, bucketCounts[0]);
-            Assert.Equal(1, bucketCounts[1]);
-            Assert.Equal(2, bucketCounts[2]);
-            Assert.Equal(2, bucketCounts[3]);
-            Assert.Equal(0, bucketCounts[4]);
-            Assert.Equal(0, bucketCounts[5]);
+
+            int index = 0;
+            int actualCount = 0;
+            var expectedBucketCounts = new long[] { 2, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0 };
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
+            {
+                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+                index++;
+                actualCount++;
+            }
+
+            Assert.Equal(Metric.DefaultHistogramBounds.Length + 1, actualCount);
 
             List<MetricPoint> metricPointsCustom = new List<MetricPoint>();
             foreach (ref var mp in metricCustom.GetMetricPoints())
@@ -414,15 +417,21 @@ namespace OpenTelemetry.Metrics.Tests
 
             count = histogramPoint.GetHistogramCount();
             sum = histogramPoint.GetHistogramSum();
-            bucketCounts = histogramPoint.GetBucketCounts();
-            explicitBounds = histogramPoint.GetExplicitBounds();
 
             Assert.Equal(40, sum);
             Assert.Equal(7, count);
-            Assert.Equal(boundaries.Length + 1, bucketCounts.Length);
-            Assert.Equal(5, bucketCounts[0]);
-            Assert.Equal(2, bucketCounts[1]);
-            Assert.Equal(0, bucketCounts[2]);
+
+            index = 0;
+            actualCount = 0;
+            expectedBucketCounts = new long[] { 5, 2, 0 };
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
+            {
+                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+                index++;
+                actualCount++;
+            }
+
+            Assert.Equal(boundaries.Length + 1, actualCount);
         }
 
         [Fact]
