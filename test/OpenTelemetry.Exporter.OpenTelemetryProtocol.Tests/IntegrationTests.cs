@@ -24,13 +24,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
     public class IntegrationTests
     {
-        private const string CollectorEndpointEnvVarName = "OTEL_COLLECTOR_HOSTNAME";
-        private static readonly string CollectorEndpoint = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(CollectorEndpointEnvVarName);
+        private const string CollectorHostnameEnvVarName = "OTEL_COLLECTOR_HOSTNAME";
+        private static readonly string CollectorHostname = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(CollectorHostnameEnvVarName);
 
         [InlineData(OtlpExportProtocol.Grpc, 4317)]
         [InlineData(OtlpExportProtocol.HttpProtobuf, 4318)]
         [Trait("CategoryName", "CollectorIntegrationTests")]
-        [SkipUnlessEnvVarFoundTheory(CollectorEndpointEnvVarName)]
+        [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
         public void ExportResultIsSuccess(OtlpExportProtocol protocol, int port)
         {
 #if NETCOREAPP3_1
@@ -42,7 +42,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var exporterOptions = new OtlpExporterOptions
             {
-                Endpoint = new System.Uri($"http://{CollectorEndpoint}:{port}"),
+                Endpoint = new System.Uri($"http://{CollectorHostname}:{port}"),
                 Protocol = protocol,
             };
 
