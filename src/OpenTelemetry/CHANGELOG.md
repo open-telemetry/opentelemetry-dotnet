@@ -34,6 +34,9 @@
   `GetStartTime`, and `GetEndTime`.
   ([#2667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2667))
 
+* MetricType modified to reserve bits for future types.
+  ([#2693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2693))
+
 ## 1.2.0-beta2
 
 Released 2021-Nov-19
