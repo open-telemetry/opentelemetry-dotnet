@@ -1,4 +1,4 @@
-// <copyright file="ExplicitBucketHistogramConfiguration.cs" company="OpenTelemetry Authors">
+// <copyright file="HistogramConfiguration.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +16,12 @@
 
 namespace OpenTelemetry.Metrics
 {
-    public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
+    public class HistogramConfiguration : MetricStreamConfiguration
     {
         /// <summary>
-        /// Gets or sets the values representing explicit histogram bucket
-        /// boundary values.
+        /// Gets or sets a value indicating whether Min, Max
+        /// should be collected.
         /// </summary>
-        /// <remarks>
-        /// The array must be in ascending order with distinct values.
-        /// </remarks>
-        public double[] Boundaries { get; set; }
+        internal bool RecordMinMax { get; set; } = true;
     }
 }
