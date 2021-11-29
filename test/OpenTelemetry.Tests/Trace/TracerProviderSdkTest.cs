@@ -649,7 +649,7 @@ namespace OpenTelemetry.Trace.Tests
             Assert.True(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
 
             // Validating ActivityTraceFlags is not enough as it does not get reflected on
-            // Id, Which can be used for context propagation.
+            // Id, If the Id is accessed before the sampler runs.
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
             Assert.EndsWith("01", activity.Id);
 
@@ -672,7 +672,7 @@ namespace OpenTelemetry.Trace.Tests
             Assert.False(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
 
             // Validating ActivityTraceFlags is not enough as it does not get reflected on
-            // Id, Which can be used for context propagation.
+            // Id, If the Id is accessed before the sampler runs.
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
             Assert.EndsWith("00", activity.Id);
 
@@ -700,7 +700,7 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Equal(hasRecordedFlag, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
 
             // Validating ActivityTraceFlags is not enough as it does not get reflected on
-            // Id, Which can be used for context propagation.
+            // Id, If the Id is accessed before the sampler runs.
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
             Assert.EndsWith(hasRecordedFlag ? "01" : "00", activity.Id);
 
@@ -778,8 +778,8 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Equal(expectedIsAllDataRequested, activity.IsAllDataRequested);
             Assert.Equal(hasRecordedFlag, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
 
-            // Validating ActivityTraceFlags is not enough as it does not get reflected on
-            // Id, Which can be used for context propagation.
+           // Validating ActivityTraceFlags is not enough as it does not get reflected on
+            // Id, If the Id is accessed before the sampler runs.
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
             Assert.EndsWith(hasRecordedFlag ? "01" : "00", activity.Id);
             activity.Stop();
@@ -814,7 +814,7 @@ namespace OpenTelemetry.Trace.Tests
             Assert.True(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
 
             // Validating ActivityTraceFlags is not enough as it does not get reflected on
-            // Id, Which can be used for context propagation.
+            // Id, If the Id is accessed before the sampler runs.
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
             Assert.EndsWith("01", activity.Id);
             activity.Stop();
@@ -849,7 +849,7 @@ namespace OpenTelemetry.Trace.Tests
             Assert.False(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
 
             // Validating ActivityTraceFlags is not enough as it does not get reflected on
-            // Id, Which can be used for context propagation.
+            // Id, If the Id is accessed before the sampler runs.
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
             Assert.EndsWith("00", activity.Id);
             activity.Stop();

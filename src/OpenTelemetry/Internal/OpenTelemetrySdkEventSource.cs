@@ -112,7 +112,7 @@ namespace OpenTelemetry.Internal
                 // https://github.com/dotnet/runtime/issues/61857
                 var activityId = string.Concat("00-", activity.TraceId.ToHexString(), "-", activity.SpanId.ToHexString());
                 activityId = string.Concat(activityId, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded) ? "-01" : "-00");
-                this.ActivityStarted(activity.OperationName, activityId);
+                this.ActivityStarted(activity.OperationName, activity.Id);
             }
         }
 
