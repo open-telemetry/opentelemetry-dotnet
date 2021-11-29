@@ -22,11 +22,11 @@ namespace OpenTelemetry.Metrics
 {
     public struct MetricPoint
     {
-        internal DateTimeOffset StartTime;
-        internal DateTimeOffset EndTime;
-
         private readonly AggregationType aggType;
         private readonly HistogramBuckets histogramBuckets;
+
+        private DateTimeOffset startTime;
+        private DateTimeOffset endTime;
 
         // Represents either "value" for double/long metric types or "count" when histogram
         private MetricPointValueStorage primaryValue;
@@ -44,9 +44,9 @@ namespace OpenTelemetry.Metrics
             Debug.Assert((keys?.Length ?? 0) == (values?.Length ?? 0), "Key and value array lengths did not match.");
 
             this.aggType = aggType;
-            this.StartTime = startTime;
+            this.startTime = default;
+            this.endTime = default;
             this.Tags = new ReadOnlyTagCollection(keys, values);
-            this.EndTime = default;
             this.primaryValue = default;
             this.secondaryValue = default;
             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
@@ -63,12 +63,41 @@ namespace OpenTelemetry.Metrics
             {
                 this.histogramBuckets = null;
             }
+
+            this.EndTime = default;
+            this.StartTime = startTime;
         }
 
         /// <summary>
         /// Gets the tags associated with the metric point.
         /// </summary>
         public ReadOnlyTagCollection Tags { get; }
+
+        public DateTimeOffset StartTime
+        {
+            get
+            {
+                return this.startTime;
+            }
+
+            internal set
+            {
+                this.startTime = value;
+            }
+        }
+
+        public DateTimeOffset EndTime
+        {
+            get
+            {
+                return this.EndTime;
+            }
+
+            internal set
+            {
+                this.EndTime = value;
+            }
+        }
 
         internal MetricPointStatus MetricPointStatus { get; private set; }
 
