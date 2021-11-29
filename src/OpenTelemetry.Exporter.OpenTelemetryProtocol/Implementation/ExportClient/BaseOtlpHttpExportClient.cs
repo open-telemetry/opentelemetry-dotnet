@@ -30,7 +30,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         {
             Guard.Null(options, nameof(options));
             Guard.InvalidTimeout(options.TimeoutMilliseconds, $"{nameof(options)}.{nameof(options.TimeoutMilliseconds)}");
-            
+
             this.Options = options;
             this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
             this.HttpClient = httpClient ?? new HttpClient { Timeout = TimeSpan.FromMilliseconds(this.Options.TimeoutMilliseconds) };
