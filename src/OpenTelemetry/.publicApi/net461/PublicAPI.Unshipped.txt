@@ -87,7 +87,7 @@ OpenTelemetry.Metrics.MetricStreamConfiguration.TagKeys.set -> void
 OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.DoubleGauge = 45 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.DoubleSum = 29 -> OpenTelemetry.Metrics.MetricType
-OpenTelemetry.Metrics.MetricType.Histogram = 48 -> OpenTelemetry.Metrics.MetricType
+OpenTelemetry.Metrics.MetricType.Histogram = 64 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.LongGauge = 42 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.LongSum = 26 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricTypeExtensions
