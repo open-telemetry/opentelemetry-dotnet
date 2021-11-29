@@ -651,7 +651,7 @@ namespace OpenTelemetry.Trace.Tests
             // Validating ActivityTraceFlags is not enough as it does not get reflected on
             // Id, If the Id is accessed before the sampler runs.
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-            Assert.EndsWith("01", activity.Id);
+            Assert.EndsWith("-01", activity.Id);
 
             activity.Stop();
         }
@@ -674,7 +674,7 @@ namespace OpenTelemetry.Trace.Tests
             // Validating ActivityTraceFlags is not enough as it does not get reflected on
             // Id, If the Id is accessed before the sampler runs.
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-            Assert.EndsWith("00", activity.Id);
+            Assert.EndsWith("-00", activity.Id);
 
             activity.Stop();
         }
@@ -702,7 +702,7 @@ namespace OpenTelemetry.Trace.Tests
             // Validating ActivityTraceFlags is not enough as it does not get reflected on
             // Id, If the Id is accessed before the sampler runs.
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-            Assert.EndsWith(hasRecordedFlag ? "01" : "00", activity.Id);
+            Assert.EndsWith(hasRecordedFlag ? "-01" : "-00", activity.Id);
 
             activity.Stop();
         }
@@ -781,7 +781,7 @@ namespace OpenTelemetry.Trace.Tests
             // Validating ActivityTraceFlags is not enough as it does not get reflected on
             // Id, If the Id is accessed before the sampler runs.
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-            Assert.EndsWith(hasRecordedFlag ? "01" : "00", activity.Id);
+            Assert.EndsWith(hasRecordedFlag ? "-01" : "-00", activity.Id);
             activity.Stop();
         }
 
@@ -816,7 +816,7 @@ namespace OpenTelemetry.Trace.Tests
             // Validating ActivityTraceFlags is not enough as it does not get reflected on
             // Id, If the Id is accessed before the sampler runs.
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-            Assert.EndsWith("01", activity.Id);
+            Assert.EndsWith("-01", activity.Id);
             activity.Stop();
         }
 
@@ -851,7 +851,7 @@ namespace OpenTelemetry.Trace.Tests
             // Validating ActivityTraceFlags is not enough as it does not get reflected on
             // Id, If the Id is accessed before the sampler runs.
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-            Assert.EndsWith("00", activity.Id);
+            Assert.EndsWith("-00", activity.Id);
             activity.Stop();
         }
 
