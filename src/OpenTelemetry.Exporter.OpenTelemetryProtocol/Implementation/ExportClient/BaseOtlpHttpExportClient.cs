@@ -55,7 +55,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             }
             catch (HttpRequestException ex)
             {
-                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(ex);
+                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Options.Endpoint, ex);
 
                 return false;
             }
