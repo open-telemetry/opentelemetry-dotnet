@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using System.Net.Http;
+using System.Reflection;
 using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Internal;
@@ -116,6 +118,42 @@ namespace OpenTelemetry.Exporter
                 "http/protobuf" => OtlpExportProtocol.HttpProtobuf,
                 _ => null,
             };
+
+        public static void TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)
+        {
+            if (serviceProvider != null
+                && options.Protocol == OtlpExportProtocol.HttpProtobuf
+                && options.HttpClientFactory == options.DefaultHttpClientFactory)
+            {
+                options.HttpClientFactory = () =>
+                {
+                    Type httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
+                    if (httpClientFactoryType != null)
+                    {
+                        object httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
+                        if (httpClientFactory != null)
+                        {
+                            MethodInfo createClientMethod = httpClientFactoryType.GetMethod(
+                                "CreateClient",
+                                BindingFlags.Public | BindingFlags.Instance,
+                                binder: null,
+                                new Type[] { typeof(string) },
+                                modifiers: null);
+                            if (createClientMethod != null)
+                            {
+                                HttpClient client = (HttpClient)createClientMethod.Invoke(httpClientFactory, new object[] { httpClientName });
+
+                                client.Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds);
+
+                                return client;
+                            }
+                        }
+                    }
+
+                    return options.DefaultHttpClientFactory();
+                };
+            }
+        }
 
         internal static void AppendExportPath(this OtlpExporterOptions options, Uri initialEndpoint, string exportRelativePath)
         {

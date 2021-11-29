@@ -17,7 +17,6 @@
 using System;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Metrics
 {
@@ -57,7 +56,7 @@ namespace OpenTelemetry.Metrics
 
             configure?.Invoke(options);
 
-            OtlpTraceExporterHelperExtensions.BuildHttpClientFactory(serviceProvider, options, "OtlpMetricExporter");
+            options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
 
             options.AppendExportPath(initialEndpoint, OtlpExporterOptions.MetricsExportPath);
 

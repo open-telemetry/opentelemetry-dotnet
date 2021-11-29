@@ -15,8 +15,6 @@
 // </copyright>
 
 using System;
-using System.Net.Http;
-using System.Reflection;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
@@ -48,42 +46,6 @@ namespace OpenTelemetry.Trace
             return AddOtlpExporter(builder, new OtlpExporterOptions(), configure, serviceProvider: null);
         }
 
-        internal static void BuildHttpClientFactory(IServiceProvider serviceProvider, OtlpExporterOptions options, string httpClientName)
-        {
-            if (serviceProvider != null
-                && options.Protocol == OtlpExportProtocol.HttpProtobuf
-                && options.HttpClientFactory == options.DefaultHttpClientFactory)
-            {
-                options.HttpClientFactory = () =>
-                {
-                    Type httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
-                    if (httpClientFactoryType != null)
-                    {
-                        object httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
-                        if (httpClientFactory != null)
-                        {
-                            MethodInfo createClientMethod = httpClientFactoryType.GetMethod(
-                                "CreateClient",
-                                BindingFlags.Public | BindingFlags.Instance,
-                                binder: null,
-                                new Type[] { typeof(string) },
-                                modifiers: null);
-                            if (createClientMethod != null)
-                            {
-                                HttpClient client = (HttpClient)createClientMethod.Invoke(httpClientFactory, new object[] { httpClientName });
-
-                                client.Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds);
-
-                                return client;
-                            }
-                        }
-                    }
-
-                    return options.DefaultHttpClientFactory();
-                };
-            }
-        }
-
         private static TracerProviderBuilder AddOtlpExporter(
             TracerProviderBuilder builder,
             OtlpExporterOptions exporterOptions,
@@ -94,7 +56,7 @@ namespace OpenTelemetry.Trace
 
             configure?.Invoke(exporterOptions);
 
-            BuildHttpClientFactory(serviceProvider, exporterOptions, "OtlpTraceExporter");
+            exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
             exporterOptions.AppendExportPath(originalEndpoint, OtlpExporterOptions.TracesExportPath);
 
