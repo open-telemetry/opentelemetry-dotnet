@@ -76,7 +76,7 @@ namespace OpenTelemetry.Metrics
 
         public DateTimeOffset GetEndTime() => this.EndTime;
 
-        public long GetCounterSumLong()
+        public long GetSumLong()
         {
             if (this.aggType == AggregationType.LongSumIncomingDelta || this.aggType == AggregationType.LongSumIncomingCumulative)
             {
@@ -84,11 +84,11 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                throw new NotSupportedException($"{nameof(this.GetCounterSumLong)} is not supported for this metric type.");
+                throw new NotSupportedException($"{nameof(this.GetSumLong)} is not supported for this metric type.");
             }
         }
 
-        public double GetCounterSumDouble()
+        public double GetSumDouble()
         {
             if (this.aggType == AggregationType.DoubleSumIncomingDelta || this.aggType == AggregationType.DoubleSumIncomingCumulative)
             {
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                throw new NotSupportedException($"{nameof(this.GetCounterSumDouble)} is not supported for this metric type.");
+                throw new NotSupportedException($"{nameof(this.GetSumDouble)} is not supported for this metric type.");
             }
         }
 

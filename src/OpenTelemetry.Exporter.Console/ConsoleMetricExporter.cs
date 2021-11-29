@@ -140,7 +140,7 @@ namespace OpenTelemetry.Exporter
                     {
                         if (metricType.IsSum())
                         {
-                            valueDisplay = metricPoint.GetCounterSumDouble().ToString(CultureInfo.InvariantCulture);
+                            valueDisplay = metricPoint.GetSumDouble().ToString(CultureInfo.InvariantCulture);
                         }
                         else
                         {
@@ -151,7 +151,7 @@ namespace OpenTelemetry.Exporter
                     {
                         if (metricType.IsSum())
                         {
-                            valueDisplay = metricPoint.GetCounterSumLong().ToString(CultureInfo.InvariantCulture);
+                            valueDisplay = metricPoint.GetSumLong().ToString(CultureInfo.InvariantCulture);
                         }
                         else
                         {

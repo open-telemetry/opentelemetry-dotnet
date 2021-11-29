@@ -75,7 +75,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     {
                         if (metric.MetricType.IsSum())
                         {
-                            cursor = WriteLong(buffer, cursor, metricPoint.GetCounterSumLong());
+                            cursor = WriteLong(buffer, cursor, metricPoint.GetSumLong());
                         }
                         else
                         {
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     {
                         if (metric.MetricType.IsSum())
                         {
-                            cursor = WriteDouble(buffer, cursor, metricPoint.GetCounterSumDouble());
+                            cursor = WriteDouble(buffer, cursor, metricPoint.GetSumDouble());
                         }
                         else
                         {
