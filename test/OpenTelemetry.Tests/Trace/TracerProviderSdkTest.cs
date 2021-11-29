@@ -778,7 +778,7 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Equal(expectedIsAllDataRequested, activity.IsAllDataRequested);
             Assert.Equal(hasRecordedFlag, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
 
-           // Validating ActivityTraceFlags is not enough as it does not get reflected on
+            // Validating ActivityTraceFlags is not enough as it does not get reflected on
             // Id, If the Id is accessed before the sampler runs.
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
             Assert.EndsWith(hasRecordedFlag ? "01" : "00", activity.Id);
