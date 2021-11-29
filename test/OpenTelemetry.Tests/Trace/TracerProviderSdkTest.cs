@@ -666,6 +666,10 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.False(activity.IsAllDataRequested);
             Assert.False(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+
+            // Validating ActivityTraceFlags is not enough as it does not get reflected on
+            // Id, Which can be used for context propagation.
+            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
             Assert.EndsWith("00", activity.Id);
 
             activity.Stop();
@@ -690,6 +694,10 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.Equal(isAllDataRequested, activity.IsAllDataRequested);
             Assert.Equal(hasRecordedFlag, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+
+            // Validating ActivityTraceFlags is not enough as it does not get reflected on
+            // Id, Which can be used for context propagation.
+            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
             Assert.EndsWith(hasRecordedFlag ? "01" : "00", activity.Id);
 
             activity.Stop();
@@ -765,6 +773,10 @@ namespace OpenTelemetry.Trace.Tests
             activity.Start();
             Assert.Equal(expectedIsAllDataRequested, activity.IsAllDataRequested);
             Assert.Equal(hasRecordedFlag, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+
+            // Validating ActivityTraceFlags is not enough as it does not get reflected on
+            // Id, Which can be used for context propagation.
+            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
             Assert.EndsWith(hasRecordedFlag ? "01" : "00", activity.Id);
             activity.Stop();
         }
@@ -827,6 +839,10 @@ namespace OpenTelemetry.Trace.Tests
             activity.Start();
             Assert.False(activity.IsAllDataRequested);
             Assert.False(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+
+            // Validating ActivityTraceFlags is not enough as it does not get reflected on
+            // Id, Which can be used for context propagation.
+            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
             Assert.EndsWith("00", activity.Id);
             activity.Stop();
         }
