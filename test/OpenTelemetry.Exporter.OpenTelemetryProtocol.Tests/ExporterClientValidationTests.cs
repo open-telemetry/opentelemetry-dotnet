@@ -37,7 +37,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
                 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
                 ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options);
-
             }
             finally
             {
