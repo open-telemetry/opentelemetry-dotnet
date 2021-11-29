@@ -5,8 +5,8 @@
 * Added configuration options for `MetricReaderType` to allow for configuring
   the `OtlpMetricExporter` to export either manually or periodically.
   ([#2674](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2674))
-* Added logs on collector URI in case of connection failure in all OTLP export
-  clients.
+* The internal log message used when OTLP export client connection failure occurs,
+  will now include the endpoint uri as well.
   ([#2686](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2686))
 
 ## 1.2.0-beta2
