@@ -1,4 +1,3 @@
-abstract OpenTelemetry.Metrics.MetricReader.ProcessMetrics(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric> metrics, int timeoutMilliseconds) -> bool
 OpenTelemetry.BaseExporter<T>.ForceFlush(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Batch<T>.Batch(T[] items, int count) -> void
 OpenTelemetry.Batch<T>.Count.get -> long
@@ -30,13 +29,10 @@ OpenTelemetry.Metrics.MetricPoint.GetHistogramBuckets() -> OpenTelemetry.Metrics
 OpenTelemetry.Metrics.MetricPoint.GetStartTime() -> System.DateTimeOffset
 OpenTelemetry.Metrics.MetricPointsAccessor
 OpenTelemetry.Metrics.MetricPointsAccessor.MetricPointsAccessor() -> void
-OpenTelemetry.Metrics.MetricPointsAccessor.Dispose() -> void
 OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator
 OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.Current.get -> OpenTelemetry.Metrics.MetricPoint
-OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.Dispose() -> void
 OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.Enumerator() -> void
 OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.MoveNext() -> bool
-OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator.Reset() -> void
 OpenTelemetry.Metrics.MetricPointsAccessor.GetEnumerator() -> OpenTelemetry.Metrics.MetricPointsAccessor.Enumerator
 OpenTelemetry.Metrics.ExportModes
 OpenTelemetry.Metrics.ExportModes.Pull = 2 -> OpenTelemetry.Metrics.ExportModes
@@ -116,7 +112,6 @@ override OpenTelemetry.BatchExportProcessor<T>.Dispose(bool disposing) -> void
 override OpenTelemetry.Metrics.BaseExportingMetricReader.Dispose(bool disposing) -> void
 override OpenTelemetry.Metrics.BaseExportingMetricReader.OnCollect(int timeoutMilliseconds) -> bool
 override OpenTelemetry.Metrics.BaseExportingMetricReader.OnShutdown(int timeoutMilliseconds) -> bool
-override OpenTelemetry.Metrics.BaseExportingMetricReader.ProcessMetrics(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric> metrics, int timeoutMilliseconds) -> bool
 override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder
 override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddMeter(params string[] names) -> OpenTelemetry.Metrics.MeterProviderBuilder
 override OpenTelemetry.Metrics.PeriodicExportingMetricReader.Dispose(bool disposing) -> void
