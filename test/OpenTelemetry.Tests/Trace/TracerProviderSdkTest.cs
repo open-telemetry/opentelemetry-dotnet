@@ -808,6 +808,10 @@ namespace OpenTelemetry.Trace.Tests
             activity.Start();
             Assert.True(activity.IsAllDataRequested);
             Assert.True(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+
+            // Validating ActivityTraceFlags is not enough as it does not get reflected on
+            // Id, Which can be used for context propagation.
+            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
             Assert.EndsWith("01", activity.Id);
             activity.Stop();
         }
