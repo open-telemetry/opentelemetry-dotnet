@@ -27,22 +27,25 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         private const string CollectorHostnameEnvVarName = "OTEL_COLLECTOR_HOSTNAME";
         private static readonly string CollectorHostname = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(CollectorHostnameEnvVarName);
 
-        [InlineData(OtlpExportProtocol.Grpc, 4317)]
-        [InlineData(OtlpExportProtocol.HttpProtobuf, 4318)]
+        [InlineData(OtlpExportProtocol.Grpc, ":4317")]
+        [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/traces")]
         [Trait("CategoryName", "CollectorIntegrationTests")]
         [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
-        public void ExportResultIsSuccess(OtlpExportProtocol protocol, int port)
+        public void ExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint)
         {
 #if NETCOREAPP3_1
-            // Adding the OtlpExporter creates a GrpcChannel/HttpClient.
-            // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure HTTP/2 endpoint.
+            // Adding the OtlpExporter creates a GrpcChannel.
+            // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
             // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            if (protocol == OtlpExportProtocol.Grpc)
+            {
+                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            }
 #endif
 
             var exporterOptions = new OtlpExporterOptions
             {
-                Endpoint = new System.Uri($"http://{CollectorHostname}:{port}"),
+                Endpoint = new System.Uri($"http://{CollectorHostname}{endpoint}"),
                 Protocol = protocol,
             };
 
