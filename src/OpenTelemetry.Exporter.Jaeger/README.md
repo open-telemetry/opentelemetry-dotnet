@@ -96,11 +96,15 @@ implementation if you want to customize the generated `HttpClient`:
 
 ```csharp
 services.AddOpenTelemetryTracing((builder) => builder
-    .AddJaegerExporter(o => o.HttpClientFactory = () =>
+    .AddJaegerExporter(o =>
     {
-        HttpClient client = new HttpClient();
-        client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value");
-        return client;
+        o.Protocol = JaegerExportProtocol.HttpBinaryThrift;
+        o.HttpClientFactory = () =>
+        {
+            HttpClient client = new HttpClient();
+            client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value");
+            return client;
+        };
     }));
 ```
 

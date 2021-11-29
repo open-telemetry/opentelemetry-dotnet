@@ -14,9 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -30,6 +32,71 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
     public class OtlpMetricsExporterTests
     {
+        [Fact]
+        public void UserHttpFactoryCalled()
+        {
+            OtlpExporterOptions options = new OtlpExporterOptions();
+
+            var defaultFactory = options.HttpClientFactory;
+
+            int invocations = 0;
+            options.Protocol = OtlpExportProtocol.HttpProtobuf;
+            options.HttpClientFactory = () =>
+            {
+                invocations++;
+                return defaultFactory();
+            };
+
+            using (var exporter = new OtlpMetricExporter(options))
+            {
+                Assert.Equal(1, invocations);
+            }
+
+            using (var provider = Sdk.CreateMeterProviderBuilder()
+                .AddOtlpExporter(o =>
+                {
+                    o.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    o.HttpClientFactory = options.HttpClientFactory;
+                })
+                .Build())
+            {
+                Assert.Equal(2, invocations);
+            }
+
+            options.HttpClientFactory = null;
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                using var exporter = new OtlpMetricExporter(options);
+            });
+
+            options.HttpClientFactory = () => null;
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                using var exporter = new OtlpMetricExporter(options);
+            });
+        }
+
+        [Fact]
+        public void ServiceProviderHttpClientFactoryInvoked()
+        {
+            IServiceCollection services = new ServiceCollection();
+
+            services.AddHttpClient();
+
+            int invocations = 0;
+
+            services.AddHttpClient("OtlpMetricExporter", configureClient: (client) => invocations++);
+
+            services.AddOpenTelemetryMetrics(builder => builder.AddOtlpExporter(
+                o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            var meterProvider = serviceProvider.GetRequiredService<MeterProvider>();
+
+            Assert.Equal(1, invocations);
+        }
+
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
