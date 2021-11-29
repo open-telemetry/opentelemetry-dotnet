@@ -21,8 +21,8 @@ OpenTelemetry.Metrics.HistogramBuckets.Enumerator.Enumerator() -> void
 OpenTelemetry.Metrics.HistogramBuckets.Enumerator.MoveNext() -> bool
 OpenTelemetry.Metrics.HistogramBuckets.GetEnumerator() -> OpenTelemetry.Metrics.HistogramBuckets.Enumerator
 OpenTelemetry.Metrics.MetricPoint.EndTime.get -> System.DateTimeOffset
-OpenTelemetry.Metrics.MetricPoint.GetCounterSumDouble() -> double
-OpenTelemetry.Metrics.MetricPoint.GetCounterSumLong() -> long
+OpenTelemetry.Metrics.MetricPoint.GetSumDouble() -> double
+OpenTelemetry.Metrics.MetricPoint.GetSumLong() -> long
 OpenTelemetry.Metrics.MetricPoint.GetEndTime() -> System.DateTimeOffset
 OpenTelemetry.Metrics.MetricPoint.GetGaugeLastValueDouble() -> double
 OpenTelemetry.Metrics.MetricPoint.GetGaugeLastValueLong() -> long
