@@ -23,7 +23,7 @@ an example of how to use the exporter for exporting logs.
 See the [Program](../../docs/metrics/getting-started/Program.cs) for
 an example of how to use the exporter for exporting metrics.
 
-See the [Program](../../docs/traces/getting-started/Program.cs) for
+See the [Program](../../docs/trace/getting-started/Program.cs) for
 an example of how to use the exporter for exporting traces.
 
 ## References

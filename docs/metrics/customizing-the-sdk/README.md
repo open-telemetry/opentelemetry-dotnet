@@ -332,6 +332,7 @@ Though `MetricReader` can be added by using the `AddReader` method on
 `MetricReader`, that is configured to export metrics to the exporter.
 
 Refer to the individual exporter docs to learn how to use them:
+
 * [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
 * [In-memory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
 * [OTLP](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
