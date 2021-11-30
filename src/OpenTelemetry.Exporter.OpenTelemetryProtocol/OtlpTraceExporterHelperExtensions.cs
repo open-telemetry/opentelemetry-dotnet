@@ -52,7 +52,7 @@ namespace OpenTelemetry.Trace
             Action<OtlpExporterOptions> configure,
             IServiceProvider serviceProvider)
         {
-            var originalEndpoint = exporterOptions.Endpoint;
+            var originalEndpoint = exporterOptions.OtlpTraceExporterOptions.Endpoint;
 
             configure?.Invoke(exporterOptions);
 
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Trace
 
             var otlpExporter = new OtlpTraceExporter(exporterOptions);
 
-            if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
+            if (exporterOptions.OtlpTraceExporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
                 return builder.AddProcessor(new SimpleActivityExportProcessor(otlpExporter));
             }
@@ -70,10 +70,10 @@ namespace OpenTelemetry.Trace
             {
                 return builder.AddProcessor(new BatchActivityExportProcessor(
                     otlpExporter,
-                    exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
-                    exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
-                    exporterOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
-                    exporterOptions.BatchExportProcessorOptions.MaxExportBatchSize));
+                    exporterOptions.OtlpTraceExporterOptions.BatchExportProcessorOptions.MaxQueueSize,
+                    exporterOptions.OtlpTraceExporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
+                    exporterOptions.OtlpTraceExporterOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                    exporterOptions.OtlpTraceExporterOptions.BatchExportProcessorOptions.MaxExportBatchSize));
             }
         }
     }
