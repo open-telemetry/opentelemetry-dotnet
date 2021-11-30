@@ -229,7 +229,6 @@ By default, the boundaries used for a Histogram are [`{ 0, 5, 10, 25, 50, 75, 10
 Views can be used to provide custom boundaries for a Histogram. The measurements
 are then aggregated using the custom boundaries provided instead of the the
 default boundaries. This requires the use of `ExplicitBucketHistogramConfiguration`.
-[Monday 08:36 PM] Reiley Yang
 
 <!-- markdownlint-disable MD013 -->
 ```csharp
@@ -269,7 +268,7 @@ default boundaries. This requires the use of `ExplicitBucketHistogramConfigurati
 ```
 
 **NOTE:** The SDK currently does not support any changes to `Aggregation` type
-for Views.
+by using Views.
 
 See [Program.cs](./Program.cs) for a complete example.
 
@@ -321,7 +320,24 @@ this moment.
 
 ### MetricReader
 
-// TODO
+[MetricReader](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricreader)
+allows collecting the pre-aggregated metrics from the SDK. They are typically
+paired with a
+[MetricExporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricexporter)
+which does the actual export of metrics.
+
+Though `MetricReader` can be added by using the `AddReader` method on
+`MeterProviderBuilder`, most users use the extension methods on
+`MeterProviderBuilder` offered by exporter libraries, which adds the correct
+`MetricReader`, that is configured to export metrics to the exporter.
+
+Refer to the individual exporter docs to learn how to use them:
+
+* [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
+* [In-memory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
+* [OTLP](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+  (OpenTelemetry Protocol)
+* [Prometheus](../../../src/OpenTelemetry.Exporter.Prometheus/README.md)
 
 ### Resource
 
