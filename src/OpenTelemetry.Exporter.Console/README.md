@@ -19,12 +19,9 @@ dotnet add package OpenTelemetry.Exporter.Console
 See the individual "getting started" examples depending on the signal being
 used:
 
-* Logs -
-  [/docs/logs/getting-started/Program.cs](../../docs/logs/getting-started/Program.cs)
-* Metrics -
-  [/docs/metrics/getting-started/Program.cs](../../docs/metrics/getting-started/Program.cs)
-* Traces -
-  [/docs/traces/getting-started/Program.cs](../../docs/traces/getting-started/Program.cs)
+* [Logs](../../docs/logs/getting-started/Program.cs)
+* [Metrics](../../docs/metrics/getting-started/Program.cs)
+* [Traces](../../docs/traces/getting-started/Program.cs)
 
 ## References
 
