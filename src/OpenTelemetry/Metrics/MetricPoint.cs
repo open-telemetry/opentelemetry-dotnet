@@ -45,7 +45,7 @@ namespace OpenTelemetry.Metrics
             Debug.Assert((keys?.Length ?? 0) == (values?.Length ?? 0), "Key and value array lengths did not match.");
 
             this.aggType = aggType;
-            this.startTime = default;
+            this.startTime = startTime;
             this.endTime = default;
             this.Tags = new ReadOnlyTagCollection(keys, values);
             this.primaryValue = default;
@@ -64,9 +64,6 @@ namespace OpenTelemetry.Metrics
             {
                 this.histogramBuckets = null;
             }
-
-            this.EndTime = default;
-            this.StartTime = startTime;
         }
 
         /// <summary>
@@ -105,10 +102,6 @@ namespace OpenTelemetry.Metrics
         }
 
         internal MetricPointStatus MetricPointStatus { get; private set; }
-
-        public DateTimeOffset GetStartTime() => this.StartTime;
-
-        public DateTimeOffset GetEndTime() => this.EndTime;
 
         public long GetSumLong()
         {

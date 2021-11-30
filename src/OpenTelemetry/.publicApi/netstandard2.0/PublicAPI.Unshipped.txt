@@ -25,11 +25,9 @@ OpenTelemetry.Metrics.HistogramConfiguration.HistogramConfiguration() -> void
 OpenTelemetry.Metrics.MetricPoint.EndTime.get -> System.DateTimeOffset
 OpenTelemetry.Metrics.MetricPoint.GetSumDouble() -> double
 OpenTelemetry.Metrics.MetricPoint.GetSumLong() -> long
-OpenTelemetry.Metrics.MetricPoint.GetEndTime() -> System.DateTimeOffset
 OpenTelemetry.Metrics.MetricPoint.GetGaugeLastValueDouble() -> double
 OpenTelemetry.Metrics.MetricPoint.GetGaugeLastValueLong() -> long
 OpenTelemetry.Metrics.MetricPoint.GetHistogramBuckets() -> OpenTelemetry.Metrics.HistogramBuckets
-OpenTelemetry.Metrics.MetricPoint.GetStartTime() -> System.DateTimeOffset
 OpenTelemetry.Metrics.MetricPoint.StartTime.get -> System.DateTimeOffset
 OpenTelemetry.Metrics.MetricPointsAccessor
 OpenTelemetry.Metrics.MetricPointsAccessor.MetricPointsAccessor() -> void

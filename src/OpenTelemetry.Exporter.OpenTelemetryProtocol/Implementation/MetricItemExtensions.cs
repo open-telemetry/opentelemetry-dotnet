@@ -152,8 +152,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         {
                             var dataPoint = new OtlpMetrics.NumberDataPoint
                             {
-                                StartTimeUnixNano = (ulong)metricPoint.GetStartTime().ToUnixTimeNanoseconds(),
-                                TimeUnixNano = (ulong)metricPoint.GetEndTime().ToUnixTimeNanoseconds(),
+                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
@@ -176,8 +176,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         {
                             var dataPoint = new OtlpMetrics.NumberDataPoint
                             {
-                                StartTimeUnixNano = (ulong)metricPoint.GetStartTime().ToUnixTimeNanoseconds(),
-                                TimeUnixNano = (ulong)metricPoint.GetEndTime().ToUnixTimeNanoseconds(),
+                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
@@ -197,8 +197,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         {
                             var dataPoint = new OtlpMetrics.NumberDataPoint
                             {
-                                StartTimeUnixNano = (ulong)metricPoint.GetStartTime().ToUnixTimeNanoseconds(),
-                                TimeUnixNano = (ulong)metricPoint.GetEndTime().ToUnixTimeNanoseconds(),
+                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
@@ -218,8 +218,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         {
                             var dataPoint = new OtlpMetrics.NumberDataPoint
                             {
-                                StartTimeUnixNano = (ulong)metricPoint.GetStartTime().ToUnixTimeNanoseconds(),
-                                TimeUnixNano = (ulong)metricPoint.GetEndTime().ToUnixTimeNanoseconds(),
+                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
@@ -241,8 +241,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         {
                             var dataPoint = new OtlpMetrics.HistogramDataPoint
                             {
-                                StartTimeUnixNano = (ulong)metricPoint.GetStartTime().ToUnixTimeNanoseconds(),
-                                TimeUnixNano = (ulong)metricPoint.GetEndTime().ToUnixTimeNanoseconds(),
+                                StartTimeUnixNano = (ulong)metricPoint.StartTime.ToUnixTimeNanoseconds(),
+                                TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
                             AddAttributes(metricPoint.Tags, dataPoint.Attributes);
