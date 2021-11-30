@@ -117,9 +117,9 @@ namespace OpenTelemetry.Metrics
                     result = this.OnCollect(timeoutMilliseconds);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Shutdown), ex);
+                OpenTelemetrySdkEventSource.Log.MetricReaderException(nameof(this.Collect), ex);
             }
 
             tcs.TrySetResult(result);
@@ -158,9 +158,9 @@ namespace OpenTelemetry.Metrics
             {
                 result = this.OnShutdown(timeoutMilliseconds);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Shutdown), ex);
+                OpenTelemetrySdkEventSource.Log.MetricReaderException(nameof(this.Shutdown), ex);
             }
 
             this.shutdownTcs.TrySetResult(result);
@@ -220,7 +220,7 @@ namespace OpenTelemetry.Metrics
                 : Stopwatch.StartNew();
 
             var collectObservableInstruments = this.ParentProvider.GetObservableInstrumentCollectCallback();
-            collectObservableInstruments();
+            collectObservableInstruments?.Invoke();
 
             var metrics = this.GetMetricsBatch();
 

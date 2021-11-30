@@ -236,9 +236,9 @@ namespace OpenTelemetry.Metrics
 
                 return (metricCountCurrentBatch > 0) ? new Batch<Metric>(this.metricsCurrentBatch, metricCountCurrentBatch) : default;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // TODO: Log
+                OpenTelemetrySdkEventSource.Log.MetricReaderException(nameof(this.GetMetricsBatch), ex);
                 return default;
             }
         }

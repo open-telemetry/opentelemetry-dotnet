@@ -74,6 +74,15 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
+        public void MetricReaderException(string evnt, Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                this.MetricReaderException(evnt, ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
         public void TracestateKeyIsInvalid(ReadOnlySpan<char> key)
         {
             if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
@@ -140,6 +149,15 @@ namespace OpenTelemetry.Internal
             if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
                 this.TracerProviderException(evnt, ex.ToInvariantString());
+            }
+        }
+
+        [NonEvent]
+        public void MeterProviderException(string evnt, Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                this.MeterProviderException(evnt, ex.ToInvariantString());
             }
         }
 
@@ -355,6 +373,18 @@ namespace OpenTelemetry.Internal
         public void MetricInstrumentIgnored(string instrumentName, string meterName, string reason, string fix)
         {
             this.WriteEvent(33, instrumentName, meterName, reason, fix);
+        }
+
+        [Event(34, Message = "Unknown error in MetricReader event '{0}': '{1}'.", Level = EventLevel.Error)]
+        public void MetricReaderException(string evnt, string ex)
+        {
+            this.WriteEvent(34, evnt, ex);
+        }
+
+        [Event(35, Message = "Unknown error in MeterProvider '{0}': '{1}'.", Level = EventLevel.Error)]
+        public void MeterProviderException(string evnt, string ex)
+        {
+            this.WriteEvent(35, evnt, ex);
         }
 
 #if DEBUG
