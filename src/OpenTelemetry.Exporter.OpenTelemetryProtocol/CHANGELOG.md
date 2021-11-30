@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Added validation that unsecure channel is configured correctly when using
+  .NET Core 3.1 for gRPC-based exporting.
+  ([#2691](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2691))
+
 ## 1.2.0-rc1
 
 Released 2021-Nov-29
@@ -9,9 +13,6 @@ Released 2021-Nov-29
 * Added configuration options for `MetricReaderType` to allow for configuring
   the `OtlpMetricExporter` to export either manually or periodically.
   ([#2674](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2674))
-* Added validation that unsecure channel is configured correctly when using
-  .NET Core 3.1 for gRPC-based exporting.
-  ([#2691](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2691))
 
 * The internal log message used when OTLP export client connection failure occurs,
   will now include the endpoint uri as well.
