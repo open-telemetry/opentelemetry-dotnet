@@ -43,8 +43,8 @@ namespace OpenTelemetry.Metrics
 
             this.aggType = aggType;
             this.StartTime = startTime;
-            this.EndTime = default;
             this.Tags = new ReadOnlyTagCollection(keys, values);
+            this.EndTime = default;
             this.primaryValue = default;
             this.secondaryValue = default;
             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
