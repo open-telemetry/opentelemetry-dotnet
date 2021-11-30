@@ -74,11 +74,11 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void MetricReaderException(string evnt, Exception ex)
+        public void MetricReaderException(string methodName, Exception ex)
         {
             if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                this.MetricReaderException(evnt, ex.ToInvariantString());
+                this.MetricReaderException(methodName, ex.ToInvariantString());
             }
         }
 
@@ -97,15 +97,6 @@ namespace OpenTelemetry.Internal
             if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
             {
                 this.TracestateValueIsInvalid(value.ToString());
-            }
-        }
-
-        [NonEvent]
-        public void MetricControllerException(Exception ex)
-        {
-            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
-            {
-                this.MetricControllerException(ex.ToInvariantString());
             }
         }
 
@@ -153,11 +144,11 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void MeterProviderException(string evnt, Exception ex)
+        public void MeterProviderException(string methodName, Exception ex)
         {
             if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                this.MeterProviderException(evnt, ex.ToInvariantString());
+                this.MeterProviderException(methodName, ex.ToInvariantString());
             }
         }
 
@@ -279,36 +270,6 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(16, exception);
         }
 
-        [Event(17, Message = "Batcher finished collection with '{0}' metrics.", Level = EventLevel.Informational)]
-        public void BatcherCollectionCompleted(int count)
-        {
-            this.WriteEvent(17, count);
-        }
-
-        [Event(18, Message = "Collection completed in '{0}' msecs.", Level = EventLevel.Informational)]
-        public void CollectionCompleted(long msec)
-        {
-            this.WriteEvent(18, msec);
-        }
-
-        [Event(19, Message = "Exception occurred in Metric Controller while processing metrics from one Collect cycle. This does not shutdown controller and subsequent collections will be done. Exception: '{0}'", Level = EventLevel.Warning)]
-        public void MetricControllerException(string exception)
-        {
-            this.WriteEvent(19, exception);
-        }
-
-        [Event(20, Message = "Meter Collect Invoked for Meter: '{0}'", Level = EventLevel.Verbose)]
-        public void MeterCollectInvoked(string meterName)
-        {
-            this.WriteEvent(20, meterName);
-        }
-
-        [Event(21, Message = "Metric Export failed with error '{0}'.", Level = EventLevel.Warning)]
-        public void MetricExporterErrorResult(int exportResult)
-        {
-            this.WriteEvent(21, exportResult);
-        }
-
         [Event(22, Message = "ForceFlush complete. '{0}' spans left in queue unprocessed.", Level = EventLevel.Informational)]
         public void ForceFlushCompleted(int spansLeftUnprocessed)
         {
@@ -376,15 +337,15 @@ namespace OpenTelemetry.Internal
         }
 
         [Event(34, Message = "Unknown error in MetricReader event '{0}': '{1}'.", Level = EventLevel.Error)]
-        public void MetricReaderException(string evnt, string ex)
+        public void MetricReaderException(string methodName, string ex)
         {
-            this.WriteEvent(34, evnt, ex);
+            this.WriteEvent(34, methodName, ex);
         }
 
         [Event(35, Message = "Unknown error in MeterProvider '{0}': '{1}'.", Level = EventLevel.Error)]
-        public void MeterProviderException(string evnt, string ex)
+        public void MeterProviderException(string methodName, string ex)
         {
-            this.WriteEvent(35, evnt, ex);
+            this.WriteEvent(35, methodName, ex);
         }
 
 #if DEBUG
