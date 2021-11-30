@@ -71,8 +71,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
 #if NETCOREAPP3_1
         [Trait("CategoryName", "CollectorIntegrationTests")]
-        [SkipUnlessEnvVarFoundFact(CollectorEndpointEnvVarName)]
-        public void ExportResultIsFailedBecauseEncryptedHttpSupportIsDisabled()
+        [SkipUnlessEnvVarFoundFact(CollectorHostnameEnvVarName)]
+        public void ExportResultIsFailedBecauseEncryptedHttpSupportIsDisabledForGrpc()
         {
             // Adding the OtlpExporter creates a GrpcChannel.
             // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
@@ -82,22 +82,22 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var exporterOptions = new OtlpExporterOptions
             {
-                Endpoint = new Uri($"http://{CollectorEndpoint}"),
+                Endpoint = new Uri($"http://{CollectorHostname}:4317"),
             };
 
             Assert.Throws<InvalidOperationException>(() => new OtlpTraceExporter(exporterOptions));
         }
 
         [Trait("CategoryName", "CollectorIntegrationTests")]
-        [SkipUnlessEnvVarFoundFact(CollectorEndpointEnvVarName)]
-        public void ExportResultIsFailedBecauseEncryptedHttpSupportIsNotConfigured()
+        [SkipUnlessEnvVarFoundFact(CollectorHostnameEnvVarName)]
+        public void ExportResultIsFailedBecauseEncryptedHttpSupportIsNotConfiguredForGrpc()
         {
             // Adding the OtlpExporter creates a GrpcChannel.
             // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
             // We want to fail fast so not setting it to ensure it fails
             var exporterOptions = new OtlpExporterOptions
             {
-                Endpoint = new Uri($"http://{CollectorEndpoint}"),
+                Endpoint = new Uri($"http://{CollectorHostname}:4317"),
             };
 
             Assert.Throws<InvalidOperationException>(() => new OtlpTraceExporter(exporterOptions));
