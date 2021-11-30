@@ -43,7 +43,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                 foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
                     var tags = metricPoint.Tags;
-                    var timestamp = metricPoint.GetEndTime().ToUnixTimeMilliseconds();
+                    var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
                     // Counter and Gauge
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                 foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
                     var tags = metricPoint.Tags;
-                    var timestamp = metricPoint.GetEndTime().ToUnixTimeMilliseconds();
+                    var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
                     long totalCount = 0;
                     foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
