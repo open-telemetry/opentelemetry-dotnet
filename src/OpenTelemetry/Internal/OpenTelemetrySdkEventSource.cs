@@ -348,6 +348,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(35, methodName, ex);
         }
 
+        [Event(36, Message = "Measurement dropped from Instrument Name/Metric Stream Name '{0}'. Reason: '{1}'. Suggested action: '{2}'", Level = EventLevel.Warning)]
+        public void MeasurementDropped(string instrumentName, string reason, string fix)
+        {
+            this.WriteEvent(36, instrumentName, reason, fix);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {
