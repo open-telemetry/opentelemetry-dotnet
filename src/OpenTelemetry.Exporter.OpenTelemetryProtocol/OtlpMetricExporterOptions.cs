@@ -98,11 +98,6 @@ namespace OpenTelemetry.Exporter
         }
 
         /// <summary>
-        /// Gets or sets the metric export interval in milliseconds. The default value is 60000.
-        /// </summary>
-        public int MetricExportIntervalMilliseconds { get; set; } = 60000;
-
-        /// <summary>
         /// Gets or sets the <see cref="MetricReaderType" /> to use. Defaults to <c>MetricReaderType.Periodic</c>.
         /// </summary>
         public MetricReaderType MetricReaderType { get; set; } = MetricReaderType.Periodic;
