@@ -68,9 +68,9 @@ namespace Examples.Console
                 providerBuilder
                     .AddOtlpExporter(o =>
                     {
-                        o.MetricReaderType = MetricReaderType.Periodic;
-                        o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
-                        o.AggregationTemporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
+                        o.MetricOptions.MetricReaderType = MetricReaderType.Periodic;
+                        o.MetricOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
+                        o.MetricOptions.AggregationTemporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                     });
             }
             else

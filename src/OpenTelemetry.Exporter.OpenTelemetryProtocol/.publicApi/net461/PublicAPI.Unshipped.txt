@@ -8,8 +8,6 @@ OpenTelemetry.Exporter.ICommonOtlpExporterOptions.Protocol.set -> void
 OpenTelemetry.Exporter.ICommonOtlpExporterOptions.TimeoutMilliseconds.get -> int
 OpenTelemetry.Exporter.ICommonOtlpExporterOptions.TimeoutMilliseconds.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions
-OpenTelemetry.Exporter.OtlpExporterOptions.AggregationTemporality.get -> OpenTelemetry.Metrics.AggregationTemporality
-OpenTelemetry.Exporter.OtlpExporterOptions.AggregationTemporality.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.BatchExportProcessorOptions.get -> OpenTelemetry.BatchExportProcessorOptions<System.Diagnostics.Activity>
 OpenTelemetry.Exporter.OtlpExporterOptions.BatchExportProcessorOptions.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.Endpoint.get -> System.Uri
@@ -18,10 +16,7 @@ OpenTelemetry.Exporter.OtlpExporterOptions.ExportProcessorType.get -> OpenTeleme
 OpenTelemetry.Exporter.OtlpExporterOptions.ExportProcessorType.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.Headers.get -> string
 OpenTelemetry.Exporter.OtlpExporterOptions.Headers.set -> void
-OpenTelemetry.Exporter.OtlpExporterOptions.MetricReaderType.get -> OpenTelemetry.Metrics.MetricReaderType
-OpenTelemetry.Exporter.OtlpExporterOptions.MetricReaderType.set -> void
-OpenTelemetry.Exporter.OtlpExporterOptions.PeriodicExportingMetricReaderOptions.get -> OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
-OpenTelemetry.Exporter.OtlpExporterOptions.PeriodicExportingMetricReaderOptions.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.MetricOptions.get -> OpenTelemetry.Exporter.OtlpMetricExporterOptions
 OpenTelemetry.Exporter.OtlpExporterOptions.HttpClientFactory.get -> System.Func<System.Net.Http.HttpClient>
 OpenTelemetry.Exporter.OtlpExporterOptions.HttpClientFactory.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.OtlpExporterOptions() -> void

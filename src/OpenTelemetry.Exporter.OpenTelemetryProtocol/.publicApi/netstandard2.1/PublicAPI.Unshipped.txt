@@ -7,12 +7,7 @@ OpenTelemetry.Exporter.ICommonOtlpExporterOptions.Protocol.get -> OpenTelemetry.
 OpenTelemetry.Exporter.ICommonOtlpExporterOptions.Protocol.set -> void
 OpenTelemetry.Exporter.ICommonOtlpExporterOptions.TimeoutMilliseconds.get -> int
 OpenTelemetry.Exporter.ICommonOtlpExporterOptions.TimeoutMilliseconds.set -> void
-OpenTelemetry.Exporter.OtlpExporterOptions.AggregationTemporality.get -> OpenTelemetry.Metrics.AggregationTemporality
-OpenTelemetry.Exporter.OtlpExporterOptions.AggregationTemporality.set -> void
-OpenTelemetry.Exporter.OtlpExporterOptions.MetricReaderType.get -> OpenTelemetry.Metrics.MetricReaderType
-OpenTelemetry.Exporter.OtlpExporterOptions.MetricReaderType.set -> void
-OpenTelemetry.Exporter.OtlpExporterOptions.PeriodicExportingMetricReaderOptions.get -> OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
-OpenTelemetry.Exporter.OtlpExporterOptions.PeriodicExportingMetricReaderOptions.set -> void
+OpenTelemetry.Exporter.OtlpExporterOptions.MetricOptions.get -> OpenTelemetry.Exporter.OtlpMetricExporterOptions
 OpenTelemetry.Exporter.OtlpExporterOptions.HttpClientFactory.get -> System.Func<System.Net.Http.HttpClient>
 OpenTelemetry.Exporter.OtlpExporterOptions.HttpClientFactory.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.Protocol.get -> OpenTelemetry.Exporter.OtlpExportProtocol

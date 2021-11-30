@@ -84,6 +84,8 @@ namespace OpenTelemetry.Exporter
                     Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
                 };
             };
+
+            this.MetricOptions = new OtlpMetricExporterOptions(this);
         }
 
         /// <summary>
@@ -110,6 +112,11 @@ namespace OpenTelemetry.Exporter
         public OtlpExportProtocol Protocol { get; set; } = OtlpExportProtocol.Grpc;
 
         /// <summary>
+        /// Gets metric-specific OTLP exporter options.
+        /// </summary>
+        public OtlpMetricExporterOptions MetricOptions { get; }
+
+        /// <summary>
         /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
         /// </summary>
         public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
@@ -118,22 +125,6 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
         /// </summary>
         public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
-
-        /// <summary>
-        /// Gets or sets the <see cref="MetricReaderType" /> to use. Defaults to <c>MetricReaderType.Periodic</c>.
-        /// </summary>
-        public MetricReaderType MetricReaderType { get; set; } = MetricReaderType.Periodic;
-
-        /// <summary>
-        /// Gets or sets the <see cref="PeriodicExportingMetricReaderOptions" /> options. Ignored unless <c>MetricReaderType</c> is <c>Periodic</c>.
-        /// </summary>
-        public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions { get; set; } = new PeriodicExportingMetricReaderOptions();
-
-        /// <summary>
-        /// Gets or sets the AggregationTemporality used for Histogram
-        /// and Sum metrics.
-        /// </summary>
-        public AggregationTemporality AggregationTemporality { get; set; } = AggregationTemporality.Cumulative;
 
         /// <summary>
         /// Gets or sets the factory function called to create the <see
