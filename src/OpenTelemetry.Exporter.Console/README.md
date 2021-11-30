@@ -21,7 +21,7 @@ used:
 
 * [Logs](../../docs/logs/getting-started/Program.cs)
 * [Metrics](../../docs/metrics/getting-started/Program.cs)
-* [Traces](../../docs/traces/getting-started/Program.cs)
+* [Traces](../../docs/trace/getting-started/Program.cs)
 
 ## References
 
