@@ -16,15 +16,15 @@ environment.
 dotnet add package OpenTelemetry.Exporter.Console
 ```
 
-See the
-See the [Program](../../docs/logs/getting-started/Program.cs) for
-an example of how to use the exporter for exporting logs.
+See the individual "getting started" examples depending on the signal being
+used:
 
-See the [Program](../../docs/metrics/getting-started/Program.cs) for
-an example of how to use the exporter for exporting metrics.
-
-See the [Program](../../docs/trace/getting-started/Program.cs) for
-an example of how to use the exporter for exporting traces.
+* Logs -
+  [/docs/logs/getting-started/Program.cs](../../docs/logs/getting-started/Program.cs)
+* Metrics -
+  [/docs/metrics/getting-started/Program.cs](../../docs/metrics/getting-started/Program.cs)
+* Traces -
+  [/docs/traces/getting-started/Program.cs](../../docs/traces/getting-started/Program.cs)
 
 ## References
 
