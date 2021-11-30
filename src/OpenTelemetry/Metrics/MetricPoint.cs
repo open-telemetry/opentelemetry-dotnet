@@ -16,15 +16,13 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace OpenTelemetry.Metrics
 {
     public struct MetricPoint
     {
-        internal DateTimeOffset StartTime;
-        internal DateTimeOffset EndTime;
-
         private readonly AggregationType aggType;
         private readonly HistogramBuckets histogramBuckets;
 
@@ -70,11 +68,25 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         public ReadOnlyTagCollection Tags { get; }
 
+        public DateTimeOffset StartTime
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal set;
+        }
+
+        public DateTimeOffset EndTime
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal set;
+        }
+
         internal MetricPointStatus MetricPointStatus { get; private set; }
-
-        public DateTimeOffset GetStartTime() => this.StartTime;
-
-        public DateTimeOffset GetEndTime() => this.EndTime;
 
         public long GetSumLong()
         {
