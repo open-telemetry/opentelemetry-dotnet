@@ -117,7 +117,7 @@ namespace OpenTelemetry.Metrics
                     var index = ++this.metricIndex;
                     if (index >= this.maxMetricStreams)
                     {
-                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Maximum allowed Metric streams for the provider exceeded.", "Use views to drop unused instruments. Or use SetMaxMetricStreams to configure Provider to allow higher limit.");
+                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Maximum allowed Metric streams for the provider exceeded.", "Use MeterProvider.AddView to drop unused instruments. Or use SetMaxMetricStreams to configure MeterProvider to allow higher limit.");
                     }
                     else
                     {
