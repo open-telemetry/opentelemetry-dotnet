@@ -26,9 +26,6 @@ namespace OpenTelemetry.Metrics
         private readonly AggregationType aggType;
         private readonly HistogramBuckets histogramBuckets;
 
-        private DateTimeOffset startTime;
-        private DateTimeOffset endTime;
-
         // Represents either "value" for double/long metric types or "count" when histogram
         private MetricPointValueStorage primaryValue;
 
@@ -45,8 +42,8 @@ namespace OpenTelemetry.Metrics
             Debug.Assert((keys?.Length ?? 0) == (values?.Length ?? 0), "Key and value array lengths did not match.");
 
             this.aggType = aggType;
-            this.startTime = startTime;
-            this.endTime = default;
+            this.StartTime = startTime;
+            this.EndTime = default;
             this.Tags = new ReadOnlyTagCollection(keys, values);
             this.primaryValue = default;
             this.secondaryValue = default;
@@ -74,31 +71,19 @@ namespace OpenTelemetry.Metrics
         public DateTimeOffset StartTime
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                return this.startTime;
-            }
+            get;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal set
-            {
-                this.startTime = value;
-            }
+            internal set;
         }
 
         public DateTimeOffset EndTime
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                return this.EndTime;
-            }
+            get;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal set
-            {
-                this.EndTime = value;
-            }
+            internal set;
         }
 
         internal MetricPointStatus MetricPointStatus { get; private set; }
