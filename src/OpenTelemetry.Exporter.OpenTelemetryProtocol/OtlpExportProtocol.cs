@@ -30,5 +30,7 @@ namespace OpenTelemetry.Exporter
         /// OTLP over HTTP with protobuf payloads (corresponds to 'http/protobuf' Protocol configuration option).
         /// </summary>
         HttpProtobuf = 1,
+
+        Unspecified = 10,
     }
 }

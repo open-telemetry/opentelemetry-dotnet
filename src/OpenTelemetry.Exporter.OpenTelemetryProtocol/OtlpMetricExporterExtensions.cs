@@ -52,7 +52,7 @@ namespace OpenTelemetry.Metrics
             Action<OtlpExporterOptions> configure,
             IServiceProvider serviceProvider)
         {
-            var initialEndpoint = options.Endpoint;
+            var initialEndpoint = options.OtlpMetricExporterOptions.Endpoint;
 
             configure?.Invoke(options);
 
@@ -62,11 +62,11 @@ namespace OpenTelemetry.Metrics
 
             var metricExporter = new OtlpMetricExporter(options);
 
-            var metricReader = options.MetricReaderType == MetricReaderType.Manual
+            var metricReader = options.OtlpMetricExporterOptions.MetricReaderType == MetricReaderType.Manual
                 ? new BaseExportingMetricReader(metricExporter)
-                : new PeriodicExportingMetricReader(metricExporter, options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
+                : new PeriodicExportingMetricReader(metricExporter, options.OtlpMetricExporterOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
 
-            metricReader.Temporality = options.AggregationTemporality;
+            metricReader.Temporality = options.OtlpMetricExporterOptions.AggregationTemporality;
             return builder.AddReader(metricReader);
         }
     }

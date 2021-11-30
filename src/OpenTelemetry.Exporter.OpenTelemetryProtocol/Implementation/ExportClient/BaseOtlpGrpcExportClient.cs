@@ -28,7 +28,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     /// <typeparam name="TRequest">Type of export request.</typeparam>
     internal abstract class BaseOtlpGrpcExportClient<TRequest> : IExportClient<TRequest>
     {
-        protected BaseOtlpGrpcExportClient(OtlpExporterOptions options)
+        protected BaseOtlpGrpcExportClient(ICommonOtlpExporterOptions options)
         {
             Guard.Null(options, nameof(options));
             Guard.InvalidTimeout(options.TimeoutMilliseconds, nameof(options.TimeoutMilliseconds));
@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             this.Headers = options.GetMetadataFromHeaders();
         }
 
-        internal OtlpExporterOptions Options { get; }
+        internal ICommonOtlpExporterOptions Options { get; }
 
 #if NETSTANDARD2_1 || NET5_0_OR_GREATER
         internal GrpcChannel Channel { get; set; }

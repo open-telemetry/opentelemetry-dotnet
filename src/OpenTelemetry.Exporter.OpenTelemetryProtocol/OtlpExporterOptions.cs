@@ -18,7 +18,6 @@ using System;
 using System.Diagnostics;
 using System.Net.Http;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
@@ -32,7 +31,7 @@ namespace OpenTelemetry.Exporter
     /// The constructor throws <see cref="FormatException"/> if it fails to parse
     /// any of the supported environment variables.
     /// </remarks>
-    public class OtlpExporterOptions
+    public class OtlpExporterOptions : ICommonOtlpExporterOptions
     {
         internal const string EndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
         internal const string HeadersEnvVarName = "OTEL_EXPORTER_OTLP_HEADERS";
@@ -84,56 +83,33 @@ namespace OpenTelemetry.Exporter
                     Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
                 };
             };
+
+            this.OtlpMetricExporterOptions = new OtlpMetricExporterOptions(this);
         }
 
-        /// <summary>
-        /// Gets or sets the target to which the exporter is going to send telemetry.
-        /// Must be a valid Uri with scheme (http or https) and host, and
-        /// may contain a port and path. The default value is http://localhost:4317.
-        /// </summary>
+        /// <inheritdoc/>
         public Uri Endpoint { get; set; } = new Uri("http://localhost:4317");
 
-        /// <summary>
-        /// Gets or sets optional headers for the connection. Refer to the <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables">
-        /// specification</a> for information on the expected format for Headers.
-        /// </summary>
+        /// <inheritdoc/>
         public string Headers { get; set; }
 
-        /// <summary>
-        /// Gets or sets the max waiting time (in milliseconds) for the backend to process each batch. The default value is 10000.
-        /// </summary>
+        /// <inheritdoc/>
         public int TimeoutMilliseconds { get; set; } = 10000;
 
-        /// <summary>
-        /// Gets or sets the the OTLP transport protocol. Supported values: Grpc and HttpProtobuf.
-        /// </summary>
+        /// <inheritdoc/>
         public OtlpExportProtocol Protocol { get; set; } = OtlpExportProtocol.Grpc;
 
         /// <summary>
         /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
         /// </summary>
+        [Obsolete]
         public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
 
         /// <summary>
         /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
         /// </summary>
+        [Obsolete]
         public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
-
-        /// <summary>
-        /// Gets or sets the <see cref="MetricReaderType" /> to use. Defaults to <c>MetricReaderType.Periodic</c>.
-        /// </summary>
-        public MetricReaderType MetricReaderType { get; set; } = MetricReaderType.Periodic;
-
-        /// <summary>
-        /// Gets or sets the <see cref="PeriodicExportingMetricReaderOptions" /> options. Ignored unless <c>MetricReaderType</c> is <c>Periodic</c>.
-        /// </summary>
-        public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions { get; set; } = new PeriodicExportingMetricReaderOptions();
-
-        /// <summary>
-        /// Gets or sets the AggregationTemporality used for Histogram
-        /// and Sum metrics.
-        /// </summary>
-        public AggregationTemporality AggregationTemporality { get; set; } = AggregationTemporality.Cumulative;
 
         /// <summary>
         /// Gets or sets the factory function called to create the <see
@@ -167,5 +143,9 @@ namespace OpenTelemetry.Exporter
         /// </list>
         /// </remarks>
         public Func<HttpClient> HttpClientFactory { get; set; }
+
+        public OtlpMetricExporterOptions OtlpMetricExporterOptions { get; }
+
+        public OtlpTraceExporterOptions OtlpTraceExporterOptions { get; }
     }
 }
