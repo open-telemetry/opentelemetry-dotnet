@@ -32,7 +32,7 @@ namespace OpenTelemetry.Exporter
     /// The constructor throws <see cref="FormatException"/> if it fails to parse
     /// any of the supported environment variables.
     /// </remarks>
-    public class OtlpExporterOptions
+    public class OtlpExporterOptions : ICommonOtlpExporterOptions
     {
         internal const string EndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
         internal const string HeadersEnvVarName = "OTEL_EXPORTER_OTLP_HEADERS";

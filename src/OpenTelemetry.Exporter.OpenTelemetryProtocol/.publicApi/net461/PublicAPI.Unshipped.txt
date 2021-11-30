@@ -1,3 +1,12 @@
+OpenTelemetry.Exporter.ICommonOtlpExporterOptions
+OpenTelemetry.Exporter.ICommonOtlpExporterOptions.Endpoint.get -> System.Uri
+OpenTelemetry.Exporter.ICommonOtlpExporterOptions.Endpoint.set -> void
+OpenTelemetry.Exporter.ICommonOtlpExporterOptions.Headers.get -> string
+OpenTelemetry.Exporter.ICommonOtlpExporterOptions.Headers.set -> void
+OpenTelemetry.Exporter.ICommonOtlpExporterOptions.Protocol.get -> OpenTelemetry.Exporter.OtlpExportProtocol
+OpenTelemetry.Exporter.ICommonOtlpExporterOptions.Protocol.set -> void
+OpenTelemetry.Exporter.ICommonOtlpExporterOptions.TimeoutMilliseconds.get -> int
+OpenTelemetry.Exporter.ICommonOtlpExporterOptions.TimeoutMilliseconds.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions
 OpenTelemetry.Exporter.OtlpExporterOptions.AggregationTemporality.get -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Exporter.OtlpExporterOptions.AggregationTemporality.set -> void
