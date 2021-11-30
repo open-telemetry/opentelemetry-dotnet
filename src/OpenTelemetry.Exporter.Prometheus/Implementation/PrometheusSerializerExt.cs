@@ -23,7 +23,10 @@ namespace OpenTelemetry.Exporter.Prometheus
     /// </summary>
     internal static partial class PrometheusSerializer
     {
-        private static readonly string[] MetricTypes = new string[] { "untyped", "counter", "gauge", "histogram", "summary" };
+        private static readonly string[] MetricTypes = new string[]
+        {
+            "untyped", "counter", "gauge", "summary", "histogram", "histogram", "histogram", "histogram", "untyped",
+        };
 
         public static int WriteMetric(byte[] buffer, int cursor, Metric metric)
         {
@@ -35,12 +38,12 @@ namespace OpenTelemetry.Exporter.Prometheus
             int metricType = (int)metric.MetricType >> 4;
             cursor = WriteTypeInfo(buffer, cursor, metric.Name, metric.Unit, MetricTypes[metricType]);
 
-            if (metric.MetricType != MetricType.Histogram)
+            if (!metric.MetricType.IsHistogram())
             {
                 foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
                     var tags = metricPoint.Tags;
-                    var timestamp = metricPoint.GetEndTime().ToUnixTimeMilliseconds();
+                    var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
                     // Counter and Gauge
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
@@ -72,7 +75,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     {
                         if (metric.MetricType.IsSum())
                         {
-                            cursor = WriteLong(buffer, cursor, metricPoint.GetCounterSumLong());
+                            cursor = WriteLong(buffer, cursor, metricPoint.GetSumLong());
                         }
                         else
                         {
@@ -83,7 +86,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     {
                         if (metric.MetricType.IsSum())
                         {
-                            cursor = WriteDouble(buffer, cursor, metricPoint.GetCounterSumDouble());
+                            cursor = WriteDouble(buffer, cursor, metricPoint.GetSumDouble());
                         }
                         else
                         {
@@ -103,7 +106,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                 foreach (ref var metricPoint in metric.GetMetricPoints())
                 {
                     var tags = metricPoint.Tags;
-                    var timestamp = metricPoint.GetEndTime().ToUnixTimeMilliseconds();
+                    var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
                     long totalCount = 0;
                     foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
