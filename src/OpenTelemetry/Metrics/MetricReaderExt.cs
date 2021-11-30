@@ -50,7 +50,7 @@ namespace OpenTelemetry.Metrics
                 var index = ++this.metricIndex;
                 if (index >= this.maxMetricStreams)
                 {
-                    OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Maximum allowed Metric streams for the provider exceeded.", "Use views to drop unused instruments. Or use SetMaxMetricStreams to configure Provider to allow higher limit.");
+                    OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Maximum allowed Metric streams for the provider exceeded.", "Use MeterProviderBuilder.AddView to drop unused instruments. Or use MeterProviderBuilder.SetMaxMetricStreams to configure MeterProvider to allow higher limit.");
                     return null;
                 }
                 else
@@ -104,20 +104,20 @@ namespace OpenTelemetry.Metrics
 
                     if (this.metricStreamNames.Contains(metricStreamName))
                     {
-                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Metric name conflicting with existing name.", "Either change the name of the instrument or change name using View.");
+                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Metric name conflicting with existing name.", "Either change the name of the instrument or change name using MeterProviderBuilder.AddView.");
                         continue;
                     }
 
                     if (metricStreamConfig?.Aggregation == Aggregation.Drop)
                     {
-                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "View configuration asks to drop this instrument.", "Modify View configuration to allow this instrument, if desired.");
+                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "View configuration asks to drop this instrument.", "Modify view configuration to allow this instrument, if desired.");
                         continue;
                     }
 
                     var index = ++this.metricIndex;
                     if (index >= this.maxMetricStreams)
                     {
-                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Maximum allowed Metric streams for the provider exceeded.", "Use MeterProvider.AddView to drop unused instruments. Or use SetMaxMetricStreams to configure MeterProvider to allow higher limit.");
+                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Maximum allowed Metric streams for the provider exceeded.", "Use MeterProviderBuilder.AddView to drop unused instruments. Or use MeterProviderBuilder.SetMaxMetricStreams to configure MeterProvider to allow higher limit.");
                     }
                     else
                     {
