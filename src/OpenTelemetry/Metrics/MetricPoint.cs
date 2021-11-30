@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace OpenTelemetry.Metrics
@@ -75,11 +76,13 @@ namespace OpenTelemetry.Metrics
 
         public DateTimeOffset StartTime
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 return this.startTime;
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal set
             {
                 this.startTime = value;
@@ -88,11 +91,13 @@ namespace OpenTelemetry.Metrics
 
         public DateTimeOffset EndTime
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 return this.EndTime;
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal set
             {
                 this.EndTime = value;
