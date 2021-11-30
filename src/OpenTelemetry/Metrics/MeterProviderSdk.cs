@@ -314,7 +314,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (state is not List<Metric> metrics)
                 {
-                    // TODO: log
+                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     return;
                 }
 
@@ -324,7 +324,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (state is not List<List<Metric>> metricsSuperList)
                 {
-                    // TODO: log
+                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     return;
                 }
 
@@ -340,7 +340,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (state is not List<Metric> metrics)
                 {
-                    // TODO: log
+                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     return;
                 }
 
@@ -350,7 +350,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (state is not List<List<Metric>> metricsSuperList)
                 {
-                    // TODO: log
+                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     return;
                 }
 
@@ -366,7 +366,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (state is not Metric metric)
                 {
-                    // TODO: log
+                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     return;
                 }
 
@@ -376,7 +376,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (state is not List<Metric> metrics)
                 {
-                    // TODO: log
+                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     return;
                 }
 
@@ -392,7 +392,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (state is not Metric metric)
                 {
-                    // TODO: log
+                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     return;
                 }
 
@@ -402,7 +402,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (state is not List<Metric> metrics)
                 {
-                    // TODO: log
+                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     return;
                 }
 
