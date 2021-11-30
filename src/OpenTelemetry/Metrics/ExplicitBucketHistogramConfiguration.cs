@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Metrics
 {
-    public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
+    public class ExplicitBucketHistogramConfiguration : MetricStreamConfiguration
     {
         /// <summary>
         /// Gets or sets the values representing explicit histogram bucket
