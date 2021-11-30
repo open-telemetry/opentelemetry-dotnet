@@ -110,7 +110,7 @@ namespace OpenTelemetry.Metrics
 
                     if (metricStreamConfig?.Aggregation == Aggregation.Drop)
                     {
-                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "View configuration asks to drop this instrument.", "Modifiy view configuration to allow this instrument, if desired.");
+                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "View configuration asks to drop this instrument.", "Modify View configuration to allow this instrument, if desired.");
                         continue;
                     }
 
