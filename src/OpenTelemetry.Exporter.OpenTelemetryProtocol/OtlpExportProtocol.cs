@@ -22,13 +22,18 @@ namespace OpenTelemetry.Exporter
     public enum OtlpExportProtocol : byte
     {
         /// <summary>
+        /// OTLP protocol has not been specified.
+        /// </summary>
+        Unspecified = 0,
+
+        /// <summary>
         /// OTLP over gRPC (corresponds to 'grpc' Protocol configuration option). Used as default.
         /// </summary>
-        Grpc = 0,
+        Grpc = 1,
 
         /// <summary>
         /// OTLP over HTTP with protobuf payloads (corresponds to 'http/protobuf' Protocol configuration option).
         /// </summary>
-        HttpProtobuf = 1,
+        HttpProtobuf = 2,
     }
 }
