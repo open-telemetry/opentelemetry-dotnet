@@ -33,7 +33,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             Guard.Null(options, nameof(options));
             Guard.InvalidTimeout(options.TimeoutMilliseconds, nameof(options.TimeoutMilliseconds));
 
-#if NETCOREAPP3_1
+#if !NETSTANDARD2_1 && !NET5_0_OR_GREATER
             ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options);
 #endif
 
