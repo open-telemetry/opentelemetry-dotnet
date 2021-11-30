@@ -70,7 +70,7 @@ namespace OpenTelemetry.Metrics
         public Enumerator GetEnumerator() => new Enumerator(this.head);
 
         /// <inheritdoc/>
-        protected override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
+        internal override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
         {
             // CompositeMetricReader delegates the work to its underlying readers,
             // so CompositeMetricReader.ProcessMetrics should never be called.

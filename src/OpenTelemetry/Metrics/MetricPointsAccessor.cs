@@ -15,12 +15,15 @@
 // </copyright>
 
 using System;
-using System.Collections;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
-    public readonly struct MetricPointsAccessor : IDisposable
+    /// <summary>
+    /// A struct for accessing the <see cref="MetricPoint"/>s collected for a
+    /// <see cref="Metric"/>.
+    /// </summary>
+    public readonly struct MetricPointsAccessor
     {
         private readonly MetricPoint[] metricsPoints;
         private readonly int[] metricPointsToProcess;
@@ -39,13 +42,8 @@ namespace OpenTelemetry.Metrics
             this.end = end;
         }
 
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-        }
-
         /// <summary>
-        /// Returns an enumerator that iterates through the <see cref="Batch{T}"/>.
+        /// Returns an enumerator that iterates through the <see cref="MetricPointsAccessor"/>.
         /// </summary>
         /// <returns><see cref="Enumerator"/>.</returns>
         public Enumerator GetEnumerator()
@@ -54,15 +52,15 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
-        /// Enumerates the elements of a <see cref="Batch{T}"/>.
+        /// Enumerates the elements of a <see cref="MetricPointsAccessor"/>.
         /// </summary>
-        public struct Enumerator : IEnumerator
+        public struct Enumerator
         {
             private readonly MetricPoint[] metricsPoints;
             private readonly int[] metricPointsToProcess;
             private readonly DateTimeOffset start;
             private readonly DateTimeOffset end;
-            private long targetCount;
+            private readonly long targetCount;
             private long index;
 
             internal Enumerator(MetricPoint[] metricsPoints, int[] metricPointsToProcess, long targetCount, DateTimeOffset start, DateTimeOffset end)
@@ -75,6 +73,9 @@ namespace OpenTelemetry.Metrics
                 this.end = end;
             }
 
+            /// <summary>
+            /// Gets the <see cref="MetricPoint"/> at the current position of the enumerator.
+            /// </summary>
             public ref MetricPoint Current
             {
                 get
@@ -83,14 +84,14 @@ namespace OpenTelemetry.Metrics
                 }
             }
 
-            /// <inheritdoc/>
-            object IEnumerator.Current => this.Current;
-
-            public void Dispose()
-            {
-            }
-
-            /// <inheritdoc/>
+            /// <summary>
+            /// Advances the enumerator to the next element of the <see
+            /// cref="MetricPointsAccessor"/>.
+            /// </summary>
+            /// <returns><see langword="true"/> if the enumerator was
+            /// successfully advanced to the next element; <see
+            /// langword="false"/> if the enumerator has passed the end of the
+            /// collection.</returns>
             public bool MoveNext()
             {
                 while (++this.index < this.targetCount)
@@ -103,10 +104,6 @@ namespace OpenTelemetry.Metrics
 
                 return false;
             }
-
-            /// <inheritdoc/>
-            public void Reset()
-                => throw new NotSupportedException();
         }
     }
 }

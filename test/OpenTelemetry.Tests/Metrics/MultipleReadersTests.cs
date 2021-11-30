@@ -109,13 +109,13 @@ namespace OpenTelemetry.Metrics.Tests
 
         private void AssertLongSumValueForMetric(Metric metric, long value)
         {
-            using var metricPoints = metric.GetMetricPoints();
+            var metricPoints = metric.GetMetricPoints();
             var metricPointsEnumerator = metricPoints.GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
             ref var metricPointForFirstExport = ref metricPointsEnumerator.Current;
             if (metric.MetricType.IsSum())
             {
-                Assert.Equal(value, metricPointForFirstExport.GetCounterSumLong());
+                Assert.Equal(value, metricPointForFirstExport.GetSumLong());
             }
             else
             {

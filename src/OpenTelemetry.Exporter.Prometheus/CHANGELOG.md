@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-rc1
+
+Released 2021-Nov-29
+
 * Bug fix for handling Histogram with empty buckets.
   ([#2651](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2651))
 
