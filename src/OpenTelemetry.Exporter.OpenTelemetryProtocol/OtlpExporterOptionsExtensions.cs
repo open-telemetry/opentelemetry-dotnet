@@ -31,9 +31,9 @@ namespace OpenTelemetry.Exporter
     internal static class OtlpExporterOptionsExtensions
     {
 #if NETSTANDARD2_1 || NET5_0_OR_GREATER
-        public static GrpcChannel CreateChannel(this OtlpExporterOptions options)
+        public static GrpcChannel CreateChannel(this ICommonOtlpExporterOptions options)
 #else
-        public static Channel CreateChannel(this OtlpExporterOptions options)
+        public static Channel CreateChannel(this ICommonOtlpExporterOptions options)
 #endif
         {
             if (options.Endpoint.Scheme != Uri.UriSchemeHttp && options.Endpoint.Scheme != Uri.UriSchemeHttps)
@@ -58,12 +58,12 @@ namespace OpenTelemetry.Exporter
 #endif
         }
 
-        public static Metadata GetMetadataFromHeaders(this OtlpExporterOptions options)
+        public static Metadata GetMetadataFromHeaders(this ICommonOtlpExporterOptions options)
         {
             return options.GetHeaders<Metadata>((m, k, v) => m.Add(k, v));
         }
 
-        public static THeaders GetHeaders<THeaders>(this OtlpExporterOptions options, Action<THeaders, string, string> addHeader)
+        public static THeaders GetHeaders<THeaders>(this ICommonOtlpExporterOptions options, Action<THeaders, string, string> addHeader)
             where THeaders : new()
         {
             var optionHeaders = options.Headers;
@@ -104,9 +104,9 @@ namespace OpenTelemetry.Exporter
         public static IExportClient<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportClient(this OtlpExporterOptions options) =>
             options.Protocol switch
             {
-                OtlpExportProtocol.Grpc => new OtlpGrpcMetricsExportClient(options),
+                OtlpExportProtocol.Grpc => new OtlpGrpcMetricsExportClient(options.MetricOptions),
                 OtlpExportProtocol.HttpProtobuf => new OtlpHttpMetricsExportClient(
-                    options,
+                    options.MetricOptions,
                     options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
                 _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
             };

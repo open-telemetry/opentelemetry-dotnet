@@ -35,7 +35,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         internal const string MediaContentType = "application/x-protobuf";
         private readonly Uri exportMetricsUri;
 
-        public OtlpHttpMetricsExportClient(OtlpExporterOptions options, HttpClient httpClient)
+        public OtlpHttpMetricsExportClient(ICommonOtlpExporterOptions options, HttpClient httpClient)
             : base(options, httpClient)
         {
             this.exportMetricsUri = this.Options.Endpoint;
