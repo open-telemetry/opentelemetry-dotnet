@@ -38,7 +38,7 @@ public interface ICommonOtlpExporterOptions
     public string Headers { get; set; }
 
     /// <summary>
-    /// Gets or sets the max waiting time (in milliseconds) for the backend to process each batch. The default value is 10000.
+    /// Gets or sets the maximum waiting time (in milliseconds) for the backend to process each batch. The default value is 10000.
     /// </summary>
     public int TimeoutMilliseconds { get; set; }
 
