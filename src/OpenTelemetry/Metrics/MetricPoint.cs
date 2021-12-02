@@ -63,7 +63,11 @@ namespace OpenTelemetry.Metrics
             }
             else if (this.aggType == AggregationType.HistogramSumCount)
             {
-                this.secondaryValue.HistogramBuckets = new HistogramBuckets(null);
+                this.histogramBuckets = new HistogramBuckets(null);
+            }
+            else
+            {
+                this.histogramBuckets = null;
             }
         }
 
@@ -309,19 +313,17 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        var histogramBuckets = this.secondaryValue.HistogramBuckets;
-
                         int i;
-                        for (i = 0; i < histogramBuckets.ExplicitBounds.Length; i++)
+                        for (i = 0; i < this.histogramBuckets.ExplicitBounds.Length; i++)
                         {
                             // Upper bound is inclusive
-                            if (number <= histogramBuckets.ExplicitBounds[i])
+                            if (number <= this.histogramBuckets.ExplicitBounds[i])
                             {
                                 break;
                             }
                         }
 
-                        lock (histogramBuckets.LockObject)
+                        lock (this.histogramBuckets.LockObject)
                         {
                             this.runningValue.AsLong++;
                             this.histogramBuckets.RunningSum += number;
@@ -333,9 +335,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramSumCount:
                     {
-                        var histogramBuckets = this.secondaryValue.HistogramBuckets;
-
-                        lock (histogramBuckets.LockObject)
+                        lock (this.histogramBuckets.LockObject)
                         {
                             this.runningValue.AsLong++;
                             this.histogramBuckets.RunningSum += number;
@@ -393,8 +393,6 @@ namespace OpenTelemetry.Metrics
                     {
                         if (outputDelta)
                         {
-                            MetricPointDeltaState deltaState = this.EnsureDeltaState();
-
                             // TODO:
                             // Is this thread-safe way to read double?
                             // As long as the value is not -ve infinity,
@@ -462,9 +460,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        var histogramBuckets = this.secondaryValue.HistogramBuckets;
-
-                        lock (histogramBuckets.LockObject)
+                        lock (this.histogramBuckets.LockObject)
                         {
                             this.snapshotValue.AsLong = this.runningValue.AsLong;
                             this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
@@ -491,9 +487,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramSumCount:
                     {
-                        var histogramBuckets = this.secondaryValue.HistogramBuckets;
-
-                        lock (histogramBuckets.LockObject)
+                        lock (this.histogramBuckets.LockObject)
                         {
                             this.snapshotValue.AsLong = this.runningValue.AsLong;
                             this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;

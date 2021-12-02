@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Metrics
 {
-    internal enum MetricPointStatus : byte
+    internal enum MetricPointStatus
     {
         /// <summary>
         /// This status is applied to <see cref="MetricPoint"/>s with status <see cref="CollectPending"/> after a Collect.
