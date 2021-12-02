@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Fixed an issue with `Filter` and `Enrich` callbacks not firing under certain
+  conditions when gRPC is used
+  ([#2698](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2698))
+
 ## 1.0.0-rc8
 
 Released 2021-Oct-08
