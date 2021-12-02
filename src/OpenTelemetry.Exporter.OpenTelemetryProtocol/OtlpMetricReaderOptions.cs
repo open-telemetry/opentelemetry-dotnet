@@ -28,7 +28,7 @@ public class OtlpMetricReaderOptions
     /// Gets or sets the AggregationTemporality used for Histogram
     /// and Sum metrics.
     /// </summary>
-    public AggregationTemporality AggregationTemporality { get; set; } = AggregationTemporality.Cumulative;
+    public AggregationTemporality Temporality { get; set; } = AggregationTemporality.Cumulative;
 
     /// <summary>
     /// Gets or sets the <see cref="MetricReaderType" /> to use. Defaults to <c>MetricReaderType.Manual</c>.

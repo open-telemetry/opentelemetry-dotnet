@@ -70,7 +70,7 @@ namespace Examples.Console
                     {
                         metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
                         metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
-                        metricReaderOptions.AggregationTemporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
+                        metricReaderOptions.Temporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                     });
             }
             else
