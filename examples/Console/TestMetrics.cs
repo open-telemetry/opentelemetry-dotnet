@@ -66,12 +66,16 @@ namespace Examples.Console
                 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
                 providerBuilder
-                    .AddOtlpExporter(o =>
-                    {
-                        o.MetricReaderType = MetricReaderType.Periodic;
-                        o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
-                        o.AggregationTemporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
-                    });
+                    .AddOtlpExporter(
+                        exporterOptions =>
+                        {
+                        },
+                        metricReaderOptions =>
+                        {
+                            metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
+                            metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
+                            metricReaderOptions.AggregationTemporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
+                        });
             }
             else
             {
