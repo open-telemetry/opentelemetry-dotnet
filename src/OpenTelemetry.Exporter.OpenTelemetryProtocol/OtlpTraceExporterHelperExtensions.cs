@@ -29,6 +29,30 @@ namespace OpenTelemetry.Trace
         /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
+        /// <param name="optionsBuilder"><see cref="OltpTraceExporterOptionsBuilder"/>.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddOtlpExporter(
+            this TracerProviderBuilder builder,
+            OltpTraceExporterOptionsBuilder optionsBuilder)
+        {
+            Guard.Null(builder, nameof(builder));
+            Guard.Null(optionsBuilder, nameof(optionsBuilder));
+
+            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            {
+                return deferredTracerProviderBuilder.Configure((sp, builder) =>
+                {
+                    AddOtlpExporter(builder, optionsBuilder, sp);
+                });
+            }
+
+            return AddOtlpExporter(builder, optionsBuilder, serviceProvider: null);
+        }
+
+        /// <summary>
+        /// Adds OpenTelemetry Protocol (OTLP) exporter to the TracerProvider.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter options configuration callback.</param>
         /// <param name="optionsBuilder"><see cref="OltpTraceExporterOptionsBuilder"/>.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
@@ -46,15 +70,7 @@ namespace OpenTelemetry.Trace
                 optionsBuilder.Configure(configure);
             }
 
-            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
-            {
-                return deferredTracerProviderBuilder.Configure((sp, builder) =>
-                {
-                    AddOtlpExporter(builder, optionsBuilder, sp);
-                });
-            }
-
-            return AddOtlpExporter(builder, optionsBuilder, serviceProvider: null);
+            return AddOtlpExporter(builder, optionsBuilder);
         }
 
         private static TracerProviderBuilder AddOtlpExporter(
@@ -62,29 +78,11 @@ namespace OpenTelemetry.Trace
             OltpTraceExporterOptionsBuilder optionsBuilder,
             IServiceProvider serviceProvider)
         {
-            var originalEndpoint = optionsBuilder.BuilderOptions.Endpoint;
+            var options = optionsBuilder.Build(serviceProvider);
 
-            var exporterOptions = optionsBuilder.Build(serviceProvider);
+            var exporter = new OtlpTraceExporter(options);
 
-            exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
-
-            exporterOptions.AppendExportPath(originalEndpoint, OtlpExporterOptions.TracesExportPath);
-
-            var otlpExporter = new OtlpTraceExporter(exporterOptions);
-
-            if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
-            {
-                return builder.AddProcessor(new SimpleActivityExportProcessor(otlpExporter));
-            }
-            else
-            {
-                return builder.AddProcessor(new BatchActivityExportProcessor(
-                    otlpExporter,
-                    exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
-                    exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
-                    exporterOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
-                    exporterOptions.BatchExportProcessorOptions.MaxExportBatchSize));
-            }
+            return builder.AddProcessor(exporter, options);
         }
     }
 }

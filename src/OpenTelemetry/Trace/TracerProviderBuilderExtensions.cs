@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
@@ -89,6 +90,30 @@ namespace OpenTelemetry.Trace
             }
 
             return tracerProviderBuilder;
+        }
+
+        /// <summary>
+        /// Adds processor to the provider.
+        /// </summary>
+        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="exporter"><see cref="BaseExporter{T}"/>.</param>
+        /// <param name="options"><see cref="ITraceExporterOptions"/>.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder AddProcessor(this TracerProviderBuilder tracerProviderBuilder, BaseExporter<Activity> exporter, ITraceExporterOptions options)
+        {
+            if (options.ExportProcessorType == ExportProcessorType.Simple)
+            {
+                return tracerProviderBuilder.AddProcessor(new SimpleActivityExportProcessor(exporter));
+            }
+            else
+            {
+                return tracerProviderBuilder.AddProcessor(new BatchActivityExportProcessor(
+                    exporter,
+                    options.BatchExportProcessorOptions.MaxQueueSize,
+                    options.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
+                    options.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                    options.BatchExportProcessorOptions.MaxExportBatchSize));
+            }
         }
 
         /// <summary>

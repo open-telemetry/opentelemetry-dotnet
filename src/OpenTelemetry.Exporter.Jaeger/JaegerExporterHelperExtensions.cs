@@ -15,8 +15,6 @@
 // </copyright>
 
 using System;
-using System.Net.Http;
-using System.Reflection;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
@@ -31,75 +29,60 @@ namespace OpenTelemetry.Trace
         /// Adds Jaeger exporter to the TracerProvider.
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
+        /// <param name="optionsBuilder"><see cref="JaegerExporterOptionsBuilder"/>.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        public static TracerProviderBuilder AddJaegerExporter(this TracerProviderBuilder builder, Action<JaegerExporterOptions> configure = null)
+        public static TracerProviderBuilder AddJaegerExporter(
+            this TracerProviderBuilder builder,
+            JaegerExporterOptionsBuilder optionsBuilder)
         {
             Guard.Null(builder, nameof(builder));
+            Guard.Null(optionsBuilder, nameof(optionsBuilder));
 
             if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
             {
                 return deferredTracerProviderBuilder.Configure((sp, builder) =>
                 {
-                    AddJaegerExporter(builder, sp.GetOptions<JaegerExporterOptions>(), configure, sp);
+                    AddJaegerExporter(builder, optionsBuilder, sp);
                 });
             }
 
-            return AddJaegerExporter(builder, new JaegerExporterOptions(), configure, serviceProvider: null);
+            return AddJaegerExporter(builder, optionsBuilder, serviceProvider: null);
+        }
+
+        /// <summary>
+        /// Adds Jaeger exporter to the TracerProvider.
+        /// </summary>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/> builder to use.</param>
+        /// <param name="configure">Exporter options configuration callback.</param>
+        /// <param name="optionsBuilder"><see cref="JaegerExporterOptionsBuilder"/>.</param>
+        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        public static TracerProviderBuilder AddJaegerExporter(
+            this TracerProviderBuilder builder,
+            Action<JaegerExporterOptions> configure = null,
+            JaegerExporterOptionsBuilder optionsBuilder = null)
+        {
+            Guard.Null(builder, nameof(builder));
+
+            optionsBuilder ??= new();
+
+            if (configure != null)
+            {
+                optionsBuilder.Configure(configure);
+            }
+
+            return AddJaegerExporter(builder, optionsBuilder);
         }
 
         private static TracerProviderBuilder AddJaegerExporter(
             TracerProviderBuilder builder,
-            JaegerExporterOptions options,
-            Action<JaegerExporterOptions> configure,
+            JaegerExporterOptionsBuilder optionsBuilder,
             IServiceProvider serviceProvider)
         {
-            configure?.Invoke(options);
+            var options = optionsBuilder.Build(serviceProvider);
 
-            if (serviceProvider != null
-                && options.Protocol == JaegerExportProtocol.HttpBinaryThrift
-                && options.HttpClientFactory == JaegerExporterOptions.DefaultHttpClientFactory)
-            {
-                options.HttpClientFactory = () =>
-                {
-                    Type httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
-                    if (httpClientFactoryType != null)
-                    {
-                        object httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
-                        if (httpClientFactory != null)
-                        {
-                            MethodInfo createClientMethod = httpClientFactoryType.GetMethod(
-                                "CreateClient",
-                                BindingFlags.Public | BindingFlags.Instance,
-                                binder: null,
-                                new Type[] { typeof(string) },
-                                modifiers: null);
-                            if (createClientMethod != null)
-                            {
-                                return (HttpClient)createClientMethod.Invoke(httpClientFactory, new object[] { "JaegerExporter" });
-                            }
-                        }
-                    }
+            var exporter = new JaegerExporter(options);
 
-                    return new HttpClient();
-                };
-            }
-
-            var jaegerExporter = new JaegerExporter(options);
-
-            if (options.ExportProcessorType == ExportProcessorType.Simple)
-            {
-                return builder.AddProcessor(new SimpleActivityExportProcessor(jaegerExporter));
-            }
-            else
-            {
-                return builder.AddProcessor(new BatchActivityExportProcessor(
-                    jaegerExporter,
-                    options.BatchExportProcessorOptions.MaxQueueSize,
-                    options.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
-                    options.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
-                    options.BatchExportProcessorOptions.MaxExportBatchSize));
-            }
+            return builder.AddProcessor(exporter, options);
         }
     }
 }

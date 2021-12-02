@@ -31,11 +31,9 @@ namespace OpenTelemetry.Exporter
     /// The constructor throws <see cref="FormatException"/> if it fails to parse
     /// any of the supported environment variables.
     /// </remarks>
-    public class OtlpExporterOptions : ITraceExporterOptions, IMetricExporterOptions
+    public class OtlpExporterOptions : ITraceExporterOptions, IMetricExporterOptions, IHttpClientFactoryExporterOptions
     {
-        internal const string TracesExportPath = "v1/traces";
-        internal const string MetricsExportPath = "v1/metrics";
-
+        internal readonly Uri DefaultEndpoint;
         internal readonly Func<HttpClient> DefaultHttpClientFactory;
 
         /// <summary>
@@ -43,6 +41,7 @@ namespace OpenTelemetry.Exporter
         /// </summary>
         public OtlpExporterOptions()
         {
+            this.Endpoint = this.DefaultEndpoint;
             this.HttpClientFactory = this.DefaultHttpClientFactory = () =>
             {
                 return new HttpClient()
@@ -57,7 +56,7 @@ namespace OpenTelemetry.Exporter
         /// Must be a valid Uri with scheme (http or https) and host, and
         /// may contain a port and path. The default value is http://localhost:4317.
         /// </summary>
-        public Uri Endpoint { get; set; } = new Uri("http://localhost:4317");
+        public Uri Endpoint { get; set; }
 
         /// <summary>
         /// Gets or sets optional headers for the connection. Refer to the <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables">

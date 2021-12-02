@@ -7,10 +7,13 @@ namespace OpenTelemetry.Exporter
     {
         public static TBuilder ConfigureMetricReader<TOptions, TBuilder>(
             this IMetricExporterOptionsBuilder<TOptions, TBuilder> builder, Action<IMetricExporterOptions> configure)
-            where TOptions : IMetricExporterOptions
+            where TOptions : class, IMetricExporterOptions, new()
+            where TBuilder : ExporterOptionsBuilder<TOptions, TBuilder>
         {
             Guard.Null(configure);
-            configure(builder.BuilderOptions);
+
+            builder.BuilderInstance.Configure((sp, o) => configure(o));
+
             return builder.BuilderInstance;
         }
     }

@@ -29,6 +29,30 @@ namespace OpenTelemetry.Metrics
         /// Adds <see cref="OtlpMetricExporter"/> to the <see cref="MeterProviderBuilder"/>.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
+        /// <param name="optionsBuilder"><see cref="OltpMetricExporterOptionsBuilder"/>.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
+        public static MeterProviderBuilder AddOtlpExporter(
+            this MeterProviderBuilder builder,
+            OltpMetricExporterOptionsBuilder optionsBuilder)
+        {
+            Guard.Null(builder, nameof(builder));
+            Guard.Null(optionsBuilder, nameof(optionsBuilder));
+
+            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            {
+                return deferredMeterProviderBuilder.Configure((sp, builder) =>
+                {
+                    AddOtlpExporter(builder, optionsBuilder, sp);
+                });
+            }
+
+            return AddOtlpExporter(builder, optionsBuilder, serviceProvider: null);
+        }
+
+        /// <summary>
+        /// Adds <see cref="OtlpMetricExporter"/> to the <see cref="MeterProviderBuilder"/>.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <param name="optionsBuilder"><see cref="OltpMetricExporterOptionsBuilder"/>.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
@@ -46,15 +70,7 @@ namespace OpenTelemetry.Metrics
                 optionsBuilder.Configure(configure);
             }
 
-            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
-            {
-                return deferredMeterProviderBuilder.Configure((sp, builder) =>
-                {
-                    AddOtlpExporter(builder, optionsBuilder, sp);
-                });
-            }
-
-            return AddOtlpExporter(builder, optionsBuilder, serviceProvider: null);
+            return AddOtlpExporter(builder, optionsBuilder);
         }
 
         private static MeterProviderBuilder AddOtlpExporter(
@@ -62,22 +78,11 @@ namespace OpenTelemetry.Metrics
             OltpMetricExporterOptionsBuilder optionsBuilder,
             IServiceProvider serviceProvider)
         {
-            var initialEndpoint = optionsBuilder.BuilderOptions.Endpoint;
-
             var options = optionsBuilder.Build(serviceProvider);
 
-            options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
+            var exporter = new OtlpMetricExporter(options);
 
-            options.AppendExportPath(initialEndpoint, OtlpExporterOptions.MetricsExportPath);
-
-            var metricExporter = new OtlpMetricExporter(options);
-
-            var metricReader = options.MetricReaderType == MetricReaderType.Manual
-                ? new BaseExportingMetricReader(metricExporter)
-                : new PeriodicExportingMetricReader(metricExporter, options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
-
-            metricReader.Temporality = options.AggregationTemporality;
-            return builder.AddReader(metricReader);
+            return builder.AddReader(exporter, options);
         }
     }
 }

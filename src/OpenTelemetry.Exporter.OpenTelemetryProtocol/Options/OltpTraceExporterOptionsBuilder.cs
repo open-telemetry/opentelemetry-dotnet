@@ -1,14 +1,19 @@
+using System;
+
 namespace OpenTelemetry.Exporter
 {
-    public sealed class OltpTraceExporterOptionsBuilder : OtlpExporterOptionsBuilder<OltpTraceExporterOptionsBuilder>, ITraceExporterOptionsBuilder<OtlpExporterOptions, OltpTraceExporterOptionsBuilder>
+    public sealed class OltpTraceExporterOptionsBuilder : OtlpExporterOptionsBuilder<OltpTraceExporterOptionsBuilder>,
+        ITraceExporterOptionsBuilder<OtlpExporterOptions, OltpTraceExporterOptionsBuilder>,
+        IHttpClientFactoryExporterOptionsBuilder<OtlpExporterOptions, OltpTraceExporterOptionsBuilder>
     {
         internal const string TracesEndpointEnvVarName = "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT";
         internal const string TracesHeadersEnvVarName = "OTEL_EXPORTER_OTLP_TRACES_HEADERS";
         internal const string TracesTimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TRACES_TIMEOUT";
         internal const string TracesProtocolEnvVarName = "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL";
+        internal const string TracesExportPath = "v1/traces";
 
         public OltpTraceExporterOptionsBuilder()
-            : base(TracesEndpointEnvVarName, TracesHeadersEnvVarName, TracesTimeoutEnvVarName, TracesProtocolEnvVarName)
+            : base(TracesEndpointEnvVarName, TracesExportPath, TracesHeadersEnvVarName, TracesTimeoutEnvVarName, TracesProtocolEnvVarName)
         {
         }
 
@@ -16,12 +21,11 @@ namespace OpenTelemetry.Exporter
         public override OltpTraceExporterOptionsBuilder BuilderInstance => this;
 
         /// <inheritdoc/>
-        protected override void ApplyTo(OtlpExporterOptions options)
+        protected override void ApplyTo(IServiceProvider serviceProvider, OtlpExporterOptions options)
         {
-            options.ExportProcessorType = this.BuilderOptions.ExportProcessorType;
-            options.BatchExportProcessorOptions = this.BuilderOptions.BatchExportProcessorOptions;
+            base.ApplyTo(serviceProvider, options);
 
-            base.ApplyTo(options);
+            options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
         }
     }
 }

@@ -15,11 +15,8 @@
 // </copyright>
 
 using System;
-using System.Net.Http;
-using System.Reflection;
 using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
-using OpenTelemetry.Internal;
 #if NETSTANDARD2_1 || NET5_0_OR_GREATER
 using Grpc.Net.Client;
 #endif
@@ -125,80 +122,11 @@ namespace OpenTelemetry.Exporter
                 && options.Protocol == OtlpExportProtocol.HttpProtobuf
                 && options.HttpClientFactory == options.DefaultHttpClientFactory)
             {
-                options.HttpClientFactory = () =>
-                {
-                    Type httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
-                    if (httpClientFactoryType != null)
-                    {
-                        object httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
-                        if (httpClientFactory != null)
-                        {
-                            MethodInfo createClientMethod = httpClientFactoryType.GetMethod(
-                                "CreateClient",
-                                BindingFlags.Public | BindingFlags.Instance,
-                                binder: null,
-                                new Type[] { typeof(string) },
-                                modifiers: null);
-                            if (createClientMethod != null)
-                            {
-                                HttpClient client = (HttpClient)createClientMethod.Invoke(httpClientFactory, new object[] { httpClientName });
-
-                                client.Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds);
-
-                                return client;
-                            }
-                        }
-                    }
-
-                    return options.DefaultHttpClientFactory();
-                };
+                options.TryEnableIHttpClientFactoryIntegration(
+                    serviceProvider,
+                    httpClientName,
+                    client => client.Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds));
             }
-        }
-
-        internal static void AppendExportPath(this OtlpExporterOptions options, Uri initialEndpoint, string exportRelativePath)
-        {
-            // The exportRelativePath is only appended when the options.Endpoint property wasn't set by the user,
-            // the protocol is HttpProtobuf and the OTEL_EXPORTER_OTLP_ENDPOINT environment variable
-            // is present. If the user provides a custom value for options.Endpoint that value is taken as is.
-            if (ReferenceEquals(initialEndpoint, options.Endpoint))
-            {
-                if (options.Protocol == OtlpExportProtocol.HttpProtobuf)
-                {
-                    if (EnvironmentVariableHelper.LoadUri(OtlpExporterOptions.EndpointEnvVarName, out Uri endpoint))
-                    {
-                        // At this point we can conclude that endpoint was initialized from OTEL_EXPORTER_OTLP_ENDPOINT
-                        // and has to be appended by export relative path (traces/metrics).
-                        options.Endpoint = endpoint.AppendPathIfNotPresent(exportRelativePath);
-                    }
-                }
-            }
-        }
-
-        internal static Uri AppendPathIfNotPresent(this Uri uri, string path)
-        {
-            var absoluteUri = uri.AbsoluteUri;
-            var separator = string.Empty;
-
-            if (absoluteUri.EndsWith("/"))
-            {
-                // Endpoint already ends with 'path/'
-                if (absoluteUri.EndsWith(string.Concat(path, "/"), StringComparison.OrdinalIgnoreCase))
-                {
-                    return uri;
-                }
-            }
-            else
-            {
-                // Endpoint already ends with 'path'
-                if (absoluteUri.EndsWith(path, StringComparison.OrdinalIgnoreCase))
-                {
-                    return uri;
-                }
-
-                separator = "/";
-            }
-
-            return new Uri(string.Concat(uri.AbsoluteUri, separator, path));
         }
     }
 }

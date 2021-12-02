@@ -7,10 +7,13 @@ namespace OpenTelemetry.Exporter
     {
         public static TBuilder ConfigureActivityProcessor<TOptions, TBuilder>(
             this ITraceExporterOptionsBuilder<TOptions, TBuilder> builder, Action<ITraceExporterOptions> configure)
-            where TOptions : ITraceExporterOptions
+            where TOptions : class, ITraceExporterOptions, new()
+            where TBuilder : ExporterOptionsBuilder<TOptions, TBuilder>
         {
             Guard.Null(configure);
-            configure(builder.BuilderOptions);
+
+            builder.BuilderInstance.Configure((sp, o) => configure(o));
+
             return builder.BuilderInstance;
         }
     }

@@ -16,6 +16,8 @@
 
 using System;
 using System.Diagnostics.Metrics;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -39,6 +41,27 @@ namespace OpenTelemetry.Metrics
             }
 
             return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Adds a reader to the provider.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="exporter"><see cref="BaseExporter{T}"/>.</param>
+        /// <param name="options"><see cref="IMetricExporterOptions"/>.</param>
+        /// <returns><see cref="MeterProvider"/>.</returns>
+        public static MeterProviderBuilder AddReader(this MeterProviderBuilder meterProviderBuilder, BaseExporter<Metric> exporter, IMetricExporterOptions options)
+        {
+            Guard.Null(exporter, nameof(exporter));
+            Guard.Null(options, nameof(options));
+
+            var metricReader = options.MetricReaderType == MetricReaderType.Manual
+                ? new BaseExportingMetricReader(exporter)
+                : new PeriodicExportingMetricReader(exporter, options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
+
+            metricReader.Temporality = options.AggregationTemporality;
+
+            return meterProviderBuilder.AddReader(metricReader);
         }
 
         /// <summary>

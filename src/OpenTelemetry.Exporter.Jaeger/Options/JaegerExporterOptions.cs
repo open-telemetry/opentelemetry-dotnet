@@ -17,7 +17,6 @@
 using System;
 using System.Diagnostics;
 using System.Net.Http;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
@@ -31,41 +30,11 @@ namespace OpenTelemetry.Exporter
     /// The constructor throws <see cref="FormatException"/> if it fails to parse
     /// any of the supported environment variables.
     /// </remarks>
-    public class JaegerExporterOptions
+    public class JaegerExporterOptions : ITraceExporterOptions, IHttpClientFactoryExporterOptions
     {
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
 
-        internal const string OtelProtocolEnvVarKey = "OTEL_EXPORTER_JAEGER_PROTOCOL";
-        internal const string OTelAgentHostEnvVarKey = "OTEL_EXPORTER_JAEGER_AGENT_HOST";
-        internal const string OTelAgentPortEnvVarKey = "OTEL_EXPORTER_JAEGER_AGENT_PORT";
-        internal const string OTelEndpointEnvVarKey = "OTEL_EXPORTER_JAEGER_ENDPOINT";
-
         internal static readonly Func<HttpClient> DefaultHttpClientFactory = () => new HttpClient();
-
-        public JaegerExporterOptions()
-        {
-            if (EnvironmentVariableHelper.LoadString(OtelProtocolEnvVarKey, out string protocolEnvVar)
-                && Enum.TryParse(protocolEnvVar, ignoreCase: true, out JaegerExportProtocol protocol))
-            {
-                this.Protocol = protocol;
-            }
-
-            if (EnvironmentVariableHelper.LoadString(OTelAgentHostEnvVarKey, out string agentHostEnvVar))
-            {
-                this.AgentHost = agentHostEnvVar;
-            }
-
-            if (EnvironmentVariableHelper.LoadNumeric(OTelAgentPortEnvVarKey, out int agentPortEnvVar))
-            {
-                this.AgentPort = agentPortEnvVar;
-            }
-
-            if (EnvironmentVariableHelper.LoadString(OTelEndpointEnvVarKey, out string endpointEnvVar)
-                && Uri.TryCreate(endpointEnvVar, UriKind.Absolute, out Uri endpoint))
-            {
-                this.Endpoint = endpoint;
-            }
-        }
 
         public JaegerExportProtocol Protocol { get; set; } = JaegerExportProtocol.UdpCompactThrift;
 
@@ -110,9 +79,8 @@ namespace OpenTelemetry.Exporter
         /// <list type="bullet">
         /// <item>This is only invoked for the <see
         /// cref="JaegerExportProtocol.HttpBinaryThrift"/> protocol.</item>
-        /// <item>The default behavior when using the <see
-        /// cref="JaegerExporterHelperExtensions.AddJaegerExporter(TracerProviderBuilder,
-        /// Action{JaegerExporterOptions})"/> extension is if an <a
+        /// <item>The default behavior when using the "AddJaegerExporter"
+        /// extensions is if an <a
         /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpclientfactory">IHttpClientFactory</a>
         /// instance can be resolved through the application <see
         /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be
