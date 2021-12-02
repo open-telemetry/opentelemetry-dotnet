@@ -17,7 +17,6 @@
 using System;
 using System.Diagnostics;
 using System.Net.Http;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -32,13 +31,8 @@ namespace OpenTelemetry.Exporter
     /// The constructor throws <see cref="FormatException"/> if it fails to parse
     /// any of the supported environment variables.
     /// </remarks>
-    public class OtlpExporterOptions
+    public class OtlpExporterOptions : ITraceExporterOptions, IMetricExporterOptions
     {
-        internal const string EndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
-        internal const string HeadersEnvVarName = "OTEL_EXPORTER_OTLP_HEADERS";
-        internal const string TimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TIMEOUT";
-        internal const string ProtocolEnvVarName = "OTEL_EXPORTER_OTLP_PROTOCOL";
-
         internal const string TracesExportPath = "v1/traces";
         internal const string MetricsExportPath = "v1/metrics";
 
@@ -49,34 +43,6 @@ namespace OpenTelemetry.Exporter
         /// </summary>
         public OtlpExporterOptions()
         {
-            if (EnvironmentVariableHelper.LoadUri(EndpointEnvVarName, out Uri endpoint))
-            {
-                this.Endpoint = endpoint;
-            }
-
-            if (EnvironmentVariableHelper.LoadString(HeadersEnvVarName, out string headersEnvVar))
-            {
-                this.Headers = headersEnvVar;
-            }
-
-            if (EnvironmentVariableHelper.LoadNumeric(TimeoutEnvVarName, out int timeout))
-            {
-                this.TimeoutMilliseconds = timeout;
-            }
-
-            if (EnvironmentVariableHelper.LoadString(ProtocolEnvVarName, out string protocolEnvVar))
-            {
-                var protocol = protocolEnvVar.ToOtlpExportProtocol();
-                if (protocol.HasValue)
-                {
-                    this.Protocol = protocol.Value;
-                }
-                else
-                {
-                    throw new FormatException($"{ProtocolEnvVarName} environment variable has an invalid value: '${protocolEnvVar}'");
-                }
-            }
-
             this.HttpClientFactory = this.DefaultHttpClientFactory = () =>
             {
                 return new HttpClient()
@@ -148,7 +114,8 @@ namespace OpenTelemetry.Exporter
         /// cref="OtlpExportProtocol.HttpProtobuf"/> protocol.</item>
         /// <item>The default behavior when using the <see
         /// cref="OtlpTraceExporterHelperExtensions.AddOtlpExporter(TracerProviderBuilder,
-        /// Action{OtlpExporterOptions})"/> extension is if an <a
+        /// Action{OtlpExporterOptions}, OltpTraceExporterOptionsBuilder)"/>
+        /// extension is if an <a
         /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpclientfactory">IHttpClientFactory</a>
         /// instance can be resolved through the application <see
         /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be
@@ -157,7 +124,8 @@ namespace OpenTelemetry.Exporter
         /// directly.</item>
         /// <item>The default behavior when using the <see
         /// cref="OtlpMetricExporterExtensions.AddOtlpExporter(MeterProviderBuilder,
-        /// Action{OtlpExporterOptions})"/> extension is if an <a
+        /// Action{OtlpExporterOptions}, OltpMetricExporterOptionsBuilder)"/>
+        /// extension is if an <a
         /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpclientfactory">IHttpClientFactory</a>
         /// instance can be resolved through the application <see
         /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be

@@ -30,31 +30,41 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
+        /// <param name="optionsBuilder"><see cref="OltpMetricExporterOptionsBuilder"/>.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
-        public static MeterProviderBuilder AddOtlpExporter(this MeterProviderBuilder builder, Action<OtlpExporterOptions> configure = null)
+        public static MeterProviderBuilder AddOtlpExporter(
+            this MeterProviderBuilder builder,
+            Action<OtlpExporterOptions> configure = null,
+            OltpMetricExporterOptionsBuilder optionsBuilder = null)
         {
             Guard.Null(builder, nameof(builder));
+
+            optionsBuilder ??= new();
+
+            if (configure != null)
+            {
+                optionsBuilder.Configure(configure);
+            }
 
             if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
             {
                 return deferredMeterProviderBuilder.Configure((sp, builder) =>
                 {
-                    AddOtlpExporter(builder, sp.GetOptions<OtlpExporterOptions>(), configure, sp);
+                    AddOtlpExporter(builder, optionsBuilder, sp);
                 });
             }
 
-            return AddOtlpExporter(builder, new OtlpExporterOptions(), configure, serviceProvider: null);
+            return AddOtlpExporter(builder, optionsBuilder, serviceProvider: null);
         }
 
         private static MeterProviderBuilder AddOtlpExporter(
             MeterProviderBuilder builder,
-            OtlpExporterOptions options,
-            Action<OtlpExporterOptions> configure,
+            OltpMetricExporterOptionsBuilder optionsBuilder,
             IServiceProvider serviceProvider)
         {
-            var initialEndpoint = options.Endpoint;
+            var initialEndpoint = optionsBuilder.BuilderOptions.Endpoint;
 
-            configure?.Invoke(options);
+            var options = optionsBuilder.Build(serviceProvider);
 
             options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
 
