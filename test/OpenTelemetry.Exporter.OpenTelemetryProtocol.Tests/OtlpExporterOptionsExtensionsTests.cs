@@ -86,6 +86,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient))]
         public void GetTraceExportClient_SupportedProtocol_ReturnsCorrectExportClient(OtlpExportProtocol protocol, Type expectedExportClientType)
         {
+#if NETCOREAPP3_1
+            if (protocol == OtlpExportProtocol.Grpc)
+            {
+                // Adding the OtlpExporter creates a GrpcChannel.
+                // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
+                // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
+                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            }
+#endif
             var options = new OtlpExporterOptions
             {
                 Protocol = protocol,
@@ -95,6 +104,24 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.Equal(expectedExportClientType, exportClient.GetType());
         }
+
+#if NETCOREAPP3_1
+        [Fact]
+        public void GetTraceExportClient_GetClientForGrpcWithoutUnencryptedFlag_ThrowsException()
+        {
+            // Adding the OtlpExporter creates a GrpcChannel.
+            // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
+            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", false);
+
+            var options = new OtlpExporterOptions
+            {
+                Protocol = OtlpExportProtocol.Grpc,
+            };
+
+            Assert.Throws<InvalidOperationException>(() => options.GetTraceExportClient());
+        }
+#endif
 
         [Fact]
         public void GetTraceExportClient_UnsupportedProtocol_Throws()
