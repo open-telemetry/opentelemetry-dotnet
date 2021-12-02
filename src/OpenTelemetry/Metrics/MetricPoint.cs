@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics
 
         private readonly HistogramBuckets histogramBuckets;
 
-        // Represents either "value" for double/long metric types or "count" when histogram
+        // Represents temporality adjusted "value" for double/long metric types or "count" when histogram
         private MetricPointValueStorage runningValue;
 
         // Represents either "value" for double/long metric types or "count" when histogram
