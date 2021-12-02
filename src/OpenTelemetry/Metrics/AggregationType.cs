@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Metrics
 {
-    internal enum AggregationType : sbyte
+    internal enum AggregationType
     {
         /// <summary>
         /// Invalid.
