@@ -39,9 +39,9 @@ namespace OpenTelemetry.Metrics
         /// Adds <see cref="OtlpMetricExporter"/> to the <see cref="MeterProviderBuilder"/>.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
+        /// <param name="configureExporter">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
-        public static MeterProviderBuilder AddOtlpExporter(this MeterProviderBuilder builder, Action<OtlpExporterOptions> configure)
+        public static MeterProviderBuilder AddOtlpExporter(this MeterProviderBuilder builder, Action<OtlpExporterOptions> configureExporter)
         {
             Guard.Null(builder, nameof(builder));
 
@@ -49,22 +49,22 @@ namespace OpenTelemetry.Metrics
             {
                 return deferredMeterProviderBuilder.Configure((sp, builder) =>
                 {
-                    AddOtlpExporter(builder, sp.GetOptions<OtlpExporterOptions>(), sp.GetOptions<OtlpMetricReaderOptions>(), configure, null, sp);
+                    AddOtlpExporter(builder, sp.GetOptions<OtlpExporterOptions>(), sp.GetOptions<OtlpMetricReaderOptions>(), configureExporter, null, sp);
                 });
             }
 
-            return AddOtlpExporter(builder, new OtlpExporterOptions(), new OtlpMetricReaderOptions(), configure, null, serviceProvider: null);
+            return AddOtlpExporter(builder, new OtlpExporterOptions(), new OtlpMetricReaderOptions(), configureExporter, null, serviceProvider: null);
         }
 
         /// <summary>
         /// Adds <see cref="OtlpMetricExporter"/> to the <see cref="MeterProviderBuilder"/>.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
-        /// <param name="configure">Exporter and <see cref="MetricReader"/> configuration options.</param>
+        /// <param name="configureExporterAndMetricReader">Exporter and <see cref="MetricReader"/> configuration options.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddOtlpExporter(
             this MeterProviderBuilder builder,
-            Action<OtlpExporterOptions, OtlpMetricReaderOptions> configure)
+            Action<OtlpExporterOptions, OtlpMetricReaderOptions> configureExporterAndMetricReader)
         {
             Guard.Null(builder, nameof(builder));
 
@@ -72,37 +72,37 @@ namespace OpenTelemetry.Metrics
             {
                 return deferredMeterProviderBuilder.Configure((sp, builder) =>
                 {
-                    AddOtlpExporter(builder, sp.GetOptions<OtlpExporterOptions>(), sp.GetOptions<OtlpMetricReaderOptions>(), null, configure, sp);
+                    AddOtlpExporter(builder, sp.GetOptions<OtlpExporterOptions>(), sp.GetOptions<OtlpMetricReaderOptions>(), null, configureExporterAndMetricReader, sp);
                 });
             }
 
-            return AddOtlpExporter(builder, new OtlpExporterOptions(), new OtlpMetricReaderOptions(), null, configure, serviceProvider: null);
+            return AddOtlpExporter(builder, new OtlpExporterOptions(), new OtlpMetricReaderOptions(), null, configureExporterAndMetricReader, serviceProvider: null);
         }
 
         private static MeterProviderBuilder AddOtlpExporter(
             MeterProviderBuilder builder,
-            OtlpExporterOptions options,
+            OtlpExporterOptions exporterOptions,
             OtlpMetricReaderOptions metricReaderOptions,
-            Action<OtlpExporterOptions> configure,
+            Action<OtlpExporterOptions> configureExporter,
             Action<OtlpExporterOptions, OtlpMetricReaderOptions> configureExporterAndMetricReader,
             IServiceProvider serviceProvider)
         {
-            var initialEndpoint = options.Endpoint;
+            var initialEndpoint = exporterOptions.Endpoint;
 
             if (configureExporterAndMetricReader != null)
             {
-                configureExporterAndMetricReader.Invoke(options, metricReaderOptions);
+                configureExporterAndMetricReader.Invoke(exporterOptions, metricReaderOptions);
             }
             else
             {
-                configure?.Invoke(options);
+                configureExporter?.Invoke(exporterOptions);
             }
 
-            options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
+            exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
 
-            options.AppendExportPath(initialEndpoint, OtlpExporterOptions.MetricsExportPath);
+            exporterOptions.AppendExportPath(initialEndpoint, OtlpExporterOptions.MetricsExportPath);
 
-            var metricExporter = new OtlpMetricExporter(options);
+            var metricExporter = new OtlpMetricExporter(exporterOptions);
 
             var metricReader = metricReaderOptions.MetricReaderType == MetricReaderType.Manual
                 ? new BaseExportingMetricReader(metricExporter)
