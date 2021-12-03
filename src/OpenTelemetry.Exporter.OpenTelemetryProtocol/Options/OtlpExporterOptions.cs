@@ -111,20 +111,16 @@ namespace OpenTelemetry.Exporter
         /// <list type="bullet">
         /// <item>This is only invoked for the <see
         /// cref="OtlpExportProtocol.HttpProtobuf"/> protocol.</item>
-        /// <item>The default behavior when using the <see
-        /// cref="OtlpTraceExporterHelperExtensions.AddOtlpExporter(TracerProviderBuilder,
-        /// Action{OtlpExporterOptions}, OltpTraceExporterOptionsBuilder)"/>
-        /// extension is if an <a
+        /// <item>The default behavior when using the "AddOtlpExporter" trace
+        /// extensions is if an <a
         /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpclientfactory">IHttpClientFactory</a>
         /// instance can be resolved through the application <see
         /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be
         /// created through the factory with the name "OtlpTraceExporter"
         /// otherwise an <see cref="HttpClient"/> will be instantiated
         /// directly.</item>
-        /// <item>The default behavior when using the <see
-        /// cref="OtlpMetricExporterExtensions.AddOtlpExporter(MeterProviderBuilder,
-        /// Action{OtlpExporterOptions}, OltpMetricExporterOptionsBuilder)"/>
-        /// extension is if an <a
+        /// <item>The default behavior when using the "AddOtlpExporter" metrics
+        /// extensions is if an <a
         /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpclientfactory">IHttpClientFactory</a>
         /// instance can be resolved through the application <see
         /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be
