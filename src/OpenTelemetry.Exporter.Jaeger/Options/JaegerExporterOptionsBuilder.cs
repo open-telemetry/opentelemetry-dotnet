@@ -68,8 +68,11 @@ namespace OpenTelemetry.Exporter
 
         protected override void ApplyTo(IServiceProvider serviceProvider, JaegerExporterOptions options)
         {
+            options.AgentHost = this.BuilderOptions.AgentHost;
+            options.AgentPort = this.BuilderOptions.AgentPort;
             options.Endpoint = this.BuilderOptions.Endpoint;
             options.Protocol = this.BuilderOptions.Protocol;
+            options.MaxPayloadSizeInBytes = this.BuilderOptions.MaxPayloadSizeInBytes;
 
             base.ApplyTo(serviceProvider, options);
 
@@ -77,7 +80,7 @@ namespace OpenTelemetry.Exporter
                 && options.Protocol == JaegerExportProtocol.HttpBinaryThrift
                 && options.HttpClientFactory == JaegerExporterOptions.DefaultHttpClientFactory)
             {
-                options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
+                options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "JaegerExporter");
             }
         }
     }
