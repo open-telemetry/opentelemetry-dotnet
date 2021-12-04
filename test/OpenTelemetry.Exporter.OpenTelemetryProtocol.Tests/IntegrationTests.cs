@@ -72,7 +72,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 #if NETCOREAPP3_1
         [Trait("CategoryName", "CollectorIntegrationTests")]
         [SkipUnlessEnvVarFoundFact(CollectorHostnameEnvVarName)]
-        public void ExportResultIsFailedBecauseEncryptedHttpSupportIsDisabledForGrpc()
+        public void ConstructingGrpcExporterFailsWhenHttp2UnencryptedSupportIsDisabledForNetcoreapp31()
         {
             // Adding the OtlpExporter creates a GrpcChannel.
             // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
