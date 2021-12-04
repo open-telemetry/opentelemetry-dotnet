@@ -37,7 +37,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
                     || unencryptedIsSupported == false)
                 {
                     throw new InvalidOperationException(
-                        "'System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport' must be enabled for using HTTP with .NET 3.1");
+                        "Calling insecure gRPC services on .NET Core 3.x requires enabling the 'System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport' switch. See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client");
                 }
             }
         }
