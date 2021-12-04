@@ -93,8 +93,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         public void ExportResultIsFailedBecauseEncryptedHttpSupportIsNotConfiguredForGrpc()
         {
             // Adding the OtlpExporter creates a GrpcChannel.
-            // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
-            // We want to fail fast so not setting it to ensure it fails
+            // This test will fail fast because Http2UnencryptedSupport is not configured and is disabled by default.
             var exporterOptions = new OtlpExporterOptions
             {
                 Endpoint = new Uri($"http://{CollectorHostname}:4317"),
