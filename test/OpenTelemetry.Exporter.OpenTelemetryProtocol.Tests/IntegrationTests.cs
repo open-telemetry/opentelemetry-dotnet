@@ -90,7 +90,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
         [Trait("CategoryName", "CollectorIntegrationTests")]
         [SkipUnlessEnvVarFoundFact(CollectorHostnameEnvVarName)]
-        public void ExportResultIsFailedBecauseEncryptedHttpSupportIsNotConfiguredForGrpc()
+        public void ConstructingGrpcExporterFailsWhenHttp2UnencryptedSupportIsNotConfiguredForNetcoreapp31()
         {
             // Adding the OtlpExporter creates a GrpcChannel.
             // This test will fail fast because Http2UnencryptedSupport is not configured and is disabled by default.
