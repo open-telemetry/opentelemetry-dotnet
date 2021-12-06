@@ -18,14 +18,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
-using System.Threading;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
-using GrpcCore = Grpc.Core;
 using OtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
 using OtlpMetrics = Opentelemetry.Proto.Metrics.V1;
 
@@ -33,6 +32,71 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
     public class OtlpMetricsExporterTests
     {
+        [Fact]
+        public void UserHttpFactoryCalled()
+        {
+            OtlpExporterOptions options = new OtlpExporterOptions();
+
+            var defaultFactory = options.HttpClientFactory;
+
+            int invocations = 0;
+            options.Protocol = OtlpExportProtocol.HttpProtobuf;
+            options.HttpClientFactory = () =>
+            {
+                invocations++;
+                return defaultFactory();
+            };
+
+            using (var exporter = new OtlpMetricExporter(options))
+            {
+                Assert.Equal(1, invocations);
+            }
+
+            using (var provider = Sdk.CreateMeterProviderBuilder()
+                .AddOtlpExporter(o =>
+                {
+                    o.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    o.HttpClientFactory = options.HttpClientFactory;
+                })
+                .Build())
+            {
+                Assert.Equal(2, invocations);
+            }
+
+            options.HttpClientFactory = null;
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                using var exporter = new OtlpMetricExporter(options);
+            });
+
+            options.HttpClientFactory = () => null;
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                using var exporter = new OtlpMetricExporter(options);
+            });
+        }
+
+        [Fact]
+        public void ServiceProviderHttpClientFactoryInvoked()
+        {
+            IServiceCollection services = new ServiceCollection();
+
+            services.AddHttpClient();
+
+            int invocations = 0;
+
+            services.AddHttpClient("OtlpMetricExporter", configureClient: (client) => invocations++);
+
+            services.AddOpenTelemetryMetrics(builder => builder.AddOtlpExporter(
+                o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            var meterProvider = serviceProvider.GetRequiredService<MeterProvider>();
+
+            Assert.Equal(1, invocations);
+        }
+
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -49,97 +113,332 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     });
             }
 
-            var tags = new KeyValuePair<string, object>[]
-            {
-                new KeyValuePair<string, object>("key1", "value1"),
-                new KeyValuePair<string, object>("key2", "value2"),
-            };
+            var metrics = new List<Metric>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{includeServiceNameInResource}", "0.0.1");
-
-            var metricReader = new BaseExportingMetricReader(new TestExporter<Metric>(RunTest))
-            {
-                PreferredAggregationTemporality = AggregationTemporality.Delta,
-            };
-
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var counter = meter.CreateCounter<int>("counter");
+            counter.Add(100);
+
+            provider.ForceFlush();
+
+            var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
+
+            var request = new OtlpCollector.ExportMetricsServiceRequest();
+            request.AddMetrics(resourceBuilder.Build().ToOtlpResource(), batch);
+
+            Assert.Single(request.ResourceMetrics);
+            var resourceMetric = request.ResourceMetrics.First();
+            var oltpResource = resourceMetric.Resource;
+
+            if (includeServiceNameInResource)
+            {
+                Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service-name");
+                Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceNamespace && kvp.Value.StringValue == "ns1");
+            }
+            else
+            {
+                Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
+            }
+
+            Assert.Single(resourceMetric.InstrumentationLibraryMetrics);
+            var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.First();
+            Assert.Equal(string.Empty, instrumentationLibraryMetrics.SchemaUrl);
+            Assert.Equal(meter.Name, instrumentationLibraryMetrics.InstrumentationLibrary.Name);
+            Assert.Equal("0.0.1", instrumentationLibraryMetrics.InstrumentationLibrary.Version);
+        }
+
+        [Theory]
+        [InlineData("test_gauge", null, null, 123, null)]
+        [InlineData("test_gauge", null, null, null, 123.45)]
+        [InlineData("test_gauge", "description", "unit", 123, null)]
+        public void TestGaugeToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue)
+        {
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            if (longValue.HasValue)
+            {
+                meter.CreateObservableGauge(name, () => longValue.Value, unit, description);
+            }
+            else
+            {
+                meter.CreateObservableGauge(name, () => doubleValue.Value, unit, description);
+            }
+
+            provider.ForceFlush();
+
+            var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
+
+            var request = new OtlpCollector.ExportMetricsServiceRequest();
+            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
+
+            var resourceMetric = request.ResourceMetrics.Single();
+            var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.Single();
+            var actual = instrumentationLibraryMetrics.Metrics.Single();
+
+            Assert.Equal(name, actual.Name);
+            Assert.Equal(description ?? string.Empty, actual.Description);
+            Assert.Equal(unit ?? string.Empty, actual.Unit);
+
+            Assert.Equal(OtlpMetrics.Metric.DataOneofCase.Gauge, actual.DataCase);
+
+            Assert.NotNull(actual.Gauge);
+            Assert.Null(actual.Sum);
+            Assert.Null(actual.Histogram);
+            Assert.Null(actual.ExponentialHistogram);
+            Assert.Null(actual.Summary);
+
+            Assert.Single(actual.Gauge.DataPoints);
+            var dataPoint = actual.Gauge.DataPoints.First();
+            Assert.True(dataPoint.StartTimeUnixNano > 0);
+            Assert.True(dataPoint.TimeUnixNano > 0);
+
+            if (longValue.HasValue)
+            {
+                Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsInt, dataPoint.ValueCase);
+                Assert.Equal(longValue, dataPoint.AsInt);
+            }
+            else
+            {
+                Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsDouble, dataPoint.ValueCase);
+                Assert.Equal(doubleValue, dataPoint.AsDouble);
+            }
+
+            Assert.Empty(dataPoint.Attributes);
+
+            Assert.Empty(dataPoint.Exemplars);
+
+#pragma warning disable CS0612 // Type or member is obsolete
+            Assert.Null(actual.IntGauge);
+            Assert.Null(actual.IntSum);
+            Assert.Null(actual.IntHistogram);
+            Assert.Empty(dataPoint.Labels);
+#pragma warning restore CS0612 // Type or member is obsolete
+        }
+
+        [Theory]
+        [InlineData("test_counter", null, null, 123, null, AggregationTemporality.Cumulative, true)]
+        [InlineData("test_counter", null, null, null, 123.45, AggregationTemporality.Cumulative, true)]
+        [InlineData("test_counter", null, null, 123, null, AggregationTemporality.Delta, true)]
+        [InlineData("test_counter", "description", "unit", 123, null, AggregationTemporality.Cumulative, true)]
+        [InlineData("test_counter", null, null, 123, null, AggregationTemporality.Delta, true, "key1", "value1", "key2", 123)]
+        public void TestCounterToOltpMetric(string name, string description, string unit, long? longValue, double? doubleValue, AggregationTemporality aggregationTemporality, bool isMonotonic, params object[] keysValues)
+        {
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(
+                    new BaseExportingMetricReader(new InMemoryExporter<Metric>(metrics))
+                    {
+                        Temporality = aggregationTemporality,
+                    })
+                .Build();
+
+            var attributes = ToAttributes(keysValues).ToArray();
+            if (longValue.HasValue)
+            {
+                var counter = meter.CreateCounter<long>(name, unit, description);
+                counter.Add(longValue.Value, attributes);
+            }
+            else
+            {
+                var counter = meter.CreateCounter<double>(name, unit, description);
+                counter.Add(doubleValue.Value, attributes);
+            }
+
+            provider.ForceFlush();
+
+            var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
+
+            var request = new OtlpCollector.ExportMetricsServiceRequest();
+            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
+
+            var resourceMetric = request.ResourceMetrics.Single();
+            var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.Single();
+            var actual = instrumentationLibraryMetrics.Metrics.Single();
+
+            Assert.Equal(name, actual.Name);
+            Assert.Equal(description ?? string.Empty, actual.Description);
+            Assert.Equal(unit ?? string.Empty, actual.Unit);
+
+            Assert.Equal(OtlpMetrics.Metric.DataOneofCase.Sum, actual.DataCase);
+
+            Assert.Null(actual.Gauge);
+            Assert.NotNull(actual.Sum);
+            Assert.Null(actual.Histogram);
+            Assert.Null(actual.ExponentialHistogram);
+            Assert.Null(actual.Summary);
+
+            Assert.Equal(isMonotonic, actual.Sum.IsMonotonic);
+
+            var otlpAggregationTemporality = aggregationTemporality == AggregationTemporality.Cumulative
+                ? OtlpMetrics.AggregationTemporality.Cumulative
+                : OtlpMetrics.AggregationTemporality.Delta;
+            Assert.Equal(otlpAggregationTemporality, actual.Sum.AggregationTemporality);
+
+            Assert.Single(actual.Sum.DataPoints);
+            var dataPoint = actual.Sum.DataPoints.First();
+            Assert.True(dataPoint.StartTimeUnixNano > 0);
+            Assert.True(dataPoint.TimeUnixNano > 0);
+
+            if (longValue.HasValue)
+            {
+                Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsInt, dataPoint.ValueCase);
+                Assert.Equal(longValue, dataPoint.AsInt);
+            }
+            else
+            {
+                Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsDouble, dataPoint.ValueCase);
+                Assert.Equal(doubleValue, dataPoint.AsDouble);
+            }
+
+            if (attributes.Length > 0)
+            {
+                OtlpTestHelpers.AssertOtlpAttributes(attributes, dataPoint.Attributes);
+            }
+            else
+            {
+                Assert.Empty(dataPoint.Attributes);
+            }
+
+            Assert.Empty(dataPoint.Exemplars);
+
+#pragma warning disable CS0612 // Type or member is obsolete
+            Assert.Null(actual.IntGauge);
+            Assert.Null(actual.IntSum);
+            Assert.Null(actual.IntHistogram);
+            Assert.Empty(dataPoint.Labels);
+#pragma warning restore CS0612 // Type or member is obsolete
+        }
+
+        [Theory]
+        [InlineData("test_histogram", null, null, 123, null, AggregationTemporality.Cumulative)]
+        [InlineData("test_histogram", null, null, null, 123.45, AggregationTemporality.Cumulative)]
+        [InlineData("test_histogram", null, null, 123, null, AggregationTemporality.Delta)]
+        [InlineData("test_histogram", "description", "unit", 123, null, AggregationTemporality.Cumulative)]
+        [InlineData("test_histogram", null, null, 123, null, AggregationTemporality.Delta, "key1", "value1", "key2", 123)]
+        public void TestHistogramToOltpMetric(string name, string description, string unit, long? longValue, double? doubleValue, AggregationTemporality aggregationTemporality, params object[] keysValues)
+        {
+            var metrics = new List<Metric>();
+
+            var metricReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(metrics));
+            metricReader.Temporality = aggregationTemporality;
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .AddReader(metricReader)
                 .Build();
 
-            var counter = meter.CreateCounter<int>("counter");
-
-            counter.Add(100, tags);
-
-            var testCompleted = false;
-
-            // Invokes the TestExporter which will invoke RunTest
-            metricReader.Collect();
-
-            Assert.True(testCompleted);
-
-            void RunTest(Batch<Metric> metrics)
+            var attributes = ToAttributes(keysValues).ToArray();
+            if (longValue.HasValue)
             {
-                var request = new OtlpCollector.ExportMetricsServiceRequest();
-                request.AddMetrics(resourceBuilder.Build().ToOtlpResource(), metrics);
+                var histogram = meter.CreateHistogram<long>(name, unit, description);
+                histogram.Record(longValue.Value, attributes);
+            }
+            else
+            {
+                var histogram = meter.CreateHistogram<double>(name, unit, description);
+                histogram.Record(doubleValue.Value, attributes);
+            }
 
-                Assert.Single(request.ResourceMetrics);
-                var resourceMetric = request.ResourceMetrics.First();
-                var oltpResource = resourceMetric.Resource;
+            provider.ForceFlush();
 
-                if (includeServiceNameInResource)
+            var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
+
+            var request = new OtlpCollector.ExportMetricsServiceRequest();
+            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
+
+            var resourceMetric = request.ResourceMetrics.Single();
+            var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.Single();
+            var actual = instrumentationLibraryMetrics.Metrics.Single();
+
+            Assert.Equal(name, actual.Name);
+            Assert.Equal(description ?? string.Empty, actual.Description);
+            Assert.Equal(unit ?? string.Empty, actual.Unit);
+
+            Assert.Equal(OtlpMetrics.Metric.DataOneofCase.Histogram, actual.DataCase);
+
+            Assert.Null(actual.Gauge);
+            Assert.Null(actual.Sum);
+            Assert.NotNull(actual.Histogram);
+            Assert.Null(actual.ExponentialHistogram);
+            Assert.Null(actual.Summary);
+
+            var otlpAggregationTemporality = aggregationTemporality == AggregationTemporality.Cumulative
+                ? OtlpMetrics.AggregationTemporality.Cumulative
+                : OtlpMetrics.AggregationTemporality.Delta;
+            Assert.Equal(otlpAggregationTemporality, actual.Histogram.AggregationTemporality);
+
+            Assert.Single(actual.Histogram.DataPoints);
+            var dataPoint = actual.Histogram.DataPoints.First();
+            Assert.True(dataPoint.StartTimeUnixNano > 0);
+            Assert.True(dataPoint.TimeUnixNano > 0);
+
+            Assert.Equal(1UL, dataPoint.Count);
+
+            if (longValue.HasValue)
+            {
+                Assert.Equal((double)longValue, dataPoint.Sum);
+            }
+            else
+            {
+                Assert.Equal(doubleValue, dataPoint.Sum);
+            }
+
+            int bucketIndex;
+            for (bucketIndex = 0; bucketIndex < dataPoint.ExplicitBounds.Count; ++bucketIndex)
+            {
+                if (dataPoint.Sum <= dataPoint.ExplicitBounds[bucketIndex])
                 {
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service-name");
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceNamespace && kvp.Value.StringValue == "ns1");
+                    break;
                 }
-                else
-                {
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
-                }
 
-                Assert.Single(resourceMetric.InstrumentationLibraryMetrics);
-                var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.First();
-                Assert.Equal(string.Empty, instrumentationLibraryMetrics.SchemaUrl);
-                Assert.Equal(meter.Name, instrumentationLibraryMetrics.InstrumentationLibrary.Name);
-                Assert.Equal("0.0.1", instrumentationLibraryMetrics.InstrumentationLibrary.Version);
+                Assert.Equal(0UL, dataPoint.BucketCounts[bucketIndex]);
+            }
 
-                Assert.Single(instrumentationLibraryMetrics.Metrics);
+            Assert.Equal(1UL, dataPoint.BucketCounts[bucketIndex]);
 
-                foreach (var metric in instrumentationLibraryMetrics.Metrics)
-                {
-                    Assert.Equal(string.Empty, metric.Description);
-                    Assert.Equal(string.Empty, metric.Unit);
-                    Assert.Equal("counter", metric.Name);
+            if (attributes.Length > 0)
+            {
+                OtlpTestHelpers.AssertOtlpAttributes(attributes, dataPoint.Attributes);
+            }
+            else
+            {
+                Assert.Empty(dataPoint.Attributes);
+            }
 
-                    Assert.Equal(OtlpMetrics.Metric.DataOneofCase.Sum, metric.DataCase);
-                    Assert.True(metric.Sum.IsMonotonic);
-                    Assert.Equal(OtlpMetrics.AggregationTemporality.Delta, metric.Sum.AggregationTemporality);
-
-                    Assert.Single(metric.Sum.DataPoints);
-                    var dataPoint = metric.Sum.DataPoints.First();
-                    Assert.True(dataPoint.StartTimeUnixNano > 0);
-                    Assert.True(dataPoint.TimeUnixNano > 0);
-                    Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsInt, dataPoint.ValueCase);
-                    Assert.Equal(100, dataPoint.AsInt);
+            Assert.Empty(dataPoint.Exemplars);
 
 #pragma warning disable CS0612 // Type or member is obsolete
-                    Assert.Empty(dataPoint.Labels);
+            Assert.Null(actual.IntGauge);
+            Assert.Null(actual.IntSum);
+            Assert.Null(actual.IntHistogram);
+            Assert.Empty(dataPoint.Labels);
 #pragma warning restore CS0612 // Type or member is obsolete
-                    OtlpTestHelpers.AssertOtlpAttributes(tags.ToList(), dataPoint.Attributes);
-
-                    Assert.Empty(dataPoint.Exemplars);
-                }
-
-                testCompleted = true;
-            }
         }
 
-        private class NoopMetricsServiceClient : OtlpCollector.MetricsService.IMetricsServiceClient
+        private static IEnumerable<KeyValuePair<string, object>> ToAttributes(object[] keysValues)
         {
-            public OtlpCollector.ExportMetricsServiceResponse Export(OtlpCollector.ExportMetricsServiceRequest request, GrpcCore.Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default)
+            var keys = keysValues?.Where((_, index) => index % 2 == 0).ToArray();
+            var values = keysValues?.Where((_, index) => index % 2 != 0).ToArray();
+
+            for (var i = 0; keys != null && i < keys.Length; ++i)
             {
-                return null;
+                yield return new KeyValuePair<string, object>(keys[i].ToString(), values[i]);
             }
         }
     }

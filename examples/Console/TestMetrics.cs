@@ -61,14 +61,15 @@ namespace Examples.Console
                  */
 
                 // Adding the OtlpExporter creates a GrpcChannel.
-                // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
+                // This switch must be set before creating a GrpcChannel when calling an insecure gRPC service.
                 // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
                 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
                 providerBuilder
                     .AddOtlpExporter(o =>
                     {
-                        o.MetricExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
+                        o.MetricReaderType = MetricReaderType.Periodic;
+                        o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
                         o.AggregationTemporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                     });
             }
@@ -77,7 +78,8 @@ namespace Examples.Console
                 providerBuilder
                     .AddConsoleExporter(o =>
                     {
-                        o.MetricExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
+                        o.MetricReaderType = MetricReaderType.Periodic;
+                        o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
                         o.AggregationTemporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                     });
             }

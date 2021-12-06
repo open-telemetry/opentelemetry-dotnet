@@ -1,4 +1,4 @@
-// <copyright file="JaegerThriftClient.cs" company="OpenTelemetry Authors">
+// <copyright file="HistogramBucket.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,24 +14,18 @@
 // limitations under the License.
 // </copyright>
 
-using Thrift;
-using Thrift.Protocol;
-
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Metrics
 {
-    internal sealed class JaegerThriftClient : TBaseClient
+    public readonly struct HistogramBucket
     {
-        public JaegerThriftClient(TProtocol outputProtocol)
-            : base(outputProtocol)
+        internal HistogramBucket(double explicitBound, long bucketCount)
         {
+            this.ExplicitBound = explicitBound;
+            this.BucketCount = bucketCount;
         }
 
-        internal void SendBatch(Batch batch)
-        {
-            EmitBatchArgs.Send(
-                this.SeqId,
-                batch,
-                this.OutputProtocol);
-        }
+        public double ExplicitBound { get; }
+
+        public long BucketCount { get; }
     }
 }

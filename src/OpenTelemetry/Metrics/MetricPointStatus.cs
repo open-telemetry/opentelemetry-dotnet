@@ -1,4 +1,4 @@
-// <copyright file="IDataPoint.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricPointStatus.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,15 +14,20 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-
 namespace OpenTelemetry.Metrics
 {
-    public interface IDataPoint : IDataValue
+    internal enum MetricPointStatus
     {
-        DateTimeOffset Timestamp { get; }
+        /// <summary>
+        /// This status is applied to <see cref="MetricPoint"/>s with status <see cref="CollectPending"/> after a Collect.
+        /// If an update occurs, status will be moved to <see cref="CollectPending"/>.
+        /// </summary>
+        NoCollectPending,
 
-        KeyValuePair<string, object>[] Tags { get; }
+        /// <summary>
+        /// The <see cref="MetricPoint"/> has been updated since the previous Collect cycle.
+        /// Collect will move it to <see cref="NoCollectPending"/>.
+        /// </summary>
+        CollectPending,
     }
 }

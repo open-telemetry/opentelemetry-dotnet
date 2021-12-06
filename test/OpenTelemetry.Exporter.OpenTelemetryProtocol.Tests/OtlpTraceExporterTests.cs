@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -57,6 +58,71 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Throws<ArgumentNullException>(() => builder.AddOtlpExporter());
         }
 
+        [Fact]
+        public void UserHttpFactoryCalled()
+        {
+            OtlpExporterOptions options = new OtlpExporterOptions();
+
+            var defaultFactory = options.HttpClientFactory;
+
+            int invocations = 0;
+            options.Protocol = OtlpExportProtocol.HttpProtobuf;
+            options.HttpClientFactory = () =>
+            {
+                invocations++;
+                return defaultFactory();
+            };
+
+            using (var exporter = new OtlpTraceExporter(options))
+            {
+                Assert.Equal(1, invocations);
+            }
+
+            using (var provider = Sdk.CreateTracerProviderBuilder()
+                .AddOtlpExporter(o =>
+                {
+                    o.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    o.HttpClientFactory = options.HttpClientFactory;
+                })
+                .Build())
+            {
+                Assert.Equal(2, invocations);
+            }
+
+            options.HttpClientFactory = null;
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                using var exporter = new OtlpTraceExporter(options);
+            });
+
+            options.HttpClientFactory = () => null;
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                using var exporter = new OtlpTraceExporter(options);
+            });
+        }
+
+        [Fact]
+        public void ServiceProviderHttpClientFactoryInvoked()
+        {
+            IServiceCollection services = new ServiceCollection();
+
+            services.AddHttpClient();
+
+            int invocations = 0;
+
+            services.AddHttpClient("OtlpTraceExporter", configureClient: (client) => invocations++);
+
+            services.AddOpenTelemetryTracing(builder => builder.AddOtlpExporter(
+                o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            var tracerProvider = serviceProvider.GetRequiredService<TracerProvider>();
+
+            Assert.Equal(1, invocations);
+        }
+
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -88,7 +154,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             using var openTelemetrySdk = builder.Build();
 
-            var processor = new BatchActivityExportProcessor(new TestExporter<Activity>(RunTest));
+            var exportedItems = new List<Activity>();
+            var processor = new BatchActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems));
             const int numOfSpans = 10;
             bool isEven;
             for (var i = 0; i < numOfSpans; i++)
@@ -103,6 +170,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
 
             processor.Shutdown();
+
+            var batch = new Batch<Activity>(exportedItems.ToArray(), exportedItems.Count);
+            RunTest(batch);
 
             void RunTest(Batch<Activity> batch)
             {
@@ -320,7 +390,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     endCalled = true;
                 };
 
-            var openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+            var tracerProvider = Sdk.CreateTracerProviderBuilder()
                             .AddSource(ActivitySourceName)
                             .AddProcessor(testActivityProcessor)
                             .AddOtlpExporter()

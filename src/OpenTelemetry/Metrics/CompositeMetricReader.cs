@@ -22,11 +22,15 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
-    internal sealed class CompositeMetricReader : MetricReader
+    /// <summary>
+    /// CompositeMetricReader that does not deal with adding metrics and recording measurements.
+    /// </summary>
+    internal sealed partial class CompositeMetricReader : MetricReader
     {
         private readonly DoublyLinkedListNode head;
         private DoublyLinkedListNode tail;
         private bool disposed;
+        private int count;
 
         public CompositeMetricReader(IEnumerable<MetricReader> readers)
         {
@@ -40,6 +44,7 @@ namespace OpenTelemetry.Metrics
 
             this.head = new DoublyLinkedListNode(iter.Current);
             this.tail = this.head;
+            this.count++;
 
             while (iter.MoveNext())
             {
@@ -57,6 +62,7 @@ namespace OpenTelemetry.Metrics
             };
             this.tail.Next = node;
             this.tail = node;
+            this.count++;
 
             return this;
         }
@@ -64,7 +70,7 @@ namespace OpenTelemetry.Metrics
         public Enumerator GetEnumerator() => new Enumerator(this.head);
 
         /// <inheritdoc/>
-        protected override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
+        internal override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
         {
             // CompositeMetricReader delegates the work to its underlying readers,
             // so CompositeMetricReader.ProcessMetrics should never be called.

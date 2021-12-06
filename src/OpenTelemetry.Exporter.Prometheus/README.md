@@ -43,15 +43,15 @@ dotnet add package OpenTelemetry.Exporter.Prometheus
   `UseOpenTelemetryPrometheusScrapingEndpoint` extension:
 
     ```csharp
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        app.UseRouting();
+        app.UseOpenTelemetryPrometheusScrapingEndpoint();
+        app.UseEndpoints(endpoints =>
         {
-            app.UseRouting();
-            app.UseOpenTelemetryPrometheusScrapingEndpoint();
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
-        }
+            endpoints.MapControllers();
+        });
+    }
     ```
 
 * On .NET Framework an http listener is automatically started which will respond
@@ -82,20 +82,20 @@ properties:
     register the scraping middleware instead of using the listener.
 
 * `HttpListenerPrefixes`: Defines the prefixes which will be used by the
-  listener when `StartHttpListener` is `true`. The default value is an array of
-  one element: `http://*:80/`. You may specify multiple endpoints.
+  listener when `StartHttpListener` is `true`. The default value is
+  `["http://*:80/"]`. You may specify multiple endpoints.
 
   For details see:
   [HttpListenerPrefixCollection.Add(String)](https://docs.microsoft.com/dotnet/api/system.net.httplistenerprefixcollection.add)
 
 * `ScrapeEndpointPath`: Defines the path for the Prometheus scrape endpoint for
   either the http listener or the middleware registered by
-  `UseOpenTelemetryPrometheusScrapingEndpoint`. Default value: `/metrics`.
+  `UseOpenTelemetryPrometheusScrapingEndpoint`. Default value: `"/metrics"`.
 
 * `ScrapeResponseCacheDurationMilliseconds`: Configures scrape endpoint response
   caching. Multiple scrape requests within the cache duration time period will
-  receive the same previously generated response. The default value is 10
-  seconds. Set to 0 to disable response caching.
+  receive the same previously generated response. The default value is `10000`
+  (10 seconds). Set to `0` to disable response caching.
 
 See
 [`TestPrometheusExporter.cs`](../../examples/Console/TestPrometheusExporter.cs)

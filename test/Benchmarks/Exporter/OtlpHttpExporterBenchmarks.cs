@@ -75,7 +75,7 @@ namespace Benchmarks.Exporter
             };
             this.exporter = new OtlpTraceExporter(
                 options,
-                new OtlpHttpTraceExportClient(options));
+                new OtlpHttpTraceExportClient(options, options.HttpClientFactory()));
 
             this.activity = ActivityHelper.CreateTestActivity();
             this.activityBatch = new CircularBuffer<Activity>(this.NumberOfSpans);

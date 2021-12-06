@@ -1,4 +1,4 @@
-// <copyright file="IExemplar.cs" company="OpenTelemetry Authors">
+// <copyright file="ExplicitBucketHistogramConfiguration.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,20 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-
 namespace OpenTelemetry.Metrics
 {
-    public interface IExemplar : IDataValue
+    public class ExplicitBucketHistogramConfiguration : MetricStreamConfiguration
     {
-        DateTimeOffset Timestamp { get; }
-
-        KeyValuePair<string, object>[] FilteredTags { get; }
-
-        ActivityTraceId TraceId { get; }
-
-        ActivitySpanId SpanId { get; }
+        /// <summary>
+        /// Gets or sets the values representing explicit histogram bucket
+        /// boundary values.
+        /// </summary>
+        /// <remarks>
+        /// The array must be in ascending order with distinct values.
+        /// </remarks>
+        public double[] Boundaries { get; set; }
     }
 }

@@ -27,7 +27,6 @@ namespace OpenTelemetry.Exporter
     /// Exporter consuming <see cref="Metric"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    [AggregationTemporality(AggregationTemporality.Cumulative | AggregationTemporality.Delta, AggregationTemporality.Cumulative)]
     public class OtlpMetricExporter : BaseExporter<Metric>
     {
         private readonly IExportClient<OtlpCollector.ExportMetricsServiceRequest> exportClient;
@@ -56,8 +55,7 @@ namespace OpenTelemetry.Exporter
             }
             else
             {
-                // TODO: this instantiation should be aligned with the protocol option (grpc or http/protobuf) when OtlpHttpMetricsExportClient will be implemented.
-                this.exportClient = new OtlpGrpcMetricsExportClient(options);
+                this.exportClient = options.GetMetricsExportClient();
             }
         }
 

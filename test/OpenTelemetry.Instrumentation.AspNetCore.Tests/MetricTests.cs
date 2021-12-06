@@ -62,7 +62,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             var metricReader = new BaseExportingMetricReader(metricExporter)
             {
-                PreferredAggregationTemporality = AggregationTemporality.Cumulative,
+                Temporality = AggregationTemporality.Cumulative,
             };
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddAspNetCoreInstrumentation()
@@ -100,8 +100,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Single(metricPoints);
 
             var metricPoint = metricPoints[0];
-            Assert.Equal(1L, metricPoint.LongValue);
-            Assert.True(metricPoint.DoubleValue > 0);
+
+            var count = metricPoint.GetHistogramCount();
+            var sum = metricPoint.GetHistogramSum();
+
+            Assert.Equal(1L, count);
+            Assert.True(sum > 0);
 
             /*
             var bucket = metric.Buckets
@@ -113,10 +117,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(1, bucket.Count);
             */
 
-            var attributes = new KeyValuePair<string, object>[metricPoint.Keys.Length];
-            for (int i = 0; i < attributes.Length; i++)
+            var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
+            int i = 0;
+            foreach (var tag in metricPoint.Tags)
             {
-                attributes[i] = new KeyValuePair<string, object>(metricPoint.Keys[i], metricPoint.Values[i]);
+                attributes[i++] = tag;
             }
 
             var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, "GET");

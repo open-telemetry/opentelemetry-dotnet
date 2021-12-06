@@ -1,4 +1,4 @@
-// <copyright file="IDataValue.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricReaderType.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +16,21 @@
 
 namespace OpenTelemetry.Metrics
 {
-    public interface IDataValue
+    /// <summary>
+    /// Type of <see cref="MetricReader" /> to be used.
+    /// </summary>
+    public enum MetricReaderType
     {
-        object Value { get; }
+        /// <summary>
+        /// Use the <see cref="BaseExportingMetricReader" />.
+        /// This requires manually invoking <c>MetricReader.Collect()</c> to export metrics.
+        /// </summary>
+        Manual,
+
+        /// <summary>
+        /// Use the <see cref="PeriodicExportingMetricReader" />.
+        /// <c>MetricReader.Collect()</c> will be invoked on a defined interval.
+        /// </summary>
+        Periodic,
     }
 }

@@ -64,7 +64,10 @@ instruments must be explicitly added to the meter provider.
 `AddMeter` method on `MeterProviderBuilder` can be used to add a `Meter` to the
 provider. The name of the `Meter` (case-insensitive) must be provided as an
 argument to this method. `AddMeter` can be called multiple times to add more
-than one meters. It also supports wild-card subscription model.
+than one meters. It also supports wildcard subscription model. It is important
+to note that *all* the instruments from the meter will be enabled, when a
+`Meter` is added. To selectively drop some instruments from a `Meter`, use the
+[View](#view) feature, as shown [here](#drop-an-instrument).
 
 It is **not** possible to add meters *once* the provider is built by the
 `Build()` method on the `MeterProviderBuilder`.
@@ -116,22 +119,22 @@ particularly useful if there are conflicting instrument names, and you do not
 own the instrument to create it with a different name.
 
 ```csharp
-   // Rename an instrument to new name.
-   .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
+    // Rename an instrument to new name.
+    .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
 ```
 
 ```csharp
-   // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
-   .AddView((instrument) =>
-      {
-         if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
+    // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
+    .AddView((instrument) =>
+    {
+        if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
             instrument.Name == "MyCounter")
-         {
+        {
             return new MetricStreamConfiguration() { Name = "MyCounterRenamed" };
-         }
+        }
 
-         return null;
-      })
+        return null;
+    })
 ```
 
 #### Drop an instrument
@@ -142,22 +145,22 @@ instrument from a Meter. If the goal is to drop every instrument from a `Meter`,
 then it is recommended to simply not add that `Meter` using `AddMeter`.
 
 ```csharp
-   // Drop the instrument "MyCounterDrop".
-   .AddView(instrumentName: "MyCounterDrop", MetricStreamConfiguration.Drop)
+    // Drop the instrument "MyCounterDrop".
+    .AddView(instrumentName: "MyCounterDrop", MetricStreamConfiguration.Drop)
 ```
 
 ```csharp
-   // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
-   .AddView((instrument) =>
-      {
-         if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
+    // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
+    .AddView((instrument) =>
+    {
+        if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
             instrument.Name == "MyCounterDrop")
-         {
+        {
             return MetricStreamConfiguration.Drop;
-         }
+        }
 
-         return null;
-      })
+        return null;
+    })
 ```
 
 #### Select specific tags
@@ -170,102 +173,146 @@ with the metric are of interest to you.
 
 ```csharp
     // Only choose "name" as the dimension for the metric "MyFruitCounter"
-   .AddView(
-      instrumentName: "MyFruitCounter",
-      metricStreamConfiguration: new MetricStreamConfiguration
-      {
-         TagKeys = new string[] { "name" },
-      })
+    .AddView(
+        instrumentName: "MyFruitCounter",
+        metricStreamConfiguration: new MetricStreamConfiguration
+        {
+            TagKeys = new string[] { "name" },
+        })
 
-   ...
-   // Only the dimension "name" is selected, "color" is dropped
-   MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
-   MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
-   MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
-   ...
+    ...
+    // Only the dimension "name" is selected, "color" is dropped
+    MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
+    MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
+    MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
+    ...
 
-   // If you provide an empty `string` array as `TagKeys` to the `MetricStreamConfiguration`
-   // the SDK will drop all the dimensions associated with the metric
-   .AddView(
-      instrumentName: "MyFruitCounter",
-      metricStreamConfiguration: new MetricStreamConfiguration
-      {
-         TagKeys = new string[] { },
-      })
+    // If you provide an empty `string` array as `TagKeys` to the `MetricStreamConfiguration`
+    // the SDK will drop all the dimensions associated with the metric
+    .AddView(
+        instrumentName: "MyFruitCounter",
+        metricStreamConfiguration: new MetricStreamConfiguration
+        {
+            TagKeys = new string[] { },
+        })
 
-   ...
-   // both "name" and "color" are dropped
-   MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
-   MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
-   MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
-   ...
+    ...
+    // both "name" and "color" are dropped
+    MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
+    MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
+    MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
+    ...
 ```
 
 ```csharp
-   // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
-   .AddView((instrument) =>
-      {
-         if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
+    // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
+    .AddView((instrument) =>
+    {
+        if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
             instrument.Name == "MyFruitCounter")
-         {
+        {
             return new MetricStreamConfiguration
             {
-               TagKeys = new string[] { "name" },
+                TagKeys = new string[] { "name" },
             };
-         }
+        }
 
-         return null;
-      })
+        return null;
+    })
 ```
 
-#### Specify custom bounds for Histogram
+#### Specify custom boundaries for Histogram
 
-By default, the bounds used for a Histogram are [`{ 0, 5, 10, 25, 50, 75, 100,
+By default, the boundaries used for a Histogram are [`{ 0, 5, 10, 25, 50, 75, 100,
 250, 500,
 1000}`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#explicit-bucket-histogram-aggregation).
-Views can be used to provide custom bounds for a Histogram. The measurements are
-then aggregated using the custom bounds provided instead of the the default
-bounds. This requires the use of `HistogramConfiguration`.
+Views can be used to provide custom boundaries for a Histogram. The measurements
+are then aggregated using the custom boundaries provided instead of the the
+default boundaries. This requires the use of `ExplicitBucketHistogramConfiguration`.
 
+<!-- markdownlint-disable MD013 -->
 ```csharp
-   // Change Histogram bounds to count measurements under the following buckets:
-   // (-inf, 10]
-   // (10, 20]
-   // (20, +inf)
-   .AddView(
-      instrumentName: "MyHistogram",
-      new HistogramConfiguration{ BucketBounds = new double[] { 10, 20 } })
+    // Change Histogram boundaries to count measurements under the following buckets:
+    // (-inf, 10]
+    // (10, 20]
+    // (20, +inf)
+    .AddView(
+        instrumentName: "MyHistogram",
+        new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { 10, 20 } })
 
-   // If you provide an empty `double` array as `BucketBounds` to the `HistogramConfiguration`,
-   // the SDK will only export the sum and count for the measurements.
-   // There are no buckets exported in this case.
-   .AddView(
-      instrumentName: "MyHistogram",
-      new HistogramConfiguration { BucketBounds = new double[] { } })
+    // If you provide an empty `double` array as `Boundaries` to the `ExplicitBucketHistogramConfiguration`,
+    // the SDK will only export the sum and count for the measurements.
+    // There are no buckets exported in this case.
+    .AddView(
+        instrumentName: "MyHistogram",
+        new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { } })
 ```
+<!-- markdownlint-enable MD013 -->
 
 ```csharp
-   // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
-   .AddView((instrument) =>
-      {
-         if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
+    // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
+    .AddView((instrument) =>
+    {
+        if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
             instrument.Name == "MyHistogram")
-         {
-            // `HistogramConfiguration` is a child class of `MetricStreamConfiguration`
-            return new HistogramConfiguration
+        {
+            // `ExplicitBucketHistogramConfiguration` is a child class of `MetricStreamConfiguration`
+            return new ExplicitBucketHistogramConfiguration
             {
-               BucketBounds = new double[] { 10, 20 },
+                Boundaries = new double[] { 10, 20 },
             };
-         }
+        }
 
-         return null;
-      })
+        return null;
+    })
 ```
 
 **NOTE:** The SDK currently does not support any changes to `Aggregation` type
-for Views.
+by using Views.
 
 See [Program.cs](./Program.cs) for a complete example.
+
+### Changing maximum Metric Streams
+
+Every instrument results in the creation of a single Metric stream. With Views,
+it is possible to produce more than one Metric stream from a single instrument.
+To protect the SDK from unbounded memory usage, SDK limits the maximum number of
+metric streams. All the measurements from the instruments created after reaching
+this limit will be dropped. The default is 1000, and `SetMaxMetricStreams` can
+be used to override the default.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter("*")
+    .SetMaxMetricStreams(100)
+    .Build();
+```
+
+### Changing maximum MetricPoints per MetricStream
+
+A Metric stream can contain as many Metric points as the number of unique
+combination of keys and values. To protect the SDK from unbounded memory usage,
+SDK limits the maximum number of metric points per metric stream, to a default
+of 2000. Once the limit is hit, any new key/value combination for that metric is
+ignored. `SetMaxMetricPointsPerMetricStream` can be used to override the
+default.
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter("*")
+    .SetMaxMetricPointsPerMetricStream(10000)
+    .Build();
+```
+
+**NOTE:** The above limit is *per* metric stream, and applies to all the metric
+streams. There is no ability to apply different limits for each instrument at
+this moment.
 
 ### Instrumentation
 
@@ -273,7 +320,24 @@ See [Program.cs](./Program.cs) for a complete example.
 
 ### MetricReader
 
-// TODO
+[MetricReader](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricreader)
+allows collecting the pre-aggregated metrics from the SDK. They are typically
+paired with a
+[MetricExporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricexporter)
+which does the actual export of metrics.
+
+Though `MetricReader` can be added by using the `AddReader` method on
+`MeterProviderBuilder`, most users use the extension methods on
+`MeterProviderBuilder` offered by exporter libraries, which adds the correct
+`MetricReader`, that is configured to export metrics to the exporter.
+
+Refer to the individual exporter docs to learn how to use them:
+
+* [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
+* [In-memory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
+* [OTLP](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+  (OpenTelemetry Protocol)
+* [Prometheus](../../../src/OpenTelemetry.Exporter.Prometheus/README.md)
 
 ### Resource
 

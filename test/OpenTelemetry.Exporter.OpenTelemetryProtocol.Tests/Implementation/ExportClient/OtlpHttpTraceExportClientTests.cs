@@ -26,7 +26,6 @@ using Moq.Protected;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
@@ -60,7 +59,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Expo
                 Headers = $"{header1.Name}={header1.Value}, {header2.Name} = {header2.Value}",
             };
 
-            var client = new OtlpHttpTraceExportClient(options);
+            var client = new OtlpHttpTraceExportClient(options, options.HttpClientFactory());
 
             Assert.NotNull(client.HttpClient);
 
@@ -146,7 +145,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Expo
 
             using var openTelemetrySdk = builder.Build();
 
-            var processor = new BatchActivityExportProcessor(new TestExporter<Activity>(RunTest));
+            var exportedItems = new List<Activity>();
+            var processor = new BatchActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems));
             const int numOfSpans = 10;
             bool isEven;
             for (var i = 0; i < numOfSpans; i++)
@@ -162,6 +162,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Expo
 
             processor.Shutdown();
 
+            var batch = new Batch<Activity>(exportedItems.ToArray(), exportedItems.Count);
+            RunTest(batch);
+
             void RunTest(Batch<Activity> batch)
             {
                 var request = new OtlpCollector.ExportTraceServiceRequest();
@@ -175,7 +178,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Expo
                 Assert.True(result);
                 Assert.NotNull(httpRequest);
                 Assert.Equal(HttpMethod.Post, httpRequest.Method);
-                Assert.Equal("http://localhost:4317/v1/traces", httpRequest.RequestUri.AbsoluteUri);
+                Assert.Equal("http://localhost:4317/", httpRequest.RequestUri.AbsoluteUri);
                 Assert.Equal(2, httpRequest.Headers.Count());
                 Assert.Contains(httpRequest.Headers, h => h.Key == header1.Name && h.Value.First() == header1.Value);
                 Assert.Contains(httpRequest.Headers, h => h.Key == header2.Name && h.Value.First() == header2.Value);

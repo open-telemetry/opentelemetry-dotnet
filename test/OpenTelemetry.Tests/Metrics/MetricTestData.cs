@@ -41,7 +41,7 @@ namespace OpenTelemetry.Metrics.Tests
                     new object[] { new string('m', 63) },
            };
 
-        public static IEnumerable<object[]> InvalidHistogramBounds
+        public static IEnumerable<object[]> InvalidHistogramBoundaries
            => new List<object[]>
            {
                     new object[] { new double[] { 0, 0 } },

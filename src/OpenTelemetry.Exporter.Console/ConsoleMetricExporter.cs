@@ -22,7 +22,6 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
 {
-    [AggregationTemporality(AggregationTemporality.Cumulative | AggregationTemporality.Delta, AggregationTemporality.Cumulative)]
     public class ConsoleMetricExporter : ConsoleExporter<Metric>
     {
         private Resource resource;
@@ -80,15 +79,12 @@ namespace OpenTelemetry.Exporter
                 {
                     string valueDisplay = string.Empty;
                     StringBuilder tagsBuilder = new StringBuilder();
-                    if (metricPoint.Keys != null)
+                    foreach (var tag in metricPoint.Tags)
                     {
-                        for (int i = 0; i < metricPoint.Keys.Length; i++)
-                        {
-                            tagsBuilder.Append(metricPoint.Keys[i]);
-                            tagsBuilder.Append(':');
-                            tagsBuilder.Append(metricPoint.Values[i]);
-                            tagsBuilder.Append(' ');
-                        }
+                        tagsBuilder.Append(tag.Key);
+                        tagsBuilder.Append(':');
+                        tagsBuilder.Append(tag.Value);
+                        tagsBuilder.Append(' ');
                     }
 
                     var tags = tagsBuilder.ToString().TrimEnd();
@@ -98,53 +94,69 @@ namespace OpenTelemetry.Exporter
                     if (metricType.IsHistogram())
                     {
                         var bucketsBuilder = new StringBuilder();
-                        bucketsBuilder.Append($"Sum: {metricPoint.DoubleValue} Count: {metricPoint.LongValue} \n");
+                        var sum = metricPoint.GetHistogramSum();
+                        var count = metricPoint.GetHistogramCount();
+                        bucketsBuilder.Append($"Sum: {sum} Count: {count} \n");
 
-                        if (metricPoint.ExplicitBounds != null)
+                        bool isFirstIteration = true;
+                        double previousExplicitBound = default;
+                        foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                         {
-                            for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
+                            if (isFirstIteration)
                             {
-                                if (i == 0)
+                                bucketsBuilder.Append("(-Infinity,");
+                                bucketsBuilder.Append(histogramMeasurement.ExplicitBound);
+                                bucketsBuilder.Append(']');
+                                bucketsBuilder.Append(':');
+                                bucketsBuilder.Append(histogramMeasurement.BucketCount);
+                                previousExplicitBound = histogramMeasurement.ExplicitBound;
+                                isFirstIteration = false;
+                            }
+                            else
+                            {
+                                bucketsBuilder.Append('(');
+                                bucketsBuilder.Append(previousExplicitBound);
+                                bucketsBuilder.Append(',');
+                                if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
                                 {
-                                    bucketsBuilder.Append("(-Infinity,");
-                                    bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
-                                    bucketsBuilder.Append(']');
-                                    bucketsBuilder.Append(':');
-                                    bucketsBuilder.Append(metricPoint.BucketCounts[i]);
-                                }
-                                else if (i == metricPoint.ExplicitBounds.Length)
-                                {
-                                    bucketsBuilder.Append('(');
-                                    bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
-                                    bucketsBuilder.Append(',');
-                                    bucketsBuilder.Append("+Infinity]");
-                                    bucketsBuilder.Append(':');
-                                    bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                                    bucketsBuilder.Append(histogramMeasurement.ExplicitBound);
                                 }
                                 else
                                 {
-                                    bucketsBuilder.Append('(');
-                                    bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
-                                    bucketsBuilder.Append(',');
-                                    bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
-                                    bucketsBuilder.Append(']');
-                                    bucketsBuilder.Append(':');
-                                    bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                                    bucketsBuilder.Append("+Infinity");
                                 }
 
-                                bucketsBuilder.AppendLine();
+                                bucketsBuilder.Append(']');
+                                bucketsBuilder.Append(':');
+                                bucketsBuilder.Append(histogramMeasurement.BucketCount);
                             }
+
+                            bucketsBuilder.AppendLine();
                         }
 
                         valueDisplay = bucketsBuilder.ToString();
                     }
                     else if (metricType.IsDouble())
                     {
-                        valueDisplay = metricPoint.DoubleValue.ToString(CultureInfo.InvariantCulture);
+                        if (metricType.IsSum())
+                        {
+                            valueDisplay = metricPoint.GetSumDouble().ToString(CultureInfo.InvariantCulture);
+                        }
+                        else
+                        {
+                            valueDisplay = metricPoint.GetGaugeLastValueDouble().ToString(CultureInfo.InvariantCulture);
+                        }
                     }
                     else if (metricType.IsLong())
                     {
-                        valueDisplay = metricPoint.LongValue.ToString(CultureInfo.InvariantCulture);
+                        if (metricType.IsSum())
+                        {
+                            valueDisplay = metricPoint.GetSumLong().ToString(CultureInfo.InvariantCulture);
+                        }
+                        else
+                        {
+                            valueDisplay = metricPoint.GetGaugeLastValueLong().ToString(CultureInfo.InvariantCulture);
+                        }
                     }
 
                     msg = new StringBuilder();
