@@ -218,7 +218,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var c = new HttpClient();
             await c.SendAsync(request);
 
-            Assert.Equal(6, activityProcessor.Invocations.Count); // SetParentProvider/OnStart/OnStart/OnEnd/OnShutdown/Dispose called.
+            Assert.Equal(4, activityProcessor.Invocations.Count);  // SetParentProvider/Begin/Begin/End called
             var activity = (Activity)activityProcessor.Invocations[3].Arguments[0];
 
             Assert.Equal(ActivityKind.Client, activity.Kind);
