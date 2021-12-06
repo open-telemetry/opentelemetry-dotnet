@@ -130,7 +130,7 @@ namespace OpenTelemetry.Trace
                 {
                     if (!ReferenceEquals(activity, Activity.Current))
                     {
-                        // Activity.Current were overriden.
+                        // Activity.Current were overridden.
                         activity = Activity.Current;
                     }
 
