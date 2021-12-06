@@ -227,8 +227,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.NotEqual(parentSpanId, activity.Context.SpanId.ToString());
             Assert.NotEqual(default, activity.Context.SpanId);
 
-            string traceparent = request.Headers.Get("traceparent");
-            Assert.Equal($"00-{activity.Context.TraceId}-{activity.Context.SpanId}-01", traceparent);
+            Assert.True(request.Headers.TryGetValues("traceparent", out var traceparents));
+            Assert.Single(traceparents);
         }
 
         [Fact]
