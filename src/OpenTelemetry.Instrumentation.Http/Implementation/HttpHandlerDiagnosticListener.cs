@@ -88,12 +88,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            // TODO: Investigate why this check is needed.
-            if (Propagators.DefaultTextMapPropagator.Extract(default, request, HttpRequestMessageContextPropagation.HeaderValuesGetter) != default)
+            var context = Propagators.DefaultTextMapPropagator.Extract(default, request, HttpRequestMessageContextPropagation.HeaderValuesGetter);
+            if (context != default)
             {
-                // this request is already instrumented, we should back off
-                activity.IsAllDataRequested = false;
-                return;
+                activity = ActivitySource.StartActivity(activity.Kind, context.ActivityContext);
+                Activity.Current = activity;
             }
 
             // Propagate context irrespective of sampling decision

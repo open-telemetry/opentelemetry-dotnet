@@ -128,6 +128,12 @@ namespace OpenTelemetry.Trace
 
                 listener.ActivityStopped = activity =>
                 {
+                    if (!ReferenceEquals(activity, Activity.Current))
+                    {
+                        // Activity.Current were overriden.
+                        activity = Activity.Current;
+                    }
+
                     OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
 
                     if (string.IsNullOrEmpty(activity.Source.Name) && !legacyActivityPredicate(activity))
