@@ -15,6 +15,7 @@
 // </copyright>
 
 extern alias Prometheus;
+
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using BenchmarkDotNet.Attributes;
