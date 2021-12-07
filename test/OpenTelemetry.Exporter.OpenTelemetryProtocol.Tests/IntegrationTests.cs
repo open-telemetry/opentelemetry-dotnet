@@ -84,7 +84,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Endpoint = new Uri($"http://{CollectorHostname}:4317"),
             };
 
-            if (Environment.Version.Major >= 3)
+            if (Environment.Version.Major == 3)
             {
                 Assert.Throws<InvalidOperationException>(() => new OtlpTraceExporter(exporterOptions));
             }
