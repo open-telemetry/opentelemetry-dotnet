@@ -323,7 +323,7 @@ default.
 
 **NOTE**: One `MetricPoint` is reserved for every `MetricStream` for the special
 case where there is no key/value pair associated with the metric. The maximum
-number of `MetricPoint`s has to accomodate for this special case.
+number of `MetricPoint`s has to accommodate for this special case.
 
 Consider the below example. Here we set the maximum number of `MetricPoint`s
 allowed to be `3`. This means that for every `MetricStream`, the SDK will export
