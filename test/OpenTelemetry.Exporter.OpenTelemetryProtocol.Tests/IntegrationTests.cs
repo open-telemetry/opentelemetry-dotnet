@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices.ComTypes;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -69,7 +70,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
         }
 
-#if NETCOREAPP3_1
         [Trait("CategoryName", "CollectorIntegrationTests")]
         [SkipUnlessEnvVarFoundFact(CollectorHostnameEnvVarName)]
         public void ConstructingGrpcExporterFailsWhenHttp2UnencryptedSupportIsDisabledForNetcoreapp31()
@@ -85,7 +85,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Endpoint = new Uri($"http://{CollectorHostname}:4317"),
             };
 
-            Assert.Throws<InvalidOperationException>(() => new OtlpTraceExporter(exporterOptions));
+            if (Environment.Version.Major >= 3)
+            {
+                Assert.Throws<InvalidOperationException>(() => new OtlpTraceExporter(exporterOptions));
+            }
+            else
+            {
+                var exporter = new OtlpTraceExporter(exporterOptions);
+                Assert.NotNull(exporter);
+            }
         }
 
         [Trait("CategoryName", "CollectorIntegrationTests")]
@@ -99,8 +107,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Endpoint = new Uri($"http://{CollectorHostname}:4317"),
             };
 
-            Assert.Throws<InvalidOperationException>(() => new OtlpTraceExporter(exporterOptions));
+            if(Environment.Version.Major == 3)
+            {
+                Assert.Throws<InvalidOperationException>(() => new OtlpTraceExporter(exporterOptions));
+            }
+            else
+            {
+                var exporter = new OtlpTraceExporter(exporterOptions);
+                Assert.NotNull(exporter);
+            }
         }
-#endif
     }
 }
