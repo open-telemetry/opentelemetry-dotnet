@@ -516,7 +516,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void MultithreadedDoubleCounterTest()
         {
-            this.MultithreadedCounterTest(deltaLongValueUpdatedByEachCall);
+            this.MultithreadedCounterTest(deltaDoubleValueUpdatedByEachCall);
         }
 
         [Fact]
@@ -773,11 +773,11 @@ namespace OpenTelemetry.Metrics.Tests
             var bucketCounts = new long[11];
             var metricReader = new BaseExportingMetricReader(new TestExporter<Metric>(batch =>
             {
-                foreach (var metricItem in batch)
+                foreach (var metric in batch)
                 {
-                    foreach (var metric in metricItem.GetMetricPoints())
+                    foreach (var metricPoint in metric.GetMetricPoints())
                     {
-                        bucketCounts = metric.GetHistogramBuckets().BucketCounts;
+                        bucketCounts = metricPoint.GetHistogramBuckets().BucketCounts;
                     }
                 }
             }));
