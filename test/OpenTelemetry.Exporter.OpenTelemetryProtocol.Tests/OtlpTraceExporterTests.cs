@@ -35,7 +35,7 @@ using Status = OpenTelemetry.Trace.Status;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
-    public class OtlpTraceExporterTests
+    public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
     {
         static OtlpTraceExporterTests()
         {

@@ -22,7 +22,7 @@ using Xunit.Sdk;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
-    public class OtlpExporterOptionsExtensionsTests
+    public class OtlpExporterOptionsExtensionsTests : Http2UnencryptedSupportTests
     {
         [Theory]
         [InlineData("key=value", new string[] { "key" }, new string[] { "value" })]

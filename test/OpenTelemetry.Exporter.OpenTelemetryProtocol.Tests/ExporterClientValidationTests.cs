@@ -20,49 +20,36 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
-    public class ExporterClientValidationTests
+    public class ExporterClientValidationTests : Http2UnencryptedSupportTests
     {
+        private const string HttpEndpoint = "http://localhost:4173";
+        private const string HttpsEndpoint = "https://localhost:4173";
+
 #if NETCOREAPP3_1
         [Fact]
         public void ExporterClientValidation_FlagIsEnabledForHttpEndpoint()
         {
-            var initialFlagStatus = this.DetermineInitialFlagStatus();
-
-            try
+            var options = new OtlpExporterOptions
             {
-                var options = new OtlpExporterOptions
-                {
-                    Endpoint = new Uri("http://localhost:4173"),
-                };
+                Endpoint = new Uri(HttpEndpoint),
+            };
 
-                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-                ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options);
-            }
-            finally
-            {
-                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", initialFlagStatus);
-            }
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
+            var exception = Record.Exception(() => ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options));
+            Assert.Null(exception);
         }
 
         [Fact]
         public void ExporterClientValidation_FlagIsNotEnabledForHttpEndpoint()
         {
-            var initialFlagStatus = this.DetermineInitialFlagStatus();
-
-            try
+            var options = new OtlpExporterOptions
             {
-                var options = new OtlpExporterOptions
-                {
-                    Endpoint = new Uri("http://localhost:4173"),
-                };
+                Endpoint = new Uri(HttpEndpoint),
+            };
 
-                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", false);
-                Assert.Throws<InvalidOperationException>(() => ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options));
-            }
-            finally
-            {
-                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", initialFlagStatus);
-            }
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", false);
+            Assert.Throws<InvalidOperationException>(() => ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options));
         }
 
         [Fact]
@@ -70,20 +57,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             var options = new OtlpExporterOptions
             {
-                Endpoint = new Uri("https://localhost:4173"),
+                Endpoint = new Uri(HttpsEndpoint),
             };
 
             ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options);
-        }
-
-        private bool DetermineInitialFlagStatus()
-        {
-            if (AppContext.TryGetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", out var flag))
-            {
-                return flag;
-            }
-
-            return false;
         }
 #endif
     }
