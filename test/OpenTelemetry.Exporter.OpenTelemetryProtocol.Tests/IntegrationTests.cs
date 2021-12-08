@@ -94,27 +94,5 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Assert.NotNull(exporter);
             }
         }
-
-        [Trait("CategoryName", "CollectorIntegrationTests")]
-        [SkipUnlessEnvVarFoundFact(CollectorHostnameEnvVarName)]
-        public void ConstructingGrpcExporterFailsWhenHttp2UnencryptedSupportIsNotConfiguredForNetcoreapp31()
-        {
-            // Adding the OtlpExporter creates a GrpcChannel.
-            // This test will fail fast because Http2UnencryptedSupport is not configured and is disabled by default.
-            var exporterOptions = new OtlpExporterOptions
-            {
-                Endpoint = new Uri($"http://{CollectorHostname}:4317"),
-            };
-
-            if (Environment.Version.Major == 3)
-            {
-                Assert.Throws<InvalidOperationException>(() => new OtlpTraceExporter(exporterOptions));
-            }
-            else
-            {
-                var exporter = new OtlpTraceExporter(exporterOptions);
-                Assert.NotNull(exporter);
-            }
-        }
     }
 }
