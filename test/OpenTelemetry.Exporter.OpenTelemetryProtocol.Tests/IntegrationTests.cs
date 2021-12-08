@@ -84,14 +84,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Endpoint = new Uri($"http://{CollectorHostname}:4317"),
             };
 
+            var exception = Record.Exception(() => new OtlpTraceExporter(exporterOptions));
+
             if (Environment.Version.Major == 3)
             {
-                Assert.Throws<InvalidOperationException>(() => new OtlpTraceExporter(exporterOptions));
+                Assert.NotNull(exception);
             }
             else
             {
-                var exporter = new OtlpTraceExporter(exporterOptions);
-                Assert.NotNull(exporter);
+                Assert.Null(exception);
             }
         }
     }
