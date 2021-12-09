@@ -25,7 +25,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         private const string HttpEndpoint = "http://localhost:4173";
         private const string HttpsEndpoint = "https://localhost:4173";
 
-#if NETCOREAPP3_1
         [Fact]
         public void ExporterClientValidation_FlagIsEnabledForHttpEndpoint()
         {
@@ -49,7 +48,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             };
 
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", false);
-            Assert.Throws<InvalidOperationException>(() => ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options));
+
+            var exception = Record.Exception(() => ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options));
+
+            if (Environment.Version.Major == 3)
+            {
+                Assert.NotNull(exception);
+                Assert.IsType<InvalidOperationException>(exception);
+            }
+            else
+            {
+                Assert.Null(exception);
+            }
         }
 
         [Fact]
@@ -60,8 +70,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Endpoint = new Uri(HttpsEndpoint),
             };
 
-            ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options);
+            var exception = Record.Exception(() => ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options));
+            Assert.Null(exception);
         }
-#endif
     }
 }

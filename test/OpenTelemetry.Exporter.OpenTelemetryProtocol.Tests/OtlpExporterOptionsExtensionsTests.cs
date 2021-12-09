@@ -104,7 +104,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(expectedExportClientType, exportClient.GetType());
         }
 
-#if NETCOREAPP3_1
         [Fact]
         public void GetTraceExportClient_GetClientForGrpcWithoutUnencryptedFlag_ThrowsException()
         {
@@ -118,9 +117,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Protocol = OtlpExportProtocol.Grpc,
             };
 
-            Assert.Throws<InvalidOperationException>(() => options.GetTraceExportClient());
+            var exception = Record.Exception(() => options.GetTraceExportClient());
+
+            if (Environment.Version.Major == 3)
+            {
+                Assert.NotNull(exception);
+                Assert.IsType<InvalidOperationException>(exception);
+            }
+            else
+            {
+                Assert.Null(exception);
+            }
         }
-#endif
 
         [Fact]
         public void GetTraceExportClient_UnsupportedProtocol_Throws()
