@@ -125,7 +125,7 @@ namespace OpenTelemetry.Metrics
         {
             for (int i = 0; i <= indexSnapshot; i++)
             {
-                ref readonly var metricPoint = ref this.metricPoints[i];
+                ref var metricPoint = ref this.metricPoints[i];
                 if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
                 {
                     continue;
@@ -146,7 +146,7 @@ namespace OpenTelemetry.Metrics
         {
             for (int i = 0; i <= indexSnapshot; i++)
             {
-                ref readonly var metricPoint = ref this.metricPoints[i];
+                ref var metricPoint = ref this.metricPoints[i];
                 if (metricPoint.StartTime == default)
                 {
                     continue;
