@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Added `ParentId` to `TelemetrySpan` ([#2733](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2733))_
+
 ## 1.2.0-rc1
 
 Released 2021-Nov-29
