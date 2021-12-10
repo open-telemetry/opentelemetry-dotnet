@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Added validation that insecure channel is configured correctly when using
-  .NET Core 3.1 for gRPC-based exporting.
+  .NET Core 3.x for gRPC-based exporting.
   ([#2691](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2691))
 
 ## 1.2.0-rc1
