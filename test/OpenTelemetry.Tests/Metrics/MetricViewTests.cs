@@ -454,13 +454,13 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-            List<MetricPoint> metricPointsDefault = new List<MetricPoint>();
+            var metricPoints = new List<MetricPoint>();
             foreach (ref var mp in exportedItems[0].GetMetricPoints())
             {
-                metricPointsDefault.Add(mp);
+                metricPoints.Add(mp);
             }
 
-            var histogramPoint = metricPointsDefault[0];
+            var histogramPoint = metricPoints[0];
             var min = histogramPoint.GetHistogramMin();
             var max = histogramPoint.GetHistogramMax();
 
@@ -488,13 +488,13 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-            List<MetricPoint> metricPointsDefault = new List<MetricPoint>();
+            var metricPoints = new List<MetricPoint>();
             foreach (ref var mp in exportedItems[0].GetMetricPoints())
             {
-                metricPointsDefault.Add(mp);
+                metricPoints.Add(mp);
             }
 
-            var histogramPoint = metricPointsDefault[0];
+            var histogramPoint = metricPoints[0];
 
             var ex = Assert.Throws<NotSupportedException>(() => histogramPoint.GetHistogramMin());
             Assert.Contains($"{nameof(histogramPoint.GetHistogramMin)} is not supported for this metric type.", ex.Message);
