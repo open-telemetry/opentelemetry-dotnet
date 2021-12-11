@@ -124,9 +124,19 @@ namespace OpenTelemetry.Metrics
                         Metric metric;
                         var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
                         string[] tagKeysInteresting = metricStreamConfig?.TagKeys;
-                        double[] histogramBucketBounds = (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfig
-                            && histogramConfig.Boundaries != null) ? histogramConfig.Boundaries : null;
-                        metric = new Metric(instrument, this.Temporality, metricName, metricDescription, this.maxMetricPointsPerMetricStream, histogramBucketBounds, tagKeysInteresting);
+                        double[] histogramBucketBounds = null;
+                        bool histogramRecordMinMax = false;
+
+                        if (metricStreamConfig is HistogramConfiguration histogramConfig)
+                        {
+                            histogramRecordMinMax = histogramConfig.RecordMinMax;
+                            if (metricStreamConfig is ExplicitBucketHistogramConfiguration explicitBucketHistogramConfiguration)
+                            {
+                                histogramBucketBounds = explicitBucketHistogramConfiguration.Boundaries;
+                            }
+                        }
+
+                        metric = new Metric(instrument, this.Temporality, metricName, metricDescription, this.maxMetricPointsPerMetricStream, histogramBucketBounds, tagKeysInteresting, histogramRecordMinMax);
 
                         this.metrics[index] = metric;
                         metrics.Add(metric);

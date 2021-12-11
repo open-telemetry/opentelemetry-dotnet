@@ -25,12 +25,16 @@ namespace OpenTelemetry.Metrics
         internal readonly double[] ExplicitBounds;
 
         internal readonly long[] RunningBucketCounts;
-
         internal readonly long[] SnapshotBucketCounts;
 
         internal double RunningSum;
-
         internal double SnapshotSum;
+
+        internal double RunningMin;
+        internal double SnapshotMin;
+
+        internal double RunningMax;
+        internal double SnapshotMax;
 
         internal HistogramBuckets(double[] explicitBounds)
         {

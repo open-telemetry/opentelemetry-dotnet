@@ -434,6 +434,75 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(boundaries.Length + 1, actualCount);
         }
 
+        [Theory]
+        [MemberData(nameof(MetricTestData.ValidHistogramWithMinMax), MemberType = typeof(MetricTestData))]
+        public void HistogramWithMinMax(double[] values, HistogramConfiguration histogramConfiguration, double expectedMin, double expectedMax)
+        {
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView("MyHistogram", histogramConfiguration)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var histogram = meter.CreateHistogram<double>("MyHistogram");
+            for (var i = 0; i < values.Length; i++)
+            {
+                histogram.Record(values[i]);
+            }
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            List<MetricPoint> metricPointsDefault = new List<MetricPoint>();
+            foreach (ref var mp in exportedItems[0].GetMetricPoints())
+            {
+                metricPointsDefault.Add(mp);
+            }
+
+            var histogramPoint = metricPointsDefault[0];
+            var min = histogramPoint.GetHistogramMin();
+            var max = histogramPoint.GetHistogramMax();
+
+            Assert.Equal(expectedMin, min);
+            Assert.Equal(expectedMax, max);
+        }
+
+        [Theory]
+        [MemberData(nameof(MetricTestData.InvalidHistogramWithMinMax), MemberType = typeof(MetricTestData))]
+        public void HistogramWithMinMaxThrows(double[] values, HistogramConfiguration histogramConfiguration)
+        {
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView("MyHistogram", histogramConfiguration)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var histogram = meter.CreateHistogram<double>("MyHistogram");
+            for (var i = 0; i < values.Length; i++)
+            {
+                histogram.Record(values[i]);
+            }
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            List<MetricPoint> metricPointsDefault = new List<MetricPoint>();
+            foreach (ref var mp in exportedItems[0].GetMetricPoints())
+            {
+                metricPointsDefault.Add(mp);
+            }
+
+            var histogramPoint = metricPointsDefault[0];
+
+            var ex = Assert.Throws<NotSupportedException>(() => histogramPoint.GetHistogramMin());
+            Assert.Contains($"{nameof(histogramPoint.GetHistogramMin)} is not supported for this metric type.", ex.Message);
+
+            ex = Assert.Throws<NotSupportedException>(() => histogramPoint.GetHistogramMax());
+            Assert.Contains($"{nameof(histogramPoint.GetHistogramMax)} is not supported for this metric type.", ex.Message);
+        }
+
         [Fact]
         public void ViewToSelectTagKeys()
         {
@@ -575,6 +644,18 @@ namespace OpenTelemetry.Metrics.Tests
         {
             MetricStreamConfiguration.Drop.Aggregation = Aggregation.Histogram;
             Assert.Equal(Aggregation.Drop, MetricStreamConfiguration.Drop.Aggregation);
+        }
+
+        [Fact]
+        public void GetHistogramMinThrows()
+        {
+            var histogramPoint = new MetricPoint(AggregationType.HistogramWithMinMax, DateTime.Now, null, null, new double[] { 0 });
+
+            var ex = Assert.Throws<InvalidOperationException>(() => histogramPoint.GetHistogramMin());
+            Assert.Equal("No values have been recorded yet.", ex.Message);
+
+            ex = Assert.Throws<InvalidOperationException>(() => histogramPoint.GetHistogramMax());
+            Assert.Equal("No values have been recorded yet.", ex.Message);
         }
     }
 }

@@ -33,7 +33,8 @@ namespace OpenTelemetry.Metrics
             string metricDescription,
             int maxMetricPointsPerMetricStream,
             double[] histogramBounds = null,
-            string[] tagKeysInteresting = null)
+            string[] tagKeysInteresting = null,
+            bool histogramRecordMinMax = true)
         {
             this.Name = metricName;
             this.Description = metricDescription ?? string.Empty;
@@ -96,6 +97,11 @@ namespace OpenTelemetry.Metrics
                     && histogramBounds.Length == 0)
                 {
                     aggType = AggregationType.HistogramSumCount;
+                }
+                else if (histogramRecordMinMax)
+                {
+                    aggType = AggregationType.HistogramWithMinMax;
+                    this.MetricType = MetricType.HistogramWithMinMax;
                 }
                 else
                 {

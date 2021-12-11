@@ -44,7 +44,7 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         /// <remarks>See specification: <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument"/>.</remarks>
         /// <param name="customViewName">The view name.</param>
-        /// <returns>Boolean indicating if the instrument is valid.</returns>
+        /// <returns>Boolean indicating if the view name is valid.</returns>
         internal static bool IsValidViewName(string customViewName)
         {
             // Only validate the view name in case it's not null. In case it's null, the view name will be the instrument name as per the spec.

@@ -62,5 +62,10 @@ namespace OpenTelemetry.Metrics
         /// Histogram with sum, count only.
         /// </summary>
         HistogramSumCount = 7,
+
+        /// <summary>
+        /// Histogram with minimum and maximum.
+        /// </summary>
+        HistogramWithMinMax = 8,
     }
 }
