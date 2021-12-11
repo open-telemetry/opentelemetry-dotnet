@@ -199,7 +199,7 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long GetHistogramCount()
         {
-            if (this.aggType != AggregationType.Histogram && this.aggType != AggregationType.HistogramSumCount)
+            if (this.aggType != AggregationType.Histogram && this.aggType != AggregationType.HistogramSumCount && this.aggType != AggregationType.HistogramWithMinMax)
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramCount));
             }
@@ -217,7 +217,7 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double GetHistogramSum()
         {
-            if (this.aggType != AggregationType.Histogram && this.aggType != AggregationType.HistogramSumCount)
+            if (this.aggType != AggregationType.Histogram && this.aggType != AggregationType.HistogramSumCount && this.aggType != AggregationType.HistogramWithMinMax)
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramSum));
             }
@@ -281,7 +281,7 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public HistogramBuckets GetHistogramBuckets()
         {
-            if (this.aggType != AggregationType.Histogram && this.aggType != AggregationType.HistogramSumCount)
+            if (this.aggType != AggregationType.Histogram && this.aggType != AggregationType.HistogramSumCount && this.aggType != AggregationType.HistogramWithMinMax)
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramBuckets));
             }
