@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Added `ParentId` to `TelemetrySpan` ([#2733](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2733))_
+* Added `ParentId` to `TelemetrySpan` ([#2740](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2740))
 
 ## 1.2.0-rc1
 
