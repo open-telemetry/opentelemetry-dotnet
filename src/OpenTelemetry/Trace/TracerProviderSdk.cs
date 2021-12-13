@@ -242,12 +242,7 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    var activitySources = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-                    foreach (var name in sources)
-                    {
-                        activitySources.Add(name);
-                    }
+                    var activitySources = new HashSet<string>(sources, StringComparer.OrdinalIgnoreCase);
 
                     if (this.supportLegacyActivity)
                     {
