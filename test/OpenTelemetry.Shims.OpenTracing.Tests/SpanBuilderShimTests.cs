@@ -122,7 +122,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         {
             // Create an activity
             var activity = new Activity("foo")
-                .SetIdFormat(System.Diagnostics.ActivityIdFormat.W3C)
+                .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
 
             // matching root operation name
