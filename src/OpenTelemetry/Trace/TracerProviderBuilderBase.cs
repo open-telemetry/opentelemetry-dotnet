@@ -30,7 +30,7 @@ namespace OpenTelemetry.Trace
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
         private readonly List<string> sources = new List<string>();
-        private readonly Dictionary<string, bool> legacyActivityOperationNames = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> legacyActivityOperationNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
 
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Trace
         {
             Guard.NullOrWhitespace(operationName, nameof(operationName));
 
-            this.legacyActivityOperationNames[operationName] = true;
+            this.legacyActivityOperationNames.Add(operationName);
 
             return this;
         }
