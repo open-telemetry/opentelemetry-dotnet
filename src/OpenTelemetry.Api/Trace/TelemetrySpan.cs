@@ -67,7 +67,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Gets the identity of the parent span id, if any.
         /// </summary>
-        public ActivitySpanId ParentId
+        public ActivitySpanId ParentSpanId
         {
             get
             {
