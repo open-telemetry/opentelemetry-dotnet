@@ -380,7 +380,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("MyHistogram", metricCustom.Name);
 
             List<MetricPoint> metricPointsDefault = new List<MetricPoint>();
-            foreach (ref var mp in metricDefault.GetMetricPoints())
+            foreach (ref readonly var mp in metricDefault.GetMetricPoints())
             {
                 metricPointsDefault.Add(mp);
             }
@@ -407,7 +407,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(Metric.DefaultHistogramBounds.Length + 1, actualCount);
 
             List<MetricPoint> metricPointsCustom = new List<MetricPoint>();
-            foreach (ref var mp in metricCustom.GetMetricPoints())
+            foreach (ref readonly var mp in metricCustom.GetMetricPoints())
             {
                 metricPointsCustom.Add(mp);
             }
@@ -465,7 +465,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0];
             Assert.Equal("NameOnly", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref readonly var mp in metric.GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }
@@ -476,7 +476,7 @@ namespace OpenTelemetry.Metrics.Tests
             metric = exportedItems[1];
             Assert.Equal("SizeOnly", metric.Name);
             metricPoints.Clear();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref readonly var mp in metric.GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }
@@ -487,7 +487,7 @@ namespace OpenTelemetry.Metrics.Tests
             metric = exportedItems[2];
             Assert.Equal("NoTags", metric.Name);
             metricPoints.Clear();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref readonly var mp in metric.GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }

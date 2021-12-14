@@ -15,11 +15,7 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using OpenTelemetry;
 using OpenTelemetry.Logs;
 
 namespace Examples.Console
@@ -33,7 +29,7 @@ namespace Examples.Console
                 builder.AddOpenTelemetry((opt) =>
                 {
                     opt.IncludeFormattedMessage = true;
-                    if (options.UseExporter.ToLower() == "otlp")
+                    if (options.UseExporter.Equals("otlp", StringComparison.OrdinalIgnoreCase))
                     {
                         /*
                          * Prerequisite to run this example:
