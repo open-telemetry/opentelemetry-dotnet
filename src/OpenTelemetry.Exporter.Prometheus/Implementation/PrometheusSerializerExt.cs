@@ -52,18 +52,13 @@ namespace OpenTelemetry.Exporter.Prometheus
                     {
                         buffer[cursor++] = unchecked((byte)'{');
 
-                        int i = 0;
                         foreach (var tag in tags)
                         {
-                            if (i++ > 0)
-                            {
-                                buffer[cursor++] = unchecked((byte)',');
-                            }
-
                             cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+                            buffer[cursor++] = unchecked((byte)',');
                         }
 
-                        buffer[cursor++] = unchecked((byte)'}');
+                        buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
                     }
 
                     buffer[cursor++] = unchecked((byte)' ');
@@ -151,18 +146,13 @@ namespace OpenTelemetry.Exporter.Prometheus
                     {
                         buffer[cursor++] = unchecked((byte)'{');
 
-                        int i = 0;
                         foreach (var tag in tags)
                         {
-                            if (i++ > 0)
-                            {
-                                buffer[cursor++] = unchecked((byte)',');
-                            }
-
                             cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+                            buffer[cursor++] = unchecked((byte)',');
                         }
 
-                        buffer[cursor++] = unchecked((byte)'}');
+                        buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
                     }
 
                     buffer[cursor++] = unchecked((byte)' ');
@@ -182,18 +172,13 @@ namespace OpenTelemetry.Exporter.Prometheus
                     {
                         buffer[cursor++] = unchecked((byte)'{');
 
-                        int i = 0;
                         foreach (var tag in tags)
                         {
-                            if (i++ > 0)
-                            {
-                                buffer[cursor++] = unchecked((byte)',');
-                            }
-
                             cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+                            buffer[cursor++] = unchecked((byte)',');
                         }
 
-                        buffer[cursor++] = unchecked((byte)'}');
+                        buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
                     }
 
                     buffer[cursor++] = unchecked((byte)' ');
