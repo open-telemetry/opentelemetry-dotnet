@@ -76,13 +76,13 @@ namespace OpenTelemetry.Trace.Tests
             using var parentSpan = new TelemetrySpan(parentActivity);
 
             // ParentId should be unset
-            Assert.Equal(default, parentSpan.ParentId);
+            Assert.Equal(default, parentSpan.ParentSpanId);
 
             using var childActivity =
                 activitySource.CreateActivity("childOperation", ActivityKind.Internal, parentActivity.Context);
             using var childSpan = new TelemetrySpan(childActivity);
 
-            Assert.Equal(parentSpan.Context.SpanId, childSpan.ParentId);
+            Assert.Equal(parentSpan.Context.SpanId, childSpan.ParentSpanId);
         }
     }
 }

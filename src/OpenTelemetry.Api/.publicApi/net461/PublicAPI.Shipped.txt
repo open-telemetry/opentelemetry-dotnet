@@ -108,7 +108,6 @@ OpenTelemetry.Trace.TelemetrySpan.Dispose() -> void
 OpenTelemetry.Trace.TelemetrySpan.End() -> void
 OpenTelemetry.Trace.TelemetrySpan.End(System.DateTimeOffset endTimestamp) -> void
 OpenTelemetry.Trace.TelemetrySpan.IsRecording.get -> bool
-OpenTelemetry.Trace.TelemetrySpan.ParentId.get -> System.Diagnostics.ActivitySpanId
 OpenTelemetry.Trace.TelemetrySpan.RecordException(string type, string message, string stacktrace) -> OpenTelemetry.Trace.TelemetrySpan
 OpenTelemetry.Trace.TelemetrySpan.RecordException(System.Exception ex) -> OpenTelemetry.Trace.TelemetrySpan
 OpenTelemetry.Trace.TelemetrySpan.SetAttribute(string key, bool value) -> OpenTelemetry.Trace.TelemetrySpan
