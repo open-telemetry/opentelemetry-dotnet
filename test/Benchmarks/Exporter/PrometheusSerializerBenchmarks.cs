@@ -16,10 +16,8 @@
 
 extern alias Prometheus;
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.IO;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
