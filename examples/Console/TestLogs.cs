@@ -29,7 +29,7 @@ namespace Examples.Console
                 builder.AddOpenTelemetry((opt) =>
                 {
                     opt.IncludeFormattedMessage = true;
-                    if (options.UseExporter.ToLower() == "otlp")
+                    if (options.UseExporter.Equals("otlp", StringComparison.OrdinalIgnoreCase))
                     {
                         /*
                          * Prerequisite to run this example:
