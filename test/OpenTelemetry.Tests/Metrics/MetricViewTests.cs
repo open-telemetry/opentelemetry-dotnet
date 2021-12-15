@@ -455,7 +455,7 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
             var metricPoints = new List<MetricPoint>();
-            foreach (ref var mp in exportedItems[0].GetMetricPoints())
+            foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }
@@ -489,7 +489,7 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
             var metricPoints = new List<MetricPoint>();
-            foreach (ref var mp in exportedItems[0].GetMetricPoints())
+            foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }

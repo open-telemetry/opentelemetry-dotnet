@@ -233,6 +233,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     }
 
                 case MetricType.Histogram:
+                case MetricType.HistogramWithMinMax:
                     {
                         var histogram = new OtlpMetrics.Histogram();
                         histogram.AggregationTemporality = temporality;

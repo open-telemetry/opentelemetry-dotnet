@@ -313,6 +313,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                 case AggregationType.HistogramSumCount:
+                case AggregationType.HistogramWithMinMax:
                     {
                         this.Update((double)number);
                         break;
