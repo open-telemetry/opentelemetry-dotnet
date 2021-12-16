@@ -89,12 +89,7 @@ namespace OpenTelemetry.Metrics
             }
             else if (meterSources.Any())
             {
-                var meterSourcesToSubscribe = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var meterSource in meterSources)
-                {
-                    meterSourcesToSubscribe.Add(meterSource);
-                }
-
+                var meterSourcesToSubscribe = new HashSet<string>(meterSources, StringComparer.OrdinalIgnoreCase);
                 shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
             }
 

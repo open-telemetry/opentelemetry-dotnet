@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
 internal static class MyExporterExtensions
