@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter
 {
@@ -65,10 +66,7 @@ namespace OpenTelemetry.Exporter
             get => this.scrapeResponseCacheDurationMilliseconds;
             set
             {
-                if (value < 0)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(value), "Value should be greater than or equal to zero.");
-                }
+                Guard.Range(value, nameof(value), min: 0);
 
                 this.scrapeResponseCacheDurationMilliseconds = value;
             }
