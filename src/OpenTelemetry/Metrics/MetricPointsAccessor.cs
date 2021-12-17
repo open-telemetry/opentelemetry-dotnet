@@ -76,7 +76,7 @@ namespace OpenTelemetry.Metrics
             /// <summary>
             /// Gets the <see cref="MetricPoint"/> at the current position of the enumerator.
             /// </summary>
-            public ref MetricPoint Current
+            public ref readonly MetricPoint Current
             {
                 get
                 {
