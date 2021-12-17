@@ -1026,7 +1026,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         /// </summary>
         private sealed class HttpWebRequestArrayList : ArrayListWrapper
         {
-            private readonly Dictionary<string, object> _requestProperties = new Dictionary<string, object>();
+            private readonly Dictionary<string, object> requestProperties = new Dictionary<string, object>();
 
             public HttpWebRequestArrayList(ArrayList list)
                 : base(list)
@@ -1040,7 +1040,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 if (value is HttpWebRequest request)
                 {
-                    ProcessRequest(request, this._requestProperties);
+                    ProcessRequest(request, this.requestProperties);
                 }
 
                 return index;
@@ -1055,7 +1055,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 if (request is HttpWebRequest webRequest)
                 {
                     HookOrProcessResult(webRequest);
-                    this._requestProperties.Clear();
+                    this.requestProperties.Clear();
                 }
             }
 
@@ -1067,7 +1067,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     if (oldList[i] is HttpWebRequest request)
                     {
                         HookOrProcessResult(request);
-                        this._requestProperties.Clear();
+                        this.requestProperties.Clear();
                     }
                 }
             }
