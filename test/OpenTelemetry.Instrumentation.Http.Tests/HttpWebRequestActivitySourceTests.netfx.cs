@@ -415,8 +415,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [InlineData("POST")]
         public async Task DoNotInjectTraceParentWhenPresent(string method)
         {
-            const  string traceId = "abcdef0123456789abcdef0123456789";
-            const  string parentSpanId = "abcdef0123456789";
+            const string traceId = "abcdef0123456789abcdef0123456789";
+            const string parentSpanId = "abcdef0123456789";
             try
             {
                 using var eventRecords = new ActivitySourceRecorder();
