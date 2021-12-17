@@ -40,7 +40,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         public const string ActivityName = ActivitySourceName + ".HttpRequestOut";
 
         internal static readonly Func<HttpWebRequest, string, IEnumerable<string>> HttpWebRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
-        internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Add(name, value);
+        internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Set(name, value);
 
         internal static HttpWebRequestInstrumentationOptions Options = new HttpWebRequestInstrumentationOptions();
 
@@ -203,7 +203,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private static bool IsRequestInstrumented(HttpWebRequest request)
             => Propagators.DefaultTextMapPropagator.Extract(default, request, HttpWebRequestHeaderValuesGetter) != default;
 
-        private static void ProcessRequest(HttpWebRequest request)
+        private static void ProcessRequest(HttpWebRequest request, IDictionary<string, object> properties)
         {
             if (!WebRequestActivitySource.HasListeners() || !Options.EventFilter(request))
             {
@@ -216,15 +216,40 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
+            Activity activity;
+            var activityContext = Activity.Current?.Context ?? default;
+            int? retryCount = null;
+
             if (IsRequestInstrumented(request))
             {
                 // This request was instrumented by previous
-                // ProcessRequest, such is the case with redirect responses where the same request is sent again.
-                return;
+                // ProcessRequest, such is the case with retries or redirect responses where the same request is sent again.
+
+                if (properties.TryGetValue("otel.previous_try_context", out var previousContext))
+                {
+                    // Handling request retry.
+                    retryCount = 1;
+                    if (properties.TryGetValue("http.retry_count", out var previousRetryCount))
+                    {
+                        retryCount = (int)previousRetryCount + 1;
+                    }
+
+                    properties["http.retry_count"] = retryCount;
+                }
+
+                activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client, activityContext, links: new[] { new ActivityLink((ActivityContext)previousContext) });
+            }
+            else
+            {
+                activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client, activityContext);
             }
 
-            var activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
-            var activityContext = Activity.Current?.Context ?? default;
+            if (retryCount != null)
+            {
+                activity?.SetTag("http.retry_count", retryCount.Value);
+            }
+
+            activityContext = Activity.Current?.Context ?? default;
 
             // Propagation must still be done in all cases, to allow
             // downstream services to continue from parent context, if any.
@@ -1001,6 +1026,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         /// </summary>
         private sealed class HttpWebRequestArrayList : ArrayListWrapper
         {
+            private readonly Dictionary<string, object> _requestProperties = new Dictionary<string, object>();
+
             public HttpWebRequestArrayList(ArrayList list)
                 : base(list)
             {
@@ -1013,7 +1040,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 if (value is HttpWebRequest request)
                 {
-                    ProcessRequest(request);
+                    ProcessRequest(request, this._requestProperties);
                 }
 
                 return index;
@@ -1028,6 +1055,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 if (request is HttpWebRequest webRequest)
                 {
                     HookOrProcessResult(webRequest);
+                    this._requestProperties.Clear();
                 }
             }
 
@@ -1039,6 +1067,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     if (oldList[i] is HttpWebRequest request)
                     {
                         HookOrProcessResult(request);
+                        this._requestProperties.Clear();
                     }
                 }
             }

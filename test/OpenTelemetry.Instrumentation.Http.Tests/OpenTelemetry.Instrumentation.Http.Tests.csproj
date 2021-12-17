@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry HTTP instrumentations</Description>
-    <TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
-    <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net461</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net5.0;net6.0;net461</TargetFrameworks>
+<!--    <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net461</TargetFrameworks>-->
   </PropertyGroup>
 
   <ItemGroup>
