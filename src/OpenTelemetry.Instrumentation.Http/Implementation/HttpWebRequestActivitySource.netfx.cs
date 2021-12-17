@@ -218,38 +218,33 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             Activity activity;
             var activityContext = Activity.Current?.Context ?? default;
-            int? retryCount = null;
 
-            if (IsRequestInstrumented(request))
+            if (IsRequestInstrumented(request) && properties.TryGetValue("otel.previous_try_context", out var previousContext))
             {
                 // This request was instrumented by previous
                 // ProcessRequest, such is the case with retries or redirect responses where the same request is sent again.
 
-                if (properties.TryGetValue("otel.previous_try_context", out var previousContext))
+                var retryCount = 1;
+                if (properties.TryGetValue("http.retry_count", out var previousRetryCount))
                 {
-                    // Handling request retry.
-                    retryCount = 1;
-                    if (properties.TryGetValue("http.retry_count", out var previousRetryCount))
-                    {
-                        retryCount = (int)previousRetryCount + 1;
-                    }
-
-                    properties["http.retry_count"] = retryCount;
+                    retryCount = (int)previousRetryCount + 1;
                 }
 
                 activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client, activityContext, links: new[] { new ActivityLink((ActivityContext)previousContext) });
+                activity?.SetTag("http.retry_count", retryCount);
+                properties["http.retry_count"] = retryCount;
             }
             else
             {
                 activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client, activityContext);
             }
 
-            if (retryCount != null)
-            {
-                activity?.SetTag("http.retry_count", retryCount.Value);
-            }
-
             activityContext = Activity.Current?.Context ?? default;
+            if (activityContext != default)
+            {
+                // Store activity context for the next possible try.
+                properties["otel.previous_try_context"] = activityContext;
+            }
 
             // Propagation must still be done in all cases, to allow
             // downstream services to continue from parent context, if any.

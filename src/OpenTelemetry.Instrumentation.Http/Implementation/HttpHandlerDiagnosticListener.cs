@@ -110,8 +110,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 Activity.Current = activity;
             }
 
-            // Store activity context for the next possible try.
-            request.Properties["otel.previous_try_context"] = activity.Context;
+            if (activity != null)
+            {
+                // Store activity context for the next possible try.
+                request.Properties["otel.previous_try_context"] = activity.Context;
+            }
 
             // Propagate context irrespective of sampling decision
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
