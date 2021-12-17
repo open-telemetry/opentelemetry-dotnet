@@ -751,8 +751,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             // exactly 1 Start event per request and exactly 1 Stop event per response (if request succeeded)
             var successfulTasks = tasks.Where(t => t.Value.Status == TaskStatus.RanToCompletion);
 
-            Assert.Equal(redirectCount * tasks.Count, eventRecords.Records.Count(rec => rec.Key == "Start"));
-            Assert.Equal(redirectCount * successfulTasks.Count(), eventRecords.Records.Count(rec => rec.Key == "Stop"));
+            Assert.Equal((redirectCount + 1) * tasks.Count, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal((redirectCount + 1) * successfulTasks.Count(), eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             // Check to make sure: We have a WebRequest and a WebResponse for each successful request
             foreach (var pair in eventRecords.Records)

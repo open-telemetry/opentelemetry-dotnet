@@ -217,9 +217,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
 
             Activity activity;
-            var activityContext = Activity.Current?.Context ?? default;
-
-            if (IsRequestInstrumented(request) && properties.TryGetValue("otel.previous_try_context", out var previousContext))
+            var context = Propagators.DefaultTextMapPropagator.Extract(default, request, HttpWebRequestHeaderValuesGetter);
+            if (context != default && properties.TryGetValue("otel.previous_try_context", out var previousContext))
             {
                 // This request was instrumented by previous
                 // ProcessRequest, such is the case with retries or redirect responses where the same request is sent again.
@@ -230,16 +229,17 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     retryCount = (int)previousRetryCount + 1;
                 }
 
-                activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client, activityContext, links: new[] { new ActivityLink((ActivityContext)previousContext) });
+                activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client, context.ActivityContext, links: new[] { new ActivityLink((ActivityContext)previousContext) });
+
                 activity?.SetTag("http.retry_count", retryCount);
                 properties["http.retry_count"] = retryCount;
             }
             else
             {
-                activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client, activityContext);
+                activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
             }
 
-            activityContext = Activity.Current?.Context ?? default;
+            var activityContext = Activity.Current?.Context ?? default;
             if (activityContext != default)
             {
                 // Store activity context for the next possible try.
