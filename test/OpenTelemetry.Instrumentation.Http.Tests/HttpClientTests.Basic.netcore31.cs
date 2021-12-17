@@ -295,17 +295,14 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 await c.SendAsync(request);
             }
 
-            Assert.Equal(6, processor.Invocations.Count); // SetParentProvider/OnStart/OnStart/OnEnd/OnShutdown/Dispose called.
-            var activity = (Activity)processor.Invocations[3].Arguments[0];
+            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            var activity = (Activity)processor.Invocations[2].Arguments[0];
 
             Assert.Equal(ActivityKind.Client, activity.Kind);
-            Assert.Equal(traceId, activity.Context.TraceId.ToString());
-            Assert.Equal(parentSpanId, activity.ParentSpanId.ToString());
-            Assert.NotEqual(parentSpanId, activity.Context.SpanId.ToString());
             Assert.NotEqual(default, activity.Context.SpanId);
-
-            Assert.True(request.Headers.TryGetValues("traceparent", out var traceparents));
-            Assert.Single(traceparents);
+            Assert.NotEqual(traceId, activity.TraceId.ToString());
+            Assert.NotEqual(parentSpanId, activity.SpanId.ToString());
+            Assert.NotEqual(parentSpanId, activity.ParentSpanId.ToString());
         }
 
         [Fact]

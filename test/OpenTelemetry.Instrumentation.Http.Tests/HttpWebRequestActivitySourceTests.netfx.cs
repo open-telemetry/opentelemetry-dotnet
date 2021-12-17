@@ -665,8 +665,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(2, eventRecords.Records.Count(rec => rec.Key == "Start"));
             Assert.Equal(2, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
-            Activity activity = AssertFirstEventWasStart(eventRecords);
-            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
+            Activity firstActivity = AssertFirstEventWasStart(eventRecords);
+            VerifyActivityStartTags(this.hostNameAndPort, method, url, firstActivity);
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
@@ -674,14 +674,19 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
             Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
 
-            activity = AssertFirstEventWasStart(eventRecords);
-            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
+            Activity secondActivity = AssertFirstEventWasStart(eventRecords);
+            VerifyActivityStartTags(this.hostNameAndPort, method, url, secondActivity);
 
             Assert.True(eventRecords.Records.TryDequeue(out exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
 
             Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
             Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
+
+            ActivityLink activityLink = secondActivity.Links.FirstOrDefault();
+            Assert.NotEqual(default, activityLink);
+            Assert.Equal(firstActivity.Context.TraceId, activityLink.Context.TraceId);
+            Assert.Equal(firstActivity.Context.SpanId, activityLink.Context.SpanId);
         }
 
         [Fact]

@@ -89,32 +89,24 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
 
             var context = Propagators.DefaultTextMapPropagator.Extract(default, request, HttpRequestMessageContextPropagation.HeaderValuesGetter);
-            if (context != default)
+            if (context != default && request.Properties.TryGetValue("otel.previous_try_context", out var previousContext))
             {
-                if (request.Properties.TryGetValue("otel.previous_try_context", out var previousContext))
+                // Handling request retry.
+                var retryCount = 1;
+                if (request.Properties.TryGetValue("http.retry_count", out var previousRetryCount))
                 {
-                    // Handling request retry.
-                    var retryCount = 1;
-                    if (request.Properties.TryGetValue("http.retry_count", out var previousRetryCount))
-                    {
-                        retryCount = (int)previousRetryCount + 1;
-                    }
-
-                    activity.SetTag("http.retry_count", retryCount);
-                    request.Properties["http.retry_count"] = retryCount;
+                    retryCount = (int)previousRetryCount + 1;
                 }
 
-                activity = previousContext != null
-                    ? ActivitySource.StartActivity(activity.Kind, context.ActivityContext, links: new[] { new ActivityLink((ActivityContext)previousContext) })
-                    : ActivitySource.StartActivity(activity.Kind, context.ActivityContext);
+                activity = ActivitySource.StartActivity(activity.Kind, context.ActivityContext, links: new[] { new ActivityLink((ActivityContext)previousContext) });
                 Activity.Current = activity;
+
+                activity.SetTag("http.retry_count", retryCount);
+                request.Properties["http.retry_count"] = retryCount;
             }
 
-            if (activity != null)
-            {
-                // Store activity context for the next possible try.
-                request.Properties["otel.previous_try_context"] = activity.Context;
-            }
+            // Store activity context for the next possible try.
+            request.Properties["otel.previous_try_context"] = activity.Context;
 
             // Propagate context irrespective of sampling decision
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
