@@ -413,7 +413,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Theory]
         [InlineData("GET")]
         [InlineData("POST")]
-        public async Task DoNotInjectTraceParentWhenPresent(string method)
+        public async Task OverrideTraceParentWhenPresent(string method)
         {
             const string traceId = "abcdef0123456789abcdef0123456789";
             const string parentSpanId = "abcdef0123456789";
@@ -444,10 +444,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 var activity = eventRecords.Records.Last().Value;
                 Assert.Equal(ActivityKind.Client, activity.Kind);
-                Assert.Equal(traceId, activity.Context.TraceId.ToString());
-                Assert.Equal(parentSpanId, activity.ParentSpanId.ToString());
-                Assert.NotEqual(parentSpanId, activity.Context.SpanId.ToString());
                 Assert.NotEqual(default, activity.Context.SpanId);
+                Assert.NotEqual(traceId, activity.TraceId.ToString());
+                Assert.NotEqual(parentSpanId, activity.SpanId.ToString());
+                Assert.NotEqual(parentSpanId, activity.ParentSpanId.ToString());
             }
             finally
             {
@@ -499,19 +499,20 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [InlineData("POST")]
         public async Task TestRedirectedRequest(string method)
         {
+            const int redirectCount = 10;
             using var eventRecords = new ActivitySourceRecorder();
 
             using (var client = new HttpClient())
             {
                 using HttpResponseMessage response = method == "GET"
-                    ? await client.GetAsync(this.BuildRequestUrl(queryString: "redirects=10"))
-                    : await client.PostAsync(this.BuildRequestUrl(queryString: "redirects=10"), new StringContent("hello world"));
+                    ? await client.GetAsync(this.BuildRequestUrl(queryString: $"redirects={redirectCount}"))
+                    : await client.PostAsync(this.BuildRequestUrl(queryString: $"redirects={redirectCount}"), new StringContent("hello world"));
             }
 
             // We should have exactly one Start and one Stop event
-            Assert.Equal(2, eventRecords.Records.Count());
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
+            Assert.Equal(2 * redirectCount, eventRecords.Records.Count());
+            Assert.Equal(redirectCount, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(redirectCount, eventRecords.Records.Count(rec => rec.Key == "Stop"));
         }
 
         /// <summary>
@@ -668,25 +669,25 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Activity firstActivity = AssertFirstEventWasStart(eventRecords);
             VerifyActivityStartTags(this.hostNameAndPort, method, url, firstActivity);
 
+            Activity secondActivity = AssertFirstEventWasStart(eventRecords);
+            VerifyActivityStartTags(this.hostNameAndPort, method, url, secondActivity);
+
+            ActivityLink activityLink = secondActivity.Links.FirstOrDefault();
+            Assert.NotEqual(default, activityLink);
+            Assert.Equal(firstActivity.Context.TraceId, activityLink.Context.TraceId);
+            Assert.Equal(firstActivity.Context.SpanId, activityLink.Context.SpanId);
+
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
 
             Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
             Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
 
-            Activity secondActivity = AssertFirstEventWasStart(eventRecords);
-            VerifyActivityStartTags(this.hostNameAndPort, method, url, secondActivity);
-
             Assert.True(eventRecords.Records.TryDequeue(out exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
 
             Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
             Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
-
-            ActivityLink activityLink = secondActivity.Links.FirstOrDefault();
-            Assert.NotEqual(default, activityLink);
-            Assert.Equal(firstActivity.Context.TraceId, activityLink.Context.TraceId);
-            Assert.Equal(firstActivity.Context.SpanId, activityLink.Context.SpanId);
         }
 
         [Fact]
