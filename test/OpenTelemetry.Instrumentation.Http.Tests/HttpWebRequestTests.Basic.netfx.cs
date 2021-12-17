@@ -219,16 +219,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             await c.SendAsync(request);
 
             Assert.Equal(3, activityProcessor.Invocations.Count);  // SetParentProvider/Begin/End called
-            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
+            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
             Assert.Equal(ActivityKind.Client, activity.Kind);
-            Assert.Equal(traceId, activity.Context.TraceId.ToString());
-            Assert.Equal(parentSpanId, activity.ParentSpanId.ToString());
-            Assert.NotEqual(parentSpanId, activity.Context.SpanId.ToString());
             Assert.NotEqual(default, activity.Context.SpanId);
 
-            Assert.True(request.Headers.TryGetValues("traceparent", out var traceparents));
-            Assert.Single(traceparents);
+            var activityLink = activity.Links.FirstOrDefault();
+            Assert.NotNull(activityLink);
+            Assert.Equal(traceId, activityLink.Context.TraceId.ToString());
+            Assert.Equal(parentSpanId, activityLink.Context.SpanId.ToString());
         }
 
         [Fact]
