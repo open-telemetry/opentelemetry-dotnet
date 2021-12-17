@@ -225,7 +225,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.NotEqual(default, activity.Context.SpanId);
 
             var activityLink = activity.Links.FirstOrDefault();
-            Assert.NotNull(activityLink);
+            Assert.NotEqual(default, activityLink);
             Assert.Equal(traceId, activityLink.Context.TraceId.ToString());
             Assert.Equal(parentSpanId, activityLink.Context.SpanId.ToString());
         }
