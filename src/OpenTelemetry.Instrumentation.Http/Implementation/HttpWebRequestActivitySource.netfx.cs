@@ -22,6 +22,7 @@ using System.Net;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
@@ -199,11 +200,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private static void InstrumentRequest(HttpWebRequest request, ActivityContext activityContext)
             => Propagators.DefaultTextMapPropagator.Inject(new PropagationContext(activityContext, Baggage.Current), request, HttpWebRequestHeaderValuesSetter);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool IsRequestInstrumented(HttpWebRequest request)
-            => Propagators.DefaultTextMapPropagator.Extract(default, request, HttpWebRequestHeaderValuesGetter) != default;
-
-        private static void ProcessRequest(HttpWebRequest request, IDictionary<string, object> properties)
+        private static void ProcessRequest(HttpWebRequest request)
         {
             if (!WebRequestActivitySource.HasListeners() || !Options.EventFilter(request))
             {
@@ -218,13 +215,13 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             Activity activity;
             var context = Propagators.DefaultTextMapPropagator.Extract(default, request, HttpWebRequestHeaderValuesGetter);
-            if (context != default && properties.TryGetValue("otel.previous_try_context", out var previousContext))
+            if (context != default && RequestProperties.Instance.TryGetValue("otel.previous_try_context", out var previousContext))
             {
                 // This request was instrumented by previous
                 // ProcessRequest, such is the case with retries or redirect responses where the same request is sent again.
 
                 var retryCount = 1;
-                if (properties.TryGetValue("http.retry_count", out var previousRetryCount))
+                if (RequestProperties.Instance.TryGetValue("http.retry_count", out var previousRetryCount))
                 {
                     retryCount = (int)previousRetryCount + 1;
                 }
@@ -232,7 +229,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client, context.ActivityContext, links: new[] { new ActivityLink((ActivityContext)previousContext) });
 
                 activity?.SetTag("http.retry_count", retryCount);
-                properties["http.retry_count"] = retryCount;
+                RequestProperties.Instance["http.retry_count"] = retryCount;
             }
             else
             {
@@ -243,7 +240,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             if (activityContext != default)
             {
                 // Store activity context for the next possible try.
-                properties["otel.previous_try_context"] = activityContext;
+                RequestProperties.Instance["otel.previous_try_context"] = activityContext;
             }
 
             // Propagation must still be done in all cases, to allow
@@ -356,6 +353,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
 
             activity.Stop();
+
+            RequestProperties.Instance.Clear();
         }
 
         private static void PrepareReflectionObjects()
@@ -654,6 +653,18 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             generator.Emit(OpCodes.Ret);
 
             return (Func<object[], T>)setterMethod.CreateDelegate(typeof(Func<object[], T>));
+        }
+
+        private static class RequestProperties
+        {
+            private static readonly AsyncLocal<Dictionary<string, object>> Properties = new AsyncLocal<Dictionary<string, object>>();
+
+            static RequestProperties()
+            {
+                Properties.Value = new Dictionary<string, object>();
+            }
+
+            public static Dictionary<string, object> Instance => Properties.Value;
         }
 
         private class HashtableWrapper : Hashtable, IEnumerable
@@ -1021,8 +1032,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         /// </summary>
         private sealed class HttpWebRequestArrayList : ArrayListWrapper
         {
-            private readonly Dictionary<string, object> requestProperties = new Dictionary<string, object>();
-
             public HttpWebRequestArrayList(ArrayList list)
                 : base(list)
             {
@@ -1035,7 +1044,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 if (value is HttpWebRequest request)
                 {
-                    ProcessRequest(request, this.requestProperties);
+                    ProcessRequest(request);
                 }
 
                 return index;
@@ -1061,7 +1070,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     if (oldList[i] is HttpWebRequest request)
                     {
                         HookOrProcessResult(request);
-                        this.requestProperties.Clear();
                     }
                 }
             }
