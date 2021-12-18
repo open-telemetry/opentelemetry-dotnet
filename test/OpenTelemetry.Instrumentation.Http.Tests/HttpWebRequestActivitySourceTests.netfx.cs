@@ -673,7 +673,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             VerifyActivityStartTags(this.hostNameAndPort, method, url, secondActivity);
 
             ActivityLink activityLink = secondActivity.Links.FirstOrDefault();
-            Assert.NotEqual(default, activityLink);
             Assert.Equal(firstActivity.Context.TraceId, activityLink.Context.TraceId);
             Assert.Equal(firstActivity.Context.SpanId, activityLink.Context.SpanId);
 
