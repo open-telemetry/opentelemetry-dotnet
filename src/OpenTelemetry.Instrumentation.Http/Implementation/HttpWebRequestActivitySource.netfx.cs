@@ -1050,7 +1050,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 if (request is HttpWebRequest webRequest)
                 {
                     HookOrProcessResult(webRequest);
-                    this.requestProperties.Clear();
                 }
             }
 
