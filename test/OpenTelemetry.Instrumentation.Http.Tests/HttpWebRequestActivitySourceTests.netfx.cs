@@ -413,7 +413,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Theory]
         [InlineData("GET")]
         [InlineData("POST")]
-        public async Task OverrideTraceParentWhenPresent(string method)
+        public async Task OverwriteTraceParentWhenPresent(string method)
         {
             const string traceId = "abcdef0123456789abcdef0123456789";
             const string parentSpanId = "abcdef0123456789";
