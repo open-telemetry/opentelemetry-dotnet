@@ -510,9 +510,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
 
             // We should have exactly one Start and one Stop event
-            Assert.Equal(2 * redirectCount, eventRecords.Records.Count());
-            Assert.Equal(redirectCount, eventRecords.Records.Count(rec => rec.Key == "Start"));
-            Assert.Equal(redirectCount, eventRecords.Records.Count(rec => rec.Key == "Stop"));
+            Assert.Equal(2 * (redirectCount + 1), eventRecords.Records.Count());
+            Assert.Equal(redirectCount + 1, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(redirectCount + 1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
         }
 
         /// <summary>
