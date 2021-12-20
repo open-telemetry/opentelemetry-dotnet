@@ -1,4 +1,4 @@
-// <copyright file="MyExporterExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricPointValueStorage.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,23 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using OpenTelemetry.Metrics;
+using System.Runtime.InteropServices;
 
-internal static class MyExporterExtensions
+namespace OpenTelemetry.Metrics
 {
-    public static MeterProviderBuilder AddMyExporter(this MeterProviderBuilder builder)
+    [StructLayout(LayoutKind.Explicit)]
+    internal struct MetricPointValueStorage
     {
-        if (builder == null)
-        {
-            throw new ArgumentNullException(nameof(builder));
-        }
+        [FieldOffset(0)]
+        public long CurrentAsLong;
 
-        return builder.AddReader(new BaseExportingMetricReader(new MyExporter()));
+        [FieldOffset(0)]
+        public double CurrentAsDouble;
+
+        [FieldOffset(8)]
+        public long SnapshotAsLong;
+
+        [FieldOffset(8)]
+        public double SnapshotAsDouble;
     }
 }

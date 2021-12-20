@@ -102,10 +102,10 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                // TODO: Log and assign some invalid Enum.
+                throw new NotSupportedException($"Unsupported Instrument Type: {instrument.GetType().FullName}");
             }
 
-            this.aggStore = new AggregatorStore(aggType, temporality, maxMetricPointsPerMetricStream, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
+            this.aggStore = new AggregatorStore(metricName, aggType, temporality, maxMetricPointsPerMetricStream, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
             this.Temporality = temporality;
             this.InstrumentDisposed = false;
         }

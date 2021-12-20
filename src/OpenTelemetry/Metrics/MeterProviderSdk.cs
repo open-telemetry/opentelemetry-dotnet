@@ -89,12 +89,7 @@ namespace OpenTelemetry.Metrics
             }
             else if (meterSources.Any())
             {
-                var meterSourcesToSubscribe = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var meterSource in meterSources)
-                {
-                    meterSourcesToSubscribe.Add(meterSource);
-                }
-
+                var meterSourcesToSubscribe = new HashSet<string>(meterSources, StringComparer.OrdinalIgnoreCase);
                 shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
             }
 
@@ -113,48 +108,55 @@ namespace OpenTelemetry.Metrics
                         return;
                     }
 
-                    // Creating list with initial capacity as the maximum
-                    // possible size, to avoid any array resize/copy internally.
-                    // There may be excess space wasted, but it'll eligible for
-                    // GC right after this method.
-                    var metricStreamConfigs = new List<MetricStreamConfiguration>(viewConfigCount);
-                    foreach (var viewConfig in this.viewConfigs)
+                    try
                     {
-                        var metricStreamConfig = viewConfig(instrument);
-                        if (metricStreamConfig != null)
+                        // Creating list with initial capacity as the maximum
+                        // possible size, to avoid any array resize/copy internally.
+                        // There may be excess space wasted, but it'll eligible for
+                        // GC right after this method.
+                        var metricStreamConfigs = new List<MetricStreamConfiguration>(viewConfigCount);
+                        foreach (var viewConfig in this.viewConfigs)
                         {
-                            metricStreamConfigs.Add(metricStreamConfig);
-                        }
-                    }
-
-                    if (metricStreamConfigs.Count == 0)
-                    {
-                        // No views matched. Add null
-                        // which will apply defaults.
-                        // Users can turn off this default
-                        // by adding a view like below as the last view.
-                        // .AddView(instrumentName: "*", MetricStreamConfiguration.Drop)
-                        metricStreamConfigs.Add(null);
-                    }
-
-                    if (this.reader != null)
-                    {
-                        if (this.compositeMetricReader == null)
-                        {
-                            var metrics = this.reader.AddMetricsListWithViews(instrument, metricStreamConfigs);
-                            if (metrics.Count > 0)
+                            var metricStreamConfig = viewConfig(instrument);
+                            if (metricStreamConfig != null)
                             {
-                                listener.EnableMeasurementEvents(instrument, metrics);
+                                metricStreamConfigs.Add(metricStreamConfig);
                             }
                         }
-                        else
+
+                        if (metricStreamConfigs.Count == 0)
                         {
-                            var metricsSuperList = this.compositeMetricReader.AddMetricsSuperListWithViews(instrument, metricStreamConfigs);
-                            if (metricsSuperList.Any(metrics => metrics.Count > 0))
+                            // No views matched. Add null
+                            // which will apply defaults.
+                            // Users can turn off this default
+                            // by adding a view like below as the last view.
+                            // .AddView(instrumentName: "*", MetricStreamConfiguration.Drop)
+                            metricStreamConfigs.Add(null);
+                        }
+
+                        if (this.reader != null)
+                        {
+                            if (this.compositeMetricReader == null)
                             {
-                                listener.EnableMeasurementEvents(instrument, metricsSuperList);
+                                var metrics = this.reader.AddMetricsListWithViews(instrument, metricStreamConfigs);
+                                if (metrics.Count > 0)
+                                {
+                                    listener.EnableMeasurementEvents(instrument, metrics);
+                                }
+                            }
+                            else
+                            {
+                                var metricsSuperList = this.compositeMetricReader.AddMetricsSuperListWithViews(instrument, metricStreamConfigs);
+                                if (metricsSuperList.Any(metrics => metrics.Count > 0))
+                                {
+                                    listener.EnableMeasurementEvents(instrument, metricsSuperList);
+                                }
                             }
                         }
+                    }
+                    catch (Exception)
+                    {
+                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(instrument.Name, instrument.Meter.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     }
                 };
 
@@ -307,7 +309,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (state is not List<Metric> metrics)
                 {
-                    // TODO: log
+                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     return;
                 }
 
@@ -317,7 +319,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (state is not List<List<Metric>> metricsSuperList)
                 {
-                    // TODO: log
+                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     return;
                 }
 
@@ -333,7 +335,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (state is not List<Metric> metrics)
                 {
-                    // TODO: log
+                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     return;
                 }
 
@@ -343,7 +345,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (state is not List<List<Metric>> metricsSuperList)
                 {
-                    // TODO: log
+                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     return;
                 }
 
@@ -359,7 +361,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (state is not Metric metric)
                 {
-                    // TODO: log
+                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     return;
                 }
 
@@ -369,7 +371,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (state is not List<Metric> metrics)
                 {
-                    // TODO: log
+                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     return;
                 }
 
@@ -385,7 +387,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (state is not Metric metric)
                 {
-                    // TODO: log
+                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     return;
                 }
 
@@ -395,7 +397,7 @@ namespace OpenTelemetry.Metrics
             {
                 if (state is not List<Metric> metrics)
                 {
-                    // TODO: log
+                    OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument.Name, "SDK internal error occurred.", "Contact SDK owners.");
                     return;
                 }
 

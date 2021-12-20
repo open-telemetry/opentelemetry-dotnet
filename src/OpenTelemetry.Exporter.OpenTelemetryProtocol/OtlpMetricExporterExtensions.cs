@@ -39,18 +39,24 @@ namespace OpenTelemetry.Metrics
             {
                 return deferredMeterProviderBuilder.Configure((sp, builder) =>
                 {
-                    AddOtlpExporter(builder, sp.GetOptions<OtlpExporterOptions>(), configure);
+                    AddOtlpExporter(builder, sp.GetOptions<OtlpExporterOptions>(), configure, sp);
                 });
             }
 
-            return AddOtlpExporter(builder, new OtlpExporterOptions(), configure);
+            return AddOtlpExporter(builder, new OtlpExporterOptions(), configure, serviceProvider: null);
         }
 
-        private static MeterProviderBuilder AddOtlpExporter(MeterProviderBuilder builder, OtlpExporterOptions options, Action<OtlpExporterOptions> configure = null)
+        private static MeterProviderBuilder AddOtlpExporter(
+            MeterProviderBuilder builder,
+            OtlpExporterOptions options,
+            Action<OtlpExporterOptions> configure,
+            IServiceProvider serviceProvider)
         {
             var initialEndpoint = options.Endpoint;
 
             configure?.Invoke(options);
+
+            options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
 
             options.AppendExportPath(initialEndpoint, OtlpExporterOptions.MetricsExportPath);
 

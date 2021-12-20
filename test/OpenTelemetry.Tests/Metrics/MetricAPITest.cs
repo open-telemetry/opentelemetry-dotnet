@@ -58,7 +58,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0];
             Assert.Equal("myGauge", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref readonly var mp in metric.GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0];
             Assert.Equal("myGauge", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref readonly var mp in metric.GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }
@@ -450,7 +450,7 @@ namespace OpenTelemetry.Metrics.Tests
 
                 foreach (var metric in exportedItems)
                 {
-                    foreach (ref var metricPoint in metric.GetMetricPoints())
+                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                     {
                         count++;
                     }
@@ -696,11 +696,11 @@ namespace OpenTelemetry.Metrics.Tests
             long sum = 0;
             foreach (var metric in metrics)
             {
-                foreach (ref var metricPoint in metric.GetMetricPoints())
+                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
                     if (metric.MetricType.IsSum())
                     {
-                        sum += metricPoint.GetCounterSumLong();
+                        sum += metricPoint.GetSumLong();
                     }
                     else
                     {
@@ -717,11 +717,11 @@ namespace OpenTelemetry.Metrics.Tests
             double sum = 0;
             foreach (var metric in metrics)
             {
-                foreach (ref var metricPoint in metric.GetMetricPoints())
+                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
                     if (metric.MetricType.IsSum())
                     {
-                        sum += metricPoint.GetCounterSumDouble();
+                        sum += metricPoint.GetSumDouble();
                     }
                     else
                     {

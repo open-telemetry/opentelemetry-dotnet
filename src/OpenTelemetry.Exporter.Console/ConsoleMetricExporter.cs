@@ -75,7 +75,7 @@ namespace OpenTelemetry.Exporter
 
                 Console.WriteLine(msg.ToString());
 
-                foreach (ref var metricPoint in metric.GetMetricPoints())
+                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
                     string valueDisplay = string.Empty;
                     StringBuilder tagsBuilder = new StringBuilder();
@@ -140,7 +140,7 @@ namespace OpenTelemetry.Exporter
                     {
                         if (metricType.IsSum())
                         {
-                            valueDisplay = metricPoint.GetCounterSumDouble().ToString(CultureInfo.InvariantCulture);
+                            valueDisplay = metricPoint.GetSumDouble().ToString(CultureInfo.InvariantCulture);
                         }
                         else
                         {
@@ -151,7 +151,7 @@ namespace OpenTelemetry.Exporter
                     {
                         if (metricType.IsSum())
                         {
-                            valueDisplay = metricPoint.GetCounterSumLong().ToString(CultureInfo.InvariantCulture);
+                            valueDisplay = metricPoint.GetSumLong().ToString(CultureInfo.InvariantCulture);
                         }
                         else
                         {
@@ -161,9 +161,9 @@ namespace OpenTelemetry.Exporter
 
                     msg = new StringBuilder();
                     msg.Append('(');
-                    msg.Append(metricPoint.GetStartTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                    msg.Append(metricPoint.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                     msg.Append(", ");
-                    msg.Append(metricPoint.GetEndTime().ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
+                    msg.Append(metricPoint.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                     msg.Append("] ");
                     msg.Append(tags);
                     if (tags != string.Empty)

@@ -20,7 +20,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
+#if !NET5_0_OR_GREATER
 using System.Threading.Tasks;
+#endif
 using Moq;
 using Moq.Protected;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -59,7 +61,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Expo
                 Headers = $"{header1.Name}={header1.Value}, {header2.Name} = {header2.Value}",
             };
 
-            var client = new OtlpHttpTraceExportClient(options);
+            var client = new OtlpHttpTraceExportClient(options, options.HttpClientFactory());
 
             Assert.NotNull(client.HttpClient);
 

@@ -48,8 +48,8 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0]; // Only one Metric object is added to the collection at this point
             var metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
-            ref var metricPointForFirstExport = ref metricPointsEnumerator.Current;
-            Assert.Equal(10, metricPointForFirstExport.GetCounterSumLong());
+            ref readonly var metricPointForFirstExport = ref metricPointsEnumerator.Current;
+            Assert.Equal(10, metricPointForFirstExport.GetSumLong());
 
             // Emit 25 for the MetricPoint with a single key-vaue pair: ("tag1", "value1")
             counter.Add(25, new KeyValuePair<string, object>("tag1", "value1"));
@@ -60,10 +60,10 @@ namespace OpenTelemetry.Metrics.Tests
             metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
             var metricPointForSecondExport = metricPointsEnumerator.Current;
-            Assert.Equal(25, metricPointForSecondExport.GetCounterSumLong());
+            Assert.Equal(25, metricPointForSecondExport.GetSumLong());
 
             // MetricPoint.LongValue for the first exporter metric should still be 10
-            Assert.Equal(10, metricPointForFirstExport.GetCounterSumLong());
+            Assert.Equal(10, metricPointForFirstExport.GetSumLong());
         }
     }
 }

@@ -36,7 +36,7 @@ namespace Examples.Console
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("myservice"))
                 .AddMeter(meter.Name); // All instruments from this meter are enabled.
 
-            if (options.UseExporter.ToLower() == "otlp")
+            if (options.UseExporter.Equals("otlp", StringComparison.OrdinalIgnoreCase))
             {
                 /*
                  * Prerequisite to run this example:
@@ -61,7 +61,7 @@ namespace Examples.Console
                  */
 
                 // Adding the OtlpExporter creates a GrpcChannel.
-                // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
+                // This switch must be set before creating a GrpcChannel when calling an insecure gRPC service.
                 // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
                 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
