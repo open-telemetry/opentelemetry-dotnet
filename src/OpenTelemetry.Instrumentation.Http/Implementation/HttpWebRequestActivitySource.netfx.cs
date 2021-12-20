@@ -213,6 +213,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
+            if (RequestProperties.Instance == null)
+            {
+                RequestProperties.Instance = new Dictionary<string, object>();
+            }
+
             Activity activity;
             var context = Propagators.DefaultTextMapPropagator.Extract(default, request, HttpWebRequestHeaderValuesGetter);
             if (context != default && RequestProperties.Instance.TryGetValue("otel.previous_try_context", out var previousContext))
@@ -353,8 +358,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
 
             activity.Stop();
-
-            RequestProperties.Instance.Clear();
         }
 
         private static void PrepareReflectionObjects()
@@ -659,12 +662,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             private static readonly AsyncLocal<Dictionary<string, object>> Properties = new AsyncLocal<Dictionary<string, object>>();
 
-            static RequestProperties()
+            public static Dictionary<string, object> Instance
             {
-                Properties.Value = new Dictionary<string, object>();
+                get => Properties.Value;
+                set => Properties.Value = value;
             }
-
-            public static Dictionary<string, object> Instance => Properties.Value;
         }
 
         private class HashtableWrapper : Hashtable, IEnumerable
