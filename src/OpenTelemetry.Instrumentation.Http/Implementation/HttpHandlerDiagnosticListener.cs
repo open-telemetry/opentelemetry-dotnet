@@ -30,12 +30,12 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
     internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
     {
-        private const string RestartedActivityKey = "dotnet.restarted_activity";
-
         internal static readonly AssemblyName AssemblyName = typeof(HttpHandlerDiagnosticListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+
+        private const string RestartedActivityKey = "dotnet.restarted_activity";
 
         private static readonly Regex CoreAppMajorVersionCheckRegex = new Regex("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
