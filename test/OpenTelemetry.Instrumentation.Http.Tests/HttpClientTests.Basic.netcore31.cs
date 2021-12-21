@@ -514,7 +514,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     try
                     {
                         response = await base.SendAsync(request, cancellationToken);
-                        if (response.IsSuccessStatusCode) {
+                        if (response.IsSuccessStatusCode)
+                        {
                             return response;
                         }
                     }
