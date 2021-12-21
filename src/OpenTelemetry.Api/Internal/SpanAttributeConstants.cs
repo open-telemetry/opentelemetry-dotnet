@@ -23,6 +23,8 @@ namespace OpenTelemetry.Trace
     {
         public const string StatusCodeKey = "otel.status_code";
         public const string StatusDescriptionKey = "otel.status_description";
+        public const string PreviousTryContextKey = "otel.previous_try_context";
+        public const string RetryCountKey = "http.retry_count";
         public const string DatabaseStatementTypeKey = "db.statement_type";
     }
 }

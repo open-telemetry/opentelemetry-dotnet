@@ -509,7 +509,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     : await client.PostAsync(this.BuildRequestUrl(queryString: $"redirects={redirectCount}"), new StringContent("hello world"));
             }
 
-            // We should have exactly one Start and one Stop event
+            // We should have exactly one Start and one Stop event per try
             Assert.Equal(2 * (redirectCount + 1), eventRecords.Records.Count());
             Assert.Equal(redirectCount + 1, eventRecords.Records.Count(rec => rec.Key == "Start"));
             Assert.Equal(redirectCount + 1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
@@ -676,6 +676,10 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.NotEqual(default, activityLink);
             Assert.Equal(firstActivity.Context.TraceId, activityLink.Context.TraceId);
             Assert.Equal(firstActivity.Context.SpanId, activityLink.Context.SpanId);
+
+            var retryCount = secondActivity.GetTagItem("http.retry_count");
+            Assert.NotNull(retryCount);
+            Assert.Equal(1, (int)retryCount);
 
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);

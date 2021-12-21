@@ -220,21 +220,21 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             Activity activity;
             var context = Propagators.DefaultTextMapPropagator.Extract(default, request, HttpWebRequestHeaderValuesGetter);
-            if (context != default && RequestProperties.Instance.TryGetValue("otel.previous_try_context", out var previousContext))
+            if (context != default && RequestProperties.Instance.TryGetValue(SpanAttributeConstants.PreviousTryContextKey, out var previousContext))
             {
                 // This request was instrumented by previous
                 // ProcessRequest, such is the case with retries or redirect responses where the same request is sent again.
 
                 var retryCount = 1;
-                if (RequestProperties.Instance.TryGetValue("http.retry_count", out var previousRetryCount))
+                if (RequestProperties.Instance.TryGetValue(SpanAttributeConstants.RetryCountKey, out var previousRetryCount))
                 {
                     retryCount = (int)previousRetryCount + 1;
                 }
 
                 activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client, context.ActivityContext, links: new[] { new ActivityLink((ActivityContext)previousContext) });
 
-                activity?.SetTag("http.retry_count", retryCount);
-                RequestProperties.Instance["http.retry_count"] = retryCount;
+                activity?.SetTag(SpanAttributeConstants.RetryCountKey, retryCount);
+                RequestProperties.Instance[SpanAttributeConstants.RetryCountKey] = retryCount;
             }
             else
             {
@@ -245,7 +245,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             if (activityContext != default)
             {
                 // Store activity context for the next possible try.
-                RequestProperties.Instance["otel.previous_try_context"] = activityContext;
+                RequestProperties.Instance[SpanAttributeConstants.PreviousTryContextKey] = activityContext;
             }
 
             // Propagation must still be done in all cases, to allow

@@ -30,6 +30,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
     internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
     {
+        private const string RestartedActivityKey = "dotnet.restarted_activity";
+
         internal static readonly AssemblyName AssemblyName = typeof(HttpHandlerDiagnosticListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
@@ -89,24 +91,30 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
 
             var context = Propagators.DefaultTextMapPropagator.Extract(default, request, HttpRequestMessageContextPropagation.HeaderValuesGetter);
-            if (context != default && request.Properties.TryGetValue("otel.previous_try_context", out var previousContext))
+            if (context != default && request.Properties.TryGetValue(SpanAttributeConstants.PreviousTryContextKey, out var previousContext))
             {
-                // Handling request retry.
+                // Handling request retry or redirect.
                 var retryCount = 1;
-                if (request.Properties.TryGetValue("http.retry_count", out var previousRetryCount))
+                if (request.Properties.TryGetValue(SpanAttributeConstants.RetryCountKey, out var previousRetryCount))
                 {
                     retryCount = (int)previousRetryCount + 1;
                 }
 
+                // Suppressing activity started by HttpClient DiagnosticsHandler.
+                activity.IsAllDataRequested = false;
+                activity.Stop();
+
                 activity = ActivitySource.StartActivity(activity.Kind, context.ActivityContext, links: new[] { new ActivityLink((ActivityContext)previousContext) });
                 Activity.Current = activity;
 
-                activity.SetTag("http.retry_count", retryCount);
-                request.Properties["http.retry_count"] = retryCount;
+                request.Properties[RestartedActivityKey] = activity;
+
+                activity.SetTag(SpanAttributeConstants.RetryCountKey, retryCount);
+                request.Properties[SpanAttributeConstants.RetryCountKey] = retryCount;
             }
 
             // Store activity context for the next possible try.
-            request.Properties["otel.previous_try_context"] = activity.Context;
+            request.Properties[SpanAttributeConstants.PreviousTryContextKey] = activity.Context;
 
             // Propagate context irrespective of sampling decision
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
@@ -205,6 +213,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     catch (Exception ex)
                     {
                         HttpInstrumentationEventSource.Log.EnrichmentException(ex);
+                    }
+                }
+
+                if (this.startRequestFetcher.TryFetch(payload, out HttpRequestMessage request) && request != null)
+                {
+                    if (request.Properties.TryGetValue(RestartedActivityKey, out object restartedActivityInstance))
+                    {
+                        var restartedActivity = (Activity)restartedActivityInstance;
+                        restartedActivity.Stop();
                     }
                 }
             }
