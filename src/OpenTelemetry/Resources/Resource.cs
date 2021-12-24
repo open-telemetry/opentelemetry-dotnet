@@ -102,7 +102,7 @@ namespace OpenTelemetry.Resources
                 sanitizedKey = attribute.Key;
             }
 
-            object sanitizedValue = SanitizeValue(attribute.Value, sanitizedKey);
+            var sanitizedValue = SanitizeValue(attribute.Value, sanitizedKey);
             return new KeyValuePair<string, object>(sanitizedKey, sanitizedValue);
         }
 
@@ -110,44 +110,59 @@ namespace OpenTelemetry.Resources
         {
             Guard.Null(keyName, nameof(keyName));
 
-            if (value is string || value is bool || value is double || value is long)
+            return value switch
             {
-                return value;
-            }
+                string => value,
+                bool => value,
+                double => value,
+                long => value,
+                string[] => value,
+                bool[] => value,
+                double[] => value,
+                long[] => value,
+                int => Convert.ToInt64(value),
+                short => Convert.ToInt64(value),
+                float => Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture),
+                int[] v => SanitizationUtils.ConvertoToInt64Array(v),
+                short[] v => SanitizationUtils.ConvertoToInt64Array(v),
+                float[] v => SanitizationUtils.ConvertToDoubleArray(v),
+                _ => throw new ArgumentException("Attribute value type is not an accepted primitive", keyName),
+            };
+        }
 
-            if (value is string[] || value is bool[] || value is double[] || value is long[])
+        private static class SanitizationUtils
+        {
+            public static long[] ConvertoToInt64Array(short[] value)
             {
-                return value;
-            }
-
-            if (value is int || value is short)
-            {
-                return Convert.ToInt64(value);
-            }
-
-            if (value is float)
-            {
-                return Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture);
-            }
-
-            if (value is int[] || value is short[])
-            {
-                long[] convertedArr = new long[((Array)value).Length];
-                int i = 0;
-                foreach (var val in (Array)value)
+                var result = new long[value.Length];
+                var i = 0;
+                foreach (var val in value)
                 {
-                    convertedArr[i] = Convert.ToInt64(val);
+                    result[i] = Convert.ToInt64(val);
                     i++;
                 }
 
-                return convertedArr;
+                return result;
             }
 
-            if (value is float[])
+            public static long[] ConvertoToInt64Array(int[] value)
             {
-                double[] convertedArr = new double[((float[])value).Length];
-                int i = 0;
-                foreach (float val in (float[])value)
+                var result = new long[value.Length];
+                var i = 0;
+                foreach (var val in value)
+                {
+                    result[i] = Convert.ToInt64(val);
+                    i++;
+                }
+
+                return result;
+            }
+
+            public static double[] ConvertToDoubleArray(float[] value)
+            {
+                var convertedArr = new double[value.Length];
+                var i = 0;
+                foreach (var val in value)
                 {
                     convertedArr[i] = Convert.ToDouble(val, System.Globalization.CultureInfo.InvariantCulture);
                     i++;
@@ -155,8 +170,6 @@ namespace OpenTelemetry.Resources
 
                 return convertedArr;
             }
-
-            throw new ArgumentException("Attribute value type is not an accepted primitive", keyName);
         }
     }
 }
