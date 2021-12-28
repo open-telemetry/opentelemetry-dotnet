@@ -8,7 +8,7 @@ CR = b'\r'
 CRLF = b'\r\n'
 LF = b'\n'
 
-def sanitycheck(pattern, allow_utf8 = False, allow_eol = (CRLF, LF)):
+def sanitycheck(pattern, allow_utf8 = False, allow_eol = (CRLF, LF), indent = 1):
     error_count = 0
 
     for filename in glob.glob(pattern, recursive=True):
@@ -26,6 +26,8 @@ def sanitycheck(pattern, allow_utf8 = False, allow_eol = (CRLF, LF)):
             for line in content.splitlines(True):
                 if allow_utf8 and lineno == 1 and line.startswith(b'\xef\xbb\xbf'):
                     line = line[3:]
+                if any(b == 7 for b in line):
+                    error.append('  TAB found at Ln:{} {}'.format(lineno, line))
                 if any(b > 127 for b in line):
                     error.append('  Non-ASCII character found at Ln:{} {}'.format(lineno, line))
                 if line[-2:] == CRLF:
@@ -47,6 +49,14 @@ def sanitycheck(pattern, allow_utf8 = False, allow_eol = (CRLF, LF)):
                     if eol not in allow_eol:
                         error.append('  Line ending {} not allowed at Ln:{}'.format(eol, lineno))
                         break
+                if line.startswith(b' '):
+                    spc_count = 0
+                    for c in line:
+                        if c != 32:
+                            break
+                        spc_count += 1
+                    if not indent or spc_count % indent:
+                        error.append('  {} SPC found at Ln:{} {}'.format(spc_count, lineno, line))
                 if line[-1:] == b' ' or line[-1:] == b'\t':
                     error.append('  Trailing space found at Ln:{} {}'.format(lineno, line))
                 lineno += 1
@@ -62,23 +72,23 @@ def sanitycheck(pattern, allow_utf8 = False, allow_eol = (CRLF, LF)):
     return error_count
 
 retval = 0
-retval += sanitycheck('.editorconfig', allow_eol = (LF,))
-retval += sanitycheck('**/Dockerfile', allow_eol = (LF,))
-retval += sanitycheck('**/*.cmd', allow_eol = (CRLF,))
-retval += sanitycheck('**/*.config', allow_utf8 = True, allow_eol = (LF,))
+retval += sanitycheck('.editorconfig', allow_eol = (LF,), indent = 0)
+retval += sanitycheck('**/Dockerfile', allow_eol = (LF,), indent = 2)
+retval += sanitycheck('**/*.cmd', allow_eol = (CRLF,), indent = 2)
+retval += sanitycheck('**/*.config', allow_utf8 = True, allow_eol = (LF,), indent = 2)
 retval += sanitycheck('**/*.cs', allow_utf8 = True, allow_eol = (LF,))
-retval += sanitycheck('**/*.cshtml', allow_utf8 = True, allow_eol = (LF,))
-retval += sanitycheck('**/*.csproj', allow_utf8 = True, allow_eol = (LF,))
-retval += sanitycheck('**/*.htm', allow_eol = (LF,))
-retval += sanitycheck('**/*.html', allow_eol = (LF,))
+retval += sanitycheck('**/*.cshtml', allow_utf8 = True, allow_eol = (LF,), indent = 4)
+retval += sanitycheck('**/*.csproj', allow_utf8 = True, allow_eol = (LF,), indent = 2)
+retval += sanitycheck('**/*.htm', allow_eol = (LF,), indent = 4)
+retval += sanitycheck('**/*.html', allow_eol = (LF,), indent = 4)
 retval += sanitycheck('**/*.md', allow_eol = (LF,))
-retval += sanitycheck('**/*.proj', allow_eol = (LF,))
-retval += sanitycheck('**/*.props', allow_eol = (LF,))
-retval += sanitycheck('**/*.py', allow_eol = (LF,))
-retval += sanitycheck('**/*.ruleset', allow_utf8 = True, allow_eol = (LF,))
-retval += sanitycheck('**/*.sln', allow_utf8 = True, allow_eol = (LF,))
-retval += sanitycheck('**/*.targets', allow_eol = (LF,))
-retval += sanitycheck('**/*.xml', allow_eol = (LF,))
-retval += sanitycheck('**/*.yml', allow_eol = (LF,))
+retval += sanitycheck('**/*.proj', allow_eol = (LF,), indent = 2)
+retval += sanitycheck('**/*.props', allow_eol = (LF,), indent = 2)
+retval += sanitycheck('**/*.py', allow_eol = (LF,), indent = 4)
+retval += sanitycheck('**/*.ruleset', allow_utf8 = True, allow_eol = (LF,), indent = 2)
+retval += sanitycheck('**/*.sln', allow_utf8 = True, allow_eol = (LF,), indent = 4)
+retval += sanitycheck('**/*.targets', allow_eol = (LF,), indent = 2)
+retval += sanitycheck('**/*.xml', allow_eol = (LF,), indent = 4)
+retval += sanitycheck('**/*.yml', allow_eol = (LF,), indent = 2)
 
 sys.exit(retval)

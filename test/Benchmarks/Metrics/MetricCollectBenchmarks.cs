@@ -69,9 +69,9 @@ namespace Benchmarks.Metrics
                     if (this.UseWithRef)
                     {
                         // The performant way of iterating.
-                        foreach (ref var metricPoint in metric.GetMetricPoints())
+                        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                         {
-                            sum += metricPoint.LongValue;
+                            sum += metricPoint.GetSumDouble();
                         }
                     }
                     else
@@ -80,7 +80,7 @@ namespace Benchmarks.Metrics
                         // This is still "correct", but less performant.
                         foreach (var metricPoint in metric.GetMetricPoints())
                         {
-                            sum += metricPoint.LongValue;
+                            sum += metricPoint.GetSumDouble();
                         }
                     }
                 }
@@ -88,7 +88,7 @@ namespace Benchmarks.Metrics
 
             this.reader = new BaseExportingMetricReader(metricExporter)
             {
-                PreferredAggregationTemporality = AggregationTemporality.Cumulative,
+                Temporality = AggregationTemporality.Cumulative,
             };
 
             this.meter = new Meter(Utils.GetCurrentMethodName());

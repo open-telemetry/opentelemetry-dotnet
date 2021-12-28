@@ -1,4 +1,4 @@
-// <copyright file="DataValue{T}.cs" company="OpenTelemetry Authors">
+// <copyright file="PeriodicExportingMetricReaderOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,16 +16,11 @@
 
 namespace OpenTelemetry.Metrics
 {
-    internal readonly struct DataValue<T> : IDataValue
-        where T : struct
+    public class PeriodicExportingMetricReaderOptions
     {
-        private readonly T value;
-
-        internal DataValue(T value)
-        {
-            this.value = value;
-        }
-
-        public object Value => (object)this.value;
+        /// <summary>
+        /// Gets or sets the metric export interval in milliseconds. The default value is <c>60000</c>.
+        /// </summary>
+        public int ExportIntervalMilliseconds { get; set; } = 60000;
     }
 }

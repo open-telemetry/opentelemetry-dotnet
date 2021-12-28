@@ -49,18 +49,23 @@ namespace OpenTelemetry.Metrics.Tests
             histogramPoint.Update(10000000);
             histogramPoint.TakeSnapshot(true);
 
-            Assert.Equal(22, histogramPoint.LongValue);
-            for (int i = 0; i < histogramPoint.BucketCounts.Length; i++)
+            var count = histogramPoint.GetHistogramCount();
+
+            Assert.Equal(22, count);
+
+            int actualCount = 0;
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
             {
-                Assert.Equal(2, histogramPoint.BucketCounts[i]);
+                Assert.Equal(2, histogramMeasurement.BucketCount);
+                actualCount++;
             }
         }
 
         [Fact]
         public void HistogramDistributeToAllBucketsCustom()
         {
-            var bounds = new double[] { 10, 20 };
-            var histogramPoint = new MetricPoint(AggregationType.Histogram, DateTimeOffset.Now, null, null, bounds);
+            var boundaries = new double[] { 10, 20 };
+            var histogramPoint = new MetricPoint(AggregationType.Histogram, DateTimeOffset.Now, null, null, boundaries);
 
             // 5 recordings <=10
             histogramPoint.Update(-10);
@@ -75,22 +80,33 @@ namespace OpenTelemetry.Metrics.Tests
 
             histogramPoint.TakeSnapshot(true);
 
+            var count = histogramPoint.GetHistogramCount();
+            var sum = histogramPoint.GetHistogramSum();
+
             // Sum of all recordings
-            Assert.Equal(40, histogramPoint.DoubleValue);
+            Assert.Equal(40, sum);
 
             // Count  = # of recordings
-            Assert.Equal(7, histogramPoint.LongValue);
-            Assert.Equal(bounds.Length + 1, histogramPoint.BucketCounts.Length);
-            Assert.Equal(5, histogramPoint.BucketCounts[0]);
-            Assert.Equal(2, histogramPoint.BucketCounts[1]);
-            Assert.Equal(0, histogramPoint.BucketCounts[2]);
+            Assert.Equal(7, count);
+
+            int index = 0;
+            int actualCount = 0;
+            var expectedBucketCounts = new long[] { 5, 2, 0 };
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
+            {
+                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+                index++;
+                actualCount++;
+            }
+
+            Assert.Equal(boundaries.Length + 1, actualCount);
         }
 
         [Fact]
         public void HistogramWithOnlySumCount()
         {
-            var bounds = new double[] { };
-            var histogramPoint = new MetricPoint(AggregationType.HistogramSumCount, DateTimeOffset.Now, null, null, bounds);
+            var boundaries = new double[] { };
+            var histogramPoint = new MetricPoint(AggregationType.HistogramSumCount, DateTimeOffset.Now, null, null, boundaries);
 
             histogramPoint.Update(-10);
             histogramPoint.Update(0);
@@ -102,13 +118,18 @@ namespace OpenTelemetry.Metrics.Tests
 
             histogramPoint.TakeSnapshot(true);
 
+            var count = histogramPoint.GetHistogramCount();
+            var sum = histogramPoint.GetHistogramSum();
+
             // Sum of all recordings
-            Assert.Equal(40, histogramPoint.DoubleValue);
+            Assert.Equal(40, sum);
 
             // Count  = # of recordings
-            Assert.Equal(7, histogramPoint.LongValue);
-            Assert.Null(histogramPoint.BucketCounts);
-            Assert.Null(histogramPoint.ExplicitBounds);
+            Assert.Equal(7, count);
+
+            // There should be no enumeration of BucketCounts and ExplicitBounds for HistogramSumCount
+            var enumerator = histogramPoint.GetHistogramBuckets().GetEnumerator();
+            Assert.False(enumerator.MoveNext());
         }
     }
 }

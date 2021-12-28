@@ -30,6 +30,7 @@ namespace OpenTelemetry.Metrics
             AggregationTemporality temporality,
             string metricName,
             string metricDescription,
+            int maxMetricPointsPerMetricStream,
             double[] histogramBounds = null,
             string[] tagKeysInteresting = null)
         {
@@ -101,10 +102,10 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                // TODO: Log and assign some invalid Enum.
+                throw new NotSupportedException($"Unsupported Instrument Type: {instrument.GetType().FullName}");
             }
 
-            this.aggStore = new AggregatorStore(aggType, temporality, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
+            this.aggStore = new AggregatorStore(metricName, aggType, temporality, maxMetricPointsPerMetricStream, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
             this.Temporality = temporality;
             this.InstrumentDisposed = false;
         }
@@ -123,7 +124,7 @@ namespace OpenTelemetry.Metrics
 
         internal bool InstrumentDisposed { get; set; }
 
-        public BatchMetricPoint GetMetricPoints()
+        public MetricPointsAccessor GetMetricPoints()
         {
             return this.aggStore.GetMetricPoints();
         }

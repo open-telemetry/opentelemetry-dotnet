@@ -19,12 +19,12 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
     internal sealed class AggregatorStore
     {
-        internal const int MaxMetricPoints = 2000;
         private static readonly ObjectArrayEqualityComparer ObjectArrayComparer = new ObjectArrayEqualityComparer();
         private readonly object lockZeroTags = new object();
         private readonly HashSet<string> tagKeysInteresting;
@@ -35,6 +35,8 @@ namespace OpenTelemetry.Metrics
             new ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>>(new StringArrayEqualityComparer());
 
         private readonly AggregationTemporality temporality;
+        private readonly string name;
+        private readonly string metricPointCapHitMessage;
         private readonly bool outputDelta;
         private readonly MetricPoint[] metricPoints;
         private readonly int[] currentMetricPointBatch;
@@ -42,20 +44,27 @@ namespace OpenTelemetry.Metrics
         private readonly double[] histogramBounds;
         private readonly UpdateLongDelegate updateLongCallback;
         private readonly UpdateDoubleDelegate updateDoubleCallback;
+        private readonly int maxMetricPoints;
         private int metricPointIndex = 0;
         private int batchSize = 0;
+        private int metricCapHitMessageLogged;
         private bool zeroTagMetricPointInitialized;
         private DateTimeOffset startTimeExclusive;
         private DateTimeOffset endTimeInclusive;
 
         internal AggregatorStore(
+            string name,
             AggregationType aggType,
             AggregationTemporality temporality,
+            int maxMetricPoints,
             double[] histogramBounds,
             string[] tagKeysInteresting = null)
         {
-            this.metricPoints = new MetricPoint[MaxMetricPoints];
-            this.currentMetricPointBatch = new int[MaxMetricPoints];
+            this.name = name;
+            this.maxMetricPoints = maxMetricPoints;
+            this.metricPointCapHitMessage = $"Maximum MetricPoints limit reached for this Metric stream. Configured limit: {this.maxMetricPoints}";
+            this.metricPoints = new MetricPoint[maxMetricPoints];
+            this.currentMetricPointBatch = new int[maxMetricPoints];
             this.aggType = aggType;
             this.temporality = temporality;
             this.outputDelta = temporality == AggregationTemporality.Delta ? true : false;
@@ -70,12 +79,7 @@ namespace OpenTelemetry.Metrics
             {
                 this.updateLongCallback = this.UpdateLongCustomTags;
                 this.updateDoubleCallback = this.UpdateDoubleCustomTags;
-                var hs = new HashSet<string>(StringComparer.Ordinal);
-                foreach (var key in tagKeysInteresting)
-                {
-                    hs.Add(key);
-                }
-
+                var hs = new HashSet<string>(tagKeysInteresting, StringComparer.Ordinal);
                 this.tagKeysInteresting = hs;
                 this.tagsKeysInterestingCount = hs.Count;
             }
@@ -98,7 +102,7 @@ namespace OpenTelemetry.Metrics
         internal int Snapshot()
         {
             this.batchSize = 0;
-            var indexSnapshot = Math.Min(this.metricPointIndex, MaxMetricPoints - 1);
+            var indexSnapshot = Math.Min(this.metricPointIndex, this.maxMetricPoints - 1);
             if (this.temporality == AggregationTemporality.Delta)
             {
                 this.SnapshotDelta(indexSnapshot);
@@ -149,9 +153,9 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        internal BatchMetricPoint GetMetricPoints()
+        internal MetricPointsAccessor GetMetricPoints()
         {
-            return new BatchMetricPoint(this.metricPoints, this.currentMetricPointBatch, this.batchSize, this.startTimeExclusive, this.endTimeInclusive);
+            return new MetricPointsAccessor(this.metricPoints, this.currentMetricPointBatch, this.batchSize, this.startTimeExclusive, this.endTimeInclusive);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -197,7 +201,7 @@ namespace OpenTelemetry.Metrics
             if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
             {
                 aggregatorIndex = this.metricPointIndex;
-                if (aggregatorIndex >= MaxMetricPoints)
+                if (aggregatorIndex >= this.maxMetricPoints)
                 {
                     // sorry! out of data points.
                     // TODO: Once we support cleanup of
@@ -212,7 +216,7 @@ namespace OpenTelemetry.Metrics
                     if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
                     {
                         aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
-                        if (aggregatorIndex >= MaxMetricPoints)
+                        if (aggregatorIndex >= this.maxMetricPoints)
                         {
                             // sorry! out of data points.
                             // TODO: Once we support cleanup of
@@ -253,7 +257,11 @@ namespace OpenTelemetry.Metrics
                 var index = this.FindMetricAggregatorsDefault(tags);
                 if (index < 0)
                 {
-                    // TODO: Measurement dropped due to MemoryPoint cap hit.
+                    if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
+                    {
+                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.");
+                    }
+
                     return;
                 }
 
@@ -261,7 +269,7 @@ namespace OpenTelemetry.Metrics
             }
             catch (Exception)
             {
-                // TODO: Measurement dropped due to internal exception.
+                OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, "SDK internal error occurred.", "Contact SDK owners.");
             }
         }
 
@@ -272,7 +280,11 @@ namespace OpenTelemetry.Metrics
                 var index = this.FindMetricAggregatorsCustomTag(tags);
                 if (index < 0)
                 {
-                    // TODO: Measurement dropped due to MemoryPoint cap hit.
+                    if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
+                    {
+                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.");
+                    }
+
                     return;
                 }
 
@@ -280,7 +292,7 @@ namespace OpenTelemetry.Metrics
             }
             catch (Exception)
             {
-                // TODO: Measurement dropped due to internal exception.
+                OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, "SDK internal error occurred.", "Contact SDK owners.");
             }
         }
 
@@ -291,7 +303,11 @@ namespace OpenTelemetry.Metrics
                 var index = this.FindMetricAggregatorsDefault(tags);
                 if (index < 0)
                 {
-                    // TODO: Measurement dropped due to MemoryPoint cap hit.
+                    if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
+                    {
+                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.");
+                    }
+
                     return;
                 }
 
@@ -299,7 +315,7 @@ namespace OpenTelemetry.Metrics
             }
             catch (Exception)
             {
-                // TODO: Measurement dropped due to internal exception.
+                OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, "SDK internal error occurred.", "Contact SDK owners.");
             }
         }
 
@@ -310,7 +326,11 @@ namespace OpenTelemetry.Metrics
                 var index = this.FindMetricAggregatorsCustomTag(tags);
                 if (index < 0)
                 {
-                    // TODO: Measurement dropped due to MemoryPoint cap hit.
+                    if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
+                    {
+                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.");
+                    }
+
                     return;
                 }
 
@@ -318,7 +338,7 @@ namespace OpenTelemetry.Metrics
             }
             catch (Exception)
             {
-                // TODO: Measurement dropped due to internal exception.
+                OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, "SDK internal error occurred.", "Contact SDK owners.");
             }
         }
 

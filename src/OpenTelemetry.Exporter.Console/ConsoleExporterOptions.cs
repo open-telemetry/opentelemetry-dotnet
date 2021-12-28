@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Threading;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter
@@ -27,9 +26,14 @@ namespace OpenTelemetry.Exporter
         public ConsoleExporterOutputTargets Targets { get; set; } = ConsoleExporterOutputTargets.Console;
 
         /// <summary>
-        /// Gets or sets the metric export interval in milliseconds. The default value is <c>Timeout.Infinite</c>.
+        /// Gets or sets the <see cref="MetricReaderType" /> to use. Defaults to <c>MetricReaderType.Manual</c>.
         /// </summary>
-        public int MetricExportIntervalMilliseconds { get; set; } = Timeout.Infinite;
+        public MetricReaderType MetricReaderType { get; set; } = MetricReaderType.Manual;
+
+        /// <summary>
+        /// Gets or sets the <see cref="PeriodicExportingMetricReaderOptions" /> options. Ignored unless <c>MetricReaderType</c> is <c>Periodic</c>.
+        /// </summary>
+        public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions { get; set; } = new PeriodicExportingMetricReaderOptions();
 
         /// <summary>
         /// Gets or sets the AggregationTemporality used for Histogram

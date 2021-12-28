@@ -56,38 +56,33 @@ namespace OpenTelemetry.Trace
         {
             configure?.Invoke(options);
 
-            if (options.Protocol == JaegerExportProtocol.HttpBinaryThrift && options.HttpClientFactory == null)
+            if (serviceProvider != null
+                && options.Protocol == JaegerExportProtocol.HttpBinaryThrift
+                && options.HttpClientFactory == JaegerExporterOptions.DefaultHttpClientFactory)
             {
-                if (serviceProvider != null)
+                options.HttpClientFactory = () =>
                 {
-                    options.HttpClientFactory = () =>
+                    Type httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
+                    if (httpClientFactoryType != null)
                     {
-                        Type httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
-                        if (httpClientFactoryType != null)
+                        object httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
+                        if (httpClientFactory != null)
                         {
-                            object httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
-                            if (httpClientFactory != null)
+                            MethodInfo createClientMethod = httpClientFactoryType.GetMethod(
+                                "CreateClient",
+                                BindingFlags.Public | BindingFlags.Instance,
+                                binder: null,
+                                new Type[] { typeof(string) },
+                                modifiers: null);
+                            if (createClientMethod != null)
                             {
-                                MethodInfo createClientMethod = httpClientFactoryType.GetMethod(
-                                    "CreateClient",
-                                    BindingFlags.Public | BindingFlags.Instance,
-                                    binder: null,
-                                    new Type[] { typeof(string) },
-                                    modifiers: null);
-                                if (createClientMethod != null)
-                                {
-                                    return (HttpClient)createClientMethod.Invoke(httpClientFactory, new object[] { "JaegerExporter" });
-                                }
+                                return (HttpClient)createClientMethod.Invoke(httpClientFactory, new object[] { "JaegerExporter" });
                             }
                         }
+                    }
 
-                        return new HttpClient();
-                    };
-                }
-                else
-                {
-                    options.HttpClientFactory = () => new HttpClient();
-                }
+                    return new HttpClient();
+                };
             }
 
             var jaegerExporter = new JaegerExporter(options);

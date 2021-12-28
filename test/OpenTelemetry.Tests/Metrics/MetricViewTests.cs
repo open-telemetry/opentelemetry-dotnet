@@ -93,13 +93,13 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [MemberData(nameof(MetricTestData.InvalidHistogramBounds), MemberType = typeof(MetricTestData))]
-        public void AddViewWithInvalidHistogramBoundsThrowsArgumentException(double[] bounds)
+        [MemberData(nameof(MetricTestData.InvalidHistogramBoundaries), MemberType = typeof(MetricTestData))]
+        public void AddViewWithInvalidHistogramBoundsThrowsArgumentException(double[] boundaries)
         {
             var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
-                .AddView("name1", new HistogramConfiguration { BucketBounds = bounds }));
+                .AddView("name1", new ExplicitBucketHistogramConfiguration { Boundaries = boundaries }));
 
-            Assert.Contains("Histogram bounds must be in ascending order with distinct values", ex.Message);
+            Assert.Contains("Histogram boundaries must be in ascending order with distinct values", ex.Message);
         }
 
         [Theory]
@@ -355,11 +355,11 @@ namespace OpenTelemetry.Metrics.Tests
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
             var exportedItems = new List<Metric>();
-            var bounds = new double[] { 10, 20 };
+            var boundaries = new double[] { 10, 20 };
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("MyHistogram", new HistogramConfiguration() { Name = "MyHistogramDefaultBound" })
-                .AddView("MyHistogram", new HistogramConfiguration() { BucketBounds = bounds })
+                .AddView("MyHistogram", new ExplicitBucketHistogramConfiguration() { Name = "MyHistogramDefaultBound" })
+                .AddView("MyHistogram", new ExplicitBucketHistogramConfiguration() { Boundaries = boundaries })
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
@@ -380,7 +380,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("MyHistogram", metricCustom.Name);
 
             List<MetricPoint> metricPointsDefault = new List<MetricPoint>();
-            foreach (ref var mp in metricDefault.GetMetricPoints())
+            foreach (ref readonly var mp in metricDefault.GetMetricPoints())
             {
                 metricPointsDefault.Add(mp);
             }
@@ -388,18 +388,26 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Single(metricPointsDefault);
             var histogramPoint = metricPointsDefault[0];
 
-            Assert.Equal(40, histogramPoint.DoubleValue);
-            Assert.Equal(7, histogramPoint.LongValue);
-            Assert.Equal(Metric.DefaultHistogramBounds.Length + 1, histogramPoint.BucketCounts.Length);
-            Assert.Equal(2, histogramPoint.BucketCounts[0]);
-            Assert.Equal(1, histogramPoint.BucketCounts[1]);
-            Assert.Equal(2, histogramPoint.BucketCounts[2]);
-            Assert.Equal(2, histogramPoint.BucketCounts[3]);
-            Assert.Equal(0, histogramPoint.BucketCounts[4]);
-            Assert.Equal(0, histogramPoint.BucketCounts[5]);
+            var count = histogramPoint.GetHistogramCount();
+            var sum = histogramPoint.GetHistogramSum();
+
+            Assert.Equal(40, sum);
+            Assert.Equal(7, count);
+
+            int index = 0;
+            int actualCount = 0;
+            var expectedBucketCounts = new long[] { 2, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0 };
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
+            {
+                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+                index++;
+                actualCount++;
+            }
+
+            Assert.Equal(Metric.DefaultHistogramBounds.Length + 1, actualCount);
 
             List<MetricPoint> metricPointsCustom = new List<MetricPoint>();
-            foreach (ref var mp in metricCustom.GetMetricPoints())
+            foreach (ref readonly var mp in metricCustom.GetMetricPoints())
             {
                 metricPointsCustom.Add(mp);
             }
@@ -407,12 +415,23 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Single(metricPointsCustom);
             histogramPoint = metricPointsCustom[0];
 
-            Assert.Equal(40, histogramPoint.DoubleValue);
-            Assert.Equal(7, histogramPoint.LongValue);
-            Assert.Equal(bounds.Length + 1, histogramPoint.BucketCounts.Length);
-            Assert.Equal(5, histogramPoint.BucketCounts[0]);
-            Assert.Equal(2, histogramPoint.BucketCounts[1]);
-            Assert.Equal(0, histogramPoint.BucketCounts[2]);
+            count = histogramPoint.GetHistogramCount();
+            sum = histogramPoint.GetHistogramSum();
+
+            Assert.Equal(40, sum);
+            Assert.Equal(7, count);
+
+            index = 0;
+            actualCount = 0;
+            expectedBucketCounts = new long[] { 5, 2, 0 };
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
+            {
+                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+                index++;
+                actualCount++;
+            }
+
+            Assert.Equal(boundaries.Length + 1, actualCount);
         }
 
         [Fact]
@@ -446,7 +465,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0];
             Assert.Equal("NameOnly", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref readonly var mp in metric.GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }
@@ -457,7 +476,7 @@ namespace OpenTelemetry.Metrics.Tests
             metric = exportedItems[1];
             Assert.Equal("SizeOnly", metric.Name);
             metricPoints.Clear();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref readonly var mp in metric.GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }
@@ -468,7 +487,7 @@ namespace OpenTelemetry.Metrics.Tests
             metric = exportedItems[2];
             Assert.Equal("NoTags", metric.Name);
             metricPoints.Clear();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref readonly var mp in metric.GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }
