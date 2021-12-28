@@ -253,7 +253,7 @@ namespace OpenTelemetry.Metrics
                         }
                         else
                         {
-                            // If number is not a histogram bound, then the result will be zero
+                            // If `number` is not a histogram bound, the result will be negative
                             // The bitwise complement of the returned value is the insertion index
                             i = Array.BinarySearch(this.histogramBuckets.ExplicitBounds, number);
                             if (i < 0)
