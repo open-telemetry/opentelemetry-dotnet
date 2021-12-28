@@ -246,7 +246,21 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        int i = this.FindHistogramBucketIndex(number);
+                        int i;
+                        if (double.IsNaN(number))
+                        {
+                            i = this.histogramBuckets.ExplicitBounds.Length;
+                        }
+                        else
+                        {
+                            // If number is not a histogram bound, then the result will be zero
+                            // The bitwise complement of the returned value is the insertion index
+                            i = Array.BinarySearch(this.histogramBuckets.ExplicitBounds, number);
+                            if (i < 0)
+                            {
+                                i = ~i;
+                            }
+                        }
 
                         lock (this.histogramBuckets.LockObject)
                         {
@@ -428,31 +442,6 @@ namespace OpenTelemetry.Metrics
                         break;
                     }
             }
-        }
-
-        private int FindHistogramBucketIndex(double number)
-        {
-            var left = 0;
-            var right = this.histogramBuckets.ExplicitBounds.Length - 1;
-
-            while (left <= right)
-            {
-                var mid = (int)Math.Floor((double)(left + right) / 2);
-                if (number == this.histogramBuckets.ExplicitBounds[mid])
-                {
-                    return mid;
-                }
-                else if (number > this.histogramBuckets.ExplicitBounds[mid])
-                {
-                    left = mid + 1;
-                }
-                else
-                {
-                    right = mid - 1;
-                }
-            }
-
-            return right + 1;
         }
     }
 }
