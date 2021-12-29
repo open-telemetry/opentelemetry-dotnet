@@ -160,15 +160,15 @@ namespace OpenTelemetry.Resources
 
             public static double[] ConvertToDoubleArray(float[] value)
             {
-                var convertedArr = new double[value.Length];
+                var result = new double[value.Length];
                 var i = 0;
                 foreach (var val in value)
                 {
-                    convertedArr[i] = Convert.ToDouble(val, System.Globalization.CultureInfo.InvariantCulture);
+                    result[i] = Convert.ToDouble(val, System.Globalization.CultureInfo.InvariantCulture);
                     i++;
                 }
 
-                return convertedArr;
+                return result;
             }
         }
     }
