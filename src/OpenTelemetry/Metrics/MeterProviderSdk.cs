@@ -110,11 +110,11 @@ internal sealed class MeterProviderSdk : MeterProvider
 
                 try
                 {
-                        // Creating list with initial capacity as the maximum
-                        // possible size, to avoid any array resize/copy internally.
-                        // There may be excess space wasted, but it'll eligible for
-                        // GC right after this method.
-                        var metricStreamConfigs = new List<MetricStreamConfiguration>(viewConfigCount);
+                    // Creating list with initial capacity as the maximum
+                    // possible size, to avoid any array resize/copy internally.
+                    // There may be excess space wasted, but it'll eligible for
+                    // GC right after this method.
+                    var metricStreamConfigs = new List<MetricStreamConfiguration>(viewConfigCount);
                     foreach (var viewConfig in this.viewConfigs)
                     {
                         var metricStreamConfig = viewConfig(instrument);
@@ -126,12 +126,12 @@ internal sealed class MeterProviderSdk : MeterProvider
 
                     if (metricStreamConfigs.Count == 0)
                     {
-                            // No views matched. Add null
-                            // which will apply defaults.
-                            // Users can turn off this default
-                            // by adding a view like below as the last view.
-                            // .AddView(instrumentName: "*", MetricStreamConfiguration.Drop)
-                            metricStreamConfigs.Add(null);
+                        // No views matched. Add null
+                        // which will apply defaults.
+                        // Users can turn off this default
+                        // by adding a view like below as the last view.
+                        // .AddView(instrumentName: "*", MetricStreamConfiguration.Drop)
+                        metricStreamConfigs.Add(null);
                     }
 
                     if (this.reader != null)
