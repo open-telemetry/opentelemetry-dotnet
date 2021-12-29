@@ -16,21 +16,20 @@
 
 using System.Runtime.InteropServices;
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+[StructLayout(LayoutKind.Explicit)]
+internal struct MetricPointValueStorage
 {
-    [StructLayout(LayoutKind.Explicit)]
-    internal struct MetricPointValueStorage
-    {
-        [FieldOffset(0)]
-        public long CurrentAsLong;
+    [FieldOffset(0)]
+    public long CurrentAsLong;
 
-        [FieldOffset(0)]
-        public double CurrentAsDouble;
+    [FieldOffset(0)]
+    public double CurrentAsDouble;
 
-        [FieldOffset(8)]
-        public long SnapshotAsLong;
+    [FieldOffset(8)]
+    public long SnapshotAsLong;
 
-        [FieldOffset(8)]
-        public double SnapshotAsDouble;
-    }
+    [FieldOffset(8)]
+    public double SnapshotAsDouble;
 }

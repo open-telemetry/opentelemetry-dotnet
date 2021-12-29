@@ -20,178 +20,177 @@ using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+/// <summary>
+/// CompositeMetricReader that does not deal with adding metrics and recording measurements.
+/// </summary>
+internal sealed partial class CompositeMetricReader : MetricReader
 {
-    /// <summary>
-    /// CompositeMetricReader that does not deal with adding metrics and recording measurements.
-    /// </summary>
-    internal sealed partial class CompositeMetricReader : MetricReader
+    private readonly DoublyLinkedListNode head;
+    private DoublyLinkedListNode tail;
+    private bool disposed;
+    private int count;
+
+    public CompositeMetricReader(IEnumerable<MetricReader> readers)
     {
-        private readonly DoublyLinkedListNode head;
-        private DoublyLinkedListNode tail;
-        private bool disposed;
-        private int count;
+        Guard.Null(readers, nameof(readers));
 
-        public CompositeMetricReader(IEnumerable<MetricReader> readers)
+        using var iter = readers.GetEnumerator();
+        if (!iter.MoveNext())
         {
-            Guard.Null(readers, nameof(readers));
+            throw new ArgumentException($"'{iter}' is null or empty", nameof(iter));
+        }
 
-            using var iter = readers.GetEnumerator();
-            if (!iter.MoveNext())
+        this.head = new DoublyLinkedListNode(iter.Current);
+        this.tail = this.head;
+        this.count++;
+
+        while (iter.MoveNext())
+        {
+            this.AddReader(iter.Current);
+        }
+    }
+
+    public CompositeMetricReader AddReader(MetricReader reader)
+    {
+        Guard.Null(reader, nameof(reader));
+
+        var node = new DoublyLinkedListNode(reader)
+        {
+            Previous = this.tail,
+        };
+        this.tail.Next = node;
+        this.tail = node;
+        this.count++;
+
+        return this;
+    }
+
+    public Enumerator GetEnumerator() => new Enumerator(this.head);
+
+    /// <inheritdoc/>
+    internal override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
+    {
+        // CompositeMetricReader delegates the work to its underlying readers,
+        // so CompositeMetricReader.ProcessMetrics should never be called.
+        throw new NotSupportedException();
+    }
+
+    /// <inheritdoc/>
+    protected override bool OnCollect(int timeoutMilliseconds = Timeout.Infinite)
+    {
+        var result = true;
+        var sw = timeoutMilliseconds == Timeout.Infinite
+            ? null
+            : Stopwatch.StartNew();
+
+        for (var cur = this.head; cur != null; cur = cur.Next)
+        {
+            if (sw == null)
             {
-                throw new ArgumentException($"'{iter}' is null or empty", nameof(iter));
+                result = cur.Value.Collect(Timeout.Infinite) && result;
             }
-
-            this.head = new DoublyLinkedListNode(iter.Current);
-            this.tail = this.head;
-            this.count++;
-
-            while (iter.MoveNext())
+            else
             {
-                this.AddReader(iter.Current);
+                var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+
+                // notify all the readers, even if we run overtime
+                result = cur.Value.Collect((int)Math.Max(timeout, 0)) && result;
             }
         }
 
-        public CompositeMetricReader AddReader(MetricReader reader)
-        {
-            Guard.Null(reader, nameof(reader));
+        return result;
+    }
 
-            var node = new DoublyLinkedListNode(reader)
+    /// <inheritdoc/>
+    protected override bool OnShutdown(int timeoutMilliseconds)
+    {
+        var result = true;
+        var sw = timeoutMilliseconds == Timeout.Infinite
+            ? null
+            : Stopwatch.StartNew();
+
+        for (var cur = this.head; cur != null; cur = cur.Next)
+        {
+            if (sw == null)
             {
-                Previous = this.tail,
-            };
-            this.tail.Next = node;
-            this.tail = node;
-            this.count++;
-
-            return this;
-        }
-
-        public Enumerator GetEnumerator() => new Enumerator(this.head);
-
-        /// <inheritdoc/>
-        internal override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
-        {
-            // CompositeMetricReader delegates the work to its underlying readers,
-            // so CompositeMetricReader.ProcessMetrics should never be called.
-            throw new NotSupportedException();
-        }
-
-        /// <inheritdoc/>
-        protected override bool OnCollect(int timeoutMilliseconds = Timeout.Infinite)
-        {
-            var result = true;
-            var sw = timeoutMilliseconds == Timeout.Infinite
-                ? null
-                : Stopwatch.StartNew();
-
-            for (var cur = this.head; cur != null; cur = cur.Next)
-            {
-                if (sw == null)
-                {
-                    result = cur.Value.Collect(Timeout.Infinite) && result;
-                }
-                else
-                {
-                    var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-
-                    // notify all the readers, even if we run overtime
-                    result = cur.Value.Collect((int)Math.Max(timeout, 0)) && result;
-                }
+                result = cur.Value.Shutdown(Timeout.Infinite) && result;
             }
-
-            return result;
-        }
-
-        /// <inheritdoc/>
-        protected override bool OnShutdown(int timeoutMilliseconds)
-        {
-            var result = true;
-            var sw = timeoutMilliseconds == Timeout.Infinite
-                ? null
-                : Stopwatch.StartNew();
-
-            for (var cur = this.head; cur != null; cur = cur.Next)
+            else
             {
-                if (sw == null)
-                {
-                    result = cur.Value.Shutdown(Timeout.Infinite) && result;
-                }
-                else
-                {
-                    var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+                var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
 
-                    // notify all the readers, even if we run overtime
-                    result = cur.Value.Shutdown((int)Math.Max(timeout, 0)) && result;
-                }
+                // notify all the readers, even if we run overtime
+                result = cur.Value.Shutdown((int)Math.Max(timeout, 0)) && result;
             }
-
-            return result;
         }
 
-        protected override void Dispose(bool disposing)
+        return result;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (!this.disposed)
         {
-            if (!this.disposed)
+            if (disposing)
             {
-                if (disposing)
+                for (var cur = this.head; cur != null; cur = cur.Next)
                 {
-                    for (var cur = this.head; cur != null; cur = cur.Next)
+                    try
                     {
-                        try
-                        {
-                            cur.Value?.Dispose();
-                        }
-                        catch (Exception)
-                        {
-                            // TODO: which event source do we use?
-                            // OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-                        }
+                        cur.Value?.Dispose();
+                    }
+                    catch (Exception)
+                    {
+                        // TODO: which event source do we use?
+                        // OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
                     }
                 }
-
-                this.disposed = true;
             }
 
-            base.Dispose(disposing);
+            this.disposed = true;
         }
 
-        public struct Enumerator
+        base.Dispose(disposing);
+    }
+
+    public struct Enumerator
+    {
+        private DoublyLinkedListNode node;
+
+        internal Enumerator(DoublyLinkedListNode node)
         {
-            private DoublyLinkedListNode node;
-
-            internal Enumerator(DoublyLinkedListNode node)
-            {
-                this.node = node;
-                this.Current = null;
-            }
-
-            public MetricReader Current { get; private set; }
-
-            public bool MoveNext()
-            {
-                if (this.node != null)
-                {
-                    this.Current = this.node.Value;
-                    this.node = this.node.Next;
-                    return true;
-                }
-
-                return false;
-            }
+            this.node = node;
+            this.Current = null;
         }
 
-        internal class DoublyLinkedListNode
+        public MetricReader Current { get; private set; }
+
+        public bool MoveNext()
         {
-            public readonly MetricReader Value;
-
-            public DoublyLinkedListNode(MetricReader value)
+            if (this.node != null)
             {
-                this.Value = value;
+                this.Current = this.node.Value;
+                this.node = this.node.Next;
+                return true;
             }
 
-            public DoublyLinkedListNode Previous { get; set; }
-
-            public DoublyLinkedListNode Next { get; set; }
+            return false;
         }
+    }
+
+    internal class DoublyLinkedListNode
+    {
+        public readonly MetricReader Value;
+
+        public DoublyLinkedListNode(MetricReader value)
+        {
+            this.Value = value;
+        }
+
+        public DoublyLinkedListNode Previous { get; set; }
+
+        public DoublyLinkedListNode Next { get; set; }
     }
 }

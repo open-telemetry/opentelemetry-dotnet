@@ -16,13 +16,12 @@
 
 using System;
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+/// <summary>
+/// Describes a type of <see cref="BaseExporter{Metric}"/> which supports <see cref="ExportModes.Pull"/>.
+/// </summary>
+public interface IPullMetricExporter
 {
-    /// <summary>
-    /// Describes a type of <see cref="BaseExporter{Metric}"/> which supports <see cref="ExportModes.Pull"/>.
-    /// </summary>
-    public interface IPullMetricExporter
-    {
-        Func<int, bool> Collect { get; set; }
-    }
+    Func<int, bool> Collect { get; set; }
 }

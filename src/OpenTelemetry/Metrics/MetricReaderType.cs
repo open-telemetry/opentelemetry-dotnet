@@ -14,23 +14,22 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+/// <summary>
+/// Type of <see cref="MetricReader" /> to be used.
+/// </summary>
+public enum MetricReaderType
 {
     /// <summary>
-    /// Type of <see cref="MetricReader" /> to be used.
+    /// Use the <see cref="BaseExportingMetricReader" />.
+    /// This requires manually invoking <c>MetricReader.Collect()</c> to export metrics.
     /// </summary>
-    public enum MetricReaderType
-    {
-        /// <summary>
-        /// Use the <see cref="BaseExportingMetricReader" />.
-        /// This requires manually invoking <c>MetricReader.Collect()</c> to export metrics.
-        /// </summary>
-        Manual,
+    Manual,
 
-        /// <summary>
-        /// Use the <see cref="PeriodicExportingMetricReader" />.
-        /// <c>MetricReader.Collect()</c> will be invoked on a defined interval.
-        /// </summary>
-        Periodic,
-    }
+    /// <summary>
+    /// Use the <see cref="PeriodicExportingMetricReader" />.
+    /// <c>MetricReader.Collect()</c> will be invoked on a defined interval.
+    /// </summary>
+    Periodic,
 }

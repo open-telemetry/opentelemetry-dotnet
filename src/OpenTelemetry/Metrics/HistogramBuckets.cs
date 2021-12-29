@@ -14,59 +14,58 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+public class HistogramBuckets
 {
-    public class HistogramBuckets
+    internal readonly long[] BucketCounts;
+
+    internal readonly long[] AggregatedBucketCounts;
+
+    internal readonly double[] ExplicitBounds;
+
+    internal readonly object LockObject;
+
+    internal HistogramBuckets(double[] histogramBounds)
     {
-        internal readonly long[] BucketCounts;
+        this.ExplicitBounds = histogramBounds;
+        this.BucketCounts = histogramBounds != null ? new long[histogramBounds.Length + 1] : null;
+        this.AggregatedBucketCounts = histogramBounds != null ? new long[histogramBounds.Length + 1] : null;
+        this.LockObject = new object();
+    }
 
-        internal readonly long[] AggregatedBucketCounts;
+    public Enumerator GetEnumerator() => new(this);
 
-        internal readonly double[] ExplicitBounds;
+    public struct Enumerator
+    {
+        private readonly int numberOfBuckets;
+        private readonly HistogramBuckets histogramMeasurements;
+        private int index;
 
-        internal readonly object LockObject;
-
-        internal HistogramBuckets(double[] histogramBounds)
+        internal Enumerator(HistogramBuckets histogramMeasurements)
         {
-            this.ExplicitBounds = histogramBounds;
-            this.BucketCounts = histogramBounds != null ? new long[histogramBounds.Length + 1] : null;
-            this.AggregatedBucketCounts = histogramBounds != null ? new long[histogramBounds.Length + 1] : null;
-            this.LockObject = new object();
+            this.histogramMeasurements = histogramMeasurements;
+            this.index = 0;
+            this.Current = default;
+            this.numberOfBuckets = histogramMeasurements.AggregatedBucketCounts == null ? 0 : histogramMeasurements.AggregatedBucketCounts.Length;
         }
 
-        public Enumerator GetEnumerator() => new(this);
+        public HistogramBucket Current { get; private set; }
 
-        public struct Enumerator
+        public bool MoveNext()
         {
-            private readonly int numberOfBuckets;
-            private readonly HistogramBuckets histogramMeasurements;
-            private int index;
-
-            internal Enumerator(HistogramBuckets histogramMeasurements)
+            if (this.index < this.numberOfBuckets)
             {
-                this.histogramMeasurements = histogramMeasurements;
-                this.index = 0;
-                this.Current = default;
-                this.numberOfBuckets = histogramMeasurements.AggregatedBucketCounts == null ? 0 : histogramMeasurements.AggregatedBucketCounts.Length;
+                double explicitBound = this.index < this.numberOfBuckets - 1
+                    ? this.histogramMeasurements.ExplicitBounds[this.index]
+                    : double.PositiveInfinity;
+                long bucketCount = this.histogramMeasurements.AggregatedBucketCounts[this.index];
+                this.Current = new HistogramBucket(explicitBound, bucketCount);
+                this.index++;
+                return true;
             }
 
-            public HistogramBucket Current { get; private set; }
-
-            public bool MoveNext()
-            {
-                if (this.index < this.numberOfBuckets)
-                {
-                    double explicitBound = this.index < this.numberOfBuckets - 1
-                        ? this.histogramMeasurements.ExplicitBounds[this.index]
-                        : double.PositiveInfinity;
-                    long bucketCount = this.histogramMeasurements.AggregatedBucketCounts[this.index];
-                    this.Current = new HistogramBucket(explicitBound, bucketCount);
-                    this.index++;
-                    return true;
-                }
-
-                return false;
-            }
+            return false;
         }
     }
 }

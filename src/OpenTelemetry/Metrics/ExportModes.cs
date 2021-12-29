@@ -16,32 +16,31 @@
 
 using System;
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+[Flags]
+public enum ExportModes : byte
 {
-    [Flags]
-    public enum ExportModes : byte
-    {
-        /*
-        0 0 0 0 0 0 0 0
-        | | | | | | | |
-        | | | | | | | +--- Push
-        | | | | | | +----- Pull
-        | | | | | +------- (reserved)
-        | | | | +--------- (reserved)
-        | | | +----------- (reserved)
-        | | +------------- (reserved)
-        | +--------------- (reserved)
-        +----------------- (reserved)
-        */
+    /*
+    0 0 0 0 0 0 0 0
+    | | | | | | | |
+    | | | | | | | +--- Push
+    | | | | | | +----- Pull
+    | | | | | +------- (reserved)
+    | | | | +--------- (reserved)
+    | | | +----------- (reserved)
+    | | +------------- (reserved)
+    | +--------------- (reserved)
+    +----------------- (reserved)
+    */
 
-        /// <summary>
-        /// Push.
-        /// </summary>
-        Push = 0b1,
+    /// <summary>
+    /// Push.
+    /// </summary>
+    Push = 0b1,
 
-        /// <summary>
-        /// Pull.
-        /// </summary>
-        Pull = 0b10,
-    }
+    /// <summary>
+    /// Pull.
+    /// </summary>
+    Pull = 0b10,
 }

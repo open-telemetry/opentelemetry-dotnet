@@ -14,17 +14,16 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+public class ExplicitBucketHistogramConfiguration : MetricStreamConfiguration
 {
-    public class ExplicitBucketHistogramConfiguration : MetricStreamConfiguration
-    {
-        /// <summary>
-        /// Gets or sets the values representing explicit histogram bucket
-        /// boundary values.
-        /// </summary>
-        /// <remarks>
-        /// The array must be in ascending order with distinct values.
-        /// </remarks>
-        public double[] Boundaries { get; set; }
-    }
+    /// <summary>
+    /// Gets or sets the values representing explicit histogram bucket
+    /// boundary values.
+    /// </summary>
+    /// <remarks>
+    /// The array must be in ascending order with distinct values.
+    /// </remarks>
+    public double[] Boundaries { get; set; }
 }

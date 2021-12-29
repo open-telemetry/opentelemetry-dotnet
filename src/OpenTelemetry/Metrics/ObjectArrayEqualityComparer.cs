@@ -16,53 +16,52 @@
 
 using System.Collections.Generic;
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+internal class ObjectArrayEqualityComparer : IEqualityComparer<object[]>
 {
-    internal class ObjectArrayEqualityComparer : IEqualityComparer<object[]>
+    public bool Equals(object[] obj1, object[] obj2)
     {
-        public bool Equals(object[] obj1, object[] obj2)
+        if (ReferenceEquals(obj1, obj2))
         {
-            if (ReferenceEquals(obj1, obj2))
-            {
-                return true;
-            }
-
-            if (ReferenceEquals(obj1, null) || ReferenceEquals(obj2, null))
-            {
-                return false;
-            }
-
-            var len1 = obj1.Length;
-
-            if (len1 != obj2.Length)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < len1; i++)
-            {
-                if (!obj1[i].Equals(obj2[i]))
-                {
-                    return false;
-                }
-            }
-
             return true;
         }
 
-        public int GetHashCode(object[] objs)
+        if (ReferenceEquals(obj1, null) || ReferenceEquals(obj2, null))
         {
-            int hash = 17;
-
-            unchecked
-            {
-                for (int i = 0; i < objs.Length; i++)
-                {
-                    hash = (hash * 31) + objs[i].GetHashCode();
-                }
-            }
-
-            return hash;
+            return false;
         }
+
+        var len1 = obj1.Length;
+
+        if (len1 != obj2.Length)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < len1; i++)
+        {
+            if (!obj1[i].Equals(obj2[i]))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public int GetHashCode(object[] objs)
+    {
+        int hash = 17;
+
+        unchecked
+        {
+            for (int i = 0; i < objs.Length; i++)
+            {
+                hash = (hash * 31) + objs[i].GetHashCode();
+            }
+        }
+
+        return hash;
     }
 }

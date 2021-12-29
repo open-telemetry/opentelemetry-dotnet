@@ -14,41 +14,40 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+// TODO: can be optimized like MetricType
+internal enum Aggregation
 {
-    // TODO: can be optimized like MetricType
-    internal enum Aggregation
-    {
 #pragma warning disable SA1602 // Enumeration items should be documented
-        Default,
-        Drop,
-        Sum,
-        LastValue,
-        Histogram,
+    Default,
+    Drop,
+    Sum,
+    LastValue,
+    Histogram,
 #pragma warning restore SA1602 // Enumeration items should be documented
-    }
+}
 
-    public class MetricStreamConfiguration
+public class MetricStreamConfiguration
+{
+    public static readonly MetricStreamConfiguration Drop = new DropConfiguration();
+
+    public string Name { get; set; }
+
+    public string Description { get; set; }
+
+    public string[] TagKeys { get; set; }
+
+    internal virtual Aggregation Aggregation { get; set; }
+
+    // TODO: MetricPoints caps can be configured here
+
+    private sealed class DropConfiguration : MetricStreamConfiguration
     {
-        public static readonly MetricStreamConfiguration Drop = new DropConfiguration();
-
-        public string Name { get; set; }
-
-        public string Description { get; set; }
-
-        public string[] TagKeys { get; set; }
-
-        internal virtual Aggregation Aggregation { get; set; }
-
-        // TODO: MetricPoints caps can be configured here
-
-        private sealed class DropConfiguration : MetricStreamConfiguration
+        internal override Aggregation Aggregation
         {
-            internal override Aggregation Aggregation
-            {
-                get => Aggregation.Drop;
-                set { }
-            }
+            get => Aggregation.Drop;
+            set { }
         }
     }
 }

@@ -16,18 +16,17 @@
 
 using System;
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+public sealed class AggregationTemporalityAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
-    public sealed class AggregationTemporalityAttribute : Attribute
+    private AggregationTemporality temporality;
+
+    public AggregationTemporalityAttribute(AggregationTemporality temporality)
     {
-        private AggregationTemporality temporality;
-
-        public AggregationTemporalityAttribute(AggregationTemporality temporality)
-        {
-            this.temporality = temporality;
-        }
-
-        public AggregationTemporality Temporality => this.temporality;
+        this.temporality = temporality;
     }
+
+    public AggregationTemporality Temporality => this.temporality;
 }

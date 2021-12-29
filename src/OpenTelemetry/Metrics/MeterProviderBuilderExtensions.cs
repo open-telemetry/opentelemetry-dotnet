@@ -18,204 +18,203 @@ using System;
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Resources;
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+/// <summary>
+/// Contains extension methods for the <see cref="MeterProviderBuilder"/> class.
+/// </summary>
+public static class MeterProviderBuilderExtensions
 {
     /// <summary>
-    /// Contains extension methods for the <see cref="MeterProviderBuilder"/> class.
+    /// Adds a reader to the provider.
     /// </summary>
-    public static class MeterProviderBuilderExtensions
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="reader"><see cref="MetricReader"/>.</param>
+    /// <returns><see cref="MeterProvider"/>.</returns>
+    public static MeterProviderBuilder AddReader(this MeterProviderBuilder meterProviderBuilder, MetricReader reader)
     {
-        /// <summary>
-        /// Adds a reader to the provider.
-        /// </summary>
-        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="reader"><see cref="MetricReader"/>.</param>
-        /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder AddReader(this MeterProviderBuilder meterProviderBuilder, MetricReader reader)
+        if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
         {
-            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
-            {
-                return meterProviderBuilderBase.AddReader(reader);
-            }
-
-            return meterProviderBuilder;
+            return meterProviderBuilderBase.AddReader(reader);
         }
 
-        /// <summary>
-        /// Add metric view, which can be used to customize the Metrics outputted
-        /// from the SDK. The views are applied in the order they are added.
-        /// </summary>
-        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="instrumentName">Name of the instrument, to be used as part of Instrument selection criteria.</param>
-        /// <param name="name">Name of the view. This will be used as name of resulting metrics stream.</param>
-        /// <returns><see cref="MeterProvider"/>.</returns>
-        /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
-        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, string name)
+        return meterProviderBuilder;
+    }
+
+    /// <summary>
+    /// Add metric view, which can be used to customize the Metrics outputted
+    /// from the SDK. The views are applied in the order they are added.
+    /// </summary>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="instrumentName">Name of the instrument, to be used as part of Instrument selection criteria.</param>
+    /// <param name="name">Name of the view. This will be used as name of resulting metrics stream.</param>
+    /// <returns><see cref="MeterProvider"/>.</returns>
+    /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
+    public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, string name)
+    {
+        if (!MeterProviderBuilderSdk.IsValidInstrumentName(name))
         {
-            if (!MeterProviderBuilderSdk.IsValidInstrumentName(name))
-            {
-                throw new ArgumentException($"Custom view name {name} is invalid.", nameof(name));
-            }
-
-            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
-            {
-                return meterProviderBuilderBase.AddView(instrumentName, name);
-            }
-
-            return meterProviderBuilder;
+            throw new ArgumentException($"Custom view name {name} is invalid.", nameof(name));
         }
 
-        /// <summary>
-        /// Add metric view, which can be used to customize the Metrics outputted
-        /// from the SDK. The views are applied in the order they are added.
-        /// </summary>
-        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="instrumentName">Name of the instrument, to be used as part of Instrument selection criteria.</param>
-        /// <param name="metricStreamConfiguration">Aggregation configuration used to produce metrics stream.</param>
-        /// <returns><see cref="MeterProvider"/>.</returns>
-        /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
-        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
+        if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
         {
-            if (metricStreamConfiguration == null)
-            {
-                throw new ArgumentNullException($"Metric stream configuration cannot be null.", nameof(metricStreamConfiguration));
-            }
-
-            if (!MeterProviderBuilderSdk.IsValidViewName(metricStreamConfiguration.Name))
-            {
-                throw new ArgumentException($"Custom view name {metricStreamConfiguration.Name} is invalid.", nameof(metricStreamConfiguration.Name));
-            }
-
-            if (metricStreamConfiguration is ExplicitBucketHistogramConfiguration histogramConfiguration)
-            {
-                // Validate histogram boundaries
-                if (histogramConfiguration.Boundaries != null && !IsSortedAndDistinct(histogramConfiguration.Boundaries))
-                {
-                    throw new ArgumentException($"Histogram boundaries must be in ascending order with distinct values", nameof(histogramConfiguration.Boundaries));
-                }
-            }
-
-            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
-            {
-                return meterProviderBuilderBase.AddView(instrumentName, metricStreamConfiguration);
-            }
-
-            return meterProviderBuilder;
+            return meterProviderBuilderBase.AddView(instrumentName, name);
         }
 
-        /// <summary>
-        /// Add metric view, which can be used to customize the Metrics outputted
-        /// from the SDK. The views are applied in the order they are added.
-        /// </summary>
-        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="viewConfig">Function to configure aggregation based on the instrument.</param>
-        /// <returns><see cref="MeterProvider"/>.</returns>
-        /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
-        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, MetricStreamConfiguration> viewConfig)
-        {
-            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
-            {
-                return meterProviderBuilderBase.AddView(viewConfig);
-            }
+        return meterProviderBuilder;
+    }
 
-            return meterProviderBuilder;
+    /// <summary>
+    /// Add metric view, which can be used to customize the Metrics outputted
+    /// from the SDK. The views are applied in the order they are added.
+    /// </summary>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="instrumentName">Name of the instrument, to be used as part of Instrument selection criteria.</param>
+    /// <param name="metricStreamConfiguration">Aggregation configuration used to produce metrics stream.</param>
+    /// <returns><see cref="MeterProvider"/>.</returns>
+    /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
+    public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
+    {
+        if (metricStreamConfiguration == null)
+        {
+            throw new ArgumentNullException($"Metric stream configuration cannot be null.", nameof(metricStreamConfiguration));
         }
 
-        /// <summary>
-        /// Sets the maximum number of Metric streams supported by the MeterProvider.
-        /// When no Views are configured, every instrument will result in one metric stream,
-        /// so this control the numbers of instruments supported.
-        /// When Views are configued, a single instrument can result in multiple metric streams,
-        /// so this control the number of streams.
-        /// </summary>
-        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
-        /// <param name="maxMetricStreams">Maximum number of metric streams allowed.</param>
-        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
-        /// <remarks>
-        /// If an instrument is created, but disposed later, this will still be contributing to the limit.
-        /// This may change in the future.
-        /// </remarks>
-        public static MeterProviderBuilder SetMaxMetricStreams(this MeterProviderBuilder meterProviderBuilder, int maxMetricStreams)
+        if (!MeterProviderBuilderSdk.IsValidViewName(metricStreamConfiguration.Name))
         {
-            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
-            {
-                meterProviderBuilderBase.SetMaxMetricStreams(maxMetricStreams);
-            }
-
-            return meterProviderBuilder;
+            throw new ArgumentException($"Custom view name {metricStreamConfiguration.Name} is invalid.", nameof(metricStreamConfiguration.Name));
         }
 
-        /// <summary>
-        /// Sets the maximum number of MetricPoints allowed per metric stream.
-        /// This limits the number of unique combinations of key/value pairs used
-        /// for reporting measurements.
-        /// </summary>
-        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
-        /// <param name="maxMetricPointsPerMetricStream">Maximum maximum number of metric points allowed per metric stream.</param>
-        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
-        /// <remarks>
-        /// If a particular key/value pair combination is used at least once,
-        /// it will contribute to the limit for the life of the process.
-        /// This may change in the future. See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/2360.
-        /// </remarks>
-        public static MeterProviderBuilder SetMaxMetricPointsPerMetricStream(this MeterProviderBuilder meterProviderBuilder, int maxMetricPointsPerMetricStream)
+        if (metricStreamConfiguration is ExplicitBucketHistogramConfiguration histogramConfiguration)
         {
-            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            // Validate histogram boundaries
+            if (histogramConfiguration.Boundaries != null && !IsSortedAndDistinct(histogramConfiguration.Boundaries))
             {
-                meterProviderBuilderBase.SetMaxMetricPointsPerMetricStream(maxMetricPointsPerMetricStream);
+                throw new ArgumentException($"Histogram boundaries must be in ascending order with distinct values", nameof(histogramConfiguration.Boundaries));
             }
-
-            return meterProviderBuilder;
         }
 
-        /// <summary>
-        /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
-        /// this provider is built from. Overwrites currently set ResourceBuilder.
-        /// </summary>
-        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
-        /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
-        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
-        public static MeterProviderBuilder SetResourceBuilder(this MeterProviderBuilder meterProviderBuilder, ResourceBuilder resourceBuilder)
+        if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
         {
-            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
-            {
-                meterProviderBuilderBase.SetResourceBuilder(resourceBuilder);
-            }
-
-            return meterProviderBuilder;
+            return meterProviderBuilderBase.AddView(instrumentName, metricStreamConfiguration);
         }
 
-        /// <summary>
-        /// Run the given actions to initialize the <see cref="MeterProvider"/>.
-        /// </summary>
-        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProvider Build(this MeterProviderBuilder meterProviderBuilder)
+        return meterProviderBuilder;
+    }
+
+    /// <summary>
+    /// Add metric view, which can be used to customize the Metrics outputted
+    /// from the SDK. The views are applied in the order they are added.
+    /// </summary>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="viewConfig">Function to configure aggregation based on the instrument.</param>
+    /// <returns><see cref="MeterProvider"/>.</returns>
+    /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
+    public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, MetricStreamConfiguration> viewConfig)
+    {
+        if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
         {
-            if (meterProviderBuilder is IDeferredMeterProviderBuilder)
-            {
-                throw new NotSupportedException("DeferredMeterProviderBuilder requires a ServiceProvider to build.");
-            }
-
-            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
-            {
-                return meterProviderBuilderSdk.BuildSdk();
-            }
-
-            return null;
+            return meterProviderBuilderBase.AddView(viewConfig);
         }
 
-        private static bool IsSortedAndDistinct(double[] values)
-        {
-            for (int i = 1; i < values.Length; i++)
-            {
-                if (values[i] <= values[i - 1])
-                {
-                    return false;
-                }
-            }
+        return meterProviderBuilder;
+    }
 
-            return true;
+    /// <summary>
+    /// Sets the maximum number of Metric streams supported by the MeterProvider.
+    /// When no Views are configured, every instrument will result in one metric stream,
+    /// so this control the numbers of instruments supported.
+    /// When Views are configued, a single instrument can result in multiple metric streams,
+    /// so this control the number of streams.
+    /// </summary>
+    /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
+    /// <param name="maxMetricStreams">Maximum number of metric streams allowed.</param>
+    /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+    /// <remarks>
+    /// If an instrument is created, but disposed later, this will still be contributing to the limit.
+    /// This may change in the future.
+    /// </remarks>
+    public static MeterProviderBuilder SetMaxMetricStreams(this MeterProviderBuilder meterProviderBuilder, int maxMetricStreams)
+    {
+        if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+        {
+            meterProviderBuilderBase.SetMaxMetricStreams(maxMetricStreams);
         }
+
+        return meterProviderBuilder;
+    }
+
+    /// <summary>
+    /// Sets the maximum number of MetricPoints allowed per metric stream.
+    /// This limits the number of unique combinations of key/value pairs used
+    /// for reporting measurements.
+    /// </summary>
+    /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
+    /// <param name="maxMetricPointsPerMetricStream">Maximum maximum number of metric points allowed per metric stream.</param>
+    /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+    /// <remarks>
+    /// If a particular key/value pair combination is used at least once,
+    /// it will contribute to the limit for the life of the process.
+    /// This may change in the future. See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/2360.
+    /// </remarks>
+    public static MeterProviderBuilder SetMaxMetricPointsPerMetricStream(this MeterProviderBuilder meterProviderBuilder, int maxMetricPointsPerMetricStream)
+    {
+        if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+        {
+            meterProviderBuilderBase.SetMaxMetricPointsPerMetricStream(maxMetricPointsPerMetricStream);
+        }
+
+        return meterProviderBuilder;
+    }
+
+    /// <summary>
+    /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
+    /// this provider is built from. Overwrites currently set ResourceBuilder.
+    /// </summary>
+    /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
+    /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
+    /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+    public static MeterProviderBuilder SetResourceBuilder(this MeterProviderBuilder meterProviderBuilder, ResourceBuilder resourceBuilder)
+    {
+        if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+        {
+            meterProviderBuilderBase.SetResourceBuilder(resourceBuilder);
+        }
+
+        return meterProviderBuilder;
+    }
+
+    /// <summary>
+    /// Run the given actions to initialize the <see cref="MeterProvider"/>.
+    /// </summary>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <returns><see cref="MeterProvider"/>.</returns>
+    public static MeterProvider Build(this MeterProviderBuilder meterProviderBuilder)
+    {
+        if (meterProviderBuilder is IDeferredMeterProviderBuilder)
+        {
+            throw new NotSupportedException("DeferredMeterProviderBuilder requires a ServiceProvider to build.");
+        }
+
+        if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+        {
+            return meterProviderBuilderSdk.BuildSdk();
+        }
+
+        return null;
+    }
+
+    private static bool IsSortedAndDistinct(double[] values)
+    {
+        for (int i = 1; i < values.Length; i++)
+        {
+            if (values[i] <= values[i - 1])
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

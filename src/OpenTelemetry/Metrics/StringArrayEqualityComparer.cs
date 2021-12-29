@@ -17,53 +17,52 @@
 using System;
 using System.Collections.Generic;
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+internal class StringArrayEqualityComparer : IEqualityComparer<string[]>
 {
-    internal class StringArrayEqualityComparer : IEqualityComparer<string[]>
+    public bool Equals(string[] strings1, string[] strings2)
     {
-        public bool Equals(string[] strings1, string[] strings2)
+        if (ReferenceEquals(strings1, strings2))
         {
-            if (ReferenceEquals(strings1, strings2))
-            {
-                return true;
-            }
-
-            if (ReferenceEquals(strings1, null) || ReferenceEquals(strings2, null))
-            {
-                return false;
-            }
-
-            var len1 = strings1.Length;
-
-            if (len1 != strings2.Length)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < len1; i++)
-            {
-                if (!strings1[i].Equals(strings2[i], StringComparison.Ordinal))
-                {
-                    return false;
-                }
-            }
-
             return true;
         }
 
-        public int GetHashCode(string[] strings)
+        if (ReferenceEquals(strings1, null) || ReferenceEquals(strings2, null))
         {
-            int hash = 17;
-
-            unchecked
-            {
-                for (int i = 0; i < strings.Length; i++)
-                {
-                    hash = (hash * 31) + strings[i].GetHashCode();
-                }
-            }
-
-            return hash;
+            return false;
         }
+
+        var len1 = strings1.Length;
+
+        if (len1 != strings2.Length)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < len1; i++)
+        {
+            if (!strings1[i].Equals(strings2[i], StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public int GetHashCode(string[] strings)
+    {
+        int hash = 17;
+
+        unchecked
+        {
+            for (int i = 0; i < strings.Length; i++)
+            {
+                hash = (hash * 31) + strings[i].GetHashCode();
+            }
+        }
+
+        return hash;
     }
 }

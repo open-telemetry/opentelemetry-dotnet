@@ -14,53 +14,52 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+internal enum AggregationType
 {
-    internal enum AggregationType
-    {
-        /// <summary>
-        /// Invalid.
-        /// </summary>
-        Invalid = -1,
+    /// <summary>
+    /// Invalid.
+    /// </summary>
+    Invalid = -1,
 
-        /// <summary>
-        /// Calculate SUM from incoming delta measurements.
-        /// </summary>
-        LongSumIncomingDelta = 0,
+    /// <summary>
+    /// Calculate SUM from incoming delta measurements.
+    /// </summary>
+    LongSumIncomingDelta = 0,
 
-        /// <summary>
-        /// Calculate SUM from incoming cumulative measurements.
-        /// </summary>
-        LongSumIncomingCumulative = 1,
+    /// <summary>
+    /// Calculate SUM from incoming cumulative measurements.
+    /// </summary>
+    LongSumIncomingCumulative = 1,
 
-        /// <summary>
-        /// Calculate SUM from incoming delta measurements.
-        /// </summary>
-        DoubleSumIncomingDelta = 2,
+    /// <summary>
+    /// Calculate SUM from incoming delta measurements.
+    /// </summary>
+    DoubleSumIncomingDelta = 2,
 
-        /// <summary>
-        /// Calculate SUM from incoming cumulative measurements.
-        /// </summary>
-        DoubleSumIncomingCumulative = 3,
+    /// <summary>
+    /// Calculate SUM from incoming cumulative measurements.
+    /// </summary>
+    DoubleSumIncomingCumulative = 3,
 
-        /// <summary>
-        /// Keep LastValue.
-        /// </summary>
-        LongGauge = 4,
+    /// <summary>
+    /// Keep LastValue.
+    /// </summary>
+    LongGauge = 4,
 
-        /// <summary>
-        /// Keep LastValue.
-        /// </summary>
-        DoubleGauge = 5,
+    /// <summary>
+    /// Keep LastValue.
+    /// </summary>
+    DoubleGauge = 5,
 
-        /// <summary>
-        /// Histogram.
-        /// </summary>
-        Histogram = 6,
+    /// <summary>
+    /// Histogram.
+    /// </summary>
+    Histogram = 6,
 
-        /// <summary>
-        /// Histogram with sum, count only.
-        /// </summary>
-        HistogramSumCount = 7,
-    }
+    /// <summary>
+    /// Histogram with sum, count only.
+    /// </summary>
+    HistogramSumCount = 7,
 }

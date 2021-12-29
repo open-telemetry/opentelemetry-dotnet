@@ -19,117 +19,116 @@ using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+public class PeriodicExportingMetricReader : BaseExportingMetricReader
 {
-    public class PeriodicExportingMetricReader : BaseExportingMetricReader
+    internal const int DefaultExportIntervalMilliseconds = 60000;
+    internal const int DefaultExportTimeoutMilliseconds = 30000;
+
+    private readonly int exportIntervalMilliseconds;
+    private readonly int exportTimeoutMilliseconds;
+    private readonly Thread exporterThread;
+    private readonly AutoResetEvent exportTrigger = new AutoResetEvent(false);
+    private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
+    private bool disposed;
+
+    public PeriodicExportingMetricReader(
+        BaseExporter<Metric> exporter,
+        int exportIntervalMilliseconds = DefaultExportIntervalMilliseconds,
+        int exportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
+        : base(exporter)
     {
-        internal const int DefaultExportIntervalMilliseconds = 60000;
-        internal const int DefaultExportTimeoutMilliseconds = 30000;
+        Guard.Range(exportIntervalMilliseconds, nameof(exportIntervalMilliseconds), min: 1);
+        Guard.Range(exportTimeoutMilliseconds, nameof(exportTimeoutMilliseconds), min: 0);
 
-        private readonly int exportIntervalMilliseconds;
-        private readonly int exportTimeoutMilliseconds;
-        private readonly Thread exporterThread;
-        private readonly AutoResetEvent exportTrigger = new AutoResetEvent(false);
-        private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
-        private bool disposed;
-
-        public PeriodicExportingMetricReader(
-            BaseExporter<Metric> exporter,
-            int exportIntervalMilliseconds = DefaultExportIntervalMilliseconds,
-            int exportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
-            : base(exporter)
+        if ((this.SupportedExportModes & ExportModes.Push) != ExportModes.Push)
         {
-            Guard.Range(exportIntervalMilliseconds, nameof(exportIntervalMilliseconds), min: 1);
-            Guard.Range(exportTimeoutMilliseconds, nameof(exportTimeoutMilliseconds), min: 0);
-
-            if ((this.SupportedExportModes & ExportModes.Push) != ExportModes.Push)
-            {
-                throw new InvalidOperationException($"The '{nameof(exporter)}' does not support '{nameof(ExportModes)}.{nameof(ExportModes.Push)}'");
-            }
-
-            this.exportIntervalMilliseconds = exportIntervalMilliseconds;
-            this.exportTimeoutMilliseconds = exportTimeoutMilliseconds;
-
-            this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
-            {
-                IsBackground = true,
-                Name = $"OpenTelemetry-{nameof(PeriodicExportingMetricReader)}-{exporter.GetType().Name}",
-            };
-            this.exporterThread.Start();
+            throw new InvalidOperationException($"The '{nameof(exporter)}' does not support '{nameof(ExportModes)}.{nameof(ExportModes.Push)}'");
         }
 
-        /// <inheritdoc />
-        protected override bool OnShutdown(int timeoutMilliseconds)
+        this.exportIntervalMilliseconds = exportIntervalMilliseconds;
+        this.exportTimeoutMilliseconds = exportTimeoutMilliseconds;
+
+        this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
         {
-            var result = true;
+            IsBackground = true,
+            Name = $"OpenTelemetry-{nameof(PeriodicExportingMetricReader)}-{exporter.GetType().Name}",
+        };
+        this.exporterThread.Start();
+    }
 
-            this.shutdownTrigger.Set();
+    /// <inheritdoc />
+    protected override bool OnShutdown(int timeoutMilliseconds)
+    {
+        var result = true;
 
-            if (timeoutMilliseconds == Timeout.Infinite)
-            {
-                this.exporterThread.Join();
-                result = this.exporter.Shutdown() && result;
-            }
-            else
-            {
-                var sw = Stopwatch.StartNew();
-                result = this.exporterThread.Join(timeoutMilliseconds) && result;
-                var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-                result = this.exporter.Shutdown((int)Math.Max(timeout, 0)) && result;
-            }
+        this.shutdownTrigger.Set();
 
-            return result;
-        }
-
-        /// <inheritdoc/>
-        protected override void Dispose(bool disposing)
+        if (timeoutMilliseconds == Timeout.Infinite)
         {
-            if (!this.disposed)
-            {
-                if (disposing)
-                {
-                    this.exportTrigger.Dispose();
-                    this.shutdownTrigger.Dispose();
-                }
-
-                this.disposed = true;
-            }
-
-            base.Dispose(disposing);
+            this.exporterThread.Join();
+            result = this.exporter.Shutdown() && result;
         }
-
-        private void ExporterProc()
+        else
         {
             var sw = Stopwatch.StartNew();
-            var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
+            result = this.exporterThread.Join(timeoutMilliseconds) && result;
+            var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+            result = this.exporter.Shutdown((int)Math.Max(timeout, 0)) && result;
+        }
 
-            while (true)
+        return result;
+    }
+
+    /// <inheritdoc/>
+    protected override void Dispose(bool disposing)
+    {
+        if (!this.disposed)
+        {
+            if (disposing)
             {
-                var timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
+                this.exportTrigger.Dispose();
+                this.shutdownTrigger.Dispose();
+            }
 
-                int index;
+            this.disposed = true;
+        }
 
-                try
-                {
-                    index = WaitHandle.WaitAny(triggers, timeout);
-                }
-                catch (ObjectDisposedException)
-                {
+        base.Dispose(disposing);
+    }
+
+    private void ExporterProc()
+    {
+        var sw = Stopwatch.StartNew();
+        var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
+
+        while (true)
+        {
+            var timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
+
+            int index;
+
+            try
+            {
+                index = WaitHandle.WaitAny(triggers, timeout);
+            }
+            catch (ObjectDisposedException)
+            {
+                return;
+            }
+
+            switch (index)
+            {
+                case 0: // export
+                    this.Collect(this.exportTimeoutMilliseconds);
+                    break;
+                case 1: // shutdown
+                    this.Collect(this.exportTimeoutMilliseconds); // TODO: do we want to use the shutdown timeout here?
                     return;
-                }
-
-                switch (index)
-                {
-                    case 0: // export
-                        this.Collect(this.exportTimeoutMilliseconds);
-                        break;
-                    case 1: // shutdown
-                        this.Collect(this.exportTimeoutMilliseconds); // TODO: do we want to use the shutdown timeout here?
-                        return;
-                    case WaitHandle.WaitTimeout: // timer
-                        this.Collect(this.exportTimeoutMilliseconds);
-                        break;
-                }
+                case WaitHandle.WaitTimeout: // timer
+                    this.Collect(this.exportTimeoutMilliseconds);
+                    break;
             }
         }
     }

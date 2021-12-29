@@ -14,18 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Metrics
+namespace OpenTelemetry.Metrics;
+
+public readonly struct HistogramBucket
 {
-    public readonly struct HistogramBucket
+    internal HistogramBucket(double explicitBound, long bucketCount)
     {
-        internal HistogramBucket(double explicitBound, long bucketCount)
-        {
-            this.ExplicitBound = explicitBound;
-            this.BucketCount = bucketCount;
-        }
-
-        public double ExplicitBound { get; }
-
-        public long BucketCount { get; }
+        this.ExplicitBound = explicitBound;
+        this.BucketCount = bucketCount;
     }
+
+    public double ExplicitBound { get; }
+
+    public long BucketCount { get; }
 }
