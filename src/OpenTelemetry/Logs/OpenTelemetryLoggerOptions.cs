@@ -22,7 +22,7 @@ namespace OpenTelemetry.Logs
 {
     public class OpenTelemetryLoggerOptions
     {
-        internal readonly List<BaseProcessor<LogRecord>> Processors = new List<BaseProcessor<LogRecord>>();
+        internal readonly List<BaseProcessor<LogRecord>> Processors = new();
         internal ResourceBuilder ResourceBuilder = ResourceBuilder.CreateDefault();
 
         /// <summary>

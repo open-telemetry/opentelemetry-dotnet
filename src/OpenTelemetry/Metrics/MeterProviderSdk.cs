@@ -28,9 +28,9 @@ namespace OpenTelemetry.Metrics
     internal sealed class MeterProviderSdk : MeterProvider
     {
         internal int ShutdownCount;
-        private readonly List<object> instrumentations = new List<object>();
+        private readonly List<object> instrumentations = new();
         private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs;
-        private readonly object collectLock = new object();
+        private readonly object collectLock = new();
         private readonly MeterListener listener;
         private readonly MetricReader reader;
         private readonly CompositeMetricReader compositeMetricReader;

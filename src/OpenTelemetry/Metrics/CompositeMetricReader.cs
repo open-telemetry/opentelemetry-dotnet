@@ -67,7 +67,7 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        public Enumerator GetEnumerator() => new Enumerator(this.head);
+        public Enumerator GetEnumerator() => new(this.head);
 
         /// <inheritdoc/>
         internal override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)

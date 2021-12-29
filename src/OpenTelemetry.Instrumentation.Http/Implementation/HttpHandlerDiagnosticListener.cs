@@ -33,14 +33,14 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         internal static readonly AssemblyName AssemblyName = typeof(HttpHandlerDiagnosticListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
-        internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+        internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
 
-        private static readonly Regex CoreAppMajorVersionCheckRegex = new Regex("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex CoreAppMajorVersionCheckRegex = new("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new PropertyFetcher<HttpRequestMessage>("Request");
-        private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new PropertyFetcher<HttpResponseMessage>("Response");
-        private readonly PropertyFetcher<Exception> stopExceptionFetcher = new PropertyFetcher<Exception>("Exception");
-        private readonly PropertyFetcher<TaskStatus> stopRequestStatusFetcher = new PropertyFetcher<TaskStatus>("RequestTaskStatus");
+        private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new("Request");
+        private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
+        private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
+        private readonly PropertyFetcher<TaskStatus> stopRequestStatusFetcher = new("RequestTaskStatus");
         private readonly bool httpClientSupportsW3C;
         private readonly HttpClientInstrumentationOptions options;
 

@@ -23,7 +23,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
     [EventSource(Name = "OpenTelemetry-Exporter-OpenTelemetryProtocol")]
     internal class OpenTelemetryProtocolExporterEventSource : EventSource
     {
-        public static readonly OpenTelemetryProtocolExporterEventSource Log = new OpenTelemetryProtocolExporterEventSource();
+        public static readonly OpenTelemetryProtocolExporterEventSource Log = new();
 
         [NonEvent]
         public void FailedToReachCollector(Uri collectorUri, Exception ex)

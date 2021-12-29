@@ -27,7 +27,7 @@ namespace OpenTelemetry.Tests.Stress;
 
 public partial class Program
 {
-    private static readonly Meter StressMeter = new Meter("OpenTelemetry.Tests.Stress");
+    private static readonly Meter StressMeter = new("OpenTelemetry.Tests.Stress");
     private static volatile bool bContinue = true;
     private static volatile string output = "Test results not available yet.";
 

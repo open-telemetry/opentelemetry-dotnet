@@ -27,7 +27,7 @@ namespace OpenTelemetry.Trace
     /// <remarks>TelemetrySpan is a wrapper around <see cref="Activity"/> class.</remarks>
     public class TelemetrySpan : IDisposable
     {
-        internal static readonly TelemetrySpan NoopInstance = new TelemetrySpan(null);
+        internal static readonly TelemetrySpan NoopInstance = new(null);
         internal readonly Activity Activity;
 
         internal TelemetrySpan(Activity activity)

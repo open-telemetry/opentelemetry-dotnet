@@ -26,8 +26,8 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 {
     internal sealed class HttpInListener : IDisposable
     {
-        private readonly PropertyFetcher<object> routeFetcher = new PropertyFetcher<object>("Route");
-        private readonly PropertyFetcher<string> routeTemplateFetcher = new PropertyFetcher<string>("RouteTemplate");
+        private readonly PropertyFetcher<object> routeFetcher = new("Route");
+        private readonly PropertyFetcher<string> routeTemplateFetcher = new("RouteTemplate");
         private readonly AspNetInstrumentationOptions options;
 
         public HttpInListener(AspNetInstrumentationOptions options)

@@ -33,11 +33,11 @@ namespace OpenTelemetry.Internal
         // Buffer size of the log line. A UTF-16 encoded character in C# can take up to 4 bytes if encoded in UTF-8.
         private const int BUFFERSIZE = 4 * 5120;
         private const string EventSourceNamePrefix = "OpenTelemetry-";
-        private readonly object lockObj = new object();
+        private readonly object lockObj = new();
         private readonly EventLevel logLevel;
         private readonly SelfDiagnosticsConfigRefresher configRefresher;
-        private readonly ThreadLocal<byte[]> writeBuffer = new ThreadLocal<byte[]>(() => null);
-        private readonly List<EventSource> eventSourcesBeforeConstructor = new List<EventSource>();
+        private readonly ThreadLocal<byte[]> writeBuffer = new(() => null);
+        private readonly List<EventSource> eventSourcesBeforeConstructor = new();
 
         private bool disposedValue = false;
 

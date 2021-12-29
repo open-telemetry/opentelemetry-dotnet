@@ -27,10 +27,10 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public abstract class TracerProviderBuilderBase : TracerProviderBuilder
     {
-        private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
-        private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
-        private readonly List<string> sources = new List<string>();
-        private readonly HashSet<string> legacyActivityOperationNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly List<InstrumentationFactory> instrumentationFactories = new();
+        private readonly List<BaseProcessor<Activity>> processors = new();
+        private readonly List<string> sources = new();
+        private readonly HashSet<string> legacyActivityOperationNames = new(StringComparer.OrdinalIgnoreCase);
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
 

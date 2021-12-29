@@ -38,9 +38,9 @@ namespace OpenTelemetry
         private readonly int exporterTimeoutMilliseconds;
         private readonly int maxExportBatchSize;
         private readonly Thread exporterThread;
-        private readonly AutoResetEvent exportTrigger = new AutoResetEvent(false);
-        private readonly ManualResetEvent dataExportedNotification = new ManualResetEvent(false);
-        private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
+        private readonly AutoResetEvent exportTrigger = new(false);
+        private readonly ManualResetEvent dataExportedNotification = new(false);
+        private readonly ManualResetEvent shutdownTrigger = new(false);
         private long shutdownDrainTarget = long.MaxValue;
         private long droppedCount;
         private bool disposed;

@@ -27,7 +27,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 {
     internal sealed class ScopeManagerShim : IScopeManager
     {
-        private static readonly ConditionalWeakTable<TelemetrySpan, IScope> SpanScopeTable = new ConditionalWeakTable<TelemetrySpan, IScope>();
+        private static readonly ConditionalWeakTable<TelemetrySpan, IScope> SpanScopeTable = new();
 
         private readonly Tracer tracer;
 

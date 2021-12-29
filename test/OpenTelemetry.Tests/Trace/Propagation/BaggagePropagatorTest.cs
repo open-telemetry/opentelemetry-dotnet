@@ -42,7 +42,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             carrier[name] = value;
         };
 
-        private readonly BaggagePropagator baggage = new BaggagePropagator();
+        private readonly BaggagePropagator baggage = new();
 
         [Fact]
         public void ValidateFieldsProperty()

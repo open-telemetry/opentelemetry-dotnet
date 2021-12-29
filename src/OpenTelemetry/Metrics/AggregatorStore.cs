@@ -25,14 +25,13 @@ namespace OpenTelemetry.Metrics
 {
     internal sealed class AggregatorStore
     {
-        private static readonly ObjectArrayEqualityComparer ObjectArrayComparer = new ObjectArrayEqualityComparer();
-        private readonly object lockZeroTags = new object();
+        private static readonly ObjectArrayEqualityComparer ObjectArrayComparer = new();
+        private readonly object lockZeroTags = new();
         private readonly HashSet<string> tagKeysInteresting;
         private readonly int tagsKeysInterestingCount;
 
         // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
-        private readonly ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>> keyValue2MetricAggs =
-            new ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>>(new StringArrayEqualityComparer());
+        private readonly ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>> keyValue2MetricAggs = new();
 
         private readonly AggregationTemporality temporality;
         private readonly string name;

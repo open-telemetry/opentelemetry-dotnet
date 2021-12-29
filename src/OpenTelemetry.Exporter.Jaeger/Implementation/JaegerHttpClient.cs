@@ -23,7 +23,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal sealed class JaegerHttpClient : IJaegerClient
     {
-        private static readonly MediaTypeHeaderValue ContentTypeHeader = new MediaTypeHeaderValue("application/vnd.apache.thrift.binary");
+        private static readonly MediaTypeHeaderValue ContentTypeHeader = new("application/vnd.apache.thrift.binary");
 
         private readonly Uri endpoint;
         private readonly HttpClient httpClient;

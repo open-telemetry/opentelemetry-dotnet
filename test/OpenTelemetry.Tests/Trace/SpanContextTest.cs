@@ -28,13 +28,13 @@ namespace OpenTelemetry.Trace.Tests
         private static readonly byte[] SecondSpanIdBytes = { (byte)'0', 0, 0, 0, 0, 0, 0, 0 };
 
         private static readonly SpanContext First =
-          new SpanContext(
+          new(
               ActivityTraceId.CreateFromBytes(FirstTraceIdBytes),
               ActivitySpanId.CreateFromBytes(FirstSpanIdBytes),
               ActivityTraceFlags.None);
 
         private static readonly SpanContext Second =
-          new SpanContext(
+          new(
               ActivityTraceId.CreateFromBytes(SecondTraceIdBytes),
               ActivitySpanId.CreateFromBytes(SecondSpanIdBytes),
               ActivityTraceFlags.Recorded);

@@ -39,16 +39,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
-        internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+        internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
         private const string DiagnosticSourceName = "Microsoft.AspNetCore";
         private const string UnknownHostName = "UNKNOWN-HOST";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
-        private readonly PropertyFetcher<HttpContext> startContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
-        private readonly PropertyFetcher<HttpContext> stopContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
-        private readonly PropertyFetcher<Exception> stopExceptionFetcher = new PropertyFetcher<Exception>("Exception");
-        private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new PropertyFetcher<object>("actionDescriptor");
-        private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new PropertyFetcher<object>("AttributeRouteInfo");
-        private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new PropertyFetcher<string>("Template");
+        private readonly PropertyFetcher<HttpContext> startContextFetcher = new("HttpContext");
+        private readonly PropertyFetcher<HttpContext> stopContextFetcher = new("HttpContext");
+        private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
+        private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new("actionDescriptor");
+        private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new("AttributeRouteInfo");
+        private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new("Template");
         private readonly AspNetCoreInstrumentationOptions options;
 
         public HttpInListener(AspNetCoreInstrumentationOptions options)

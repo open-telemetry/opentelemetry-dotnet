@@ -189,7 +189,7 @@ namespace OpenTelemetry.Exporter
 
         private sealed class JsonContent : HttpContent
         {
-            private static readonly MediaTypeHeaderValue JsonHeader = new MediaTypeHeaderValue("application/json")
+            private static readonly MediaTypeHeaderValue JsonHeader = new("application/json")
             {
                 CharSet = "utf-8",
             };

@@ -24,7 +24,7 @@ namespace OpenTelemetry.Resources
     /// </summary>
     public class ResourceBuilder
     {
-        private readonly List<Resource> resources = new List<Resource>();
+        private readonly List<Resource> resources = new();
 
         private ResourceBuilder()
         {
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Resources
         /// </summary>
         /// <returns>Created <see cref="ResourceBuilder"/>.</returns>
         public static ResourceBuilder CreateEmpty()
-            => new ResourceBuilder();
+            => new();
 
         /// <summary>
         /// Clears the <see cref="Resource"/>s added to the builder.
