@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using OpenTelemetry.Internal;
 
@@ -122,53 +123,16 @@ namespace OpenTelemetry.Resources
                 long[] => value,
                 int => Convert.ToInt64(value),
                 short => Convert.ToInt64(value),
-                float => Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture),
-                int[] v => SanitizationUtils.ConvertoToInt64Array(v),
-                short[] v => SanitizationUtils.ConvertoToInt64Array(v),
-                float[] v => SanitizationUtils.ConvertToDoubleArray(v),
+                float => Convert.ToDouble(value, CultureInfo.InvariantCulture),
+                int[] v => Array.ConvertAll(v, Convert.ToInt64),
+                short[] v => Array.ConvertAll(v, Convert.ToInt64),
+                float[] v => Array.ConvertAll(v, ConvertToDoubleUsingIvariantCulture),
                 _ => throw new ArgumentException("Attribute value type is not an accepted primitive", keyName),
             };
-        }
 
-        private static class SanitizationUtils
-        {
-            public static long[] ConvertoToInt64Array(short[] value)
+            static double ConvertToDoubleUsingIvariantCulture(float value)
             {
-                var result = new long[value.Length];
-                var i = 0;
-                foreach (var val in value)
-                {
-                    result[i] = Convert.ToInt64(val);
-                    i++;
-                }
-
-                return result;
-            }
-
-            public static long[] ConvertoToInt64Array(int[] value)
-            {
-                var result = new long[value.Length];
-                var i = 0;
-                foreach (var val in value)
-                {
-                    result[i] = Convert.ToInt64(val);
-                    i++;
-                }
-
-                return result;
-            }
-
-            public static double[] ConvertToDoubleArray(float[] value)
-            {
-                var result = new double[value.Length];
-                var i = 0;
-                foreach (var val in value)
-                {
-                    result[i] = Convert.ToDouble(val, System.Globalization.CultureInfo.InvariantCulture);
-                    i++;
-                }
-
-                return result;
+                return Convert.ToDouble(value, CultureInfo.InvariantCulture);
             }
         }
     }
