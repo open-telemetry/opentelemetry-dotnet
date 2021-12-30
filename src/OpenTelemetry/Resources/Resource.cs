@@ -126,14 +126,9 @@ namespace OpenTelemetry.Resources
                 float => Convert.ToDouble(value, CultureInfo.InvariantCulture),
                 int[] v => Array.ConvertAll(v, Convert.ToInt64),
                 short[] v => Array.ConvertAll(v, Convert.ToInt64),
-                float[] v => Array.ConvertAll(v, ConvertToDoubleUsingIvariantCulture),
+                float[] v => Array.ConvertAll(v, f => Convert.ToDouble(f, CultureInfo.InvariantCulture)),
                 _ => throw new ArgumentException("Attribute value type is not an accepted primitive", keyName),
             };
-
-            static double ConvertToDoubleUsingIvariantCulture(float value)
-            {
-                return Convert.ToDouble(value, CultureInfo.InvariantCulture);
-            }
         }
     }
 }
