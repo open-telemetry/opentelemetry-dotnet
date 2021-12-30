@@ -27,7 +27,6 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public abstract partial class MetricReader : IDisposable
     {
-        private const AggregationTemporality AggregationTemporalityUnspecified = (AggregationTemporality)0;
         private const AggregationTemporality AggregationTemporalityUnspecified = 0;
         private readonly object newTaskLock = new();
         private readonly object onCollectLock = new();
