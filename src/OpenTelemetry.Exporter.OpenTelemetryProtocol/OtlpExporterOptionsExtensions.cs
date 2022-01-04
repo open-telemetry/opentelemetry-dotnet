@@ -22,6 +22,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Internal;
 #if NETSTANDARD2_1 || NET5_0_OR_GREATER
 using Grpc.Net.Client;
+using Grpc.Net.Client.Configuration;
 #endif
 using MetricsOtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
 using TraceOtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
@@ -42,7 +43,41 @@ namespace OpenTelemetry.Exporter
             }
 
 #if NETSTANDARD2_1 || NET5_0_OR_GREATER
-            return GrpcChannel.ForAddress(options.Endpoint);
+            // The specification does not dictate the parameters of the default retry policy.
+            // These defaults are borrowed from opentelemetry-java.
+            var retryPolicy = new RetryPolicy
+            {
+                // https://github.com/open-telemetry/opentelemetry-java/blob/6f755cc8128f8077643b4990327c22b293c46e45/exporters/otlp/common/src/main/java/io/opentelemetry/exporter/otlp/internal/retry/RetryPolicyBuilder.java#L19-L22
+                MaxAttempts = 5,
+                InitialBackoff = TimeSpan.FromSeconds(1),
+                MaxBackoff = TimeSpan.FromSeconds(5),
+                BackoffMultiplier = 1.5,
+
+                // https://github.com/open-telemetry/opentelemetry-java/commit/6f755cc8128f8077643b4990327c22b293c46e45#diff-2d25b543bc2c5a13e495895b6f6a2db80e1167bbe3387024cb917efda35a99acR24-R34
+                RetryableStatusCodes =
+                {
+                    StatusCode.Cancelled,
+                    StatusCode.DeadlineExceeded,
+                    StatusCode.ResourceExhausted,
+                    StatusCode.Aborted,
+                    StatusCode.OutOfRange,
+                    StatusCode.Unavailable,
+                    StatusCode.DataLoss,
+                },
+            };
+
+            var methodConfig = new MethodConfig
+            {
+                // MethodName.Default applies the retry policy to all methods called by this channel.
+                Names = { MethodName.Default },
+                RetryPolicy = retryPolicy,
+            };
+
+            var serviceConfig = new ServiceConfig { MethodConfigs = { methodConfig } };
+
+            var channelOptions = new GrpcChannelOptions { ServiceConfig = serviceConfig };
+
+            return GrpcChannel.ForAddress(options.Endpoint, channelOptions);
 #else
             ChannelCredentials channelCredentials;
             if (options.Endpoint.Scheme == Uri.UriSchemeHttps)
