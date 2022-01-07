@@ -32,11 +32,11 @@ namespace OpenTelemetry.Exporter
         private IReadOnlyCollection<string> httpListenerPrefixes = new string[] { "http://*:80/" };
 
 #if NETCOREAPP3_1_OR_GREATER
-    /// <summary>
-    /// Gets or sets a value indicating whether or not an http listener
-    /// should be started. Default value: False.
-    /// </summary>
-    public bool StartHttpListener { get; set; }
+        /// <summary>
+        /// Gets or sets a value indicating whether or not an http listener
+        /// should be started. Default value: False.
+        /// </summary>
+        public bool StartHttpListener { get; set; }
 #else
         /// <summary>
         /// Gets or sets a value indicating whether or not an http listener
