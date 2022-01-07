@@ -29,13 +29,14 @@ namespace OpenTelemetry.Exporter
         internal Func<DateTimeOffset> GetUtcNowDateTimeOffset = () => DateTimeOffset.UtcNow;
 
         private int scrapeResponseCacheDurationMilliseconds = 10 * 1000;
+        private IReadOnlyCollection<string> httpListenerPrefixes = new string[] { "http://*:80/" };
 
 #if NETCOREAPP3_1_OR_GREATER
-        /// <summary>
-        /// Gets or sets a value indicating whether or not an http listener
-        /// should be started. Default value: False.
-        /// </summary>
-        public bool StartHttpListener { get; set; }
+    /// <summary>
+    /// Gets or sets a value indicating whether or not an http listener
+    /// should be started. Default value: False.
+    /// </summary>
+    public bool StartHttpListener { get; set; }
 #else
         /// <summary>
         /// Gets or sets a value indicating whether or not an http listener
@@ -48,7 +49,23 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets the prefixes to use for the http listener. Default
         /// value: http://*:80/.
         /// </summary>
-        public IReadOnlyCollection<string> HttpListenerPrefixes { get; set; } = new string[] { "http://*:80/" };
+        public IReadOnlyCollection<string> HttpListenerPrefixes
+        {
+            get => this.httpListenerPrefixes;
+            set
+            {
+                foreach (string inputUri in value)
+                {
+                    if (!(Uri.TryCreate(inputUri, UriKind.Absolute, out var uri) &&
+                        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)))
+                    {
+                        throw new ArgumentException("Prometheus server path should be a valid uri with http/https protocol.");
+                    }
+
+                    this.httpListenerPrefixes = value;
+                }
+            }
+        }
 
         /// <summary>
         /// Gets or sets the path to use for the scraping endpoint. Default value: /metrics.

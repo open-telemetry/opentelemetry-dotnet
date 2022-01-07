@@ -105,5 +105,40 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 "^# TYPE counter_double counter\ncounter_double{key1='value1',key2='value2'} 101.17 \\d+\n$".Replace('\'', '"'),
                 await response.Content.ReadAsStringAsync().ConfigureAwait(false));
         }
+
+
+        [Theory]
+        [InlineData("http://http.example.com")]
+        [InlineData("https://https.example.com")]
+        public void ServerEndpointSanityCheckPositiveTest(string uri)
+        {
+            using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddPrometheusExporter(opt =>
+                {
+                    opt.HttpListenerPrefixes = new string[] { uri };
+                })
+                .Build();
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(null)]
+        [InlineData("ftp://ftp.example.com")]
+        public void ServerEndpointSanityCheckNegativeTest(string uri)
+        {
+            try
+            {
+                using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+                    .AddPrometheusExporter(opt =>
+                    {
+                        opt.HttpListenerPrefixes = new string[] { uri };
+                    })
+                    .Build();
+            }
+            catch (Exception ex)
+            {
+                Assert.Equal("Prometheus server path should be a valid uri with http/https protocol.", ex.Message);
+            }
+        }
     }
 }
