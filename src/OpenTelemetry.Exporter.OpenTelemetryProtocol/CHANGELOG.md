@@ -1,5 +1,9 @@
 # Changelog
 
+* Changed `OtlpLogExporter` to convert `ILogger` structured log inputs to
+  `Attributes` in OpenTelemetry (only active when `ParseStateValues` is `true`
+  on `OpenTelemetryLoggerOptions`)
+
 ## Unreleased
 
 * Added validation that insecure channel is configured correctly when using
