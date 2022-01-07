@@ -106,7 +106,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 await response.Content.ReadAsStringAsync().ConfigureAwait(false));
         }
 
-
         [Theory]
         [InlineData("http://http.example.com")]
         [InlineData("https://https.example.com")]
