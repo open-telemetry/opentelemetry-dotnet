@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -229,10 +228,6 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
 
         internal class TestReader : MetricReader
         {
-            protected override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
-            {
-                return true;
-            }
         }
     }
 }

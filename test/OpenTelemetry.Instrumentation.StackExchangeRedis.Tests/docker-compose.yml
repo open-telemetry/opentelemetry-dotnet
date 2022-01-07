@@ -12,7 +12,7 @@ services:
   tests:
     build:
       context: .
-      dockerfile: ./test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/dockerfile
+      dockerfile: ./test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/Dockerfile
     command: --TestCaseFilter:CategoryName=RedisIntegrationTests
     environment:
       - OTEL_REDISENDPOINT=redis:6379

@@ -15,12 +15,16 @@
 // </copyright>
 
 using System;
+using System.Net.Http;
+using System.Reflection;
 using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Internal;
 #if NETSTANDARD2_1 || NET5_0_OR_GREATER
 using Grpc.Net.Client;
 #endif
-using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
+using MetricsOtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
+using TraceOtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter
 {
@@ -87,12 +91,24 @@ namespace OpenTelemetry.Exporter
             return headers;
         }
 
-        public static IExportClient<OtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options) =>
+        public static IExportClient<TraceOtlpCollector.ExportTraceServiceRequest> GetTraceExportClient(this OtlpExporterOptions options) =>
             options.Protocol switch
             {
                 OtlpExportProtocol.Grpc => new OtlpGrpcTraceExportClient(options),
-                OtlpExportProtocol.HttpProtobuf => new OtlpHttpTraceExportClient(options),
-                _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported.")
+                OtlpExportProtocol.HttpProtobuf => new OtlpHttpTraceExportClient(
+                    options,
+                    options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
+                _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
+            };
+
+        public static IExportClient<MetricsOtlpCollector.ExportMetricsServiceRequest> GetMetricsExportClient(this OtlpExporterOptions options) =>
+            options.Protocol switch
+            {
+                OtlpExportProtocol.Grpc => new OtlpGrpcMetricsExportClient(options),
+                OtlpExportProtocol.HttpProtobuf => new OtlpHttpMetricsExportClient(
+                    options,
+                    options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
+                _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
             };
 
         public static OtlpExportProtocol? ToOtlpExportProtocol(this string protocol) =>
@@ -100,10 +116,65 @@ namespace OpenTelemetry.Exporter
             {
                 "grpc" => OtlpExportProtocol.Grpc,
                 "http/protobuf" => OtlpExportProtocol.HttpProtobuf,
-                _ => null
+                _ => null,
             };
 
-        public static Uri AppendPathIfNotPresent(this Uri uri, string path)
+        public static void TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)
+        {
+            if (serviceProvider != null
+                && options.Protocol == OtlpExportProtocol.HttpProtobuf
+                && options.HttpClientFactory == options.DefaultHttpClientFactory)
+            {
+                options.HttpClientFactory = () =>
+                {
+                    Type httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
+                    if (httpClientFactoryType != null)
+                    {
+                        object httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
+                        if (httpClientFactory != null)
+                        {
+                            MethodInfo createClientMethod = httpClientFactoryType.GetMethod(
+                                "CreateClient",
+                                BindingFlags.Public | BindingFlags.Instance,
+                                binder: null,
+                                new Type[] { typeof(string) },
+                                modifiers: null);
+                            if (createClientMethod != null)
+                            {
+                                HttpClient client = (HttpClient)createClientMethod.Invoke(httpClientFactory, new object[] { httpClientName });
+
+                                client.Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds);
+
+                                return client;
+                            }
+                        }
+                    }
+
+                    return options.DefaultHttpClientFactory();
+                };
+            }
+        }
+
+        internal static void AppendExportPath(this OtlpExporterOptions options, Uri initialEndpoint, string exportRelativePath)
+        {
+            // The exportRelativePath is only appended when the options.Endpoint property wasn't set by the user,
+            // the protocol is HttpProtobuf and the OTEL_EXPORTER_OTLP_ENDPOINT environment variable
+            // is present. If the user provides a custom value for options.Endpoint that value is taken as is.
+            if (ReferenceEquals(initialEndpoint, options.Endpoint))
+            {
+                if (options.Protocol == OtlpExportProtocol.HttpProtobuf)
+                {
+                    if (EnvironmentVariableHelper.LoadUri(OtlpExporterOptions.EndpointEnvVarName, out Uri endpoint))
+                    {
+                        // At this point we can conclude that endpoint was initialized from OTEL_EXPORTER_OTLP_ENDPOINT
+                        // and has to be appended by export relative path (traces/metrics).
+                        options.Endpoint = endpoint.AppendPathIfNotPresent(exportRelativePath);
+                    }
+                }
+            }
+        }
+
+        internal static Uri AppendPathIfNotPresent(this Uri uri, string path)
         {
             var absoluteUri = uri.AbsoluteUri;
             var separator = string.Empty;

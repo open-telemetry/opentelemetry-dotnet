@@ -25,8 +25,12 @@ namespace OpenTelemetry.Metrics
         Type:
             0x10: Sum
             0x20: Gauge
-            0x30: Histogram
-            0x40: Summary (reserved)
+            0x30: Summary (reserved)
+            0x40: Histogram
+            0x50: HistogramWithMinMax (reserved)
+            0x60: ExponentialHistogram (reserved)
+            0x70: ExponentialHistogramWithMinMax (reserved)
+            0x80: Reserved
 
         Point kind:
             0x04: I1 (signed 1-byte integer)
@@ -64,6 +68,6 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Histogram.
         /// </summary>
-        Histogram = 0x30,
+        Histogram = 0x40,
     }
 }

@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Exporter.Jaeger.Implementation.Tests;
 using OpenTelemetry.Resources;
@@ -41,6 +42,71 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         {
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             Assert.NotNull(jaegerTraceExporter);
+        }
+
+        [Fact]
+        public void UserHttpFactoryCalled()
+        {
+            JaegerExporterOptions options = new JaegerExporterOptions();
+
+            var defaultFactory = options.HttpClientFactory;
+
+            int invocations = 0;
+            options.Protocol = JaegerExportProtocol.HttpBinaryThrift;
+            options.HttpClientFactory = () =>
+            {
+                invocations++;
+                return defaultFactory();
+            };
+
+            using (var exporter = new JaegerExporter(options))
+            {
+                Assert.Equal(1, invocations);
+            }
+
+            using (var provider = Sdk.CreateTracerProviderBuilder()
+                .AddJaegerExporter(o =>
+                {
+                    o.Protocol = JaegerExportProtocol.HttpBinaryThrift;
+                    o.HttpClientFactory = options.HttpClientFactory;
+                })
+                .Build())
+            {
+                Assert.Equal(2, invocations);
+            }
+
+            options.HttpClientFactory = null;
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                using var exporter = new JaegerExporter(options);
+            });
+
+            options.HttpClientFactory = () => null;
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                using var exporter = new JaegerExporter(options);
+            });
+        }
+
+        [Fact]
+        public void ServiceProviderHttpClientFactoryInvoked()
+        {
+            IServiceCollection services = new ServiceCollection();
+
+            services.AddHttpClient();
+
+            int invocations = 0;
+
+            services.AddHttpClient("JaegerExporter", configureClient: (client) => invocations++);
+
+            services.AddOpenTelemetryTracing(builder => builder.AddJaegerExporter(
+                o => o.Protocol = JaegerExportProtocol.HttpBinaryThrift));
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            var tracerProvider = serviceProvider.GetRequiredService<TracerProvider>();
+
+            Assert.Equal(1, invocations);
         }
 
         [Fact]
@@ -127,20 +193,25 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             jaegerExporter.AppendSpan(CreateTestJaegerSpan());
 
             // Assert
-            Assert.Equal(1, jaegerExporter.Batch.Count);
+            Assert.Equal(1U, jaegerExporter.NumberOfSpansInCurrentBatch);
         }
 
-        [Fact]
-        public void JaegerTraceExporter_SpansSplitToBatches_SpansIncludedInBatches()
+        [Theory]
+        [InlineData("Compact", 1500)]
+        [InlineData("Binary", 2200)]
+        public void JaegerTraceExporter_SpansSplitToBatches_SpansIncludedInBatches(string protocolType, int maxPayloadSizeInBytes)
         {
-            // Arrange
-            var memoryTransport = new InMemoryTransport();
-            using var jaegerExporter = new JaegerExporter(
-                new JaegerExporterOptions { MaxPayloadSizeInBytes = 1500 }, memoryTransport);
-            jaegerExporter.SetResourceAndInitializeBatch(Resource.Empty);
+            TProtocolFactory protocolFactory = protocolType == "Compact"
+                ? new TCompactProtocol.Factory()
+                : new TBinaryProtocol.Factory();
+            var client = new TestJaegerClient();
 
-            var tempTransport = new InMemoryTransport(initialCapacity: 3000);
-            var protocol = new TCompactProtocol(tempTransport);
+            // Arrange
+            using var jaegerExporter = new JaegerExporter(
+                new JaegerExporterOptions { MaxPayloadSizeInBytes = maxPayloadSizeInBytes },
+                protocolFactory,
+                client);
+            jaegerExporter.SetResourceAndInitializeBatch(Resource.Empty);
 
             // Create six spans, each taking more space than the previous one
             var spans = new JaegerSpan[6];
@@ -153,10 +224,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
                     });
             }
 
+            var protocol = protocolFactory.GetProtocol();
             var serializedSpans = spans.Select(s =>
             {
                 s.Write(protocol);
-                return tempTransport.ToArray();
+                var data = protocol.WrittenData.ToArray();
+                protocol.Clear();
+                return data;
             }).ToArray();
 
             // Act
@@ -164,10 +238,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             foreach (var span in spans)
             {
                 jaegerExporter.AppendSpan(span);
-                var sentBatch = memoryTransport.ToArray();
-                if (sentBatch.Length > 0)
+                var sentBatch = client.LastWrittenData;
+                if (sentBatch != null)
                 {
                     sentBatches.Add(sentBatch);
+                    client.LastWrittenData = null;
                 }
             }
 
@@ -190,9 +265,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
                 "Expected span data not found in sent batch");
 
             // jaegerExporter.Batch should contain the two remaining spans
-            Assert.Equal(2, jaegerExporter.Batch.Count);
-            jaegerExporter.Batch.Write(protocol);
-            var serializedBatch = tempTransport.ToArray();
+            Assert.Equal(2U, jaegerExporter.NumberOfSpansInCurrentBatch);
+            jaegerExporter.SendCurrentBatch();
+            Assert.True(client.LastWrittenData != null);
+            var serializedBatch = client.LastWrittenData;
             Assert.True(
                 ContainsSequence(serializedBatch, serializedSpans[4]),
                 "Expected span data not found in unsent batch");
@@ -226,6 +302,31 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             }
 
             return false;
+        }
+
+        private sealed class TestJaegerClient : IJaegerClient
+        {
+            public bool Connected => true;
+
+            public byte[] LastWrittenData { get; set; }
+
+            public void Close()
+            {
+            }
+
+            public void Connect()
+            {
+            }
+
+            public void Dispose()
+            {
+            }
+
+            public int Send(byte[] buffer, int offset, int count)
+            {
+                this.LastWrittenData = new ArraySegment<byte>(buffer, offset, count).ToArray();
+                return count;
+            }
         }
     }
 }

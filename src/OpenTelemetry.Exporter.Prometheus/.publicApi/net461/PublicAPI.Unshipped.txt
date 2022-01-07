@@ -1,0 +1,18 @@
+OpenTelemetry.Exporter.PrometheusExporter
+OpenTelemetry.Exporter.PrometheusExporter.Collect.get -> System.Func<int, bool>
+OpenTelemetry.Exporter.PrometheusExporter.Collect.set -> void
+OpenTelemetry.Exporter.PrometheusExporter.PrometheusExporter(OpenTelemetry.Exporter.PrometheusExporterOptions options) -> void
+OpenTelemetry.Exporter.PrometheusExporterOptions
+OpenTelemetry.Exporter.PrometheusExporterOptions.HttpListenerPrefixes.get -> System.Collections.Generic.IReadOnlyCollection<string>
+OpenTelemetry.Exporter.PrometheusExporterOptions.HttpListenerPrefixes.set -> void
+OpenTelemetry.Exporter.PrometheusExporterOptions.PrometheusExporterOptions() -> void
+OpenTelemetry.Exporter.PrometheusExporterOptions.ScrapeEndpointPath.get -> string
+OpenTelemetry.Exporter.PrometheusExporterOptions.ScrapeEndpointPath.set -> void
+OpenTelemetry.Exporter.PrometheusExporterOptions.ScrapeResponseCacheDurationMilliseconds.get -> int
+OpenTelemetry.Exporter.PrometheusExporterOptions.ScrapeResponseCacheDurationMilliseconds.set -> void
+OpenTelemetry.Exporter.PrometheusExporterOptions.StartHttpListener.get -> bool
+OpenTelemetry.Exporter.PrometheusExporterOptions.StartHttpListener.set -> void
+OpenTelemetry.Metrics.PrometheusExporterMeterProviderBuilderExtensions
+override OpenTelemetry.Exporter.PrometheusExporter.Dispose(bool disposing) -> void
+override OpenTelemetry.Exporter.PrometheusExporter.Export(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric> metrics) -> OpenTelemetry.ExportResult
+static OpenTelemetry.Metrics.PrometheusExporterMeterProviderBuilderExtensions.AddPrometheusExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Action<OpenTelemetry.Exporter.PrometheusExporterOptions> configure = null) -> OpenTelemetry.Metrics.MeterProviderBuilder

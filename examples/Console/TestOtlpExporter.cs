@@ -56,7 +56,7 @@ namespace Examples.Console
         private static object RunWithActivitySource(string endpoint, string protocol)
         {
             // Adding the OtlpExporter creates a GrpcChannel.
-            // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
+            // This switch must be set before creating a GrpcChannel when calling an insecure gRPC service.
             // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
@@ -69,7 +69,7 @@ namespace Examples.Console
 
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use OTLP exporter.
-            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("otlp-test"))
                     .AddOtlpExporter(opt =>
@@ -99,7 +99,7 @@ namespace Examples.Console
             {
                 "grpc" => OtlpExportProtocol.Grpc,
                 "http/protobuf" => OtlpExportProtocol.HttpProtobuf,
-                _ => null
+                _ => null,
             };
     }
 }

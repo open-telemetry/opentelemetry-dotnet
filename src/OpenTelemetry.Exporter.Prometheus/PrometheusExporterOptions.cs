@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter
 {
@@ -26,6 +27,8 @@ namespace OpenTelemetry.Exporter
     {
         internal const string DefaultScrapeEndpointPath = "/metrics";
         internal Func<DateTimeOffset> GetUtcNowDateTimeOffset = () => DateTimeOffset.UtcNow;
+
+        private int scrapeResponseCacheDurationMilliseconds = 10 * 1000;
 
 #if NETCOREAPP3_1_OR_GREATER
         /// <summary>
@@ -51,5 +54,22 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets the path to use for the scraping endpoint. Default value: /metrics.
         /// </summary>
         public string ScrapeEndpointPath { get; set; } = DefaultScrapeEndpointPath;
+
+        /// <summary>
+        /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 10,000 (10 seconds).
+        /// </summary>
+        /// <remarks>
+        /// Note: Specify 0 to disable response caching.
+        /// </remarks>
+        public int ScrapeResponseCacheDurationMilliseconds
+        {
+            get => this.scrapeResponseCacheDurationMilliseconds;
+            set
+            {
+                Guard.Range(value, nameof(value), min: 0);
+
+                this.scrapeResponseCacheDurationMilliseconds = value;
+            }
+        }
     }
 }
