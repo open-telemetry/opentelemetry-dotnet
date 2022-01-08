@@ -247,18 +247,12 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.Histogram:
                     {
                         int i;
-                        if (double.IsNaN(number))
+                        for (i = 0; i < this.histogramBuckets.ExplicitBounds.Length; i++)
                         {
-                            i = this.histogramBuckets.ExplicitBounds.Length;
-                        }
-                        else
-                        {
-                            // If `number` is not a histogram bound, the result will be negative
-                            // The bitwise complement of the returned value is the insertion index
-                            i = Array.BinarySearch(this.histogramBuckets.ExplicitBounds, number);
-                            if (i < 0)
+                            // Upper bound is inclusive
+                            if (number <= this.histogramBuckets.ExplicitBounds[i])
                             {
-                                i = ~i;
+                                break;
                             }
                         }
 
