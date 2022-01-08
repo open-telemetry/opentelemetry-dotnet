@@ -137,7 +137,11 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             catch (Exception ex)
             {
                 Assert.Equal("System.ArgumentException", ex.GetType().ToString());
+#if NET461
+                Assert.Equal("Prometheus server path should be a valid URI with http/https scheme.\r\nParameter name: HttpListenerPrefixes", ex.Message);
+#else
                 Assert.Equal("Prometheus server path should be a valid URI with http/https scheme. (Parameter 'HttpListenerPrefixes')", ex.Message);
+#endif
             }
         }
     }
