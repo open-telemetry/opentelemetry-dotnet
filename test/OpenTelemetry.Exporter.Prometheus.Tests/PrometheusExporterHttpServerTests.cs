@@ -107,8 +107,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Theory]
-        [InlineData("http://http.example.com")]
-        [InlineData("https://https.example.com")]
+        [InlineData("http://example.com")]
+        [InlineData("https://example.com")]
         public void ServerEndpointSanityCheckPositiveTest(string uri)
         {
             using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -122,7 +122,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         [Theory]
         [InlineData("")]
         [InlineData(null)]
-        [InlineData("ftp://ftp.example.com")]
+        [InlineData("ftp://example.com")]
         public void ServerEndpointSanityCheckNegativeTest(string uri)
         {
             try
@@ -136,7 +136,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             }
             catch (Exception ex)
             {
-                Assert.Equal("Prometheus server path should be a valid uri with http/https protocol.", ex.Message);
+                Assert.Equal("System.ArgumentException", ex.GetType().ToString());
+                Assert.Equal("Prometheus server path should be a valid URI with http/https scheme. (Parameter 'HttpListenerPrefixes')", ex.Message);
             }
         }
     }

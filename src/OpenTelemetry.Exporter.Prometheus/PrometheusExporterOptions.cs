@@ -59,7 +59,9 @@ namespace OpenTelemetry.Exporter
                     if (!(Uri.TryCreate(inputUri, UriKind.Absolute, out var uri) &&
                         (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)))
                     {
-                        throw new ArgumentException("Prometheus server path should be a valid uri with http/https protocol.");
+                        throw new ArgumentException(
+                            "Prometheus server path should be a valid URI with http/https scheme.",
+                            nameof(this.HttpListenerPrefixes));
                     }
 
                     this.httpListenerPrefixes = value;
