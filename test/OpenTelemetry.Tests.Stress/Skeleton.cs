@@ -94,8 +94,7 @@ public partial class Program
             .Build() : null;
 
         var statistics = new long[concurrency];
-        var watchForTotal = new Stopwatch();
-        watchForTotal.Start();
+        var watchForTotal = Stopwatch.StartNew();
 
         Parallel.Invoke(
             () =>
