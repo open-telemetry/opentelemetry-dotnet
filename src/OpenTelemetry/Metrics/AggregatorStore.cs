@@ -79,12 +79,7 @@ namespace OpenTelemetry.Metrics
             {
                 this.updateLongCallback = this.UpdateLongCustomTags;
                 this.updateDoubleCallback = this.UpdateDoubleCustomTags;
-                var hs = new HashSet<string>(StringComparer.Ordinal);
-                foreach (var key in tagKeysInteresting)
-                {
-                    hs.Add(key);
-                }
-
+                var hs = new HashSet<string>(tagKeysInteresting, StringComparer.Ordinal);
                 this.tagKeysInteresting = hs;
                 this.tagsKeysInterestingCount = hs.Count;
             }

@@ -48,7 +48,7 @@ On all platforms, the minimum requirements are:
 
 ### Linux or MacOS
 
-* Visual Studio for Mac or Visual Studio Code
+* Visual Studio 2022+ for Mac or Visual Studio Code
 
 Mono might be required by your IDE but is not required by this project. This is
 because unit tests targeting .NET Framework (i.e: `net461`) are disabled outside
@@ -56,7 +56,7 @@ of Windows.
 
 ### Windows
 
-* Visual Studio 2017+ or Visual Studio Code
+* Visual Studio 2022+ or Visual Studio Code
 * .NET Framework 4.6.1+
 
 ### Public API

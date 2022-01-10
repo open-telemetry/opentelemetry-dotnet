@@ -223,12 +223,13 @@ with the metric are of interest to you.
 
 #### Specify custom boundaries for Histogram
 
-By default, the boundaries used for a Histogram are [`{ 0, 5, 10, 25, 50, 75, 100,
-250, 500,
+By default, the boundaries used for a Histogram are [`{ 0, 5, 10, 25, 50, 75,
+100, 250, 500,
 1000}`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#explicit-bucket-histogram-aggregation).
 Views can be used to provide custom boundaries for a Histogram. The measurements
 are then aggregated using the custom boundaries provided instead of the the
-default boundaries. This requires the use of `ExplicitBucketHistogramConfiguration`.
+default boundaries. This requires the use of
+`ExplicitBucketHistogramConfiguration`.
 
 <!-- markdownlint-disable MD013 -->
 ```csharp
@@ -281,14 +282,33 @@ metric streams. All the measurements from the instruments created after reaching
 this limit will be dropped. The default is 1000, and `SetMaxMetricStreams` can
 be used to override the default.
 
+Consider the below example. Here we set the maximum number of `MetricStream`s
+allowed to be `1`. This means that the SDK would export measurements from only
+one `MetricStream`. The very first instrument that is published
+(`MyFruitCounter` in this case) will create a `MetricStream` and the SDK will
+thereby reach the maximum `MetricStream` limit of `1`. The measurements from any
+susequent instruments added will be dropped.
+
 ```csharp
+using System.Diagnostics.Metrics;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
+Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
+Counter<long> AnotherFruitCounter = MyMeter.CreateCounter<long>("AnotherFruitCounter");
+
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .AddMeter("*")
-    .SetMaxMetricStreams(100)
+    .AddConsoleExporter()
+    .SetMaxMetricStreams(1) // The default value is 1000
     .Build();
+
+// SDK only exports measurements from `MyFruitCounter`.
+MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
+
+// The measurements from `AnotherFruitCounter` are dropped as the maximum
+// `MetricStream`s allowed is `1`.
+AnotherFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
 ```
 
 ### Changing maximum MetricPoints per MetricStream
@@ -297,18 +317,77 @@ A Metric stream can contain as many Metric points as the number of unique
 combination of keys and values. To protect the SDK from unbounded memory usage,
 SDK limits the maximum number of metric points per metric stream, to a default
 of 2000. Once the limit is hit, any new key/value combination for that metric is
-ignored. `SetMaxMetricPointsPerMetricStream` can be used to override the
+ignored. The SDK chooses the key/value combinations in the order in which they
+are emitted. `SetMaxMetricPointsPerMetricStream` can be used to override the
 default.
 
+**NOTE**: One `MetricPoint` is reserved for every `MetricStream` for the special
+case where there is no key/value pair associated with the metric. The maximum
+number of `MetricPoint`s has to accommodate for this special case.
+
+Consider the below example. Here we set the maximum number of `MetricPoint`s
+allowed to be `3`. This means that for every `MetricStream`, the SDK will export
+measurements for up to `3` distinct key/value combinations of the metric. There
+are two instruments published here: `MyFruitCounter` and `AnotherFruitCounter`.
+There are two total `MetricStream`s created one for each of these instruments.
+SDK will limit the maximum number of distinct key/value combinations for each of
+these `MetricStream`s to `3`.
+
+<!-- markdownlint-disable MD013 -->
 ```csharp
+using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
+Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
+Counter<long> AnotherFruitCounter = MyMeter.CreateCounter<long>("AnotherFruitCounter");
+
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .AddMeter("*")
-    .SetMaxMetricPointsPerMetricStream(10000)
+    .AddConsoleExporter()
+    .SetMaxMetricPointsPerMetricStream(3) // The default value is 2000
     .Build();
+
+// There are four distinct key/value combinations emitted for `MyFruitCounter`:
+// 1. No key/value pair
+// 2. (name:apple, color:red)
+// 3. (name:lemon, color:yellow)
+// 4. (name:apple, color:green)
+
+// Since the maximum number of `MetricPoint`s allowed is `3`, the SDK will only export measurements for the following three combinations:
+// 1. No key/value pair
+// 2. (name:apple, color:red)
+// 3. (name:lemon, color:yellow)
+
+MyFruitCounter.Add(1); // Exported (No key/value pair)
+MyFruitCounter.Add(1, new("name", "apple"), new("color", "red")); // Exported
+MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow")); // Exported
+MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow")); // Exported
+MyFruitCounter.Add(2, new("name", "apple"), new("color", "green")); // Not exported
+MyFruitCounter.Add(5, new("name", "apple"), new("color", "red")); // Exported
+MyFruitCounter.Add(4, new("name", "lemon"), new("color", "yellow")); // Exported
+
+// There are four distinct key/value combinations emitted for `AnotherFruitCounter`:
+// 1. (name:kiwi)
+// 2. (name:banana, color:yellow)
+// 3. (name:mango, color:yellow)
+// 4. (name:banana, color:green)
+
+// Since the maximum number of `MetricPoint`s allowed is `3`, the SDK will only export measurements for the following three combinations:
+// 1. No key/value pair (This is a special case. The SDK reserves a `MetricPoint` for it even if it's not explicitly emitted.)
+// 2. (name:kiwi)
+// 3. (name:banana, color:yellow)
+
+AnotherFruitCounter.Add(4, new KeyValuePair<string, object>("name", "kiwi")); // Exported
+AnotherFruitCounter.Add(1, new("name", "banana"), new("color", "yellow")); // Exported
+AnotherFruitCounter.Add(2, new("name", "mango"), new("color", "yellow")); // Not exported
+AnotherFruitCounter.Add(1, new("name", "mango"), new("color", "yellow")); // Not exported
+AnotherFruitCounter.Add(2, new("name", "banana"), new("color", "green")); // Not exported
+AnotherFruitCounter.Add(5, new("name", "banana"), new("color", "yellow")); // Exported
+AnotherFruitCounter.Add(4, new("name", "mango"), new("color", "yellow")); // Not exported
 ```
+<!-- markdownlint-enable MD013 -->
 
 **NOTE:** The above limit is *per* metric stream, and applies to all the metric
 streams. There is no ability to apply different limits for each instrument at

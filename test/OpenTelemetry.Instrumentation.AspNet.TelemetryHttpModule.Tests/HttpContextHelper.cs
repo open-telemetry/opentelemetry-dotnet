@@ -89,7 +89,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
             public override string GetKnownRequestHeader(int index)
             {
-                var name = HttpWorkerRequest.GetKnownRequestHeaderName(index);
+                var name = GetKnownRequestHeaderName(index);
 
                 if (this.headers.ContainsKey(name))
                 {
