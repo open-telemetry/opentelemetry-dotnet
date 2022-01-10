@@ -30,12 +30,13 @@ namespace OpenTelemetry.Metrics
             AggregationTemporality temporality,
             string metricName,
             string metricDescription,
+            int maxMetricPointsPerMetricStream,
             double[] histogramBounds = null,
             string[] tagKeysInteresting = null)
         {
             this.Name = metricName;
-            this.Description = metricDescription;
-            this.Unit = instrument.Unit;
+            this.Description = metricDescription ?? string.Empty;
+            this.Unit = instrument.Unit ?? string.Empty;
             this.Meter = instrument.Meter;
             AggregationType aggType = default;
             if (instrument.GetType() == typeof(ObservableCounter<long>)
@@ -101,11 +102,12 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                // TODO: Log and assign some invalid Enum.
+                throw new NotSupportedException($"Unsupported Instrument Type: {instrument.GetType().FullName}");
             }
 
-            this.aggStore = new AggregatorStore(aggType, temporality, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
+            this.aggStore = new AggregatorStore(metricName, aggType, temporality, maxMetricPointsPerMetricStream, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
             this.Temporality = temporality;
+            this.InstrumentDisposed = false;
         }
 
         public MetricType MetricType { get; private set; }
@@ -120,7 +122,9 @@ namespace OpenTelemetry.Metrics
 
         public Meter Meter { get; private set; }
 
-        public BatchMetricPoint GetMetricPoints()
+        internal bool InstrumentDisposed { get; set; }
+
+        public MetricPointsAccessor GetMetricPoints()
         {
             return this.aggStore.GetMetricPoints();
         }
@@ -135,9 +139,9 @@ namespace OpenTelemetry.Metrics
             this.aggStore.Update(value, tags);
         }
 
-        internal void SnapShot()
+        internal int Snapshot()
         {
-            this.aggStore.SnapShot();
+            return this.aggStore.Snapshot();
         }
     }
 }

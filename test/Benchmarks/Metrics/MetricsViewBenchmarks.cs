@@ -20,7 +20,9 @@ using System.Diagnostics.Metrics;
 using System.Threading;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Tests;
 
 /*
 BenchmarkDotNet=v0.12.1, OS=Windows 10.0.19043
@@ -45,6 +47,7 @@ namespace Benchmarks.Metrics
         private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());
         private static readonly string[] DimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
         private static readonly int DimensionsValuesLength = DimensionValues.Length;
+        private List<Metric> metrics;
         private Counter<long> counter;
         private MeterProvider provider;
         private Meter meter;
@@ -78,13 +81,15 @@ namespace Benchmarks.Metrics
         [GlobalSetup]
         public void Setup()
         {
-            this.meter = new Meter("TestMeter");
+            this.meter = new Meter(Utils.GetCurrentMethodName());
             this.counter = this.meter.CreateCounter<long>("counter");
+            this.metrics = new List<Metric>();
 
             if (this.ViewConfig == ViewConfiguration.NoView)
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(this.meter.Name)
+                    .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(this.metrics)))
                     .Build();
             }
             else if (this.ViewConfig == ViewConfiguration.ViewNoInstrSelect)
@@ -92,6 +97,7 @@ namespace Benchmarks.Metrics
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(this.meter.Name)
                     .AddView("nomatch", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
+                    .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(this.metrics)))
                     .Build();
             }
             else if (this.ViewConfig == ViewConfiguration.ViewSelectsInstr)
@@ -99,6 +105,7 @@ namespace Benchmarks.Metrics
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(this.meter.Name)
                     .AddView(this.counter.Name, new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
+                    .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(this.metrics)))
                     .Build();
             }
         }

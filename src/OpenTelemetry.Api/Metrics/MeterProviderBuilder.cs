@@ -18,7 +18,7 @@ using System;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// TracerProviderBuilder base class.
+    /// MeterProviderBuilder base class.
     /// </summary>
     public abstract class MeterProviderBuilder
     {

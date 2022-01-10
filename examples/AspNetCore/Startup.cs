@@ -44,6 +44,9 @@ namespace Examples.AspNetCore
         {
             services.AddControllers();
 
+            // Enable HttpClientFactory integration for customization of the HttpClient used for export calls.
+            services.AddHttpClient();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
@@ -68,6 +71,9 @@ namespace Examples.AspNetCore
                         .AddJaegerExporter());
 
                     services.Configure<JaegerExporterOptions>(this.Configuration.GetSection("Jaeger"));
+
+                    // Customize the HttpClient that will be used when JaegerExporter is configured for HTTP transport.
+                    services.AddHttpClient("JaegerExporter", configureClient: (client) => client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
                     break;
                 case "zipkin":
                     services.AddOpenTelemetryTracing((builder) => builder
@@ -80,7 +86,7 @@ namespace Examples.AspNetCore
                     break;
                 case "otlp":
                     // Adding the OtlpExporter creates a GrpcChannel.
-                    // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
+                    // This switch must be set before creating a GrpcChannel when calling an insecure gRPC service.
                     // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
                     AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
@@ -128,7 +134,13 @@ namespace Examples.AspNetCore
                         builder.AddOtlpExporter();
                         break;
                     default:
-                        builder.AddConsoleExporter();
+                        builder.AddConsoleExporter(options =>
+                        {
+                            // The ConsoleMetricExporter defaults to a manual collect cycle.
+                            // This configuration causes metrics to be exported to stdout on a 10s interval.
+                            options.MetricReaderType = MetricReaderType.Periodic;
+                            options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10000;
+                        });
                         break;
                 }
             });

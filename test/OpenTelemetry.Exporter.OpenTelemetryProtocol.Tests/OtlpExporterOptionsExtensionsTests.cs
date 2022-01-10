@@ -22,7 +22,7 @@ using Xunit.Sdk;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
-    public class OtlpExporterOptionsExtensionsTests
+    public class OtlpExporterOptionsExtensionsTests : Http2UnencryptedSupportTests
     {
         [Theory]
         [InlineData("key=value", new string[] { "key" }, new string[] { "value" })]
@@ -86,6 +86,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient))]
         public void GetTraceExportClient_SupportedProtocol_ReturnsCorrectExportClient(OtlpExportProtocol protocol, Type expectedExportClientType)
         {
+            if (protocol == OtlpExportProtocol.Grpc && Environment.Version.Major == 3)
+            {
+                // Adding the OtlpExporter creates a GrpcChannel.
+                // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
+                // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
+                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            }
+
             var options = new OtlpExporterOptions
             {
                 Protocol = protocol,
@@ -94,6 +102,32 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var exportClient = options.GetTraceExportClient();
 
             Assert.Equal(expectedExportClientType, exportClient.GetType());
+        }
+
+        [Fact]
+        public void GetTraceExportClient_GetClientForGrpcWithoutUnencryptedFlag_ThrowsException()
+        {
+            // Adding the OtlpExporter creates a GrpcChannel.
+            // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
+            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", false);
+
+            var options = new OtlpExporterOptions
+            {
+                Protocol = OtlpExportProtocol.Grpc,
+            };
+
+            var exception = Record.Exception(() => options.GetTraceExportClient());
+
+            if (Environment.Version.Major == 3)
+            {
+                Assert.NotNull(exception);
+                Assert.IsType<InvalidOperationException>(exception);
+            }
+            else
+            {
+                Assert.Null(exception);
+            }
         }
 
         [Fact]
@@ -130,6 +164,69 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var resultUri = uri.AppendPathIfNotPresent(OtlpExporterOptions.TracesExportPath);
 
             Assert.Equal(expectedUri, resultUri.AbsoluteUri);
+        }
+
+        [Fact]
+        public void AppendExportPath_EndpointNotSet_EnvironmentVariableNotDefined_NotAppended()
+        {
+            ClearEndpointEnvVar();
+
+            var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+
+            options.AppendExportPath(options.Endpoint, "test/path");
+
+            Assert.Equal("http://localhost:4317/", options.Endpoint.AbsoluteUri);
+        }
+
+        [Fact]
+        public void AppendExportPath_EndpointNotSet_EnvironmentVariableDefined_Appended()
+        {
+            Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
+
+            var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+
+            options.AppendExportPath(options.Endpoint, "test/path");
+
+            Assert.Equal("http://test:8888/test/path", options.Endpoint.AbsoluteUri);
+
+            ClearEndpointEnvVar();
+        }
+
+        [Fact]
+        public void AppendExportPath_EndpointSetEqualToEnvironmentVariable_EnvironmentVariableDefined_NotAppended()
+        {
+            Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
+
+            var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+            var originalEndpoint = options.Endpoint;
+            options.Endpoint = new Uri("http://test:8888");
+
+            options.AppendExportPath(originalEndpoint, "test/path");
+
+            Assert.Equal("http://test:8888/", options.Endpoint.AbsoluteUri);
+
+            ClearEndpointEnvVar();
+        }
+
+        [Theory]
+        [InlineData("http://localhost:4317/")]
+        [InlineData("http://test:8888/")]
+        public void AppendExportPath_EndpointSet_EnvironmentVariableNotDefined_NotAppended(string endpoint)
+        {
+            ClearEndpointEnvVar();
+
+            var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+            var originalEndpoint = options.Endpoint;
+            options.Endpoint = new Uri(endpoint);
+
+            options.AppendExportPath(originalEndpoint, "test/path");
+
+            Assert.Equal(endpoint, options.Endpoint.AbsoluteUri);
+        }
+
+        private static void ClearEndpointEnvVar()
+        {
+            Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, null);
         }
     }
 }

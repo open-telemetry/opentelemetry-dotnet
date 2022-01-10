@@ -24,6 +24,25 @@ option java_package = "io.opentelemetry.proto.logs.v1";
 option java_outer_classname = "LogsProto";
 option go_package = "github.com/open-telemetry/opentelemetry-proto/gen/go/logs/v1";
 
+// LogsData represents the logs data that can be stored in a persistent storage,
+// OR can be embedded by other protocols that transfer OTLP logs data but do not
+// implement the OTLP protocol.
+//
+// The main difference between this message and collector protocol is that
+// in this message there will not be any "control" or "metadata" specific to
+// OTLP protocol.
+//
+// When new fields are added into this message, the OTLP request MUST be updated
+// as well.
+message LogsData {
+  // An array of ResourceLogs.
+  // For data coming from a single resource this array will typically contain
+  // one element. Intermediary nodes that receive data from multiple origins
+  // typically batch the data before forwarding further and in that case this
+  // array will contain multiple elements.
+  repeated ResourceLogs resource_logs = 1;
+}
+
 // A collection of InstrumentationLibraryLogs from a Resource.
 message ResourceLogs {
   // The resource for the logs in this message.

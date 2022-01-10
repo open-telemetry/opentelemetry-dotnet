@@ -86,6 +86,15 @@ namespace OpenTelemetry.Metrics
                 throw new ArgumentException($"Custom view name {metricStreamConfiguration.Name} is invalid.", nameof(metricStreamConfiguration.Name));
             }
 
+            if (metricStreamConfiguration is ExplicitBucketHistogramConfiguration histogramConfiguration)
+            {
+                // Validate histogram boundaries
+                if (histogramConfiguration.Boundaries != null && !IsSortedAndDistinct(histogramConfiguration.Boundaries))
+                {
+                    throw new ArgumentException($"Histogram boundaries must be in ascending order with distinct values", nameof(histogramConfiguration.Boundaries));
+                }
+            }
+
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
                 return meterProviderBuilderBase.AddView(instrumentName, metricStreamConfiguration);
@@ -107,6 +116,53 @@ namespace OpenTelemetry.Metrics
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
                 return meterProviderBuilderBase.AddView(viewConfig);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Sets the maximum number of Metric streams supported by the MeterProvider.
+        /// When no Views are configured, every instrument will result in one metric stream,
+        /// so this control the numbers of instruments supported.
+        /// When Views are configued, a single instrument can result in multiple metric streams,
+        /// so this control the number of streams.
+        /// </summary>
+        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
+        /// <param name="maxMetricStreams">Maximum number of metric streams allowed.</param>
+        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        /// <remarks>
+        /// If an instrument is created, but disposed later, this will still be contributing to the limit.
+        /// This may change in the future.
+        /// </remarks>
+        public static MeterProviderBuilder SetMaxMetricStreams(this MeterProviderBuilder meterProviderBuilder, int maxMetricStreams)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                meterProviderBuilderBase.SetMaxMetricStreams(maxMetricStreams);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Sets the maximum number of MetricPoints allowed per metric stream.
+        /// This limits the number of unique combinations of key/value pairs used
+        /// for reporting measurements.
+        /// </summary>
+        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
+        /// <param name="maxMetricPointsPerMetricStream">Maximum maximum number of metric points allowed per metric stream.</param>
+        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        /// <remarks>
+        /// If a particular key/value pair combination is used at least once,
+        /// it will contribute to the limit for the life of the process.
+        /// This may change in the future. See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/2360.
+        /// </remarks>
+        public static MeterProviderBuilder SetMaxMetricPointsPerMetricStream(this MeterProviderBuilder meterProviderBuilder, int maxMetricPointsPerMetricStream)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                meterProviderBuilderBase.SetMaxMetricPointsPerMetricStream(maxMetricPointsPerMetricStream);
             }
 
             return meterProviderBuilder;
@@ -147,6 +203,19 @@ namespace OpenTelemetry.Metrics
             }
 
             return null;
+        }
+
+        private static bool IsSortedAndDistinct(double[] values)
+        {
+            for (int i = 1; i < values.Length; i++)
+            {
+                if (values[i] <= values[i - 1])
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

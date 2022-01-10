@@ -439,7 +439,7 @@ context.
 Metrics in OpenTelemetry .NET are a somewhat unique implementation of the
 OpenTelemetry project, as the Metrics API is incorporated directly into the .NET
 runtime itself, as part of the
-[`System.Diagnostics.DiagnosticSource`](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/6.0.0-rc.1.21451.13)
+[`System.Diagnostics.DiagnosticSource`](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/6.0.0)
 package. This means, users can instrument their applications/libraries to emit
 metrics by simply using the `System.Diagnostics.DiagnosticSource` package. This
 package can be used in applications targeting any of the officially supported
@@ -452,16 +452,15 @@ for versions lower than `.NET Framework 4.6.1`.
 ### Basic metric usage
 
 1. Install the `System.Diagnostics.DiagnosticSource` package version
-   `6.0.0-rc.1.21451.13` or above to your application or library.
+   `6.0.0` or above to your application or library.
 
+    <!-- markdownlint-disable MD013 -->
     ```xml
     <ItemGroup>
-      <PackageReference
-        Include="System.Diagnostics.DiagnosticSource"
-        Version="6.0.0-rc.1.21451.13"
-      />
+      <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.0" />
     </ItemGroup>
     ```
+    <!-- markdownlint-enable MD013 -->
 
 2. Create a `Meter`, providing the name and version of the library/application
    doing the instrumentation. The `Meter` instance is typically created once and

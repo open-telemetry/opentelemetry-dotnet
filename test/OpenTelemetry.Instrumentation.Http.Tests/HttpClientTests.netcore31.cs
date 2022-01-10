@@ -25,6 +25,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Moq;
 using Newtonsoft.Json;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -55,19 +56,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
             var metricItems = new List<Metric>();
-            var metricExporter = new TestExporter<Metric>(ProcessExport);
-
-            void ProcessExport(Batch<Metric> batch)
-            {
-                foreach (var metricItem in batch)
-                {
-                    metricItems.Add(metricItem);
-                }
-            }
+            var metricExporter = new InMemoryExporter<Metric>(metricItems);
 
             var metricReader = new BaseExportingMetricReader(metricExporter)
             {
-                PreferredAggregationTemporality = AggregationTemporality.Cumulative,
+                Temporality = AggregationTemporality.Cumulative,
             };
             var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddHttpClientInstrumentation()
@@ -166,13 +159,18 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 Assert.Single(metricPoints);
                 var metricPoint = metricPoints[0];
-                Assert.Equal(1L, metricPoint.LongValue);
-                Assert.Equal(activity.Duration.TotalMilliseconds, metricPoint.DoubleValue);
 
-                var attributes = new KeyValuePair<string, object>[metricPoint.Keys.Length];
-                for (int i = 0; i < attributes.Length; i++)
+                var count = metricPoint.GetHistogramCount();
+                var sum = metricPoint.GetHistogramSum();
+
+                Assert.Equal(1L, count);
+                Assert.Equal(activity.Duration.TotalMilliseconds, sum);
+
+                var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
+                int i = 0;
+                foreach (var tag in metricPoint.Tags)
                 {
-                    attributes[i] = new KeyValuePair<string, object>(metricPoint.Keys[i], metricPoint.Values[i]);
+                    attributes[i++] = tag;
                 }
 
                 var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, tc.Method);
@@ -187,14 +185,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             }
             else
             {
-                Assert.Single(requestMetrics);
-                var metricPoints = new List<MetricPoint>();
-                foreach (var p in requestMetrics[0].GetMetricPoints())
-                {
-                    metricPoints.Add(p);
-                }
-
-                Assert.Empty(metricPoints);
+                Assert.Empty(requestMetrics);
             }
         }
 
