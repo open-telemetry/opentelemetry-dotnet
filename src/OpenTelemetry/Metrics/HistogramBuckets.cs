@@ -30,10 +30,10 @@ namespace OpenTelemetry.Metrics
         internal double RunningSum;
         internal double SnapshotSum;
 
-        internal double RunningMin;
+        internal double RunningMin = double.PositiveInfinity;
         internal double SnapshotMin;
 
-        internal double RunningMax;
+        internal double RunningMax = double.NegativeInfinity;
         internal double SnapshotMax;
 
         internal HistogramBuckets(double[] explicitBounds)

@@ -364,56 +364,13 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        int i;
-                        for (i = 0; i < this.histogramBuckets.ExplicitBounds.Length; i++)
-                        {
-                            // Upper bound is inclusive
-                            if (number <= this.histogramBuckets.ExplicitBounds[i])
-                            {
-                                break;
-                            }
-                        }
-
-                        lock (this.histogramBuckets.LockObject)
-                        {
-                            this.runningValue.AsLong++;
-                            this.histogramBuckets.RunningSum += number;
-                            this.histogramBuckets.RunningBucketCounts[i]++;
-                        }
-
+                        this.HistogramUpdate(number, false);
                         break;
                     }
 
                 case AggregationType.HistogramWithMinMax:
                     {
-                        int i;
-                        for (i = 0; i < this.histogramBuckets.ExplicitBounds.Length; i++)
-                        {
-                            // Upper bound is inclusive
-                            if (number <= this.histogramBuckets.ExplicitBounds[i])
-                            {
-                                break;
-                            }
-                        }
-
-                        lock (this.histogramBuckets.LockObject)
-                        {
-                            this.runningValue.AsLong++;
-                            this.histogramBuckets.RunningSum += number;
-                            this.histogramBuckets.RunningBucketCounts[i]++;
-
-                            if (this.runningValue.AsLong == 1)
-                            {
-                                this.histogramBuckets.RunningMin = number;
-                                this.histogramBuckets.RunningMax = number;
-                            }
-                            else
-                            {
-                                this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);
-                                this.histogramBuckets.RunningMax = Math.Max(this.histogramBuckets.RunningMax, number);
-                            }
-                        }
-
+                        this.HistogramUpdate(number, true);
                         break;
                     }
 
@@ -544,60 +501,13 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        lock (this.histogramBuckets.LockObject)
-                        {
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
-                            if (outputDelta)
-                            {
-                                this.runningValue.AsLong = 0;
-                                this.histogramBuckets.RunningSum = 0;
-                            }
-
-                            for (int i = 0; i < this.histogramBuckets.RunningBucketCounts.Length; i++)
-                            {
-                                this.histogramBuckets.SnapshotBucketCounts[i] = this.histogramBuckets.RunningBucketCounts[i];
-                                if (outputDelta)
-                                {
-                                    this.histogramBuckets.RunningBucketCounts[i] = 0;
-                                }
-                            }
-
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-                        }
-
+                        this.HistogramSnapshot(outputDelta, false);
                         break;
                     }
 
                 case AggregationType.HistogramWithMinMax:
                     {
-                        lock (this.histogramBuckets.LockObject)
-                        {
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
-                            this.histogramBuckets.SnapshotMin = this.histogramBuckets.RunningMin;
-                            this.histogramBuckets.SnapshotMax = this.histogramBuckets.RunningMax;
-
-                            if (outputDelta)
-                            {
-                                this.runningValue.AsLong = 0;
-                                this.histogramBuckets.RunningSum = 0;
-                                this.histogramBuckets.RunningMin = 0;
-                                this.histogramBuckets.RunningMax = 0;
-                            }
-
-                            for (int i = 0; i < this.histogramBuckets.RunningBucketCounts.Length; i++)
-                            {
-                                this.histogramBuckets.SnapshotBucketCounts[i] = this.histogramBuckets.RunningBucketCounts[i];
-                                if (outputDelta)
-                                {
-                                    this.histogramBuckets.RunningBucketCounts[i] = 0;
-                                }
-                            }
-
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-                        }
-
+                        this.HistogramSnapshot(outputDelta, true);
                         break;
                     }
 
@@ -625,6 +535,78 @@ namespace OpenTelemetry.Metrics
         private void ThrowNotSupportedMetricTypeException(string methodName)
         {
             throw new NotSupportedException($"{methodName} is not supported for this metric type.");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private int FindHistogramBucket(double number)
+        {
+            int i;
+            for (i = 0; i < this.histogramBuckets.ExplicitBounds.Length; i++)
+            {
+                // Upper bound is inclusive
+                if (number <= this.histogramBuckets.ExplicitBounds[i])
+                {
+                    break;
+                }
+            }
+
+            return i;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void HistogramUpdate(double number, bool hasMinMax)
+        {
+            int i = this.FindHistogramBucket(number);
+
+            lock (this.histogramBuckets.LockObject)
+            {
+                this.runningValue.AsLong++;
+                this.histogramBuckets.RunningSum += number;
+                this.histogramBuckets.RunningBucketCounts[i]++;
+
+                if (hasMinMax)
+                {
+                    this.histogramBuckets.RunningMin = Math.Min(this.histogramBuckets.RunningMin, number);
+                    this.histogramBuckets.RunningMax = Math.Max(this.histogramBuckets.RunningMax, number);
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void HistogramSnapshot(bool outputDelta, bool hasMinMax)
+        {
+            lock (this.histogramBuckets.LockObject)
+            {
+                this.snapshotValue.AsLong = this.runningValue.AsLong;
+                this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
+                if (hasMinMax)
+                {
+                    this.histogramBuckets.SnapshotMin = this.histogramBuckets.RunningMin;
+                    this.histogramBuckets.SnapshotMax = this.histogramBuckets.RunningMax;
+                }
+
+                if (outputDelta)
+                {
+                    this.runningValue.AsLong = 0;
+                    this.histogramBuckets.RunningSum = 0;
+                    if (hasMinMax)
+                    {
+                        this.histogramBuckets.RunningMin = 0;
+                        this.histogramBuckets.RunningMax = 0;
+                    }
+                }
+
+                for (int i = 0; i < this.histogramBuckets.RunningBucketCounts.Length; i++)
+                {
+                    this.histogramBuckets.SnapshotBucketCounts[i] = this.histogramBuckets.RunningBucketCounts[i];
+                    if (outputDelta)
+                    {
+                        this.histogramBuckets.RunningBucketCounts[i] = 0;
+                    }
+                }
+
+                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+            }
         }
     }
 }
