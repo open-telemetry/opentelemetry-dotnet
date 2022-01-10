@@ -17,10 +17,10 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
+using OpenTelemetry.Internal;
 #if NETSTANDARD2_1 || NET5_0_OR_GREATER
 using Grpc.Net.Client;
 #endif
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
 {
@@ -32,6 +32,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         {
             Guard.Null(options, nameof(options));
             Guard.InvalidTimeout(options.TimeoutMilliseconds, nameof(options.TimeoutMilliseconds));
+
+            ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options);
 
             this.Options = options;
             this.Headers = options.GetMetadataFromHeaders();

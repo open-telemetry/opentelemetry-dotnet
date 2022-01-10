@@ -69,7 +69,7 @@ namespace Benchmarks.Metrics
                     if (this.UseWithRef)
                     {
                         // The performant way of iterating.
-                        foreach (ref var metricPoint in metric.GetMetricPoints())
+                        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                         {
                             sum += metricPoint.GetSumDouble();
                         }
