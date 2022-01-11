@@ -187,50 +187,37 @@ namespace OpenTelemetry.Metrics
             string[] sortedTagKeys = null;
             ConcurrentDictionary<object[], int> value2metrics;
 
-            if (length > 1)
+            // We only need to sort if there is more than one Tag Key.
+            if (!this.tagKeyCombinations.TryGetValue(tagKeys, out sortedTagKeys))
             {
-                // We only need to sort if there is more than one Tag Key.
-                if (!this.tagKeyCombinations.TryGetValue(tagKeys, out sortedTagKeys))
-                {
-                    // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                    seqKey = new string[length];
-                    tagKeys.CopyTo(seqKey, 0);
+                // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                seqKey = new string[length];
+                tagKeys.CopyTo(seqKey, 0);
 
+                if (length > 1)
+                {
                     // Create a new array for the sorted Tag keys.
                     sortedTagKeys = new string[length];
                     tagKeys.CopyTo(sortedTagKeys, 0);
 
                     Array.Sort(sortedTagKeys, tagValues);
-
-                    this.tagKeyCombinations.TryAdd(seqKey, sortedTagKeys);
                 }
-
-                // GetOrAdd by the sorted Tag keys at 1st Level of 2-level dictionary structure.
-                // Get back a Dictionary of [ Values x Metrics[] ].
-                if (!this.keyValue2MetricAggs.TryGetValue(sortedTagKeys, out value2metrics))
+                else
                 {
-                    value2metrics = new ConcurrentDictionary<object[], int>(ObjectArrayComparer);
-                    if (!this.keyValue2MetricAggs.TryAdd(sortedTagKeys, value2metrics))
-                    {
-                        this.keyValue2MetricAggs.TryGetValue(sortedTagKeys, out value2metrics);
-                    }
+                    sortedTagKeys = seqKey;
                 }
+
+                this.tagKeyCombinations.TryAdd(seqKey, sortedTagKeys);
             }
-            else
-            {
-                // GetOrAdd by the sorted Tag keys at 1st Level of 2-level dictionary structure.
-                // Get back a Dictionary of [ Values x Metrics[] ].
-                if (!this.keyValue2MetricAggs.TryGetValue(tagKeys, out value2metrics))
-                {
-                    // Create a new array for the sorted Tag keys.
-                    sortedTagKeys = new string[length];
-                    tagKeys.CopyTo(sortedTagKeys, 0);
 
-                    value2metrics = new ConcurrentDictionary<object[], int>(ObjectArrayComparer);
-                    if (!this.keyValue2MetricAggs.TryAdd(sortedTagKeys, value2metrics))
-                    {
-                        this.keyValue2MetricAggs.TryGetValue(sortedTagKeys, out value2metrics);
-                    }
+            // GetOrAdd by the sorted Tag keys at 1st Level of 2-level dictionary structure.
+            // Get back a Dictionary of [ Values x Metrics[] ].
+            if (!this.keyValue2MetricAggs.TryGetValue(sortedTagKeys, out value2metrics))
+            {
+                value2metrics = new ConcurrentDictionary<object[], int>(ObjectArrayComparer);
+                if (!this.keyValue2MetricAggs.TryAdd(sortedTagKeys, value2metrics))
+                {
+                    this.keyValue2MetricAggs.TryGetValue(sortedTagKeys, out value2metrics);
                 }
             }
 
