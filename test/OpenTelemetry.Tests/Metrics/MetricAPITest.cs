@@ -383,6 +383,78 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public void DimensionsAreOrderInsensitive(bool exportDelta, bool hasView)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}.{hasView}");
+            var counterLong = meter.CreateCounter<long>("Counter");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                {
+                    Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+                });
+
+            if (hasView)
+            {
+                meterProviderBuilder.AddView(instrumentName: "Counter", new MetricStreamConfiguration() { TagKeys = new string[] { "Key1", "Key2" } });
+            }
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            counterLong.Add(10, new("Key1", "Value1"), new("Key2", "Value2"), new("Key3", "Value3"));
+            counterLong.Add(10, new("Key1", "Value1"), new("Key3", "Value3"), new("Key2", "Value2"));
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            long sumReceived = GetLongSum(exportedItems);
+            Assert.Equal(20, sumReceived);
+
+            exportedItems.Clear();
+            counterLong.Add(10, new("Key2", "Value2"), new("Key1", "Value1"), new("Key3", "Value3"));
+            counterLong.Add(10, new("Key2", "Value2"), new("Key3", "Value3"), new("Key1", "Value1"));
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            sumReceived = GetLongSum(exportedItems);
+            if (exportDelta)
+            {
+                Assert.Equal(20, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(40, sumReceived);
+            }
+
+            exportedItems.Clear();
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            sumReceived = GetLongSum(exportedItems);
+            if (exportDelta)
+            {
+                Assert.Equal(0, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(40, sumReceived);
+            }
+
+            exportedItems.Clear();
+            counterLong.Add(40, new("Key3", "Value3"), new("Key1", "Value1"), new("Key2", "Value2"));
+            counterLong.Add(20, new("Key3", "Value3"), new("Key2", "Value2"), new("Key1", "Value1"));
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            sumReceived = GetLongSum(exportedItems);
+            if (exportDelta)
+            {
+                Assert.Equal(60, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(100, sumReceived);
+            }
+        }
+
+        [Theory]
         [InlineData(AggregationTemporality.Cumulative)]
         [InlineData(AggregationTemporality.Delta)]
         public void TestInstrumentDisposal(AggregationTemporality temporality)
