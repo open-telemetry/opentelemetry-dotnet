@@ -26,13 +26,17 @@ namespace OpenTelemetry.Metrics
     internal sealed class AggregatorStore
     {
         private static readonly ObjectArrayEqualityComparer ObjectArrayComparer = new ObjectArrayEqualityComparer();
+        private static readonly StringArrayEqualityComparer StringArrayComparer = new StringArrayEqualityComparer();
         private readonly object lockZeroTags = new object();
         private readonly HashSet<string> tagKeysInteresting;
         private readonly int tagsKeysInterestingCount;
 
+        private readonly ConcurrentDictionary<string[], string[]> tagKeyCombinations =
+            new ConcurrentDictionary<string[], string[]>(StringArrayComparer);
+
         // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
         private readonly ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>> keyValue2MetricAggs =
-            new ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>>(new StringArrayEqualityComparer());
+            new ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>>(StringArrayComparer);
 
         private readonly AggregationTemporality temporality;
         private readonly string name;
@@ -180,19 +184,41 @@ namespace OpenTelemetry.Metrics
         {
             int aggregatorIndex;
             string[] seqKey = null;
+            string[] sortedTagKeys = null;
+            ConcurrentDictionary<object[], int> value2metrics = null;
 
-            // GetOrAdd by TagKeys at 1st Level of 2-level dictionary structure.
-            // Get back a Dictionary of [ Values x Metrics[] ].
-            if (!this.keyValue2MetricAggs.TryGetValue(tagKeys, out var value2metrics))
+            if (length > 1)
             {
-                // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                seqKey = new string[length];
-                tagKeys.CopyTo(seqKey, 0);
-
-                value2metrics = new ConcurrentDictionary<object[], int>(ObjectArrayComparer);
-                if (!this.keyValue2MetricAggs.TryAdd(seqKey, value2metrics))
+                if (!this.tagKeyCombinations.TryGetValue(tagKeys, out sortedTagKeys))
                 {
-                    this.keyValue2MetricAggs.TryGetValue(seqKey, out value2metrics);
+                    // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                    seqKey = new string[length];
+                    tagKeys.CopyTo(seqKey, 0);
+
+                    // Create a new array for the sorted Tag keys.
+                    sortedTagKeys = new string[length];
+                    tagKeys.CopyTo(sortedTagKeys, 0);
+
+                    Array.Sort(sortedTagKeys, tagValues);
+
+                    this.tagKeyCombinations.TryAdd(seqKey, sortedTagKeys);
+                }
+            }
+            else
+            {
+                // Create a new array for the sorted Tag keys.
+                sortedTagKeys = new string[length];
+                tagKeys.CopyTo(sortedTagKeys, 0);
+            }
+
+            // GetOrAdd by the sorted Tag keys at 1st Level of 2-level dictionary structure.
+            // Get back a Dictionary of [ Values x Metrics[] ].
+            if (!this.keyValue2MetricAggs.TryGetValue(sortedTagKeys, out value2metrics))
+            {
+                value2metrics = new ConcurrentDictionary<object[], int>(ObjectArrayComparer);
+                if (!this.keyValue2MetricAggs.TryAdd(sortedTagKeys, value2metrics))
+                {
+                    this.keyValue2MetricAggs.TryGetValue(sortedTagKeys, out value2metrics);
                 }
             }
 
@@ -355,11 +381,6 @@ namespace OpenTelemetry.Metrics
 
             storage.SplitToKeysAndValues(tags, tagLength, out var tagKeys, out var tagValues);
 
-            if (tagLength > 1)
-            {
-                Array.Sort(tagKeys, tagValues);
-            }
-
             return this.LookupAggregatorStore(tagKeys, tagValues, tagLength);
         }
 
@@ -386,11 +407,6 @@ namespace OpenTelemetry.Metrics
             {
                 this.InitializeZeroTagPointIfNotInitialized();
                 return 0;
-            }
-
-            if (actualLength > 1)
-            {
-                Array.Sort(tagKeys, tagValues);
             }
 
             return this.LookupAggregatorStore(tagKeys, tagValues, actualLength);
