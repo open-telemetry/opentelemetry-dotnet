@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Make `MetricPoint` of `MetricPointAccessor` readonly.
+  ([2736](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2736))
+
 ## 1.2.0-rc1
 
 Released 2021-Nov-29
