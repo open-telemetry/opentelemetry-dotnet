@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using OpenTelemetry.Internal;
 
@@ -102,7 +103,7 @@ namespace OpenTelemetry.Resources
                 sanitizedKey = attribute.Key;
             }
 
-            object sanitizedValue = SanitizeValue(attribute.Value, sanitizedKey);
+            var sanitizedValue = SanitizeValue(attribute.Value, sanitizedKey);
             return new KeyValuePair<string, object>(sanitizedKey, sanitizedValue);
         }
 
@@ -110,53 +111,24 @@ namespace OpenTelemetry.Resources
         {
             Guard.Null(keyName, nameof(keyName));
 
-            if (value is string || value is bool || value is double || value is long)
+            return value switch
             {
-                return value;
-            }
-
-            if (value is string[] || value is bool[] || value is double[] || value is long[])
-            {
-                return value;
-            }
-
-            if (value is int || value is short)
-            {
-                return Convert.ToInt64(value);
-            }
-
-            if (value is float)
-            {
-                return Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture);
-            }
-
-            if (value is int[] || value is short[])
-            {
-                long[] convertedArr = new long[((Array)value).Length];
-                int i = 0;
-                foreach (var val in (Array)value)
-                {
-                    convertedArr[i] = Convert.ToInt64(val);
-                    i++;
-                }
-
-                return convertedArr;
-            }
-
-            if (value is float[])
-            {
-                double[] convertedArr = new double[((float[])value).Length];
-                int i = 0;
-                foreach (float val in (float[])value)
-                {
-                    convertedArr[i] = Convert.ToDouble(val, System.Globalization.CultureInfo.InvariantCulture);
-                    i++;
-                }
-
-                return convertedArr;
-            }
-
-            throw new ArgumentException("Attribute value type is not an accepted primitive", keyName);
+                string => value,
+                bool => value,
+                double => value,
+                long => value,
+                string[] => value,
+                bool[] => value,
+                double[] => value,
+                long[] => value,
+                int => Convert.ToInt64(value),
+                short => Convert.ToInt64(value),
+                float => Convert.ToDouble(value, CultureInfo.InvariantCulture),
+                int[] v => Array.ConvertAll(v, Convert.ToInt64),
+                short[] v => Array.ConvertAll(v, Convert.ToInt64),
+                float[] v => Array.ConvertAll(v, f => Convert.ToDouble(f, CultureInfo.InvariantCulture)),
+                _ => throw new ArgumentException("Attribute value type is not an accepted primitive", keyName),
+            };
         }
     }
 }
