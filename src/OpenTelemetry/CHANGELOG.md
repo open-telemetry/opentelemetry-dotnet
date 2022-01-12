@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Update default httpListenerPrefixes for PrometheusExporter to be http://localhost:9184/.
+(placeholder)
+
 * Make `MetricPoint` of `MetricPointAccessor` readonly.
   ([2736](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2736))
 

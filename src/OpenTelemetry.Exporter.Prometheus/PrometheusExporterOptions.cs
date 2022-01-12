@@ -46,9 +46,9 @@ namespace OpenTelemetry.Exporter
 
         /// <summary>
         /// Gets or sets the prefixes to use for the http listener. Default
-        /// value: http://*:80/.
+        /// value: http://localhost:9184/.
         /// </summary>
-        public IReadOnlyCollection<string> HttpListenerPrefixes { get; set; } = new string[] { "http://*:80/" };
+        public IReadOnlyCollection<string> HttpListenerPrefixes { get; set; } = new string[] { "http://localhost:9184/" };
 
         /// <summary>
         /// Gets or sets the path to use for the scraping endpoint. Default value: /metrics.
