@@ -777,7 +777,7 @@ namespace OpenTelemetry.Metrics.Tests
                 {
                     foreach (var metricPoint in metric.GetMetricPoints())
                     {
-                        bucketCounts = metricPoint.GetHistogramBuckets().BucketCounts;
+                        bucketCounts = metricPoint.GetHistogramBuckets().RunningBucketCounts;
                     }
                 }
             }));
