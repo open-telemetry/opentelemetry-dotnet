@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics
         public static MeterProviderBuilder AddAspNetCoreInstrumentation(
             this MeterProviderBuilder builder)
         {
-            Guard.Null(builder, nameof(builder));
+            Guard.ThrowIfNull(builder, nameof(builder));
 
             // TODO: Implement an IDeferredMeterProviderBuilder
 
