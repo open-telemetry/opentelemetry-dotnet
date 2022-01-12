@@ -34,6 +34,9 @@ namespace OpenTelemetry.Metrics
         private readonly ConcurrentDictionary<string[], string[]> tagKeyCombinations =
             new ConcurrentDictionary<string[], string[]>(StringArrayComparer);
 
+        private readonly ConcurrentDictionary<object[], object[]> tagValueCombinations =
+            new ConcurrentDictionary<object[], object[]>(ObjectArrayComparer);
+
         // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
         private readonly ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>> keyValue2MetricAggs =
             new ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>>(StringArrayComparer);
@@ -183,16 +186,19 @@ namespace OpenTelemetry.Metrics
         private int LookupAggregatorStore(string[] tagKeys, object[] tagValues, int length)
         {
             int aggregatorIndex;
-            string[] seqKey = null;
             string[] sortedTagKeys = null;
+            object[] sortedTagValues = null;
             ConcurrentDictionary<object[], int> value2metrics;
 
             // We only need to sort if there is more than one Tag Key.
             if (!this.tagKeyCombinations.TryGetValue(tagKeys, out sortedTagKeys))
             {
                 // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                seqKey = new string[length];
+                var seqKey = new string[length];
                 tagKeys.CopyTo(seqKey, 0);
+
+                var seqValue = new object[length];
+                tagValues.CopyTo(seqValue, 0);
 
                 if (length > 1)
                 {
@@ -200,13 +206,19 @@ namespace OpenTelemetry.Metrics
                     sortedTagKeys = new string[length];
                     tagKeys.CopyTo(sortedTagKeys, 0);
 
-                    Array.Sort(sortedTagKeys, tagValues);
+                    // Create a new array for the sorted Tag values.
+                    sortedTagValues = new object[length];
+                    tagValues.CopyTo(sortedTagValues, 0);
+
+                    Array.Sort(sortedTagKeys, sortedTagValues);
                 }
                 else
                 {
                     sortedTagKeys = seqKey;
+                    sortedTagValues = seqValue;
                 }
 
+                this.tagValueCombinations.TryAdd(seqValue, sortedTagValues);
                 this.tagKeyCombinations.TryAdd(seqKey, sortedTagKeys);
             }
 
@@ -221,9 +233,30 @@ namespace OpenTelemetry.Metrics
                 }
             }
 
+            if (!this.tagValueCombinations.TryGetValue(tagValues, out sortedTagValues))
+            {
+                var seqValue = new object[length];
+                tagValues.CopyTo(seqValue, 0);
+
+                if (length > 1)
+                {
+                    // Create a new array for the sorted Tag values.
+                    sortedTagValues = new object[length];
+                    tagValues.CopyTo(sortedTagValues, 0);
+
+                    Array.Sort(tagKeys, sortedTagValues);
+                }
+                else
+                {
+                    sortedTagValues = seqValue;
+                }
+
+                this.tagValueCombinations.TryAdd(seqValue, sortedTagValues);
+            }
+
             // GetOrAdd by TagValues at 2st Level of 2-level dictionary structure.
             // Get back Metrics[].
-            if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
+            if (!value2metrics.TryGetValue(sortedTagValues, out aggregatorIndex))
             {
                 aggregatorIndex = this.metricPointIndex;
                 if (aggregatorIndex >= this.maxMetricPoints)
@@ -238,7 +271,7 @@ namespace OpenTelemetry.Metrics
                 lock (value2metrics)
                 {
                     // check again after acquiring lock.
-                    if (!value2metrics.TryGetValue(tagValues, out aggregatorIndex))
+                    if (!value2metrics.TryGetValue(sortedTagValues, out aggregatorIndex))
                     {
                         aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
                         if (aggregatorIndex >= this.maxMetricPoints)
@@ -250,17 +283,14 @@ namespace OpenTelemetry.Metrics
                             return -1;
                         }
 
-                        var seqVal = new object[length];
-                        tagValues.CopyTo(seqVal, 0);
-
                         ref var metricPoint = ref this.metricPoints[aggregatorIndex];
                         var dt = DateTimeOffset.UtcNow;
-                        metricPoint = new MetricPoint(this.aggType, dt, sortedTagKeys, seqVal, this.histogramBounds);
+                        metricPoint = new MetricPoint(this.aggType, dt, sortedTagKeys, sortedTagValues, this.histogramBounds);
 
                         // Add to dictionary *after* initializing MetricPoint
                         // as other threads can start writing to the
                         // MetricPoint, if dictionary entry found.
-                        value2metrics.TryAdd(seqVal, aggregatorIndex);
+                        value2metrics.TryAdd(sortedTagValues, aggregatorIndex);
                     }
                 }
             }

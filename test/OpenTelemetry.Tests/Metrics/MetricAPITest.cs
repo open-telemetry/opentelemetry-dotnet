@@ -410,13 +410,39 @@ namespace OpenTelemetry.Metrics.Tests
             counterLong.Add(10, new("Key1", "Value1"), new("Key2", "Value2"), new("Key3", "Value3"));
             counterLong.Add(10, new("Key1", "Value1"), new("Key3", "Value3"), new("Key2", "Value2"));
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            List<KeyValuePair<string, object>> tags;
+            if (hasView)
+            {
+                tags = new List<KeyValuePair<string, object>>()
+                {
+                    new("Key1", "Value1"),
+                    new("Key2", "Value2"),
+                };
+            }
+            else
+            {
+                tags = new List<KeyValuePair<string, object>>()
+                {
+                    new("Key1", "Value1"),
+                    new("Key2", "Value2"),
+                    new("Key3", "Value3"),
+                };
+            }
+
+            Assert.True(OnlyOneMetricPointExists(exportedItems));
+            CheckTagsForFirstMetricPoint(exportedItems, tags);
             long sumReceived = GetLongSum(exportedItems);
             Assert.Equal(20, sumReceived);
 
             exportedItems.Clear();
-            counterLong.Add(10, new("Key2", "Value2"), new("Key1", "Value1"), new("Key3", "Value3"));
+            counterLong.Add(5, new("Key2", "Value2"), new("Key1", "Value1"), new("Key3", "Value3"));
+            counterLong.Add(5, new("Key2", "Value2"), new("Key1", "Value1"), new("Key3", "Value3"));
             counterLong.Add(10, new("Key2", "Value2"), new("Key3", "Value3"), new("Key1", "Value1"));
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.True(OnlyOneMetricPointExists(exportedItems));
+            CheckTagsForFirstMetricPoint(exportedItems, tags);
             sumReceived = GetLongSum(exportedItems);
             if (exportDelta)
             {
@@ -436,6 +462,8 @@ namespace OpenTelemetry.Metrics.Tests
             }
             else
             {
+                Assert.True(OnlyOneMetricPointExists(exportedItems));
+                CheckTagsForFirstMetricPoint(exportedItems, tags);
                 Assert.Equal(40, sumReceived);
             }
 
@@ -443,6 +471,9 @@ namespace OpenTelemetry.Metrics.Tests
             counterLong.Add(40, new("Key3", "Value3"), new("Key1", "Value1"), new("Key2", "Value2"));
             counterLong.Add(20, new("Key3", "Value3"), new("Key2", "Value2"), new("Key1", "Value1"));
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.True(OnlyOneMetricPointExists(exportedItems));
+            CheckTagsForFirstMetricPoint(exportedItems, tags);
             sumReceived = GetLongSum(exportedItems);
             if (exportDelta)
             {
@@ -730,8 +761,39 @@ namespace OpenTelemetry.Metrics.Tests
             return sum;
         }
 
+        private static bool OnlyOneMetricPointExists(List<Metric> metrics)
+        {
+            int count = 0;
+            foreach (var metric in metrics)
+            {
+                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                {
+                    count++;
+                }
+            }
+
+            return count == 1;
+        }
+
+        // Provide tags input sorted by Key
+        private static void CheckTagsForFirstMetricPoint(List<Metric> metrics, List<KeyValuePair<string, object>> tags)
+        {
+            var metric = metrics[0];
+            var metricPointEnumerator = metric.GetMetricPoints().GetEnumerator();
+            Assert.True(metricPointEnumerator.MoveNext());
+
+            int index = 0;
+            var metricPoint = metricPointEnumerator.Current;
+            foreach (var tag in metricPoint.Tags)
+            {
+                Assert.Equal(tags[index].Key, tag.Key);
+                Assert.Equal(tags[index].Value, tag.Value);
+                index++;
+            }
+        }
+
         private static void CounterUpdateThread<T>(object obj)
-            where T : struct, IComparable
+        where T : struct, IComparable
         {
             if (obj is not UpdateThreadArguments<T> arguments)
             {
