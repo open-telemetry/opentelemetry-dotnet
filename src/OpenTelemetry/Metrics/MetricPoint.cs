@@ -537,8 +537,8 @@ namespace OpenTelemetry.Metrics
             throw new NotSupportedException($"{methodName} is not supported for this metric type.");
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private int FindHistogramBucket(double number)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void HistogramUpdate(double number, bool hasMinMax)
         {
             int i;
             for (i = 0; i < this.histogramBuckets.ExplicitBounds.Length; i++)
@@ -549,14 +549,6 @@ namespace OpenTelemetry.Metrics
                     break;
                 }
             }
-
-            return i;
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private void HistogramUpdate(double number, bool hasMinMax)
-        {
-            int i = this.FindHistogramBucket(number);
 
             lock (this.histogramBuckets.LockObject)
             {
@@ -572,7 +564,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void HistogramSnapshot(bool outputDelta, bool hasMinMax)
         {
             lock (this.histogramBuckets.LockObject)
