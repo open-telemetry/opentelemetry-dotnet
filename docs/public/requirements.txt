@@ -1,2 +1,0 @@
-furo
-myst-parser
