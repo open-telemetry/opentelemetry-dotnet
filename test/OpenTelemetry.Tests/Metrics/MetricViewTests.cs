@@ -439,14 +439,14 @@ namespace OpenTelemetry.Metrics.Tests
         public void HistogramWithMinMax(double[] values, HistogramConfiguration histogramConfiguration, double expectedMin, double expectedMax)
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
+            var histogram = meter.CreateHistogram<double>("MyHistogram");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("MyHistogram", histogramConfiguration)
+                .AddView(histogram.Name, histogramConfiguration)
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
-            var histogram = meter.CreateHistogram<double>("MyHistogram");
             for (var i = 0; i < values.Length; i++)
             {
                 histogram.Record(values[i]);
@@ -473,14 +473,14 @@ namespace OpenTelemetry.Metrics.Tests
         public void HistogramWithMinMaxThrows(double[] values, HistogramConfiguration histogramConfiguration)
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
+            var histogram = meter.CreateHistogram<double>("MyHistogram");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("MyHistogram", histogramConfiguration)
+                .AddView(histogram.Name, histogramConfiguration)
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
-            var histogram = meter.CreateHistogram<double>("MyHistogram");
             for (var i = 0; i < values.Length; i++)
             {
                 histogram.Record(values[i]);
