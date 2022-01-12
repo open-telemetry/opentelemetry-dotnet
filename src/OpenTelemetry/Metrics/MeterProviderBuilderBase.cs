@@ -47,7 +47,7 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc />
         public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
         {
-            Guard.Null(instrumentationFactory, nameof(instrumentationFactory));
+            Guard.ThrowIfNull(instrumentationFactory, nameof(instrumentationFactory));
 
             this.instrumentationFactories.Add(
                 new InstrumentationFactory(
@@ -61,11 +61,11 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc />
         public override MeterProviderBuilder AddMeter(params string[] names)
         {
-            Guard.Null(names, nameof(names));
+            Guard.ThrowIfNull(names, nameof(names));
 
             foreach (var name in names)
             {
-                Guard.NullOrWhitespace(name, nameof(name));
+                Guard.ThrowIfNullOrWhitespace(name, nameof(name));
 
                 this.meterSources.Add(name);
             }
@@ -106,7 +106,7 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilder SetMaxMetricStreams(int maxMetricStreams)
         {
-            Guard.Range(maxMetricStreams, min: 1);
+            Guard.ThrowIfOutOfRange(maxMetricStreams, min: 1);
 
             this.maxMetricStreams = maxMetricStreams;
             return this;
@@ -114,7 +114,7 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilder SetMaxMetricPointsPerMetricStream(int maxMetricPointsPerMetricStream)
         {
-            Guard.Range(maxMetricPointsPerMetricStream, min: 1);
+            Guard.ThrowIfOutOfRange(maxMetricPointsPerMetricStream, min: 1);
 
             this.maxMetricPointsPerMetricStream = maxMetricPointsPerMetricStream;
             return this;
