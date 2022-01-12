@@ -14,20 +14,31 @@
 // limitations under the License.
 // </copyright>
 
+/*
+Activity.Id:          00-8389584945550f40820b96ce1ceb9299-745239d26e408342-01
+Activity.DisplayName: SayHello
+Activity.Kind:        Internal
+Activity.StartTime:   2020-08-12T15:59:10.4461835Z
+Activity.Duration:    00:00:00.0066039
+Activity.TagObjects:
+    foo: 1
+    bar: Hello, World!
+    baz: [1, 2, 3]
+*/
+
 using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 public class Program
 {
-    private static readonly ActivitySource MyActivitySource = new ActivitySource(
-        "MyCompany.MyProduct.MyLibrary");
+    private static readonly ActivitySource MyActivitySource = new ActivitySource("MyCompany.MyProduct.MyLibrary");
 
     public static void Main()
     {
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new AlwaysOnSampler())
-            .AddSource("MyCompany.MyProduct.MyLibrary")
+            .AddSource(MyActivitySource.Name)
             .AddConsoleExporter()
             .Build();
 
