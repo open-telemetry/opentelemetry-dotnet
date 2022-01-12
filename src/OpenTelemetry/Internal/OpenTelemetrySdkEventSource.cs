@@ -330,7 +330,7 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(32, exportProcessorName, exporterName, droppedCount);
         }
 
-        [Event(33, Message = "Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{1}'. Suggested action: '{2}'", Level = EventLevel.Warning)]
+        [Event(33, Message = "Measurements from Instrument '{0}', Meter '{1}' will be ignored. Reason: '{2}'. Suggested action: '{3}'", Level = EventLevel.Warning)]
         public void MetricInstrumentIgnored(string instrumentName, string meterName, string reason, string fix)
         {
             this.WriteEvent(33, instrumentName, meterName, reason, fix);
