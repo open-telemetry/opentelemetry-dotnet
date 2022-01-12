@@ -21,7 +21,6 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using Google.Protobuf;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Metrics;
 using OtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
@@ -149,7 +148,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         sum.IsMonotonic = true;
                         sum.AggregationTemporality = temporality;
 
-                        foreach (ref var metricPoint in metric.GetMetricPoints())
+                        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                         {
                             var dataPoint = new OtlpMetrics.NumberDataPoint
                             {
@@ -157,9 +156,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
-                            AddAttributes(metricPoint.Keys, metricPoint.Values, dataPoint.Attributes);
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
-                            dataPoint.AsInt = metricPoint.LongValue;
+                            dataPoint.AsInt = metricPoint.GetSumLong();
                             sum.DataPoints.Add(dataPoint);
                         }
 
@@ -173,7 +172,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         sum.IsMonotonic = true;
                         sum.AggregationTemporality = temporality;
 
-                        foreach (ref var metricPoint in metric.GetMetricPoints())
+                        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                         {
                             var dataPoint = new OtlpMetrics.NumberDataPoint
                             {
@@ -181,9 +180,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
-                            AddAttributes(metricPoint.Keys, metricPoint.Values, dataPoint.Attributes);
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
-                            dataPoint.AsDouble = metricPoint.DoubleValue;
+                            dataPoint.AsDouble = metricPoint.GetSumDouble();
                             sum.DataPoints.Add(dataPoint);
                         }
 
@@ -194,7 +193,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 case MetricType.LongGauge:
                     {
                         var gauge = new OtlpMetrics.Gauge();
-                        foreach (ref var metricPoint in metric.GetMetricPoints())
+                        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                         {
                             var dataPoint = new OtlpMetrics.NumberDataPoint
                             {
@@ -202,9 +201,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
-                            AddAttributes(metricPoint.Keys, metricPoint.Values, dataPoint.Attributes);
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
-                            dataPoint.AsInt = metricPoint.LongValue;
+                            dataPoint.AsInt = metricPoint.GetGaugeLastValueLong();
                             gauge.DataPoints.Add(dataPoint);
                         }
 
@@ -215,7 +214,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 case MetricType.DoubleGauge:
                     {
                         var gauge = new OtlpMetrics.Gauge();
-                        foreach (ref var metricPoint in metric.GetMetricPoints())
+                        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                         {
                             var dataPoint = new OtlpMetrics.NumberDataPoint
                             {
@@ -223,9 +222,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
-                            AddAttributes(metricPoint.Keys, metricPoint.Values, dataPoint.Attributes);
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
 
-                            dataPoint.AsDouble = metricPoint.DoubleValue;
+                            dataPoint.AsDouble = metricPoint.GetGaugeLastValueDouble();
                             gauge.DataPoints.Add(dataPoint);
                         }
 
@@ -238,7 +237,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         var histogram = new OtlpMetrics.Histogram();
                         histogram.AggregationTemporality = temporality;
 
-                        foreach (ref var metricPoint in metric.GetMetricPoints())
+                        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                         {
                             var dataPoint = new OtlpMetrics.HistogramDataPoint
                             {
@@ -246,16 +245,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                                 TimeUnixNano = (ulong)metricPoint.EndTime.ToUnixTimeNanoseconds(),
                             };
 
-                            AddAttributes(metricPoint.Keys, metricPoint.Values, dataPoint.Attributes);
-                            dataPoint.Count = (ulong)metricPoint.LongValue;
-                            dataPoint.Sum = metricPoint.DoubleValue;
+                            AddAttributes(metricPoint.Tags, dataPoint.Attributes);
+                            dataPoint.Count = (ulong)metricPoint.GetHistogramCount();
+                            dataPoint.Sum = metricPoint.GetHistogramSum();
 
-                            for (int i = 0; i < metricPoint.BucketCounts.Length; i++)
+                            foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                             {
-                                dataPoint.BucketCounts.Add((ulong)metricPoint.BucketCounts[i]);
-                                if (i < metricPoint.BucketCounts.Length - 1)
+                                dataPoint.BucketCounts.Add((ulong)histogramMeasurement.BucketCount);
+                                if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
                                 {
-                                    dataPoint.ExplicitBounds.Add(metricPoint.ExplicitBounds[i]);
+                                    dataPoint.ExplicitBounds.Add(histogramMeasurement.ExplicitBound);
                                 }
                             }
 
@@ -270,18 +269,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             return otlpMetric;
         }
 
-        private static void AddAttributes(string[] keys, object[] values, RepeatedField<OtlpCommon.KeyValue> attributes)
+        private static void AddAttributes(ReadOnlyTagCollection tags, RepeatedField<OtlpCommon.KeyValue> attributes)
         {
-            if (keys != null)
+            foreach (var tag in tags)
             {
-                for (int i = 0; i < keys.Length; i++)
-                {
-                    KeyValuePair<string, object> tag = new KeyValuePair<string, object>(keys[i], values[i]);
-                    attributes.Add(tag.ToOtlpAttribute());
-                }
+                attributes.Add(tag.ToOtlpAttribute());
             }
         }
 
+        /*
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static OtlpMetrics.Exemplar ToOtlpExemplar(this IExemplar exemplar)
         {
@@ -327,6 +323,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             return otlpExemplar;
         }
+        */
 
         private static Action<RepeatedField<OtlpMetrics.Metric>, int> CreateRepeatedFieldOfMetricSetCountAction()
         {

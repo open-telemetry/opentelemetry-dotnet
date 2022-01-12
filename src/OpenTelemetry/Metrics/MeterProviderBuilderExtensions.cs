@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Diagnostics.Metrics;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -24,16 +26,143 @@ namespace OpenTelemetry.Metrics
     public static class MeterProviderBuilderExtensions
     {
         /// <summary>
-        /// Add metric reader.
+        /// Adds a reader to the provider.
         /// </summary>
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
-        /// <param name="metricReader">Metricreader.</param>
+        /// <param name="reader"><see cref="MetricReader"/>.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
-        public static MeterProviderBuilder AddMetricReader(this MeterProviderBuilder meterProviderBuilder, MetricReader metricReader)
+        public static MeterProviderBuilder AddReader(this MeterProviderBuilder meterProviderBuilder, MetricReader reader)
         {
-            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                return meterProviderBuilderSdk.AddMetricReader(metricReader);
+                return meterProviderBuilderBase.AddReader(reader);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Add metric view, which can be used to customize the Metrics outputted
+        /// from the SDK. The views are applied in the order they are added.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="instrumentName">Name of the instrument, to be used as part of Instrument selection criteria.</param>
+        /// <param name="name">Name of the view. This will be used as name of resulting metrics stream.</param>
+        /// <returns><see cref="MeterProvider"/>.</returns>
+        /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
+        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, string name)
+        {
+            if (!MeterProviderBuilderSdk.IsValidInstrumentName(name))
+            {
+                throw new ArgumentException($"Custom view name {name} is invalid.", nameof(name));
+            }
+
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                return meterProviderBuilderBase.AddView(instrumentName, name);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Add metric view, which can be used to customize the Metrics outputted
+        /// from the SDK. The views are applied in the order they are added.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="instrumentName">Name of the instrument, to be used as part of Instrument selection criteria.</param>
+        /// <param name="metricStreamConfiguration">Aggregation configuration used to produce metrics stream.</param>
+        /// <returns><see cref="MeterProvider"/>.</returns>
+        /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
+        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
+        {
+            if (metricStreamConfiguration == null)
+            {
+                throw new ArgumentNullException($"Metric stream configuration cannot be null.", nameof(metricStreamConfiguration));
+            }
+
+            if (!MeterProviderBuilderSdk.IsValidViewName(metricStreamConfiguration.Name))
+            {
+                throw new ArgumentException($"Custom view name {metricStreamConfiguration.Name} is invalid.", nameof(metricStreamConfiguration.Name));
+            }
+
+            if (metricStreamConfiguration is ExplicitBucketHistogramConfiguration histogramConfiguration)
+            {
+                // Validate histogram boundaries
+                if (histogramConfiguration.Boundaries != null && !IsSortedAndDistinct(histogramConfiguration.Boundaries))
+                {
+                    throw new ArgumentException($"Histogram boundaries must be in ascending order with distinct values", nameof(histogramConfiguration.Boundaries));
+                }
+            }
+
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                return meterProviderBuilderBase.AddView(instrumentName, metricStreamConfiguration);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Add metric view, which can be used to customize the Metrics outputted
+        /// from the SDK. The views are applied in the order they are added.
+        /// </summary>
+        /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+        /// <param name="viewConfig">Function to configure aggregation based on the instrument.</param>
+        /// <returns><see cref="MeterProvider"/>.</returns>
+        /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
+        public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, MetricStreamConfiguration> viewConfig)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                return meterProviderBuilderBase.AddView(viewConfig);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Sets the maximum number of Metric streams supported by the MeterProvider.
+        /// When no Views are configured, every instrument will result in one metric stream,
+        /// so this control the numbers of instruments supported.
+        /// When Views are configued, a single instrument can result in multiple metric streams,
+        /// so this control the number of streams.
+        /// </summary>
+        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
+        /// <param name="maxMetricStreams">Maximum number of metric streams allowed.</param>
+        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        /// <remarks>
+        /// If an instrument is created, but disposed later, this will still be contributing to the limit.
+        /// This may change in the future.
+        /// </remarks>
+        public static MeterProviderBuilder SetMaxMetricStreams(this MeterProviderBuilder meterProviderBuilder, int maxMetricStreams)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                meterProviderBuilderBase.SetMaxMetricStreams(maxMetricStreams);
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Sets the maximum number of MetricPoints allowed per metric stream.
+        /// This limits the number of unique combinations of key/value pairs used
+        /// for reporting measurements.
+        /// </summary>
+        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
+        /// <param name="maxMetricPointsPerMetricStream">Maximum maximum number of metric points allowed per metric stream.</param>
+        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        /// <remarks>
+        /// If a particular key/value pair combination is used at least once,
+        /// it will contribute to the limit for the life of the process.
+        /// This may change in the future. See: https://github.com/open-telemetry/opentelemetry-dotnet/issues/2360.
+        /// </remarks>
+        public static MeterProviderBuilder SetMaxMetricPointsPerMetricStream(this MeterProviderBuilder meterProviderBuilder, int maxMetricPointsPerMetricStream)
+        {
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                meterProviderBuilderBase.SetMaxMetricPointsPerMetricStream(maxMetricPointsPerMetricStream);
             }
 
             return meterProviderBuilder;
@@ -48,9 +177,9 @@ namespace OpenTelemetry.Metrics
         /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
         public static MeterProviderBuilder SetResourceBuilder(this MeterProviderBuilder meterProviderBuilder, ResourceBuilder resourceBuilder)
         {
-            if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                meterProviderBuilderSdk.SetResourceBuilder(resourceBuilder);
+                meterProviderBuilderBase.SetResourceBuilder(resourceBuilder);
             }
 
             return meterProviderBuilder;
@@ -63,12 +192,30 @@ namespace OpenTelemetry.Metrics
         /// <returns><see cref="MeterProvider"/>.</returns>
         public static MeterProvider Build(this MeterProviderBuilder meterProviderBuilder)
         {
+            if (meterProviderBuilder is IDeferredMeterProviderBuilder)
+            {
+                throw new NotSupportedException("DeferredMeterProviderBuilder requires a ServiceProvider to build.");
+            }
+
             if (meterProviderBuilder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                return meterProviderBuilderSdk.Build();
+                return meterProviderBuilderSdk.BuildSdk();
             }
 
             return null;
+        }
+
+        private static bool IsSortedAndDistinct(double[] values)
+        {
+            for (int i = 1; i < values.Length; i++)
+            {
+                if (values[i] <= values[i - 1])
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

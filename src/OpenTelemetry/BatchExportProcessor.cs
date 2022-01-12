@@ -43,6 +43,7 @@ namespace OpenTelemetry
         private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
         private long shutdownDrainTarget = long.MaxValue;
         private long droppedCount;
+        private bool disposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchExportProcessor{T}"/> class.
@@ -60,25 +61,10 @@ namespace OpenTelemetry
             int maxExportBatchSize = DefaultMaxExportBatchSize)
             : base(exporter)
         {
-            if (maxQueueSize <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(maxQueueSize), maxQueueSize, "maxQueueSize should be greater than zero.");
-            }
-
-            if (maxExportBatchSize <= 0 || maxExportBatchSize > maxQueueSize)
-            {
-                throw new ArgumentOutOfRangeException(nameof(maxExportBatchSize), maxExportBatchSize, "maxExportBatchSize should be greater than zero and less than maxQueueSize.");
-            }
-
-            if (scheduledDelayMilliseconds <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(scheduledDelayMilliseconds), scheduledDelayMilliseconds, "scheduledDelayMilliseconds should be greater than zero.");
-            }
-
-            if (exporterTimeoutMilliseconds < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(exporterTimeoutMilliseconds), exporterTimeoutMilliseconds, "exporterTimeoutMilliseconds should be non-negative.");
-            }
+            Guard.ThrowIfOutOfRange(maxQueueSize, nameof(maxQueueSize), min: 1);
+            Guard.ThrowIfOutOfRange(maxExportBatchSize, nameof(maxExportBatchSize), min: 1, max: maxQueueSize, maxName: nameof(maxQueueSize));
+            Guard.ThrowIfOutOfRange(scheduledDelayMilliseconds, nameof(scheduledDelayMilliseconds), min: 1);
+            Guard.ThrowIfOutOfRange(exporterTimeoutMilliseconds, nameof(exporterTimeoutMilliseconds), min: 0);
 
             this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
@@ -144,7 +130,9 @@ namespace OpenTelemetry
 
             var triggers = new WaitHandle[] { this.dataExportedNotification, this.shutdownTrigger };
 
-            var sw = Stopwatch.StartNew();
+            var sw = timeoutMilliseconds == Timeout.Infinite
+                ? null
+                : Stopwatch.StartNew();
 
             // There is a chance that the export thread finished processing all the data from the queue,
             // and signaled before we enter wait here, use polling to prevent being blocked indefinitely.
@@ -152,9 +140,16 @@ namespace OpenTelemetry
 
             while (true)
             {
-                if (timeoutMilliseconds == Timeout.Infinite)
+                if (sw == null)
                 {
-                    WaitHandle.WaitAny(triggers, pollingMilliseconds);
+                    try
+                    {
+                        WaitHandle.WaitAny(triggers, pollingMilliseconds);
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        return false;
+                    }
                 }
                 else
                 {
@@ -165,7 +160,14 @@ namespace OpenTelemetry
                         return this.circularBuffer.RemovedCount >= head;
                     }
 
-                    WaitHandle.WaitAny(triggers, Math.Min((int)timeout, pollingMilliseconds));
+                    try
+                    {
+                        WaitHandle.WaitAny(triggers, Math.Min((int)timeout, pollingMilliseconds));
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        return false;
+                    }
                 }
 
                 if (this.circularBuffer.RemovedCount >= head)
@@ -205,6 +207,24 @@ namespace OpenTelemetry
             return this.exporter.Shutdown((int)Math.Max(timeout, 0));
         }
 
+        /// <inheritdoc/>
+        protected override void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                if (disposing)
+                {
+                    this.exportTrigger.Dispose();
+                    this.dataExportedNotification.Dispose();
+                    this.shutdownTrigger.Dispose();
+                }
+
+                this.disposed = true;
+            }
+
+            base.Dispose(disposing);
+        }
+
         private void ExporterProc()
         {
             var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
@@ -214,7 +234,14 @@ namespace OpenTelemetry
                 // only wait when the queue doesn't have enough items, otherwise keep busy and send data continuously
                 if (this.circularBuffer.Count < this.maxExportBatchSize)
                 {
-                    WaitHandle.WaitAny(triggers, this.scheduledDelayMilliseconds);
+                    try
+                    {
+                        WaitHandle.WaitAny(triggers, this.scheduledDelayMilliseconds);
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        return;
+                    }
                 }
 
                 if (this.circularBuffer.Count > 0)
@@ -230,7 +257,7 @@ namespace OpenTelemetry
 
                 if (this.circularBuffer.RemovedCount >= this.shutdownDrainTarget)
                 {
-                    break;
+                    return;
                 }
             }
         }

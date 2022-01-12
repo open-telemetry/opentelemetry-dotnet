@@ -78,7 +78,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             var tracer = TracerProvider.Default.GetTracer(TracerName);
             var shim = new ScopeManagerShim(tracer);
 
-            Assert.Throws<ArgumentException>(() => shim.Activate(new Mock<global::OpenTracing.ISpan>().Object, true));
+            Assert.Throws<InvalidCastException>(() => shim.Activate(new Mock<global::OpenTracing.ISpan>().Object, true));
         }
 
         [Fact]

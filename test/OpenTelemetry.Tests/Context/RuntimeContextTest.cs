@@ -58,7 +58,7 @@ namespace OpenTelemetry.Context.Tests
         public void GetSlotReturnsNullWhenTypeNotMatchingExistingSlot()
         {
             RuntimeContext.RegisterSlot<bool>("testslot");
-            Assert.Throws<ArgumentException>(() => RuntimeContext.GetSlot<int>("testslot"));
+            Assert.Throws<InvalidCastException>(() => RuntimeContext.GetSlot<int>("testslot"));
         }
 
         [Fact]

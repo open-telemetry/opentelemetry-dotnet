@@ -16,14 +16,12 @@
 
 using System;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
 {
-    [AggregationTemporality(AggregationTemporality.Cumulative | AggregationTemporality.Delta, AggregationTemporality.Cumulative)]
     public class ConsoleMetricExporter : ConsoleExporter<Metric>
     {
         private Resource resource;
@@ -56,7 +54,7 @@ namespace OpenTelemetry.Exporter
                 msg.Append(metric.Name);
                 if (!string.IsNullOrEmpty(metric.Description))
                 {
-                    msg.Append(' ');
+                    msg.Append(", ");
                     msg.Append(metric.Description);
                 }
 
@@ -77,56 +75,60 @@ namespace OpenTelemetry.Exporter
 
                 Console.WriteLine(msg.ToString());
 
-                foreach (ref var metricPoint in metric.GetMetricPoints())
+                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
                     string valueDisplay = string.Empty;
                     StringBuilder tagsBuilder = new StringBuilder();
-                    if (metricPoint.Keys != null)
+                    foreach (var tag in metricPoint.Tags)
                     {
-                        for (int i = 0; i < metricPoint.Keys.Length; i++)
-                        {
-                            tagsBuilder.Append(metricPoint.Keys[i]);
-                            tagsBuilder.Append(":");
-                            tagsBuilder.Append(metricPoint.Values[i]);
-                        }
+                        tagsBuilder.Append(tag.Key);
+                        tagsBuilder.Append(':');
+                        tagsBuilder.Append(tag.Value);
+                        tagsBuilder.Append(' ');
                     }
 
-                    var tags = tagsBuilder.ToString();
+                    var tags = tagsBuilder.ToString().TrimEnd();
 
                     var metricType = metric.MetricType;
 
                     if (metricType.IsHistogram())
                     {
                         var bucketsBuilder = new StringBuilder();
-                        bucketsBuilder.Append($"Sum: {metricPoint.DoubleValue} Count: {metricPoint.LongValue} \n");
-                        for (int i = 0; i < metricPoint.ExplicitBounds.Length + 1; i++)
+                        var sum = metricPoint.GetHistogramSum();
+                        var count = metricPoint.GetHistogramCount();
+                        bucketsBuilder.Append($"Sum: {sum} Count: {count} \n");
+
+                        bool isFirstIteration = true;
+                        double previousExplicitBound = default;
+                        foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                         {
-                            if (i == 0)
+                            if (isFirstIteration)
                             {
                                 bucketsBuilder.Append("(-Infinity,");
-                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
-                                bucketsBuilder.Append("]");
-                                bucketsBuilder.Append(":");
-                                bucketsBuilder.Append(metricPoint.BucketCounts[i]);
-                            }
-                            else if (i == metricPoint.ExplicitBounds.Length)
-                            {
-                                bucketsBuilder.Append("(");
-                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
-                                bucketsBuilder.Append(",");
-                                bucketsBuilder.Append("+Infinity]");
-                                bucketsBuilder.Append(":");
-                                bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                                bucketsBuilder.Append(histogramMeasurement.ExplicitBound);
+                                bucketsBuilder.Append(']');
+                                bucketsBuilder.Append(':');
+                                bucketsBuilder.Append(histogramMeasurement.BucketCount);
+                                previousExplicitBound = histogramMeasurement.ExplicitBound;
+                                isFirstIteration = false;
                             }
                             else
                             {
-                                bucketsBuilder.Append("(");
-                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i - 1]);
-                                bucketsBuilder.Append(",");
-                                bucketsBuilder.Append(metricPoint.ExplicitBounds[i]);
-                                bucketsBuilder.Append("]");
-                                bucketsBuilder.Append(":");
-                                bucketsBuilder.Append(metricPoint.BucketCounts[i]);
+                                bucketsBuilder.Append('(');
+                                bucketsBuilder.Append(previousExplicitBound);
+                                bucketsBuilder.Append(',');
+                                if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
+                                {
+                                    bucketsBuilder.Append(histogramMeasurement.ExplicitBound);
+                                }
+                                else
+                                {
+                                    bucketsBuilder.Append("+Infinity");
+                                }
+
+                                bucketsBuilder.Append(']');
+                                bucketsBuilder.Append(':');
+                                bucketsBuilder.Append(histogramMeasurement.BucketCount);
                             }
 
                             bucketsBuilder.AppendLine();
@@ -136,20 +138,39 @@ namespace OpenTelemetry.Exporter
                     }
                     else if (metricType.IsDouble())
                     {
-                        valueDisplay = metricPoint.DoubleValue.ToString(CultureInfo.InvariantCulture);
+                        if (metricType.IsSum())
+                        {
+                            valueDisplay = metricPoint.GetSumDouble().ToString(CultureInfo.InvariantCulture);
+                        }
+                        else
+                        {
+                            valueDisplay = metricPoint.GetGaugeLastValueDouble().ToString(CultureInfo.InvariantCulture);
+                        }
                     }
                     else if (metricType.IsLong())
                     {
-                        valueDisplay = metricPoint.LongValue.ToString(CultureInfo.InvariantCulture);
+                        if (metricType.IsSum())
+                        {
+                            valueDisplay = metricPoint.GetSumLong().ToString(CultureInfo.InvariantCulture);
+                        }
+                        else
+                        {
+                            valueDisplay = metricPoint.GetGaugeLastValueLong().ToString(CultureInfo.InvariantCulture);
+                        }
                     }
 
                     msg = new StringBuilder();
+                    msg.Append('(');
                     msg.Append(metricPoint.StartTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                     msg.Append(", ");
                     msg.Append(metricPoint.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                     msg.Append("] ");
-                    msg.Append(string.Join(";", tags));
-                    msg.Append(' ');
+                    msg.Append(tags);
+                    if (tags != string.Empty)
+                    {
+                        msg.Append(' ');
+                    }
+
                     msg.Append(metric.MetricType);
                     msg.AppendLine();
                     msg.Append($"Value: {valueDisplay}");

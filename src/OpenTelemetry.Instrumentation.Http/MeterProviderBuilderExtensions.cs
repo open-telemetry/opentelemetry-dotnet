@@ -14,8 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using OpenTelemetry.Instrumentation.Http;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -32,10 +32,7 @@ namespace OpenTelemetry.Metrics
         public static MeterProviderBuilder AddHttpClientInstrumentation(
             this MeterProviderBuilder builder)
         {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.ThrowIfNull(builder, nameof(builder));
 
             // TODO: Implement an IDeferredMeterProviderBuilder
 
@@ -46,7 +43,7 @@ namespace OpenTelemetry.Metrics
             //   RecordException - probably doesn't make sense for metric instrumentation
 
             var instrumentation = new HttpClientMetrics();
-            builder.AddSource(HttpClientMetrics.InstrumentationName);
+            builder.AddMeter(HttpClientMetrics.InstrumentationName);
             return builder.AddInstrumentation(() => instrumentation);
         }
     }

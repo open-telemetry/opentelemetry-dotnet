@@ -16,19 +16,28 @@
 
 using System;
 using System.Diagnostics;
-using OpenTelemetry.Exporter.Zipkin.Implementation;
+using System.Net.Http;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
 {
     /// <summary>
-    /// Zipkin trace exporter options.
+    /// Zipkin span exporter options.
+    /// OTEL_EXPORTER_ZIPKIN_ENDPOINT
+    /// environment variables are parsed during object construction.
     /// </summary>
+    /// <remarks>
+    /// The constructor throws <see cref="FormatException"/> if it fails to parse
+    /// any of the supported environment variables.
+    /// </remarks>
     public sealed class ZipkinExporterOptions
     {
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
         internal const string ZipkinEndpointEnvVar = "OTEL_EXPORTER_ZIPKIN_ENDPOINT";
         internal const string DefaultZipkinEndpoint = "http://localhost:9411/api/v2/spans";
+
+        internal static readonly Func<HttpClient> DefaultHttpClientFactory = () => new HttpClient();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ZipkinExporterOptions"/> class.
@@ -36,14 +45,9 @@ namespace OpenTelemetry.Exporter
         /// </summary>
         public ZipkinExporterOptions()
         {
-            try
+            if (EnvironmentVariableHelper.LoadUri(ZipkinEndpointEnvVar, out Uri endpoint))
             {
-                this.Endpoint = new Uri(Environment.GetEnvironmentVariable(ZipkinEndpointEnvVar) ?? DefaultZipkinEndpoint);
-            }
-            catch (Exception ex)
-            {
-                this.Endpoint = new Uri(DefaultZipkinEndpoint);
-                ZipkinExporterEventSource.Log.FailedEndpointInitialization(ex);
+                this.Endpoint = endpoint;
             }
         }
 
@@ -51,7 +55,7 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets Zipkin endpoint address. See https://zipkin.io/zipkin-api/#/default/post_spans.
         /// Typically https://zipkin-server-name:9411/api/v2/spans.
         /// </summary>
-        public Uri Endpoint { get; set; }
+        public Uri Endpoint { get; set; } = new Uri(DefaultZipkinEndpoint);
 
         /// <summary>
         /// Gets or sets a value indicating whether short trace id should be used.
@@ -72,5 +76,23 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is BatchExporter.
         /// </summary>
         public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
+
+        /// <summary>
+        /// Gets or sets the factory function called to create the <see
+        /// cref="HttpClient"/> instance that will be used at runtime to
+        /// transmit spans over HTTP. The returned instance will be reused for
+        /// all export invocations.
+        /// </summary>
+        /// <remarks>
+        /// Note: The default behavior when using the <see
+        /// cref="ZipkinExporterHelperExtensions.AddZipkinExporter(TracerProviderBuilder,
+        /// Action{ZipkinExporterOptions})"/> extension is if an <a
+        /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpclientfactory">IHttpClientFactory</a>
+        /// instance can be resolved through the application <see
+        /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be
+        /// created through the factory with the name "ZipkinExporter" otherwise
+        /// an <see cref="HttpClient"/> will be instantiated directly.
+        /// </remarks>
+        public Func<HttpClient> HttpClientFactory { get; set; } = DefaultHttpClientFactory;
     }
 }

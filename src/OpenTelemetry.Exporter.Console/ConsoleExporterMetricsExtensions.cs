@@ -15,8 +15,8 @@
 // </copyright>
 
 using System;
-using System.Threading;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -31,22 +31,20 @@ namespace OpenTelemetry.Metrics
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public static MeterProviderBuilder AddConsoleExporter(this MeterProviderBuilder builder, Action<ConsoleExporterOptions> configure = null)
         {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.ThrowIfNull(builder, nameof(builder));
 
             var options = new ConsoleExporterOptions();
             configure?.Invoke(options);
 
             var exporter = new ConsoleMetricExporter(options);
 
-            if (options.MetricExportIntervalMilliseconds == Timeout.Infinite)
-            {
-                return builder.AddMetricReader(new BaseExportingMetricReader(exporter));
-            }
+            var reader = options.MetricReaderType == MetricReaderType.Manual
+                ? new BaseExportingMetricReader(exporter)
+                : new PeriodicExportingMetricReader(exporter, options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
 
-            return builder.AddMetricReader(new PeriodicExportingMetricReader(exporter, options.MetricExportIntervalMilliseconds));
+            reader.Temporality = options.AggregationTemporality;
+
+            return builder.AddReader(reader);
         }
     }
 }

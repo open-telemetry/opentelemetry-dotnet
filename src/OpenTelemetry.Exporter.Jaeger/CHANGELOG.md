@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 1.2.0-rc1
+
+Released 2021-Nov-29
+
+## 1.2.0-beta2
+
+Released 2021-Nov-19
+
+* Changed `JaegerExporterOptions` constructor to throw
+  `FormatException` if it fails to parse any of the supported environment
+  variables.
+
+* Added support for sending spans directly to a Jaeger Collector over HTTP
+  ([#2574](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2574))
+
+## 1.2.0-beta1
+
+Released 2021-Oct-08
+
 ## 1.2.0-alpha4
 
 Released 2021-Sep-23

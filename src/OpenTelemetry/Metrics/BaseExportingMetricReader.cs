@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -28,15 +29,16 @@ namespace OpenTelemetry.Metrics
 
         public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
-            this.exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+            Guard.ThrowIfNull(exporter, nameof(exporter));
+
+            this.exporter = exporter;
 
             var exportorType = exporter.GetType();
             var attributes = exportorType.GetCustomAttributes(typeof(AggregationTemporalityAttribute), true);
             if (attributes.Length > 0)
             {
                 var attr = (AggregationTemporalityAttribute)attributes[attributes.Length - 1];
-                this.PreferredAggregationTemporality = attr.Preferred;
-                this.SupportedAggregationTemporality = attr.Supported;
+                this.Temporality = attr.Temporality;
             }
 
             attributes = exportorType.GetCustomAttributes(typeof(ExportModesAttribute), true);
@@ -65,6 +67,8 @@ namespace OpenTelemetry.Metrics
             }
         }
 
+        internal BaseExporter<Metric> Exporter => this.exporter;
+
         protected ExportModes SupportedExportModes => this.supportedExportModes;
 
         internal override void SetParentProvider(BaseProvider parentProvider)
@@ -74,9 +78,18 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <inheritdoc/>
-        protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
+        internal override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
         {
-            return this.exporter.Export(metrics) == ExportResult.Success;
+            // TODO: Do we need to consider timeout here?
+            try
+            {
+                return this.exporter.Export(metrics) == ExportResult.Success;
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetrySdkEventSource.Log.MetricReaderException(nameof(this.ProcessMetrics), ex);
+                return false;
+            }
         }
 
         /// <inheritdoc />
@@ -120,29 +133,27 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (!this.disposed)
             {
-                return;
-            }
-
-            if (disposing)
-            {
-                try
+                if (disposing)
                 {
-                    if (this.exporter is IPullMetricExporter pullExporter)
+                    try
                     {
-                        pullExporter.Collect = null;
+                        if (this.exporter is IPullMetricExporter pullExporter)
+                        {
+                            pullExporter.Collect = null;
+                        }
+
+                        this.exporter.Dispose();
                     }
+                    catch (Exception ex)
+                    {
+                        OpenTelemetrySdkEventSource.Log.MetricReaderException(nameof(this.Dispose), ex);
+                    }
+                }
 
-                    this.exporter.Dispose();
-                }
-                catch (Exception)
-                {
-                    // TODO: Log
-                }
+                this.disposed = true;
             }
-
-            this.disposed = true;
 
             base.Dispose(disposing);
         }

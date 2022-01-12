@@ -20,17 +20,27 @@ using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
-    public class Metric
+    public sealed class Metric
     {
-        private AggregatorStore aggStore;
+        internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 };
 
-        internal Metric(Instrument instrument, AggregationTemporality temporality)
+        private readonly AggregatorStore aggStore;
+
+        internal Metric(
+            Instrument instrument,
+            AggregationTemporality temporality,
+            string metricName,
+            string metricDescription,
+            int maxMetricPointsPerMetricStream,
+            double[] histogramBounds = null,
+            string[] tagKeysInteresting = null)
         {
-            this.Name = instrument.Name;
-            this.Description = instrument.Description;
-            this.Unit = instrument.Unit;
+            this.Name = metricName;
+            this.Description = metricDescription ?? string.Empty;
+            this.Unit = instrument.Unit ?? string.Empty;
             this.Meter = instrument.Meter;
-            AggregationType aggType = default;
+
+            AggregationType aggType;
             if (instrument.GetType() == typeof(ObservableCounter<long>)
                 || instrument.GetType() == typeof(ObservableCounter<int>)
                 || instrument.GetType() == typeof(ObservableCounter<short>)
@@ -80,16 +90,26 @@ namespace OpenTelemetry.Metrics
                 || instrument.GetType() == typeof(Histogram<float>)
                 || instrument.GetType() == typeof(Histogram<double>))
             {
-                aggType = AggregationType.Histogram;
                 this.MetricType = MetricType.Histogram;
+
+                if (histogramBounds != null
+                    && histogramBounds.Length == 0)
+                {
+                    aggType = AggregationType.HistogramSumCount;
+                }
+                else
+                {
+                    aggType = AggregationType.Histogram;
+                }
             }
             else
             {
-                // TODO: Log and assign some invalid Enum.
+                throw new NotSupportedException($"Unsupported Instrument Type: {instrument.GetType().FullName}");
             }
 
-            this.aggStore = new AggregatorStore(aggType, temporality);
+            this.aggStore = new AggregatorStore(metricName, aggType, temporality, maxMetricPointsPerMetricStream, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
             this.Temporality = temporality;
+            this.InstrumentDisposed = false;
         }
 
         public MetricType MetricType { get; private set; }
@@ -104,24 +124,26 @@ namespace OpenTelemetry.Metrics
 
         public Meter Meter { get; private set; }
 
-        public BatchMetricPoint GetMetricPoints()
+        internal bool InstrumentDisposed { get; set; }
+
+        public MetricPointsAccessor GetMetricPoints()
         {
             return this.aggStore.GetMetricPoints();
         }
 
         internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            this.aggStore.UpdateLong(value, tags);
+            this.aggStore.Update(value, tags);
         }
 
         internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            this.aggStore.UpdateDouble(value, tags);
+            this.aggStore.Update(value, tags);
         }
 
-        internal void SnapShot()
+        internal int Snapshot()
         {
-            this.aggStore.SnapShot();
+            return this.aggStore.Snapshot();
         }
     }
 }

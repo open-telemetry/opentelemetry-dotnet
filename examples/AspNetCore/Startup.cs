@@ -23,7 +23,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Metrics;
@@ -34,8 +33,6 @@ namespace Examples.AspNetCore
 {
     public class Startup
     {
-        private MeterProvider meterProvider;
-
         public Startup(IConfiguration configuration)
         {
             this.Configuration = configuration;
@@ -46,6 +43,9 @@ namespace Examples.AspNetCore
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+
+            // Enable HttpClientFactory integration for customization of the HttpClient used for export calls.
+            services.AddHttpClient();
 
             services.AddSwaggerGen(c =>
             {
@@ -59,9 +59,9 @@ namespace Examples.AspNetCore
                 }
             });
 
-            // Switch between Zipkin/Jaeger by setting UseExporter in appsettings.json.
-            var exporter = this.Configuration.GetValue<string>("UseExporter").ToLowerInvariant();
-            switch (exporter)
+            // Switch between Zipkin/Jaeger/OTLP by setting UseExporter in appsettings.json.
+            var tracingExporter = this.Configuration.GetValue<string>("UseTracingExporter").ToLowerInvariant();
+            switch (tracingExporter)
             {
                 case "jaeger":
                     services.AddOpenTelemetryTracing((builder) => builder
@@ -71,6 +71,9 @@ namespace Examples.AspNetCore
                         .AddJaegerExporter());
 
                     services.Configure<JaegerExporterOptions>(this.Configuration.GetSection("Jaeger"));
+
+                    // Customize the HttpClient that will be used when JaegerExporter is configured for HTTP transport.
+                    services.AddHttpClient("JaegerExporter", configureClient: (client) => client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
                     break;
                 case "zipkin":
                     services.AddOpenTelemetryTracing((builder) => builder
@@ -83,7 +86,7 @@ namespace Examples.AspNetCore
                     break;
                 case "otlp":
                     // Adding the OtlpExporter creates a GrpcChannel.
-                    // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
+                    // This switch must be set before creating a GrpcChannel when calling an insecure gRPC service.
                     // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
                     AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
@@ -117,15 +120,30 @@ namespace Examples.AspNetCore
                     break;
             }
 
-            // TODO: Add IServiceCollection.AddOpenTelemetryMetrics extension method
-            var providerBuilder = Sdk.CreateMeterProviderBuilder()
-                .AddAspNetCoreInstrumentation();
+            var metricsExporter = this.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
+            services.AddOpenTelemetryMetrics(builder =>
+            {
+                builder.AddAspNetCoreInstrumentation();
 
-            // TODO: Add configuration switch for Prometheus and OTLP export
-            providerBuilder
-                .AddConsoleExporter();
-
-            this.meterProvider = providerBuilder.Build();
+                switch (metricsExporter)
+                {
+                    case "prometheus":
+                        builder.AddPrometheusExporter();
+                        break;
+                    case "otlp":
+                        builder.AddOtlpExporter();
+                        break;
+                    default:
+                        builder.AddConsoleExporter(options =>
+                        {
+                            // The ConsoleMetricExporter defaults to a manual collect cycle.
+                            // This configuration causes metrics to be exported to stdout on a 10s interval.
+                            options.MetricReaderType = MetricReaderType.Periodic;
+                            options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10000;
+                        });
+                        break;
+                }
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -145,6 +163,12 @@ namespace Examples.AspNetCore
             });
 
             app.UseRouting();
+
+            var metricsExporter = this.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
+            if (metricsExporter == "prometheus")
+            {
+                app.UseOpenTelemetryPrometheusScrapingEndpoint();
+            }
 
             app.UseEndpoints(endpoints =>
             {

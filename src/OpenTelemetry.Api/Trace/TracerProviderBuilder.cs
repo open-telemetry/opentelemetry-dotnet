@@ -51,7 +51,7 @@ namespace OpenTelemetry.Trace
         /// Adds a listener for <see cref="Activity"/> objects created with the given operation name to the <see cref="TracerProviderBuilder"/>.
         /// </summary>
         /// <remarks>
-        /// This is provided to capture legacy <see cref="Activity"/> objects created without using the <see cref="System.Diagnostics.ActivitySource"/> API.
+        /// This is provided to capture legacy <see cref="Activity"/> objects created without using the <see cref="ActivitySource"/> API.
         /// </remarks>
         /// <param name="operationName">Operation name of the <see cref="Activity"/> objects to capture.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>

@@ -16,10 +16,10 @@
 
 using System;
 using System.Diagnostics;
-using Grpc.Core;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
+using OtlpResource = Opentelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter
 {
@@ -27,14 +27,16 @@ namespace OpenTelemetry.Exporter
     /// Exporter consuming <see cref="Activity"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    public class OtlpTraceExporter : BaseOtlpExporter<Activity>
+    public class OtlpTraceExporter : BaseExporter<Activity>
     {
-        private readonly OtlpCollector.TraceService.ITraceServiceClient traceClient;
+        private readonly IExportClient<OtlpCollector.ExportTraceServiceRequest> exportClient;
+
+        private OtlpResource.Resource processResource;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
         /// </summary>
-        /// <param name="options">Configuration options for the exporter.</param>
+        /// <param name="options">Configuration options for the export.</param>
         public OtlpTraceExporter(OtlpExporterOptions options)
             : this(options, null)
         {
@@ -43,21 +45,21 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
         /// </summary>
-        /// <param name="options">Configuration options for the exporter.</param>
-        /// <param name="traceServiceClient"><see cref="OtlpCollector.TraceService.TraceServiceClient"/>.</param>
-        internal OtlpTraceExporter(OtlpExporterOptions options, OtlpCollector.TraceService.ITraceServiceClient traceServiceClient = null)
-            : base(options)
+        /// <param name="options">Configuration options for the export.</param>
+        /// <param name="exportClient">Client used for sending export request.</param>
+        internal OtlpTraceExporter(OtlpExporterOptions options, IExportClient<OtlpCollector.ExportTraceServiceRequest> exportClient = null)
         {
-            if (traceServiceClient != null)
+            if (exportClient != null)
             {
-                this.traceClient = traceServiceClient;
+                this.exportClient = exportClient;
             }
             else
             {
-                this.Channel = options.CreateChannel();
-                this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.Channel);
+                this.exportClient = options.GetTraceExportClient();
             }
         }
+
+        internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
 
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> activityBatch)
@@ -65,20 +67,16 @@ namespace OpenTelemetry.Exporter
             // Prevents the exporter's gRPC and HTTP operations from being instrumented.
             using var scope = SuppressInstrumentationScope.Begin();
 
-            OtlpCollector.ExportTraceServiceRequest request = new OtlpCollector.ExportTraceServiceRequest();
+            var request = new OtlpCollector.ExportTraceServiceRequest();
 
             request.AddBatch(this.ProcessResource, activityBatch);
-            var deadline = DateTime.UtcNow.AddMilliseconds(this.Options.TimeoutMilliseconds);
 
             try
             {
-                this.traceClient.Export(request, headers: this.Headers, deadline: deadline);
-            }
-            catch (RpcException ex)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(ex);
-
-                return ExportResult.Failure;
+                if (!this.exportClient.SendExportRequest(request))
+                {
+                    return ExportResult.Failure;
+                }
             }
             catch (Exception ex)
             {
@@ -92,6 +90,12 @@ namespace OpenTelemetry.Exporter
             }
 
             return ExportResult.Success;
+        }
+
+        /// <inheritdoc />
+        protected override bool OnShutdown(int timeoutMilliseconds)
+        {
+            return this.exportClient?.Shutdown(timeoutMilliseconds) ?? true;
         }
     }
 }

@@ -24,7 +24,6 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
     using System.Threading;
     using System.Threading.Tasks;
     using System.Web;
-    using OpenTelemetry.Context;
     using OpenTelemetry.Context.Propagation;
     using Xunit;
 

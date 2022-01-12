@@ -100,7 +100,8 @@ namespace OpenTelemetry.Tests
             {
                 try
                 {
-                    this.listener?.Stop();
+                    this.listener.Close();
+                    this.httpListenerTask?.Wait();
                 }
                 catch (ObjectDisposedException)
                 {

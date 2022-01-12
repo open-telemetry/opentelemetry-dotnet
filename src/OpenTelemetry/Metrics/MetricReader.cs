@@ -17,71 +17,113 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
-    public abstract class MetricReader : IDisposable
+    /// <summary>
+    /// MetricReader which does not deal with individual metrics.
+    /// </summary>
+    public abstract partial class MetricReader : IDisposable
     {
-        private const AggregationTemporality CumulativeAndDelta = AggregationTemporality.Cumulative | AggregationTemporality.Delta;
-        private AggregationTemporality preferredAggregationTemporality = CumulativeAndDelta;
-        private AggregationTemporality supportedAggregationTemporality = CumulativeAndDelta;
+        private const AggregationTemporality AggregationTemporalityUnspecified = (AggregationTemporality)0;
+        private readonly object newTaskLock = new object();
+        private readonly object onCollectLock = new object();
+        private readonly TaskCompletionSource<bool> shutdownTcs = new TaskCompletionSource<bool>();
+        private AggregationTemporality temporality = AggregationTemporalityUnspecified;
         private int shutdownCount;
+        private TaskCompletionSource<bool> collectionTcs;
 
         public BaseProvider ParentProvider { get; private set; }
 
-        public AggregationTemporality PreferredAggregationTemporality
+        public AggregationTemporality Temporality
         {
-            get => this.preferredAggregationTemporality;
-            set
+            get
             {
-                ValidateAggregationTemporality(value, this.supportedAggregationTemporality);
-                this.preferredAggregationTemporality = value;
-            }
-        }
+                if (this.temporality == AggregationTemporalityUnspecified)
+                {
+                    this.temporality = AggregationTemporality.Cumulative;
+                }
 
-        public AggregationTemporality SupportedAggregationTemporality
-        {
-            get => this.supportedAggregationTemporality;
+                return this.temporality;
+            }
+
             set
             {
-                ValidateAggregationTemporality(this.preferredAggregationTemporality, value);
-                this.supportedAggregationTemporality = value;
+                if (this.temporality != AggregationTemporalityUnspecified)
+                {
+                    throw new NotSupportedException($"The temporality cannot be modified (the current value is {this.temporality}).");
+                }
+
+                this.temporality = value;
             }
         }
 
         /// <summary>
         /// Attempts to collect the metrics, blocks the current thread until
-        /// metrics collection completed or timed out.
+        /// metrics collection completed, shutdown signaled or timed out.
         /// </summary>
         /// <param name="timeoutMilliseconds">
         /// The number (non-negative) of milliseconds to wait, or
         /// <c>Timeout.Infinite</c> to wait indefinitely.
         /// </param>
         /// <returns>
-        /// Returns <c>true</c> when metrics collection succeeded; otherwise, <c>false</c>.
+        /// Returns <c>true</c> when metrics collection succeeded; otherwise,
+        /// <c>false</c>.
         /// </returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentOutOfRangeException">
         /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
         /// </exception>
         /// <remarks>
-        /// This function guarantees thread-safety.
+        /// This function guarantees thread-safety. If multiple calls occurred
+        /// simultaneously, they might get folded and result in less calls to
+        /// the <c>OnCollect</c> callback for improved performance, as long as
+        /// the semantic can be preserved.
         /// </remarks>
         public bool Collect(int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
+            Guard.ThrowIfInvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
+
+            var shouldRunCollect = false;
+            var tcs = this.collectionTcs;
+
+            if (tcs == null)
             {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
+                lock (this.newTaskLock)
+                {
+                    tcs = this.collectionTcs;
+
+                    if (tcs == null)
+                    {
+                        shouldRunCollect = true;
+                        tcs = new TaskCompletionSource<bool>();
+                        this.collectionTcs = tcs;
+                    }
+                }
             }
 
+            if (!shouldRunCollect)
+            {
+                return Task.WaitAny(tcs.Task, this.shutdownTcs.Task, Task.Delay(timeoutMilliseconds)) == 0 ? tcs.Task.Result : false;
+            }
+
+            var result = false;
             try
             {
-                return this.OnCollect(timeoutMilliseconds);
+                lock (this.onCollectLock)
+                {
+                    this.collectionTcs = null;
+                    result = this.OnCollect(timeoutMilliseconds);
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Collect), ex);
-                return false;
+                OpenTelemetrySdkEventSource.Log.MetricReaderException(nameof(this.Collect), ex);
             }
+
+            tcs.TrySetResult(result);
+            return result;
         }
 
         /// <summary>
@@ -95,7 +137,7 @@ namespace OpenTelemetry.Metrics
         /// <returns>
         /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentOutOfRangeException">
         /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
         /// </exception>
         /// <remarks>
@@ -104,25 +146,25 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         public bool Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
-            }
+            Guard.ThrowIfInvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
-            if (Interlocked.Increment(ref this.shutdownCount) > 1)
+            if (Interlocked.CompareExchange(ref this.shutdownCount, 1, 0) != 0)
             {
                 return false; // shutdown already called
             }
 
+            var result = false;
             try
             {
-                return this.OnShutdown(timeoutMilliseconds);
+                result = this.OnShutdown(timeoutMilliseconds);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // TODO: OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Shutdown), ex);
-                return false;
+                OpenTelemetrySdkEventSource.Log.MetricReaderException(nameof(this.Shutdown), ex);
             }
+
+            this.shutdownTcs.TrySetResult(result);
+            return result;
         }
 
         /// <inheritdoc/>
@@ -149,7 +191,10 @@ namespace OpenTelemetry.Metrics
         /// Returns <c>true</c> when metrics processing succeeded; otherwise,
         /// <c>false</c>.
         /// </returns>
-        protected abstract bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds);
+        internal virtual bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
+        {
+            return true;
+        }
 
         /// <summary>
         /// Called by <c>Collect</c>. This function should block the current
@@ -165,18 +210,21 @@ namespace OpenTelemetry.Metrics
         /// <c>false</c>.
         /// </returns>
         /// <remarks>
-        /// This function is called synchronously on the thread which called
-        /// <c>Collect</c>. This function should be thread-safe, and should
-        /// not throw exceptions.
+        /// This function is called synchronously on the threads which called
+        /// <c>Collect</c>. This function should not throw exceptions.
         /// </remarks>
         protected virtual bool OnCollect(int timeoutMilliseconds)
         {
-            var sw = Stopwatch.StartNew();
+            var sw = timeoutMilliseconds == Timeout.Infinite
+                ? null
+                : Stopwatch.StartNew();
 
-            var collectMetric = this.ParentProvider.GetMetricCollect();
-            var metrics = collectMetric();
+            var collectObservableInstruments = this.ParentProvider.GetObservableInstrumentCollectCallback();
+            collectObservableInstruments?.Invoke();
 
-            if (timeoutMilliseconds == Timeout.Infinite)
+            var metrics = this.GetMetricsBatch();
+
+            if (sw == null)
             {
                 return this.ProcessMetrics(metrics, Timeout.Infinite);
             }
@@ -224,37 +272,6 @@ namespace OpenTelemetry.Metrics
         /// </param>
         protected virtual void Dispose(bool disposing)
         {
-        }
-
-        private static void ValidateAggregationTemporality(AggregationTemporality preferred, AggregationTemporality supported)
-        {
-            if ((int)(preferred & CumulativeAndDelta) == 0)
-            {
-                throw new ArgumentException($"PreferredAggregationTemporality has an invalid value {preferred}.", nameof(preferred));
-            }
-
-            if ((int)(supported & CumulativeAndDelta) == 0)
-            {
-                throw new ArgumentException($"SupportedAggregationTemporality has an invalid value {supported}.", nameof(supported));
-            }
-
-            /*
-            | Preferred  | Supported  | Valid |
-            | ---------- | ---------- | ----- |
-            | Both       | Both       | true  |
-            | Both       | Cumulative | false |
-            | Both       | Delta      | false |
-            | Cumulative | Both       | true  |
-            | Cumulative | Cumulative | true  |
-            | Cumulative | Delta      | false |
-            | Delta      | Both       | true  |
-            | Delta      | Cumulative | false |
-            | Delta      | Delta      | true  |
-            */
-            if ((int)(preferred & supported) == 0 || preferred > supported)
-            {
-                throw new ArgumentException($"PreferredAggregationTemporality {preferred} and SupportedAggregationTemporality {supported} are incompatible.");
-            }
         }
     }
 }

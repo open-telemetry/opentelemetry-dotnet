@@ -30,11 +30,13 @@ namespace Examples.Console
     {
         internal static object Run(MetricsOptions options)
         {
+            using var meter = new Meter("TestMeter");
+
             var providerBuilder = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("myservice"))
-                .AddSource("TestMeter"); // All instruments from this meter are enabled.
+                .AddMeter(meter.Name); // All instruments from this meter are enabled.
 
-            if (options.UseExporter.ToLower() == "otlp")
+            if (options.UseExporter.Equals("otlp", StringComparison.OrdinalIgnoreCase))
             {
                 /*
                  * Prerequisite to run this example:
@@ -59,14 +61,15 @@ namespace Examples.Console
                  */
 
                 // Adding the OtlpExporter creates a GrpcChannel.
-                // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
+                // This switch must be set before creating a GrpcChannel when calling an insecure gRPC service.
                 // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
                 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
                 providerBuilder
                     .AddOtlpExporter(o =>
                     {
-                        o.MetricExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
+                        o.MetricReaderType = MetricReaderType.Periodic;
+                        o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
                         o.AggregationTemporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                     });
             }
@@ -75,14 +78,13 @@ namespace Examples.Console
                 providerBuilder
                     .AddConsoleExporter(o =>
                     {
-                        o.MetricExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
+                        o.MetricReaderType = MetricReaderType.Periodic;
+                        o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
                         o.AggregationTemporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                     });
             }
 
             using var provider = providerBuilder.Build();
-
-            using var meter = new Meter("TestMeter", "0.0.1");
 
             Counter<int> counter = null;
             if (options.FlagCounter ?? true)
@@ -98,7 +100,7 @@ namespace Examples.Console
 
             if (options.FlagGauge ?? false)
             {
-                var observableCounter = meter.CreateObservableGauge<int>("gauge", () =>
+                var observableCounter = meter.CreateObservableGauge("gauge", () =>
                 {
                     return new List<Measurement<int>>()
                     {

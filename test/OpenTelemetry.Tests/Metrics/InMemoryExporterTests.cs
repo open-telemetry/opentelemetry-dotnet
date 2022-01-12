@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests
@@ -26,47 +27,43 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact(Skip = "To be run after https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361 is fixed")]
         public void InMemoryExporterShouldDeepCopyMetricPoints()
         {
-            var meter = new Meter("InMemoryExporterTests", "1.0");
-
             var exportedItems = new List<Metric>();
-            using var inMemoryReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
-            {
-                PreferredAggregationTemporality = AggregationTemporality.Delta,
-            };
 
+            using var meter = new Meter(Utils.GetCurrentMethodName());
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddSource("InMemoryExporterTests")
-            .AddMetricReader(inMemoryReader)
-            .Build();
+                .AddMeter(meter.Name)
+                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                {
+                    Temporality = AggregationTemporality.Delta,
+                })
+                .Build();
 
             var counter = meter.CreateCounter<long>("meter");
 
             // Emit 10 for the MetricPoint with a single key-vaue pair: ("tag1", "value1")
             counter.Add(10, new KeyValuePair<string, object>("tag1", "value1"));
 
-            // Pull metric data from AggregatorStore
-            inMemoryReader.Collect();
+            meterProvider.ForceFlush();
 
             var metric = exportedItems[0]; // Only one Metric object is added to the collection at this point
             var metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
-            ref var metricPointForFirstExport = ref metricPointsEnumerator.Current;
-            Assert.Equal(10, metricPointForFirstExport.LongValue);
+            ref readonly var metricPointForFirstExport = ref metricPointsEnumerator.Current;
+            Assert.Equal(10, metricPointForFirstExport.GetSumLong());
 
             // Emit 25 for the MetricPoint with a single key-vaue pair: ("tag1", "value1")
             counter.Add(25, new KeyValuePair<string, object>("tag1", "value1"));
 
-            // Pull metric data from AggregatorStore
-            inMemoryReader.Collect();
+            meterProvider.ForceFlush();
 
             metric = exportedItems[1]; // Second Metric object is added to the collection at this point
             metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
             var metricPointForSecondExport = metricPointsEnumerator.Current;
-            Assert.Equal(25, metricPointForSecondExport.LongValue);
+            Assert.Equal(25, metricPointForSecondExport.GetSumLong());
 
             // MetricPoint.LongValue for the first exporter metric should still be 10
-            Assert.Equal(10, metricPointForFirstExport.LongValue);
+            Assert.Equal(10, metricPointForFirstExport.GetSumLong());
         }
     }
 }

@@ -14,9 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -30,17 +30,10 @@ namespace OpenTelemetry.Metrics
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddInMemoryExporter(this MeterProviderBuilder builder, ICollection<Metric> exportedItems)
         {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.ThrowIfNull(builder, nameof(builder));
+            Guard.ThrowIfNull(exportedItems, nameof(exportedItems));
 
-            if (exportedItems == null)
-            {
-                throw new ArgumentNullException(nameof(exportedItems));
-            }
-
-            return builder.AddMetricReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems)));
+            return builder.AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems)));
         }
     }
 }

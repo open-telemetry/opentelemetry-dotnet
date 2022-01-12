@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc8
+
+Released 2021-Oct-08
+
 * Removes .NET Framework 4.5.2, .NET 4.6 support. The minimum .NET Framework
   version supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
 

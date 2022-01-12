@@ -22,11 +22,12 @@ not covered by the built-in exporters:
 * Exporters should derive from `OpenTelemetry.BaseExporter<Activity>` (which
   belongs to the [OpenTelemetry](../../../src/OpenTelemetry/README.md) package)
   and implement the `Export` method.
-* Exporters can optionally implement the `OnShutdown` method.
+* Exporters can optionally implement the `OnForceFlush` and `OnShutdown` method.
 * Depending on user's choice and load on the application, `Export` may get
   called with one or more activities.
 * Exporters will only receive sampled-in and ended activities.
-* Exporters should not throw exceptions from `Export` and `OnShutdown`.
+* Exporters should not throw exceptions from `Export`, `OnForceFlush` and
+  `OnShutdown`.
 * Exporters should not modify activities they receive (the same activity may be
   exported again by different exporter).
 * Exporters are responsible for any retry logic needed by the scenario. The SDK
@@ -250,13 +251,13 @@ When using such a filtering processor, instead of using extension method to
 register the exporter, they must be registered manually as shown below:
 
 ```csharp
-    using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-        .SetSampler(new MySampler())
-        .AddSource("OTel.Demo")
-        .AddProcessor(new MyFilteringProcessor(
-            new SimpleActivityExportProcessor(new MyExporter("ExporterX")),
-            (act) => true))
-        .Build();
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .SetSampler(new MySampler())
+    .AddSource("OTel.Demo")
+    .AddProcessor(new MyFilteringProcessor(
+        new SimpleActivityExportProcessor(new MyExporter("ExporterX")),
+        (act) => true))
+    .Build();
 ```
 
 Most [instrumentation libraries](#instrumentation-library) shipped from this

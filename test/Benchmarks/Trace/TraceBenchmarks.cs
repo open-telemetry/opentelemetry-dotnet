@@ -97,6 +97,18 @@ namespace Benchmarks.Trace
                 .AddLegacySource("TestOperationName2")
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
+
+            Sdk.CreateTracerProviderBuilder()
+                .SetSampler(new AlwaysOnSampler())
+                .AddLegacySource("ExactMatch.OperationName1")
+                .AddProcessor(new DummyActivityProcessor())
+                .Build();
+
+            Sdk.CreateTracerProviderBuilder()
+                .SetSampler(new AlwaysOnSampler())
+                .AddLegacySource("WildcardMatch.*")
+                .AddProcessor(new DummyActivityProcessor())
+                .Build();
         }
 
         [Benchmark]
@@ -171,6 +183,22 @@ namespace Benchmarks.Trace
         public void TwoInstrumentations()
         {
             using (var activity = this.sourceWithTwoLegacyActivityOperationNameSubscriptions.StartActivity("Benchmark"))
+            {
+            }
+        }
+
+        [Benchmark]
+        public void LegacyActivity_ExactMatchMode()
+        {
+            using (var activity = new Activity("ExactMatch.OperationName1").Start())
+            {
+            }
+        }
+
+        [Benchmark]
+        public void LegacyActivity_WildcardMatchMode()
+        {
+            using (var activity = new Activity("WildcardMatch.OperationName1").Start())
             {
             }
         }

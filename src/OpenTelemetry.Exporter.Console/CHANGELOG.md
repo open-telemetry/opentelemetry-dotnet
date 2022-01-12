@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 1.2.0-rc1
+
+Released 2021-Nov-29
+
+* Added configuration options for `MetricReaderType` to allow for configuring
+  the `ConsoleMetricExporter` to export either manually or periodically.
+  ([#2648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2648))
+
+## 1.2.0-beta2
+
+Released 2021-Nov-19
+
+## 1.2.0-beta1
+
+Released 2021-Oct-08
+
 ## 1.2.0-alpha4
 
 Released 2021-Sep-23
