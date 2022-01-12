@@ -109,7 +109,7 @@ namespace OpenTelemetry.Resources
 
         private static object SanitizeValue(object value, string keyName)
         {
-            Guard.Null(keyName, nameof(keyName));
+            Guard.ThrowIfNull(keyName, nameof(keyName));
 
             return value switch
             {

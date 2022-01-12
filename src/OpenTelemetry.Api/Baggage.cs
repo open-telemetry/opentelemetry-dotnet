@@ -239,7 +239,7 @@ namespace OpenTelemetry
         /// <returns>Baggage item or <see langword="null"/> if nothing was found.</returns>
         public string GetBaggage(string name)
         {
-            Guard.NullOrEmpty(name, nameof(name));
+            Guard.ThrowIfNullOrEmpty(name, nameof(name));
 
             return this.baggage != null && this.baggage.TryGetValue(name, out string value)
                 ? value

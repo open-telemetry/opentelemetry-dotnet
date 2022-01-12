@@ -34,7 +34,7 @@ namespace OpenTelemetry.Metrics
 
         public CompositeMetricReader(IEnumerable<MetricReader> readers)
         {
-            Guard.Null(readers, nameof(readers));
+            Guard.ThrowIfNull(readers, nameof(readers));
 
             using var iter = readers.GetEnumerator();
             if (!iter.MoveNext())
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Metrics
 
         public CompositeMetricReader AddReader(MetricReader reader)
         {
-            Guard.Null(reader, nameof(reader));
+            Guard.ThrowIfNull(reader, nameof(reader));
 
             var node = new DoublyLinkedListNode(reader)
             {
