@@ -21,14 +21,7 @@ Any exceptions to this are noted in the individual `README.md` files.
 
 ## Getting Started
 
-[Draft] As an application owner or a library author, you can find the getting started
-guide and reference documentation at [opentelemetry-dotnet.readthedocs.io](https://opentelemetry-dotnet.readthedocs.io/)
-
-If you are new here, please read the getting started docs:
-
-* [logs](./docs/logs/getting-started/README.md)
-* [metrics](./docs/metrics/getting-started/README.md) (experimental)
-* [trace](./docs/trace/getting-started/README.md)
+If you are new here, please read the [getting started docs](https://opentelemetry-dotnet.readthedocs.io/)
 
 This repository includes multiple installable components, available on
 [NuGet](https://www.nuget.org/profiles/OpenTelemetry). Each component has its

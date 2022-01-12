@@ -39,22 +39,20 @@ Exception has occurred.
 While using `Activity` API, the common pattern would be:
 
 ```csharp
-using (var activity = MyActivitySource.StartActivity("Foo"))
+using var activity = MyActivitySource.StartActivity("Foo");
+try
 {
-    try
-    {
-        Func();
-    }
-    catch (SomeException ex)
-    {
-        activity?.SetStatus(Status.Error);
-        DoSomething();
-    }
-    catch (Exception ex)
-    {
-        activity?.SetStatus(Status.Error);
-        throw;
-    }
+    Func();
+}
+catch (SomeException ex)
+{
+    activity?.SetStatus(Status.Error);
+    DoSomething();
+}
+catch (Exception ex)
+{
+    activity?.SetStatus(Status.Error);
+    throw;
 }
 ```
 
@@ -86,16 +84,14 @@ exception message as the Status description. The following code shows how to do
 that:
 
 ```csharp
-using (var activity = MyActivitySource.StartActivity("Foo"))
+using var activity = MyActivitySource.StartActivity("Foo");
+try
 {
-    try
-    {
-        Func();
-    }
-    catch (SomeException ex)
-    {
-        activity?.SetStatus(Status.Error.WithDescription(ex.message));
-    }
+    Func();
+}
+catch (SomeException ex)
+{
+    activity?.SetStatus(Status.Error.WithDescription(ex.message));
 }
 ```
 
@@ -110,17 +106,15 @@ convention](https://github.com/open-telemetry/opentelemetry-specification/blob/m
 as shown below:
 
 ```csharp
-using (var activity = MyActivitySource.StartActivity("Foo"))
+using var activity = MyActivitySource.StartActivity("Foo");
+try
 {
-    try
-    {
-        Func();
-    }
-    catch (SomeException ex)
-    {
-        activity?.SetStatus(Status.Error.WithDescription(ex.message));
-        activity?.RecordException(ex);
-    }
+    Func();
+}
+catch (SomeException ex)
+{
+    activity?.SetStatus(Status.Error.WithDescription(ex.message));
+    activity?.RecordException(ex);
 }
 ```
 
