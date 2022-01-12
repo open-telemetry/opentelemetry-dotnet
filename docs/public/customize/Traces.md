@@ -34,13 +34,22 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder().Build();
 
 ## TracerProvider configuration
 
-`TracerProvider` holds the tracing configuration, which includes the following:
+`TracerProvider` holds the tracing configuration, which includes the following
 
 - The list of `ActivitySource`s (aka Tracers) from which traces are collected.
-- The list of instrumentations enabled via [InstrumentationLibrary](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library).
-- The list of [Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#span-processor), including exporting processors which exports traces to [Exporters](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#span-exporter)
-- The [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md) associated with the traces.
-- The [Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler) to be used.
+- The list of instrumentations enabled via
+  [InstrumentationLibrary](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library)
+  .
+- The list of
+  [Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#span-processor)
+  , including exporting processors which exports traces to
+  [Exporters](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#span-exporter)
+- The
+  [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
+  associated with the traces.
+- The
+  [Sampler](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler)
+  to be used.
 
 ### Activity Source
 
@@ -76,7 +85,9 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-See [Program.cs](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/docs/trace/customizing-the-sdk/Program.cs) for a complete example.
+See
+[Program.cs](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/docs/trace/customizing-the-sdk/Program.cs)
+for a complete example.
 
 **Note**
 A common mistake while configuring `TracerProvider` is forgetting to add

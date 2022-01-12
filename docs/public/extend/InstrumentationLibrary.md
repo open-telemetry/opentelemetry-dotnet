@@ -1,27 +1,33 @@
 
 # Instrumentation Library
 
-The [inspiration of the OpenTelemetry project](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/overview.md#instrumentation-libraries) is to make every library observable out of the box by having them call OpenTelemetry API directly. However, many libraries will not have such integration, and as such there is a need for a separate library which would inject such calls, using mechanisms such as wrapping interfaces, subscribing to library-specific callbacks, or translating existing telemetry into OpenTelemetry model.
+The
+[inspiration of the OpenTelemetry project](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/overview.md#instrumentation-libraries)
+is to make every library observable out of the box by having them call
+OpenTelemetry API directly. However, many libraries will not have such
+integration, and as such there is a need for a separate library which would
+inject such calls, using mechanisms such as wrapping interfaces, subscribing to
+library-specific callbacks, or translating existing telemetry into
+OpenTelemetry model.
 
 A library which enables instrumentation for another library is called
-[Instrumentation
-Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library)
-and the library it instruments is called the [Instrumented
-Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumented-library).
+[Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library)
+and the library it instruments is called the
+[Instrumented Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumented-library).
 If a given library has built-in instrumentation with OpenTelemetry, then
 instrumented library and instrumentation library will be the same.
 
-The [OpenTelemetry .NET Github repo](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/README.md#getting-started) ships
-the following instrumentation libraries. The individual docs for them describes
-the library they instrument, and steps for enabling them.
+The
+[OpenTelemetry .NET Github repo](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/README.md#getting-started)
+ships the following instrumentation libraries. The individual docs for them
+describes the library they instrument, and steps for enabling them.
 
-* [ASP.NET](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.AspNet/README.md)
-* [ASP.NET Core](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
-* [gRPC client](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
-* [HTTP clients](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.Http/README.md)
-* [Redis
-  client](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
-* [SQL client](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.SqlClient/README.md)
+- [ASP.NET](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.AspNet/README.md)
+- [ASP.NET Core](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
+- [gRPC Client](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
+- [HTTP Client](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.Http/README.md)
+- [Redis Client](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
+- [SQL Client](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.SqlClient/README.md)
 
 More community contributed instrumentations are available in [OpenTelemetry .NET
 Contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src).
@@ -84,26 +90,24 @@ Writing an instrumentation library typically involves 3 steps.
    `TracerProviderBuilder`, to enable the instrumentation. This is optional, and
    the below guidance must be followed:
 
-    1. If the instrumentation library requires state management tied to that of
-       `TracerProvider`, then it must register itself with the provider with the
-       `AddInstrumentation` method on the `TracerProviderBuilder`. This causes
-       the instrumentation to be created and disposed along with
-       `TracerProvider`. If the above is required, then it must provide an
-       extension method on `TracerProviderBuilder`. Inside this extension
-       method, it should call the `AddInstrumentation` method, and `AddSource`
-       method to enable its ActivitySource for the provider. An example
-       instrumentation using this approach is [StackExchangeRedis
-       instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.StackExchangeRedis/TracerProviderBuilderExtensions.cs)
-
-    2. If the instrumentation library does not requires any state management
-       tied to that of `TracerProvider`, then providing `TracerProviderBuilder`
-       extension method is optional. If provided, then it must call `AddSource`
-       to enable its ActivitySource for the provider.
-
-    3. If instrumentation library does not require state management, and is not
-       providing extension method, then the name of the `ActivitySource` used by
-       the instrumented library must be documented so that end users can enable
-       it using `AddSource` method on `TracerProviderBuilder`.
+   1. If the instrumentation library requires state management tied to that of
+      `TracerProvider`, then it must register itself with the provider with the
+      `AddInstrumentation` method on the `TracerProviderBuilder`. This causes
+      the instrumentation to be created and disposed along with
+      `TracerProvider`. If the above is required, then it must provide an
+      extension method on `TracerProviderBuilder`. Inside this extension
+      method, it should call the `AddInstrumentation` method, and `AddSource`
+      method to enable its ActivitySource for the provider. An example
+      instrumentation using this approach is
+      [StackExchangeRedis Instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.StackExchangeRedis/TracerProviderBuilderExtensions.cs)
+   2. If the instrumentation library does not requires any state management
+      tied to that of `TracerProvider`, then providing `TracerProviderBuilder`
+      extension method is optional. If provided, then it must call `AddSource`
+      to enable its ActivitySource for the provider.
+   3. If instrumentation library does not require state management, and is not
+      providing extension method, then the name of the `ActivitySource` used by
+      the instrumented library must be documented so that end users can enable
+      it using `AddSource` method on `TracerProviderBuilder`.
 
 ## Instrumentation for libraries producing legacy Activity
 
@@ -119,11 +123,17 @@ activities does not by default runs through the sampler, and will have their
 with it.
 
 Some common examples of such libraries include
-[ASP.NET](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.AspNet/README.md), [ASP.NET Core](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore/README.md), [HTTP client .NET Core](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.Http/README.md) .
+[ASP.NET](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.AspNet/README.md)
+,
+[ASP.NET Core](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
+,
+[HTTP Client .NET Core](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Instrumentation.Http/README.md)
+.
 Instrumentation libraries for these are already provided in this repo. The
 [OpenTelemetry .NET Contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
 repostory also has instrumentations for libraries like
 [ElasticSearchClient](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Contrib.Instrumentation.ElasticsearchClient)
 etc. which fall in this category.
 
-If you are writing instrumentation for such library, it is recommended to refer to one of the above as a reference.
+If you are writing instrumentation for such library, it is recommended to refer
+to one of the above as a reference.

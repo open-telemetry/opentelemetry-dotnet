@@ -10,8 +10,10 @@ OpenTelemetry .NET SDK has provided the following built-in trace exporters
 
 [Exporter Requirements](./Introduction.md#ExporterRequirements)
 
-- Exporters should use `Activity.TagObjects` collection instead of `Activity.Tags` to obtain the full set of attributes (tags).
-- Exporters should use `ParentProvider.GetResource()` to get the `Resource` associated with the provider.
+- Exporters should use `Activity.TagObjects` collection instead of
+  `Activity.Tags` to obtain the full set of attributes (tags).
+- Exporters should use `ParentProvider.GetResource()` to get the `Resource`
+  associated with the provider.
 
 Here is a demo exporter which simply writes activity names to the console
 
@@ -47,16 +49,20 @@ Here is a demo processor
 
 ### Filtering Processor
 
-A common use case of writing custom processor is to filter Activities from being exported. Such a "FilteringProcessor" can be written as a wrapper around an underlying processor. Here is an example
+A common use case of writing custom processor is to filter Activities from
+being exported. Such a "FilteringProcessor" can be written as a wrapper around
+an underlying processor. Here is an example
 
 ```{literalinclude} ../../trace/extending-the-sdk/MyFilteringProcessor.cs
 :language: c#
 :lines: 17-
 ```
 
-When using such a filtering processor, instead of using extension method to register the exporter, they must be registered manually like this
+When using such a filtering processor, instead of using extension method to
+register the exporter, they must be registered manually like this
 
 <!-- TODO include from source code -->
+
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .SetSampler(new MySampler())

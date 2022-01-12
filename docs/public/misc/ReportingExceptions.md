@@ -2,9 +2,9 @@
 
 The following doc describes how to report Exceptions to OpenTelemetry tracing
 when user is manually creating `Activity`s. If the user is using one of the
-[instrumentation libraries](../extending-the-sdk/README.md#instrumentation-library), it may
-provide these functionalities automatically. Please refer to the respective
-documentation for guidance.
+[instrumentation libraries](../extending-the-sdk/README.md#instrumentation-library)
+, it may provide these functionalities automatically. Please refer to the
+respective documentation for guidance.
 
 ## User-handled Exception
 
@@ -136,7 +136,7 @@ through the unfinished activities and export them for troubleshooting. Here is
 one way of doing this
 
 <!-- TODO make source code -->
-<!-- markdownlint-disable MD013 -->
+
 ```csharp
 using System;
 using System.Diagnostics;
@@ -167,7 +167,9 @@ public class Program
         }
     }
 
-    private static void UnhandledExceptionHandler(object source, UnhandledExceptionEventArgs args)
+    private static void UnhandledExceptionHandler(
+        object source,
+        UnhandledExceptionEventArgs args)
     {
         var ex = (Exception)args.ExceptionObject;
 
@@ -182,6 +184,7 @@ public class Program
     }
 }
 ```
+
 <!-- markdownlint-enable MD013 -->
 
 **WARNING:** Use `AppDomain.UnhandledException` with caution. A throw in the

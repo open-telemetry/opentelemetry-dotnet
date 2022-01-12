@@ -3,9 +3,12 @@
 ## MeterProvider
 
 As shown in the [getting-started](../sdk/Metrics.md) doc, a valid
-[`MeterProvider`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#meterprovider) must be configured and built to collect metrics with OpenTelemetry .NET Sdk.
+[`MeterProvider`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#meterprovider)
+must be configured and built to collect metrics with OpenTelemetry .NET Sdk.
 
-`MeterProvider` holds all the configuration for metrics like MetricReaders, Views, etc. Naturally, almost all the customizations must be done on the `MeterProvider`.
+`MeterProvider` holds all the configuration for metrics like MetricReaders,
+Views, etc. Naturally, almost all the customizations must be done on the
+`MeterProvider`.
 
 ## Building a MeterProvider
 
@@ -34,10 +37,19 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder().Build();
 `MeterProvider` holds the metrics configuration, which includes the following
 
 - The list of `Meter`s from which instruments are created to report measurements.
-- The list of instrumentations enabled via [Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library).
-- The list of [MetricReaders](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricreader), including exporting readers which exports metrics to [Exporters](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricexporter)
-- The [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md) associated with the metrics.
-- The list of [Views](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view) to be used.
+- The list of instrumentations enabled via
+  [Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library)
+  .
+- The list of
+  [MetricReaders](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricreader)
+  , including exporting readers which exports metrics to
+  [Exporters](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricexporter)
+- The
+  [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
+  associated with the metrics.
+- The list of
+  [Views](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view)
+  to be used.
 
 ### Meter
 
@@ -77,7 +89,9 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .Build();
 ```
 
-See [Program.cs](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/docs/metrics/customizing-the-sdk/Program.cs) for a complete example.
+See
+[Program.cs](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/docs/metrics/customizing-the-sdk/Program.cs)
+for a complete example.
 
 **Note:** A common mistake while configuring `MeterProvider` is forgetting to
 add the required `Meter`s to the provider. It is recommended to leverage the
@@ -130,6 +144,7 @@ then it is recommended to simply not add that `Meter` using `AddMeter`.
 ```
 
 <!-- TODO add to source code -->
+
 ```csharp
     // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
     .AddView((instrument) =>
@@ -153,6 +168,7 @@ useful when you have a metric for which only a few of the dimensions associated
 with the metric are of interest to you.
 
 <!-- TODO use from source code -->
+
 ```csharp
     // Only choose "name" as the dimension for the metric "MyFruitCounter"
     .AddView(
@@ -187,6 +203,7 @@ with the metric are of interest to you.
 ```
 
 <!-- TODO use from source code -->
+
 ```csharp
     // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
     .AddView((instrument) =>
@@ -215,40 +232,42 @@ default boundaries. This requires the use of
 `ExplicitBucketHistogramConfiguration`.
 
 <!-- TODO use source code -->
-```csharp
-    // Change Histogram boundaries to count measurements under the following buckets:
-    // (-inf, 10]
-    // (10, 20]
-    // (20, +inf)
-    .AddView(
-        instrumentName: "MyHistogram",
-        new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { 10, 20 } })
 
-    // If you provide an empty `double` array as `Boundaries` to the `ExplicitBucketHistogramConfiguration`,
-    // the SDK will only export the sum and count for the measurements.
-    // There are no buckets exported in this case.
-    .AddView(
-        instrumentName: "MyHistogram",
-        new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { } })
+```csharp
+// Change Histogram boundaries to count measurements under the following buckets:
+// (-inf, 10]
+// (10, 20]
+// (20, +inf)
+.AddView(
+    instrumentName: "MyHistogram",
+    new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { 10, 20 } })
+
+// If you provide an empty `double` array as `Boundaries` to the `ExplicitBucketHistogramConfiguration`,
+// the SDK will only export the sum and count for the measurements.
+// There are no buckets exported in this case.
+.AddView(
+    instrumentName: "MyHistogram",
+    new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { } })
 ```
 
 <!-- TODO use source code -->
-```csharp
-    // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
-    .AddView((instrument) =>
-    {
-        if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
-            instrument.Name == "MyHistogram")
-        {
-            // `ExplicitBucketHistogramConfiguration` is a child class of `MetricStreamConfiguration`
-            return new ExplicitBucketHistogramConfiguration
-            {
-                Boundaries = new double[] { 10, 20 },
-            };
-        }
 
-        return null;
-    })
+```csharp
+// Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
+.AddView((instrument) =>
+{
+    if (instrument.Meter.Name == "CompanyA.ProductB.LibraryC" &&
+        instrument.Name == "MyHistogram")
+    {
+        // `ExplicitBucketHistogramConfiguration` is a child class of `MetricStreamConfiguration`
+        return new ExplicitBucketHistogramConfiguration
+        {
+            Boundaries = new double[] { 10, 20 },
+        };
+    }
+
+    return null;
+})
 ```
 
 **NOTE:** The SDK currently does not support any changes to `Aggregation` type
@@ -271,6 +290,7 @@ thereby reach the maximum `MetricStream` limit of `1`. The measurements from any
 susequent instruments added will be dropped.
 
 <!-- TODO use source code -->
+
 ```csharp
 using System.Diagnostics.Metrics;
 using OpenTelemetry;
@@ -317,6 +337,7 @@ these `MetricStream`s to `3`.
 
 <!-- TODO use source code -->
 <!-- markdownlint-disable MD013 -->
+
 ```csharp
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
@@ -338,7 +359,8 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
 // 3. (name:lemon, color:yellow)
 // 4. (name:apple, color:green)
 
-// Since the maximum number of `MetricPoint`s allowed is `3`, the SDK will only export measurements for the following three combinations:
+// Since the maximum number of `MetricPoint`s allowed is `3`, the SDK will only
+//   export measurements for the following three combinations:
 // 1. No key/value pair
 // 2. (name:apple, color:red)
 // 3. (name:lemon, color:yellow)
@@ -351,14 +373,17 @@ MyFruitCounter.Add(2, new("name", "apple"), new("color", "green")); // Not expor
 MyFruitCounter.Add(5, new("name", "apple"), new("color", "red")); // Exported
 MyFruitCounter.Add(4, new("name", "lemon"), new("color", "yellow")); // Exported
 
-// There are four distinct key/value combinations emitted for `AnotherFruitCounter`:
+// There are four distinct key/value combinations emitted for
+//   `AnotherFruitCounter`:
 // 1. (name:kiwi)
 // 2. (name:banana, color:yellow)
 // 3. (name:mango, color:yellow)
 // 4. (name:banana, color:green)
 
-// Since the maximum number of `MetricPoint`s allowed is `3`, the SDK will only export measurements for the following three combinations:
-// 1. No key/value pair (This is a special case. The SDK reserves a `MetricPoint` for it even if it's not explicitly emitted.)
+// Since the maximum number of `MetricPoint`s allowed is `3`, the SDK will only
+//   export measurements for the following three combinations:
+// 1. No key/value pair (This is a special case. The SDK reserves a
+//   `MetricPoint` for it even if it's not explicitly emitted.)
 // 2. (name:kiwi)
 // 3. (name:banana, color:yellow)
 
@@ -370,6 +395,7 @@ AnotherFruitCounter.Add(2, new("name", "banana"), new("color", "green")); // Not
 AnotherFruitCounter.Add(5, new("name", "banana"), new("color", "yellow")); // Exported
 AnotherFruitCounter.Add(4, new("name", "mango"), new("color", "yellow")); // Not exported
 ```
+
 <!-- markdownlint-enable MD013 -->
 
 **NOTE:** The above limit is *per* metric stream, and applies to all the metric
