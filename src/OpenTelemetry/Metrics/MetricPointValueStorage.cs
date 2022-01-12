@@ -22,15 +22,9 @@ namespace OpenTelemetry.Metrics
     internal struct MetricPointValueStorage
     {
         [FieldOffset(0)]
-        public long CurrentAsLong;
+        public long AsLong;
 
         [FieldOffset(0)]
-        public double CurrentAsDouble;
-
-        [FieldOffset(8)]
-        public long SnapshotAsLong;
-
-        [FieldOffset(8)]
-        public double SnapshotAsDouble;
+        public double AsDouble;
     }
 }
