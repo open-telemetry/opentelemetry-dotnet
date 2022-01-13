@@ -23,7 +23,8 @@ namespace OpenTelemetry.Metrics
     public sealed class Metric
     {
         internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 };
-        private AggregatorStore aggStore;
+
+        private readonly AggregatorStore aggStore;
 
         internal Metric(
             Instrument instrument,
@@ -38,7 +39,8 @@ namespace OpenTelemetry.Metrics
             this.Description = metricDescription ?? string.Empty;
             this.Unit = instrument.Unit ?? string.Empty;
             this.Meter = instrument.Meter;
-            AggregationType aggType = default;
+
+            AggregationType aggType;
             if (instrument.GetType() == typeof(ObservableCounter<long>)
                 || instrument.GetType() == typeof(ObservableCounter<int>)
                 || instrument.GetType() == typeof(ObservableCounter<short>)

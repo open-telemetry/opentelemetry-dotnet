@@ -54,16 +54,20 @@ namespace OpenTelemetry.Exporter
             get => this.httpListenerPrefixes;
             set
             {
+                _ = value ?? throw new ArgumentNullException(nameof(this.httpListenerPrefixes));
+
                 foreach (string inputUri in value)
                 {
                     if (!(Uri.TryCreate(inputUri, UriKind.Absolute, out var uri) &&
                         (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)))
                     {
-                        throw new ArgumentException("Prometheus server path should be a valid uri with http/https protocol.");
+                        throw new ArgumentException(
+                            "Prometheus server path should be a valid URI with http/https scheme.",
+                            nameof(this.httpListenerPrefixes));
                     }
-
-                    this.httpListenerPrefixes = value;
                 }
+
+                this.httpListenerPrefixes = value;
             }
         }
 
@@ -83,7 +87,7 @@ namespace OpenTelemetry.Exporter
             get => this.scrapeResponseCacheDurationMilliseconds;
             set
             {
-                Guard.Range(value, nameof(value), min: 0);
+                Guard.ThrowIfOutOfRange(value, nameof(value), min: 0);
 
                 this.scrapeResponseCacheDurationMilliseconds = value;
             }

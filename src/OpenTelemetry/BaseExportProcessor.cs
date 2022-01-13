@@ -35,7 +35,7 @@ namespace OpenTelemetry
         /// <param name="exporter">Exporter instance.</param>
         protected BaseExportProcessor(BaseExporter<T> exporter)
         {
-            Guard.Null(exporter, nameof(exporter));
+            Guard.ThrowIfNull(exporter, nameof(exporter));
 
             this.exporter = exporter;
         }

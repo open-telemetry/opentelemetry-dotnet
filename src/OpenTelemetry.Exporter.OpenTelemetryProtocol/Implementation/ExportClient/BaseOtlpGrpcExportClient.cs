@@ -30,8 +30,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     {
         protected BaseOtlpGrpcExportClient(OtlpExporterOptions options)
         {
-            Guard.Null(options, nameof(options));
-            Guard.InvalidTimeout(options.TimeoutMilliseconds, nameof(options.TimeoutMilliseconds));
+            Guard.ThrowIfNull(options, nameof(options));
+            Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds, nameof(options.TimeoutMilliseconds));
 
             ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options);
 
