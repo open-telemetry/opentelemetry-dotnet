@@ -56,7 +56,7 @@ namespace OpenTelemetry.Resources
         {
             Dictionary<string, object> resourceAttributes = new Dictionary<string, object>();
 
-            Guard.NullOrEmpty(serviceName, nameof(serviceName));
+            Guard.ThrowIfNullOrEmpty(serviceName, nameof(serviceName));
 
             resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceName, serviceName);
 

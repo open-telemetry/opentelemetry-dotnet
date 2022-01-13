@@ -33,7 +33,7 @@ namespace OpenTelemetry.Logs
         /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
         public static OpenTelemetryLoggerOptions AddOtlpExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<OtlpExporterOptions> configure = null)
         {
-            Guard.Null(loggerOptions);
+            Guard.ThrowIfNull(loggerOptions);
 
             return AddOtlpExporter(loggerOptions, new OtlpExporterOptions(), configure);
         }
