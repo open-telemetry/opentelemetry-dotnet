@@ -1,21 +1,120 @@
-# Prometheus Exporter for OpenTelemetry .NET
+# Application monitoring with Prometheus and Grafana via OpenTelemetry .NET PrometheusExporter
 
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.Prometheus.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Prometheus)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.Prometheus.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Prometheus)
 
-## Prerequisite
+- [Application monitoring with Prometheus and Grafana via OpenTelemetry .NET PrometheusExporter](#application-monitoring-with-prometheus-and-grafana-via-opentelemetry-net-prometheusexporter)
+  - [Introduction](#introduction)
+  - [Get Prometheus](#get-prometheus)
+  - [PrometheusExporter HTTP server](#prometheusexporter-http-server)
+    - [Configuration](#configuration)
+    - [Start Prometheus](#start-prometheus)
+    - [Configure OpenTelemetry to expose metrics to Prometheus endpoint](#configure-opentelemetry-to-expose-metrics-to-prometheus-endpoint)
+    - [Check results in Prometheus](#check-results-in-prometheus)
+    - [Query results with Grafana](#query-results-with-grafana)
+  - [Configure PrometheousExporter middleware](#configure-prometheousexporter-middleware)
+    - [Configure Prometheus Scraping Endpoint](#configure-prometheus-scraping-endpoint)
+  - [Configuration](#configuration-1)
+  - [Options Properties](#options-properties)
+  - [References](#references)
 
-* [Get Prometheus](https://prometheus.io/docs/introduction/first_steps/)
 
-## Steps to enable OpenTelemetry.Exporter.Prometheus
+## Introduction
+* [What is Prometheus?](https://prometheus.io/docs/introduction/overview/)
+* [Grafana support for Prometheus](https://prometheus.io/docs/visualization/grafana/#creating-a-prometheus-graph)
+## [Get Prometheus](https://prometheus.io/docs/introduction/first_steps/)
 
-### Step 1: Install Package
+## PrometheusExporter HTTP server
+### Configuration
 
-```shell
-dotnet add package OpenTelemetry.Exporter.Prometheus
+After downloading the [latest release](https://prometheus.io/download/), extract it to a local location of your liking. You will find the default prometheus configuration yaml file in the folder, named prometheus.yml. 
+
+Replace all the content with:
+```
+global:
+  scrape_interval: 10s
+  scrape_timeout: 10s
+  evaluation_interval: 10s
+scrape_configs:
+- job_name: OpenTelemetryTest
+  honor_timestamps: true
+  scrape_interval: 1s
+  scrape_timeout: 1s
+  metrics_path: /metrics
+  scheme: http
+  follow_redirects: true
+  static_configs:
+  - targets:
+    - localhost:9184
 ```
 
-### Step 2: Configure OpenTelemetry MeterProvider
+### Start Prometheus
+Follow the instructions [here](https://prometheus.io/docs/introduction/first_steps/#starting-prometheus) to start and verify prometheus server has been started successfully.
+
+Next, we are going to make some modifications to [Program.cs](../../docs/metrics/getting-started/Program.cs)
+to export our metrics to the endpoint that prometheus was configured to listen to.
+
+### Configure OpenTelemetry to expose metrics to Prometheus endpoint 
+
+Create a new console application and run it:
+
+```sh
+dotnet new console --output prometheus-http-server
+cd prometheus-http-server
+dotnet run
+```
+
+We will have to add a reference to Prometheus exporter to the prometheus-http-server application.
+
+```shell
+dotnet add package OpenTelemetry.Exporter.Prometheus --version 1.2.0-rc1
+```
+
+Now, replace all the code in `Program.cs` with:
+
+```csharp
+using System;
+using System.Diagnostics.Metrics;
+using System.Threading;
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+
+public class Program
+{
+    private static readonly Meter MyMeter = new Meter("MyCompany.MyProduct.MyLibrary", "1.0");
+    private static readonly Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
+
+    public static void Main(string[] args)
+    {
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter("MyCompany.MyProduct.MyLibrary")
+            .AddPrometheusExporter(opt =>
+            {
+                opt.StartHttpListener = true;
+                opt.HttpListenerPrefixes = new string[] { $"http://localhost:9184/" };
+            })
+            .Build();
+
+        Console.WriteLine("Press any key to exit");
+        while (!Console.KeyAvailable)
+        {
+            Thread.Sleep(1000);
+            MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
+            MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
+            MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow"));
+            MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
+            MyFruitCounter.Add(5, new("name", "apple"), new("color", "red"));
+            MyFruitCounter.Add(4, new("name", "lemon"), new("color", "yellow"));
+        }
+    }
+}
+```
+### Check results in Prometheus
+
+### Query results with Grafana
+
+
+## Configure PrometheousExporter middleware
 
 * When using OpenTelemetry.Extensions.Hosting package on .NET Core 3.1+:
 
@@ -26,18 +125,7 @@ dotnet add package OpenTelemetry.Exporter.Prometheus
     });
     ```
 
-* Or configure directly:
-
-    Call the `AddPrometheusExporter` `MeterProviderBuilder` extension to
-    register the Prometheus exporter.
-
-    ```csharp
-    using var meterProvider = Sdk.CreateMeterProviderBuilder()
-        .AddPrometheusExporter()
-        .Build();
-    ```
-
-### Step 3: Configure Prometheus Scraping Endpoint
+### Configure Prometheus Scraping Endpoint
 
 * On .NET Core 3.1+ register Prometheus scraping middleware using the
   `UseOpenTelemetryPrometheusScrapingEndpoint` extension:
