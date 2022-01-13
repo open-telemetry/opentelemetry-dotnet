@@ -92,6 +92,34 @@ namespace OpenTelemetry.Metrics.Tests
                .Build());
         }
 
+        [Fact]
+        public void AddViewWithNameThrowsInvalidArgumentExceptionWhenConflict()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter1 = new Meter("AddViewWithGuaranteedConflictThrowsInvalidArgumentException");
+
+            Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
+               .AddMeter(meter1.Name)
+               .AddView("instrumenta.*", name: "newname")
+               .AddInMemoryExporter(exportedItems)
+               .Build());
+        }
+
+        [Fact]
+        public void AddViewWithNameInMetricStreamConfigurationThrowsInvalidArgumentExceptionWhenConflict()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter1 = new Meter("AddViewWithGuaranteedConflictThrowsInvalidArgumentException");
+
+            Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
+               .AddMeter(meter1.Name)
+               .AddView("instrumenta.*", new MetricStreamConfiguration() { Name = "newname" })
+               .AddInMemoryExporter(exportedItems)
+               .Build());
+        }
+
         [Theory]
         [MemberData(nameof(MetricTestData.InvalidHistogramBoundaries), MemberType = typeof(MetricTestData))]
         public void AddViewWithInvalidHistogramBoundsThrowsArgumentException(double[] boundaries)
