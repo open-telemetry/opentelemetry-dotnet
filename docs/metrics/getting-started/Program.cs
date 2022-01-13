@@ -14,6 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+/*
+Export MyFruitCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
+(2021-09-23T22:00:08.4399776Z, 2021-09-23T22:00:08.4510115Z] color:red name:apple LongSum Value: 6
+(2021-09-23T22:00:08.4399776Z, 2021-09-23T22:00:08.4510115Z] color:yellow name:lemon LongSum Value: 7
+(2021-09-23T22:00:08.4399776Z, 2021-09-23T22:00:08.4510115Z] color:green name:apple LongSum Value: 2
+*/
+
 using System.Diagnostics.Metrics;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;

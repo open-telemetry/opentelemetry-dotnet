@@ -63,12 +63,11 @@ deeply nested `Activity` objects, or there are activities created in a 3rd party
 library.
 
 The following configuration will automatically detect exception and set the
-activity status to `Error`:
+activity status to `Error`
 
 ```csharp
 Sdk.CreateTracerProviderBuilder()
     .SetErrorStatusOnException()
-    // ...
 ```
 
 A complete example can be found [here](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/docs/trace/reporting-exceptions/Program.cs).
@@ -124,68 +123,21 @@ The term `Unhandled Exception` is used to describe exceptions that are not
 handled by the application. When an unhandled exception happened, the behavior
 will depend on the presence of a debugger
 
-* If there is no debugger, the exception will normally crash the process or
+- If there is no debugger, the exception will normally crash the process or
   terminate the thread.
-* If a debugger is attached, the debugger will be notified that an unhandled
+- If a debugger is attached, the debugger will be notified that an unhandled
   exception happened.
-* In case a postmortem debugger is configured, the postmortem debugger will be
+- In case a postmortem debugger is configured, the postmortem debugger will be
   activited and normally it will collect a crash dump.
 
 It might be useful to automatically capture the unhandled exceptions, travel
 through the unfinished activities and export them for troubleshooting. Here is
 one way of doing this
 
-<!-- TODO make source code -->
-
-```csharp
-using System;
-using System.Diagnostics;
-using OpenTelemetry;
-using OpenTelemetry.Trace;
-
-public class Program
-{
-    private static readonly ActivitySource MyActivitySource = new ActivitySource("MyCompany.MyProduct.MyLibrary");
-
-    public static void Main()
-    {
-        AppDomain.CurrentDomain.UnhandledException += UnhandledExceptionHandler;
-
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddSource("MyCompany.MyProduct.MyLibrary")
-            .SetSampler(new AlwaysOnSampler())
-            .SetErrorStatusOnException()
-            .AddConsoleExporter()
-            .Build();
-
-        using (MyActivitySource.StartActivity("Foo"))
-        {
-            using (MyActivitySource.StartActivity("Bar"))
-            {
-                throw new Exception("Oops!");
-            }
-        }
-    }
-
-    private static void UnhandledExceptionHandler(
-        object source,
-        UnhandledExceptionEventArgs args)
-    {
-        var ex = (Exception)args.ExceptionObject;
-
-        var activity = Activity.Current;
-
-        while (activity != null)
-        {
-            activity.RecordException(ex);
-            activity.Dispose();
-            activity = activity.Parent;
-        }
-    }
-}
+```{literalinclude} ../../trace/reporting-exceptions/Program.cs
+:language: c#
+:lines: 17-
 ```
-
-<!-- markdownlint-enable MD013 -->
 
 **WARNING:** Use `AppDomain.UnhandledException` with caution. A throw in the
 handler puts the process into an unrecoverable state.

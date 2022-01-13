@@ -8,8 +8,9 @@ OpenTelemetry .NET SDK has provided the following built-in trace exporters
 - [Zipkin](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.Zipkin/README.md)
 - [OpenTelemetryProtocol](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
 
-[Exporter Requirements](./Introduction.md#ExporterRequirements)
+[Exporters](./Introduction.html#exporters)
 
+- Inherit from `OpenTelemetry.BaseExporter<Activity>`
 - Exporters should use `Activity.TagObjects` collection instead of
   `Activity.Tags` to obtain the full set of attributes (tags).
 - Exporters should use `ParentProvider.GetResource()` to get the `Resource`
@@ -37,6 +38,8 @@ This allows users to add the Exporter to the `TracerProvider` shown here
 ```
 
 ## Processor
+
+[Processors](./Introduction.html#processors)
 
 - Inherit from `OpenTelemetry.BaseProcessor<Activity>`
 

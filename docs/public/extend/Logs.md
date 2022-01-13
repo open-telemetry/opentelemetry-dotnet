@@ -2,7 +2,9 @@
 
 ## Exporter
 
-[Exporter Requirements](./Introduction.md#ExporterRequirements)
+[Exporters](./Introduction.html#exporters)
+
+- Inherit from `OpenTelemetry.BaseExporter<LogRecord>`
 
 Here is a demo exporter which simply writes log records to the console
 
@@ -26,6 +28,8 @@ This allows users to add the Exporter to the `OpenTelemetryLoggerOptions` shown 
 ```
 
 ## Processor
+
+[Processors](./Introduction.html#processors)
 
 - Inherit from `OpenTelemetry.BaseProcessor<LogRecord>`
 

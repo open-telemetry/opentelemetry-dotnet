@@ -26,6 +26,8 @@ public class Program
 
     public static void Main()
     {
+        AppDomain.CurrentDomain.UnhandledException += UnhandledExceptionHandler;
+
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("MyCompany.MyProduct.MyLibrary")
             .SetSampler(new AlwaysOnSampler())
@@ -33,19 +35,28 @@ public class Program
             .AddConsoleExporter()
             .Build();
 
-        try
+        using (MyActivitySource.StartActivity("Foo"))
         {
-            using (MyActivitySource.StartActivity("Foo"))
+            using (MyActivitySource.StartActivity("Bar"))
             {
-                using (MyActivitySource.StartActivity("Bar"))
-                {
-                    throw new Exception("Oops!");
-                }
+                throw new Exception("Oops!");
             }
         }
-        catch (Exception)
+    }
+
+    private static void UnhandledExceptionHandler(
+        object source,
+        UnhandledExceptionEventArgs args)
+    {
+        var ex = (Exception)args.ExceptionObject;
+
+        var activity = Activity.Current;
+
+        while (activity != null)
         {
-            // swallow the exception
+            activity.RecordException(ex);
+            activity.Dispose();
+            activity = activity.Parent;
         }
     }
 }

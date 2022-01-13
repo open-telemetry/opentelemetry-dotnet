@@ -17,7 +17,7 @@ These exporters work with all types of telemetry: logs, traces, and metrics.
 Items in the following list refers to either a log record, activity, or metric
 depending on what kind of exporter it is.
 
-- Exporters should derive from `OpenTelemetry.BaseExporter`
+- Exporters should derive from `OpenTelemetry.BaseExporter<T>`
   (which belongs to the
   [OpenTelemetry](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry/README.md)
   package) and implement the `Export` method.
@@ -51,7 +51,7 @@ Custom processors can be implemented to cover more scenarios
 
 ### Processor Requirements
 
-- Processors should inherit from `OpenTelemetry.BaseProcessor`
+- Processors should inherit from `OpenTelemetry.BaseProcessor<T>`
   (which belongs to the
   [OpenTelemetry](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry/README.md)
   package), and implement the `OnEnd` method.

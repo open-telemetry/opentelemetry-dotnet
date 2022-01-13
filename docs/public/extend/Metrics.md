@@ -2,7 +2,9 @@
 
 ## Exporter
 
-[Exporter Requirements](./Introduction.md#ExporterRequirements)
+[Exporters](./Introduction.html#exporters)
+
+- Inherit from `OpenTelemetry.BaseExporter<Metric>`
 
 Here is a demo exporter which simply writes metrics to the console
 
@@ -11,16 +13,24 @@ Here is a demo exporter which simply writes metrics to the console
 :lines: 17-
 ```
 
-## Reader
+Apart from the exporter itself, you should also provide extension methods like this
 
-```{literalinclude} ../../metrics/extending-the-sdk/MyReader.cs
+```{literalinclude} ../../metrics/extending-the-sdk/MyExporterExtensions.cs
 :language: c#
 :lines: 17-
 ```
 
-## Exemplar
+This allows users to add the Exporter to the `TracerProvider` shown here
 
 ```{literalinclude} ../../metrics/extending-the-sdk/Program.cs
 :language: c#
 :lines: 17-
 ```
+
+## Reader
+
+TBD
+
+## Exemplar
+
+TBD

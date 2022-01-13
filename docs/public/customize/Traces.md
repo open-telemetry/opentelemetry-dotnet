@@ -1,5 +1,7 @@
 # Traces
 
+This document is a work in progress.
+
 ## TracerProvider
 
 As shown in the [getting-started](../sdk/Traces.md) doc, a valid
@@ -70,6 +72,8 @@ It is not possible to add sources *after* the provider is built, by calling the
 `Build()` method on the `TracerProviderBuilder`.
 
 The snippet below shows how to add activity sources to the provider.
+
+<!-- todo include code from source -->
 
 ```csharp
 using OpenTelemetry;

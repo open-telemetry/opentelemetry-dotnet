@@ -37,6 +37,8 @@ is configured to subscribe to the activities from the source
 
 ## OpenTelemetry .NET and Relation with .NET Activity API
 
+<!-- TODO: similar comment is made at bottom of Prerequisites page -->
+
 If you tried the above program, you may have already noticed that the terms
 `ActivitySource` and `Activity` were used instead of `Tracer` and `Span` from
 OpenTelemetry specification. This results from the fact that,  OpenTelemetry
