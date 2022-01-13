@@ -342,3 +342,6 @@ ASALocalRun/
 /.sonarqube
 
 /src/LastMajorVersionBinaries
+
+# Sphinx Documentation
+/docs/public/_build
