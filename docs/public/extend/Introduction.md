@@ -23,10 +23,10 @@ depending on what kind of exporter it is.
   package) and implement the `Export` method.
 - Exporters can optionally implement the `OnShutdown` method.
 - Depending on user's choice and load on the application, `Export` may get
-  called with one or more items. TODO items being log records, activities, or
-  metrics.
-- Exporters will only receive sampled-in data. TODO Data being logs, activities
-  or metrics.
+  called with one or more items (log records, activities, or
+  metrics).
+- Exporters will only receive sampled-in data (log records, activities, or
+  metrics).
 - Exporters should not throw exceptions from `Export` and `OnShutdown`.
 - Exporters should not modify the `items` (log records, activities, metrics)
   they receive (the same `item` may be exported again by different exporter).
@@ -81,7 +81,7 @@ OpenTelemetry .NET SDK has provided the following built-in samplers
 
 ### Sampler Requirements
 
-- Samplers should inherit from `OpenTelemetry.Trace.Sampler` (TODO: log & metrics)
+- Samplers should inherit from `OpenTelemetry.Trace.Sampler`
   (which belongs to the
   [OpenTelemetry](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry/README.md)
   package), and implement the `ShouldSample` method.
