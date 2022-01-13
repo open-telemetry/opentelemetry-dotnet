@@ -14,13 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-/*
-Export MyFruitCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
-2021-09-23T03:17:30.6198292Z, 2021-09-23T03:17:30.6356517Z] color:redname:apple LongSum Value: 6
-2021-09-23T03:17:30.6198292Z, 2021-09-23T03:17:30.6356517Z] color:yellowname:lemon LongSum Value: 7
-2021-09-23T03:17:30.6198292Z, 2021-09-23T03:17:30.6356517Z] color:greenname:apple LongSum Value: 2
-*/
-
 using System.Diagnostics.Metrics;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -33,7 +26,7 @@ public class Program
     public static void Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddSource(MyMeter.Name)
+            .AddMeter("MyCompany.MyProduct.MyLibrary")
             .AddConsoleExporter()
             .Build();
 
