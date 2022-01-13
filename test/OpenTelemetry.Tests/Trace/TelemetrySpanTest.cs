@@ -67,5 +67,21 @@ namespace OpenTelemetry.Trace.Tests
             telemetrySpan.RecordException(null);
             Assert.Empty(activity.Events);
         }
+
+        [Fact]
+        public void ParentIds()
+        {
+            using var parentActivity = new Activity("parentOperation");
+            parentActivity.Start(); // can't generate the Id until the operation is started
+            using var parentSpan = new TelemetrySpan(parentActivity);
+
+            // ParentId should be unset
+            Assert.Equal(default, parentSpan.ParentSpanId);
+
+            using var childActivity = new Activity("childOperation").SetParentId(parentActivity.Id);
+            using var childSpan = new TelemetrySpan(childActivity);
+
+            Assert.Equal(parentSpan.Context.SpanId, childSpan.ParentSpanId);
+        }
     }
 }
