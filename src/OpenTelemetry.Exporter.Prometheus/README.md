@@ -1,9 +1,9 @@
-# Application monitoring with Prometheus and Grafana via OpenTelemetry .NET PrometheusExporter
+# Application monitoring with OpenTelemetry .NET PrometheusExporter via Prometheus and Grafana
 
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.Prometheus.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Prometheus)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.Prometheus.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Prometheus)
 
-- [Application monitoring with Prometheus and Grafana via OpenTelemetry .NET PrometheusExporter](#application-monitoring-with-prometheus-and-grafana-via-opentelemetry-net-prometheusexporter)
+- [Application monitoring with OpenTelemetry .NET PrometheusExporter via Prometheus and Grafana](#application-monitoring-with-opentelemetry-net-prometheusexporter-via-prometheus-and-grafana)
   - [Introduction](#introduction)
   - [Get Prometheus](#get-prometheus)
   - [PrometheusExporter HTTP server](#prometheusexporter-http-server)
@@ -22,7 +22,8 @@
 ## Introduction
 * [What is Prometheus?](https://prometheus.io/docs/introduction/overview/)
 * [Grafana support for Prometheus](https://prometheus.io/docs/visualization/grafana/#creating-a-prometheus-graph)
-## [Get Prometheus](https://prometheus.io/docs/introduction/first_steps/)
+## Get Prometheus
+Follow the first steps in [this]((https://prometheus.io/docs/introduction/first_steps/)) document.
 
 ## PrometheusExporter HTTP server
 ### Configuration
@@ -51,7 +52,7 @@ scrape_configs:
 ### Start Prometheus
 Follow the instructions [here](https://prometheus.io/docs/introduction/first_steps/#starting-prometheus) to start and verify prometheus server has been started successfully.
 
-Next, we are going to make some modifications to [Program.cs](../../docs/metrics/getting-started/Program.cs)
+Next, we are going to make some small tweaks to [Program.cs](../../docs/metrics/getting-started/Program.cs)
 to export our metrics to the endpoint that prometheus was configured to listen to.
 
 ### Configure OpenTelemetry to expose metrics to Prometheus endpoint 
@@ -70,7 +71,7 @@ We will have to add a reference to Prometheus exporter to the prometheus-http-se
 dotnet add package OpenTelemetry.Exporter.Prometheus --version 1.2.0-rc1
 ```
 
-Now, replace all the code in `Program.cs` with:
+Now, replace everything in `Program.cs` with:
 
 ```csharp
 using System;
@@ -110,6 +111,9 @@ public class Program
 }
 ```
 ### Check results in Prometheus
+Run the application and leave it running in the background. 
+Now we should be able to see the metrics at the endpoint we've configured in `Program.cs` and `prometheus.yml` file, in this case "http://localhost:9184/".
+![pic1](../../docs/metrics/prometheus-http-server/imgs/prom-1.png)
 
 ### Query results with Grafana
 
