@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+
 * Update default httpListenerPrefixes for PrometheusExporter to be <http://localhost:9184/>.
 ([2783](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2783))
 
