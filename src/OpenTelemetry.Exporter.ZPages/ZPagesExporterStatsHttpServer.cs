@@ -42,7 +42,7 @@ namespace OpenTelemetry.Exporter.ZPages
         /// <param name="exporter">The <see cref="ZPagesExporterStatsHttpServer"/> instance.</param>
         public ZPagesExporterStatsHttpServer(ZPagesExporter exporter)
         {
-            Guard.Null(exporter?.Options?.Url, $"{nameof(exporter)}?.{nameof(exporter.Options)}?.{nameof(exporter.Options.Url)}");
+            Guard.ThrowIfNull(exporter?.Options?.Url, $"{nameof(exporter)}?.{nameof(exporter.Options)}?.{nameof(exporter.Options.Url)}");
 
             this.httpListener.Prefixes.Add(exporter.Options.Url);
         }

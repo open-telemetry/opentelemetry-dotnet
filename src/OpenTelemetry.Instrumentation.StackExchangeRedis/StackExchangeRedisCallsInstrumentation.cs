@@ -59,7 +59,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis
         /// <param name="options">Configuration options for redis instrumentation.</param>
         public StackExchangeRedisCallsInstrumentation(IConnectionMultiplexer connection, StackExchangeRedisCallsInstrumentationOptions options)
         {
-            Guard.Null(connection, nameof(connection));
+            Guard.ThrowIfNull(connection, nameof(connection));
 
             this.options = options ?? new StackExchangeRedisCallsInstrumentationOptions();
 
