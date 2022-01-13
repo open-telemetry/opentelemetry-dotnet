@@ -240,7 +240,8 @@ default boundaries. This requires the use of
 // (20, +inf)
 .AddView(
     instrumentName: "MyHistogram",
-    new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { 10, 20 } })
+    new ExplicitBucketHistogramConfiguration {
+        Boundaries = new double[] { 10, 20 }})
 
 // If you provide an empty `double` array as `Boundaries` to the `ExplicitBucketHistogramConfiguration`,
 // the SDK will only export the sum and count for the measurements.

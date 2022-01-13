@@ -1,6 +1,7 @@
 # Instruments
 
-In the getting started document we saw an `Async Counter`, that's only one of the instruments.
+In the getting started document we saw a `Counter`, that's only one of the
+instruments.
 
 Here is an example program that uses the following instruments
 
