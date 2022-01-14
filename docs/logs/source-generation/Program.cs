@@ -33,10 +33,10 @@ public class Program
 
         logger.FoodRecallNotice(
             logLevel: LogLevel.Critical,
-            brandName: "Dole",
+            brandName: "Contoso",
             productDescription: "Salads",
             productType: "Food & Beverages",
             recallReasonDescription: "due to a possible health risk from Listeria monocytogenes",
-            companyName: "Dole Fresh Vegetables, Inc.");
+            companyName: "Contoso Fresh Vegetables, Inc.");
     }
 }
