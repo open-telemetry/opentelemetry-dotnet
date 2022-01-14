@@ -2,63 +2,19 @@
 
 Only for Maintainers.
 
- 1. Decide the tag name (version name) to be released.
-    eg: 1.0.0-rc2, 1.0.0 etc.
+## Prerequisites
 
- 2. Run the following PowerShell from the root of the
-    repo to get combined changelog (to be used later).
+- Install [GitHub CLI](https://cli.github.com/)
 
-    ```powershell
-        $changelogs = Get-ChildItem -Path . -Recurse -Filter changelog.md
-        foreach ($changelog in $changelogs)
-        {
-         Add-Content -Path .\combinedchangelog.md -Value "**$($changelog.Directory.Name)**"
-         $lines = Get-Content -Path $changelog.FullName
-         $started = $false
-         $ended = $false
-         foreach ($line in $lines)
-             {
-                if($line -like "## Unreleased" -and $started -ne $true)
-                {
-                  $started = $true
-                }
-                elseif($line -like "## *" -and $started -eq $true)
-                {
-                  $ended = $true
-                  break
-                }
-                else
-                {
-                    if ($started -eq $true)
-                    {
-                        Add-Content -Path .\combinedchangelog.md $line
-                    }
-                }
-             }
-        }
-    ```
+## Steps
 
-    This generates combined changelog to be used in Github release.
-    Once contents of combined changelog is saved somewhere,
-    delete the file.
+1. Decide the tag name (version name) to be released.
+   eg: 1.0.0-rc2, 1.0.0 etc.
 
- 3. Run the following PowerShell script from the root of the repo.
-    This updates all the changelog to have release date for the
-    current version being released.
-    Replace the version with actual version.
-    The actual version would be the tag name from step1.
+1. Obtain the API key from [nuget.org](#TODO) (Only maintainers have access)
 
-    ```powershell
-         $changelogs = Get-ChildItem -Path . -Recurse -Filter changelog.md
-        foreach ($changelog in $changelogs)
-        {
-         (Get-Content -Path $changelog.FullName) -replace "Unreleased", "Unreleased
-
-    ## 1.0.0-rc2
-
-    Released $(Get-Date -UFormat '%Y-%b-%d')" | Set-Content -Path $changelog.FullName
-        }
-    ```
+1. Run the following script from the root of the repository
+   `./build/Release.ps1 <TagName> <NuGetApiKey> <CoreComponents> <NonCoreComponents>`
 
  4. Submit PR with the above changes, and get it merged.
 
@@ -99,8 +55,6 @@ Only for Maintainers.
 10. Download latest [nuget.exe](https://www.nuget.org/downloads) into
     the same folder from step 9.
 
-11. Obtain the API key from nuget.org (Only maintainers have access)
-
 12. Run the following commands from PowerShell from local folder used in step 9:
 
     ```powershell
@@ -113,8 +67,6 @@ Only for Maintainers.
 
 13. Packages would be available in nuget.org in few minutes.
     Validate that the package is uploaded.
-
-14. Delete the API key generated in step 11.
 
 15. Make the Github release with tag from Step5
     and contents of combinedchangelog from Step2.
