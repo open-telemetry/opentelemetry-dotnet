@@ -659,7 +659,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         private static void CounterUpdateThread<T>(object obj)
-        where T : struct, IComparable
+            where T : struct, IComparable
         {
             if (obj is not UpdateThreadArguments<T> arguments)
             {
