@@ -31,11 +31,8 @@ namespace OpenTelemetry.Metrics
         private readonly HashSet<string> tagKeysInteresting;
         private readonly int tagsKeysInterestingCount;
 
-        private readonly ConcurrentDictionary<string[], string[]> tagKeyCombinations =
-            new ConcurrentDictionary<string[], string[]>(StringArrayComparer);
-
-        private readonly ConcurrentDictionary<object[], object[]> tagValueCombinations =
-            new ConcurrentDictionary<object[], object[]>(ObjectArrayComparer);
+        private readonly ConcurrentDictionary<Tags, Tags> sortedTagsDictionary =
+            new ConcurrentDictionary<Tags, Tags>();
 
         // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
         private readonly ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>> keyValue2MetricAggs =
@@ -186,12 +183,12 @@ namespace OpenTelemetry.Metrics
         private int LookupAggregatorStore(string[] tagKeys, object[] tagValues, int length)
         {
             int aggregatorIndex;
-            string[] sortedTagKeys = null;
-            object[] sortedTagValues = null;
             ConcurrentDictionary<object[], int> value2metrics;
 
+            var givenTags = new Tags(tagKeys, tagValues);
+
             // We only need to sort if there is more than one Tag Key.
-            if (!this.tagKeyCombinations.TryGetValue(tagKeys, out sortedTagKeys))
+            if (!this.sortedTagsDictionary.TryGetValue(givenTags, out var sortedTags))
             {
                 // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
                 var seqKey = new string[length];
@@ -199,6 +196,9 @@ namespace OpenTelemetry.Metrics
 
                 var seqValue = new object[length];
                 tagValues.CopyTo(seqValue, 0);
+
+                string[] sortedTagKeys;
+                object[] sortedTagValues;
 
                 if (length > 1)
                 {
@@ -218,45 +218,24 @@ namespace OpenTelemetry.Metrics
                     sortedTagValues = seqValue;
                 }
 
-                this.tagValueCombinations.TryAdd(seqValue, sortedTagValues);
-                this.tagKeyCombinations.TryAdd(seqKey, sortedTagKeys);
+                sortedTags = new Tags(sortedTagKeys, sortedTagValues);
+                this.sortedTagsDictionary.TryAdd(givenTags, sortedTags);
             }
 
             // GetOrAdd by the sorted Tag keys at 1st Level of 2-level dictionary structure.
             // Get back a Dictionary of [ Values x Metrics[] ].
-            if (!this.keyValue2MetricAggs.TryGetValue(sortedTagKeys, out value2metrics))
+            if (!this.keyValue2MetricAggs.TryGetValue(sortedTags.Keys, out value2metrics))
             {
                 value2metrics = new ConcurrentDictionary<object[], int>(ObjectArrayComparer);
-                if (!this.keyValue2MetricAggs.TryAdd(sortedTagKeys, value2metrics))
+                if (!this.keyValue2MetricAggs.TryAdd(sortedTags.Keys, value2metrics))
                 {
-                    this.keyValue2MetricAggs.TryGetValue(sortedTagKeys, out value2metrics);
+                    this.keyValue2MetricAggs.TryGetValue(sortedTags.Keys, out value2metrics);
                 }
-            }
-
-            if (!this.tagValueCombinations.TryGetValue(tagValues, out sortedTagValues))
-            {
-                var seqValue = new object[length];
-                tagValues.CopyTo(seqValue, 0);
-
-                if (length > 1)
-                {
-                    // Create a new array for the sorted Tag values.
-                    sortedTagValues = new object[length];
-                    tagValues.CopyTo(sortedTagValues, 0);
-
-                    Array.Sort(tagKeys, sortedTagValues);
-                }
-                else
-                {
-                    sortedTagValues = seqValue;
-                }
-
-                this.tagValueCombinations.TryAdd(seqValue, sortedTagValues);
             }
 
             // GetOrAdd by TagValues at 2st Level of 2-level dictionary structure.
             // Get back Metrics[].
-            if (!value2metrics.TryGetValue(sortedTagValues, out aggregatorIndex))
+            if (!value2metrics.TryGetValue(sortedTags.Values, out aggregatorIndex))
             {
                 aggregatorIndex = this.metricPointIndex;
                 if (aggregatorIndex >= this.maxMetricPoints)
@@ -271,7 +250,7 @@ namespace OpenTelemetry.Metrics
                 lock (value2metrics)
                 {
                     // check again after acquiring lock.
-                    if (!value2metrics.TryGetValue(sortedTagValues, out aggregatorIndex))
+                    if (!value2metrics.TryGetValue(sortedTags.Values, out aggregatorIndex))
                     {
                         aggregatorIndex = Interlocked.Increment(ref this.metricPointIndex);
                         if (aggregatorIndex >= this.maxMetricPoints)
@@ -285,12 +264,12 @@ namespace OpenTelemetry.Metrics
 
                         ref var metricPoint = ref this.metricPoints[aggregatorIndex];
                         var dt = DateTimeOffset.UtcNow;
-                        metricPoint = new MetricPoint(this.aggType, dt, sortedTagKeys, sortedTagValues, this.histogramBounds);
+                        metricPoint = new MetricPoint(this.aggType, dt, sortedTags.Keys, sortedTags.Values, this.histogramBounds);
 
                         // Add to dictionary *after* initializing MetricPoint
                         // as other threads can start writing to the
                         // MetricPoint, if dictionary entry found.
-                        value2metrics.TryAdd(sortedTagValues, aggregatorIndex);
+                        value2metrics.TryAdd(sortedTags.Values, aggregatorIndex);
                     }
                 }
             }
