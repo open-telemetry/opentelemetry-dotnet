@@ -306,33 +306,6 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
-        public void ViewToRenameMetricWildCardMatch()
-        {
-            using var meter = new Meter(Utils.GetCurrentMethodName());
-            var exportedItems = new List<Metric>();
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter.Name)
-                .AddView("counter*", "renamed")
-                .AddInMemoryExporter(exportedItems)
-                .Build();
-
-            // Expecting one metric stream.
-            var counter1 = meter.CreateCounter<long>("counterA");
-            counter1.Add(10);
-            var counter2 = meter.CreateCounter<long>("counterB");
-            counter2.Add(10);
-            var counter3 = meter.CreateCounter<long>("counterC");
-            counter3.Add(10);
-            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-
-            // counter* matches all 3 instruments which all
-            // becomes "renamed" and only 1st one is exported.
-            Assert.Single(exportedItems);
-            var metric = exportedItems[0];
-            Assert.Equal("renamed", metric.Name);
-        }
-
-        [Fact]
         public void ViewToProduceMultipleStreamsFromInstrument()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
