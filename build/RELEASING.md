@@ -2,67 +2,20 @@
 
 Only for Maintainers.
 
- 1. Decide the tag name (version name) to be released.
-    eg: 1.0.0-rc2, 1.0.0 etc.
+1. Decide the tag name (version name) to be released.
+   eg: 1.0.0-rc2, 1.0.0 etc.
 
- 2. Run the following PowerShell from the root of the
-    repo to get combined changelog (to be used later).
+1. Run the following PowerShell from the root of the
+   repo to get combined changelog (to be used later).
 
-    ```powershell
-        $changelogs = Get-ChildItem -Path . -Recurse -Filter changelog.md
-        foreach ($changelog in $changelogs)
-        {
-         Add-Content -Path .\combinedchangelog.md -Value "**$($changelog.Directory.Name)**"
-         $lines = Get-Content -Path $changelog.FullName
-         $started = $false
-         $ended = $false
-         foreach ($line in $lines)
-             {
-                if($line -like "## Unreleased" -and $started -ne $true)
-                {
-                  $started = $true
-                }
-                elseif($line -like "## *" -and $started -eq $true)
-                {
-                  $ended = $true
-                  break
-                }
-                else
-                {
-                    if ($started -eq $true)
-                    {
-                        Add-Content -Path .\combinedchangelog.md $line
-                    }
-                }
-             }
-        }
-    ```
+    `./build/todo.ps1 1.0.0-rc2 | Set-Clipboard`
 
     This generates combined changelog to be used in Github release.
-    Once contents of combined changelog is saved somewhere,
-    delete the file.
+    Note: `git restore **/CHANGELOG.md` will undo changes to all CHANGELOG.md.
 
- 3. Run the following PowerShell script from the root of the repo.
-    This updates all the changelog to have release date for the
-    current version being released.
-    Replace the version with actual version.
-    The actual version would be the tag name from step1.
+1. Submit PR with the above changes, and get it merged.
 
-    ```powershell
-         $changelogs = Get-ChildItem -Path . -Recurse -Filter changelog.md
-        foreach ($changelog in $changelogs)
-        {
-         (Get-Content -Path $changelog.FullName) -replace "Unreleased", "Unreleased
-
-    ## 1.0.0-rc2
-
-    Released $(Get-Date -UFormat '%Y-%b-%d')" | Set-Content -Path $changelog.FullName
-        }
-    ```
-
- 4. Submit PR with the above changes, and get it merged.
-
- 5. Tag Git with version to be released e.g.:
+1. Tag Git with version to be released e.g.:
 
     ```sh
     git tag -a 1.0.0-rc2 -m "1.0.0-rc2"
