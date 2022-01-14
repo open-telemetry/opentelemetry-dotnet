@@ -383,6 +383,168 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void DimensionsAreOrderInsensitiveWithSortedKeysFirst(bool exportDelta)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+            var counterLong = meter.CreateCounter<long>("Counter");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                {
+                    Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+                })
+                .Build();
+
+            // Emit the first metric with the sorted order of tag keys
+            counterLong.Add(5, new("Key1", "Value1"), new("Key2", "Value2"), new("Key3", "Value3"));
+            counterLong.Add(10, new("Key1", "Value1"), new("Key3", "Value3"), new("Key2", "Value2"));
+            counterLong.Add(10, new("Key2", "Value20"), new("Key1", "Value10"), new("Key3", "Value30"));
+
+            // Emit a metric with different set of keys but the same set of values as one of the previous metric points
+            counterLong.Add(25, new("Key4", "Value1"), new("Key5", "Value3"), new("Key6", "Value2"));
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            List<KeyValuePair<string, object>> tagsForFirstMetricPoint = new List<KeyValuePair<string, object>>()
+            {
+                new("Key1", "Value1"),
+                new("Key2", "Value2"),
+                new("Key3", "Value3"),
+            };
+
+            List<KeyValuePair<string, object>> tagsForSecondMetricPoint = new List<KeyValuePair<string, object>>()
+            {
+                new("Key1", "Value10"),
+                new("Key2", "Value20"),
+                new("Key3", "Value30"),
+            };
+
+            List<KeyValuePair<string, object>> tagsForThirdMetricPoint = new List<KeyValuePair<string, object>>()
+            {
+                new("Key4", "Value1"),
+                new("Key5", "Value3"),
+                new("Key6", "Value2"),
+            };
+
+            Assert.Equal(3, GetNumberOfMetricPoints(exportedItems));
+            CheckTagsForNthMetricPoint(exportedItems, tagsForFirstMetricPoint, 1);
+            CheckTagsForNthMetricPoint(exportedItems, tagsForSecondMetricPoint, 2);
+            CheckTagsForNthMetricPoint(exportedItems, tagsForThirdMetricPoint, 3);
+            long sumReceived = GetLongSum(exportedItems);
+            Assert.Equal(50, sumReceived);
+
+            exportedItems.Clear();
+
+            counterLong.Add(5, new("Key2", "Value2"), new("Key1", "Value1"), new("Key3", "Value3"));
+            counterLong.Add(5, new("Key2", "Value2"), new("Key1", "Value1"), new("Key3", "Value3"));
+            counterLong.Add(10, new("Key2", "Value2"), new("Key3", "Value3"), new("Key1", "Value1"));
+            counterLong.Add(10, new("Key2", "Value20"), new("Key3", "Value30"), new("Key1", "Value10"));
+            counterLong.Add(20, new("Key4", "Value1"), new("Key6", "Value2"), new("Key5", "Value3"));
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.Equal(3, GetNumberOfMetricPoints(exportedItems));
+            CheckTagsForNthMetricPoint(exportedItems, tagsForFirstMetricPoint, 1);
+            CheckTagsForNthMetricPoint(exportedItems, tagsForFirstMetricPoint, 1);
+            CheckTagsForNthMetricPoint(exportedItems, tagsForSecondMetricPoint, 2);
+            CheckTagsForNthMetricPoint(exportedItems, tagsForThirdMetricPoint, 3);
+            sumReceived = GetLongSum(exportedItems);
+            if (exportDelta)
+            {
+                Assert.Equal(50, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(100, sumReceived);
+            }
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void DimensionsAreOrderInsensitiveWithUnsortedKeysFirst(bool exportDelta)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+            var counterLong = meter.CreateCounter<long>("Counter");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                {
+                    Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+                })
+                .Build();
+
+            // Emit the first metric with the unsorted order of tag keys
+            counterLong.Add(5, new("Key1", "Value1"), new("Key3", "Value3"), new("Key2", "Value2"));
+            counterLong.Add(10, new("Key1", "Value1"), new("Key2", "Value2"), new("Key3", "Value3"));
+            counterLong.Add(10, new("Key2", "Value20"), new("Key1", "Value10"), new("Key3", "Value30"));
+
+            // Emit a metric with different set of keys but the same set of values as one of the previous metric points
+            counterLong.Add(25, new("Key4", "Value1"), new("Key5", "Value3"), new("Key6", "Value2"));
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            List<KeyValuePair<string, object>> tagsForFirstMetricPoint = new List<KeyValuePair<string, object>>()
+            {
+                new("Key1", "Value1"),
+                new("Key2", "Value2"),
+                new("Key3", "Value3"),
+            };
+
+            List<KeyValuePair<string, object>> tagsForSecondMetricPoint = new List<KeyValuePair<string, object>>()
+            {
+                new("Key1", "Value10"),
+                new("Key2", "Value20"),
+                new("Key3", "Value30"),
+            };
+
+            List<KeyValuePair<string, object>> tagsForThirdMetricPoint = new List<KeyValuePair<string, object>>()
+            {
+                new("Key4", "Value1"),
+                new("Key5", "Value3"),
+                new("Key6", "Value2"),
+            };
+
+            Assert.Equal(3, GetNumberOfMetricPoints(exportedItems));
+            CheckTagsForNthMetricPoint(exportedItems, tagsForFirstMetricPoint, 1);
+            CheckTagsForNthMetricPoint(exportedItems, tagsForSecondMetricPoint, 2);
+            CheckTagsForNthMetricPoint(exportedItems, tagsForThirdMetricPoint, 3);
+            long sumReceived = GetLongSum(exportedItems);
+            Assert.Equal(50, sumReceived);
+
+            exportedItems.Clear();
+
+            counterLong.Add(5, new("Key2", "Value2"), new("Key1", "Value1"), new("Key3", "Value3"));
+            counterLong.Add(5, new("Key2", "Value2"), new("Key1", "Value1"), new("Key3", "Value3"));
+            counterLong.Add(10, new("Key2", "Value2"), new("Key3", "Value3"), new("Key1", "Value1"));
+            counterLong.Add(10, new("Key2", "Value20"), new("Key3", "Value30"), new("Key1", "Value10"));
+            counterLong.Add(20, new("Key4", "Value1"), new("Key6", "Value2"), new("Key5", "Value3"));
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.Equal(3, GetNumberOfMetricPoints(exportedItems));
+            CheckTagsForNthMetricPoint(exportedItems, tagsForFirstMetricPoint, 1);
+            CheckTagsForNthMetricPoint(exportedItems, tagsForFirstMetricPoint, 1);
+            CheckTagsForNthMetricPoint(exportedItems, tagsForSecondMetricPoint, 2);
+            CheckTagsForNthMetricPoint(exportedItems, tagsForThirdMetricPoint, 3);
+            sumReceived = GetLongSum(exportedItems);
+            if (exportDelta)
+            {
+                Assert.Equal(50, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(100, sumReceived);
+            }
+        }
+
+        [Theory]
         [InlineData(AggregationTemporality.Cumulative)]
         [InlineData(AggregationTemporality.Delta)]
         public void TestInstrumentDisposal(AggregationTemporality temporality)
@@ -656,6 +818,41 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             return sum;
+        }
+
+        private static int GetNumberOfMetricPoints(List<Metric> metrics)
+        {
+            int count = 0;
+            foreach (var metric in metrics)
+            {
+                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        // Provide tags input sorted by Key
+        private static void CheckTagsForNthMetricPoint(List<Metric> metrics, List<KeyValuePair<string, object>> tags, int n)
+        {
+            var metric = metrics[0];
+            var metricPointEnumerator = metric.GetMetricPoints().GetEnumerator();
+
+            for (int i = 0; i < n; i++)
+            {
+                Assert.True(metricPointEnumerator.MoveNext());
+            }
+
+            int index = 0;
+            var metricPoint = metricPointEnumerator.Current;
+            foreach (var tag in metricPoint.Tags)
+            {
+                Assert.Equal(tags[index].Key, tag.Key);
+                Assert.Equal(tags[index].Value, tag.Value);
+                index++;
+            }
         }
 
         private static void CounterUpdateThread<T>(object obj)
