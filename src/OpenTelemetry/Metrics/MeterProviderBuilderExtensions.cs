@@ -60,8 +60,9 @@ namespace OpenTelemetry.Metrics
             if (instrumentName.IndexOf('*') != -1)
             {
                 throw new ArgumentException(
-                    $"When view is used to provide name of metric stream, the instrument name" +
-                    $"{instrumentName} should not contain wildcard selection, as it'll lead to conflict.",
+                    $"Instrument selection criteria is invalid. Instrument name '{instrumentName}' " +
+                    $"contains a wildcard character. This is not allowed when using a view to " +
+                    $"rename a metric stream as it would lead to conflicting metric stream names.",
                     nameof(instrumentName));
             }
 
@@ -97,8 +98,9 @@ namespace OpenTelemetry.Metrics
             if (metricStreamConfiguration.Name != null && instrumentName.IndexOf('*') != -1)
             {
                 throw new ArgumentException(
-                    $"When view is used to provide name of metric stream, the instrument name" +
-                    $"{instrumentName} should not contain wildcard selection, as it'll lead to conflict.",
+                    $"Instrument selection criteria is invalid. Instrument name '{instrumentName}' " +
+                    $"contains a wildcard character. This is not allowed when using a view to " +
+                    $"rename a metric stream as it would lead to conflicting metric stream names.",
                     nameof(instrumentName));
             }
 
