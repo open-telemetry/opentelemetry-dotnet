@@ -41,7 +41,7 @@ namespace OpenTelemetry.Trace
         public SpanAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
             : this()
         {
-            Guard.Null(attributes, nameof(attributes));
+            Guard.ThrowIfNull(attributes, nameof(attributes));
 
             foreach (KeyValuePair<string, object> kvp in attributes)
             {
@@ -133,7 +133,7 @@ namespace OpenTelemetry.Trace
 
         private void AddInternal(string key, object value)
         {
-            Guard.Null(key, nameof(key));
+            Guard.ThrowIfNull(key, nameof(key));
 
             this.Attributes[key] = value;
         }

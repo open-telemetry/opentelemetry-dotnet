@@ -28,8 +28,8 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public TracerShim(Trace.Tracer tracer, TextMapPropagator textFormat)
         {
-            Guard.Null(tracer, nameof(tracer));
-            Guard.Null(textFormat, nameof(textFormat));
+            Guard.ThrowIfNull(tracer, nameof(tracer));
+            Guard.ThrowIfNull(textFormat, nameof(textFormat));
 
             this.tracer = tracer;
             this.propagator = textFormat;
@@ -51,8 +51,8 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public global::OpenTracing.ISpanContext Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier)
         {
-            Guard.Null(format, nameof(format));
-            Guard.Null(carrier, nameof(carrier));
+            Guard.ThrowIfNull(format, nameof(format));
+            Guard.ThrowIfNull(carrier, nameof(carrier));
 
             PropagationContext propagationContext = default;
 
@@ -92,10 +92,10 @@ namespace OpenTelemetry.Shims.OpenTracing
             IFormat<TCarrier> format,
             TCarrier carrier)
         {
-            Guard.Null(spanContext, nameof(spanContext));
-            var shim = Guard.Type<SpanContextShim>(spanContext, nameof(spanContext));
-            Guard.Null(format, nameof(format));
-            Guard.Null(carrier, nameof(carrier));
+            Guard.ThrowIfNull(spanContext, nameof(spanContext));
+            var shim = Guard.ThrowIfNotOfType<SpanContextShim>(spanContext, nameof(spanContext));
+            Guard.ThrowIfNull(format, nameof(format));
+            Guard.ThrowIfNull(carrier, nameof(carrier));
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
