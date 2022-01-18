@@ -11,7 +11,7 @@
     - [Start Prometheus](#start-prometheus)
     - [Configure OpenTelemetry to expose metrics to Prometheus endpoint](#configure-opentelemetry-to-expose-metrics-to-prometheus-endpoint)
     - [Check results in Prometheus](#check-results-in-prometheus)
-    - [Query results with Grafana](#query-results-with-grafana)
+    - [View/Query results with Grafana](#viewquery-results-with-grafana)
   - [Configure PrometheousExporter middleware](#configure-prometheousexporter-middleware)
     - [Configure Prometheus Scraping Endpoint](#configure-prometheus-scraping-endpoint)
   - [Configuration](#configuration-1)
@@ -111,12 +111,32 @@ public class Program
 }
 ```
 ### Check results in Prometheus
-Run the application and leave it running in the background. 
-Now we should be able to see the metrics at the endpoint we've configured in `Program.cs` and `prometheus.yml` file, in this case "http://localhost:9184/".
-![pic1](../../docs/metrics/prometheus-http-server/imgs/prom-1.png)
+Run the application and leave the process running in the background. 
+Now we should be able to see the metrics at the endpoint we've configured in `prometheus.yml` file and the defined in `Program.cs`; in this case, the value is: "http://localhost:9184/". 
 
-### Query results with Grafana
+Check the output metrics with your favorite browser:
 
+![localhost](../../docs/metrics/prometheus-http-server/imgs/prom-1.PNG)
+
+To use the graphical interface for viewing your metrics with Prometheus, navigate to "http://localhost:9090/graph", insert MyFruitCounter we've created into the expression bar, and click execute. We should be able to see the following chart:
+
+![Prometheus Graph](../../docs/metrics/prometheus-http-server/imgs/prom-2.PNG)
+
+Congratulations!
+
+Now we know how to configure prometheus http server and deploy OpenTelemetry prometheusExporter to export our metrics. Next, we are going to explore a tool called Grafana, which has powerful visualizations and  for the metrics.
+### View/Query results with Grafana
+
+[Install Grafana](https://grafana.com/docs/grafana/latest/installation/)
+For windows users, after finished installation, start the standalone Graphana server, grafana-server.exe located in the bin folder. Then go to the default Grafana port 3000, we can confirm the port number with the logs from the command line as well. And follow the instructions [here](https://grafana.com/docs/grafana/latest/getting-started/getting-started/#step-2-log-in) for logging in.
+
+After successfully logged in, hit on the explore option on the left panel, we should be able to write some queries to explore our metrics now!
+
+[Here](https://promlabs.com/promql-cheat-sheet/) is a list of PromQL to begin with.
+
+In the below example, the query targeted to find out what is the per-second rate of increace for myFruitCounter metrics over the last 30 minutes:
+
+![Rate](../../docs/metrics/prometheus-http-server/imgs/graphana-1.PNG)
 
 ## Configure PrometheousExporter middleware
 
