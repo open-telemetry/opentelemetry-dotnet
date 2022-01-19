@@ -116,7 +116,7 @@ Now we should be able to see the metrics at the endpoint we've configured in `pr
 
 Check the output metrics with your favorite browser:
 
-![localhost](../../docs/metrics/prometheus-http-server/imgs/prom-1.PNG)
+![localhost](../docs/metrics/prometheus-http-server/imgs/prom-1.PNG)
 
 To use the graphical interface for viewing your metrics with Prometheus, navigate to "http://localhost:9090/graph", insert MyFruitCounter we've created into the expression bar, and click execute. We should be able to see the following chart:
 
@@ -128,11 +128,11 @@ Now we know how to configure prometheus http server and deploy OpenTelemetry pro
 ### View/Query results with Grafana
 
 [Install Grafana](https://grafana.com/docs/grafana/latest/installation/)
-For windows users, after finished installation, start the standalone Graphana server, grafana-server.exe located in the bin folder. Then go to the default Grafana port 3000, we can confirm the port number with the logs from the command line as well. And follow the instructions [here](https://grafana.com/docs/grafana/latest/getting-started/getting-started/#step-2-log-in) for logging in.
+For windows users, after finishing installation, start the standalone Graphana server, grafana-server.exe located in the bin folder. Then go to the default Grafana port 3000, we can confirm the port number with the logs from the command line as well. And follow the instructions [here](https://grafana.com/docs/grafana/latest/getting-started/getting-started/#step-2-log-in) for logging in.
 
 After successfully logged in, hit on the explore option on the left panel, we should be able to write some queries to explore our metrics now!
 
-[Here](https://promlabs.com/promql-cheat-sheet/) is a list of PromQL to begin with.
+[This](https://promlabs.com/promql-cheat-sheet/) is a list of PromQL to begin with.
 
 In the below example, the query targeted to find out what is the per-second rate of increace for myFruitCounter metrics over the last 30 minutes:
 
