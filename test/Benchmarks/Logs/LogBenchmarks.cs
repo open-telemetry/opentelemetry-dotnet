@@ -62,25 +62,31 @@ namespace Benchmarks.Logs
         [Benchmark]
         public void NoListener()
         {
-            this.loggerWithNoListener.LogInformation("Hello, World!");
+            this.loggerWithNoListener.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
         }
 
         [Benchmark]
         public void OneProcessor()
         {
-            this.loggerWithOneProcessor.LogInformation("Hello, World!");
+            this.loggerWithOneProcessor.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+        }
+
+        [Benchmark]
+        public void OneProcessorWithLoggerMessageGenerator()
+        {
+            Food.SayHello(this.loggerWithOneProcessor, "tomato", 2.99);
         }
 
         [Benchmark]
         public void TwoProcessors()
         {
-            this.loggerWithTwoProcessors.LogInformation("Hello, World!");
+            this.loggerWithTwoProcessors.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
         }
 
         [Benchmark]
         public void ThreeProcessors()
         {
-            this.loggerWithThreeProcessors.LogInformation("Hello, World!");
+            this.loggerWithThreeProcessors.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
         }
 
         internal class DummyLogProcessor : BaseProcessor<LogRecord>
