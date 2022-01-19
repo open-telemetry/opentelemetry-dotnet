@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if NETCOREAPP3_1
 using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
@@ -89,4 +88,3 @@ namespace Benchmarks.Logs
         }
     }
 }
-#endif
