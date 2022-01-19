@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter
 
         /// <summary>
         /// Gets or sets the prefixes to use for the http listener. Default
-        /// value: http://localhost:9184/.
+        /// value: http://localhost:9464/.
         /// </summary>
         public IReadOnlyCollection<string> HttpListenerPrefixes
         {
