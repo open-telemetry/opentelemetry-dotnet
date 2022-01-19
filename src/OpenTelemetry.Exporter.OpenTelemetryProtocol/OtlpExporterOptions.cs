@@ -16,16 +16,22 @@
 
 using System;
 using System.Diagnostics;
-using System.Security;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using System.Net.Http;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
 {
     /// <summary>
-    /// Configuration options for the OpenTelemetry Protocol (OTLP) exporter.
+    /// OpenTelemetry Protocol (OTLP) exporter options.
+    /// OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_HEADERS, OTEL_EXPORTER_OTLP_TIMEOUT, OTEL_EXPORTER_OTLP_PROTOCOL
+    /// environment variables are parsed during object construction.
     /// </summary>
+    /// <remarks>
+    /// The constructor throws <see cref="FormatException"/> if it fails to parse
+    /// any of the supported environment variables.
+    /// </remarks>
     public class OtlpExporterOptions
     {
         internal const string EndpointEnvVarName = "OTEL_EXPORTER_OTLP_ENDPOINT";
@@ -36,65 +42,48 @@ namespace OpenTelemetry.Exporter
         internal const string TracesExportPath = "v1/traces";
         internal const string MetricsExportPath = "v1/metrics";
 
+        internal readonly Func<HttpClient> DefaultHttpClientFactory;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
         /// </summary>
         public OtlpExporterOptions()
         {
-            try
+            if (EnvironmentVariableHelper.LoadUri(EndpointEnvVarName, out Uri endpoint))
             {
-                string endpointEnvVar = Environment.GetEnvironmentVariable(EndpointEnvVarName);
-                if (!string.IsNullOrEmpty(endpointEnvVar))
-                {
-                    if (Uri.TryCreate(endpointEnvVar, UriKind.Absolute, out var endpoint))
-                    {
-                        this.Endpoint = endpoint;
-                    }
-                    else
-                    {
-                        OpenTelemetryProtocolExporterEventSource.Log.FailedToParseEnvironmentVariable(EndpointEnvVarName, endpointEnvVar);
-                    }
-                }
+                this.Endpoint = endpoint;
+            }
 
-                string headersEnvVar = Environment.GetEnvironmentVariable(HeadersEnvVarName);
-                if (!string.IsNullOrEmpty(headersEnvVar))
-                {
-                    this.Headers = headersEnvVar;
-                }
+            if (EnvironmentVariableHelper.LoadString(HeadersEnvVarName, out string headersEnvVar))
+            {
+                this.Headers = headersEnvVar;
+            }
 
-                string timeoutEnvVar = Environment.GetEnvironmentVariable(TimeoutEnvVarName);
-                if (!string.IsNullOrEmpty(timeoutEnvVar))
-                {
-                    if (int.TryParse(timeoutEnvVar, out var timeout))
-                    {
-                        this.TimeoutMilliseconds = timeout;
-                    }
-                    else
-                    {
-                        OpenTelemetryProtocolExporterEventSource.Log.FailedToParseEnvironmentVariable(TimeoutEnvVarName, timeoutEnvVar);
-                    }
-                }
+            if (EnvironmentVariableHelper.LoadNumeric(TimeoutEnvVarName, out int timeout))
+            {
+                this.TimeoutMilliseconds = timeout;
+            }
 
-                string protocolEnvVar = Environment.GetEnvironmentVariable(ProtocolEnvVarName);
-                if (!string.IsNullOrEmpty(protocolEnvVar))
+            if (EnvironmentVariableHelper.LoadString(ProtocolEnvVarName, out string protocolEnvVar))
+            {
+                var protocol = protocolEnvVar.ToOtlpExportProtocol();
+                if (protocol.HasValue)
                 {
-                    var protocol = protocolEnvVar.ToOtlpExportProtocol();
-                    if (protocol.HasValue)
-                    {
-                        this.Protocol = protocol.Value;
-                    }
-                    else
-                    {
-                        OpenTelemetryProtocolExporterEventSource.Log.UnsupportedProtocol(protocolEnvVar);
-                    }
+                    this.Protocol = protocol.Value;
+                }
+                else
+                {
+                    throw new FormatException($"{ProtocolEnvVarName} environment variable has an invalid value: '${protocolEnvVar}'");
                 }
             }
-            catch (SecurityException ex)
+
+            this.HttpClientFactory = this.DefaultHttpClientFactory = () =>
             {
-                // The caller does not have the required permission to
-                // retrieve the value of an environment variable from the current process.
-                OpenTelemetryProtocolExporterEventSource.Log.MissingPermissionsToReadEnvironmentVariable(ex);
-            }
+                return new HttpClient()
+                {
+                    Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
+                };
+            };
         }
 
         /// <summary>
@@ -131,14 +120,52 @@ namespace OpenTelemetry.Exporter
         public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
 
         /// <summary>
-        /// Gets or sets the metric export interval in milliseconds. The default value is 1000 milliseconds.
+        /// Gets or sets the <see cref="MetricReaderType" /> to use. Defaults to <c>MetricReaderType.Periodic</c>.
         /// </summary>
-        public int MetricExportIntervalMilliseconds { get; set; } = 1000;
+        public MetricReaderType MetricReaderType { get; set; } = MetricReaderType.Periodic;
+
+        /// <summary>
+        /// Gets or sets the <see cref="PeriodicExportingMetricReaderOptions" /> options. Ignored unless <c>MetricReaderType</c> is <c>Periodic</c>.
+        /// </summary>
+        public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions { get; set; } = new PeriodicExportingMetricReaderOptions();
 
         /// <summary>
         /// Gets or sets the AggregationTemporality used for Histogram
         /// and Sum metrics.
         /// </summary>
         public AggregationTemporality AggregationTemporality { get; set; } = AggregationTemporality.Cumulative;
+
+        /// <summary>
+        /// Gets or sets the factory function called to create the <see
+        /// cref="HttpClient"/> instance that will be used at runtime to
+        /// transmit telemetry over HTTP. The returned instance will be reused
+        /// for all export invocations.
+        /// </summary>
+        /// <remarks>
+        /// Notes:
+        /// <list type="bullet">
+        /// <item>This is only invoked for the <see
+        /// cref="OtlpExportProtocol.HttpProtobuf"/> protocol.</item>
+        /// <item>The default behavior when using the <see
+        /// cref="OtlpTraceExporterHelperExtensions.AddOtlpExporter(TracerProviderBuilder,
+        /// Action{OtlpExporterOptions})"/> extension is if an <a
+        /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpclientfactory">IHttpClientFactory</a>
+        /// instance can be resolved through the application <see
+        /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be
+        /// created through the factory with the name "OtlpTraceExporter"
+        /// otherwise an <see cref="HttpClient"/> will be instantiated
+        /// directly.</item>
+        /// <item>The default behavior when using the <see
+        /// cref="OtlpMetricExporterExtensions.AddOtlpExporter(MeterProviderBuilder,
+        /// Action{OtlpExporterOptions})"/> extension is if an <a
+        /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpclientfactory">IHttpClientFactory</a>
+        /// instance can be resolved through the application <see
+        /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be
+        /// created through the factory with the name "OtlpMetricExporter"
+        /// otherwise an <see cref="HttpClient"/> will be instantiated
+        /// directly.</item>
+        /// </list>
+        /// </remarks>
+        public Func<HttpClient> HttpClientFactory { get; set; }
     }
 }

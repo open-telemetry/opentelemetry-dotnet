@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
 {
@@ -28,8 +29,11 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLogger(string categoryName, OpenTelemetryLoggerProvider provider)
         {
-            this.categoryName = categoryName ?? throw new ArgumentNullException(nameof(categoryName));
-            this.provider = provider ?? throw new ArgumentNullException(nameof(provider));
+            Guard.ThrowIfNull(categoryName, nameof(categoryName));
+            Guard.ThrowIfNull(provider, nameof(provider));
+
+            this.categoryName = categoryName;
+            this.provider = provider;
         }
 
         internal IExternalScopeProvider ScopeProvider { get; set; }
@@ -54,7 +58,7 @@ namespace OpenTelemetry.Logs
                     logLevel,
                     eventId,
                     options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
-                    options.ParseStateValues ? null : (object)state,
+                    options.ParseStateValues ? null : state,
                     exception,
                     options.ParseStateValues ? this.ParseState(state) : null);
 

@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
-using global::OpenTracing.Propagation;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal;
+using OpenTracing.Propagation;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
@@ -28,9 +28,11 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public TracerShim(Trace.Tracer tracer, TextMapPropagator textFormat)
         {
-            this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer), "Parameter cannot be null");
-            this.propagator = textFormat ?? throw new ArgumentNullException(nameof(textFormat), "Parameter cannot be null");
+            Guard.ThrowIfNull(tracer, nameof(tracer));
+            Guard.ThrowIfNull(textFormat, nameof(textFormat));
 
+            this.tracer = tracer;
+            this.propagator = textFormat;
             this.ScopeManager = new ScopeManagerShim(this.tracer);
         }
 
@@ -47,17 +49,10 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.ISpanContext Extract<TCarrier>(global::OpenTracing.Propagation.IFormat<TCarrier> format, TCarrier carrier)
+        public global::OpenTracing.ISpanContext Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier)
         {
-            if (format is null)
-            {
-                throw new ArgumentNullException(nameof(format), "Parameter cannot be null");
-            }
-
-            if (carrier == null)
-            {
-                throw new ArgumentNullException(nameof(carrier), "Parameter cannot be null");
-            }
+            Guard.ThrowIfNull(format, nameof(format));
+            Guard.ThrowIfNull(carrier, nameof(carrier));
 
             PropagationContext propagationContext = default;
 
@@ -94,28 +89,13 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public void Inject<TCarrier>(
             global::OpenTracing.ISpanContext spanContext,
-            global::OpenTracing.Propagation.IFormat<TCarrier> format,
+            IFormat<TCarrier> format,
             TCarrier carrier)
         {
-            if (spanContext is null)
-            {
-                throw new ArgumentNullException(nameof(spanContext), "Parameter cannot be null");
-            }
-
-            if (!(spanContext is SpanContextShim shim))
-            {
-                throw new ArgumentException("Context is not a valid SpanContextShim object", nameof(shim));
-            }
-
-            if (format is null)
-            {
-                throw new ArgumentNullException(nameof(format), "Parameter cannot be null");
-            }
-
-            if (carrier == null)
-            {
-                throw new ArgumentNullException(nameof(carrier), "Parameter cannot be null");
-            }
+            Guard.ThrowIfNull(spanContext, nameof(spanContext));
+            var shim = Guard.ThrowIfNotOfType<SpanContextShim>(spanContext, nameof(spanContext));
+            Guard.ThrowIfNull(format, nameof(format));
+            Guard.ThrowIfNull(carrier, nameof(carrier));
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {

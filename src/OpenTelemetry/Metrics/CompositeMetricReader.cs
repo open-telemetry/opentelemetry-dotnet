@@ -18,31 +18,33 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class CompositeMetricReader : MetricReader
+    /// <summary>
+    /// CompositeMetricReader that does not deal with adding metrics and recording measurements.
+    /// </summary>
+    internal sealed partial class CompositeMetricReader : MetricReader
     {
         private readonly DoublyLinkedListNode head;
         private DoublyLinkedListNode tail;
         private bool disposed;
+        private int count;
 
         public CompositeMetricReader(IEnumerable<MetricReader> readers)
         {
-            if (readers == null)
-            {
-                throw new ArgumentNullException(nameof(readers));
-            }
+            Guard.ThrowIfNull(readers, nameof(readers));
 
             using var iter = readers.GetEnumerator();
-
             if (!iter.MoveNext())
             {
-                throw new ArgumentException($"{nameof(readers)} collection is empty");
+                throw new ArgumentException($"'{iter}' is null or empty", nameof(iter));
             }
 
             this.head = new DoublyLinkedListNode(iter.Current);
             this.tail = this.head;
+            this.count++;
 
             while (iter.MoveNext())
             {
@@ -52,10 +54,7 @@ namespace OpenTelemetry.Metrics
 
         public CompositeMetricReader AddReader(MetricReader reader)
         {
-            if (reader == null)
-            {
-                throw new ArgumentNullException(nameof(reader));
-            }
+            Guard.ThrowIfNull(reader, nameof(reader));
 
             var node = new DoublyLinkedListNode(reader)
             {
@@ -63,6 +62,7 @@ namespace OpenTelemetry.Metrics
             };
             this.tail.Next = node;
             this.tail = node;
+            this.count++;
 
             return this;
         }
@@ -70,23 +70,24 @@ namespace OpenTelemetry.Metrics
         public Enumerator GetEnumerator() => new Enumerator(this.head);
 
         /// <inheritdoc/>
-        protected override bool ProcessMetrics(Batch<Metric> metrics, int timeoutMilliseconds)
+        internal override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
         {
             // CompositeMetricReader delegates the work to its underlying readers,
             // so CompositeMetricReader.ProcessMetrics should never be called.
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         /// <inheritdoc/>
         protected override bool OnCollect(int timeoutMilliseconds = Timeout.Infinite)
         {
             var result = true;
-            var cur = this.head;
-            var sw = Stopwatch.StartNew();
+            var sw = timeoutMilliseconds == Timeout.Infinite
+                ? null
+                : Stopwatch.StartNew();
 
-            while (cur != null)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
-                if (timeoutMilliseconds == Timeout.Infinite)
+                if (sw == null)
                 {
                     result = cur.Value.Collect(Timeout.Infinite) && result;
                 }
@@ -97,8 +98,6 @@ namespace OpenTelemetry.Metrics
                     // notify all the readers, even if we run overtime
                     result = cur.Value.Collect((int)Math.Max(timeout, 0)) && result;
                 }
-
-                cur = cur.Next;
             }
 
             return result;
@@ -107,13 +106,14 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc/>
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
-            var cur = this.head;
             var result = true;
-            var sw = Stopwatch.StartNew();
+            var sw = timeoutMilliseconds == Timeout.Infinite
+                ? null
+                : Stopwatch.StartNew();
 
-            while (cur != null)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
-                if (timeoutMilliseconds == Timeout.Infinite)
+                if (sw == null)
                 {
                     result = cur.Value.Shutdown(Timeout.Infinite) && result;
                 }
@@ -124,8 +124,6 @@ namespace OpenTelemetry.Metrics
                     // notify all the readers, even if we run overtime
                     result = cur.Value.Shutdown((int)Math.Max(timeout, 0)) && result;
                 }
-
-                cur = cur.Next;
             }
 
             return result;
@@ -133,32 +131,28 @@ namespace OpenTelemetry.Metrics
 
         protected override void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (!this.disposed)
             {
-                return;
-            }
-
-            if (disposing)
-            {
-                var cur = this.head;
-
-                while (cur != null)
+                if (disposing)
                 {
-                    try
+                    for (var cur = this.head; cur != null; cur = cur.Next)
                     {
-                        cur.Value?.Dispose();
+                        try
+                        {
+                            cur.Value?.Dispose();
+                        }
+                        catch (Exception)
+                        {
+                            // TODO: which event source do we use?
+                            // OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+                        }
                     }
-                    catch (Exception)
-                    {
-                        // TODO: which event source do we use?
-                        // OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-                    }
-
-                    cur = cur.Next;
                 }
+
+                this.disposed = true;
             }
 
-            this.disposed = true;
+            base.Dispose(disposing);
         }
 
         public struct Enumerator

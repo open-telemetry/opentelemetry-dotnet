@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -40,21 +41,23 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static ThreadStaticStorage GetStorage()
         {
-            if (ThreadStaticStorage.storage == null)
+            if (storage == null)
             {
-                ThreadStaticStorage.storage = new ThreadStaticStorage();
+                storage = new ThreadStaticStorage();
             }
 
-            return ThreadStaticStorage.storage;
+            return storage;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void SplitToKeysAndValues(ReadOnlySpan<KeyValuePair<string, object>> tags, int tagLength, out string[] tagKeys, out object[] tagValues)
         {
+            Guard.ThrowIfZero(tagLength, $"There must be at least one tag to use {nameof(ThreadStaticStorage)}", $"{nameof(tagLength)}");
+
             if (tagLength <= MaxTagCacheSize)
             {
-                tagKeys = this.tagStorage[tagLength - 1].TagKey;
-                tagValues = this.tagStorage[tagLength - 1].TagValue;
+                tagKeys = this.tagStorage[tagLength - 1].TagKeys;
+                tagValues = this.tagStorage[tagLength - 1].TagValues;
             }
             else
             {
@@ -91,8 +94,8 @@ namespace OpenTelemetry.Metrics
             }
             else if (actualLength <= MaxTagCacheSize)
             {
-                tagKeys = this.tagStorage[actualLength - 1].TagKey;
-                tagValues = this.tagStorage[actualLength - 1].TagValue;
+                tagKeys = this.tagStorage[actualLength - 1].TagKeys;
+                tagValues = this.tagStorage[actualLength - 1].TagValues;
             }
             else
             {
@@ -125,13 +128,13 @@ namespace OpenTelemetry.Metrics
         internal class TagStorage
         {
             // Used to split into Key sequence, Value sequence.
-            internal readonly string[] TagKey;
-            internal readonly object[] TagValue;
+            internal readonly string[] TagKeys;
+            internal readonly object[] TagValues;
 
             internal TagStorage(int n)
             {
-                this.TagKey = new string[n];
-                this.TagValue = new object[n];
+                this.TagKeys = new string[n];
+                this.TagValues = new object[n];
             }
         }
     }

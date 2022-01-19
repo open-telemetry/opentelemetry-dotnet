@@ -26,7 +26,7 @@ namespace OpenTelemetry.Context
     public class ThreadLocalRuntimeContextSlot<T> : RuntimeContextSlot<T>, IRuntimeContextSlotValueAccessor
     {
         private readonly ThreadLocal<T> slot;
-        private bool disposedValue;
+        private bool disposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ThreadLocalRuntimeContextSlot{T}"/> class.
@@ -62,13 +62,17 @@ namespace OpenTelemetry.Context
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
-
-            if (disposing && !this.disposedValue)
+            if (!this.disposed)
             {
-                this.slot.Dispose();
-                this.disposedValue = true;
+                if (disposing)
+                {
+                    this.slot.Dispose();
+                }
+
+                this.disposed = true;
             }
+
+            base.Dispose(disposing);
         }
     }
 }

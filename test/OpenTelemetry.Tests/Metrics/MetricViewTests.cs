@@ -17,12 +17,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Tests
 {
-#pragma warning disable SA1000 // KeywordsMustBeSpacedCorrectly https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/3214
     public class MetricViewTests
     {
         private const int MaxTimeToAllowForFlush = 10000;
@@ -36,16 +36,16 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewToRenameMetric()
         {
-            using var meter1 = new Meter("ViewToRenameMetricTest");
+            using var meter = new Meter(Utils.GetCurrentMethodName());
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter1.Name)
+                .AddMeter(meter.Name)
                 .AddView("name1", "renamed")
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
             // Expecting one metric stream.
-            var counterLong = meter1.CreateCounter<long>("name1");
+            var counterLong = meter.CreateCounter<long>("name1");
             counterLong.Add(10);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Single(exportedItems);
@@ -53,12 +53,114 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("renamed", metric.Name);
         }
 
+        [Theory]
+        [MemberData(nameof(MetricTestData.InvalidInstrumentNames), MemberType = typeof(MetricTestData))]
+        public void AddViewWithInvalidNameThrowsArgumentException(string viewNewName)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter1 = new Meter("AddViewWithInvalidNameThrowsArgumentException");
+
+            var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter1.Name)
+                .AddView("name1", viewNewName)
+                .AddInMemoryExporter(exportedItems)
+                .Build());
+
+            Assert.Contains($"Custom view name {viewNewName} is invalid.", ex.Message);
+
+            ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter1.Name)
+                .AddView("name1", new MetricStreamConfiguration { Name = viewNewName })
+                .AddInMemoryExporter(exportedItems)
+                .Build());
+
+            Assert.Contains($"Custom view name {viewNewName} is invalid.", ex.Message);
+        }
+
+        [Fact]
+        public void AddViewWithNullMetricStreamConfigurationThrowsArgumentnullException()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter1 = new Meter("AddViewWithInvalidNameThrowsArgumentException");
+
+            Assert.Throws<ArgumentNullException>(() => Sdk.CreateMeterProviderBuilder()
+               .AddMeter(meter1.Name)
+               .AddView("name1", (MetricStreamConfiguration)null)
+               .AddInMemoryExporter(exportedItems)
+               .Build());
+        }
+
+        [Fact]
+        public void AddViewWithNameThrowsInvalidArgumentExceptionWhenConflict()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter1 = new Meter("AddViewWithGuaranteedConflictThrowsInvalidArgumentException");
+
+            Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
+               .AddMeter(meter1.Name)
+               .AddView("instrumenta.*", name: "newname")
+               .AddInMemoryExporter(exportedItems)
+               .Build());
+        }
+
+        [Fact]
+        public void AddViewWithNameInMetricStreamConfigurationThrowsInvalidArgumentExceptionWhenConflict()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter1 = new Meter("AddViewWithGuaranteedConflictThrowsInvalidArgumentException");
+
+            Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
+               .AddMeter(meter1.Name)
+               .AddView("instrumenta.*", new MetricStreamConfiguration() { Name = "newname" })
+               .AddInMemoryExporter(exportedItems)
+               .Build());
+        }
+
+        [Theory]
+        [MemberData(nameof(MetricTestData.InvalidHistogramBoundaries), MemberType = typeof(MetricTestData))]
+        public void AddViewWithInvalidHistogramBoundsThrowsArgumentException(double[] boundaries)
+        {
+            var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
+                .AddView("name1", new ExplicitBucketHistogramConfiguration { Boundaries = boundaries }));
+
+            Assert.Contains("Histogram boundaries must be in ascending order with distinct values", ex.Message);
+        }
+
+        [Theory]
+        [MemberData(nameof(MetricTestData.ValidInstrumentNames), MemberType = typeof(MetricTestData))]
+        public void ViewWithValidNameExported(string viewNewName)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter1 = new Meter("ViewWithInvalidNameIgnoredTest");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter1.Name)
+                .AddView("name1", viewNewName)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var counterLong = meter1.CreateCounter<long>("name1");
+            counterLong.Add(10);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            // Expecting one metric stream.
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal(viewNewName, metric.Name);
+        }
+
         [Fact]
         public void ViewToRenameMetricConditionally()
         {
-            using var meter1 = new Meter("ViewToRenameMetricConditionallyTest");
-            using var meter2 = new Meter("ViewToRenameMetricConditionallyTest2");
+            using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.1");
+            using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.2");
+
             var exportedItems = new List<Metric>();
+
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter1.Name)
                 .AddMeter(meter2.Name)
@@ -93,47 +195,130 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("new description", exportedItems[1].Description);
         }
 
-        [Fact]
-        public void ViewToRenameMetricWildCardMatch()
+        [Theory]
+        [MemberData(nameof(MetricTestData.InvalidInstrumentNames), MemberType = typeof(MetricTestData))]
+        public void ViewWithInvalidNameIgnoredConditionally(string viewNewName)
         {
-            using var meter1 = new Meter("ViewToRenameMetricWildCardMatchTest");
+            using var meter1 = new Meter("ViewToRenameMetricConditionallyTest");
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter1.Name)
-                .AddView("counter*", "renamed")
+
+                // since here it's a func, we can't validate the name right away
+                // so the view is allowed to be added, but upon instrument creation it's going to be ignored.
+                .AddView((instrument) =>
+                {
+                    if (instrument.Meter.Name.Equals(meter1.Name, StringComparison.OrdinalIgnoreCase)
+                        && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // invalid instrument name as per the spec
+                        return new MetricStreamConfiguration() { Name = viewNewName, Description = "new description" };
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                })
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            // We should expect 1 metric here,
+            // but because the MetricStreamName passed is invalid, the instrument is ignored
+            var counter1 = meter1.CreateCounter<long>("name1", "unit", "original_description");
+            counter1.Add(10);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.Empty(exportedItems);
+        }
+
+        [Theory]
+        [MemberData(nameof(MetricTestData.ValidInstrumentNames), MemberType = typeof(MetricTestData))]
+        public void ViewWithValidNameConditionally(string viewNewName)
+        {
+            using var meter1 = new Meter("ViewToRenameMetricConditionallyTest");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter1.Name)
+                .AddView((instrument) =>
+                {
+                    if (instrument.Meter.Name.Equals(meter1.Name, StringComparison.OrdinalIgnoreCase)
+                        && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // invalid instrument name as per the spec
+                        return new MetricStreamConfiguration() { Name = viewNewName, Description = "new description" };
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                })
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
             // Expecting one metric stream.
-            var counter1 = meter1.CreateCounter<long>("counterA");
+            var counter1 = meter1.CreateCounter<long>("name1", "unit", "original_description");
             counter1.Add(10);
-            var counter2 = meter1.CreateCounter<long>("counterB");
-            counter2.Add(10);
-            var counter3 = meter1.CreateCounter<long>("counterC");
-            counter3.Add(10);
+
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-            // counter* matches all 3 instruments which all
-            // becomes "renamed" and only 1st one is exported.
+            // Expecting one metric stream.
             Assert.Single(exportedItems);
             var metric = exportedItems[0];
-            Assert.Equal("renamed", metric.Name);
+            Assert.Equal(viewNewName, metric.Name);
+        }
+
+        [Fact]
+        public void ViewWithNullCustomNameTakesInstrumentName()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter("ViewToRenameMetricConditionallyTest");
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView((instrument) =>
+                {
+                    if (instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // null View name
+                        return new MetricStreamConfiguration() { };
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                })
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            // Expecting one metric stream.
+            // Since the View name was null, the instrument name was used instead
+            var counter1 = meter.CreateCounter<long>("name1", "unit", "original_description");
+            counter1.Add(10);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            // Expecting one metric stream.
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal(counter1.Name, metric.Name);
         }
 
         [Fact]
         public void ViewToProduceMultipleStreamsFromInstrument()
         {
-            using var meter1 = new Meter("ViewToProduceMultipleStreamsFromInstrumentTest");
+            using var meter = new Meter(Utils.GetCurrentMethodName());
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter1.Name)
+                .AddMeter(meter.Name)
                 .AddView("name1", "renamedStream1")
                 .AddView("name1", "renamedStream2")
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
             // Expecting two metric stream.
-            var counterLong = meter1.CreateCounter<long>("name1");
+            var counterLong = meter.CreateCounter<long>("name1");
             counterLong.Add(10);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Equal(2, exportedItems.Count);
@@ -144,10 +329,10 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewToProduceMultipleStreamsWithDuplicatesFromInstrument()
         {
-            using var meter1 = new Meter("ViewToProduceMultipleStreamsWithDuplicatesFromInstrumentTest");
+            using var meter = new Meter(Utils.GetCurrentMethodName());
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter1.Name)
+                .AddMeter(meter.Name)
                 .AddView("name1", "renamedStream1")
                 .AddView("name1", "renamedStream2")
                 .AddView("name1", "renamedStream2")
@@ -158,7 +343,7 @@ namespace OpenTelemetry.Metrics.Tests
             // the .AddView("name1", "renamedStream2")
             // won't produce new Metric as the name
             // conflicts.
-            var counterLong = meter1.CreateCounter<long>("name1");
+            var counterLong = meter.CreateCounter<long>("name1");
             counterLong.Add(10);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Equal(2, exportedItems.Count);
@@ -169,17 +354,17 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewToProduceCustomHistogramBound()
         {
-            using var meter1 = new Meter("ViewToProduceCustomHistogramBoundTest");
+            using var meter = new Meter(Utils.GetCurrentMethodName());
             var exportedItems = new List<Metric>();
-            var bounds = new double[] { 10, 20 };
+            var boundaries = new double[] { 10, 20 };
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter1.Name)
-                .AddView("MyHistogram", new HistogramConfiguration() { Name = "MyHistogramDefaultBound" })
-                .AddView("MyHistogram", new HistogramConfiguration() { BucketBounds = bounds })
+                .AddMeter(meter.Name)
+                .AddView("MyHistogram", new ExplicitBucketHistogramConfiguration() { Name = "MyHistogramDefaultBound" })
+                .AddView("MyHistogram", new ExplicitBucketHistogramConfiguration() { Boundaries = boundaries })
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
-            var histogram = meter1.CreateHistogram<long>("MyHistogram");
+            var histogram = meter.CreateHistogram<long>("MyHistogram");
             histogram.Record(-10);
             histogram.Record(0);
             histogram.Record(1);
@@ -196,7 +381,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("MyHistogram", metricCustom.Name);
 
             List<MetricPoint> metricPointsDefault = new List<MetricPoint>();
-            foreach (ref var mp in metricDefault.GetMetricPoints())
+            foreach (ref readonly var mp in metricDefault.GetMetricPoints())
             {
                 metricPointsDefault.Add(mp);
             }
@@ -204,18 +389,26 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Single(metricPointsDefault);
             var histogramPoint = metricPointsDefault[0];
 
-            Assert.Equal(40, histogramPoint.DoubleValue);
-            Assert.Equal(7, histogramPoint.LongValue);
-            Assert.Equal(Metric.DefaultHistogramBounds.Length + 1, histogramPoint.BucketCounts.Length);
-            Assert.Equal(2, histogramPoint.BucketCounts[0]);
-            Assert.Equal(1, histogramPoint.BucketCounts[1]);
-            Assert.Equal(2, histogramPoint.BucketCounts[2]);
-            Assert.Equal(2, histogramPoint.BucketCounts[3]);
-            Assert.Equal(0, histogramPoint.BucketCounts[4]);
-            Assert.Equal(0, histogramPoint.BucketCounts[5]);
+            var count = histogramPoint.GetHistogramCount();
+            var sum = histogramPoint.GetHistogramSum();
+
+            Assert.Equal(40, sum);
+            Assert.Equal(7, count);
+
+            int index = 0;
+            int actualCount = 0;
+            var expectedBucketCounts = new long[] { 2, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0 };
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
+            {
+                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+                index++;
+                actualCount++;
+            }
+
+            Assert.Equal(Metric.DefaultHistogramBounds.Length + 1, actualCount);
 
             List<MetricPoint> metricPointsCustom = new List<MetricPoint>();
-            foreach (ref var mp in metricCustom.GetMetricPoints())
+            foreach (ref readonly var mp in metricCustom.GetMetricPoints())
             {
                 metricPointsCustom.Add(mp);
             }
@@ -223,21 +416,32 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Single(metricPointsCustom);
             histogramPoint = metricPointsCustom[0];
 
-            Assert.Equal(40, histogramPoint.DoubleValue);
-            Assert.Equal(7, histogramPoint.LongValue);
-            Assert.Equal(bounds.Length + 1, histogramPoint.BucketCounts.Length);
-            Assert.Equal(5, histogramPoint.BucketCounts[0]);
-            Assert.Equal(2, histogramPoint.BucketCounts[1]);
-            Assert.Equal(0, histogramPoint.BucketCounts[2]);
+            count = histogramPoint.GetHistogramCount();
+            sum = histogramPoint.GetHistogramSum();
+
+            Assert.Equal(40, sum);
+            Assert.Equal(7, count);
+
+            index = 0;
+            actualCount = 0;
+            expectedBucketCounts = new long[] { 5, 2, 0 };
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
+            {
+                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+                index++;
+                actualCount++;
+            }
+
+            Assert.Equal(boundaries.Length + 1, actualCount);
         }
 
         [Fact]
         public void ViewToSelectTagKeys()
         {
-            using var meter1 = new Meter("ViewToSelectTagKeysTest");
+            using var meter = new Meter(Utils.GetCurrentMethodName());
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter1.Name)
+                .AddMeter(meter.Name)
                 .AddView("FruitCounter", new MetricStreamConfiguration()
                 { TagKeys = new string[] { "name" }, Name = "NameOnly" })
                 .AddView("FruitCounter", new MetricStreamConfiguration()
@@ -247,7 +451,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
-            var counter = meter1.CreateCounter<long>("FruitCounter");
+            var counter = meter.CreateCounter<long>("FruitCounter");
             counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "small"));
             counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "small"));
 
@@ -262,7 +466,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0];
             Assert.Equal("NameOnly", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref readonly var mp in metric.GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }
@@ -273,7 +477,7 @@ namespace OpenTelemetry.Metrics.Tests
             metric = exportedItems[1];
             Assert.Equal("SizeOnly", metric.Name);
             metricPoints.Clear();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref readonly var mp in metric.GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }
@@ -284,7 +488,7 @@ namespace OpenTelemetry.Metrics.Tests
             metric = exportedItems[2];
             Assert.Equal("NoTags", metric.Name);
             metricPoints.Clear();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref readonly var mp in metric.GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }
@@ -296,7 +500,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewToDropSingleInstrument()
         {
-            using var meter = new Meter("ViewToDropSingleInstrumentTest");
+            using var meter = new Meter(Utils.GetCurrentMethodName());
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
@@ -319,7 +523,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewToDropMultipleInstruments()
         {
-            using var meter = new Meter("ViewToDropMultipleInstrumentsTest");
+            using var meter = new Meter(Utils.GetCurrentMethodName());
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
@@ -346,7 +550,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewToDropAndRetainInstrument()
         {
-            using var meter = new Meter("ViewToDropAndRetainInstrumentTest");
+            using var meter = new Meter(Utils.GetCurrentMethodName());
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
@@ -370,8 +574,8 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void MetricStreamConfigurationForDropMustNotAllowOverriding()
         {
-            Assert.Throws<ArgumentException>(() => MetricStreamConfiguration.Drop.Aggregation = Aggregation.Histogram);
+            MetricStreamConfiguration.Drop.Aggregation = Aggregation.Histogram;
+            Assert.Equal(Aggregation.Drop, MetricStreamConfiguration.Drop.Aggregation);
         }
     }
-#pragma warning restore SA1000 // KeywordsMustBeSpacedCorrectly
 }

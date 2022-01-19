@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 1.2.0-rc1
+
+Released 2021-Nov-29
+
+## 1.2.0-beta2
+
+Released 2021-Nov-19
+
+* Changed `ZipkinExporterOptions` constructor to throw
+  `FormatException` if it fails to parse any of the supported environment
+  variables.
+
+* Added `HttpClientFactory` option
+  ([#2654](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2654))
+
 ## 1.2.0-beta1
 
 Released 2021-Oct-08

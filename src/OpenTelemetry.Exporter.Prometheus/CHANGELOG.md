@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 1.2.0-rc1
+
+Released 2021-Nov-29
+
+* Bug fix for handling Histogram with empty buckets.
+  ([#2651](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2651))
+
+## 1.2.0-beta2
+
+Released 2021-Nov-19
+
+* Added scrape endpoint response caching feature &
+  `ScrapeResponseCacheDurationMilliseconds` option
+  ([#2610](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2610))
+
 ## 1.2.0-beta1
 
 Released 2021-Oct-08

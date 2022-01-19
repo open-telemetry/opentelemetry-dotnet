@@ -84,7 +84,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             activityProcessor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
             var sampler = new TestSampler();
-            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .SetSampler(sampler)
                 .AddSqlClientInstrumentation(options =>

@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -29,17 +30,16 @@ namespace OpenTelemetry.Metrics
 
         public MeterProviderBuilderHosting(IServiceCollection services)
         {
-            this.Services = services ?? throw new ArgumentNullException(nameof(services));
+            Guard.ThrowIfNull(services, nameof(services));
+
+            this.Services = services;
         }
 
         public IServiceCollection Services { get; }
 
         public MeterProviderBuilder Configure(Action<IServiceProvider, MeterProviderBuilder> configure)
         {
-            if (configure == null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
+            Guard.ThrowIfNull(configure, nameof(configure));
 
             this.configurationActions.Add(configure);
             return this;
@@ -47,10 +47,7 @@ namespace OpenTelemetry.Metrics
 
         public MeterProvider Build(IServiceProvider serviceProvider)
         {
-            if (serviceProvider == null)
-            {
-                throw new ArgumentNullException(nameof(serviceProvider));
-            }
+            Guard.ThrowIfNull(serviceProvider, nameof(serviceProvider));
 
             // Note: Not using a foreach loop because additional actions can be
             // added during each call.

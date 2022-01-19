@@ -30,7 +30,7 @@ public class Program
     {
         var process = Process.GetCurrentProcess();
 
-        MyMeter.CreateObservableGauge<long>(
+        MyMeter.CreateObservableGauge(
             "MyProcessWorkingSetGauge",
             () => new List<Measurement<long>>()
             {
@@ -42,10 +42,7 @@ public class Program
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter("MyCompany.MyProduct.MyLibrary")
-            /*
-            TODO: revisit once this exception is removed "System.InvalidOperationException: Only one Metricreader is allowed.".
-            .AddReader(new MyReader())
-            */
+            .AddReader(new BaseExportingMetricReader(new MyExporter("ExporterX")))
             .AddMyExporter()
             .Build();
 

@@ -17,12 +17,9 @@
 #if NETCOREAPP3_1_OR_GREATER
 using System;
 using System.Diagnostics;
-using System.IO;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus
@@ -41,10 +38,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <param name="next"><see cref="RequestDelegate"/>.</param>
         public PrometheusExporterMiddleware(MeterProvider meterProvider, RequestDelegate next)
         {
-            if (meterProvider == null)
-            {
-                throw new ArgumentNullException(nameof(meterProvider));
-            }
+            Guard.ThrowIfNull(meterProvider, nameof(meterProvider));
 
             if (!meterProvider.TryFindExporter(out PrometheusExporter exporter))
             {
@@ -54,59 +48,55 @@ namespace OpenTelemetry.Exporter.Prometheus
             this.exporter = exporter;
         }
 
+        internal PrometheusExporterMiddleware(PrometheusExporter exporter)
+        {
+            this.exporter = exporter;
+        }
+
         /// <summary>
         /// Invoke.
         /// </summary>
-        /// <param name="httpContext"> context. </param>
-        /// <returns>Task. </returns>
+        /// <param name="httpContext"> context.</param>
+        /// <returns>Task.</returns>
         public async Task InvokeAsync(HttpContext httpContext)
         {
             Debug.Assert(httpContext != null, "httpContext should not be null");
 
             var response = httpContext.Response;
 
-            if (!this.exporter.TryEnterSemaphore())
-            {
-                response.StatusCode = 429;
-                return;
-            }
-
             try
             {
-                this.exporter.Collect(Timeout.Infinite);
+                var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
+                try
+                {
+                    if (collectionResponse.View.Count > 0)
+                    {
+                        response.StatusCode = 200;
+                        response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
+                        response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
 
-                await WriteMetricsToResponse(this.exporter, response).ConfigureAwait(false);
+                        await response.Body.WriteAsync(collectionResponse.View.Array, 0, collectionResponse.View.Count).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Collection failure.");
+                    }
+                }
+                finally
+                {
+                    this.exporter.CollectionManager.ExitCollect();
+                }
             }
             catch (Exception ex)
             {
+                PrometheusExporterEventSource.Log.FailedExport(ex);
                 if (!response.HasStarted)
                 {
                     response.StatusCode = 500;
                 }
+            }
 
-                PrometheusExporterEventSource.Log.FailedExport(ex);
-            }
-            finally
-            {
-                this.exporter.ReleaseSemaphore();
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static async Task WriteMetricsToResponse(PrometheusExporter exporter, HttpResponse response)
-        {
-            response.StatusCode = 200;
-            response.ContentType = PrometheusMetricBuilder.ContentType;
-
-            using var writer = new StreamWriter(response.Body, encoding: Encoding.UTF8, leaveOpen: true);
-            try
-            {
-                await exporter.WriteMetricsCollection(writer, exporter.Options.GetUtcNowDateTimeOffset).ConfigureAwait(false);
-            }
-            finally
-            {
-                await writer.FlushAsync().ConfigureAwait(false);
-            }
+            this.exporter.OnExport = null;
         }
     }
 }

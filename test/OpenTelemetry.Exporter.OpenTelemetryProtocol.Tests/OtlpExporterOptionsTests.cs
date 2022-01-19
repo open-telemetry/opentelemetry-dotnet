@@ -63,9 +63,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "invalid");
 
-            var options = new OtlpExporterOptions();
-
-            Assert.Equal(new Uri("http://localhost:4317"), options.Endpoint); // use default
+            Assert.Throws<FormatException>(() => new OtlpExporterOptions());
         }
 
         [Fact]
@@ -73,9 +71,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             Environment.SetEnvironmentVariable(OtlpExporterOptions.TimeoutEnvVarName, "invalid");
 
-            var options = new OtlpExporterOptions();
-
-            Assert.Equal(10000, options.TimeoutMilliseconds); // use default
+            Assert.Throws<FormatException>(() => new OtlpExporterOptions());
         }
 
         [Fact]
@@ -83,9 +79,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             Environment.SetEnvironmentVariable(OtlpExporterOptions.ProtocolEnvVarName, "invalid");
 
-            var options = new OtlpExporterOptions();
-
-            Assert.Equal(OtlpExportProtocol.Grpc, options.Protocol); // use default
+            Assert.Throws<FormatException>(() => new OtlpExporterOptions());
         }
 
         [Fact]

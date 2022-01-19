@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter
 {
@@ -26,6 +27,9 @@ namespace OpenTelemetry.Exporter
     {
         internal const string DefaultScrapeEndpointPath = "/metrics";
         internal Func<DateTimeOffset> GetUtcNowDateTimeOffset = () => DateTimeOffset.UtcNow;
+
+        private int scrapeResponseCacheDurationMilliseconds = 10 * 1000;
+        private IReadOnlyCollection<string> httpListenerPrefixes = new string[] { "http://*:80/" };
 
 #if NETCOREAPP3_1_OR_GREATER
         /// <summary>
@@ -45,11 +49,48 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets the prefixes to use for the http listener. Default
         /// value: http://*:80/.
         /// </summary>
-        public IReadOnlyCollection<string> HttpListenerPrefixes { get; set; } = new string[] { "http://*:80/" };
+        public IReadOnlyCollection<string> HttpListenerPrefixes
+        {
+            get => this.httpListenerPrefixes;
+            set
+            {
+                _ = value ?? throw new ArgumentNullException(nameof(this.httpListenerPrefixes));
+
+                foreach (string inputUri in value)
+                {
+                    if (!(Uri.TryCreate(inputUri, UriKind.Absolute, out var uri) &&
+                        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)))
+                    {
+                        throw new ArgumentException(
+                            "Prometheus server path should be a valid URI with http/https scheme.",
+                            nameof(this.httpListenerPrefixes));
+                    }
+                }
+
+                this.httpListenerPrefixes = value;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the path to use for the scraping endpoint. Default value: /metrics.
         /// </summary>
         public string ScrapeEndpointPath { get; set; } = DefaultScrapeEndpointPath;
+
+        /// <summary>
+        /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 10,000 (10 seconds).
+        /// </summary>
+        /// <remarks>
+        /// Note: Specify 0 to disable response caching.
+        /// </remarks>
+        public int ScrapeResponseCacheDurationMilliseconds
+        {
+            get => this.scrapeResponseCacheDurationMilliseconds;
+            set
+            {
+                Guard.ThrowIfOutOfRange(value, nameof(value), min: 0);
+
+                this.scrapeResponseCacheDurationMilliseconds = value;
+            }
+        }
     }
 }

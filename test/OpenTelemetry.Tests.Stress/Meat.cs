@@ -16,13 +16,13 @@
 
 using System.Runtime.CompilerServices;
 
-// namespace OpenTelemetry.Tests.Stress;
+namespace OpenTelemetry.Tests.Stress;
 
 public partial class Program
 {
     public static void Main()
     {
-        Stress(concurrency: 1);
+        Stress(concurrency: 1, prometheusPort: 9184);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

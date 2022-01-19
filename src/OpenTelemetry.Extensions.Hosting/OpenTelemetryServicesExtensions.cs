@@ -15,9 +15,11 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Extensions.Hosting.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -46,10 +48,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Action<TracerProviderBuilder> configure)
         {
-            if (configure is null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
+            Guard.ThrowIfNull(configure, nameof(configure));
 
             var builder = new TracerProviderBuilderHosting(services);
             configure(builder);
@@ -74,10 +73,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetryMetrics(this IServiceCollection services, Action<MeterProviderBuilder> configure)
         {
-            if (configure is null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
+            Guard.ThrowIfNull(configure, nameof(configure));
 
             var builder = new MeterProviderBuilderHosting(services);
             configure(builder);
@@ -92,15 +88,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         private static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Func<IServiceProvider, TracerProvider> createTracerProvider)
         {
-            if (services is null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            if (createTracerProvider is null)
-            {
-                throw new ArgumentNullException(nameof(createTracerProvider));
-            }
+            Guard.ThrowIfNull(services, nameof(services));
+            Guard.ThrowIfNull(createTracerProvider, nameof(createTracerProvider));
 
             try
             {
@@ -123,15 +112,8 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         private static IServiceCollection AddOpenTelemetryMetrics(this IServiceCollection services, Func<IServiceProvider, MeterProvider> createMeterProvider)
         {
-            if (services is null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            if (createMeterProvider is null)
-            {
-                throw new ArgumentNullException(nameof(createMeterProvider));
-            }
+            Debug.Assert(services != null, $"{nameof(services)} must not be null");
+            Debug.Assert(createMeterProvider != null, $"{nameof(createMeterProvider)} must not be null");
 
             try
             {

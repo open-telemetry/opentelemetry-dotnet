@@ -27,6 +27,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
@@ -47,9 +48,11 @@ namespace OpenTelemetry.Exporter
         /// <param name="client">Http client to use to upload telemetry.</param>
         public ZipkinExporter(ZipkinExporterOptions options, HttpClient client = null)
         {
-            this.options = options ?? throw new ArgumentNullException(nameof(options));
+            Guard.ThrowIfNull(options, nameof(options));
+
+            this.options = options;
             this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? ZipkinExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
-            this.httpClient = client ?? new HttpClient();
+            this.httpClient = client ?? options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("ZipkinExporter was missing HttpClientFactory or it returned null.");
         }
 
         internal ZipkinEndpoint LocalEndpoint { get; private set; }

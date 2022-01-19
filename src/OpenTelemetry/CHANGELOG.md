@@ -2,24 +2,108 @@
 
 ## Unreleased
 
+* Make `MetricPoint` of `MetricPointAccessor` readonly.
+  ([2736](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2736))
+
+* Fail-fast when using AddView with guaranteed conflict.
+  ([2751](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2751))
+
+## 1.2.0-rc1
+
+Released 2021-Nov-29
+
+* Prevent accessing activity Id before sampler runs in case of legacy
+  activities.
+  ([2659](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2659))
+
+* Added `ReadOnlyTagCollection` and expose `Tags` on `MetricPoint` instead of
+  `Keys`+`Values`
+  ([#2642](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2642))
+
+* Refactored `MetricPoint` and added public methods: `GetBucketCounts`,
+  `GetExplicitBounds`, `GetHistogramCount`, and `GetHistogramSum`
+  ([#2657](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2657))
+
+* Remove MetricStreamConfiguration.Aggregation, as the feature to customize
+  aggregation is not implemented yet.
+  ([#2660](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2660))
+
+* Removed the public property `HistogramMeasurements` and added a public method
+  `GetHistogramBuckets` instead. Renamed the class `HistogramMeasurements` to
+  `HistogramBuckets` and added an enumerator of type `HistogramBucket` for
+  enumerating `BucketCounts` and `ExplicitBounds`. Removed `GetBucketCounts` and
+  `GetExplicitBounds` methods from `MetricPoint`.
+  ([#2664](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2664))
+
+* Refactored temporality setting to align with the latest spec.
+  ([#2666](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2666))
+
+* Removed the public properties `LongValue`, `DoubleValue`, in favor of their
+  counterpart public methods `GetSumLong`, `GetSumDouble`,
+  `GetGaugeLastValueLong`, `GetGaugeLastValueDouble`.
+  ([#2667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2667))
+
+* MetricType modified to reserve bits for future types.
+  ([#2693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2693))
+
+## 1.2.0-beta2
+
+Released 2021-Nov-19
+
+* Renamed `HistogramConfiguration` to `ExplicitBucketHistogramConfiguration` and
+  changed its member `BucketBounds` to `Boundaries`.
+  ([#2638](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2638))
+
+* Metrics with the same name but from different meters are allowed.
+  ([#2634](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2634))
+
+* Metrics SDK will not provide inactive Metrics to delta exporter.
+  ([#2629](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2629))
+
+* Histogram bounds are validated when added to a View.
+  ([#2573](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2573))
+
+* Changed `BatchExportActivityProcessorOptions` constructor to throw
+  `FormatException` if it fails to parse any of the supported environment
+  variables.
+
+* Added `BaseExporter.ForceFlush`.
+  ([#2525](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2525))
+
+* Exposed public `Batch(T[] items, int count)` constructor on `Batch<T>` struct
+  ([#2542](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2542))
+
+* Added wildcard support for AddMeter.
+  ([#2459](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2459))
+
+* Add support for multiple Metric readers
+  ([#2596](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2596))
+
+* Add ability to configure MaxMetricStreams, MaxMetricPointsPerMetricStream
+  ([#2635](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2635))
+
 ## 1.2.0-beta1
 
 Released 2021-Oct-08
 
-* Exception from Observable instrument callbacks does not
-  result in entire metrics being lost.
+* Exception from Observable instrument callbacks does not result in entire
+  metrics being lost.
 
-* SDK is allocation-free on recording of measurements with
-  upto 8 tags.
+* SDK is allocation-free on recording of measurements with upto 8 tags.
 
 * TracerProviderBuilder.AddLegacySource now supports wildcard activity names.
   ([#2183](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2183))
+
+* Instrument and View names are validated [according with the
+  spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument).
+  ([#2470](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2470))
 
 ## 1.2.0-alpha4
 
 Released 2021-Sep-23
 
-* `BatchExportProcessor.OnShutdown` will now log the count of dropped telemetry items.
+* `BatchExportProcessor.OnShutdown` will now log the count of dropped telemetry
+  items.
   ([#2331](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2331))
 * Changed `CompositeProcessor<T>.OnForceFlush` to meet with the spec
   requirement. Now the SDK will invoke `ForceFlush` on all registered
@@ -30,14 +114,14 @@ Released 2021-Sep-23
 
 Released 2021-Sep-13
 
-* Metrics perf improvements, bug fixes.
-  Replace MetricProcessor with MetricReader.
+* Metrics perf improvements, bug fixes. Replace MetricProcessor with
+  MetricReader.
   ([#2306](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2306))
 
-* Add `BatchExportActivityProcessorOptions` which supports field value overriding
-  using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
-  `OTEL_BSP_MAX_QUEUE_SIZE`, `OTEL_BSP_MAX_EXPORT_BATCH_SIZE`
-  envionmental variables as defined in the
+* Add `BatchExportActivityProcessorOptions` which supports field value
+  overriding using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
+  `OTEL_BSP_MAX_QUEUE_SIZE`, `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` envionmental
+  variables as defined in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/sdk-environment-variables.md#batch-span-processor).
   ([#2219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2219))
 
@@ -45,21 +129,24 @@ Released 2021-Sep-13
 
 Released 2021-Aug-24
 
-* More Metrics features. All instrument types, push/pull
-  exporters, Delta/Cumulative temporality supported.
+* More Metrics features. All instrument types, push/pull exporters,
+  Delta/Cumulative temporality supported.
 
-* `ResourceBuilder.CreateDefault` has detectors for
-  `OTEL_RESOURCE_ATTRIBUTES`, `OTEL_SERVICE_NAME` environment variables
-  so that explicit `AddEnvironmentVariableDetector` call is not needed. ([#2247](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2247))
+* `ResourceBuilder.CreateDefault` has detectors for `OTEL_RESOURCE_ATTRIBUTES`,
+  `OTEL_SERVICE_NAME` environment variables so that explicit
+  `AddEnvironmentVariableDetector` call is not needed.
+  ([#2247](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2247))
 
 * `ResourceBuilder.AddEnvironmentVariableDetector` handles `OTEL_SERVICE_NAME`
-   environmental variable. ([#2209](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2209))
+   environmental variable.
+   ([#2209](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2209))
 
-* Removes upper constraint for Microsoft.Extensions.Logging
-  dependencies. ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
+* Removes upper constraint for Microsoft.Extensions.Logging dependencies.
+  ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
 
-* OpenTelemetryLogger modified to not throw, when the
-  formatter supplied in ILogger.Log call is null. ([#2200](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2200))
+* OpenTelemetryLogger modified to not throw, when the formatter supplied in
+  ILogger.Log call is null.
+  ([#2200](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2200))
 
 ## 1.2.0-alpha1
 
@@ -70,7 +157,8 @@ Released 2021-Jul-23
   ([#2174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2174))
 
 * Removes .NET Framework 4.5.2, .NET 4.6 support. The minimum .NET Framework
-  version supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
+  version supported is .NET 4.6.1.
+  ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
 
 ## 1.1.0
 
@@ -107,8 +195,8 @@ Released 2021-May-11
 Released 2021-Apr-23
 
 * Use `AssemblyFileVersionAttribute` instead of `FileVersionInfo.GetVersionInfo`
-  to get the SDK version attribute to ensure that it works when the assembly
-  is not loaded directly from a file on disk
+  to get the SDK version attribute to ensure that it works when the assembly is
+  not loaded directly from a file on disk
   ([#1908](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1908))
 
 ## 1.1.0-beta1

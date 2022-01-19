@@ -1,6 +1,42 @@
 # Changelog
 
+* Changed `OtlpLogExporter` to convert `ILogger` structured log inputs to
+  `Attributes` in OpenTelemetry (only active when `ParseStateValues` is `true`
+  on `OpenTelemetryLoggerOptions`)
+
 ## Unreleased
+
+* Added validation that insecure channel is configured correctly when using
+  .NET Core 3.x for gRPC-based exporting.
+  ([#2691](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2691))
+
+## 1.2.0-rc1
+
+Released 2021-Nov-29
+
+* Added configuration options for `MetricReaderType` to allow for configuring
+  the `OtlpMetricExporter` to export either manually or periodically.
+  ([#2674](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2674))
+
+* The internal log message used when OTLP export client connection failure occurs,
+  will now include the endpoint uri as well.
+  ([#2686](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2686))
+
+* Support `HttpProtobuf` protocol with metrics & added `HttpClientFactory`
+  option
+  ([#2696](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2696))
+
+## 1.2.0-beta2
+
+Released 2021-Nov-19
+
+* Changed `OtlpExporterOptions` constructor to throw
+  `FormatException` if it fails to parse any of the supported environment
+  variables.
+
+* Changed `OtlpExporterOptions.MetricExportIntervalMilliseconds` to default
+  60000 milliseconds.
+  ([#2641](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2641))
 
 ## 1.2.0-beta1
 

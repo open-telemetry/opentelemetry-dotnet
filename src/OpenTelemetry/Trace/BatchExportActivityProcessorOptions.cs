@@ -16,11 +16,19 @@
 
 using System;
 using System.Diagnostics;
-using System.Security;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
+    /// <summary>
+    /// Batch span processor options.
+    /// OTEL_BSP_MAX_QUEUE_SIZE, OTEL_BSP_MAX_EXPORT_BATCH_SIZE, OTEL_BSP_EXPORT_TIMEOUT, OTEL_BSP_SCHEDULE_DELAY
+    /// environment variables are parsed during object construction.
+    /// </summary>
+    /// <remarks>
+    /// The constructor throws <see cref="FormatException"/> if it fails to parse
+    /// any of the supported environment variables.
+    /// </remarks>
     public class BatchExportActivityProcessorOptions : BatchExportProcessorOptions<Activity>
     {
         internal const string MaxQueueSizeEnvVarKey = "OTEL_BSP_MAX_QUEUE_SIZE";
@@ -35,57 +43,25 @@ namespace OpenTelemetry.Trace
         {
             int value;
 
-            if (TryLoadEnvVarInt(ExporterTimeoutEnvVarKey, out value))
+            if (EnvironmentVariableHelper.LoadNumeric(ExporterTimeoutEnvVarKey, out value))
             {
                 this.ExporterTimeoutMilliseconds = value;
             }
 
-            if (TryLoadEnvVarInt(MaxExportBatchSizeEnvVarKey, out value))
+            if (EnvironmentVariableHelper.LoadNumeric(MaxExportBatchSizeEnvVarKey, out value))
             {
                 this.MaxExportBatchSize = value;
             }
 
-            if (TryLoadEnvVarInt(MaxQueueSizeEnvVarKey, out value))
+            if (EnvironmentVariableHelper.LoadNumeric(MaxQueueSizeEnvVarKey, out value))
             {
                 this.MaxQueueSize = value;
             }
 
-            if (TryLoadEnvVarInt(ScheduledDelayEnvVarKey, out value))
+            if (EnvironmentVariableHelper.LoadNumeric(ScheduledDelayEnvVarKey, out value))
             {
                 this.ScheduledDelayMilliseconds = value;
             }
-        }
-
-        private static bool TryLoadEnvVarInt(string envVarKey, out int result)
-        {
-            result = 0;
-
-            string value;
-            try
-            {
-                value = Environment.GetEnvironmentVariable(envVarKey);
-            }
-            catch (SecurityException ex)
-            {
-                // The caller does not have the required permission to
-                // retrieve the value of an environment variable from the current process.
-                OpenTelemetrySdkEventSource.Log.MissingPermissionsToReadEnvironmentVariable(ex);
-                return false;
-            }
-
-            if (string.IsNullOrEmpty(value))
-            {
-                return false;
-            }
-
-            if (!int.TryParse(value, out var parsedValue))
-            {
-                OpenTelemetrySdkEventSource.Log.FailedToParseEnvironmentVariable(envVarKey, value);
-                return false;
-            }
-
-            result = parsedValue;
-            return true;
         }
     }
 }

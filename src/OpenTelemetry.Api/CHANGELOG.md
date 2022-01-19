@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+* Added `ParentSpanId` to `TelemetrySpan` ([#2740](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2740))
+
+## 1.2.0-rc1
+
+Released 2021-Nov-29
+
+## 1.2.0-beta2
+
+Released 2021-Nov-19
+
+* Updated System.Diagnostics.DiagnosticSource to version 6.0.0.
+  ([#2582](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2582))
+
 ## 1.2.0-beta1
 
 Released 2021-Oct-08

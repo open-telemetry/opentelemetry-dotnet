@@ -16,6 +16,7 @@
 
 using System;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -32,29 +33,40 @@ namespace OpenTelemetry.Metrics
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddOtlpExporter(this MeterProviderBuilder builder, Action<OtlpExporterOptions> configure = null)
         {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.ThrowIfNull(builder, nameof(builder));
 
             if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
             {
                 return deferredMeterProviderBuilder.Configure((sp, builder) =>
                 {
-                    AddOtlpExporter(builder, sp.GetOptions<OtlpExporterOptions>(), configure);
+                    AddOtlpExporter(builder, sp.GetOptions<OtlpExporterOptions>(), configure, sp);
                 });
             }
 
-            return AddOtlpExporter(builder, new OtlpExporterOptions(), configure);
+            return AddOtlpExporter(builder, new OtlpExporterOptions(), configure, serviceProvider: null);
         }
 
-        private static MeterProviderBuilder AddOtlpExporter(MeterProviderBuilder builder, OtlpExporterOptions options, Action<OtlpExporterOptions> configure = null)
+        private static MeterProviderBuilder AddOtlpExporter(
+            MeterProviderBuilder builder,
+            OtlpExporterOptions options,
+            Action<OtlpExporterOptions> configure,
+            IServiceProvider serviceProvider)
         {
+            var initialEndpoint = options.Endpoint;
+
             configure?.Invoke(options);
 
+            options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
+
+            options.AppendExportPath(initialEndpoint, OtlpExporterOptions.MetricsExportPath);
+
             var metricExporter = new OtlpMetricExporter(options);
-            var metricReader = new PeriodicExportingMetricReader(metricExporter, options.MetricExportIntervalMilliseconds);
-            metricReader.PreferredAggregationTemporality = options.AggregationTemporality;
+
+            var metricReader = options.MetricReaderType == MetricReaderType.Manual
+                ? new BaseExportingMetricReader(metricExporter)
+                : new PeriodicExportingMetricReader(metricExporter, options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
+
+            metricReader.Temporality = options.AggregationTemporality;
             return builder.AddReader(metricReader);
         }
     }

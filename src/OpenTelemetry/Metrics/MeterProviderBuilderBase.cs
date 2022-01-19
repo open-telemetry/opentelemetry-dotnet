@@ -16,8 +16,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text.RegularExpressions;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -27,10 +29,14 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public abstract class MeterProviderBuilderBase : MeterProviderBuilder
     {
+        internal const int MaxMetricsDefault = 1000;
+        internal const int MaxMetricPointsPerMetricDefault = 2000;
         private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
         private readonly List<string> meterSources = new List<string>();
         private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs = new List<Func<Instrument, MetricStreamConfiguration>>();
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
+        private int maxMetricStreams = MaxMetricsDefault;
+        private int maxMetricPointsPerMetricStream = MaxMetricPointsPerMetricDefault;
 
         protected MeterProviderBuilderBase()
         {
@@ -41,10 +47,7 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc />
         public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
         {
-            if (instrumentationFactory == null)
-            {
-                throw new ArgumentNullException(nameof(instrumentationFactory));
-            }
+            Guard.ThrowIfNull(instrumentationFactory, nameof(instrumentationFactory));
 
             this.instrumentationFactories.Add(
                 new InstrumentationFactory(
@@ -58,17 +61,11 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc />
         public override MeterProviderBuilder AddMeter(params string[] names)
         {
-            if (names == null)
-            {
-                throw new ArgumentNullException(nameof(names));
-            }
+            Guard.ThrowIfNull(names, nameof(names));
 
             foreach (var name in names)
             {
-                if (string.IsNullOrWhiteSpace(name))
-                {
-                    throw new ArgumentException($"{nameof(names)} contains null or whitespace string.");
-                }
+                Guard.ThrowIfNullOrWhitespace(name, nameof(name));
 
                 this.meterSources.Add(name);
             }
@@ -78,11 +75,6 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilder AddReader(MetricReader reader)
         {
-            if (this.MetricReaders.Count >= 1)
-            {
-                throw new InvalidOperationException("Only one Metricreader is allowed.");
-            }
-
             this.MetricReaders.Add(reader);
             return this;
         }
@@ -112,9 +104,27 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
+        internal MeterProviderBuilder SetMaxMetricStreams(int maxMetricStreams)
+        {
+            Guard.ThrowIfOutOfRange(maxMetricStreams, min: 1);
+
+            this.maxMetricStreams = maxMetricStreams;
+            return this;
+        }
+
+        internal MeterProviderBuilder SetMaxMetricPointsPerMetricStream(int maxMetricPointsPerMetricStream)
+        {
+            Guard.ThrowIfOutOfRange(maxMetricPointsPerMetricStream, min: 1);
+
+            this.maxMetricPointsPerMetricStream = maxMetricPointsPerMetricStream;
+            return this;
+        }
+
         internal MeterProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
-            this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
+            Debug.Assert(resourceBuilder != null, $"{nameof(resourceBuilder)} must not be null");
+
+            this.resourceBuilder = resourceBuilder;
             return this;
         }
 
@@ -129,6 +139,8 @@ namespace OpenTelemetry.Metrics
                 this.meterSources,
                 this.instrumentationFactories,
                 this.viewConfigs,
+                this.maxMetricStreams,
+                this.maxMetricPointsPerMetricStream,
                 this.MetricReaders.ToArray());
         }
 

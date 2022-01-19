@@ -16,7 +16,6 @@
 
 using System;
 using System.Diagnostics.Tracing;
-using System.Security;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
@@ -27,29 +26,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         public static readonly OpenTelemetryProtocolExporterEventSource Log = new OpenTelemetryProtocolExporterEventSource();
 
         [NonEvent]
-        public void MissingPermissionsToReadEnvironmentVariable(SecurityException ex)
-        {
-            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
-            {
-                this.MissingPermissionsToReadEnvironmentVariable(ex.ToInvariantString());
-            }
-        }
-
-        [NonEvent]
-        public void FailedToConvertToProtoDefinitionError(Exception ex)
+        public void FailedToReachCollector(Uri collectorUri, Exception ex)
         {
             if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                this.FailedToConvertToProtoDefinitionError(ex.ToInvariantString());
-            }
-        }
-
-        [NonEvent]
-        public void FailedToReachCollector(Exception ex)
-        {
-            if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
-            {
-                this.FailedToReachCollector(ex.ToInvariantString());
+                var rawCollectorUri = collectorUri.ToString();
+                this.FailedToReachCollector(rawCollectorUri, ex.ToInvariantString());
             }
         }
 
@@ -62,16 +44,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
         }
 
-        [Event(1, Message = "Exporter failed to convert SpanData content into gRPC proto definition. Data will not be sent. Exception: {0}", Level = EventLevel.Error)]
-        public void FailedToConvertToProtoDefinitionError(string ex)
+        [Event(2, Message = "Exporter failed send data to collector to {0} endpoint. Data will not be sent. Exception: {1}", Level = EventLevel.Error)]
+        public void FailedToReachCollector(string rawCollectorUri, string ex)
         {
-            this.WriteEvent(1, ex);
-        }
-
-        [Event(2, Message = "Exporter failed send data to collector. Data will not be sent. Exception: {0}", Level = EventLevel.Error)]
-        public void FailedToReachCollector(string ex)
-        {
-            this.WriteEvent(2, ex);
+            this.WriteEvent(2, rawCollectorUri, ex);
         }
 
         [Event(3, Message = "Could not translate activity from class '{0}' and method '{1}', span will not be recorded.", Level = EventLevel.Informational)]
@@ -90,18 +66,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         public void CouldNotTranslateMetric(string className, string methodName)
         {
             this.WriteEvent(5, className, methodName);
-        }
-
-        [Event(6, Message = "Failed to parse environment variable: '{0}', value: '{1}'.", Level = EventLevel.Warning)]
-        public void FailedToParseEnvironmentVariable(string name, string value)
-        {
-            this.WriteEvent(6, name, value);
-        }
-
-        [Event(7, Message = "Missing permissions to read environment variable: '{0}'", Level = EventLevel.Warning)]
-        public void MissingPermissionsToReadEnvironmentVariable(string exception)
-        {
-            this.WriteEvent(7, exception);
         }
 
         [Event(8, Message = "Unsupported value for protocol '{0}' is configured, default protocol 'grpc' will be used.", Level = EventLevel.Warning)]

@@ -35,6 +35,7 @@ namespace OpenTelemetry.Trace
         private readonly Action<Activity> getRequestedDataAction;
         private readonly bool supportLegacyActivity;
         private BaseProcessor<Activity> processor;
+        private bool disposed;
 
         internal TracerProviderSdk(
             Resource resource,
@@ -42,7 +43,7 @@ namespace OpenTelemetry.Trace
             IEnumerable<TracerProviderBuilderBase.InstrumentationFactory> instrumentationFactories,
             Sampler sampler,
             List<BaseProcessor<Activity>> processors,
-            Dictionary<string, bool> legacyActivityOperationNames)
+            HashSet<string> legacyActivityOperationNames)
         {
             this.Resource = resource;
             this.sampler = sampler;
@@ -52,10 +53,10 @@ namespace OpenTelemetry.Trace
             Regex legacyActivityWildcardModeRegex = null;
             foreach (var legacyName in legacyActivityOperationNames)
             {
-                if (legacyName.Key.Contains('*'))
+                if (legacyName.Contains('*'))
                 {
                     legacyActivityWildcardMode = true;
-                    legacyActivityWildcardModeRegex = GetWildcardRegex(legacyActivityOperationNames.Keys);
+                    legacyActivityWildcardModeRegex = GetWildcardRegex(legacyActivityOperationNames);
                     break;
                 }
             }
@@ -84,7 +85,7 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    legacyActivityPredicate = activity => legacyActivityOperationNames.ContainsKey(activity.OperationName);
+                    legacyActivityPredicate = activity => legacyActivityOperationNames.Contains(activity.OperationName);
                 }
 
                 listener.ActivityStarted = activity =>
@@ -241,21 +242,16 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    var activitySources = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-
-                    foreach (var name in sources)
-                    {
-                        activitySources[name] = true;
-                    }
+                    var activitySources = new HashSet<string>(sources, StringComparer.OrdinalIgnoreCase);
 
                     if (this.supportLegacyActivity)
                     {
-                        activitySources[string.Empty] = true;
+                        activitySources.Add(string.Empty);
                     }
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
-                    listener.ShouldListenTo = (activitySource) => activitySources.ContainsKey(activitySource.Name);
+                    listener.ShouldListenTo = (activitySource) => activitySources.Contains(activitySource.Name);
                 }
             }
             else
@@ -286,10 +282,7 @@ namespace OpenTelemetry.Trace
 
         internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
         {
-            if (processor == null)
-            {
-                throw new ArgumentNullException(nameof(processor));
-            }
+            Guard.ThrowIfNull(processor, nameof(processor));
 
             processor.SetParentProvider(this);
 
@@ -355,26 +348,34 @@ namespace OpenTelemetry.Trace
 
         protected override void Dispose(bool disposing)
         {
-            if (this.instrumentations != null)
+            if (!this.disposed)
             {
-                foreach (var item in this.instrumentations)
+                if (disposing)
                 {
-                    (item as IDisposable)?.Dispose();
+                    if (this.instrumentations != null)
+                    {
+                        foreach (var item in this.instrumentations)
+                        {
+                            (item as IDisposable)?.Dispose();
+                        }
+
+                        this.instrumentations.Clear();
+                    }
+
+                    (this.sampler as IDisposable)?.Dispose();
+
+                    // Wait for up to 5 seconds grace period
+                    this.processor?.Shutdown(5000);
+                    this.processor?.Dispose();
+
+                    // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
+                    // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
+                    // sessions that were open.
+                    this.listener?.Dispose();
                 }
 
-                this.instrumentations.Clear();
+                this.disposed = true;
             }
-
-            (this.sampler as IDisposable)?.Dispose();
-
-            // Wait for up to 5 seconds grace period
-            this.processor?.Shutdown(5000);
-            this.processor?.Dispose();
-
-            // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
-            // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
-            // sessions that were open.
-            this.listener?.Dispose();
 
             base.Dispose(disposing);
         }
@@ -397,7 +398,7 @@ namespace OpenTelemetry.Trace
             {
                 SamplingDecision.RecordAndSample => ActivitySamplingResult.AllDataAndRecorded,
                 SamplingDecision.RecordOnly => ActivitySamplingResult.AllData,
-                _ => ActivitySamplingResult.PropagationData
+                _ => ActivitySamplingResult.PropagationData,
             };
 
             if (activitySamplingResult != ActivitySamplingResult.PropagationData)

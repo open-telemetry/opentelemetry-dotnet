@@ -15,7 +15,6 @@
 // </copyright>
 
 using CommandLine;
-using OpenTelemetry.Exporter;
 
 namespace Examples.Console
 {
@@ -43,12 +42,13 @@ namespace Examples.Console
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, LogsOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
-                    (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port, options.DurationInMins),
+                    (PrometheusOptions options) => TestPrometheusExporter.Run(options.Port),
                     (MetricsOptions options) => TestMetrics.Run(options),
+                    (LogsOptions options) => TestLogs.Run(options),
                     (GrpcNetClientOptions options) => TestGrpcNetClient.Run(),
                     (HttpClientOptions options) => TestHttpClient.Run(),
                     (RedisOptions options) => TestRedis.Run(options.Uri),
@@ -84,11 +84,8 @@ namespace Examples.Console
     [Verb("prometheus", HelpText = "Specify the options required to test Prometheus")]
     internal class PrometheusOptions
     {
-        [Option('p', "port", Default = 9184, HelpText = "The port to expose metrics. The endpoint will be http://localhost:port/metrics (This is the port from which your Prometheus server scraps metrics from.)", Required = false)]
+        [Option('p', "port", Default = 9184, HelpText = "The port to expose metrics. The endpoint will be http://localhost:port/metrics/ (this is the port from which your Prometheus server scraps metrics from.)", Required = false)]
         public int Port { get; set; }
-
-        [Option('d', "duration", Default = 2, HelpText = "Total duration in minutes to run the demo.", Required = false)]
-        public int DurationInMins { get; set; }
     }
 
     [Verb("metrics", HelpText = "Specify the options required to test Metrics")]
@@ -167,6 +164,13 @@ namespace Examples.Console
 
         [Option('p', "protocol", HelpText = "Transport protocol used by exporter. Supported values: grpc and http/protobuf.", Default = "grpc")]
         public string Protocol { get; set; }
+    }
+
+    [Verb("logs", HelpText = "Specify the options required to test Logs")]
+    internal class LogsOptions
+    {
+        [Option("useExporter", Default = "otlp", HelpText = "Options include otlp or console.", Required = false)]
+        public string UseExporter { get; set; }
     }
 
     [Verb("inmemory", HelpText = "Specify the options required to test InMemory Exporter")]

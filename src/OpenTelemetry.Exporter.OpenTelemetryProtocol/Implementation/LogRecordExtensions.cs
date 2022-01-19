@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
@@ -35,7 +34,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             OtlpResource.Resource processResource,
             in Batch<LogRecord> logRecordBatch)
         {
-            Dictionary<string, OtlpLogs.InstrumentationLibraryLogs> logRecordsByLibrary = new Dictionary<string, OtlpLogs.InstrumentationLibraryLogs>();
             OtlpLogs.ResourceLogs resourceLogs = new OtlpLogs.ResourceLogs
             {
                 Resource = processResource,
@@ -78,16 +76,25 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = logRecord.FormattedMessage };
             }
 
+            if (logRecord.StateValues != null)
+            {
+                foreach (var stateValue in logRecord.StateValues)
+                {
+                    var otlpAttribute = stateValue.ToOtlpAttribute();
+                    otlpLogRecord.Attributes.Add(otlpAttribute);
+                }
+            }
+
             if (logRecord.EventId != 0)
             {
-                otlpLogRecord.Attributes.AddAttribute(nameof(logRecord.EventId), logRecord.EventId.ToString());
+                otlpLogRecord.Attributes.AddStringAttribute(nameof(logRecord.EventId), logRecord.EventId.ToString());
             }
 
             if (logRecord.Exception != null)
             {
-                otlpLogRecord.Attributes.AddAttribute(SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name);
-                otlpLogRecord.Attributes.AddAttribute(SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message);
-                otlpLogRecord.Attributes.AddAttribute(SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString());
+                otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name);
+                otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message);
+                otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString());
             }
 
             if (logRecord.TraceId != default && logRecord.SpanId != default)
@@ -109,7 +116,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             return otlpLogRecord;
         }
 
-        private static void AddAttribute(this RepeatedField<OtlpCommon.KeyValue> repeatedField, string key, string value)
+        private static void AddStringAttribute(this RepeatedField<OtlpCommon.KeyValue> repeatedField, string key, string value)
         {
             repeatedField.Add(new OtlpCommon.KeyValue
             {

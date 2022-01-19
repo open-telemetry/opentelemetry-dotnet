@@ -15,8 +15,9 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -25,8 +26,11 @@ namespace OpenTelemetry.Metrics
         internal const int DefaultExportIntervalMilliseconds = 60000;
         internal const int DefaultExportTimeoutMilliseconds = 30000;
 
-        private readonly Task exportTask;
-        private readonly CancellationTokenSource token;
+        private readonly int exportIntervalMilliseconds;
+        private readonly int exportTimeoutMilliseconds;
+        private readonly Thread exporterThread;
+        private readonly AutoResetEvent exportTrigger = new AutoResetEvent(false);
+        private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
         private bool disposed;
 
         public PeriodicExportingMetricReader(
@@ -35,52 +39,98 @@ namespace OpenTelemetry.Metrics
             int exportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
             : base(exporter)
         {
+            Guard.ThrowIfOutOfRange(exportIntervalMilliseconds, nameof(exportIntervalMilliseconds), min: 1);
+            Guard.ThrowIfOutOfRange(exportTimeoutMilliseconds, nameof(exportTimeoutMilliseconds), min: 0);
+
             if ((this.SupportedExportModes & ExportModes.Push) != ExportModes.Push)
             {
-                throw new InvalidOperationException("The exporter does not support push mode.");
+                throw new InvalidOperationException($"The '{nameof(exporter)}' does not support '{nameof(ExportModes)}.{nameof(ExportModes.Push)}'");
             }
 
-            this.token = new CancellationTokenSource();
+            this.exportIntervalMilliseconds = exportIntervalMilliseconds;
+            this.exportTimeoutMilliseconds = exportTimeoutMilliseconds;
 
-            // TODO: Use dedicated thread.
-            this.exportTask = new Task(() =>
+            this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
             {
-                while (!this.token.IsCancellationRequested)
-                {
-                    // TODO: Should pass CancellationToken
-                    Task.Delay(exportIntervalMilliseconds).Wait();
-                    this.Collect();
-                }
-            });
+                IsBackground = true,
+                Name = $"OpenTelemetry-{nameof(PeriodicExportingMetricReader)}-{exporter.GetType().Name}",
+            };
+            this.exporterThread.Start();
+        }
 
-            this.exportTask.Start();
+        /// <inheritdoc />
+        protected override bool OnShutdown(int timeoutMilliseconds)
+        {
+            var result = true;
+
+            this.shutdownTrigger.Set();
+
+            if (timeoutMilliseconds == Timeout.Infinite)
+            {
+                this.exporterThread.Join();
+                result = this.exporter.Shutdown() && result;
+            }
+            else
+            {
+                var sw = Stopwatch.StartNew();
+                result = this.exporterThread.Join(timeoutMilliseconds) && result;
+                var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+                result = this.exporter.Shutdown((int)Math.Max(timeout, 0)) && result;
+            }
+
+            return result;
         }
 
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (!this.disposed)
             {
-                return;
-            }
-
-            if (disposing)
-            {
-                try
+                if (disposing)
                 {
-                    this.token.Cancel();
-                    this.exportTask.Wait();
-                    this.token.Dispose();
+                    this.exportTrigger.Dispose();
+                    this.shutdownTrigger.Dispose();
                 }
-                catch (Exception)
-                {
-                    // TODO: Log
-                }
-            }
 
-            this.disposed = true;
+                this.disposed = true;
+            }
 
             base.Dispose(disposing);
+        }
+
+        private void ExporterProc()
+        {
+            var sw = Stopwatch.StartNew();
+            var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
+
+            while (true)
+            {
+                var timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
+
+                int index;
+
+                try
+                {
+                    index = WaitHandle.WaitAny(triggers, timeout);
+                }
+                catch (ObjectDisposedException)
+                {
+                    return;
+                }
+
+                switch (index)
+                {
+                    case 0: // export
+                        this.Collect(this.exportTimeoutMilliseconds);
+                        break;
+                    case 1: // shutdown
+                        this.Collect(this.exportTimeoutMilliseconds); // TODO: do we want to use the shutdown timeout here?
+                        return;
+                    case WaitHandle.WaitTimeout: // timer
+                        this.Collect(this.exportTimeoutMilliseconds);
+                        break;
+                }
+            }
         }
     }
 }

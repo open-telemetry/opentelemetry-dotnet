@@ -16,6 +16,7 @@
 
 using System;
 using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -33,7 +34,7 @@ namespace OpenTelemetry.Metrics
         /// <returns>
         /// Returns <c>true</c> when force flush succeeded; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentOutOfRangeException">
         /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
         /// </exception>
         /// <remarks>
@@ -41,15 +42,8 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         public static bool ForceFlush(this MeterProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (provider == null)
-            {
-                throw new ArgumentNullException(nameof(provider));
-            }
-
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
-            }
+            Guard.ThrowIfNull(provider, nameof(provider));
+            Guard.ThrowIfInvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             if (provider is MeterProviderSdk meterProviderSdk)
             {
@@ -57,10 +51,9 @@ namespace OpenTelemetry.Metrics
                 {
                     return meterProviderSdk.OnForceFlush(timeoutMilliseconds);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    // TODO: what event source do we use?
-                    // OpenTelemetrySdkEventSource.Log.MeterProviderException(nameof(meterProviderSdk.OnForceFlush), ex);
+                    OpenTelemetrySdkEventSource.Log.MeterProviderException(nameof(meterProviderSdk.OnForceFlush), ex);
                     return false;
                 }
             }
@@ -80,7 +73,7 @@ namespace OpenTelemetry.Metrics
         /// <returns>
         /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentOutOfRangeException">
         /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
         /// </exception>
         /// <remarks>
@@ -89,15 +82,8 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         public static bool Shutdown(this MeterProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
-            if (provider == null)
-            {
-                throw new ArgumentNullException(nameof(provider));
-            }
-
-            if (timeoutMilliseconds < 0 && timeoutMilliseconds != Timeout.Infinite)
-            {
-                throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "timeoutMilliseconds should be non-negative or Timeout.Infinite.");
-            }
+            Guard.ThrowIfNull(provider, nameof(provider));
+            Guard.ThrowIfInvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
             if (provider is MeterProviderSdk meterProviderSdk)
             {
@@ -110,10 +96,9 @@ namespace OpenTelemetry.Metrics
                 {
                     return meterProviderSdk.OnShutdown(timeoutMilliseconds);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    // TODO: what event source do we use?
-                    // OpenTelemetrySdkEventSource.Log.MeterProviderException(nameof(meterProviderSdk.OnShutdown), ex);
+                    OpenTelemetrySdkEventSource.Log.MeterProviderException(nameof(meterProviderSdk.OnShutdown), ex);
                     return false;
                 }
             }
