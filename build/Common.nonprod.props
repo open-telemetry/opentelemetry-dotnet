@@ -35,9 +35,8 @@
     <MicrosoftAspNetWebApiWebHostPkgVer>[5.2.7,6.0)</MicrosoftAspNetWebApiWebHostPkgVer>
     <MicrosoftAspNetWebPagesPkgVer>[3.2.7,4.0)</MicrosoftAspNetWebPagesPkgVer>
     <MicrosoftExtensionsHostingPkgVer>[3.1.6,5.0)</MicrosoftExtensionsHostingPkgVer>
-    <MicrosoftExtensionsLoggingPkgVer>[5.0.0,6.0)</MicrosoftExtensionsLoggingPkgVer>
-    <MicrosoftExtensionsLoggingAbstractionsPkgVer>[5.0.0,6.0)</MicrosoftExtensionsLoggingAbstractionsPkgVer>
-    <MicrosoftExtensionsLoggingConsolePkgVer>[5.0.0,6.0)</MicrosoftExtensionsLoggingConsolePkgVer>
+    <MicrosoftExtensionsLoggingPkgVer>[6.0.0,)</MicrosoftExtensionsLoggingPkgVer>
+    <MicrosoftExtensionsLoggingAbstractionsPkgVer>[6.0.0,)</MicrosoftExtensionsLoggingAbstractionsPkgVer>
     <MicrosoftNETTestSdkPkgVer>[16.10.0]</MicrosoftNETTestSdkPkgVer>
     <NewtonsoftJsonPkgVer>[12.0.2,13.0)</NewtonsoftJsonPkgVer>
     <MoqPkgVer>[4.14.5,5.0)</MoqPkgVer>
