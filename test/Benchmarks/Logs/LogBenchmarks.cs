@@ -85,6 +85,12 @@ namespace Benchmarks.Logs
         }
 
         [Benchmark]
+        public void NoListenerWithLoggerMessageGenerator()
+        {
+            Food.SayHello(this.loggerWithNoListener, "tomato", 2.99);
+        }
+
+        [Benchmark]
         public void OneProcessor()
         {
             this.loggerWithOneProcessor.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
