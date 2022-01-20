@@ -34,7 +34,7 @@ in the prometheus official document.
 
 After downloading the [latest release](https://prometheus.io/download/), extract
 it to a local location that's easy to access. We will find the default
-prometheus configuration yaml file in the folder, named `prometheus.yml`.
+Prometheus configuration YAML file in the folder, named `prometheus.yml`.
 
 Replace all the content with:
 ```
@@ -59,7 +59,7 @@ scrape_configs:
 
 Follow the instructions from
 [starting-prometheus](https://prometheus.io/docs/introduction/first_steps/#starting-prometheus)
-to start the prometheus server and verify it has been started successfully.
+to start the Prometheus server and verify it has been started successfully.
 
 Once the server is started, we are going to make some small tweaks to the
 example in the getting-started metrics [example](../getting-started/Program.cs)
@@ -100,7 +100,7 @@ with
 ```
 
 We set the options for our prometheus exporter to export data via the endpoint
-that we've configured prometheus server to listen to in the prometheus.yml file.
+that we've configured Prometheus server to listen to in the `prometheus.yml` file.
 
 Also, for our learning purpose, use a while-loop to keep increasing the counter
 value until any key is pressed.
@@ -119,11 +119,11 @@ while (!Console.KeyAvailable)
 }
 ```
 
-After the above modifications, now our `program.cs` should look like [this](./Program.cs).
+After the above modifications, now our `Program.cs` should look like [this](./Program.cs).
 
 ### Check Results in Prometheus
 
-Execute the application and leave the process running in the background. Now we
+Start the application and leave the process running. Now we
 should be able to see the metrics at the endpoint we've configured in
 `prometheus.yml` file and defined in `Program.cs`; in this case, the endpoint
 is: "http://localhost:9184/". 
