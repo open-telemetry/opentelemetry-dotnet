@@ -17,6 +17,7 @@
 using System;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
@@ -52,9 +53,6 @@ namespace Examples.AspNetCore
                             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
                             builder.AddOpenTelemetry(options =>
                             {
-                                options.IncludeScopes = true;
-                                options.ParseStateValues = true;
-                                options.IncludeFormattedMessage = true;
                                 options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(context.Configuration.GetValue<string>("Otlp:ServiceName")));
                                 options.AddOtlpExporter(otlpOptions =>
                                  {
@@ -66,13 +64,17 @@ namespace Examples.AspNetCore
                         default:
                             builder.AddOpenTelemetry(options =>
                             {
-                                options.IncludeScopes = true;
-                                options.ParseStateValues = true;
-                                options.IncludeFormattedMessage = true;
                                 options.AddConsoleExporter();
                             });
                             break;
                     }
+
+                    builder.Services.Configure<OpenTelemetryLoggerOptions>( opt =>
+                    {
+                        opt.IncludeScopes = true;
+                        opt.ParseStateValues = true;
+                        opt.IncludeFormattedMessage = true;
+                    });
                 });
     }
 }
