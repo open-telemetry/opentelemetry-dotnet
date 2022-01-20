@@ -13,7 +13,7 @@
 
 ## Prerequisite
 
-It is highly recommended to go over the [getting-started](../getting-started/)
+It is highly recommended to go over the [getting-started](../getting-started/README.md)
 project under the metrics document folder before following along this document.
 
 ## Introduction
