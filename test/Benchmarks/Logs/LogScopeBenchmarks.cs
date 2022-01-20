@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if NETCOREAPP3_1
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -77,4 +76,3 @@ namespace Benchmarks.Logs
         }
     }
 }
-#endif
