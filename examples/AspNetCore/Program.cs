@@ -69,7 +69,7 @@ namespace Examples.AspNetCore
                             break;
                     }
 
-                    builder.Services.Configure<OpenTelemetryLoggerOptions>( opt =>
+                    builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
                     {
                         opt.IncludeScopes = true;
                         opt.ParseStateValues = true;
