@@ -40,7 +40,7 @@ Let's create a new file in the same location as `prometheus.yml`, called
 `otel.yml` for this exercise. Copy and paste the entire content below into the
 otel.yml file we have created just now.
 
-```
+```yaml
 global:
   scrape_interval: 10s
   scrape_timeout: 10s
@@ -66,7 +66,7 @@ to start the Prometheus server and verify it has been started successfully.
 
 Please note that we will need pass in otel.yml file as the argument:
 
-```
+```console
 ./prometheus --config.file=otel.yml
 ```
 
@@ -75,7 +75,7 @@ example in the getting-started metrics [example](../getting-started/Program.cs)
 to export our metrics to the endpoint that prometheus was configured to listen
 to.
 
-### Configure OpenTelemetry to Expose metrics to Prometheus Endpoint 
+### Configure OpenTelemetry to Expose metrics to Prometheus Endpoint
 
 Create a new console application and run it:
 
@@ -135,15 +135,15 @@ After the above modifications, now our `Program.cs` should look like [this](./Pr
 Start the application and leave the process running. Now we
 should be able to see the metrics at the endpoint we've configured in
 `otel.yml` and defined in `Program.cs`; in this case, the endpoint
-is: "http://localhost:9184/". 
+is: "http://localhost:9184/".
 
 Check the output metrics with your favorite browser:
 
-![MyFruitCounter output:](https://user-images.githubusercontent.com/16979322/150242010-8bde0002-44a5-4c84-94e6-3e0ee8a6ea4f.PNG
+![MyFruitCounter output:](https://user-images.githubusercontent.com/16979322/150242010-8bde0002-44a5-4c84-94e6-3e0ee8a6ea4f.PNG)
 
 To use the graphical interface for viewing your metrics with Prometheus,
 navigate to "http://localhost:9090/graph", type `MyFruitCounter` in the
-expression bar of the UI, and click execute. 
+expression bar of the UI, and click execute.
 
 We should be able to see the following chart:
 
@@ -165,7 +165,7 @@ First of all, please [Install Grafana](https://grafana.com/docs/grafana/latest/i
 For windows users, after finishing installation, start the standalone Grafana
 server, grafana-server.exe located in the bin folder. Then, use the browser to
 navigate to the default port of grafana `3000`. We can confirm the port number
-with the logs from the command line after starting the grafana server as well. 
+with the logs from the command line after starting the grafana server as well.
 
 And follow the instructions in the grafana getting started
 [doc](https://grafana.com/docs/grafana/latest/getting-started/getting-started/#step-2-log-in)
