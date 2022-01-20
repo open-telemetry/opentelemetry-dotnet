@@ -4,7 +4,7 @@
   - [Prerequisite](#prerequisite)
   - [Introduction](#introduction)
   - [Get Prometheus](#get-prometheus)
-  - [Prometheus HTTP server](#prometheus-http-server)
+  - [Prometheus server](#prometheus-server)
     - [Configuration](#configuration)
     - [Start Prometheus](#start-prometheus)
     - [Configure OpenTelemetry to Expose metrics to Prometheus Endpoint](#configure-opentelemetry-to-expose-metrics-to-prometheus-endpoint)
@@ -28,7 +28,7 @@ project under the metrics document folder before following along this document.
 Follow the [first steps]((https://prometheus.io/docs/introduction/first_steps/))
 in the prometheus official document.
 
-## Prometheus HTTP server
+## Prometheus server
 
 ### Configuration
 
@@ -36,14 +36,17 @@ After downloading the [latest release](https://prometheus.io/download/), extract
 it to a local location that's easy to access. We will find the default
 Prometheus configuration YAML file in the folder, named `prometheus.yml`.
 
-Replace all the content with:
+Let's create a new file in the same location as `prometheus.yml`, called
+`otel.yml` for this exercise. Copy and paste the entire content below into the
+otel.yml file we have created just now.
+
 ```
 global:
   scrape_interval: 10s
   scrape_timeout: 10s
   evaluation_interval: 10s
 scrape_configs:
-- job_name: OpenTelemetryTest # assign a job name, as prometheus server can listen to multiple jobs
+- job_name: MyOpenTelemetryDemo
   honor_timestamps: true
   scrape_interval: 1s
   scrape_timeout: 1s
@@ -60,6 +63,12 @@ scrape_configs:
 Follow the instructions from
 [starting-prometheus](https://prometheus.io/docs/introduction/first_steps/#starting-prometheus)
 to start the Prometheus server and verify it has been started successfully.
+
+Please note that we will need pass in otel.yml file as the argument:
+
+```
+./prometheus --config.file=otel.yml
+```
 
 Once the server is started, we are going to make some small tweaks to the
 example in the getting-started metrics [example](../getting-started/Program.cs)
@@ -100,7 +109,7 @@ with
 ```
 
 We set the options for our prometheus exporter to export data via the endpoint
-that we've configured Prometheus server to listen to in the `prometheus.yml` file.
+that we've configured Prometheus server to listen to in the otel.yml file.
 
 Also, for our learning purpose, use a while-loop to keep increasing the counter
 value until any key is pressed.
@@ -125,7 +134,7 @@ After the above modifications, now our `Program.cs` should look like [this](./Pr
 
 Start the application and leave the process running. Now we
 should be able to see the metrics at the endpoint we've configured in
-`prometheus.yml` file and defined in `Program.cs`; in this case, the endpoint
+`otel.yml` and defined in `Program.cs`; in this case, the endpoint
 is: "http://localhost:9184/". 
 
 Check the output metrics with your favorite browser:
@@ -141,7 +150,7 @@ We should be able to see the following chart:
 ![Prometheus Graph:](https://user-images.githubusercontent.com/16979322/150242083-65b84f25-c95f-4e9b-a64f-699ad8816602.PNG)
 
 From the legend, we can see that the `instance` name and the `job` name are the
-values we have set in `prometheus.yml` file.
+values we have set in `otel.yml`.
 
 Congratulations!
 
