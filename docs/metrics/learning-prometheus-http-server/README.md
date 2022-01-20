@@ -130,7 +130,7 @@ is: "http://localhost:9184/".
 
 Check the output metrics with your favorite browser:
 
-![MyFruitCounter](./img/myFruitCounter.PNG)
+![MyFruitCounter output:](https://user-images.githubusercontent.com/16979322/150242010-8bde0002-44a5-4c84-94e6-3e0ee8a6ea4f.PNG
 
 To use the graphical interface for viewing your metrics with Prometheus,
 navigate to "http://localhost:9090/graph", type `MyFruitCounter` in the
@@ -138,7 +138,7 @@ expression bar of the UI, and click execute.
 
 We should be able to see the following chart:
 
-![Prometheus Graph on myFruitCounter](./img/prometheusGraph.PNG)
+![Prometheus Graph:](https://user-images.githubusercontent.com/16979322/150242083-65b84f25-c95f-4e9b-a64f-699ad8816602.PNG)
 
 From the legend, we can see that the `instance` name and the `job` name are the
 values we have set in `prometheus.yml` file.
@@ -169,7 +169,7 @@ now!
 Feel free to find some handy PromQL
 [here](https://promlabs.com/promql-cheat-sheet/).
 
-In the below example, the query targeted to find out what is the per-second rate
+In the below example, the query targets to find out what is the per-second rate
 of increace for myFruitCounter over the last 30 minutes:
 
-![Grafana dashboard with myFruitCounter metrics rate](./img/grafana.PNG)
+![Grafana dashboard with myFruitCounter metrics rate:](https://user-images.githubusercontent.com/16979322/150242148-f35165a3-ab34-4e8c-88a1-4995ceeb08e2.PNG)
