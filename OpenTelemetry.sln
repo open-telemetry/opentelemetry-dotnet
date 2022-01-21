@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29123.89
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry", "src\OpenTelemetry\OpenTelemetry.csproj", "{AE3E3DF5-4083-4C6E-A840-8271B0ACDE7E}"
 EndProject
@@ -223,6 +223,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs", "src\OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs\OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs.csproj", "{6E1A5FA3-E024-4972-9EDC-11E36C5A0D6F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore.6.0", "test\TestApp.AspNetCore.6.0\TestApp.AspNetCore.6.0.csproj", "{0076C657-564F-4787-9FFF-52D9D55166E8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "source-generation", "docs\logs\source-generation\source-generation.csproj", "{1F6CC903-04C9-4E7C-B388-C215C467BFB9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -466,6 +468,10 @@ Global
 		{0076C657-564F-4787-9FFF-52D9D55166E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0076C657-564F-4787-9FFF-52D9D55166E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0076C657-564F-4787-9FFF-52D9D55166E8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F6CC903-04C9-4E7C-B388-C215C467BFB9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F6CC903-04C9-4E7C-B388-C215C467BFB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F6CC903-04C9-4E7C-B388-C215C467BFB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F6CC903-04C9-4E7C-B388-C215C467BFB9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -501,6 +507,7 @@ Global
 		{1F9D7748-D099-4E25-97F5-9C969D6FF969} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
 		{81234AFA-B4E7-4D0D-AB97-FD559C78EDA2} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
 		{0076C657-564F-4787-9FFF-52D9D55166E8} = {77C7929A-2EED-4AA6-8705-B5C443C8AA0F}
+		{1F6CC903-04C9-4E7C-B388-C215C467BFB9} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}
