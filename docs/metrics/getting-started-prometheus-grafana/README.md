@@ -97,8 +97,10 @@ Check the output metrics with your favorite browser:
 
 ![MyFruitCounter output:](https://user-images.githubusercontent.com/16979322/150242010-8bde0002-44a5-4c84-94e6-3e0ee8a6ea4f.PNG)
 
-Now, we understand how we can configure Opentelemetry `PrometheusExporter` to export metrics the the specified endpoint.
-Next, we are going to learn how to use Prometheus and Grafana to see/query our metrics with powerful visualization.
+Now, we understand how we can configure Opentelemetry `PrometheusExporter` to
+export metrics the endpoint we sepcified. Next, we are going to learn about how
+to use Prometheus and Grafana to view/query our metrics with powerful
+visualization.
 
 ## Download Prometheus
 
@@ -162,7 +164,7 @@ values we have set in `otel.yml`.
 
 Congratulations!
 
-Now we know how to configure prometheus server and deploy OpenTelemetry
+Now we know how to configure Prometheus server and deploy OpenTelemetry
 `PrometheusExporter` to export our metrics. Next, we are going to explore a tool
 called Grafana, which has powerful visualizations for the metrics.
 
@@ -175,7 +177,7 @@ server, grafana-server.exe located in the bin folder. Then, use the browser to
 navigate to the default port of Grafana `3000`. We can confirm the port number
 with the logs from the command line after starting the Grafana server as well.
 
-And follow the instructions in the Grafana getting started
+Follow the instructions in the Grafana getting started
 [doc](https://grafana.com/docs/grafana/latest/getting-started/getting-started/#step-2-log-in)
 to log in.
 
@@ -187,6 +189,6 @@ Feel free to find some handy PromQL
 [here](https://promlabs.com/promql-cheat-sheet/).
 
 In the below example, the query targets to find out what is the per-second rate
-of increace for myFruitCounter over the last 30 minutes:
+of increace of myFruitCounter over the last 30 minutes:
 
 ![Grafana dashboard with myFruitCounter metrics rate:](https://user-images.githubusercontent.com/16979322/150242148-f35165a3-ab34-4e8c-88a1-4995ceeb08e2.PNG)
