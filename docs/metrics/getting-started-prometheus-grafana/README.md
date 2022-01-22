@@ -136,7 +136,7 @@ scrape_configs:
   - targets:
   # set the target to the location where metrics will be exposed by
   # the OpenTelemetry Prometheus Exporter
-    - localhost:9184 
+    - localhost:9184
 ```
 
 ### Start Prometheus
