@@ -3,18 +3,19 @@
 - [Quick start on exporting metrics to Prometheus/Grafana](#quick-start-on-exporting-metrics-to-prometheusgrafana)
   - [Prerequisite](#prerequisite)
   - [Introduction](#introduction)
+    - [Configure OpenTelemetry to Expose metrics to Prometheus Endpoint](#configure-opentelemetry-to-expose-metrics-to-prometheus-endpoint)
+    - [Check Results in the browser](#check-results-in-the-browser)
   - [Download Prometheus](#download-prometheus)
   - [Prometheus server](#prometheus-server)
     - [Configuration](#configuration)
     - [Start Prometheus](#start-prometheus)
-    - [Configure OpenTelemetry to Expose metrics to Prometheus Endpoint](#configure-opentelemetry-to-expose-metrics-to-prometheus-endpoint)
-    - [Check Results in Prometheus](#check-results-in-prometheus)
+    - [View Results in Prometheus](#view-results-in-prometheus)
     - [View/Query Results with Grafana](#viewquery-results-with-grafana)
 
 ## Prerequisite
 
 It is highly recommended to go over the [getting-started](../getting-started/README.md)
-project under the metrics document folder before following along this document.
+project under the document folder of metrics before following along this document.
 
 ## Introduction
 
@@ -23,10 +24,87 @@ project under the metrics document folder before following along this document.
 - [Grafana support for
   Prometheus](https://prometheus.io/docs/visualization/grafana/#creating-a-prometheus-graph)
 
+### Configure OpenTelemetry to Expose metrics to Prometheus Endpoint
+
+Create a new console application and run it:
+
+```sh
+dotnet new console --output prometheus-http-server
+cd prometheus-http-server
+dotnet run
+```
+
+We will have to add a reference to prometheus exporter to the
+prometheus-http-server application.
+
+```shell
+dotnet add package OpenTelemetry.Exporter.Prometheus --version 1.2.0-rc1
+```
+
+Now, we are going to make some small tweaks to the example in the
+getting-started metrics `Program.cs` to make the metrics available via
+OpenTelemetry Prometheus Exporter.
+
+First, copy and paste everything from getting-started
+metrics[example](../getting-started/Program.cs) to the Program.cs file of the
+new console application (prometheus-http-server) we've created.
+
+And replace the below line:
+
+```csharp
+.AddConsoleExporter()
+```
+
+with
+
+```csharp
+.AddPrometheusExporter(opt =>
+{
+    opt.StartHttpListener = true;
+    opt.HttpListenerPrefixes = new string[] { $"http://localhost:9184/" };
+})
+```
+
+With `.AddPrometheusExporter()` function, OpenTelemetry `PrometheusExporter` will
+export data via the endpoint defined by `HttpListenerPrefixes`.
+
+Also, for our learning purpose, use a while-loop to keep increasing the counter
+value until any key is pressed.
+
+```csharp
+Console.WriteLine("Press any key to exit");
+while (!Console.KeyAvailable)
+{
+    Thread.Sleep(1000);
+    MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
+    MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
+    MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow"));
+    ...
+    ...
+    ...
+}
+```
+
+After the above modifications, now our `Program.cs` should look like [this](./Program.cs).
+
+### Check Results in the browser
+
+Start the application and leave the process running. Now we should be able to
+see the metrics at the endpoint we've defined in `Program.cs`; in this case, the
+endpoint is: "http://localhost:9184/".
+
+Check the output metrics with your favorite browser:
+
+![MyFruitCounter output:](https://user-images.githubusercontent.com/16979322/150242010-8bde0002-44a5-4c84-94e6-3e0ee8a6ea4f.PNG)
+
+Now, we understand how we can configure Opentelemetry `PrometheusExporter` to export metrics the the specified endpoint.
+Next, we are going to learn how to use Prometheus and Grafana to see/query our metrics with powerful visualization.
+
 ## Download Prometheus
 
 Follow the [first steps]((https://prometheus.io/docs/introduction/first_steps/))
 to download the [latest release](https://prometheus.io/download/) of Prometheus.
+
 ## Prometheus server
 
 ### Configuration
@@ -35,9 +113,9 @@ After finished downloading, extract it to a local location that's easy to
 access. We will find the default Prometheus configuration YAML file in the
 folder, named `prometheus.yml`.
 
-Let's create a new file in the same location as `prometheus.yml`, called
-`otel.yml` for this exercise. Copy and paste the entire content below into the
-otel.yml file we have created just now.
+Let's create a new file in the same location as where `prometheus.yml` locates,
+and named the new file as `otel.yml` for this exercise. Then, copy and paste the
+entire content below into the otel.yml file we have created just now.
 
 ```yaml
 global:
@@ -69,83 +147,13 @@ Please note that we will need pass in otel.yml file as the argument:
 ./prometheus --config.file=otel.yml
 ```
 
-Once the server is started, we are going to make some small tweaks to the
-example in the getting-started metrics [example](../getting-started/Program.cs)
-to export our metrics to the endpoint that prometheus was configured to listen
-to.
+### View Results in Prometheus
 
-### Configure OpenTelemetry to Expose metrics to Prometheus Endpoint
+To use the graphical interface for viewing our metrics with Prometheus, navigate
+to "http://localhost:9090/graph", and type `MyFruitCounter` in the expression
+bar of the UI; finally, click the execute button.
 
-Create a new console application and run it:
-
-```sh
-dotnet new console --output prometheus-http-server
-cd prometheus-http-server
-dotnet run
-```
-
-We will have to add a reference to prometheus exporter to the
-prometheus-http-server application.
-
-```shell
-dotnet add package OpenTelemetry.Exporter.Prometheus --version 1.2.0-rc1
-```
-
-Now, replace the below line in the [Program.cs](../getting-started/Program.cs)
-
-```csharp
-.AddConsoleExporter()
-```
-
-with
-
-```csharp
-.AddPrometheusExporter(opt =>
-{
-    opt.StartHttpListener = true;
-    opt.HttpListenerPrefixes = new string[] { $"http://localhost:9184/" };
-})
-```
-
-OpenTelemetry Prometheus Exporter will export data via the endpoint defined by
-`HttpListenerPrefixes`. And we have configured Prometheus server to scrape the
-same endpoint previously in the otel.yml file.
-
-Also, for our learning purpose, use a while-loop to keep increasing the counter
-value until any key is pressed.
-
-```csharp
-Console.WriteLine("Press any key to exit");
-while (!Console.KeyAvailable)
-{
-    Thread.Sleep(1000);
-    MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
-    MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
-    MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow"));
-    ...
-    ...
-    ...
-}
-```
-
-After the above modifications, now our `Program.cs` should look like [this](./Program.cs).
-
-### Check Results in Prometheus
-
-Start the application and leave the process running. Now we
-should be able to see the metrics at the endpoint we've configured in
-`otel.yml` and defined in `Program.cs`; in this case, the endpoint
-is: "http://localhost:9184/".
-
-Check the output metrics with your favorite browser:
-
-![MyFruitCounter output:](https://user-images.githubusercontent.com/16979322/150242010-8bde0002-44a5-4c84-94e6-3e0ee8a6ea4f.PNG)
-
-To use the graphical interface for viewing your metrics with Prometheus,
-navigate to "http://localhost:9090/graph", type `MyFruitCounter` in the
-expression bar of the UI, and click execute.
-
-We should be able to see the following chart:
+We should be able to see the following chart from the browser:
 
 ![Prometheus Graph:](https://user-images.githubusercontent.com/16979322/150242083-65b84f25-c95f-4e9b-a64f-699ad8816602.PNG)
 
@@ -154,8 +162,8 @@ values we have set in `otel.yml`.
 
 Congratulations!
 
-Now we know how to configure prometheus http server and deploy OpenTelemetry
-prometheusExporter to export our metrics. Next, we are going to explore a tool
+Now we know how to configure prometheus server and deploy OpenTelemetry
+`PrometheusExporter` to export our metrics. Next, we are going to explore a tool
 called Grafana, which has powerful visualizations for the metrics.
 
 ### View/Query Results with Grafana
@@ -164,10 +172,10 @@ First of all, please [Install Grafana](https://grafana.com/docs/grafana/latest/i
 
 For windows users, after finishing installation, start the standalone Grafana
 server, grafana-server.exe located in the bin folder. Then, use the browser to
-navigate to the default port of grafana `3000`. We can confirm the port number
-with the logs from the command line after starting the grafana server as well.
+navigate to the default port of Grafana `3000`. We can confirm the port number
+with the logs from the command line after starting the Grafana server as well.
 
-And follow the instructions in the grafana getting started
+And follow the instructions in the Grafana getting started
 [doc](https://grafana.com/docs/grafana/latest/getting-started/getting-started/#step-2-log-in)
 to log in.
 
