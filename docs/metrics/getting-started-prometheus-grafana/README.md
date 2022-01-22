@@ -3,7 +3,7 @@
 - [Quick start on exporting metrics to Prometheus/Grafana](#quick-start-on-exporting-metrics-to-prometheusgrafana)
   - [Prerequisite](#prerequisite)
   - [Introduction](#introduction)
-  - [Get Prometheus](#get-prometheus)
+  - [Download Prometheus](#download-prometheus)
   - [Prometheus server](#prometheus-server)
     - [Configuration](#configuration)
     - [Start Prometheus](#start-prometheus)
@@ -23,18 +23,17 @@ project under the metrics document folder before following along this document.
 - [Grafana support for
   Prometheus](https://prometheus.io/docs/visualization/grafana/#creating-a-prometheus-graph)
 
-## Get Prometheus
+## Download Prometheus
 
 Follow the [first steps]((https://prometheus.io/docs/introduction/first_steps/))
-in the prometheus official document.
-
+to download the [latest release](https://prometheus.io/download/) of Prometheus.
 ## Prometheus server
 
 ### Configuration
 
-After downloading the [latest release](https://prometheus.io/download/), extract
-it to a local location that's easy to access. We will find the default
-Prometheus configuration YAML file in the folder, named `prometheus.yml`.
+After finished downloading, extract it to a local location that's easy to
+access. We will find the default Prometheus configuration YAML file in the
+folder, named `prometheus.yml`.
 
 Let's create a new file in the same location as `prometheus.yml`, called
 `otel.yml` for this exercise. Copy and paste the entire content below into the
@@ -55,7 +54,7 @@ scrape_configs:
   follow_redirects: true
   static_configs:
   - targets:
-    - localhost:9184 # set the port that prometheus server will listen to
+    - localhost:9184 # set the target to the location where metrics will be exposed by the OpenTelemetry Prometheus Exporter
 ```
 
 ### Start Prometheus
@@ -108,8 +107,9 @@ with
 })
 ```
 
-We set the options for our prometheus exporter to export data via the endpoint
-that we've configured Prometheus server to listen to in the otel.yml file.
+OpenTelemetry Prometheus Exporter will export data via the endpoint defined by
+`HttpListenerPrefixes`. And we have configured Prometheus server to scrape the
+same endpoint previously in the otel.yml file.
 
 Also, for our learning purpose, use a while-loop to keep increasing the counter
 value until any key is pressed.
