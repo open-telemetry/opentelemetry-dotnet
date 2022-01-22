@@ -3,10 +3,10 @@
 - [Quick start on exporting metrics to Prometheus/Grafana](#quick-start-on-exporting-metrics-to-prometheusgrafana)
   - [Prerequisite](#prerequisite)
   - [Introduction](#introduction)
-    - [Configure OpenTelemetry to Expose metrics to Prometheus Endpoint](#configure-opentelemetry-to-expose-metrics-to-prometheus-endpoint)
+    - [Configure OpenTelemetry to Expose metrics via Prometheus Endpoint](#configure-opentelemetry-to-expose-metrics-via-prometheus-endpoint)
     - [Check Results in the browser](#check-results-in-the-browser)
   - [Download Prometheus](#download-prometheus)
-  - [Prometheus server](#prometheus-server)
+  - [Prometheus and Grafana](#prometheus-and-grafana)
     - [Configuration](#configuration)
     - [Start Prometheus](#start-prometheus)
     - [View Results in Prometheus](#view-results-in-prometheus)
@@ -24,7 +24,7 @@ project under the document folder of metrics before following along this documen
 - [Grafana support for
   Prometheus](https://prometheus.io/docs/visualization/grafana/#creating-a-prometheus-graph)
 
-### Configure OpenTelemetry to Expose metrics to Prometheus Endpoint
+### Configure OpenTelemetry to Expose metrics via Prometheus Endpoint
 
 Create a new console application and run it:
 
@@ -105,7 +105,7 @@ Next, we are going to learn how to use Prometheus and Grafana to see/query our m
 Follow the [first steps]((https://prometheus.io/docs/introduction/first_steps/))
 to download the [latest release](https://prometheus.io/download/) of Prometheus.
 
-## Prometheus server
+## Prometheus and Grafana
 
 ### Configuration
 
