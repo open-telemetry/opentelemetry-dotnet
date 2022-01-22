@@ -191,11 +191,13 @@ namespace OpenTelemetry.Metrics
             if (!this.sortedTagsDictionary.TryGetValue(givenTags, out var sortedTags))
             {
                 // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                var seqKey = new string[length];
-                tagKeys.CopyTo(seqKey, 0);
+                var givenKeys = new string[length];
+                tagKeys.CopyTo(givenKeys, 0);
 
-                var seqValue = new object[length];
-                tagValues.CopyTo(seqValue, 0);
+                var givenValues = new object[length];
+                tagValues.CopyTo(givenValues, 0);
+
+                givenTags = new Tags(givenKeys, givenValues);
 
                 string[] sortedTagKeys;
                 object[] sortedTagValues;
@@ -214,8 +216,8 @@ namespace OpenTelemetry.Metrics
                 }
                 else
                 {
-                    sortedTagKeys = seqKey;
-                    sortedTagValues = seqValue;
+                    sortedTagKeys = givenKeys;
+                    sortedTagValues = givenValues;
                 }
 
                 sortedTags = new Tags(sortedTagKeys, sortedTagValues);
