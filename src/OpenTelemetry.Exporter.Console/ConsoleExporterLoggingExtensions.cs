@@ -30,7 +30,7 @@ namespace OpenTelemetry.Logs
         /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
         public static OpenTelemetryLoggerOptions AddConsoleExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<ConsoleExporterOptions> configure = null)
         {
-            Guard.Null(loggerOptions, nameof(loggerOptions));
+            Guard.ThrowIfNull(loggerOptions, nameof(loggerOptions));
 
             var options = new ConsoleExporterOptions();
             configure?.Invoke(options);

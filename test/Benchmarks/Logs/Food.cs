@@ -1,4 +1,4 @@
-// <copyright file="MetricPointValueStorage.cs" company="OpenTelemetry Authors">
+// <copyright file="Food.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-using System.Runtime.InteropServices;
+using Microsoft.Extensions.Logging;
 
-namespace OpenTelemetry.Metrics
+namespace Benchmarks.Logs
 {
-    [StructLayout(LayoutKind.Explicit)]
-    internal struct MetricPointValueStorage
+    public static partial class Food
     {
-        [FieldOffset(0)]
-        public long AsLong;
-
-        [FieldOffset(0)]
-        public double AsDouble;
+        [LoggerMessage(
+            EventId = 0,
+            Level = LogLevel.Information,
+            Message = "Hello from {food} {price}.")]
+        public static partial void SayHello(
+            ILogger logger, string food, double price);
     }
 }
