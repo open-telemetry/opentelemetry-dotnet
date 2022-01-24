@@ -15,7 +15,7 @@
 ## Prerequisite
 
 It is highly recommended to go over the [getting-started](../getting-started/README.md)
-project under the document folder of metrics before following along this document.
+doc before following along this document.
 
 ## Introduction
 
@@ -99,8 +99,8 @@ Check the output metrics with your favorite browser:
 ![MyFruitCounter output:](https://user-images.githubusercontent.com/16979322/150242010-8bde0002-44a5-4c84-94e6-3e0ee8a6ea4f.PNG)
 
 Now, we understand how we can configure Opentelemetry `PrometheusExporter` to
-export metrics the endpoint we sepcified. Next, we are going to learn about how
-to use Prometheus and Grafana to view/query our metrics with powerful
+export metrics the endpoint we specified. Next, we are going to learn about how
+to use Prometheus and Grafana to view/query the metrics
 visualization.
 
 ## Download Prometheus
