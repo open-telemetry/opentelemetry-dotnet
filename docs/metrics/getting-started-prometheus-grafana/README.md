@@ -34,8 +34,9 @@ cd prometheus-http-server
 dotnet run
 ```
 
-We will have to add a reference to prometheus exporter to the
-prometheus-http-server application.
+Add a reference to [prometheus
+exporter](https://www.nuget.org/packages/opentelemetry.exporter.prometheus) to
+this application.
 
 ```shell
 dotnet add package OpenTelemetry.Exporter.Prometheus --version 1.2.0-rc1
@@ -46,7 +47,7 @@ getting-started metrics `Program.cs` to make the metrics available via
 OpenTelemetry Prometheus Exporter.
 
 First, copy and paste everything from getting-started
-metrics[example](../getting-started/Program.cs) to the Program.cs file of the
+metrics [example](../getting-started/Program.cs) to the Program.cs file of the
 new console application (prometheus-http-server) we've created.
 
 And replace the below line:
@@ -172,7 +173,7 @@ called Grafana, which has powerful visualizations for the metrics.
 
 ### View/Query Results with Grafana
 
-First of all, please [Install Grafana](https://grafana.com/docs/grafana/latest/installation/).
+Please [Install Grafana](https://grafana.com/docs/grafana/latest/installation/).
 
 For windows users, after finishing installation, start the standalone Grafana
 server, grafana-server.exe located in the bin folder. Then, use the browser to
