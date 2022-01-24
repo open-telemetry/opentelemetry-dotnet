@@ -34,7 +34,7 @@ namespace OpenTelemetry.Trace.Tests
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         }
 
-        [Fact(Skip = "Get around GitHub failure")]
+        [Fact]
         public void TracerProviderSdkInvokesSamplingWithCorrectParameters()
         {
             var testSampler = new TestSampler();
@@ -99,12 +99,15 @@ namespace OpenTelemetry.Trace.Tests
             }
 
             using (var fromInvalidW3CIdParent =
-                activitySource.StartActivity("customContext", ActivityKind.Client, "InvalidW3CIdParent"))
+                activitySource.StartActivity(name: "customContext", kind: ActivityKind.Client, parentId: "InvalidW3CIdParent"))
             {
-                // OpenTelemetry ActivityContext does not support
-                // non W3C Ids. Starting activity with non W3C Ids
-                // will result in no activity being created.
-                Assert.Null(fromInvalidW3CIdParent);
+                Assert.NotNull(fromInvalidW3CIdParent);
+                Assert.Equal("customContext", fromInvalidW3CIdParent.DisplayName);
+                Assert.Equal(ActivityKind.Client, fromInvalidW3CIdParent.Kind);
+
+                // OpenTelemetry ActivityContext does not support non W3C Ids.
+                // Starting activity with non W3C Ids will result in an activity with no ParentId being created.
+                Assert.Null(fromInvalidW3CIdParent.ParentId);
             }
         }
 
