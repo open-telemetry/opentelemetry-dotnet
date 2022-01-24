@@ -99,14 +99,14 @@ namespace OpenTelemetry.Trace.Tests
             }
 
             using (var fromInvalidW3CIdParent =
-                activitySource.StartActivity(name: "customContext", kind: ActivityKind.Client, parentId: "InvalidW3CIdParent"))
+                activitySource.StartActivity("customContext", ActivityKind.Client, "InvalidW3CIdParent"))
             {
                 Assert.NotNull(fromInvalidW3CIdParent);
                 Assert.Equal("customContext", fromInvalidW3CIdParent.DisplayName);
                 Assert.Equal(ActivityKind.Client, fromInvalidW3CIdParent.Kind);
 
                 // OpenTelemetry ActivityContext does not support non W3C Ids.
-                // Starting activity with non W3C Ids will result in an activity with no ParentId being created.
+                // Starting activity with non W3C Ids will result in an Activity being created with no ParentId.
                 Assert.Null(fromInvalidW3CIdParent.ParentId);
             }
         }
