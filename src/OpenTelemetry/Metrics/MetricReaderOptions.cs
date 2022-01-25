@@ -25,12 +25,8 @@ public class MetricReaderOptions
 {
     private const AggregationTemporality AggregationTemporalityUnspecified = (AggregationTemporality)0;
     private const MetricReaderType MetricReaderTypeUnspecified = (MetricReaderType)(-1);
-
-    public MetricReaderOptions()
-    {
-        this.Temporality = AggregationTemporalityUnspecified;
-        this.MetricReaderType = MetricReaderTypeUnspecified;
-    }
+    private AggregationTemporality temporality = AggregationTemporalityUnspecified;
+    private MetricReaderType metricReaderType = MetricReaderTypeUnspecified;
 
     /// <summary>
     /// Gets or sets the AggregationTemporality used for Histogram
@@ -40,17 +36,17 @@ public class MetricReaderOptions
     {
         get
         {
-            if (this.Temporality == AggregationTemporalityUnspecified)
+            if (this.temporality == AggregationTemporalityUnspecified)
             {
-                this.Temporality = AggregationTemporality.Cumulative;
+                this.temporality = AggregationTemporality.Cumulative;
             }
 
-            return this.Temporality;
+            return this.temporality;
         }
 
         set
         {
-            this.Temporality = value;
+            this.temporality = value;
         }
     }
 
@@ -61,17 +57,17 @@ public class MetricReaderOptions
     {
         get
         {
-            if (this.MetricReaderType == MetricReaderTypeUnspecified)
+            if (this.metricReaderType == MetricReaderTypeUnspecified)
             {
-                this.MetricReaderType = MetricReaderType.Manual;
+                this.metricReaderType = MetricReaderType.Manual;
             }
 
-            return this.MetricReaderType;
+            return this.metricReaderType;
         }
 
         set
         {
-            this.MetricReaderType = value;
+            this.metricReaderType = value;
         }
     }
 
