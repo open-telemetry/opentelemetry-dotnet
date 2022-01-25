@@ -1,4 +1,4 @@
-// <copyright file="OtlpMetricReaderOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricReaderOptions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,10 +19,9 @@ using OpenTelemetry.Metrics;
 namespace OpenTelemetry.Exporter;
 
 /// <summary>
-/// Options for configuring the <see cref="MetricReader"/> used in conjunction with an <see cref="OtlpMetricExporter"/>.
-/// This is meant to be used with the MeterProviderBuilder.AddOtlpExporter() extension method.
+/// Options for configuring a <see cref="MetricReader"/> .
 /// </summary>
-public class OtlpMetricReaderOptions
+public class MetricReaderOptions
 {
     /// <summary>
     /// Gets or sets the AggregationTemporality used for Histogram
