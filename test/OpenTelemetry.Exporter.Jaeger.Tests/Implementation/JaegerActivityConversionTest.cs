@@ -250,7 +250,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         [Fact]
         public void JaegerActivityConverterTest_ConvertActivityToJaegerSpan_NoLinks()
         {
-            var activity = CreateTestActivity(addLinks: false);
+            var activity = CreateTestActivity(addLinks: false, ticksToAdd: 8000);
             var traceIdAsInt = new Int128(activity.Context.TraceId);
             var spanIdAsInt = new Int128(activity.Context.SpanId);
 
@@ -480,10 +480,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Resource resource = null,
             ActivityKind kind = ActivityKind.Client,
             bool isRootSpan = false,
-            Status? status = null)
+            Status? status = null,
+            long ticksToAdd = 60 * TimeSpan.TicksPerSecond)
         {
             var startTimestamp = DateTime.UtcNow;
-            var endTimestamp = startTimestamp.AddSeconds(60);
+            var endTimestamp = startTimestamp.AddTicks(ticksToAdd);
             var eventTimestamp = DateTime.UtcNow;
             var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
 
