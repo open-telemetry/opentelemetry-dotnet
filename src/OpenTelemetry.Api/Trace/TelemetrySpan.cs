@@ -65,6 +65,24 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Gets the identity of the parent span id, if any.
+        /// </summary>
+        public ActivitySpanId ParentSpanId
+        {
+            get
+            {
+                if (this.Activity == null)
+                {
+                    return default;
+                }
+                else
+                {
+                    return this.Activity.ParentSpanId;
+                }
+            }
+        }
+
+        /// <summary>
         /// Sets the status of the span execution.
         /// </summary>
         /// <param name="value">Status to be set.</param>

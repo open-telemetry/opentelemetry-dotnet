@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
         public static TracerProviderBuilder AddZipkinExporter(this TracerProviderBuilder builder, Action<ZipkinExporterOptions> configure = null)
         {
-            Guard.Null(builder, nameof(builder));
+            Guard.ThrowIfNull(builder, nameof(builder));
 
             if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
             {
