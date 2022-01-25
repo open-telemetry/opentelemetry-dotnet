@@ -104,6 +104,16 @@ namespace OpenTelemetry.Metrics
 
             var metricExporter = new OtlpMetricExporter(exporterOptions);
 
+            if (metricReaderOptions.Temporality == (AggregationTemporality)0)
+            {
+                metricReaderOptions.Temporality = AggregationTemporality.Cumulative;
+            }
+
+            if (metricReaderOptions.MetricReaderType == (MetricReaderType)(-1))
+            {
+                metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
+            }
+
             var metricReader = metricReaderOptions.MetricReaderType == MetricReaderType.Manual
                 ? new BaseExportingMetricReader(metricExporter)
                 : new PeriodicExportingMetricReader(metricExporter, metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);

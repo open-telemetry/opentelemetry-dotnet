@@ -19,20 +19,61 @@ using OpenTelemetry.Metrics;
 namespace OpenTelemetry.Exporter;
 
 /// <summary>
-/// Options for configuring a <see cref="MetricReader"/> .
+/// Options for configuring either a <see cref="BaseExportingMetricReader"/> or <see cref="PeriodicExportingMetricReader"/> .
 /// </summary>
 public class MetricReaderOptions
 {
+    private const AggregationTemporality AggregationTemporalityUnspecified = (AggregationTemporality)0;
+    private const MetricReaderType MetricReaderTypeUnspecified = (MetricReaderType)(-1);
+
+    public MetricReaderOptions()
+    {
+        this.Temporality = AggregationTemporalityUnspecified;
+        this.MetricReaderType = MetricReaderTypeUnspecified;
+    }
+
     /// <summary>
     /// Gets or sets the AggregationTemporality used for Histogram
     /// and Sum metrics.
     /// </summary>
-    public AggregationTemporality Temporality { get; set; } = AggregationTemporality.Cumulative;
+    public AggregationTemporality Temporality
+    {
+        get
+        {
+            if (this.Temporality == AggregationTemporalityUnspecified)
+            {
+                this.Temporality = AggregationTemporality.Cumulative;
+            }
+
+            return this.Temporality;
+        }
+
+        set
+        {
+            this.Temporality = value;
+        }
+    }
 
     /// <summary>
     /// Gets or sets the <see cref="MetricReaderType" /> to use. Defaults to <c>MetricReaderType.Manual</c>.
     /// </summary>
-    public MetricReaderType MetricReaderType { get; set; } = MetricReaderType.Manual;
+    public MetricReaderType MetricReaderType
+    {
+        get
+        {
+            if (this.MetricReaderType == MetricReaderTypeUnspecified)
+            {
+                this.MetricReaderType = MetricReaderType.Manual;
+            }
+
+            return this.MetricReaderType;
+        }
+
+        set
+        {
+            this.MetricReaderType = value;
+        }
+    }
 
     /// <summary>
     /// Gets or sets the <see cref="PeriodicExportingMetricReaderOptions" /> options. Ignored unless <c>MetricReaderType</c> is <c>Periodic</c>.
