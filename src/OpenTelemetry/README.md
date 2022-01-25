@@ -333,8 +333,7 @@ The self-diagnostics feature can be enabled/changed/disabled while the process
 is running. The SDK will attempt to read the configuration file every 10 seconds
 in non-exclusive read-only mode. The SDK will create or overwrite a file
 with new logs according to the configuration. This file will not exceed the
-configured max size and will be circularly overwritten so that this feature has
-minimal overhead and bounded resource usage.
+configured max size and will be circularly overwritten.
 
 To enable self-diagnostics, go to the
 [current working directory](https://en.wikipedia.org/wiki/Working_directory) of
@@ -395,6 +394,11 @@ When the `LogDirectory` or
 new logs according to the new configuration. The configuration file has to be no
 more than 4 KiB. In case the file is larger than 4 KiB, only the first 4 KiB of
 content will be read.
+
+The log file might not be a proper text file format to achieve the goal of having
+minimal overhead and bounded resource usage: it may have trailing `NULL`s if log
+text is less than configured size; once write operation reaches the end, it will
+start from beginning and overwrite existing text.
 
 ## References
 
