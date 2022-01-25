@@ -389,11 +389,10 @@ If the SDK fails to parse the `LogDirectory`, `FileSize` or `LogLevel` fields as
 the specified format, the configuration file will be treated as invalid and no
 log file would be generated.
 
-When the `LogDirectory` or
-`FileSize` is found to be changed, the SDK will create or overwrite a file with
-new logs according to the new configuration. The configuration file has to be no
-more than 4 KiB. In case the file is larger than 4 KiB, only the first 4 KiB of
-content will be read.
+When the `LogDirectory` or `FileSize` is found to be changed, the SDK will create
+or overwrite a file with new logs according to the new configuration. The
+configuration file has to be no more than 4 KiB. In case the file is larger than
+4 KiB, only the first 4 KiB of content will be read.
 
 The log file might not be a proper text file format to achieve the goal of having
 minimal overhead and bounded resource usage: it may have trailing `NULL`s if log
