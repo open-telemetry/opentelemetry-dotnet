@@ -1,6 +1,6 @@
 param (
     [string]$TagName,
-    [string]$NuGetApiKey,
+    [string]$NugetApiKey,
     [bool]$CoreComponents,
     [bool]$NonCoreComponents
 )
@@ -73,17 +73,19 @@ Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.
 
 If (-not $NonCoreComponents) {
     Write-Output "Delete Core Packages"
-    explorer "src"
+    # TODO automate this delete
+    Explorer "src"
     PressKeyToContinue
 }
 
 # Upload to NuGet
-./nuget.exe setApiKey $NuGetApiKey
-ForEach ($NuPkgPath in Get-ChildItem -Path "src" -Recurse -Filter "*.nupkg") {
+./nuget.exe setApiKey $NugetApiKey
+ForEach ($NuPkgPath in Get-ChildItem -Path "src" -Filter "*.nupkg" -Recurse) {
     ./nuget.exe push $NuPkgPath.fullname -Source "https://api.nuget.org/v3/index.json"
 }
+Pop-Location
 
-Write-Output "Validate the package is uploaded to NuGet"
+Write-Output "Validate the package is uploaded to NuGet (takes a few minutes)"
 Start-Process "https://www.nuget.org/profiles/OpenTelemetry"
 PressKeyToContinue
 
@@ -93,37 +95,37 @@ gh release create $TagName --notes $CombinedChangelog
 # TODO separate version from instrumentation/hosting/OTshim package
 PressKeyToContinue
 
-# Update `OTelPreviousStableVer` in `Common.props` if needed
-# TODO verify this means a stable release
+# Update `OTelPreviousStableVer` in `Common.props`, if needed
 $CommonPropsFile = "build/Common.props"
+# TODO verify this means a stable release
 If (-not $TagName.Contains("-")) {
-    ForEach ($Line in Get-Content -Path $CommonPropsFile) {
-        If ($Line -like "*<OTelPreviousStableVer>*") {
-            $StartIndex = $Line.IndexOf(">") + 1
-            $EndIndex = $Line.IndexOf("</")
-            $OTelPreviousStableVer = $line.Substring($StartIndex, $EndIndex - $StartIndex)
-            break
-        }
+    [xml] $CommonProps = Get-Content $CommonPropsFile
+    $OTelPreviousStableVer = $CommonProps.Project.PropertyGroup.OTelPreviousStableVer
+
+    If ($OTelPreviousStableVer -ne $TagName) {
+        # Start new branch from upstream/main
+        $OTelVersionBranch = "otel-version-$TagName"
+        $OTelVersionTitle = "Update OTelPreviousStableVer in $CommonPropsFile - $TagName"
+        git fetch upstream main
+        git checkout main
+        git merge upstream/main
+        git checkout -b $OTelVersionBranch
+
+        # Update XML element with newest version
+        $Lines = Get-Content -Path $CommonPropsFile
+        $Old = "<OTelPreviousStableVer>$OTelPreviousStableVer</OTelPreviousStableVer>"
+        $New = "<OTelPreviousStableVer>$TagName</OTelPreviousStableVer>"
+        $Lines -Replace $Old, $New | Set-Content -Path $CommonPropsFile
+
+        # Create PR
+        git commit -am $OTelVersionTitle
+        git push --set-upstream origin $OTelVersionBranch
+        gh pr create --title $OTelVersionTitle
     }
 }
 
-If ($OTelPreviousStableVer -and $TagName -ne $OTelPreviousStableVer) {
-    $OTelVersionBranch = "otel-version-$TagName"
-    $OTelVersionTitle = "Update OTelPreviousStableVer in build/Common.props - $TagName"
-    git fetch upstream main
-    git checkout main
-    git merge upstream/main
-    git checkout -b $OTelVersionBranch
-
-    $Old = "<OTelPreviousStableVer>$OTelPreviousStableVer</OTelPreviousStableVer>"
-    $New = "<OTelPreviousStableVer>$TagName</OTelPreviousStableVer>"
-    $lines -Replace $Old, $New | Set-Content -Path $CommonPropsFile
-
-    git commit -am $OTelVersionTitle
-    git push --set-upstream origin $OTelVersionBranch
-    gh pr create --title $OTelVersionTitle
-}
-
 # Update OpenTelemetry.io Document
+# TODO what do you change here?
+Write-Output "Update OpenTelemetry.io Document"
 Start-Process "https://github.com/open-telemetry/opentelemetry.io/tree/main/content/en/docs/instrumentation/net"
 PressKeyToContinue
