@@ -52,7 +52,7 @@ namespace OpenTelemetry.Internal
 
         public static void Add(ref PooledList<T> list, T item)
         {
-            Guard.Null(list.buffer, $"{nameof(list)}.{nameof(list.buffer)}");
+            Guard.ThrowIfNull(list.buffer, $"{nameof(list)}.{nameof(list.buffer)}");
 
             var buffer = list.buffer;
 

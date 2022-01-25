@@ -57,6 +57,15 @@ namespace OpenTelemetry.Metrics
                 throw new ArgumentException($"Custom view name {name} is invalid.", nameof(name));
             }
 
+            if (instrumentName.IndexOf('*') != -1)
+            {
+                throw new ArgumentException(
+                    $"Instrument selection criteria is invalid. Instrument name '{instrumentName}' " +
+                    $"contains a wildcard character. This is not allowed when using a view to " +
+                    $"rename a metric stream as it would lead to conflicting metric stream names.",
+                    nameof(instrumentName));
+            }
+
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
                 return meterProviderBuilderBase.AddView(instrumentName, name);
@@ -84,6 +93,15 @@ namespace OpenTelemetry.Metrics
             if (!MeterProviderBuilderSdk.IsValidViewName(metricStreamConfiguration.Name))
             {
                 throw new ArgumentException($"Custom view name {metricStreamConfiguration.Name} is invalid.", nameof(metricStreamConfiguration.Name));
+            }
+
+            if (metricStreamConfiguration.Name != null && instrumentName.IndexOf('*') != -1)
+            {
+                throw new ArgumentException(
+                    $"Instrument selection criteria is invalid. Instrument name '{instrumentName}' " +
+                    $"contains a wildcard character. This is not allowed when using a view to " +
+                    $"rename a metric stream as it would lead to conflicting metric stream names.",
+                    nameof(instrumentName));
             }
 
             if (metricStreamConfiguration is ExplicitBucketHistogramConfiguration histogramConfiguration)

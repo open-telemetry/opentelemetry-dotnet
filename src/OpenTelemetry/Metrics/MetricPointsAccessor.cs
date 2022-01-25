@@ -33,7 +33,7 @@ namespace OpenTelemetry.Metrics
 
         internal MetricPointsAccessor(MetricPoint[] metricsPoints, int[] metricPointsToProcess, long targetCount, DateTimeOffset start, DateTimeOffset end)
         {
-            Guard.Null(metricsPoints, nameof(metricsPoints));
+            Guard.ThrowIfNull(metricsPoints, nameof(metricsPoints));
 
             this.metricsPoints = metricsPoints;
             this.metricPointsToProcess = metricPointsToProcess;
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Metrics
             /// <summary>
             /// Gets the <see cref="MetricPoint"/> at the current position of the enumerator.
             /// </summary>
-            public ref MetricPoint Current
+            public ref readonly MetricPoint Current
             {
                 get
                 {

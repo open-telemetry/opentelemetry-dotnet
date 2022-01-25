@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics
 
         public MeterProviderBuilderHosting(IServiceCollection services)
         {
-            Guard.Null(services, nameof(services));
+            Guard.ThrowIfNull(services, nameof(services));
 
             this.Services = services;
         }
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Metrics
 
         public MeterProviderBuilder Configure(Action<IServiceProvider, MeterProviderBuilder> configure)
         {
-            Guard.Null(configure, nameof(configure));
+            Guard.ThrowIfNull(configure, nameof(configure));
 
             this.configurationActions.Add(configure);
             return this;
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Metrics
 
         public MeterProvider Build(IServiceProvider serviceProvider)
         {
-            Guard.Null(serviceProvider, nameof(serviceProvider));
+            Guard.ThrowIfNull(serviceProvider, nameof(serviceProvider));
 
             // Note: Not using a foreach loop because additional actions can be
             // added during each call.

@@ -35,7 +35,7 @@ using Status = OpenTelemetry.Trace.Status;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
-    public class OtlpTraceExporterTests
+    public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
     {
         static OtlpTraceExporterTests()
         {
@@ -372,6 +372,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void UseOpenTelemetryProtocolActivityExporterWithCustomActivityProcessor()
         {
+            if (Environment.Version.Major == 3)
+            {
+                // Adding the OtlpExporter creates a GrpcChannel.
+                // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
+                // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
+                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            }
+
             const string ActivitySourceName = "otlp.test";
             TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
 

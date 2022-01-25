@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace
             IEnumerable<TracerProviderBuilderBase.InstrumentationFactory> instrumentationFactories,
             Sampler sampler,
             List<BaseProcessor<Activity>> processors,
-            Dictionary<string, bool> legacyActivityOperationNames)
+            HashSet<string> legacyActivityOperationNames)
         {
             this.Resource = resource;
             this.sampler = sampler;
@@ -53,10 +53,10 @@ namespace OpenTelemetry.Trace
             Regex legacyActivityWildcardModeRegex = null;
             foreach (var legacyName in legacyActivityOperationNames)
             {
-                if (legacyName.Key.Contains('*'))
+                if (legacyName.Contains('*'))
                 {
                     legacyActivityWildcardMode = true;
-                    legacyActivityWildcardModeRegex = GetWildcardRegex(legacyActivityOperationNames.Keys);
+                    legacyActivityWildcardModeRegex = GetWildcardRegex(legacyActivityOperationNames);
                     break;
                 }
             }
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    legacyActivityPredicate = activity => legacyActivityOperationNames.ContainsKey(activity.OperationName);
+                    legacyActivityPredicate = activity => legacyActivityOperationNames.Contains(activity.OperationName);
                 }
 
                 listener.ActivityStarted = activity =>
@@ -242,12 +242,7 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    var activitySources = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-                    foreach (var name in sources)
-                    {
-                        activitySources.Add(name);
-                    }
+                    var activitySources = new HashSet<string>(sources, StringComparer.OrdinalIgnoreCase);
 
                     if (this.supportLegacyActivity)
                     {
@@ -287,7 +282,7 @@ namespace OpenTelemetry.Trace
 
         internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
         {
-            Guard.Null(processor, nameof(processor));
+            Guard.ThrowIfNull(processor, nameof(processor));
 
             processor.SetParentProvider(this);
 

@@ -36,7 +36,7 @@ namespace Examples.Console
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("myservice"))
                 .AddMeter(meter.Name); // All instruments from this meter are enabled.
 
-            if (options.UseExporter.ToLower() == "otlp")
+            if (options.UseExporter.Equals("otlp", StringComparison.OrdinalIgnoreCase))
             {
                 /*
                  * Prerequisite to run this example:

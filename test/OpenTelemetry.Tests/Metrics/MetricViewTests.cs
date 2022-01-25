@@ -92,6 +92,34 @@ namespace OpenTelemetry.Metrics.Tests
                .Build());
         }
 
+        [Fact]
+        public void AddViewWithNameThrowsInvalidArgumentExceptionWhenConflict()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter1 = new Meter("AddViewWithGuaranteedConflictThrowsInvalidArgumentException");
+
+            Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
+               .AddMeter(meter1.Name)
+               .AddView("instrumenta.*", name: "newname")
+               .AddInMemoryExporter(exportedItems)
+               .Build());
+        }
+
+        [Fact]
+        public void AddViewWithNameInMetricStreamConfigurationThrowsInvalidArgumentExceptionWhenConflict()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter1 = new Meter("AddViewWithGuaranteedConflictThrowsInvalidArgumentException");
+
+            Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
+               .AddMeter(meter1.Name)
+               .AddView("instrumenta.*", new MetricStreamConfiguration() { Name = "newname" })
+               .AddInMemoryExporter(exportedItems)
+               .Build());
+        }
+
         [Theory]
         [MemberData(nameof(MetricTestData.InvalidHistogramBoundaries), MemberType = typeof(MetricTestData))]
         public void AddViewWithInvalidHistogramBoundsThrowsArgumentException(double[] boundaries)
@@ -278,33 +306,6 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
-        public void ViewToRenameMetricWildCardMatch()
-        {
-            using var meter = new Meter(Utils.GetCurrentMethodName());
-            var exportedItems = new List<Metric>();
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter.Name)
-                .AddView("counter*", "renamed")
-                .AddInMemoryExporter(exportedItems)
-                .Build();
-
-            // Expecting one metric stream.
-            var counter1 = meter.CreateCounter<long>("counterA");
-            counter1.Add(10);
-            var counter2 = meter.CreateCounter<long>("counterB");
-            counter2.Add(10);
-            var counter3 = meter.CreateCounter<long>("counterC");
-            counter3.Add(10);
-            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-
-            // counter* matches all 3 instruments which all
-            // becomes "renamed" and only 1st one is exported.
-            Assert.Single(exportedItems);
-            var metric = exportedItems[0];
-            Assert.Equal("renamed", metric.Name);
-        }
-
-        [Fact]
         public void ViewToProduceMultipleStreamsFromInstrument()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
@@ -380,7 +381,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("MyHistogram", metricCustom.Name);
 
             List<MetricPoint> metricPointsDefault = new List<MetricPoint>();
-            foreach (ref var mp in metricDefault.GetMetricPoints())
+            foreach (ref readonly var mp in metricDefault.GetMetricPoints())
             {
                 metricPointsDefault.Add(mp);
             }
@@ -407,7 +408,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(Metric.DefaultHistogramBounds.Length + 1, actualCount);
 
             List<MetricPoint> metricPointsCustom = new List<MetricPoint>();
-            foreach (ref var mp in metricCustom.GetMetricPoints())
+            foreach (ref readonly var mp in metricCustom.GetMetricPoints())
             {
                 metricPointsCustom.Add(mp);
             }
@@ -465,7 +466,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0];
             Assert.Equal("NameOnly", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref readonly var mp in metric.GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }
@@ -476,7 +477,7 @@ namespace OpenTelemetry.Metrics.Tests
             metric = exportedItems[1];
             Assert.Equal("SizeOnly", metric.Name);
             metricPoints.Clear();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref readonly var mp in metric.GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }
@@ -487,7 +488,7 @@ namespace OpenTelemetry.Metrics.Tests
             metric = exportedItems[2];
             Assert.Equal("NoTags", metric.Name);
             metricPoints.Clear();
-            foreach (ref var mp in metric.GetMetricPoints())
+            foreach (ref readonly var mp in metric.GetMetricPoints())
             {
                 metricPoints.Add(mp);
             }
