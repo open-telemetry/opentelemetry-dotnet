@@ -21,14 +21,6 @@ OpenTelemetry.Exporter.OtlpMetricExporter
 OpenTelemetry.Exporter.OtlpMetricExporter.OtlpMetricExporter(OpenTelemetry.Exporter.OtlpExporterOptions options) -> void
 OpenTelemetry.Exporter.OtlpTraceExporter
 OpenTelemetry.Exporter.OtlpTraceExporter.OtlpTraceExporter(OpenTelemetry.Exporter.OtlpExporterOptions options) -> void
-OpenTelemetry.Exporter.OtlpMetricReaderOptions
-OpenTelemetry.Exporter.OtlpMetricReaderOptions.MetricReaderType.get -> OpenTelemetry.Metrics.MetricReaderType
-OpenTelemetry.Exporter.OtlpMetricReaderOptions.MetricReaderType.set -> void
-OpenTelemetry.Exporter.OtlpMetricReaderOptions.OtlpMetricReaderOptions() -> void
-OpenTelemetry.Exporter.OtlpMetricReaderOptions.PeriodicExportingMetricReaderOptions.get -> OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
-OpenTelemetry.Exporter.OtlpMetricReaderOptions.PeriodicExportingMetricReaderOptions.set -> void
-OpenTelemetry.Exporter.OtlpMetricReaderOptions.Temporality.get -> OpenTelemetry.Metrics.AggregationTemporality
-OpenTelemetry.Exporter.OtlpMetricReaderOptions.Temporality.set -> void
 OpenTelemetry.Metrics.OtlpMetricExporterExtensions
 OpenTelemetry.Trace.OtlpTraceExporterHelperExtensions
 override OpenTelemetry.Exporter.OtlpMetricExporter.Export(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric> metrics) -> OpenTelemetry.ExportResult
