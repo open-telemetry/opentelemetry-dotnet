@@ -29,7 +29,7 @@ namespace OpenTelemetry.Exporter
         internal Func<DateTimeOffset> GetUtcNowDateTimeOffset = () => DateTimeOffset.UtcNow;
 
         private int scrapeResponseCacheDurationMilliseconds = 10 * 1000;
-        private IReadOnlyCollection<string> httpListenerPrefixes = new string[] { "http://*:80/" };
+        private IReadOnlyCollection<string> httpListenerPrefixes = new string[] { "http://localhost:9464/" };
 
 #if NETCOREAPP3_1_OR_GREATER
         /// <summary>
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter
 
         /// <summary>
         /// Gets or sets the prefixes to use for the http listener. Default
-        /// value: http://*:80/.
+        /// value: http://localhost:9464/.
         /// </summary>
         public IReadOnlyCollection<string> HttpListenerPrefixes
         {
