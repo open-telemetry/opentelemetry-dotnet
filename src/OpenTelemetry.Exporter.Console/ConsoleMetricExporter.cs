@@ -42,7 +42,7 @@ namespace OpenTelemetry.Exporter
                     {
                         if (resourceAttribute.Key.Equals("service.name"))
                         {
-                            Console.WriteLine("Service.Name" + resourceAttribute.Value);
+                            this.WriteLine("Service.Name" + resourceAttribute.Value);
                         }
                     }
                 }
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Exporter
                     }
                 }
 
-                Console.WriteLine(msg.ToString());
+                this.WriteLine(msg.ToString());
 
                 foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
@@ -174,7 +174,7 @@ namespace OpenTelemetry.Exporter
                     msg.Append(metric.MetricType);
                     msg.AppendLine();
                     msg.Append($"Value: {valueDisplay}");
-                    Console.WriteLine(msg);
+                    this.WriteLine(msg.ToString());
                 }
             }
 
