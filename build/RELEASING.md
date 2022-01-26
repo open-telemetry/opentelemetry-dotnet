@@ -60,9 +60,13 @@ Only for Maintainers.
         }
     ```
 
- 4. Submit PR with the above changes, and get it merged.
+ 4. Normalize PublicApi files (Stable Release Only)
+    Run the PowerShell script `.\build\finalize-publicapi.ps1`.
+    This will merge the contents of Unshipped.txt into the Shipped.txt.
 
- 5. Tag Git with version to be released e.g.:
+ 5. Submit PR with the above changes, and get it merged.
+
+ 6. Tag Git with version to be released e.g.:
 
     ```sh
     git tag -a 1.0.0-rc2 -m "1.0.0-rc2"
@@ -83,25 +87,25 @@ Only for Maintainers.
 
     If releasing both, push both tags above.
 
- 6. Open [Pack and publish to MyGet
+ 7. Open [Pack and publish to MyGet
     workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
     and manually trigger a build. At the end of this, MyGet will have the
     packages. The package name will be the tag name used in step 5.
 
- 7. Validate using MyGet packages. Basic sanity checks :)
+ 8. Validate using MyGet packages. Basic sanity checks :)
 
- 8. From the above build, get the artifacts from the drop, which has all the
+ 9. From the above build, get the artifacts from the drop, which has all the
     NuGet packages.
 
- 9. Copy all the NuGet files and symbols into a local folder. If only
+10. Copy all the NuGet files and symbols into a local folder. If only
     releasing core packages, only copy them over.
 
-10. Download latest [nuget.exe](https://www.nuget.org/downloads) into
+11. Download latest [nuget.exe](https://www.nuget.org/downloads) into
     the same folder from step 9.
 
-11. Obtain the API key from nuget.org (Only maintainers have access)
+12. Obtain the API key from nuget.org (Only maintainers have access)
 
-12. Run the following commands from PowerShell from local folder used in step 9:
+13. Run the following commands from PowerShell from local folder used in step 9:
 
     ```powershell
     .\nuget.exe setApiKey <actual api key>
@@ -111,21 +115,21 @@ Only for Maintainers.
     https://api.nuget.org/v3/index.json}
     ```
 
-13. Packages would be available in nuget.org in few minutes.
+14. Packages would be available in nuget.org in few minutes.
     Validate that the package is uploaded.
 
-14. Delete the API key generated in step 11.
+15. Delete the API key generated in step 11.
 
-15. Make the Github release with tag from Step5
+16. Make the Github release with tag from Step5
     and contents of combinedchangelog from Step2.
 
     TODO: Add tagging for Metrics release.
     TODO: Separate version for instrumention/hosting/OTshim package.
 
-16. Update the OpenTelemetry.io document
+17. Update the OpenTelemetry.io document
     [here](https://github.com/open-telemetry/opentelemetry.io/tree/main/content/en/docs/net)
     by sending a Pull Request.
 
-17. If a new stable version of the core packages were released,
+18. If a new stable version of the core packages were released,
     update `OTelPreviousStableVer` in Common.props
     to the just released stable version.
