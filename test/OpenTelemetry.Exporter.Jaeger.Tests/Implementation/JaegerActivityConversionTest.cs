@@ -576,7 +576,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
 
         private long TimeSpanToMicroseconds(TimeSpan timeSpan)
         {
-            return timeSpan.Ticks * (TimeSpan.TicksPerMillisecond / 1000);
+            return timeSpan.Ticks / (TimeSpan.TicksPerMillisecond / 1000);
         }
 
         public class RemoteEndpointPriorityTestCase
