@@ -1,24 +1,40 @@
 param (
-    [string]$TagName,
-    [string]$NugetApiKey,
-    [bool]$CoreComponents,
-    [bool]$NonCoreComponents
+    [Parameter(Mandatory)]
+    # https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
+    [ValidatePattern("^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$")]
+    [string]
+    $TagName,
+    [Parameter(Mandatory)]
+    [ValidatePattern("[0-9a-z]{46}")]
+    [string]
+    $NugetApiKey,
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
+    [bool]
+    $CoreComponents,
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
+    [bool]
+    $NonCoreComponents
 )
 
-function PressKeyToContinue {
-    # TODO - make text disappear after pressing the key - write spaces on the same line starting at pos 0?
+Function PressKeyToContinue {
+    param (
+        $Instruction
+    )
+
+    Write-Host $Instruction
     Write-Host -NoNewLine "Press any key to continue..."
-    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    $Null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 }
 
-If (("" -eq $TagName)) {
-    Write-Error "Please provide a tag name (version name) for the release." -ErrorAction Stop
+# Ensure branch is clean, otherwise abort
+$ChangedFiles = $(git status --porcelain | Measure-Object | Select-Object -Expand Count)
+if ($ChangedFiles -gt 0) {
+    Write-Error "Aborting. Found uncommitted changes." -ErrorAction Stop
 }
-
-PressKeyToContinue #TODO remove
 
 # Checkout `main` branch and create new branch for changes
-# TODO ensure branch is clean, otherwise abort
 $ChangelogBranch = "changelogs-$TagName"
 git fetch upstream main
 git checkout main
@@ -51,9 +67,8 @@ ForEach ($ChangelogPath in Get-ChildItem -Path . -Recurse -Filter CHANGELOG.md) 
 $ChangelogTitle = "CHANGELOG.md Files Update - $TagName"
 git commit -am $ChangelogTitle
 git push --set-upstream origin $ChangelogBranch
-gh pr create --title $ChangelogTitle
-# TODO --reviewer @reyang
-PressKeyToContinue
+gh pr create --title $ChangelogTitle # TODO --reviewer @reyang
+PressKeyToContinue("Merge the PR")
 
 # Tag Git with version to be released
 git tag -a $TagName -m $TagName
@@ -66,34 +81,32 @@ If ($NonCoreComponents) {
 git push origin $TagName
 
 # Trigger MyGet Build and Download Artifacts from the Drop
-Push-Location "$HOME/Downloads"
+$DownloadDirectory = "$HOME/Downloads"
 gh workflow run "publish-packages-1.0.yml"
-gh run download --name "windows-latest-packages" --dir .
+gh run download --name "windows-latest-packages" --dir $DownloadDirectory
+Push-Location "$DownloadDirectory/src"
 Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile "src/nuget.exe"
 
+# TODO automate this delete?
 If (-not $NonCoreComponents) {
-    Write-Output "Delete Core Packages"
-    # TODO automate this delete
-    Explorer "src"
-    PressKeyToContinue
+    Explorer "."
+    PressKeyToContinue("Delete Core Packages")
 }
 
 # Upload to NuGet
 ./nuget.exe setApiKey $NugetApiKey
-ForEach ($NuPkgPath in Get-ChildItem -Path "src" -Filter "*.nupkg" -Recurse) {
+ForEach ($NuPkgPath in Get-ChildItem -Path "." -Filter "*.nupkg" -Recurse) {
     ./nuget.exe push $NuPkgPath.fullname -Source "https://api.nuget.org/v3/index.json"
 }
 Pop-Location
 
-Write-Output "Validate the package is uploaded to NuGet (takes a few minutes)"
 Start-Process "https://www.nuget.org/profiles/OpenTelemetry"
-PressKeyToContinue
+PressKeyToContinue("Validate the package is uploaded to NuGet (takes a few minutes)")
 
 # GitHub Release
 gh release create $TagName --notes $CombinedChangelog
 # TODO add taggings for metrics release?
 # TODO separate version from instrumentation/hosting/OTshim package
-PressKeyToContinue
 
 # Update `OTelPreviousStableVer` in `Common.props`, if needed
 $CommonPropsFile = "build/Common.props"
@@ -126,6 +139,5 @@ If (-not $TagName.Contains("-")) {
 
 # Update OpenTelemetry.io Document
 # TODO what do you change here?
-Write-Output "Update OpenTelemetry.io Document"
 Start-Process "https://github.com/open-telemetry/opentelemetry.io/tree/main/content/en/docs/instrumentation/net"
-PressKeyToContinue
+PressKeyToContinue("Update OpenTelemetry.io Document")
