@@ -15,7 +15,11 @@ param (
     [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
     [bool]
-    $NonCoreComponents
+    $NonCoreComponents,
+    [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
+    [bool]
+    $IsStableRelease
 )
 
 Function PressKeyToContinue {
@@ -28,9 +32,10 @@ Function PressKeyToContinue {
     $Null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 }
 
-# TODO is this function correct
-Function IsStableRelease {
-    return -not $TagName.Contains("-")
+Function GitFetchAndMergeUpstreamMain {
+    git fetch upstream main
+    git checkout main
+    git merge upstream/main
 }
 
 # Ensure branch is clean, otherwise abort
@@ -41,9 +46,7 @@ if ($ChangedFiles -gt 0) {
 
 # Checkout `main` branch and create new branch for changes
 $ChangelogBranch = "changelogs-$TagName"
-git fetch upstream main
-git checkout main
-git merge upstream/main
+GitFetchAndMergeUpstreamMain
 git checkout -b $ChangelogBranch
 
 # CHANGELOG Processing and Updating
@@ -69,7 +72,7 @@ ForEach ($ChangelogPath in Get-ChildItem -Path . -Recurse -Filter CHANGELOG.md) 
 }
 
 # Normalize PublicApi files
-If (IsStableRelease) {
+If ($IsStableRelease) {
     Start-Process PowerShell.exe -ArgumentList "-noexit", "-command .\build\finalize-publicapi.ps1"
 }
 
@@ -81,6 +84,7 @@ gh pr create --title $ChangelogTitle # TODO --reviewer @reyang
 PressKeyToContinue("Merge the PR")
 
 # Tag Git with version to be released
+GitFetchAndMergeUpstreamMain
 git tag -a $TagName -m $TagName
 If ($CoreComponents) {
     git tag -a "core-$TagName" -m "$TagName of all core components"
@@ -120,7 +124,7 @@ gh release create $TagName --notes $CombinedChangelog
 
 # Update `OTelPreviousStableVer` in `Common.props`, if needed
 $CommonPropsFile = "build/Common.props"
-If (IsStableRelease) {
+If ($IsStableRelease) {
     [xml] $CommonProps = Get-Content $CommonPropsFile
     $OTelPreviousStableVer = $CommonProps.Project.PropertyGroup.OTelPreviousStableVer
 
