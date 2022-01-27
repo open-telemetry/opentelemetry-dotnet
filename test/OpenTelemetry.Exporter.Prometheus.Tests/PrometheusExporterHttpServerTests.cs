@@ -105,5 +105,50 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 "^# TYPE counter_double counter\ncounter_double{key1='value1',key2='value2'} 101.17 \\d+\n$".Replace('\'', '"'),
                 await response.Content.ReadAsStringAsync().ConfigureAwait(false));
         }
+
+        [Theory]
+        [InlineData("http://example.com")]
+        [InlineData("https://example.com")]
+        [InlineData("http://127.0.0.1")]
+        [InlineData("http://example.com", "https://example.com", "http://127.0.0.1")]
+        public void ServerEndpointSanityCheckPositiveTest(params string[] uris)
+        {
+            using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddPrometheusExporter(opt =>
+                {
+                    opt.HttpListenerPrefixes = uris;
+                })
+                .Build();
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(null)]
+        [InlineData("ftp://example.com")]
+        [InlineData("http://example.com", "https://example.com", "ftp://example.com")]
+        public void ServerEndpointSanityCheckNegativeTest(params string[] uris)
+        {
+            try
+            {
+                using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+                    .AddPrometheusExporter(opt =>
+                    {
+                        opt.HttpListenerPrefixes = uris;
+                    })
+                    .Build();
+            }
+            catch (Exception ex)
+            {
+                if (ex is not ArgumentNullException)
+                {
+                    Assert.Equal("System.ArgumentException", ex.GetType().ToString());
+#if NET461
+                    Assert.Equal("Prometheus server path should be a valid URI with http/https scheme.\r\nParameter name: httpListenerPrefixes", ex.Message);
+#else
+                    Assert.Equal("Prometheus server path should be a valid URI with http/https scheme. (Parameter 'httpListenerPrefixes')", ex.Message);
+#endif
+                }
+            }
+        }
     }
 }
