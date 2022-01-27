@@ -34,10 +34,7 @@ namespace OpenTelemetry.Instrumentation.Http
 
         internal static Action<HttpRequestMessage, string, string> HeaderValueSetter => (request, name, value) =>
         {
-            if (request.Headers.Contains(name))
-            {
-                request.Headers.Remove(name);
-            }
+request.Headers.Remove(name);
 
             request.Headers.Add(name, value);
         };
