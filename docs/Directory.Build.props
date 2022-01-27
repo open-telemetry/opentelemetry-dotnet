@@ -4,7 +4,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <!-- https://dotnet.microsoft.com/download/dotnet-core -->
-    <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
     <!-- https://dotnet.microsoft.com/download/dotnet-framework -->
     <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net461;net462;net47;net471;net472;net48</TargetFrameworks>
   </PropertyGroup>
@@ -14,6 +14,6 @@
       Please sort alphabetically.
       Refer to https://docs.microsoft.com/nuget/concepts/package-versioning for semver syntax.
     -->
-    <MicrosoftExtensionsLoggingPkgVer>[5.0.0,6.0)</MicrosoftExtensionsLoggingPkgVer>
+    <MicrosoftExtensionsLoggingPkgVer>[6.0.0,)</MicrosoftExtensionsLoggingPkgVer>
   </PropertyGroup>
 </Project>

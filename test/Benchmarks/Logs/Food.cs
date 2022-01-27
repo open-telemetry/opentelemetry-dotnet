@@ -1,4 +1,4 @@
-// <copyright file="Int128Test.cs" company="OpenTelemetry Authors">
+// <copyright file="Food.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics;
-using Xunit;
+using Microsoft.Extensions.Logging;
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
+namespace Benchmarks.Logs
 {
-    public class Int128Test
+    public static partial class Food
     {
-        [Fact]
-        public void Int128ConversionWorksAsExpected()
-        {
-            var id = ActivityTraceId.CreateFromBytes(new byte[] { 0x1a, 0x0f, 0x54, 0x63, 0x25, 0xa8, 0x56, 0x43, 0x1a, 0x4c, 0x24, 0xea, 0xa8, 0x60, 0xb0, 0xe8 });
-            var int128 = new Int128(id);
-
-            Assert.Equal(unchecked(0x1a0f546325a85643), int128.High);
-            Assert.Equal(unchecked(0x1a4c24eaa860b0e8), int128.Low);
-        }
+        [LoggerMessage(
+            EventId = 0,
+            Level = LogLevel.Information,
+            Message = "Hello from {food} {price}.")]
+        public static partial void SayHello(
+            ILogger logger, string food, double price);
     }
 }

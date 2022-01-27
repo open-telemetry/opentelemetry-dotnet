@@ -14,11 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
 
 namespace Examples.AspNetCore
 {
@@ -40,17 +43,38 @@ namespace Examples.AspNetCore
                     builder.ClearProviders();
                     builder.AddConsole();
 
-                    var useLogging = context.Configuration.GetValue<bool>("UseLogging");
-                    if (useLogging)
+                    var logExporter = context.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
+                    switch (logExporter)
                     {
-                        builder.AddOpenTelemetry(options =>
-                        {
-                            options.IncludeScopes = true;
-                            options.ParseStateValues = true;
-                            options.IncludeFormattedMessage = true;
-                            options.AddConsoleExporter();
-                        });
+                        case "otlp":
+                            // Adding the OtlpExporter creates a GrpcChannel.
+                            // This switch must be set before creating a GrpcChannel when calling an insecure gRPC service.
+                            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
+                            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+                            builder.AddOpenTelemetry(options =>
+                            {
+                                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(context.Configuration.GetValue<string>("Otlp:ServiceName")));
+                                options.AddOtlpExporter(otlpOptions =>
+                                 {
+                                     otlpOptions.Endpoint = new Uri(context.Configuration.GetValue<string>("Otlp:Endpoint"));
+                                 });
+                            });
+                            break;
+
+                        default:
+                            builder.AddOpenTelemetry(options =>
+                            {
+                                options.AddConsoleExporter();
+                            });
+                            break;
                     }
+
+                    builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
+                    {
+                        opt.IncludeScopes = true;
+                        opt.ParseStateValues = true;
+                        opt.IncludeFormattedMessage = true;
+                    });
                 });
     }
 }

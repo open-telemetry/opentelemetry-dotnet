@@ -85,9 +85,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 }
             }
 
-            if (logRecord.EventId != 0)
+            if (logRecord.EventId != default)
             {
-                otlpLogRecord.Attributes.AddStringAttribute(nameof(logRecord.EventId), logRecord.EventId.ToString());
+                otlpLogRecord.Attributes.AddIntAttribute(nameof(logRecord.EventId.Id), logRecord.EventId.Id);
+                otlpLogRecord.Attributes.AddStringAttribute(nameof(logRecord.EventId.Name), logRecord.EventId.Name);
             }
 
             if (logRecord.Exception != null)
@@ -122,6 +123,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             {
                 Key = key,
                 Value = new OtlpCommon.AnyValue { StringValue = value },
+            });
+        }
+
+        private static void AddIntAttribute(this RepeatedField<OtlpCommon.KeyValue> repeatedField, string key, int value)
+        {
+            repeatedField.Add(new OtlpCommon.KeyValue
+            {
+                Key = key,
+                Value = new OtlpCommon.AnyValue { IntValue = value },
             });
         }
     }

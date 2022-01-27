@@ -71,7 +71,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(activity.StartTimeUtc.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal((long)(activity.Duration.TotalMilliseconds * 1000), jaegerSpan.Duration);
+            Assert.Equal(this.TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
 
             var tags = jaegerSpan.Tags.ToArray();
             var tag = tags[0];
@@ -159,7 +159,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(activity.StartTimeUtc.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal((long)(activity.Duration.TotalMilliseconds * 1000), jaegerSpan.Duration);
+            Assert.Equal(this.TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
 
             // 2 tags: span.kind & library.name.
             Assert.Equal(2, jaegerSpan.Tags.Count);
@@ -218,7 +218,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(activity.StartTimeUtc.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal(activity.Duration.TotalMilliseconds * 1000, jaegerSpan.Duration);
+            Assert.Equal(this.TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
 
             var tags = jaegerSpan.Tags.ToArray();
             var tag = tags[0];
@@ -250,7 +250,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         [Fact]
         public void JaegerActivityConverterTest_ConvertActivityToJaegerSpan_NoLinks()
         {
-            var activity = CreateTestActivity(addLinks: false);
+            var activity = CreateTestActivity(addLinks: false, ticksToAdd: 8000);
             var traceIdAsInt = new Int128(activity.Context.TraceId);
             var spanIdAsInt = new Int128(activity.Context.SpanId);
 
@@ -269,7 +269,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(activity.StartTimeUtc.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal(activity.Duration.TotalMilliseconds * 1000, jaegerSpan.Duration);
+            Assert.Equal(this.TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
 
             var tags = jaegerSpan.Tags.ToArray();
             var tag = tags[0];
@@ -480,10 +480,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Resource resource = null,
             ActivityKind kind = ActivityKind.Client,
             bool isRootSpan = false,
-            Status? status = null)
+            Status? status = null,
+            long ticksToAdd = 60 * TimeSpan.TicksPerSecond)
         {
             var startTimestamp = DateTime.UtcNow;
-            var endTimestamp = startTimestamp.AddSeconds(60);
+            var endTimestamp = startTimestamp.AddTicks(ticksToAdd);
             var eventTimestamp = DateTime.UtcNow;
             var traceId = ActivityTraceId.CreateFromString("e8ea7e9ac72de94e91fabc613f9686b2".AsSpan());
 
@@ -571,6 +572,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             activity.Stop();
 
             return activity;
+        }
+
+        private long TimeSpanToMicroseconds(TimeSpan timeSpan)
+        {
+            return timeSpan.Ticks / (TimeSpan.TicksPerMillisecond / 1000);
         }
 
         public class RemoteEndpointPriorityTestCase
