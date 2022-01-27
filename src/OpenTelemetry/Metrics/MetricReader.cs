@@ -85,6 +85,7 @@ namespace OpenTelemetry.Metrics
         {
             Guard.ThrowIfInvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
+            OpenTelemetrySdkEventSource.Log.MetricReaderEvent($"{nameof(MetricReader)}.{nameof(this.Collect)} method called with {nameof(timeoutMilliseconds)} = {timeoutMilliseconds}.");
             var shouldRunCollect = false;
             var tcs = this.collectionTcs;
 
@@ -123,6 +124,9 @@ namespace OpenTelemetry.Metrics
             }
 
             tcs.TrySetResult(result);
+
+            OpenTelemetrySdkEventSource.Log.MetricReaderEvent($"{nameof(MetricReader)}.{nameof(this.Collect)} method is returning {result}.");
+
             return result;
         }
 
@@ -148,6 +152,8 @@ namespace OpenTelemetry.Metrics
         {
             Guard.ThrowIfInvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
 
+            OpenTelemetrySdkEventSource.Log.MetricReaderEvent($"{nameof(MetricReader)}.{nameof(this.Shutdown)} called with {nameof(timeoutMilliseconds)} = {timeoutMilliseconds}.");
+
             if (Interlocked.CompareExchange(ref this.shutdownCount, 1, 0) != 0)
             {
                 return false; // shutdown already called
@@ -164,6 +170,9 @@ namespace OpenTelemetry.Metrics
             }
 
             this.shutdownTcs.TrySetResult(result);
+
+            OpenTelemetrySdkEventSource.Log.MetricReaderEvent($"{nameof(MetricReader)}.{nameof(this.Shutdown)} method is returning {result}.");
+
             return result;
         }
 
@@ -215,12 +224,16 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         protected virtual bool OnCollect(int timeoutMilliseconds)
         {
+            OpenTelemetrySdkEventSource.Log.MetricReaderEvent($"{nameof(MetricReader)}.{nameof(this.OnCollect)} called with {nameof(timeoutMilliseconds)} = {timeoutMilliseconds}.");
+
             var sw = timeoutMilliseconds == Timeout.Infinite
                 ? null
                 : Stopwatch.StartNew();
 
             var collectObservableInstruments = this.ParentProvider.GetObservableInstrumentCollectCallback();
             collectObservableInstruments?.Invoke();
+
+            OpenTelemetrySdkEventSource.Log.MetricReaderEvent("Observable instruments collected.");
 
             var metrics = this.GetMetricsBatch();
 
