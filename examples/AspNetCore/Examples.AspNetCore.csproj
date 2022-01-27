@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -18,6 +18,7 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Zipkin\OpenTelemetry.Exporter.Zipkin.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs\OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.AspNetCore\OpenTelemetry.Instrumentation.AspNetCore.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.Http\OpenTelemetry.Instrumentation.Http.csproj" />

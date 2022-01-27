@@ -83,7 +83,7 @@ properties:
 
 * `HttpListenerPrefixes`: Defines the prefixes which will be used by the
   listener when `StartHttpListener` is `true`. The default value is
-  `["http://*:80/"]`. You may specify multiple endpoints.
+  `["http://localhost:9464/"]`. You may specify multiple endpoints.
 
   For details see:
   [HttpListenerPrefixCollection.Add(String)](https://docs.microsoft.com/dotnet/api/system.net.httplistenerprefixcollection.add)

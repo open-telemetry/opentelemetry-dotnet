@@ -128,7 +128,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 operationName: activity.DisplayName,
                 flags: (activity.Context.TraceFlags & ActivityTraceFlags.Recorded) > 0 ? 0x1 : 0,
                 startTime: ToEpochMicroseconds(activity.StartTimeUtc),
-                duration: (long)activity.Duration.TotalMilliseconds * 1000,
+                duration: activity.Duration.Ticks / TicksPerMicrosecond,
                 references: activity.ToJaegerSpanRefs(),
                 tags: jaegerTags.Tags,
                 logs: activity.ToJaegerLogs());
