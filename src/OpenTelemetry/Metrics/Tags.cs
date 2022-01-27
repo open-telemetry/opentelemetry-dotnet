@@ -36,13 +36,7 @@ namespace OpenTelemetry.Metrics
 
         public readonly override bool Equals(object obj)
         {
-            if (!(obj is Tags))
-            {
-                return false;
-            }
-
-            var other = (Tags)obj;
-            return this.Equals(other);
+            return obj is Tags other && this.Equals(other);
         }
 
         public readonly bool Equals(Tags other)

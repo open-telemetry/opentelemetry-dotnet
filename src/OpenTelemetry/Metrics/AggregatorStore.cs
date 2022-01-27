@@ -29,9 +29,6 @@ namespace OpenTelemetry.Metrics
         private readonly HashSet<string> tagKeysInteresting;
         private readonly int tagsKeysInterestingCount;
 
-        private readonly ConcurrentDictionary<Tags, Tags> sortedTagsDictionary =
-            new ConcurrentDictionary<Tags, Tags>();
-
         private readonly ConcurrentDictionary<Tags, int> tagsToMetricPointIndexDictionary =
             new ConcurrentDictionary<Tags, int>();
 
@@ -181,78 +178,81 @@ namespace OpenTelemetry.Metrics
         {
             var givenTags = new Tags(tagKeys, tagValues);
 
-            // We only need to sort if there is more than one Tag Key.
-            if (!this.sortedTagsDictionary.TryGetValue(givenTags, out var sortedTags))
+            if (!this.tagsToMetricPointIndexDictionary.TryGetValue(givenTags, out var aggregatorIndex))
             {
-                // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                var givenKeys = new string[length];
-                tagKeys.CopyTo(givenKeys, 0);
-
-                var givenValues = new object[length];
-                tagValues.CopyTo(givenValues, 0);
-
-                givenTags = new Tags(givenKeys, givenValues);
-
-                string[] sortedTagKeys;
-                object[] sortedTagValues;
-
+                Tags sortedTags;
                 if (length > 1)
                 {
+                    // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
                     // Create a new array for the sorted Tag keys.
-                    sortedTagKeys = new string[length];
+                    var sortedTagKeys = new string[length];
                     tagKeys.CopyTo(sortedTagKeys, 0);
 
                     // Create a new array for the sorted Tag values.
-                    sortedTagValues = new object[length];
+                    var sortedTagValues = new object[length];
                     tagValues.CopyTo(sortedTagValues, 0);
 
                     Array.Sort(sortedTagKeys, sortedTagValues);
+
+                    sortedTags = new Tags(sortedTagKeys, sortedTagValues);
                 }
                 else
                 {
-                    sortedTagKeys = givenKeys;
-                    sortedTagValues = givenValues;
+                    sortedTags = givenTags;
                 }
 
-                sortedTags = new Tags(sortedTagKeys, sortedTagValues);
-                this.sortedTagsDictionary.TryAdd(givenTags, sortedTags);
-            }
-
-            if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out var aggregatorIndex))
-            {
-                aggregatorIndex = this.metricPointIndex;
-                if (aggregatorIndex >= this.maxMetricPoints)
+                if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
                 {
-                    // sorry! out of data points.
-                    // TODO: Once we support cleanup of
-                    // unused points (typically with delta)
-                    // we can re-claim them here.
-                    return -1;
-                }
+                    // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                    var givenKeys = new string[length];
+                    tagKeys.CopyTo(givenKeys, 0);
 
-                lock (this.tagsToMetricPointIndexDictionary)
-                {
-                    // check again after acquiring lock.
-                    if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
+                    var givenValues = new object[length];
+                    tagValues.CopyTo(givenValues, 0);
+
+                    givenTags = new Tags(givenKeys, givenValues);
+
+                    aggregatorIndex = this.metricPointIndex;
+                    if (aggregatorIndex >= this.maxMetricPoints)
                     {
-                        aggregatorIndex = ++this.metricPointIndex;
-                        if (aggregatorIndex >= this.maxMetricPoints)
+                        // sorry! out of data points.
+                        // TODO: Once we support cleanup of
+                        // unused points (typically with delta)
+                        // we can re-claim them here.
+                        return -1;
+                    }
+
+                    lock (this.tagsToMetricPointIndexDictionary)
+                    {
+                        // check again after acquiring lock.
+                        if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
                         {
-                            // sorry! out of data points.
-                            // TODO: Once we support cleanup of
-                            // unused points (typically with delta)
-                            // we can re-claim them here.
-                            return -1;
+                            aggregatorIndex = ++this.metricPointIndex;
+                            if (aggregatorIndex >= this.maxMetricPoints)
+                            {
+                                // sorry! out of data points.
+                                // TODO: Once we support cleanup of
+                                // unused points (typically with delta)
+                                // we can re-claim them here.
+                                return -1;
+                            }
+
+                            ref var metricPoint = ref this.metricPoints[aggregatorIndex];
+                            var dt = DateTimeOffset.UtcNow;
+                            metricPoint = new MetricPoint(this.aggType, dt, sortedTags.Keys, sortedTags.Values, this.histogramBounds);
+
+                            // Add to dictionary *after* initializing MetricPoint
+                            // as other threads can start writing to the
+                            // MetricPoint, if dictionary entry found.
+                            if (length > 1)
+                            {
+                                // Add the sorted order only if tags length > 1
+                                this.tagsToMetricPointIndexDictionary.TryAdd(sortedTags, aggregatorIndex);
+                            }
+
+                            // givenTags and sortedTags are the same when tags length < 1
+                            this.tagsToMetricPointIndexDictionary.TryAdd(givenTags, aggregatorIndex);
                         }
-
-                        ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                        var dt = DateTimeOffset.UtcNow;
-                        metricPoint = new MetricPoint(this.aggType, dt, sortedTags.Keys, sortedTags.Values, this.histogramBounds);
-
-                        // Add to dictionary *after* initializing MetricPoint
-                        // as other threads can start writing to the
-                        // MetricPoint, if dictionary entry found.
-                        this.tagsToMetricPointIndexDictionary.TryAdd(sortedTags, aggregatorIndex);
                     }
                 }
             }
