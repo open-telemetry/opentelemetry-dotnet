@@ -54,7 +54,7 @@ namespace OpenTelemetry.Exporter
             get => this.httpListenerPrefixes;
             set
             {
-                _ = value ?? throw new ArgumentNullException(nameof(this.httpListenerPrefixes));
+                Guard.ThrowIfNull(value, nameof(this.httpListenerPrefixes));
 
                 foreach (string inputUri in value)
                 {
