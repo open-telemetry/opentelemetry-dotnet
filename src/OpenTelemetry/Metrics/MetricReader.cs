@@ -183,15 +183,11 @@ namespace OpenTelemetry.Metrics
         /// Processes a batch of metrics.
         /// </summary>
         /// <param name="metrics">Batch of metrics to be processed.</param>
-        /// <param name="timeoutMilliseconds">
-        /// The number (non-negative) of milliseconds to wait, or
-        /// <c>Timeout.Infinite</c> to wait indefinitely.
-        /// </param>
         /// <returns>
         /// Returns <c>true</c> when metrics processing succeeded; otherwise,
         /// <c>false</c>.
         /// </returns>
-        internal virtual bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
+        internal virtual bool ProcessMetrics(in Batch<Metric> metrics)
         {
             return true;
         }
@@ -226,7 +222,7 @@ namespace OpenTelemetry.Metrics
 
             if (sw == null)
             {
-                return this.ProcessMetrics(metrics, Timeout.Infinite);
+                return this.ProcessMetrics(metrics);
             }
             else
             {
@@ -237,7 +233,7 @@ namespace OpenTelemetry.Metrics
                     return false;
                 }
 
-                return this.ProcessMetrics(metrics, (int)timeout);
+                return this.ProcessMetrics(metrics);
             }
         }
 
