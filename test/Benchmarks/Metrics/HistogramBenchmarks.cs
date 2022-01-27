@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using System.Threading;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
@@ -26,14 +27,14 @@ using OpenTelemetry.Tests;
 /*
 |                 Method | BoundCount |     Mean |    Error |   StdDev | Allocated |
 |----------------------- |----------- |---------:|---------:|---------:|----------:|
-|   HistogramLongHotPath |         10 | 43.85 ns | 0.151 ns | 0.134 ns |         - |
-| HistogramDoubleHotPath |         10 | 42.62 ns | 0.428 ns | 0.400 ns |         - |
-|   HistogramLongHotPath |         20 | 46.81 ns | 0.229 ns | 0.214 ns |         - |
-| HistogramDoubleHotPath |         20 | 44.97 ns | 0.106 ns | 0.099 ns |         - |
-|   HistogramLongHotPath |         50 | 58.76 ns | 0.179 ns | 0.150 ns |         - |
-| HistogramDoubleHotPath |         50 | 53.16 ns | 0.168 ns | 0.149 ns |         - |
-|   HistogramLongHotPath |        100 | 69.91 ns | 1.021 ns | 0.955 ns |         - |
-| HistogramDoubleHotPath |        100 | 64.25 ns | 0.088 ns | 0.082 ns |         - |
+|   HistogramLongHotPath |         10 | 65.10 ns | 0.694 ns | 0.649 ns |         - |
+| HistogramDoubleHotPath |         10 | 61.06 ns | 0.370 ns | 0.328 ns |         - |
+|   HistogramLongHotPath |         20 | 68.32 ns | 1.237 ns | 1.157 ns |         - |
+| HistogramDoubleHotPath |         20 | 67.71 ns | 0.753 ns | 0.704 ns |         - |
+|   HistogramLongHotPath |         50 | 80.11 ns | 0.864 ns | 0.721 ns |         - |
+| HistogramDoubleHotPath |         50 | 75.49 ns | 0.437 ns | 0.409 ns |         - |
+|   HistogramLongHotPath |        100 | 90.48 ns | 0.296 ns | 0.262 ns |         - |
+| HistogramDoubleHotPath |        100 | 86.93 ns | 0.915 ns | 0.856 ns |         - |
 */
 
 namespace Benchmarks.Metrics
@@ -42,7 +43,8 @@ namespace Benchmarks.Metrics
     public class HistogramBenchmarks
     {
         private const int MaxValue = 1000;
-        private readonly Random random = new();
+        private static readonly string[] DimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
+        private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
         private Histogram<long> histogramLong;
         private Histogram<double> histogramDouble;
         private MeterProvider provider;
@@ -51,6 +53,7 @@ namespace Benchmarks.Metrics
 
         [Params(10, 20, 50, 100)]
         public int BoundCount { get; set; }
+
 
         [GlobalSetup]
         public void Setup()
@@ -88,13 +91,15 @@ namespace Benchmarks.Metrics
         [Benchmark]
         public void HistogramLongHotPath()
         {
-            this.histogramLong?.Record(this.random.Next(MaxValue));
+            var random = ThreadLocalRandom.Value;
+            this.histogramLong?.Record(random.Next(MaxValue));
         }
 
         [Benchmark]
         public void HistogramDoubleHotPath()
         {
-            this.histogramDouble?.Record(this.random.NextDouble() * MaxValue);
+            var random = ThreadLocalRandom.Value;
+            this.histogramDouble?.Record(random.NextDouble() * MaxValue);
         }
     }
 }
