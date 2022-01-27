@@ -28,6 +28,11 @@ Function PressKeyToContinue {
     $Null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 }
 
+# TODO is this function correct
+Function IsStableRelease {
+    return -not $TagName.Contains("-")
+}
+
 # Ensure branch is clean, otherwise abort
 $ChangedFiles = $(git status --porcelain | Measure-Object | Select-Object -Expand Count)
 if ($ChangedFiles -gt 0) {
@@ -61,6 +66,11 @@ ForEach ($ChangelogPath in Get-ChildItem -Path . -Recurse -Filter CHANGELOG.md) 
 
     $NewFileHeader = "Unreleased`n`n## $TagName`n`nReleased $(Get-Date -UFormat '%Y-%b-%d')"
     (Get-Content -Path $ChangelogPath.FullName) -Replace "Unreleased", $NewFileHeader | Set-Content -Path $ChangelogPath.FullName
+}
+
+# Normalize PublicApi files
+If (IsStableRelease) {
+    Start-Process PowerShell.exe -ArgumentList "-noexit", "-command .\build\finalize-publicapi.ps1"
 }
 
 # Submit PR and Merge
@@ -110,8 +120,7 @@ gh release create $TagName --notes $CombinedChangelog
 
 # Update `OTelPreviousStableVer` in `Common.props`, if needed
 $CommonPropsFile = "build/Common.props"
-# TODO verify this means a stable release
-If (-not $TagName.Contains("-")) {
+If (IsStableRelease) {
     [xml] $CommonProps = Get-Content $CommonPropsFile
     $OTelPreviousStableVer = $CommonProps.Project.PropertyGroup.OTelPreviousStableVer
 
