@@ -54,7 +54,6 @@ namespace Benchmarks.Metrics
         [Params(10, 20, 50, 100)]
         public int BoundCount { get; set; }
 
-
         [GlobalSetup]
         public void Setup()
         {
