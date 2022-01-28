@@ -49,7 +49,9 @@ with
 ```
 
 With `AddPrometheusExporter()`, OpenTelemetry `PrometheusExporter` will export
-data via the endpoint defined by `HttpListenerPrefixes`.
+data via the endpoint defined by
+[PrometheusExporterOptions.HttpListenerPrefixes](../../../src/OpenTelemetry.Exporter.Prometheus/README.md#httplistenerprefixes),
+which is `http://localhost:9464/` by default.
 
 Also, for our learning purpose, use a while-loop to keep increasing the counter
 value until any key is pressed.
