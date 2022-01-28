@@ -62,44 +62,46 @@ dotnet add package OpenTelemetry.Exporter.Prometheus
 
 ## Configuration
 
-You can configure the `PrometheusExporter` through `PrometheusExporterOptions`.
-
-## Options Properties
-
 The `PrometheusExporter` can be configured using the `PrometheusExporterOptions`
-properties:
-
-* `StartHttpListener`: Set to `true` to start an http listener which will
-  respond to Prometheus scrape requests using the `HttpListenerPrefixes` and
-  `ScrapeEndpointPath` options.
-
-  Defaults:
-
-  * On .NET Framework this is `true` by default.
-
-  * On .NET Core 3.1+ this is `false` by default. Users running ASP.NET Core
-    should use the `UseOpenTelemetryPrometheusScrapingEndpoint` extension to
-    register the scraping middleware instead of using the listener.
-
-* `HttpListenerPrefixes`: Defines the prefixes which will be used by the
-  listener when `StartHttpListener` is `true`. The default value is
-  `["http://localhost:9464/"]`. You may specify multiple endpoints.
-
-  For details see:
-  [HttpListenerPrefixCollection.Add(String)](https://docs.microsoft.com/dotnet/api/system.net.httplistenerprefixcollection.add)
-
-* `ScrapeEndpointPath`: Defines the path for the Prometheus scrape endpoint for
-  either the http listener or the middleware registered by
-  `UseOpenTelemetryPrometheusScrapingEndpoint`. Default value: `"/metrics"`.
-
-* `ScrapeResponseCacheDurationMilliseconds`: Configures scrape endpoint response
-  caching. Multiple scrape requests within the cache duration time period will
-  receive the same previously generated response. The default value is `10000`
-  (10 seconds). Set to `0` to disable response caching.
-
-See
+properties. Refer to
 [`TestPrometheusExporter.cs`](../../examples/Console/TestPrometheusExporter.cs)
 for example use.
+
+### StartHttpListener
+
+Set to `true` to start an HTTP listener which will respond to Prometheus scrape
+requests using the [HttpListenerPrefixes](#httplistenerprefixes) and
+[ScrapeEndpointPath](#scrapeendpointpath) options.
+
+Defaults:
+
+* On .NET Framework this is `true` by default.
+
+* On .NET Core 3.1+ this is `false` by default. Users running ASP.NET Core
+  should use the `UseOpenTelemetryPrometheusScrapingEndpoint` extension to
+  register the scraping middleware instead of using the listener.
+
+### HttpListenerPrefixes
+
+Defines the prefixes which will be used by the listener when `StartHttpListener`
+is `true`. The default value is `["http://localhost:9464/"]`. You may specify
+multiple endpoints.
+
+For details see:
+[HttpListenerPrefixCollection.Add(String)](https://docs.microsoft.com/dotnet/api/system.net.httplistenerprefixcollection.add)
+
+### ScrapeEndpointPath
+
+Defines the path for the Prometheus scrape endpoint for
+either the http listener or the middleware registered by
+`UseOpenTelemetryPrometheusScrapingEndpoint`. Default value: `"/metrics"`.
+
+### ScrapeResponseCacheDurationMilliseconds
+
+Configures scrape endpoint response caching. Multiple scrape requests within the
+cache duration time period will receive the same previously generated response.
+The default value is `10000` (10 seconds). Set to `0` to disable response
+caching.
 
 ## References
 
