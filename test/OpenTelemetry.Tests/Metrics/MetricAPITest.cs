@@ -102,6 +102,52 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
+        [InlineData("unit")]
+        [InlineData("")]
+        [InlineData(null)]
+        public void MetricUnitIsExportedCorrectly(string unit)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var counter = meter.CreateCounter<long>("name1", unit);
+            counter.Add(10);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal(unit ?? string.Empty, metric.Unit);
+        }
+
+        [Theory]
+        [InlineData("description")]
+        [InlineData("")]
+        [InlineData(null)]
+        public void MetricDescriptionIsExportedCorrectly(string description)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var counter = meter.CreateCounter<long>("name1", null, description);
+            counter.Add(10);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal(description ?? string.Empty, metric.Description);
+        }
+
+        [Theory]
         [InlineData(AggregationTemporality.Cumulative, true)]
         [InlineData(AggregationTemporality.Cumulative, false)]
         [InlineData(AggregationTemporality.Delta, true)]
