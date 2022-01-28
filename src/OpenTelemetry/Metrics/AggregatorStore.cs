@@ -180,7 +180,6 @@ namespace OpenTelemetry.Metrics
 
             if (!this.tagsToMetricPointIndexDictionary.TryGetValue(givenTags, out var aggregatorIndex))
             {
-                Tags sortedTags;
                 if (length > 1)
                 {
                     // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
@@ -194,20 +193,77 @@ namespace OpenTelemetry.Metrics
 
                     Array.Sort(sortedTagKeys, sortedTagValues);
 
-                    sortedTags = new Tags(sortedTagKeys, sortedTagValues);
+                    var sortedTags = new Tags(sortedTagKeys, sortedTagValues);
+
+                    if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
+                    {
+                        // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                        var givenKeys = new string[length];
+                        tagKeys.CopyTo(givenKeys, 0);
+
+                        var givenValues = new object[length];
+                        tagValues.CopyTo(givenValues, 0);
+
+                        givenTags = new Tags(givenKeys, givenValues);
+
+                        aggregatorIndex = this.metricPointIndex;
+                        if (aggregatorIndex >= this.maxMetricPoints)
+                        {
+                            // sorry! out of data points.
+                            // TODO: Once we support cleanup of
+                            // unused points (typically with delta)
+                            // we can re-claim them here.
+                            return -1;
+                        }
+
+                        lock (this.tagsToMetricPointIndexDictionary)
+                        {
+                            // check again after acquiring lock.
+                            if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
+                            {
+                                aggregatorIndex = ++this.metricPointIndex;
+                                if (aggregatorIndex >= this.maxMetricPoints)
+                                {
+                                    // sorry! out of data points.
+                                    // TODO: Once we support cleanup of
+                                    // unused points (typically with delta)
+                                    // we can re-claim them here.
+                                    return -1;
+                                }
+
+                                ref var metricPoint = ref this.metricPoints[aggregatorIndex];
+                                var dt = DateTimeOffset.UtcNow;
+                                metricPoint = new MetricPoint(this.aggType, dt, sortedTags.Keys, sortedTags.Values, this.histogramBounds);
+
+                                // Add to dictionary *after* initializing MetricPoint
+                                // as other threads can start writing to the
+                                // MetricPoint, if dictionary entry found.
+
+                                // Add the sorted order along with the given order of tags
+                                this.tagsToMetricPointIndexDictionary.TryAdd(sortedTags, aggregatorIndex);
+                                this.tagsToMetricPointIndexDictionary.TryAdd(givenTags, aggregatorIndex);
+                            }
+                        }
+                    }
                 }
                 else
                 {
-                    sortedTags = givenTags;
-                }
-
-                if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
-                {
                     // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                    var givenKeys = new string[length];
-                    tagKeys.CopyTo(givenKeys, 0);
+                    string[] givenKeys;
+                    object[] givenValues;
 
-                    var givenValues = new object[length];
+                    if (length == 0)
+                    {
+                        givenKeys = Array.Empty<string>();
+                        givenValues = Array.Empty<object>();
+                    }
+                    else
+                    {
+                        givenKeys = new string[length];
+                        givenValues = new object[length];
+                    }
+
+                    tagKeys.CopyTo(givenKeys, 0);
                     tagValues.CopyTo(givenValues, 0);
 
                     givenTags = new Tags(givenKeys, givenValues);
@@ -225,7 +281,7 @@ namespace OpenTelemetry.Metrics
                     lock (this.tagsToMetricPointIndexDictionary)
                     {
                         // check again after acquiring lock.
-                        if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
+                        if (!this.tagsToMetricPointIndexDictionary.TryGetValue(givenTags, out aggregatorIndex))
                         {
                             aggregatorIndex = ++this.metricPointIndex;
                             if (aggregatorIndex >= this.maxMetricPoints)
@@ -239,18 +295,13 @@ namespace OpenTelemetry.Metrics
 
                             ref var metricPoint = ref this.metricPoints[aggregatorIndex];
                             var dt = DateTimeOffset.UtcNow;
-                            metricPoint = new MetricPoint(this.aggType, dt, sortedTags.Keys, sortedTags.Values, this.histogramBounds);
+                            metricPoint = new MetricPoint(this.aggType, dt, givenTags.Keys, givenTags.Values, this.histogramBounds);
 
                             // Add to dictionary *after* initializing MetricPoint
                             // as other threads can start writing to the
                             // MetricPoint, if dictionary entry found.
-                            if (length > 1)
-                            {
-                                // Add the sorted order only if tags length > 1
-                                this.tagsToMetricPointIndexDictionary.TryAdd(sortedTags, aggregatorIndex);
-                            }
 
-                            // givenTags and sortedTags are the same when tags length < 1
+                            // givenTags will alwayas be sorted when tags length < 1
                             this.tagsToMetricPointIndexDictionary.TryAdd(givenTags, aggregatorIndex);
                         }
                     }

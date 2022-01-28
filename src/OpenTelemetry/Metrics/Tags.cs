@@ -86,12 +86,7 @@ namespace OpenTelemetry.Metrics
             {
                 for (int i = 0; i < this.Keys.Length; i++)
                 {
-                    hash = (hash * 31) + this.Keys[i].GetHashCode();
-                }
-
-                for (int i = 0; i < this.Values.Length; i++)
-                {
-                    hash = (hash * 31) + this.Values[i].GetHashCode();
+                    hash = (hash * 31) + this.Keys[i].GetHashCode() + this.Values[i].GetHashCode();
                 }
             }
 
