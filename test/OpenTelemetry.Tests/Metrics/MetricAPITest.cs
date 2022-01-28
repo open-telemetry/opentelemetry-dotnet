@@ -15,7 +15,9 @@
 // </copyright>
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading;
@@ -380,6 +382,131 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 Assert.Equal(30, sumReceived);
             }
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ObservableCounterWithTagsAggregationTest(bool exportDelta)
+        {
+            var exportedItems = new List<Metric>();
+            var tags1 = new List<KeyValuePair<string, object>>();
+            tags1.Add(new("statusCode", 200));
+            tags1.Add(new("verb", "get"));
+
+            var tags2 = new List<KeyValuePair<string, object>>();
+            tags2.Add(new("statusCode", 200));
+            tags2.Add(new("verb", "post"));
+
+            var tags3 = new List<KeyValuePair<string, object>>();
+            tags3.Add(new("statusCode", 500));
+            tags3.Add(new("verb", "get"));
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+            var counterLong = meter.CreateObservableCounter(
+                "observable-counter",
+                () =>
+                {
+                    return new List<Measurement<long>>()
+                    {
+                        new Measurement<long>(10, tags1),
+                        new Measurement<long>(10, tags2),
+                        new Measurement<long>(10, tags3),
+                    };
+                });
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                {
+                    Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+                })
+                .Build();
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("observable-counter", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Equal(3, metricPoints.Count);
+
+            var metricPoint1 = metricPoints[0];
+            Assert.Equal(10, metricPoint1.GetSumLong());
+            ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+            var metricPoint2 = metricPoints[1];
+            Assert.Equal(10, metricPoint2.GetSumLong());
+            ValidateMetricPointTags(tags2, metricPoint2.Tags);
+
+            var metricPoint3 = metricPoints[2];
+            Assert.Equal(10, metricPoint3.GetSumLong());
+            ValidateMetricPointTags(tags3, metricPoint3.Tags);
+        }
+
+        [Theory(Skip = "Known issue.")]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ObservableCounterSpatialAggregationTest(bool exportDelta)
+        {
+            var exportedItems = new List<Metric>();
+            var tags1 = new List<KeyValuePair<string, object>>();
+            tags1.Add(new("statusCode", 200));
+            tags1.Add(new("verb", "get"));
+
+            var tags2 = new List<KeyValuePair<string, object>>();
+            tags2.Add(new("statusCode", 200));
+            tags2.Add(new("verb", "post"));
+
+            var tags3 = new List<KeyValuePair<string, object>>();
+            tags3.Add(new("statusCode", 500));
+            tags3.Add(new("verb", "get"));
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+            var counterLong = meter.CreateObservableCounter(
+                "requestCount",
+                () =>
+                {
+                    return new List<Measurement<long>>()
+                    {
+                        new Measurement<long>(10, tags1),
+                        new Measurement<long>(10, tags2),
+                        new Measurement<long>(10, tags3),
+                    };
+                });
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                {
+                    Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+                })
+                .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = new string[] { } })
+                .Build();
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("requestCount", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+
+            var emptyTags = new List<KeyValuePair<string, object>>();
+            var metricPoint1 = metricPoints[0];
+            ValidateMetricPointTags(emptyTags, metricPoint1.Tags);
+
+            // This will fail, as SDK is not "spatially" aggregating the
+            // requestCount
+            Assert.Equal(30, metricPoint1.GetSumLong());
         }
 
         [Theory]
@@ -796,6 +923,19 @@ namespace OpenTelemetry.Metrics.Tests
             var counter = meter.CreateCounter<long>("counter");
 
             counter.Add(10, new KeyValuePair<string, object>("key", "value"));
+        }
+
+        private static void ValidateMetricPointTags(List<KeyValuePair<string, object>> expectedTags, ReadOnlyTagCollection actualTags)
+        {
+            int tagIndex = 0;
+            foreach (var tag in actualTags)
+            {
+                Assert.Equal(expectedTags[tagIndex].Key, tag.Key);
+                Assert.Equal(expectedTags[tagIndex].Value, tag.Value);
+                tagIndex++;
+            }
+
+            Assert.Equal(expectedTags.Count, tagIndex);
         }
 
         private static long GetLongSum(List<Metric> metrics)
