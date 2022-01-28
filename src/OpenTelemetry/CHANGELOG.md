@@ -10,7 +10,7 @@
 
 * Performance Improvement: When emitting metrics, users are strongly advised to
   provide tags with same Key order, to achieve maximum performance.
-  ([2805](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2805))
+  ([2805](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2805/files))
 
 ## 1.2.0-rc1
 
