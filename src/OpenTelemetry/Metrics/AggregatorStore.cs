@@ -301,7 +301,7 @@ namespace OpenTelemetry.Metrics
                             // as other threads can start writing to the
                             // MetricPoint, if dictionary entry found.
 
-                            // givenTags will alwayas be sorted when tags length < 1
+                            // givenTags will always be sorted when tags length == 1
                             this.tagsToMetricPointIndexDictionary.TryAdd(givenTags, aggregatorIndex);
                         }
                     }
