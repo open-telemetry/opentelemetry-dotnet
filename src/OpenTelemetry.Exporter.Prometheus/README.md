@@ -54,11 +54,11 @@ dotnet add package OpenTelemetry.Exporter.Prometheus
     }
     ```
 
-* On .NET Framework an http listener is automatically started which will respond
-  to scraping requests. See the [Options Properties](#options-properties)
-  section for details on the settings available. This may also be turned on in
-  .NET Core (it is OFF by default) when the ASP.NET Core pipeline is not
-  available for middleware registration.
+* On .NET Framework an HTTP listener is automatically started which will respond
+  to scraping requests. See the [Configuration](#configuration) section for
+  details on the settings available. This may also be turned on in .NET Core (it
+  is OFF by default) when the ASP.NET Core pipeline is not available for
+  middleware registration.
 
 ## Configuration
 
@@ -93,7 +93,7 @@ For details see:
 ### ScrapeEndpointPath
 
 Defines the path for the Prometheus scrape endpoint for
-either the http listener or the middleware registered by
+either the HTTP listener or the middleware registered by
 `UseOpenTelemetryPrometheusScrapingEndpoint`. Default value: `"/metrics"`.
 
 ### ScrapeResponseCacheDurationMilliseconds
