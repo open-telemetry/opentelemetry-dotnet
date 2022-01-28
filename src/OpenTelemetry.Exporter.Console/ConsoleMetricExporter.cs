@@ -51,13 +51,13 @@ namespace OpenTelemetry.Exporter
             {
                 var msg = new StringBuilder($"\nExport ");
                 msg.Append(metric.Name);
-                if (!string.IsNullOrEmpty(metric.Description))
+                if (metric.Description != string.Empty)
                 {
                     msg.Append(", ");
                     msg.Append(metric.Description);
                 }
 
-                if (!string.IsNullOrEmpty(metric.Unit))
+                if (metric.Unit != string.Empty)
                 {
                     msg.Append($", Unit: {metric.Unit}");
                 }
