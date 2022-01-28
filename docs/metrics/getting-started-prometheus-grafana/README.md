@@ -75,9 +75,7 @@ After the above modifications, now our `Program.cs` should look like [this](./Pr
 ### Check results in the browser
 
 Start the application and keep it running. Now we should be able to see the
-metrics at [http://localhost:9464/](http://localhost:9464/), which is the
-default value and can be customized using
-[PrometheusExporterOptions.HttpListenerPrefixes](../../../src/OpenTelemetry.Exporter.Prometheus/README.md#httplistenerprefixes).
+metrics at [http://localhost:9464/metrics](http://localhost:9464/metrics).
 
 Check the output metrics with your favorite browser:
 
