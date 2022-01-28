@@ -31,21 +31,26 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
+
 #if NETCOREAPP3_1
 using TestApp.AspNetCore._3._1;
-#else
+#endif
+#if NET5_0
 using TestApp.AspNetCore._5._0;
+#endif
+#if NET6_0
+using TestApp.AspNetCore._6._0;
 #endif
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
     // See https://github.com/aspnet/Docs/tree/master/aspnetcore/test/integration-tests/samples/2.x/IntegrationTestsSample
-    public class BasicTests
+    public sealed class BasicTests
         : IClassFixture<WebApplicationFactory<Startup>>, IDisposable
     {
         private readonly WebApplicationFactory<Startup> factory;
-        private TracerProvider openTelemetrySdk = null;
+        private TracerProvider tracerProvider = null;
 
         public BasicTests(WebApplicationFactory<Startup> factory)
         {
@@ -65,7 +70,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             void ConfigureTestServices(IServiceCollection services)
             {
-                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddAspNetCoreInstrumentation()
                     .AddProcessor(activityProcessor.Object)
                     .Build();
@@ -109,7 +114,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             activityProcessor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
             void ConfigureTestServices(IServiceCollection services)
             {
-                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddAspNetCoreInstrumentation(options =>
                     {
                         if (shouldEnrich)
@@ -158,7 +163,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices(services =>
                     {
-                        this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder().AddAspNetCoreInstrumentation()
+                        this.tracerProvider = Sdk.CreateTracerProviderBuilder().AddAspNetCoreInstrumentation()
                         .AddProcessor(activityProcessor.Object)
                         .Build();
                     })))
@@ -220,7 +225,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                         builder.ConfigureTestServices(services =>
                         {
                             Sdk.SetDefaultTextMapPropagator(propagator.Object);
-                            this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                                 .AddAspNetCoreInstrumentation()
                                 .AddProcessor(activityProcessor.Object)
                                 .Build();
@@ -281,7 +286,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             void ConfigureTestServices(IServiceCollection services)
             {
-                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddAspNetCoreInstrumentation((opt) => opt.Filter = (ctx) => ctx.Request.Path != "/api/values/2")
                     .AddProcessor(activityProcessor.Object)
                     .Build();
@@ -325,7 +330,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             void ConfigureTestServices(IServiceCollection services)
             {
-                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddAspNetCoreInstrumentation((opt) => opt.Filter = (ctx) =>
                     {
                         if (ctx.Request.Path == "/api/values/2")
@@ -398,7 +403,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     .WithWebHostBuilder(builder =>
                         builder.ConfigureTestServices(services =>
                         {
-                            this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                             .SetSampler(new TestSampler(samplingDecision))
                             .AddAspNetCoreInstrumentation()
                             .Build();
@@ -457,7 +462,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     .WithWebHostBuilder(builder =>
                         builder.ConfigureTestServices(services =>
                         {
-                            this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                             .AddAspNetCoreInstrumentation(options =>
                             {
                                 options.Filter = context =>
@@ -508,6 +513,55 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
         }
 
+        [Fact]
+        public async Task BaggageClearedWhenActivityStopped()
+        {
+            int? baggageCountAfterStart = null;
+            int? baggageCountAfterStop = null;
+            using EventWaitHandle stopSignal = new EventWaitHandle(false, EventResetMode.ManualReset);
+
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
+                        new TestHttpInListener(new AspNetCoreInstrumentationOptions())
+                        {
+                            OnStartActivityCallback = (activity, payload) =>
+                            {
+                                baggageCountAfterStart = Baggage.Current.Count;
+                            },
+                            OnStopActivityCallback = (activity, payload) =>
+                            {
+                                baggageCountAfterStop = Baggage.Current.Count;
+                                stopSignal.Set();
+                            },
+                        }))
+                    .Build();
+            }
+
+            // Arrange
+            using (var client = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices))
+                .CreateClient())
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
+
+                request.Headers.TryAddWithoutValidation("baggage", "TestKey1=123,TestKey2=456");
+
+                // Act
+                using var response = await client.SendAsync(request);
+            }
+
+            stopSignal.WaitOne(5000);
+
+            // Assert
+            Assert.NotNull(baggageCountAfterStart);
+            Assert.Equal(2, baggageCountAfterStart);
+            Assert.NotNull(baggageCountAfterStop);
+            Assert.Equal(0, baggageCountAfterStop);
+        }
+
         [Theory]
         [InlineData(SamplingDecision.Drop, false, false)]
         [InlineData(SamplingDecision.RecordOnly, true, true)]
@@ -518,7 +572,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             bool enrichCalled = false;
             void ConfigureTestServices(IServiceCollection services)
             {
-                this.openTelemetrySdk = Sdk.CreateTracerProviderBuilder()
+                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .SetSampler(new TestSampler(samplingDecision))
                     .AddAspNetCoreInstrumentation(options =>
                     {
@@ -551,7 +605,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
         public void Dispose()
         {
-            this.openTelemetrySdk?.Dispose();
+            this.tracerProvider?.Dispose();
         }
 
         private static void WaitForProcessorInvocations(Mock<BaseProcessor<Activity>> activityProcessor, int invocationCount)
@@ -573,7 +627,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(ActivityKind.Server, activityToValidate.Kind);
             Assert.Equal(HttpInListener.ActivitySourceName, activityToValidate.Source.Name);
             Assert.Equal(HttpInListener.Version.ToString(), activityToValidate.Source.Version);
-            Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SpanAttributeConstants.HttpPathKey) as string);
+            Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SemanticConventions.AttributeHttpTarget) as string);
         }
 
         private static void ActivityEnrichment(Activity activity, string method, object obj)
@@ -622,7 +676,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
         private class TestSampler : Sampler
         {
-            private SamplingDecision samplingDecision;
+            private readonly SamplingDecision samplingDecision;
 
             public TestSampler(SamplingDecision samplingDecision)
             {
@@ -632,6 +686,32 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
             {
                 return new SamplingResult(this.samplingDecision);
+            }
+        }
+
+        private class TestHttpInListener : HttpInListener
+        {
+            public Action<Activity, object> OnStartActivityCallback;
+
+            public Action<Activity, object> OnStopActivityCallback;
+
+            public TestHttpInListener(AspNetCoreInstrumentationOptions options)
+                : base(options)
+            {
+            }
+
+            public override void OnStartActivity(Activity activity, object payload)
+            {
+                base.OnStartActivity(activity, payload);
+
+                this.OnStartActivityCallback?.Invoke(activity, payload);
+            }
+
+            public override void OnStopActivity(Activity activity, object payload)
+            {
+                base.OnStopActivity(activity, payload);
+
+                this.OnStopActivityCallback?.Invoke(activity, payload);
             }
         }
     }

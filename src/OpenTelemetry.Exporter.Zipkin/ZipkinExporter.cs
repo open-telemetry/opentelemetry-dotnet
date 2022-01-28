@@ -22,10 +22,12 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter
@@ -46,9 +48,11 @@ namespace OpenTelemetry.Exporter
         /// <param name="client">Http client to use to upload telemetry.</param>
         public ZipkinExporter(ZipkinExporterOptions options, HttpClient client = null)
         {
-            this.options = options ?? throw new ArgumentNullException(nameof(options));
+            Guard.ThrowIfNull(options, nameof(options));
+
+            this.options = options;
             this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? ZipkinExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
-            this.httpClient = client ?? new HttpClient();
+            this.httpClient = client ?? options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("ZipkinExporter was missing HttpClientFactory or it returned null.");
         }
 
         internal ZipkinEndpoint LocalEndpoint { get; private set; }
@@ -73,7 +77,11 @@ namespace OpenTelemetry.Exporter
                     Content = new JsonContent(this, batch),
                 };
 
+#if NET5_0_OR_GREATER
+                using var response = this.httpClient.Send(request, CancellationToken.None);
+#else
                 using var response = this.httpClient.SendAsync(request, CancellationToken.None).GetAwaiter().GetResult();
+#endif
 
                 response.EnsureSuccessStatusCode();
 
@@ -179,7 +187,7 @@ namespace OpenTelemetry.Exporter
             return result;
         }
 
-        private class JsonContent : HttpContent
+        private sealed class JsonContent : HttpContent
         {
             private static readonly MediaTypeHeaderValue JsonHeader = new MediaTypeHeaderValue("application/json")
             {
@@ -198,7 +206,28 @@ namespace OpenTelemetry.Exporter
                 this.Headers.ContentType = JsonHeader;
             }
 
+#if NET5_0_OR_GREATER
+            protected override void SerializeToStream(Stream stream, TransportContext context, CancellationToken cancellationToken)
+            {
+                this.SerializeToStreamInternal(stream);
+            }
+#endif
+
             protected override Task SerializeToStreamAsync(Stream stream, TransportContext context)
+            {
+                this.SerializeToStreamInternal(stream);
+                return Task.CompletedTask;
+            }
+
+            protected override bool TryComputeLength(out long length)
+            {
+                // We can't know the length of the content being pushed to the output stream.
+                length = -1;
+                return false;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private void SerializeToStreamInternal(Stream stream)
             {
                 if (this.writer == null)
                 {
@@ -227,14 +256,6 @@ namespace OpenTelemetry.Exporter
                 this.writer.WriteEndArray();
 
                 this.writer.Flush();
-                return Task.CompletedTask;
-            }
-
-            protected override bool TryComputeLength(out long length)
-            {
-                // We can't know the length of the content being pushed to the output stream.
-                length = -1;
-                return false;
             }
         }
     }

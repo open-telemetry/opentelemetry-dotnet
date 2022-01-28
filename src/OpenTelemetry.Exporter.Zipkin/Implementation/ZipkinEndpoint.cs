@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System.Collections.Generic;
 using System.Text.Json;
 
@@ -54,11 +55,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             return new ZipkinEndpoint(serviceName);
         }
 
-        public static ZipkinEndpoint Create((string name, int port) serviceNameAndPort)
+        public static ZipkinEndpoint Create((string Name, int Port) serviceNameAndPort)
         {
-            var serviceName = serviceNameAndPort.port == default
-                ? serviceNameAndPort.name
-                : $"{serviceNameAndPort.name}:{serviceNameAndPort.port}";
+            var serviceName = serviceNameAndPort.Port == default
+                ? serviceNameAndPort.Name
+                : $"{serviceNameAndPort.Name}:{serviceNameAndPort.Port}";
 
             return new ZipkinEndpoint(serviceName);
         }

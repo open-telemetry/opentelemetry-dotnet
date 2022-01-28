@@ -14,16 +14,83 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Generic;
+using OpenTelemetry.Internal;
+
 namespace OpenTelemetry.Exporter
 {
     /// <summary>
-    /// Options to run prometheus exporter.
+    /// <see cref="PrometheusExporter"/> options.
     /// </summary>
     public class PrometheusExporterOptions
     {
+        internal const string DefaultScrapeEndpointPath = "/metrics";
+        internal Func<DateTimeOffset> GetUtcNowDateTimeOffset = () => DateTimeOffset.UtcNow;
+
+        private int scrapeResponseCacheDurationMilliseconds = 10 * 1000;
+        private IReadOnlyCollection<string> httpListenerPrefixes = new string[] { "http://localhost:9464/" };
+
+#if NETCOREAPP3_1_OR_GREATER
         /// <summary>
-        /// Gets or sets the port to listen to. Typically it ends with /metrics like http://localhost:9184/metrics/.
+        /// Gets or sets a value indicating whether or not an http listener
+        /// should be started. Default value: False.
         /// </summary>
-        public string Url { get; set; } = "http://localhost:9184/metrics/";
+        public bool StartHttpListener { get; set; }
+#else
+        /// <summary>
+        /// Gets or sets a value indicating whether or not an http listener
+        /// should be started. Default value: True.
+        /// </summary>
+        public bool StartHttpListener { get; set; } = true;
+#endif
+
+        /// <summary>
+        /// Gets or sets the prefixes to use for the http listener. Default
+        /// value: http://localhost:9464/.
+        /// </summary>
+        public IReadOnlyCollection<string> HttpListenerPrefixes
+        {
+            get => this.httpListenerPrefixes;
+            set
+            {
+                Guard.ThrowIfNull(value, nameof(this.httpListenerPrefixes));
+
+                foreach (string inputUri in value)
+                {
+                    if (!(Uri.TryCreate(inputUri, UriKind.Absolute, out var uri) &&
+                        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)))
+                    {
+                        throw new ArgumentException(
+                            "Prometheus server path should be a valid URI with http/https scheme.",
+                            nameof(this.httpListenerPrefixes));
+                    }
+                }
+
+                this.httpListenerPrefixes = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the path to use for the scraping endpoint. Default value: /metrics.
+        /// </summary>
+        public string ScrapeEndpointPath { get; set; } = DefaultScrapeEndpointPath;
+
+        /// <summary>
+        /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 10,000 (10 seconds).
+        /// </summary>
+        /// <remarks>
+        /// Note: Specify 0 to disable response caching.
+        /// </remarks>
+        public int ScrapeResponseCacheDurationMilliseconds
+        {
+            get => this.scrapeResponseCacheDurationMilliseconds;
+            set
+            {
+                Guard.ThrowIfOutOfRange(value, nameof(value), min: 0);
+
+                this.scrapeResponseCacheDurationMilliseconds = value;
+            }
+        }
     }
 }

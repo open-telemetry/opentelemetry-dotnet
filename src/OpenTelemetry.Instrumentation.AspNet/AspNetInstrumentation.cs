@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using OpenTelemetry.Instrumentation.AspNet.Implementation;
 
@@ -21,11 +22,9 @@ namespace OpenTelemetry.Instrumentation.AspNet
     /// <summary>
     /// Asp.Net Requests instrumentation.
     /// </summary>
-    internal class AspNetInstrumentation : IDisposable
+    internal sealed class AspNetInstrumentation : IDisposable
     {
-        internal const string AspNetDiagnosticListenerName = "OpenTelemetry.Instrumentation.AspNet.Telemetry";
-
-        private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
+        private readonly HttpInListener httpInListener;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AspNetInstrumentation"/> class.
@@ -33,17 +32,13 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// <param name="options">Configuration options for ASP.NET instrumentation.</param>
         public AspNetInstrumentation(AspNetInstrumentationOptions options)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
-                name => new HttpInListener(name, options),
-                listener => listener.Name == AspNetDiagnosticListenerName,
-                null);
-            this.diagnosticSourceSubscriber.Subscribe();
+            this.httpInListener = new HttpInListener(options);
         }
 
         /// <inheritdoc/>
         public void Dispose()
         {
-            this.diagnosticSourceSubscriber?.Dispose();
+            this.httpInListener?.Dispose();
         }
     }
 }

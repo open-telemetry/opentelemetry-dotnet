@@ -16,15 +16,18 @@
 
 using System;
 using System.Runtime.CompilerServices;
+#if DEBUG
 using System.Threading;
-using global::OpenTracing;
+#endif
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
+using OpenTracing;
 
 namespace OpenTelemetry.Shims.OpenTracing
 {
     internal sealed class ScopeManagerShim : IScopeManager
     {
-        private static readonly ConditionalWeakTable<TelemetrySpan, global::OpenTracing.IScope> SpanScopeTable = new ConditionalWeakTable<TelemetrySpan, global::OpenTracing.IScope>();
+        private static readonly ConditionalWeakTable<TelemetrySpan, IScope> SpanScopeTable = new ConditionalWeakTable<TelemetrySpan, IScope>();
 
         private readonly Tracer tracer;
 
@@ -32,9 +35,11 @@ namespace OpenTelemetry.Shims.OpenTracing
         private int spanScopeTableCount;
 #endif
 
-        public ScopeManagerShim(Trace.Tracer tracer)
+        public ScopeManagerShim(Tracer tracer)
         {
-            this.tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
+            Guard.ThrowIfNull(tracer, nameof(tracer));
+
+            this.tracer = tracer;
         }
 
 #if DEBUG
@@ -42,7 +47,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 #endif
 
         /// <inheritdoc/>
-        public global::OpenTracing.IScope Active
+        public IScope Active
         {
             get
             {
@@ -62,12 +67,9 @@ namespace OpenTelemetry.Shims.OpenTracing
         }
 
         /// <inheritdoc/>
-        public global::OpenTracing.IScope Activate(ISpan span, bool finishSpanOnDispose)
+        public IScope Activate(ISpan span, bool finishSpanOnDispose)
         {
-            if (!(span is SpanShim shim))
-            {
-                throw new ArgumentException("span is not a valid SpanShim object");
-            }
+            var shim = Guard.ThrowIfNotOfType<SpanShim>(span, nameof(span));
 
             var scope = Tracer.WithSpan(shim.Span);
 
@@ -93,7 +95,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             return instrumentation;
         }
 
-        private class ScopeInstrumentation : global::OpenTracing.IScope
+        private class ScopeInstrumentation : IScope
         {
             private readonly Action disposeAction;
 

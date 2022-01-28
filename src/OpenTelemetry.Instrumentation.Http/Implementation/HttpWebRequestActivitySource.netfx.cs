@@ -291,9 +291,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         private static void ProcessResult(IAsyncResult asyncResult, AsyncCallback asyncCallback, Activity activity, object result, bool forceResponseCopy)
         {
-            // We could be executing on a different thread now so set the activity.
-            Debug.Assert(Activity.Current == null || Activity.Current == activity, "There was an unexpected active Activity on the result thread.");
-            if (Activity.Current == null)
+            // We could be executing on a different thread now so restore the activity if needed.
+            if (Activity.Current != activity)
             {
                 Activity.Current = activity;
             }
@@ -454,7 +453,66 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             Hashtable originalTable = servicePointTableField.GetValue(null) as Hashtable;
             ServicePointHashtable newTable = new ServicePointHashtable(originalTable ?? new Hashtable());
 
+            foreach (DictionaryEntry existingServicePoint in originalTable)
+            {
+                HookServicePoint(existingServicePoint.Value);
+            }
+
             servicePointTableField.SetValue(null, newTable);
+        }
+
+        private static void HookServicePoint(object value)
+        {
+            if (value is WeakReference weakRef
+                && weakRef.IsAlive
+                && weakRef.Target is ServicePoint servicePoint)
+            {
+                // Replace the ConnectionGroup hashtable inside this ServicePoint object,
+                // which allows us to intercept each new ConnectionGroup object added under
+                // this ServicePoint.
+                Hashtable originalTable = connectionGroupListField.GetValue(servicePoint) as Hashtable;
+                ConnectionGroupHashtable newTable = new ConnectionGroupHashtable(originalTable ?? new Hashtable());
+
+                foreach (DictionaryEntry existingConnectionGroup in originalTable)
+                {
+                    HookConnectionGroup(existingConnectionGroup.Value);
+                }
+
+                connectionGroupListField.SetValue(servicePoint, newTable);
+            }
+        }
+
+        private static void HookConnectionGroup(object value)
+        {
+            if (connectionGroupType.IsInstanceOfType(value))
+            {
+                // Replace the Connection arraylist inside this ConnectionGroup object,
+                // which allows us to intercept each new Connection object added under
+                // this ConnectionGroup.
+                ArrayList originalArrayList = connectionListField.GetValue(value) as ArrayList;
+                ConnectionArrayList newArrayList = new ConnectionArrayList(originalArrayList ?? new ArrayList());
+
+                foreach (object connection in originalArrayList)
+                {
+                    HookConnection(connection);
+                }
+
+                connectionListField.SetValue(value, newArrayList);
+            }
+        }
+
+        private static void HookConnection(object value)
+        {
+            if (connectionType.IsInstanceOfType(value))
+            {
+                // Replace the HttpWebRequest arraylist inside this Connection object,
+                // which allows us to intercept each new HttpWebRequest object added under
+                // this Connection.
+                ArrayList originalArrayList = writeListField.GetValue(value) as ArrayList;
+                HttpWebRequestArrayList newArrayList = new HttpWebRequestArrayList(originalArrayList ?? new ArrayList());
+
+                writeListField.SetValue(value, newArrayList);
+            }
         }
 
         private static Func<TClass, TField> CreateFieldGetter<TClass, TField>(string fieldName, BindingFlags flags)
@@ -676,20 +734,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 get => base[key];
                 set
                 {
-                    if (value is WeakReference weakRef && weakRef.IsAlive)
-                    {
-                        if (weakRef.Target is ServicePoint servicePoint)
-                        {
-                            // Replace the ConnectionGroup hashtable inside this ServicePoint object,
-                            // which allows us to intercept each new ConnectionGroup object added under
-                            // this ServicePoint.
-                            Hashtable originalTable = connectionGroupListField.GetValue(servicePoint) as Hashtable;
-                            ConnectionGroupHashtable newTable = new ConnectionGroupHashtable(originalTable ?? new Hashtable());
-
-                            connectionGroupListField.SetValue(servicePoint, newTable);
-                        }
-                    }
-
+                    HookServicePoint(value);
                     base[key] = value;
                 }
             }
@@ -712,17 +757,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 get => base[key];
                 set
                 {
-                    if (connectionGroupType.IsInstanceOfType(value))
-                    {
-                        // Replace the Connection arraylist inside this ConnectionGroup object,
-                        // which allows us to intercept each new Connection object added under
-                        // this ConnectionGroup.
-                        ArrayList originalArrayList = connectionListField.GetValue(value) as ArrayList;
-                        ConnectionArrayList newArrayList = new ConnectionArrayList(originalArrayList ?? new ArrayList());
-
-                        connectionListField.SetValue(value, newArrayList);
-                    }
-
+                    HookConnectionGroup(value);
                     base[key] = value;
                 }
             }
@@ -952,17 +987,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             public override int Add(object value)
             {
-                if (connectionType.IsInstanceOfType(value))
-                {
-                    // Replace the HttpWebRequest arraylist inside this Connection object,
-                    // which allows us to intercept each new HttpWebRequest object added under
-                    // this Connection.
-                    ArrayList originalArrayList = writeListField.GetValue(value) as ArrayList;
-                    HttpWebRequestArrayList newArrayList = new HttpWebRequestArrayList(originalArrayList ?? new ArrayList());
-
-                    writeListField.SetValue(value, newArrayList);
-                }
-
+                HookConnection(value);
                 return base.Add(value);
             }
         }

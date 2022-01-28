@@ -30,11 +30,13 @@ namespace Examples.Console
     {
         internal static object Run(MetricsOptions options)
         {
+            using var meter = new Meter("TestMeter");
+
             var providerBuilder = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("myservice"))
-                .AddSource("TestMeter"); // All instruments from this meter are enabled.
+                .AddMeter(meter.Name); // All instruments from this meter are enabled.
 
-            if (options.UseExporter.ToLower() == "otlp")
+            if (options.UseExporter.Equals("otlp", StringComparison.OrdinalIgnoreCase))
             {
                 /*
                  * Prerequisite to run this example:
@@ -44,10 +46,10 @@ namespace Examples.Console
                  * launch the OpenTelemetry Collector with an OTLP receiver, by running:
                  *
                  *  - On Unix based systems use:
-                 *     docker run --rm -it -p 4317:4317 -v $(pwd):/cfg otel/opentelemetry-collector:0.28.0 --config=/cfg/otlp-collector-example/config.yaml
+                 *     docker run --rm -it -p 4317:4317 -v $(pwd):/cfg otel/opentelemetry-collector:0.33.0 --config=/cfg/otlp-collector-example/config.yaml
                  *
                  *  - On Windows use:
-                 *     docker run --rm -it -p 4317:4317 -v "%cd%":/cfg otel/opentelemetry-collector:0.28.0 --config=/cfg/otlp-collector-example/config.yaml
+                 *     docker run --rm -it -p 4317:4317 -v "%cd%":/cfg otel/opentelemetry-collector:0.33.0 --config=/cfg/otlp-collector-example/config.yaml
                  *
                  * Open another terminal window at the examples/Console/ directory and
                  * launch the OTLP example by running:
@@ -59,15 +61,16 @@ namespace Examples.Console
                  */
 
                 // Adding the OtlpExporter creates a GrpcChannel.
-                // This switch must be set before creating a GrpcChannel/HttpClient when calling an insecure gRPC service.
+                // This switch must be set before creating a GrpcChannel when calling an insecure gRPC service.
                 // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
                 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
                 providerBuilder
                     .AddOtlpExporter(o =>
                     {
-                        o.MetricExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
-                        o.IsDelta = options.IsDelta;
+                        o.MetricReaderType = MetricReaderType.Periodic;
+                        o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
+                        o.AggregationTemporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                     });
             }
             else
@@ -75,14 +78,13 @@ namespace Examples.Console
                 providerBuilder
                     .AddConsoleExporter(o =>
                     {
-                        o.MetricExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
-                        o.IsDelta = options.IsDelta;
+                        o.MetricReaderType = MetricReaderType.Periodic;
+                        o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
+                        o.AggregationTemporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                     });
             }
 
             using var provider = providerBuilder.Build();
-
-            using var meter = new Meter("TestMeter", "0.0.1");
 
             Counter<int> counter = null;
             if (options.FlagCounter ?? true)
@@ -98,20 +100,7 @@ namespace Examples.Console
 
             if (options.FlagGauge ?? false)
             {
-                var observableCounter = meter.CreateObservableGauge<int>("gauge", () =>
-                {
-                    return new List<Measurement<int>>()
-                    {
-                        new Measurement<int>(
-                            (int)Process.GetCurrentProcess().PrivateMemorySize64,
-                            new KeyValuePair<string, object>("tag1", "value1")),
-                    };
-                });
-            }
-
-            if (options.FlagUpDownCounter ?? true)
-            {
-                var observableCounter = meter.CreateObservableCounter<int>("updown", () =>
+                var observableCounter = meter.CreateObservableGauge("gauge", () =>
                 {
                     return new List<Measurement<int>>()
                     {

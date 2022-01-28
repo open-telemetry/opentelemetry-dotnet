@@ -55,7 +55,7 @@ namespace Examples.Console
         {
             // Enable OpenTelemetry for the sources "Samples.SampleServer" and "Samples.SampleClient"
             // and use the Jaeger exporter.
-            using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("jaeger-test"))
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
                     .AddJaegerExporter(o =>
@@ -87,8 +87,8 @@ namespace Examples.Console
             {
                 sample.Start();
 
-                System.Console.WriteLine("Traces are being created and exported" +
-                    "to Jaeger in the background. Use Jaeger to view them." +
+                System.Console.WriteLine("Traces are being created and exported " +
+                    "to Jaeger in the background. Use Jaeger to view them. " +
                     "Press ENTER to stop.");
                 System.Console.ReadLine();
             }

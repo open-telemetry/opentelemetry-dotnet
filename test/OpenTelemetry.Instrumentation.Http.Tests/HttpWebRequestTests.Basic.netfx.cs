@@ -61,7 +61,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpWebRequestInstrumentationInjectsHeadersAsync()
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation()
                 .Build();
@@ -108,7 +108,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 });
 
             Sdk.SetDefaultTextMapPropagator(propagator.Object);
-            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation()
                 .Build();
@@ -155,7 +155,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             Sdk.SetDefaultTextMapPropagator(propagator.Object);
-            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation()
                 .Build();
@@ -199,7 +199,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpWebRequestInstrumentationBacksOffIfAlreadyInstrumented()
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation()
                 .Build();
@@ -222,7 +222,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task RequestNotCollectedWhenInstrumentationFilterApplied()
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation(
                     c => c.Filter = (req) => !req.RequestUri.OriginalString.Contains(this.url))
@@ -238,7 +238,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task RequestNotCollectedWhenInstrumentationFilterThrowsException()
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation(
                     c => c.Filter = (req) => throw new Exception("From Instrumentation filter"))
@@ -256,13 +256,31 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public void AddHttpClientInstrumentationUsesHttpWebRequestInstrumentationOptions()
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            using var tracerProviderSdk = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation(options =>
                 {
                     Assert.IsType<HttpWebRequestInstrumentationOptions>(options);
                 })
                 .Build();
+        }
+
+        [Fact]
+        public async Task HttpWebRequestInstrumentationOnExistingInstance()
+        {
+            using HttpClient client = new HttpClient();
+
+            await client.GetAsync(this.url).ConfigureAwait(false);
+
+            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddProcessor(activityProcessor.Object)
+                .AddHttpClientInstrumentation()
+                .Build();
+
+            await client.GetAsync(this.url).ConfigureAwait(false);
+
+            Assert.Equal(3, activityProcessor.Invocations.Count);  // SetParentProvider/Begin/End called
         }
     }
 }

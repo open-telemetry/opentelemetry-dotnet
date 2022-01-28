@@ -15,7 +15,7 @@
 // </copyright>
 
 using System;
-using System.ComponentModel;
+using System.Diagnostics;
 using System.Reflection;
 using System.Web;
 
@@ -26,7 +26,15 @@ namespace OpenTelemetry.Instrumentation.AspNet
     /// </summary>
     public class TelemetryHttpModule : IHttpModule
     {
-        private const string BeginCalledFlag = "OpenTelemetry.Instrumentation.AspNet.BeginCalled";
+        /// <summary>
+        /// OpenTelemetry.Instrumentation.AspNet <see cref="ActivitySource"/> name.
+        /// </summary>
+        public const string AspNetSourceName = "OpenTelemetry.Instrumentation.AspNet.Telemetry";
+
+        /// <summary>
+        /// <see cref="Activity.OperationName"/> for OpenTelemetry.Instrumentation.AspNet created <see cref="Activity"/> objects.
+        /// </summary>
+        public const string AspNetActivityName = "Microsoft.AspNet.HttpReqIn";
 
         // ServerVariable set only on rewritten HttpContext by URL Rewrite module.
         private const string URLRewriteRewrittenRequest = "IIS_WasUrlRewritten";
@@ -34,13 +42,12 @@ namespace OpenTelemetry.Instrumentation.AspNet
         // ServerVariable set on every request if URL module is registered in HttpModule pipeline.
         private const string URLRewriteModuleVersion = "IIS_UrlRewriteModule";
 
-        private static readonly MethodInfo OnStepMethodInfo = typeof(HttpApplication).GetMethod("OnExecuteRequestStep");
+        private static readonly MethodInfo OnExecuteRequestStepMethodInfo = typeof(HttpApplication).GetMethod("OnExecuteRequestStep");
 
         /// <summary>
-        /// Gets or sets a value indicating whether TelemetryHttpModule should parse headers to get correlation ids.
+        /// Gets the <see cref="TelemetryHttpModuleOptions"/> applied to requests processed by the handler.
         /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool ParseHeaders { get; set; } = true;
+        public static TelemetryHttpModuleOptions Options { get; } = new TelemetryHttpModuleOptions();
 
         /// <inheritdoc />
         public void Dispose()
@@ -54,60 +61,36 @@ namespace OpenTelemetry.Instrumentation.AspNet
             context.EndRequest += this.Application_EndRequest;
             context.Error += this.Application_Error;
 
-            // OnExecuteRequestStep is availabile starting with 4.7.1
-            // If this is executed in 4.7.1 runtime (regardless of targeted .NET version),
-            // we will use it to restore lost activity, otherwise keep PreRequestHandlerExecute
-            if (OnStepMethodInfo != null && HttpRuntime.UsingIntegratedPipeline)
+            if (HttpRuntime.UsingIntegratedPipeline && OnExecuteRequestStepMethodInfo != null)
             {
+                // OnExecuteRequestStep is availabile starting with 4.7.1
                 try
                 {
-                    OnStepMethodInfo.Invoke(context, new object[] { (Action<HttpContextBase, Action>)this.OnExecuteRequestStep });
+                    OnExecuteRequestStepMethodInfo.Invoke(context, new object[] { (Action<HttpContextBase, Action>)this.OnExecuteRequestStep });
                 }
                 catch (Exception e)
                 {
                     AspNetTelemetryEventSource.Log.OnExecuteRequestStepInvokationError(e.Message);
                 }
             }
-            else
-            {
-                context.PreRequestHandlerExecute += this.Application_PreRequestHandlerExecute;
-            }
-        }
-
-        /// <summary>
-        /// Restores Activity before each pipeline step if it was lost.
-        /// </summary>
-        /// <param name="context">HttpContext instance.</param>
-        /// <param name="step">Step to be executed.</param>
-        internal void OnExecuteRequestStep(HttpContextBase context, Action step)
-        {
-            // Once we have public Activity.Current setter (https://github.com/dotnet/corefx/issues/29207) this method will be
-            // simplified to just assign Current if is was lost.
-            // In the mean time, we are creating child Activity to restore the context. We have to send
-            // event with this Activity to tracing system. It created a lot of issues for listeners as
-            // we may potentially have a lot of them for different stages.
-            // To reduce amount of events, we only care about ExecuteRequestHandler stage - restore activity here and
-            // stop/report it to tracing system in EndRequest.
-            if (context.CurrentNotification == RequestNotification.ExecuteRequestHandler && !context.IsPostNotification)
-            {
-                ActivityHelper.RestoreActivityIfNeeded(context.Items);
-            }
-
-            step();
         }
 
         private void Application_BeginRequest(object sender, EventArgs e)
         {
-            var context = ((HttpApplication)sender).Context;
             AspNetTelemetryEventSource.Log.TraceCallback("Application_BeginRequest");
-            ActivityHelper.CreateRootActivity(context, this.ParseHeaders);
-            context.Items[BeginCalledFlag] = true;
+            ActivityHelper.StartAspNetActivity(Options.TextMapPropagator, ((HttpApplication)sender).Context, Options.OnRequestStartedCallback);
         }
 
-        private void Application_PreRequestHandlerExecute(object sender, EventArgs e)
+        private void OnExecuteRequestStep(HttpContextBase context, Action step)
         {
-            AspNetTelemetryEventSource.Log.TraceCallback("Application_PreRequestHandlerExecute");
-            ActivityHelper.RestoreActivityIfNeeded(((HttpApplication)sender).Context.Items);
+            // Called only on 4.7.1+ runtimes
+
+            if (context.CurrentNotification == RequestNotification.ExecuteRequestHandler && !context.IsPostNotification)
+            {
+                ActivityHelper.RestoreContextIfNeeded(context.ApplicationInstance.Context);
+            }
+
+            step();
         }
 
         private void Application_EndRequest(object sender, EventArgs e)
@@ -117,9 +100,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
 
             var context = ((HttpApplication)sender).Context;
 
-            // EndRequest does it's best effort to notify that request has ended
-            // BeginRequest has never been called
-            if (!context.Items.Contains(BeginCalledFlag))
+            if (!ActivityHelper.HasStarted(context, out Activity aspNetActivity))
             {
                 // Rewrite: In case of rewrite, a new request context is created, called the child request, and it goes through the entire IIS/ASP.NET integrated pipeline.
                 // The child request can be mapped to any of the handlers configured in IIS, and it's execution is no different than it would be if it was received via the HTTP stack.
@@ -135,13 +116,13 @@ namespace OpenTelemetry.Instrumentation.AspNet
                 else
                 {
                     // Activity has never been started
-                    ActivityHelper.CreateRootActivity(context, this.ParseHeaders);
+                    aspNetActivity = ActivityHelper.StartAspNetActivity(Options.TextMapPropagator, context, Options.OnRequestStartedCallback);
                 }
             }
 
             if (trackActivity)
             {
-                ActivityHelper.StopAspNetActivity(context.Items);
+                ActivityHelper.StopAspNetActivity(Options.TextMapPropagator, aspNetActivity, context, Options.OnRequestStoppedCallback);
             }
         }
 
@@ -154,12 +135,12 @@ namespace OpenTelemetry.Instrumentation.AspNet
             var exception = context.Error;
             if (exception != null)
             {
-                if (!context.Items.Contains(BeginCalledFlag))
+                if (!ActivityHelper.HasStarted(context, out Activity aspNetActivity))
                 {
-                    ActivityHelper.CreateRootActivity(context, this.ParseHeaders);
+                    aspNetActivity = ActivityHelper.StartAspNetActivity(Options.TextMapPropagator, context, Options.OnRequestStartedCallback);
                 }
 
-                ActivityHelper.WriteActivityException(context.Items, exception);
+                ActivityHelper.WriteActivityException(aspNetActivity, context, exception, Options.OnExceptionCallback);
             }
         }
     }

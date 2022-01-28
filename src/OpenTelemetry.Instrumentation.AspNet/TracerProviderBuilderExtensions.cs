@@ -16,7 +16,7 @@
 
 using System;
 using OpenTelemetry.Instrumentation.AspNet;
-using OpenTelemetry.Instrumentation.AspNet.Implementation;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
@@ -35,18 +35,13 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             Action<AspNetInstrumentationOptions> configureAspNetInstrumentationOptions = null)
         {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.ThrowIfNull(builder, nameof(builder));
 
             var aspnetOptions = new AspNetInstrumentationOptions();
             configureAspNetInstrumentationOptions?.Invoke(aspnetOptions);
 
             builder.AddInstrumentation(() => new AspNetInstrumentation(aspnetOptions));
-            builder.AddSource(HttpInListener.ActivitySourceName);
-            builder.AddLegacySource("Microsoft.AspNet.HttpReqIn"); // for the activities created by AspNetCore
-            builder.AddLegacySource("ActivityCreatedByHttpInListener"); // for the sibling activities created by the instrumentation library
+            builder.AddSource(TelemetryHttpModule.AspNetSourceName);
 
             return builder;
         }

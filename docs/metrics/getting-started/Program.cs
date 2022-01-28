@@ -14,40 +14,27 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
 public class Program
 {
-    private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
-    private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("counter");
+    private static readonly Meter MyMeter = new Meter("MyCompany.MyProduct.MyLibrary", "1.0");
+    private static readonly Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
 
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestMeter")
-                .AddConsoleExporter()
-                .Build();
+            .AddMeter("MyCompany.MyProduct.MyLibrary")
+            .AddConsoleExporter()
+            .Build();
 
-        using var token = new CancellationTokenSource();
-        Task writeMetricTask = new Task(() =>
-        {
-            while (!token.IsCancellationRequested)
-            {
-                Counter.Add(
-                            10,
-                            new KeyValuePair<string, object>("tag1", "value1"),
-                            new KeyValuePair<string, object>("tag2", "value2"));
-                Task.Delay(10).Wait();
-            }
-        });
-        writeMetricTask.Start();
-
-        token.CancelAfter(10000);
-        await writeMetricTask;
+        MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
+        MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
+        MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow"));
+        MyFruitCounter.Add(2, new("name", "apple"), new("color", "green"));
+        MyFruitCounter.Add(5, new("name", "apple"), new("color", "red"));
+        MyFruitCounter.Add(4, new("name", "lemon"), new("color", "yellow"));
     }
 }

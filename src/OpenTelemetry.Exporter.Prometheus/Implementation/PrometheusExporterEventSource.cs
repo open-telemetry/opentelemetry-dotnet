@@ -18,13 +18,13 @@ using System;
 using System.Diagnostics.Tracing;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter.Prometheus.Implementation
+namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
     /// EventSource events emitted from the project.
     /// </summary>
     [EventSource(Name = "OpenTelemetry-Exporter-Prometheus")]
-    internal class PrometheusExporterEventSource : EventSource
+    internal sealed class PrometheusExporterEventSource : EventSource
     {
         public static PrometheusExporterEventSource Log = new PrometheusExporterEventSource();
 

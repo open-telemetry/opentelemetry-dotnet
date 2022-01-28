@@ -16,7 +16,7 @@ services:
   tests:
     build:
       context: .
-      dockerfile: ./test/OpenTelemetry.Instrumentation.SqlClient.Tests/dockerfile
+      dockerfile: ./test/OpenTelemetry.Instrumentation.SqlClient.Tests/Dockerfile
     entrypoint: ["bash", "-c", "/wait && dotnet vstest OpenTelemetry.Instrumentation.SqlClient.Tests.dll --TestCaseFilter:CategoryName=SqlIntegrationTests"]
     environment:
       - OTEL_SQLCONNECTIONSTRING=Data Source=sql; User ID=sa; Password=Pass@word18

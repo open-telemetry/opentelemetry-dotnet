@@ -1,8 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
-    <!--
-    <PackageReference Include="OpenTelemetry" Version="$(OpenTelemetryPkgVer)" />
-    -->
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 </Project>

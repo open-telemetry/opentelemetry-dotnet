@@ -24,22 +24,18 @@ namespace OpenTelemetry
 {
     public class CompositeProcessor<T> : BaseProcessor<T>
     {
-        private DoublyLinkedListNode head;
+        private readonly DoublyLinkedListNode head;
         private DoublyLinkedListNode tail;
         private bool disposed;
 
         public CompositeProcessor(IEnumerable<BaseProcessor<T>> processors)
         {
-            if (processors == null)
-            {
-                throw new ArgumentNullException(nameof(processors));
-            }
+            Guard.ThrowIfNull(processors, nameof(processors));
 
             using var iter = processors.GetEnumerator();
-
             if (!iter.MoveNext())
             {
-                throw new ArgumentException($"{nameof(processors)} collection is empty");
+                throw new ArgumentException($"'{iter}' is null or empty", nameof(iter));
             }
 
             this.head = new DoublyLinkedListNode(iter.Current);
@@ -53,10 +49,7 @@ namespace OpenTelemetry
 
         public CompositeProcessor<T> AddProcessor(BaseProcessor<T> processor)
         {
-            if (processor == null)
-            {
-                throw new ArgumentNullException(nameof(processor));
-            }
+            Guard.ThrowIfNull(processor, nameof(processor));
 
             var node = new DoublyLinkedListNode(processor)
             {
@@ -71,73 +64,58 @@ namespace OpenTelemetry
         /// <inheritdoc/>
         public override void OnEnd(T data)
         {
-            var cur = this.head;
-
-            while (cur != null)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
                 cur.Value.OnEnd(data);
-                cur = cur.Next;
             }
         }
 
         /// <inheritdoc/>
         public override void OnStart(T data)
         {
-            var cur = this.head;
-
-            while (cur != null)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
                 cur.Value.OnStart(data);
-                cur = cur.Next;
             }
         }
 
         /// <inheritdoc/>
         protected override bool OnForceFlush(int timeoutMilliseconds)
         {
-            var cur = this.head;
+            var result = true;
+            var sw = timeoutMilliseconds == Timeout.Infinite
+                ? null
+                : Stopwatch.StartNew();
 
-            var sw = Stopwatch.StartNew();
-
-            while (cur != null)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
-                if (timeoutMilliseconds == Timeout.Infinite)
+                if (sw == null)
                 {
-                    _ = cur.Value.ForceFlush(Timeout.Infinite);
+                    result = cur.Value.ForceFlush(Timeout.Infinite) && result;
                 }
                 else
                 {
                     var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
 
-                    if (timeout <= 0)
-                    {
-                        return false;
-                    }
-
-                    var succeeded = cur.Value.ForceFlush((int)timeout);
-
-                    if (!succeeded)
-                    {
-                        return false;
-                    }
+                    // notify all the processors, even if we run overtime
+                    result = cur.Value.ForceFlush((int)Math.Max(timeout, 0)) && result;
                 }
-
-                cur = cur.Next;
             }
 
-            return true;
+            return result;
         }
 
         /// <inheritdoc/>
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
-            var cur = this.head;
             var result = true;
-            var sw = Stopwatch.StartNew();
+            var sw = timeoutMilliseconds == Timeout.Infinite
+                ? null
+                : Stopwatch.StartNew();
 
-            while (cur != null)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
-                if (timeoutMilliseconds == Timeout.Infinite)
+                if (sw == null)
                 {
                     result = cur.Value.Shutdown(Timeout.Infinite) && result;
                 }
@@ -148,40 +126,35 @@ namespace OpenTelemetry
                     // notify all the processors, even if we run overtime
                     result = cur.Value.Shutdown((int)Math.Max(timeout, 0)) && result;
                 }
-
-                cur = cur.Next;
             }
 
             return result;
         }
 
+        /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (!this.disposed)
             {
-                return;
-            }
-
-            if (disposing)
-            {
-                var cur = this.head;
-
-                while (cur != null)
+                if (disposing)
                 {
-                    try
+                    for (var cur = this.head; cur != null; cur = cur.Next)
                     {
-                        cur.Value?.Dispose();
+                        try
+                        {
+                            cur.Value?.Dispose();
+                        }
+                        catch (Exception ex)
+                        {
+                            OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-                    }
-
-                    cur = cur.Next;
                 }
+
+                this.disposed = true;
             }
 
-            this.disposed = true;
+            base.Dispose(disposing);
         }
 
         private class DoublyLinkedListNode

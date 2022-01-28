@@ -17,16 +17,19 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
-using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 #if NETCOREAPP3_1
 using TestApp.AspNetCore._3._1;
-#else
+#endif
+#if NET5_0
 using TestApp.AspNetCore._5._0;
+#endif
+#if NET6_0
+using TestApp.AspNetCore._6._0;
 #endif
 using Xunit;
 
@@ -53,21 +56,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [Fact]
         public async Task RequestMetricIsCaptured()
         {
-            var metricItems = new List<MetricItem>();
-            var metricExporter = new TestExporter<MetricItem>(ProcessExport);
+            var metricItems = new List<Metric>();
+            var metricExporter = new InMemoryExporter<Metric>(metricItems);
 
-            void ProcessExport(Batch<MetricItem> batch)
+            var metricReader = new BaseExportingMetricReader(metricExporter)
             {
-                foreach (var metricItem in batch)
-                {
-                    metricItems.Add(metricItem);
-                }
-            }
-
-            var processor = new PullMetricProcessor(metricExporter, true);
+                Temporality = AggregationTemporality.Cumulative,
+            };
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddAspNetCoreInstrumentation()
-                .AddMetricProcessor(processor)
+                .AddReader(metricReader)
                 .Build();
 
             using (var client = this.factory.CreateClient())
@@ -81,46 +79,64 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // giving some breezing room for the End callback to complete
             await Task.Delay(TimeSpan.FromSeconds(1));
 
-            // Invokes the TestExporter which will invoke ProcessExport
-            processor.PullRequest();
-
             this.meterProvider.Dispose();
 
             var requestMetrics = metricItems
-                .SelectMany(item => item.Metrics.Where(metric => metric.Name == "http.server.request_count"))
+                .Where(item => item.Name == "http.server.duration")
                 .ToArray();
 
             Assert.True(requestMetrics.Length == 1);
 
-            var metric = requestMetrics[0] as ISumMetricLong;
+            var metric = requestMetrics[0];
             Assert.NotNull(metric);
-            Assert.Equal(1L, metric.LongSum);
+            Assert.True(metric.MetricType == MetricType.Histogram);
+            var metricPoints = new List<MetricPoint>();
+            foreach (var p in metric.GetMetricPoints())
+            {
+                metricPoints.Add(p);
+            }
+
+            Assert.Single(metricPoints);
+
+            var metricPoint = metricPoints[0];
+
+            var count = metricPoint.GetHistogramCount();
+            var sum = metricPoint.GetHistogramSum();
+
+            Assert.Equal(1L, count);
+            Assert.True(sum > 0);
+
+            /*
+            var bucket = metric.Buckets
+                .Where(b =>
+                    metric.PopulationSum > b.LowBoundary &&
+                    metric.PopulationSum <= b.HighBoundary)
+                .FirstOrDefault();
+            Assert.NotEqual(default, bucket);
+            Assert.Equal(1, bucket.Count);
+            */
+
+            var attributes = new KeyValuePair<string, object>[metricPoint.Tags.Count];
+            int i = 0;
+            foreach (var tag in metricPoint.Tags)
+            {
+                attributes[i++] = tag;
+            }
 
             var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, "GET");
             var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
             var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, 200);
             var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "HTTP/1.1");
-            Assert.Contains(method, metric.Attributes);
-            Assert.Contains(scheme, metric.Attributes);
-            Assert.Contains(statusCode, metric.Attributes);
-            Assert.Contains(flavor, metric.Attributes);
-            Assert.Equal(4, metric.Attributes.Length);
+            Assert.Contains(method, attributes);
+            Assert.Contains(scheme, attributes);
+            Assert.Contains(statusCode, attributes);
+            Assert.Contains(flavor, attributes);
+            Assert.Equal(4, attributes.Length);
         }
 
         public void Dispose()
         {
             this.meterProvider?.Dispose();
-        }
-
-        private static void WaitForMetricItems(List<MetricItem> metricItems, int count)
-        {
-            Assert.True(SpinWait.SpinUntil(
-                () =>
-                {
-                    Thread.Sleep(10);
-                    return metricItems.Count >= count;
-                },
-                TimeSpan.FromSeconds(1)));
         }
     }
 }

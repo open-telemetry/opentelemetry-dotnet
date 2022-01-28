@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.0.0-rc8
+
+Released 2021-Oct-08
+
+* Replaced `http.path` tag on activity with `http.target`.
+  ([#2266](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2266))
+
 ## 1.0.0-rc7
 
 Released 2021-Jul-12

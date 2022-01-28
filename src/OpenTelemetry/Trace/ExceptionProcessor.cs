@@ -22,7 +22,7 @@ using System.Runtime.InteropServices;
 
 namespace OpenTelemetry.Trace
 {
-    internal class ExceptionProcessor : BaseProcessor<Activity>
+    internal sealed class ExceptionProcessor : BaseProcessor<Activity>
     {
         private const string ExceptionPointersKey = "otel.exception_pointers";
 
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Trace
             }
             catch (Exception ex)
             {
-                throw new NotSupportedException("System.Runtime.InteropServices.Marshal.GetExceptionPointers is not supported.", ex);
+                throw new NotSupportedException($"'{typeof(Marshal).FullName}.GetExceptionPointers' is not supported", ex);
             }
         }
 

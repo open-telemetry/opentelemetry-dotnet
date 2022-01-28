@@ -33,7 +33,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         public GrpcServer()
         {
             // Allows gRPC client to call insecure gRPC services
-            // https://docs.microsoft.com/en-us/aspnet/core/grpc/troubleshoot?view=aspnetcore-3.1#call-insecure-grpc-services-with-net-core-client
+            // https://docs.microsoft.com/aspnet/core/grpc/troubleshoot?view=aspnetcore-3.1#call-insecure-grpc-services-with-net-core-client
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
             this.Port = 0;

@@ -38,7 +38,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
     ///
     /// "Microsoft.Data.SqlClient.EventSource" doesn't have that issue.
     /// </remarks>
-    internal class SqlEventSourceListener : EventListener
+    internal sealed class SqlEventSourceListener : EventListener
     {
         internal const string AdoNetEventSourceName = "Microsoft-AdoNet-SystemData";
         internal const string MdsEventSourceName = "Microsoft.Data.SqlClient.EventSource";
@@ -75,12 +75,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
             if (eventSource?.Name.StartsWith(AdoNetEventSourceName, StringComparison.Ordinal) == true)
             {
                 this.adoNetEventSource = eventSource;
-                this.EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)1);
+                this.EnableEvents(eventSource, EventLevel.Informational, EventKeywords.All);
             }
             else if (eventSource?.Name.StartsWith(MdsEventSourceName, StringComparison.Ordinal) == true)
             {
                 this.mdsEventSource = eventSource;
-                this.EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)1);
+                this.EnableEvents(eventSource, EventLevel.Informational, EventKeywords.All);
             }
 
             base.OnEventSourceCreated(eventSource);

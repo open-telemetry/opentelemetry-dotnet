@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Diagnostics;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -28,9 +30,10 @@ namespace OpenTelemetry.Trace.Tests
         public void ExportProcessorIgnoresActivityWhenDropped()
         {
             var sampler = new AlwaysOffSampler();
-            var processor = new TestActivityExportProcessor(new TestExporter<Activity>(_ => { }));
+            var exportedItems = new List<Activity>();
+            var processor = new TestActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems));
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var sdk = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .SetSampler(sampler)
                 .AddProcessor(processor)
@@ -49,9 +52,10 @@ namespace OpenTelemetry.Trace.Tests
         public void ExportProcessorIgnoresActivityMarkedAsRecordOnly()
         {
             var sampler = new RecordOnlySampler();
-            var processor = new TestActivityExportProcessor(new TestExporter<Activity>(_ => { }));
+            var exportedItems = new List<Activity>();
+            var processor = new TestActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems));
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var sdk = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .SetSampler(sampler)
                 .AddProcessor(processor)
@@ -70,9 +74,10 @@ namespace OpenTelemetry.Trace.Tests
         public void ExportProcessorExportsActivityMarkedAsRecordAndSample()
         {
             var sampler = new AlwaysOnSampler();
-            var processor = new TestActivityExportProcessor(new TestExporter<Activity>(_ => { }));
+            var exportedItems = new List<Activity>();
+            var processor = new TestActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems));
             using var activitySource = new ActivitySource(ActivitySourceName);
-            using var sdk = Sdk.CreateTracerProviderBuilder()
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
                 .SetSampler(sampler)
                 .AddProcessor(processor)

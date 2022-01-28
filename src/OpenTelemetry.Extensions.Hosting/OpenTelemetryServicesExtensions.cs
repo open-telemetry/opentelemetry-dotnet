@@ -15,7 +15,12 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Extensions.Hosting.Implementation;
+using OpenTelemetry.Internal;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -43,14 +48,36 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Action<TracerProviderBuilder> configure)
         {
-            if (configure is null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
+            Guard.ThrowIfNull(configure, nameof(configure));
 
             var builder = new TracerProviderBuilderHosting(services);
             configure(builder);
             return services.AddOpenTelemetryTracing(sp => builder.Build(sp));
+        }
+
+        /// <summary>
+        /// Adds OpenTelemetry MeterProvider to the specified <see cref="IServiceCollection" />.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
+        public static IServiceCollection AddOpenTelemetryMetrics(this IServiceCollection services)
+        {
+            return services.AddOpenTelemetryMetrics(builder => { });
+        }
+
+        /// <summary>
+        /// Adds OpenTelemetry MeterProvider to the specified <see cref="IServiceCollection" />.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+        /// <param name="configure">Callback action to configure the <see cref="MeterProviderBuilder"/>.</param>
+        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
+        public static IServiceCollection AddOpenTelemetryMetrics(this IServiceCollection services, Action<MeterProviderBuilder> configure)
+        {
+            Guard.ThrowIfNull(configure, nameof(configure));
+
+            var builder = new MeterProviderBuilderHosting(services);
+            configure(builder);
+            return services.AddOpenTelemetryMetrics(sp => builder.Build(sp));
         }
 
         /// <summary>
@@ -61,20 +88,37 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         private static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Func<IServiceProvider, TracerProvider> createTracerProvider)
         {
-            if (services is null)
+            Guard.ThrowIfNull(services, nameof(services));
+            Guard.ThrowIfNull(createTracerProvider, nameof(createTracerProvider));
+
+            try
             {
-                throw new ArgumentNullException(nameof(services));
+                services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
+                return services.AddSingleton(s => createTracerProvider(s));
+            }
+            catch (Exception ex)
+            {
+                HostingExtensionsEventSource.Log.FailedInitialize(ex);
             }
 
-            if (createTracerProvider is null)
-            {
-                throw new ArgumentNullException(nameof(createTracerProvider));
-            }
+            return services;
+        }
+
+        /// <summary>
+        /// Adds OpenTelemetry MeterProvider to the specified <see cref="IServiceCollection" />.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+        /// <param name="createMeterProvider">A delegate that provides the tracer provider to be registered.</param>
+        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
+        private static IServiceCollection AddOpenTelemetryMetrics(this IServiceCollection services, Func<IServiceProvider, MeterProvider> createMeterProvider)
+        {
+            Debug.Assert(services != null, $"{nameof(services)} must not be null");
+            Debug.Assert(createMeterProvider != null, $"{nameof(createMeterProvider)} must not be null");
 
             try
             {
                 services.AddHostedService<TelemetryHostedService>();
-                return services.AddSingleton(s => createTracerProvider(s));
+                return services.AddSingleton(s => createMeterProvider(s));
             }
             catch (Exception ex)
             {

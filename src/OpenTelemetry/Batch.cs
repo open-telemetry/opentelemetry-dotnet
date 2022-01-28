@@ -31,23 +31,53 @@ namespace OpenTelemetry
     {
         private readonly T item;
         private readonly CircularBuffer<T> circularBuffer;
+        private readonly T[] items;
         private readonly long targetCount;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Batch{T}"/> struct.
+        /// </summary>
+        /// <param name="items">The items to store in the batch.</param>
+        /// <param name="count">The number of items in the batch.</param>
+        public Batch(T[] items, int count)
+        {
+            Guard.ThrowIfNull(items, nameof(items));
+            Guard.ThrowIfOutOfRange(count, nameof(count), 0, items.Length);
+
+            this.item = null;
+            this.circularBuffer = null;
+            this.items = items;
+            this.Count = this.targetCount = count;
+        }
 
         internal Batch(T item)
         {
-            this.item = item ?? throw new ArgumentNullException(nameof(item));
+            Debug.Assert(item != null, $"{nameof(item)} was null.");
+
+            this.item = item;
             this.circularBuffer = null;
-            this.targetCount = 1;
+            this.items = null;
+            this.Count = this.targetCount = 1;
         }
 
         internal Batch(CircularBuffer<T> circularBuffer, int maxSize)
         {
             Debug.Assert(maxSize > 0, $"{nameof(maxSize)} should be a positive number.");
+            Debug.Assert(circularBuffer != null, $"{nameof(circularBuffer)} was null.");
 
             this.item = null;
-            this.circularBuffer = circularBuffer ?? throw new ArgumentNullException(nameof(circularBuffer));
-            this.targetCount = circularBuffer.RemovedCount + Math.Min(maxSize, circularBuffer.Count);
+            this.items = null;
+            this.circularBuffer = circularBuffer;
+            this.Count = Math.Min(maxSize, circularBuffer.Count);
+            this.targetCount = circularBuffer.RemovedCount + this.Count;
         }
+
+        private delegate bool BatchEnumeratorMoveNextFunc(ref Enumerator enumerator);
+
+        /// <summary>
+        /// Gets the count of items in the batch.
+        /// </summary>
+        public long Count { get; }
 
         /// <inheritdoc/>
         public void Dispose()
@@ -70,7 +100,10 @@ namespace OpenTelemetry
         {
             return this.circularBuffer != null
                 ? new Enumerator(this.circularBuffer, this.targetCount)
-                : new Enumerator(this.item);
+                : this.item != null
+                    ? new Enumerator(this.item)
+                    /* In the event someone uses default/new Batch() to create Batch we fallback to empty items mode. */
+                    : new Enumerator(this.items ?? Array.Empty<T>(), this.targetCount);
         }
 
         /// <summary>
@@ -78,21 +111,80 @@ namespace OpenTelemetry
         /// </summary>
         public struct Enumerator : IEnumerator<T>
         {
+            private static readonly BatchEnumeratorMoveNextFunc MoveNextSingleItem = (ref Enumerator enumerator) =>
+            {
+                if (enumerator.targetCount >= 0)
+                {
+                    enumerator.Current = null;
+                    return false;
+                }
+
+                enumerator.targetCount++;
+                return true;
+            };
+
+            private static readonly BatchEnumeratorMoveNextFunc MoveNextCircularBuffer = (ref Enumerator enumerator) =>
+            {
+                var circularBuffer = enumerator.circularBuffer;
+
+                if (circularBuffer.RemovedCount < enumerator.targetCount)
+                {
+                    enumerator.Current = circularBuffer.Read();
+                    return true;
+                }
+
+                enumerator.Current = null;
+                return false;
+            };
+
+            private static readonly BatchEnumeratorMoveNextFunc MoveNextArray = (ref Enumerator enumerator) =>
+            {
+                var items = enumerator.items;
+
+                if (enumerator.itemIndex < enumerator.targetCount)
+                {
+                    enumerator.Current = items[enumerator.itemIndex++];
+                    return true;
+                }
+
+                enumerator.Current = null;
+                return false;
+            };
+
             private readonly CircularBuffer<T> circularBuffer;
+            private readonly T[] items;
+            private readonly BatchEnumeratorMoveNextFunc moveNextFunc;
             private long targetCount;
+            private int itemIndex;
 
             internal Enumerator(T item)
             {
                 this.Current = item;
                 this.circularBuffer = null;
+                this.items = null;
                 this.targetCount = -1;
+                this.itemIndex = 0;
+                this.moveNextFunc = MoveNextSingleItem;
             }
 
             internal Enumerator(CircularBuffer<T> circularBuffer, long targetCount)
             {
                 this.Current = null;
+                this.items = null;
                 this.circularBuffer = circularBuffer;
                 this.targetCount = targetCount;
+                this.itemIndex = 0;
+                this.moveNextFunc = MoveNextCircularBuffer;
+            }
+
+            internal Enumerator(T[] items, long targetCount)
+            {
+                this.Current = null;
+                this.circularBuffer = null;
+                this.items = items;
+                this.targetCount = targetCount;
+                this.itemIndex = 0;
+                this.moveNextFunc = MoveNextArray;
             }
 
             /// <inheritdoc/>
@@ -109,28 +201,7 @@ namespace OpenTelemetry
             /// <inheritdoc/>
             public bool MoveNext()
             {
-                var circularBuffer = this.circularBuffer;
-
-                if (circularBuffer == null)
-                {
-                    if (this.targetCount >= 0)
-                    {
-                        this.Current = null;
-                        return false;
-                    }
-
-                    this.targetCount++;
-                    return true;
-                }
-
-                if (circularBuffer.RemovedCount < this.targetCount)
-                {
-                    this.Current = circularBuffer.Read();
-                    return true;
-                }
-
-                this.Current = null;
-                return false;
+                return this.moveNextFunc(ref this);
             }
 
             /// <inheritdoc/>

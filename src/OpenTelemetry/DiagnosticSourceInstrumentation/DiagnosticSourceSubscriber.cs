@@ -17,17 +17,18 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Instrumentation
 {
     internal class DiagnosticSourceSubscriber : IDisposable, IObserver<DiagnosticListener>
     {
+        private readonly List<IDisposable> listenerSubscriptions;
         private readonly Func<string, ListenerHandler> handlerFactory;
         private readonly Func<DiagnosticListener, bool> diagnosticSourceFilter;
         private readonly Func<string, object, object, bool> isEnabledFilter;
         private long disposed;
         private IDisposable allSourcesSubscription;
-        private List<IDisposable> listenerSubscriptions;
 
         public DiagnosticSourceSubscriber(
             ListenerHandler handler,
@@ -41,8 +42,10 @@ namespace OpenTelemetry.Instrumentation
             Func<DiagnosticListener, bool> diagnosticSourceFilter,
             Func<string, object, object, bool> isEnabledFilter)
         {
+            Guard.ThrowIfNull(handlerFactory, nameof(handlerFactory));
+
             this.listenerSubscriptions = new List<IDisposable>();
-            this.handlerFactory = handlerFactory ?? throw new ArgumentNullException(nameof(handlerFactory));
+            this.handlerFactory = handlerFactory;
             this.diagnosticSourceFilter = diagnosticSourceFilter;
             this.isEnabledFilter = isEnabledFilter;
         }

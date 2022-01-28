@@ -48,16 +48,16 @@ On all platforms, the minimum requirements are:
 
 ### Linux or MacOS
 
-* Visual Studio for Mac or Visual Studio Code
+* Visual Studio 2022+ for Mac or Visual Studio Code
 
 Mono might be required by your IDE but is not required by this project. This is
-because unit tests targeting .NET Framework (i.e: `net46`) are disabled outside
+because unit tests targeting .NET Framework (i.e: `net461`) are disabled outside
 of Windows.
 
 ### Windows
 
-* Visual Studio 2017+ or Visual Studio Code
-* .NET Framework 4.6+
+* Visual Studio 2022+ or Visual Studio Code
+* .NET Framework 4.6.1+
 
 ### Public API
 
@@ -76,14 +76,14 @@ helper methods.
    in each framework that you target.
 * Add the following lines to your csproj:
 
+<!-- markdownlint-disable MD013 -->
 ```xml
 <ItemGroup>
-  <AdditionalFiles
-Include=".publicApi\$(TargetFramework)\PublicAPI.Shipped.txt" />
-  <AdditionalFiles
-Include=".publicApi\$(TargetFramework)\PublicAPI.Unshipped.txt" />
+  <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Shipped.txt" />
+  <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Unshipped.txt" />
 </ItemGroup>
 ```
+<!-- markdownlint-enable MD013 -->
 
 * Use
    [IntelliSense](https://docs.microsoft.com/visualstudio/ide/using-intellisense)

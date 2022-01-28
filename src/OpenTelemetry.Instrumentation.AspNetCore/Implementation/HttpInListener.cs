@@ -19,11 +19,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+#if !NETSTANDARD2_0
 using System.Runtime.CompilerServices;
+#endif
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Internal;
+#if !NETSTANDARD2_0
 using OpenTelemetry.Instrumentation.GrpcNetClient;
+#endif
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
@@ -35,6 +40,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+        private const string DiagnosticSourceName = "Microsoft.AspNetCore";
         private const string UnknownHostName = "UNKNOWN-HOST";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
         private readonly PropertyFetcher<HttpContext> startContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
@@ -43,14 +49,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new PropertyFetcher<object>("actionDescriptor");
         private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new PropertyFetcher<object>("AttributeRouteInfo");
         private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new PropertyFetcher<string>("Template");
-        private readonly bool hostingSupportsW3C;
         private readonly AspNetCoreInstrumentationOptions options;
 
-        public HttpInListener(string name, AspNetCoreInstrumentationOptions options)
-            : base(name)
+        public HttpInListener(AspNetCoreInstrumentationOptions options)
+            : base(DiagnosticSourceName)
         {
-            this.hostingSupportsW3C = typeof(HttpRequest).Assembly.GetName().Version.Major >= 3;
-            this.options = options ?? throw new ArgumentNullException(nameof(options));
+            Guard.ThrowIfNull(options, nameof(options));
+
+            this.options = options;
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
@@ -81,7 +87,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // Ensure context extraction irrespective of sampling decision
             var request = context.Request;
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
-            if (!this.hostingSupportsW3C || !(textMapPropagator is TraceContextPropagator))
+            if (!(textMapPropagator is TraceContextPropagator))
             {
                 var ctx = textMapPropagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
@@ -105,10 +111,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     activity = newOne;
                 }
 
-                if (ctx.Baggage != default)
-                {
-                    Baggage.Current = ctx.Baggage;
-                }
+                Baggage.Current = ctx.Baggage;
             }
 
             // enrich Activity from payload only if sampling decision
@@ -151,7 +154,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
-                activity.SetTag(SpanAttributeConstants.HttpPathKey, path);
+                activity.SetTag(SemanticConventions.AttributeHttpTarget, path);
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
 
                 var userAgent = request.Headers["User-Agent"].FirstOrDefault();
@@ -186,17 +189,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
-#if NETSTANDARD2_1 || NETCOREAPP3_1 || NET5_0
+#if !NETSTANDARD2_0
                 if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
                 {
                     AddGrpcAttributes(activity, grpcMethod, context);
                 }
-                else
+                else if (activity.GetStatus().StatusCode == StatusCode.Unset)
                 {
-                    if (activity.GetStatus().StatusCode == StatusCode.Unset)
-                    {
-                        activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
-                    }
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
                 }
 #else
                 if (activity.GetStatus().StatusCode == StatusCode.Unset)
@@ -232,6 +232,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // If yes, then we need to store the asp.net core activity inside
                 // the one created by the instrumentation.
                 // And retrieve it here, and set it to Current.
+            }
+
+            var textMapPropagator = Propagators.DefaultTextMapPropagator;
+            if (!(textMapPropagator is TraceContextPropagator))
+            {
+                Baggage.Current = default;
             }
         }
 
@@ -327,7 +333,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             return builder.ToString();
         }
 
-#if NETSTANDARD2_1 || NETCOREAPP3_1 || NET5_0
+#if !NETSTANDARD2_0
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
         {

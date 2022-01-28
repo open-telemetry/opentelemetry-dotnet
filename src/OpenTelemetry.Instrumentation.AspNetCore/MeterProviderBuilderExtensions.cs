@@ -14,8 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using OpenTelemetry.Instrumentation.AspNetCore;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
@@ -32,10 +32,7 @@ namespace OpenTelemetry.Metrics
         public static MeterProviderBuilder AddAspNetCoreInstrumentation(
             this MeterProviderBuilder builder)
         {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.ThrowIfNull(builder, nameof(builder));
 
             // TODO: Implement an IDeferredMeterProviderBuilder
 
@@ -46,7 +43,7 @@ namespace OpenTelemetry.Metrics
             //   EnableGrpcAspNetCoreSupport - this instrumentation will also need to also handle gRPC requests
 
             var instrumentation = new AspNetCoreMetrics();
-            builder.AddSource(AspNetCoreMetrics.InstrumentationName);
+            builder.AddMeter(AspNetCoreMetrics.InstrumentationName);
             return builder.AddInstrumentation(() => instrumentation);
         }
     }

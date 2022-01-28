@@ -26,7 +26,7 @@ option go_package = "github.com/open-telemetry/opentelemetry-proto/gen/go/common
 // object containing arrays, key-value lists and primitives.
 message AnyValue {
   // The value is one of the listed fields. It is valid for all values to be unspecified
-  // in which case this AnyValue is considered to be "null".
+  // in which case this AnyValue is considered to be "empty".
   oneof value {
     string string_value = 1;
     bool bool_value = 2;

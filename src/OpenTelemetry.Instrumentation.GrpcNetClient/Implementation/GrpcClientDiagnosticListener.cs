@@ -24,7 +24,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
 {
-    internal class GrpcClientDiagnosticListener : ListenerHandler
+    internal sealed class GrpcClientDiagnosticListener : ListenerHandler
     {
         internal static readonly AssemblyName AssemblyName = typeof(GrpcClientDiagnosticListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;

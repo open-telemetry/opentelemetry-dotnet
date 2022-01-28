@@ -15,8 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests
@@ -24,101 +22,114 @@ namespace OpenTelemetry.Metrics.Tests
     public class AggregatorTest
     {
         [Fact]
-        public void HistogramDistributeToAllBuckets()
+        public void HistogramDistributeToAllBucketsDefault()
         {
-            using var meter = new Meter("TestMeter", "0.0.1");
+            var histogramPoint = new MetricPoint(AggregationType.Histogram, DateTimeOffset.Now, null, null, Metric.DefaultHistogramBounds);
+            histogramPoint.Update(-1);
+            histogramPoint.Update(0);
+            histogramPoint.Update(2);
+            histogramPoint.Update(5);
+            histogramPoint.Update(8);
+            histogramPoint.Update(10);
+            histogramPoint.Update(11);
+            histogramPoint.Update(25);
+            histogramPoint.Update(40);
+            histogramPoint.Update(50);
+            histogramPoint.Update(70);
+            histogramPoint.Update(75);
+            histogramPoint.Update(99);
+            histogramPoint.Update(100);
+            histogramPoint.Update(246);
+            histogramPoint.Update(250);
+            histogramPoint.Update(499);
+            histogramPoint.Update(500);
+            histogramPoint.Update(999);
+            histogramPoint.Update(1000);
+            histogramPoint.Update(1001);
+            histogramPoint.Update(10000000);
+            histogramPoint.TakeSnapshot(true);
 
-            var hist = new HistogramMetricAggregator("test", "desc", "1", meter, DateTimeOffset.UtcNow, new KeyValuePair<string, object>[0]);
+            var count = histogramPoint.GetHistogramCount();
 
-            hist.Update<long>(-1);
-            hist.Update<long>(0);
-            hist.Update<long>(5);
-            hist.Update<long>(10);
-            hist.Update<long>(25);
-            hist.Update<long>(50);
-            hist.Update<long>(75);
-            hist.Update<long>(100);
-            hist.Update<long>(250);
-            hist.Update<long>(500);
-            hist.Update<long>(1000);
-            var metric = hist.Collect(DateTimeOffset.UtcNow, false);
+            Assert.Equal(22, count);
 
-            Assert.NotNull(metric);
-            Assert.IsType<HistogramMetric>(metric);
-
-            if (metric is HistogramMetric agg)
+            int actualCount = 0;
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
             {
-                int len = 0;
-                foreach (var bucket in agg.Buckets)
-                {
-                    Assert.Equal(1, bucket.Count);
-                    len++;
-                }
-
-                Assert.Equal(11, len);
+                Assert.Equal(2, histogramMeasurement.BucketCount);
+                actualCount++;
             }
         }
 
         [Fact]
-        public void HistogramCustomBoundaries()
+        public void HistogramDistributeToAllBucketsCustom()
         {
-            using var meter = new Meter("TestMeter", "0.0.1");
+            var boundaries = new double[] { 10, 20 };
+            var histogramPoint = new MetricPoint(AggregationType.Histogram, DateTimeOffset.Now, null, null, boundaries);
 
-            var hist = new HistogramMetricAggregator("test", "desc", "1", meter, DateTimeOffset.UtcNow, new KeyValuePair<string, object>[0], new double[] { 0 });
+            // 5 recordings <=10
+            histogramPoint.Update(-10);
+            histogramPoint.Update(0);
+            histogramPoint.Update(1);
+            histogramPoint.Update(9);
+            histogramPoint.Update(10);
 
-            hist.Update<long>(-1);
-            hist.Update<long>(0);
-            var metric = hist.Collect(DateTimeOffset.UtcNow, false);
+            // 2 recordings >10, <=20
+            histogramPoint.Update(11);
+            histogramPoint.Update(19);
 
-            Assert.NotNull(metric);
-            Assert.IsType<HistogramMetric>(metric);
+            histogramPoint.TakeSnapshot(true);
 
-            if (metric is HistogramMetric agg)
+            var count = histogramPoint.GetHistogramCount();
+            var sum = histogramPoint.GetHistogramSum();
+
+            // Sum of all recordings
+            Assert.Equal(40, sum);
+
+            // Count  = # of recordings
+            Assert.Equal(7, count);
+
+            int index = 0;
+            int actualCount = 0;
+            var expectedBucketCounts = new long[] { 5, 2, 0 };
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
             {
-                int len = 0;
-                foreach (var bucket in agg.Buckets)
-                {
-                    Assert.Equal(1, bucket.Count);
-                    len++;
-                }
-
-                Assert.Equal(2, len);
+                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+                index++;
+                actualCount++;
             }
+
+            Assert.Equal(boundaries.Length + 1, actualCount);
         }
 
         [Fact]
-        public void HistogramWithEmptyBuckets()
+        public void HistogramWithOnlySumCount()
         {
-            using var meter = new Meter("TestMeter", "0.0.1");
+            var boundaries = new double[] { };
+            var histogramPoint = new MetricPoint(AggregationType.HistogramSumCount, DateTimeOffset.Now, null, null, boundaries);
 
-            var hist = new HistogramMetricAggregator("test", "desc", "1", meter, DateTimeOffset.UtcNow, new KeyValuePair<string, object>[0], new double[] { 0, 5, 10 });
+            histogramPoint.Update(-10);
+            histogramPoint.Update(0);
+            histogramPoint.Update(1);
+            histogramPoint.Update(9);
+            histogramPoint.Update(10);
+            histogramPoint.Update(11);
+            histogramPoint.Update(19);
 
-            hist.Update<long>(-3);
-            hist.Update<long>(-2);
-            hist.Update<long>(-1);
-            hist.Update<long>(6);
-            hist.Update<long>(7);
-            hist.Update<long>(12);
-            var metric = hist.Collect(DateTimeOffset.UtcNow, false);
+            histogramPoint.TakeSnapshot(true);
 
-            Assert.NotNull(metric);
-            Assert.IsType<HistogramMetric>(metric);
+            var count = histogramPoint.GetHistogramCount();
+            var sum = histogramPoint.GetHistogramSum();
 
-            if (metric is HistogramMetric agg)
-            {
-                var expectedCounts = new int[] { 3, 0, 2, 1 };
-                int len = 0;
-                foreach (var bucket in agg.Buckets)
-                {
-                    if (len < expectedCounts.Length)
-                    {
-                        Assert.Equal(expectedCounts[len], bucket.Count);
-                        len++;
-                    }
-                }
+            // Sum of all recordings
+            Assert.Equal(40, sum);
 
-                Assert.Equal(4, len);
-            }
+            // Count  = # of recordings
+            Assert.Equal(7, count);
+
+            // There should be no enumeration of BucketCounts and ExplicitBounds for HistogramSumCount
+            var enumerator = histogramPoint.GetHistogramBuckets().GetEnumerator();
+            Assert.False(enumerator.MoveNext());
         }
     }
 }

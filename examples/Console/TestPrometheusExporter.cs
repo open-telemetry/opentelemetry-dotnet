@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,60 +24,78 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
-namespace Examples.Console
+namespace Examples.Console;
+
+internal class TestPrometheusExporter
 {
-    internal class TestPrometheusExporter
+    private static readonly Meter MyMeter = new Meter("MyMeter");
+    private static readonly Meter MyMeter2 = new Meter("MyMeter2");
+    private static readonly Counter<double> Counter = MyMeter.CreateCounter<double>("myCounter", description: "A counter for demonstration purpose.");
+    private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("myHistogram");
+    private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());
+
+    internal static object Run(int port)
     {
-        private static readonly Meter MyMeter = new Meter("TestMeter", "0.0.1");
-        private static readonly Counter<long> Counter = MyMeter.CreateCounter<long>("counter");
+        /* prometheus.yml
 
-        internal static object Run(int port, int totalDurationInMins)
-        {
-            /*
-            Following is sample prometheus.yml config. Adjust port,interval as needed.
+        global:
+          scrape_interval: 1s
+          evaluation_interval: 1s
 
-            scrape_configs:
-              # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
-              - job_name: 'OpenTelemetryTest'
+        scrape_configs:
+          - job_name: "opentelemetry"
+            static_configs:
+              - targets: ["localhost:9184"]
+        */
 
-                # metrics_path defaults to '/metrics'
-                # scheme defaults to 'http'.
-
-                static_configs:
-                - targets: ['localhost:9184']
-            */
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddSource("TestMeter")
-                .AddPrometheusExporter(opt => opt.Url = $"http://localhost:{port}/metrics/")
-                .Build();
-
-            using var token = new CancellationTokenSource();
-            Task writeMetricTask = new Task(() =>
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(MyMeter.Name)
+            .AddMeter(MyMeter2.Name)
+            .AddPrometheusExporter(options =>
             {
-                while (!token.IsCancellationRequested)
-                {
-                    Counter.Add(
-                                10,
-                                new KeyValuePair<string, object>("tag1", "value1"),
-                                new KeyValuePair<string, object>("tag2", "value2"));
+                options.StartHttpListener = true;
+                options.HttpListenerPrefixes = new string[] { $"http://localhost:{port}/" };
+                options.ScrapeResponseCacheDurationMilliseconds = 0;
+            })
+            .Build();
 
-                    Counter.Add(
-                                100,
-                                new KeyValuePair<string, object>("tag1", "anothervalue"),
-                                new KeyValuePair<string, object>("tag2", "somethingelse"));
-                    Task.Delay(10).Wait();
-                }
-            });
-            writeMetricTask.Start();
+        var process = Process.GetCurrentProcess();
+        MyMeter.CreateObservableCounter("thread.cpu_time", () => GetThreadCpuTime(process), "ms");
 
-            token.CancelAfter(totalDurationInMins * 60 * 1000);
+        // If the same Instrument name+unit combination happened under different Meters, PrometheusExporter
+        // exporter will output duplicated metric names. Related issues and PRs:
+        // * https://github.com/open-telemetry/opentelemetry-specification/pull/2017
+        // * https://github.com/open-telemetry/opentelemetry-specification/pull/2035
+        // * https://github.com/open-telemetry/opentelemetry-dotnet/pull/2593
+        //
+        // MyMeter2.CreateObservableCounter("thread.cpu_time", () => GetThreadCpuTime(process), "ms");
 
-            System.Console.WriteLine($"OpenTelemetry Prometheus Exporter is making metrics available at http://localhost:{port}/metrics/");
-            System.Console.WriteLine($"Press Enter key to exit now or will exit automatically after {totalDurationInMins} minutes.");
-            System.Console.ReadLine();
-            token.Cancel();
-            System.Console.WriteLine("Exiting...");
-            return null;
+        using var token = new CancellationTokenSource();
+
+        Task.Run(() =>
+        {
+            while (!token.IsCancellationRequested)
+            {
+                Counter.Add(9.9, new("name", "apple"), new("color", "red"));
+                Counter.Add(99.9, new("name", "lemon"), new("color", "yellow"));
+                MyHistogram.Record(ThreadLocalRandom.Value.Next(1, 1500), new("tag1", "value1"), new("tag2", "value2"));
+                Task.Delay(10).Wait();
+            }
+        });
+
+        System.Console.WriteLine($"PrometheusExporter is listening on http://localhost:{port}/metrics/");
+        System.Console.WriteLine($"Press any key to exit...");
+        System.Console.ReadKey();
+        token.Cancel();
+
+        return null;
+    }
+
+    private static IEnumerable<Measurement<double>> GetThreadCpuTime(Process process)
+    {
+        foreach (ProcessThread thread in process.Threads)
+        {
+            yield return new(thread.TotalProcessorTime.TotalMilliseconds, new("ProcessId", process.Id), new("ThreadId", thread.Id));
         }
     }
 }

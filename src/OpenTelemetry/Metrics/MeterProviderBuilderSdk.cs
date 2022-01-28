@@ -14,99 +14,48 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using OpenTelemetry.Resources;
+using System.Text.RegularExpressions;
 
 namespace OpenTelemetry.Metrics
 {
-    internal class MeterProviderBuilderSdk : MeterProviderBuilder
+    internal class MeterProviderBuilderSdk : MeterProviderBuilderBase
     {
-        private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
-        private readonly List<string> meterSources = new List<string>();
-        private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
+        private static readonly Regex InstrumentNameRegex = new Regex(
+            @"^[a-zA-Z][-.\w]{0,62}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        internal MeterProviderBuilderSdk()
+        /// <summary>
+        /// Returns whether the given instrument name is valid according to the specification.
+        /// </summary>
+        /// <remarks>See specification: <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument"/>.</remarks>
+        /// <param name="instrumentName">The instrument name.</param>
+        /// <returns>Boolean indicating if the instrument is valid.</returns>
+        internal static bool IsValidInstrumentName(string instrumentName)
         {
-        }
-
-        internal List<MetricProcessor> MetricProcessors { get; } = new List<MetricProcessor>();
-
-        public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
-        {
-            if (instrumentationFactory == null)
+            if (string.IsNullOrWhiteSpace(instrumentName))
             {
-                throw new ArgumentNullException(nameof(instrumentationFactory));
+                return false;
             }
 
-            this.instrumentationFactories.Add(
-                new InstrumentationFactory(
-                    typeof(TInstrumentation).Name,
-                    "semver:" + typeof(TInstrumentation).Assembly.GetName().Version,
-                    instrumentationFactory));
-
-            return this;
+            return InstrumentNameRegex.IsMatch(instrumentName);
         }
 
-        public override MeterProviderBuilder AddSource(params string[] names)
+        /// <summary>
+        /// Returns whether the given custom view name is valid according to the specification.
+        /// </summary>
+        /// <remarks>See specification: <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument"/>.</remarks>
+        /// <param name="customViewName">The view name.</param>
+        /// <returns>Boolean indicating if the instrument is valid.</returns>
+        internal static bool IsValidViewName(string customViewName)
         {
-            if (names == null)
+            // Only validate the view name in case it's not null. In case it's null, the view name will be the instrument name as per the spec.
+            if (customViewName == null)
             {
-                throw new ArgumentNullException(nameof(names));
+                return true;
             }
 
-            foreach (var name in names)
-            {
-                if (string.IsNullOrWhiteSpace(name))
-                {
-                    throw new ArgumentException($"{nameof(names)} contains null or whitespace string.");
-                }
-
-                this.meterSources.Add(name);
-            }
-
-            return this;
+            return InstrumentNameRegex.IsMatch(customViewName);
         }
 
-        internal MeterProviderBuilderSdk AddMetricProcessor(MetricProcessor processor)
-        {
-            if (this.MetricProcessors.Count >= 1)
-            {
-                throw new InvalidOperationException("Only one MetricProcessor is allowed.");
-            }
-
-            this.MetricProcessors.Add(processor);
-            return this;
-        }
-
-        internal MeterProviderBuilderSdk SetResourceBuilder(ResourceBuilder resourceBuilder)
-        {
-            this.resourceBuilder = resourceBuilder ?? throw new ArgumentNullException(nameof(resourceBuilder));
-            return this;
-        }
-
-        internal MeterProvider Build()
-        {
-            return new MeterProviderSdk(
-                this.resourceBuilder.Build(),
-                this.meterSources,
-                this.instrumentationFactories,
-                this.MetricProcessors.ToArray());
-        }
-
-        // TODO: This is copied from TracerProviderBuilderSdk. Move to common location.
-        internal readonly struct InstrumentationFactory
-        {
-            public readonly string Name;
-            public readonly string Version;
-            public readonly Func<object> Factory;
-
-            internal InstrumentationFactory(string name, string version, Func<object> factory)
-            {
-                this.Name = name;
-                this.Version = version;
-                this.Factory = factory;
-            }
-        }
+        internal MeterProvider BuildSdk() => this.Build();
     }
 }

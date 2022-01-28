@@ -50,5 +50,35 @@ namespace OpenTelemetry.Instrumentation.Tests
             var fetch = new PropertyFetcher<string>("null");
             Assert.False(fetch.TryFetch(null, out _));
         }
+
+        [Fact]
+        public void FetchPropertyMultiplePayloadTypes()
+        {
+            var fetch = new PropertyFetcher<string>("Property");
+
+            Assert.True(fetch.TryFetch(new PayloadTypeA(), out string propertyValue));
+            Assert.Equal("A", propertyValue);
+
+            Assert.True(fetch.TryFetch(new PayloadTypeB(), out propertyValue));
+            Assert.Equal("B", propertyValue);
+
+            Assert.False(fetch.TryFetch(new PayloadTypeC(), out _));
+
+            Assert.False(fetch.TryFetch(null, out _));
+        }
+
+        private class PayloadTypeA
+        {
+            public string Property { get; set; } = "A";
+        }
+
+        private class PayloadTypeB
+        {
+            public string Property { get; set; } = "B";
+        }
+
+        private class PayloadTypeC
+        {
+        }
     }
 }

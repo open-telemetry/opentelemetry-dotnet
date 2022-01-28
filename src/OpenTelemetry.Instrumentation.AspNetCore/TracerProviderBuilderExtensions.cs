@@ -17,6 +17,7 @@
 using System;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
@@ -35,10 +36,7 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             Action<AspNetCoreInstrumentationOptions> configureAspNetCoreInstrumentationOptions = null)
         {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
+            Guard.ThrowIfNull(builder, nameof(builder));
 
             if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
             {
@@ -51,13 +49,24 @@ namespace OpenTelemetry.Trace
             return AddAspNetCoreInstrumentation(builder, new AspNetCoreInstrumentationOptions(), configureAspNetCoreInstrumentationOptions);
         }
 
-        private static TracerProviderBuilder AddAspNetCoreInstrumentation(TracerProviderBuilder builder, AspNetCoreInstrumentationOptions options, Action<AspNetCoreInstrumentationOptions> configure = null)
+        internal static TracerProviderBuilder AddAspNetCoreInstrumentation(
+            this TracerProviderBuilder builder,
+            AspNetCoreInstrumentation instrumentation)
         {
-            configure?.Invoke(options);
-            var instrumentation = new AspNetCoreInstrumentation(options);
             builder.AddSource(HttpInListener.ActivitySourceName);
             builder.AddLegacySource(HttpInListener.ActivityOperationName); // for the activities created by AspNetCore
             return builder.AddInstrumentation(() => instrumentation);
+        }
+
+        private static TracerProviderBuilder AddAspNetCoreInstrumentation(
+            TracerProviderBuilder builder,
+            AspNetCoreInstrumentationOptions options,
+            Action<AspNetCoreInstrumentationOptions> configure = null)
+        {
+            configure?.Invoke(options);
+            return AddAspNetCoreInstrumentation(
+                builder,
+                new AspNetCoreInstrumentation(new HttpInListener(options)));
         }
     }
 }

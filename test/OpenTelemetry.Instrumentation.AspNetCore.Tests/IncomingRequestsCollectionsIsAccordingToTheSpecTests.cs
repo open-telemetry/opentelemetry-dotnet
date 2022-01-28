@@ -27,8 +27,12 @@ using Moq;
 using OpenTelemetry.Trace;
 #if NETCOREAPP3_1
 using TestApp.AspNetCore._3._1;
-#else
+#endif
+#if NET5_0
 using TestApp.AspNetCore._5._0;
+#endif
+#if NET6_0
+using TestApp.AspNetCore._6._0;
 #endif
 using Xunit;
 
@@ -104,7 +108,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
             Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
-            Assert.Equal(urlPath, activity.GetTagValue(SpanAttributeConstants.HttpPathKey));
+            Assert.Equal(urlPath, activity.GetTagValue(SemanticConventions.AttributeHttpTarget));
             Assert.Equal($"http://localhost{urlPath}", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
             Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
 

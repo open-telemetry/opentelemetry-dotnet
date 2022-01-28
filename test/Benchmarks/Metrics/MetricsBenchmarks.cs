@@ -16,29 +16,39 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet=v0.12.1, OS=Windows 10.0.19043
-Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical cores
-.NET Core SDK=5.0.302
-  [Host]     : .NET Core 3.1.17 (CoreCLR 4.700.21.31506, CoreFX 4.700.21.31502), X64 RyuJIT
-  DefaultJob : .NET Core 3.1.17 (CoreCLR 4.700.21.31506, CoreFX 4.700.21.31502), X64 RyuJIT
+// * Summary *
+
+BenchmarkDotNet=v0.13.1, OS=Windows 10.0.19043.1288 (21H1/May2021Update)
+Intel Xeon CPU E5-1650 v4 3.60GHz, 1 CPU, 12 logical and 6 physical cores
+.NET SDK=6.0.100
+  [Host]     : .NET 6.0.0 (6.0.21.52210), X64 RyuJIT
+  DefaultJob : .NET 6.0.0 (6.0.21.52210), X64 RyuJIT
 
 
-|                    Method | WithSDK |      Mean |     Error |     StdDev |    Median |  Gen 0 | Gen 1 | Gen 2 | Allocated |
-|-------------------------- |-------- |----------:|----------:|-----------:|----------:|-------:|------:|------:|----------:|
-|            CounterHotPath |   False |  18.48 ns |  0.366 ns |   0.570 ns |  18.52 ns |      - |     - |     - |         - |
-| CounterWith1LabelsHotPath |   False |  30.25 ns |  1.274 ns |   3.530 ns |  29.14 ns |      - |     - |     - |         - |
-| CounterWith3LabelsHotPath |   False |  82.93 ns |  2.586 ns |   7.124 ns |  81.79 ns |      - |     - |     - |         - |
-| CounterWith5LabelsHotPath |   False | 134.94 ns |  4.756 ns |  13.491 ns | 132.45 ns | 0.0248 |     - |     - |     104 B |
-|            CounterHotPath |    True |  68.58 ns |  1.417 ns |   3.228 ns |  68.40 ns |      - |     - |     - |         - |
-| CounterWith1LabelsHotPath |    True | 192.19 ns |  8.114 ns |  23.151 ns | 184.06 ns |      - |     - |     - |         - |
-| CounterWith3LabelsHotPath |    True | 799.33 ns | 47.442 ns | 136.882 ns | 757.73 ns |      - |     - |     - |         - |
-| CounterWith5LabelsHotPath |    True | 972.16 ns | 45.809 ns | 133.626 ns | 939.95 ns | 0.0553 |     - |     - |     232 B |
+|                    Method | AggregationTemporality |      Mean |     Error |    StdDev |    Median | Allocated |
+|-------------------------- |----------------------- |----------:|----------:|----------:|----------:|----------:|
+|            CounterHotPath |             Cumulative |  19.35 ns |  0.419 ns |  0.946 ns |  19.25 ns |         - |
+| CounterWith1LabelsHotPath |             Cumulative |  97.25 ns |  1.973 ns |  3.657 ns |  96.57 ns |         - |
+| CounterWith3LabelsHotPath |             Cumulative | 467.93 ns |  9.265 ns | 16.228 ns | 466.28 ns |         - |
+| CounterWith5LabelsHotPath |             Cumulative | 746.34 ns | 14.804 ns | 34.014 ns | 749.77 ns |         - |
+| CounterWith6LabelsHotPath |             Cumulative | 858.71 ns | 17.180 ns | 37.711 ns | 855.80 ns |         - |
+| CounterWith7LabelsHotPath |             Cumulative | 972.73 ns | 19.371 ns | 39.130 ns | 970.10 ns |         - |
+|            CounterHotPath |                  Delta |  20.27 ns |  0.415 ns |  0.912 ns |  20.36 ns |         - |
+| CounterWith1LabelsHotPath |                  Delta |  98.39 ns |  1.979 ns |  4.891 ns |  98.67 ns |         - |
+| CounterWith3LabelsHotPath |                  Delta | 483.07 ns |  9.694 ns | 22.850 ns | 478.88 ns |         - |
+| CounterWith5LabelsHotPath |                  Delta | 723.44 ns | 14.472 ns | 24.574 ns | 722.89 ns |         - |
+| CounterWith6LabelsHotPath |                  Delta | 850.73 ns | 16.661 ns | 19.187 ns | 850.21 ns |         - |
+| CounterWith7LabelsHotPath |                  Delta | 946.01 ns | 18.713 ns | 43.742 ns | 930.80 ns |         - |
+
 */
 
 namespace Benchmarks.Metrics
@@ -52,20 +62,24 @@ namespace Benchmarks.Metrics
         private Random random = new Random();
         private string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
 
-        [Params(false, true)]
-        public bool WithSDK { get; set; }
+        [Params(AggregationTemporality.Cumulative, AggregationTemporality.Delta)]
+        public AggregationTemporality AggregationTemporality { get; set; }
 
         [GlobalSetup]
         public void Setup()
         {
-            if (this.WithSDK)
-            {
-                this.provider = Sdk.CreateMeterProviderBuilder()
-                    .AddSource("TestMeter") // All instruments from this meter are enabled.
-                    .Build();
-            }
+            this.meter = new Meter(Utils.GetCurrentMethodName());
 
-            this.meter = new Meter("TestMeter");
+            var exportedItems = new List<Metric>();
+            var reader = new PeriodicExportingMetricReader(new InMemoryExporter<Metric>(exportedItems), 1000)
+            {
+                Temporality = this.AggregationTemporality,
+            };
+            this.provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(this.meter.Name) // All instruments from this meter are enabled.
+                .AddReader(reader)
+                .Build();
+
             this.counter = this.meter.CreateCounter<long>("counter");
         }
 
@@ -101,12 +115,46 @@ namespace Benchmarks.Metrics
         [Benchmark]
         public void CounterWith5LabelsHotPath()
         {
-            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 2)]);
-            var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[this.random.Next(0, 2)]);
-            var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[this.random.Next(0, 5)]);
-            var tag4 = new KeyValuePair<string, object>("DimName4", this.dimensionValues[this.random.Next(0, 5)]);
-            var tag5 = new KeyValuePair<string, object>("DimName4", this.dimensionValues[this.random.Next(0, 10)]);
-            this.counter?.Add(100, tag1, tag2, tag3, tag4, tag5);
+            var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[this.random.Next(0, 10)] },
+            };
+            this.counter?.Add(100, tags);
+        }
+
+        [Benchmark]
+        public void CounterWith6LabelsHotPath()
+        {
+            var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
+            };
+            this.counter?.Add(100, tags);
+        }
+
+        [Benchmark]
+        public void CounterWith7LabelsHotPath()
+        {
+            var tags = new TagList
+            {
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName7", this.dimensionValues[this.random.Next(0, 1)] },
+            };
+            this.counter?.Add(100, tags);
         }
     }
 }

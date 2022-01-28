@@ -20,12 +20,14 @@ using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Trace;
-#if NETCOREAPP2_1
-using TestApp.AspNetCore._2._1;
-#elif NETCOREAPP3_1
+#if NETCOREAPP3_1
 using TestApp.AspNetCore._3._1;
-#else
+#endif
+#if NET5_0
 using TestApp.AspNetCore._5._0;
+#endif
+#if NET6_0
+using TestApp.AspNetCore._6._0;
 #endif
 using Xunit.Abstractions;
 
