@@ -1,7 +1,6 @@
 # Quick start on exporting metrics to Prometheus/Grafana
 
-- [Export metrics using Prometheus
-  Exporter](#export-metrics-using-prometheus-exporter)
+- [Export metrics from the application](#export-metrics-from-the-application)
   - [Check results in the browser](#check-results-in-the-browser)
 - [Collect metrics using Prometheus](#collect-metrics-using-prometheus)
   - [Configuration](#configuration)
@@ -9,7 +8,7 @@
   - [View results in Prometheus](#view-results-in-prometheus)
 - [Explore metrics using Grafana](#explore-metrics-using-grafana)
 
-## Export metrics using Prometheus Exporter
+## Export metrics from the application
 
 It is highly recommended to go over the [getting-started](../getting-started/README.md)
 doc before following along this document.
