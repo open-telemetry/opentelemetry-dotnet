@@ -448,7 +448,7 @@ namespace OpenTelemetry.Metrics.Tests
             ValidateMetricPointTags(tags3, metricPoint3.Tags);
         }
 
-        [Theory]
+        [Theory(Skip = "Known issue.")]
         [InlineData(true)]
         [InlineData(false)]
         public void ObservableCounterSpatialAggregationTest(bool exportDelta)
@@ -506,20 +506,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             // This will fail, as SDK is not "spatially" aggregating the
             // requestCount
-            // Assert.Equal(30, metricPoint1.GetSumLong());
-        }
-
-        private static void ValidateMetricPointTags(List<KeyValuePair<string, object>> expectedTags, ReadOnlyTagCollection actualTags)
-        {
-            int tagIndex = 0;
-            foreach (var tag in actualTags)
-            {
-                Assert.Equal(expectedTags[tagIndex].Key, tag.Key);
-                Assert.Equal(expectedTags[tagIndex].Value, tag.Value);
-                tagIndex++;
-            }
-
-            Assert.Equal(expectedTags.Count, tagIndex);
+            Assert.Equal(30, metricPoint1.GetSumLong());
         }
 
         [Theory]
@@ -936,6 +923,19 @@ namespace OpenTelemetry.Metrics.Tests
             var counter = meter.CreateCounter<long>("counter");
 
             counter.Add(10, new KeyValuePair<string, object>("key", "value"));
+        }
+
+        private static void ValidateMetricPointTags(List<KeyValuePair<string, object>> expectedTags, ReadOnlyTagCollection actualTags)
+        {
+            int tagIndex = 0;
+            foreach (var tag in actualTags)
+            {
+                Assert.Equal(expectedTags[tagIndex].Key, tag.Key);
+                Assert.Equal(expectedTags[tagIndex].Value, tag.Value);
+                tagIndex++;
+            }
+
+            Assert.Equal(expectedTags.Count, tagIndex);
         }
 
         private static long GetLongSum(List<Metric> metrics)
