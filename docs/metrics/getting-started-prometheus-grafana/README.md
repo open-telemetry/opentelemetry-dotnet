@@ -1,4 +1,4 @@
-# Quick start on exporting metrics to Prometheus/Grafana
+# Getting Started with Prometheus and Grafana
 
 - [Export metrics from the application](#export-metrics-from-the-application)
   - [Check results in the browser](#check-results-in-the-browser)
@@ -75,16 +75,13 @@ After the above modifications, now our `Program.cs` should look like [this](./Pr
 ### Check results in the browser
 
 Start the application and keep it running. Now we should be able to see the
-metrics at [http://localhost:9464/metrics](http://localhost:9464/metrics).
+metrics at [http://localhost:9464/metrics](http://localhost:9464/metrics) from a
+web browser:
 
-Check the output metrics with your favorite browser:
+![Browser UI](https://user-images.githubusercontent.com/17327289/151633547-736c6d91-62d2-4e66-a53f-2e16c44bfabc.png)
 
-![MyFruitCounter output:](https://user-images.githubusercontent.com/16979322/150242010-8bde0002-44a5-4c84-94e6-3e0ee8a6ea4f.PNG)
-
-Now, we understand how we can configure Opentelemetry `PrometheusExporter` to
-export metrics the endpoint we specified. Next, we are going to learn about how
-to use Prometheus and Grafana to view/query the metrics
-visualization.
+Now, we understand how we can configure `PrometheusExporter` to export metrics.
+Next, we are going to learn about how to use Prometheus to collect the metrics.
 
 ## Collect metrics using Prometheus
 
@@ -99,26 +96,16 @@ folder, named `prometheus.yml`.
 
 Let's create a new file in the same location as where `prometheus.yml` locates,
 and named the new file as `otel.yml` for this exercise. Then, copy and paste the
-entire content below into the otel.yml file we have created just now.
+entire content below into the `otel.yml` file we have created just now.
 
 ```yaml
 global:
   scrape_interval: 10s
-  scrape_timeout: 10s
   evaluation_interval: 10s
 scrape_configs:
-- job_name: MyOpenTelemetryDemo
-  honor_timestamps: true
-  scrape_interval: 1s
-  scrape_timeout: 1s
-  metrics_path: /metrics
-  scheme: http
-  follow_redirects: true
-  static_configs:
-  - targets:
-  # set the target to the location where metrics will be exposed by
-  # the OpenTelemetry Prometheus Exporter
-    - localhost:9464
+  - job_name: "otel"
+    static_configs:
+      - targets: ["localhost:9464"]
 ```
 
 ### Start Prometheus
@@ -127,7 +114,7 @@ Follow the instructions from
 [starting-prometheus](https://prometheus.io/docs/introduction/first_steps/#starting-prometheus)
 to start the Prometheus server and verify it has been started successfully.
 
-Please note that we will need pass in otel.yml file as the argument:
+Please note that we will need pass in `otel.yml` file as the argument:
 
 ```console
 ./prometheus --config.file=otel.yml
@@ -136,12 +123,13 @@ Please note that we will need pass in otel.yml file as the argument:
 ### View results in Prometheus
 
 To use the graphical interface for viewing our metrics with Prometheus, navigate
-to "http://localhost:9090/graph", and type `MyFruitCounter` in the expression
-bar of the UI; finally, click the execute button.
+to [http://localhost:9090/graph](http://localhost:9090/graph), and type
+`MyFruitCounter` in the expression bar of the UI; finally, click the execute
+button.
 
 We should be able to see the following chart from the browser:
 
-![Prometheus Graph:](https://user-images.githubusercontent.com/16979322/150242083-65b84f25-c95f-4e9b-a64f-699ad8816602.PNG)
+![Prometheus UI](https://user-images.githubusercontent.com/17327289/151636225-6e4ce4c7-09f3-4996-8ca5-d404a88d9195.png)
 
 From the legend, we can see that the `instance` name and the `job` name are the
 values we have set in `otel.yml`.
@@ -156,10 +144,9 @@ called Grafana, which has powerful visualizations for the metrics.
 
 [Install Grafana](https://grafana.com/docs/grafana/latest/installation/).
 
-For Windows users, after finishing installation, start the standalone Grafana
-server, grafana-server.exe located in the bin folder. Then, use the browser to
-navigate to the default port of Grafana `3000`. We can confirm the port number
-with the logs from the command line after starting the Grafana server as well.
+Start the standalone Grafana server (`grafana-server.exe` or
+`./bin/grafana-server`, depending on the operating system). Then, use the
+browser to navigate to [http://localhost:3000/](http://localhost:3000/).
 
 Follow the instructions in the Grafana getting started
 [doc](https://grafana.com/docs/grafana/latest/getting-started/getting-started/#step-2-log-in)
@@ -173,9 +160,10 @@ Feel free to find some handy PromQL
 [here](https://promlabs.com/promql-cheat-sheet/).
 
 In the below example, the query targets to find out what is the per-second rate
-of increace of myFruitCounter over the last 30 minutes:
+of increase of myFruitCounter over the past 5 minutes:
 
-![Grafana dashboard with myFruitCounter metrics rate:](https://user-images.githubusercontent.com/16979322/150242148-f35165a3-ab34-4e8c-88a1-4995ceeb08e2.PNG)
+![Grafana
+UI](https://user-images.githubusercontent.com/17327289/151636769-138ecb4f-b44f-477b-88eb-247fc4340252.png)
 
 ## Learn more
 
