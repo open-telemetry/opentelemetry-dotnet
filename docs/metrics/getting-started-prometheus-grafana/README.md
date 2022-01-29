@@ -1,4 +1,4 @@
-# Quick start on exporting metrics to Prometheus/Grafana
+# Getting Started with Prometheus and Grafana
 
 - [Export metrics from the application](#export-metrics-from-the-application)
   - [Check results in the browser](#check-results-in-the-browser)
