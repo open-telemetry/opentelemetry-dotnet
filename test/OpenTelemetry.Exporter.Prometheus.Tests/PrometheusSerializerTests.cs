@@ -266,11 +266,12 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             provider.ForceFlush();
 
+            // Note that only the final value from the list is kept
             var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
             Assert.Matches(
                 ("^"
                     + "# TYPE observable_counter counter\n"
-                    + "observable_counter 100 \\d+\n"
+                    + "observable_counter 100 \\d+\n" 
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
