@@ -26,16 +26,9 @@ namespace OpenTelemetry.Internal
     internal class CircularBuffer<T>
         where T : class
     {
-        private static readonly bool ShouldYieldWhileSpinning;
-
         private readonly T[] trait;
         private long head;
         private long tail;
-
-        static CircularBuffer()
-        {
-            ShouldYieldWhileSpinning = DetectShouldYieldWhileSpinning();
-        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CircularBuffer{T}"/> class.
@@ -88,7 +81,7 @@ namespace OpenTelemetry.Internal
         {
             Guard.ThrowIfNull(value, nameof(value));
 
-            var shouldYield = ShouldYieldWhileSpinning;
+            var spinWait = new SpinWait();
             while (true)
             {
                 var tailSnapshot = this.tail;
@@ -102,10 +95,7 @@ namespace OpenTelemetry.Internal
                 var head = Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot);
                 if (head != headSnapshot)
                 {
-                    if (shouldYield)
-                    {
-                        Thread.Yield();
-                    }
+                    spinWait.SpinOnce();
 
                     continue;
                 }
@@ -136,7 +126,7 @@ namespace OpenTelemetry.Internal
 
             var spinCountDown = maxSpinCount;
 
-            var shouldYield = ShouldYieldWhileSpinning;
+            var spinWait = new SpinWait();
             while (true)
             {
                 var tailSnapshot = this.tail;
@@ -155,10 +145,7 @@ namespace OpenTelemetry.Internal
                         return false; // exceeded maximum spin count
                     }
 
-                    if (shouldYield)
-                    {
-                        Thread.Yield();
-                    }
+                    spinWait.SpinOnce();
 
                     continue;
                 }
@@ -194,12 +181,6 @@ namespace OpenTelemetry.Internal
                 this.tail++;
                 return value;
             }
-        }
-
-        private static bool DetectShouldYieldWhileSpinning()
-        {
-            var isRunningOnSingleCore = Environment.ProcessorCount == 1;
-            return isRunningOnSingleCore;
         }
     }
 }
