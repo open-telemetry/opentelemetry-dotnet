@@ -160,7 +160,7 @@ Feel free to find some handy PromQL
 [here](https://promlabs.com/promql-cheat-sheet/).
 
 In the below example, the query targets to find out what is the per-second rate
-of increace of myFruitCounter over the past 5 minutes:
+of increase of myFruitCounter over the past 5 minutes:
 
 ![Grafana
 UI](https://user-images.githubusercontent.com/17327289/151636769-138ecb4f-b44f-477b-88eb-247fc4340252.png)
