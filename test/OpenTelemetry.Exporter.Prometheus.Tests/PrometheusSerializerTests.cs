@@ -187,6 +187,134 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
+        public void AsynchronousCounter_SingleValue()
+        {
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#asynchronous-counter
+
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            int i = 0;
+            var counterLong = meter.CreateObservableCounter(
+                "observable-counter",
+                () => ++i * 10);
+
+            Assert.Empty(metrics);
+
+            provider.ForceFlush();
+            Assert.Single(metrics); // verify that List<metrics> contains 1 item
+            Assert.Equal(1, i); // verify that the callback is invoked everytime we call Flush.
+            Assert.Equal(10, GetSumLong(metrics));
+
+            metrics.Clear();
+            provider.ForceFlush();
+            Assert.Single(metrics);
+            Assert.Equal(2, i);
+            Assert.Equal(20, GetSumLong(metrics));
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE observable_counter counter\n"
+                    + "observable_counter \\d+ \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
+        public void AsynchronousCounter_Measurement_SingleValue()
+        {
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#asynchronous-counter
+
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            int i = 0;
+            var counterLong = meter.CreateObservableCounter(
+                "observable-counter",
+                () => new Measurement<long>(++i * 10));
+
+            Assert.Empty(metrics);
+
+            provider.ForceFlush();
+            Assert.Single(metrics); // verify that List<metrics> contains 1 item
+            Assert.Equal(1, i); // verify that the callback is invoked everytime we call Flush.
+            Assert.Equal(10, GetSumLong(metrics));
+
+            metrics.Clear();
+            provider.ForceFlush();
+            Assert.Single(metrics);
+            Assert.Equal(2, i);
+            Assert.Equal(20, GetSumLong(metrics));
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE observable_counter counter\n"
+                    + "observable_counter \\d+ \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
+        public void AsynchronousCounter_Measurement_MultipleValues()
+        {
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#asynchronous-counter
+
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            int i = 0;
+            var counterLong = meter.CreateObservableCounter(
+                "observable-counter",
+                () => new List<Measurement<long>>()
+                    {
+                        new Measurement<long>(++i),
+                        new Measurement<long>(i * 10),
+                        new Measurement<long>(i * 100),
+                    });
+
+            Assert.Empty(metrics);
+
+            provider.ForceFlush();
+            Assert.Single(metrics); // verify that List<metrics> contains 1 item
+            Assert.Equal(1, i); // verify that the callback is invoked everytime we call Flush.
+            Assert.Equal(100, GetSumLong(metrics)); // only the last value in the list is kept.
+
+            metrics.Clear();
+            provider.ForceFlush();
+            Assert.Single(metrics);
+            Assert.Equal(2, i);
+            Assert.Equal(200, GetSumLong(metrics));
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE observable_counter counter\n"
+                    + "observable_counter \\d+ \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
         public void HistogramZeroDimension()
         {
             var buffer = new byte[85000];
@@ -381,6 +509,21 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     + "test_histogram_count 3 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        private static long GetSumLong(List<Metric> metrics)
+        {
+            long sum = 0;
+            foreach (var metric in metrics)
+            {
+                Assert.True(metric.MetricType.IsSum());
+                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                {
+                    sum += metricPoint.GetSumLong();
+                }
+            }
+
+            return sum;
         }
     }
 }
