@@ -209,7 +209,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             Assert.Matches(
                 ("^"
                     + "# TYPE observable_counter counter\n"
-                    + "observable_counter \\d+ \\d+\n"
+                    + "observable_counter 10 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
@@ -237,7 +237,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             Assert.Matches(
                 ("^"
                     + "# TYPE observable_counter counter\n"
-                    + "observable_counter \\d+ \\d+\n"
+                    + "observable_counter 10 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
@@ -270,7 +270,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             Assert.Matches(
                 ("^"
                     + "# TYPE observable_counter counter\n"
-                    + "observable_counter \\d+ \\d+\n"
+                    + "observable_counter 100 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
