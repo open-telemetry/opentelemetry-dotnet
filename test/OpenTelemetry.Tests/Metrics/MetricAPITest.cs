@@ -171,21 +171,28 @@ namespace OpenTelemetry.Metrics.Tests
 
             using var meterProvider = meterProviderBuilder.Build();
 
-            // Expecting one metric stream.
             var counterLong = meter.CreateCounter<long>("name1");
+            var anotherCounterSameName = meter.CreateCounter<long>("name1");
+
             counterLong.Add(10);
+            anotherCounterSameName.Add(20);
+            counterLong.Add(10);
+            anotherCounterSameName.Add(20);
+
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Single(exportedItems);
 
-            // The following will be ignored as
-            // metric of same name exists.
-            // Metric stream will remain one.
-            var anotherCounterSameName = meter.CreateCounter<long>("name1");
-            anotherCounterSameName.Add(10);
-            counterLong.Add(10);
-            exportedItems.Clear();
-            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("name1", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            var metricPoint1 = metricPoints[0];
+            Assert.Equal(20, metricPoint1.GetSumLong());
         }
 
         [Theory]
