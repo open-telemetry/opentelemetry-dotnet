@@ -15,9 +15,7 @@
 // </copyright>
 
 using System;
-using System.Buffers;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading;
@@ -171,21 +169,28 @@ namespace OpenTelemetry.Metrics.Tests
 
             using var meterProvider = meterProviderBuilder.Build();
 
-            // Expecting one metric stream.
             var counterLong = meter.CreateCounter<long>("name1");
+            var anotherCounterSameName = meter.CreateCounter<long>("name1");
+
             counterLong.Add(10);
+            anotherCounterSameName.Add(20);
+            counterLong.Add(10);
+            anotherCounterSameName.Add(20);
+
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Single(exportedItems);
 
-            // The following will be ignored as
-            // metric of same name exists.
-            // Metric stream will remain one.
-            var anotherCounterSameName = meter.CreateCounter<long>("name1");
-            anotherCounterSameName.Add(10);
-            counterLong.Add(10);
-            exportedItems.Clear();
-            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("name1", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            var metricPoint1 = metricPoints[0];
+            Assert.Equal(20, metricPoint1.GetSumLong());
         }
 
         [Theory]
@@ -469,6 +474,7 @@ namespace OpenTelemetry.Metrics.Tests
                 })
                 .Build();
 
+            // Export 1
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Single(exportedItems);
             var metric = exportedItems[0];
@@ -491,6 +497,32 @@ namespace OpenTelemetry.Metrics.Tests
 
             var metricPoint3 = metricPoints[2];
             Assert.Equal(10, metricPoint3.GetSumLong());
+            ValidateMetricPointTags(tags3, metricPoint3.Tags);
+
+            // Export 2
+            exportedItems.Clear();
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            metric = exportedItems[0];
+            Assert.Equal("observable-counter", metric.Name);
+            metricPoints.Clear();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Equal(3, metricPoints.Count);
+
+            metricPoint1 = metricPoints[0];
+            Assert.Equal(exportDelta ? 0 : 10, metricPoint1.GetSumLong());
+            ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+            metricPoint2 = metricPoints[1];
+            Assert.Equal(exportDelta ? 0 : 10, metricPoint2.GetSumLong());
+            ValidateMetricPointTags(tags2, metricPoint2.Tags);
+
+            metricPoint3 = metricPoints[2];
+            Assert.Equal(exportDelta ? 0 : 10, metricPoint3.GetSumLong());
             ValidateMetricPointTags(tags3, metricPoint3.Tags);
         }
 
