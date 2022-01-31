@@ -113,16 +113,25 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .AddInMemoryExporter(metrics)
                 .Build();
 
-            var counter = meter.CreateCounter<long>("test_counter");
-            counter.Add(123, new KeyValuePair<string, object>("tagKey", "tagValue"));
+            var tags1 = new List<KeyValuePair<string, object>>();
+            tags1.Add(new("tagKey1", "tagValue1"));
+            meter.CreateObservableGauge(
+                "test_gauge",
+                () =>
+                {
+                    return new List<Measurement<long>>()
+                    {
+                        new Measurement<long>(123, tags1),
+                    };
+                });
 
             provider.ForceFlush();
 
             var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
             Assert.Matches(
                 ("^"
-                    + "# TYPE test_counter counter\n"
-                    + "test_counter{tagKey='tagValue'} 123 \\d+\n"
+                    + "# TYPE test_gauge gauge\n"
+                    + "test_gauge{tagKey1='tagValue1'} 123 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
