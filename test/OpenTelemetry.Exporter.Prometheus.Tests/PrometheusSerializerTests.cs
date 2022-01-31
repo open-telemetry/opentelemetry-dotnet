@@ -113,17 +113,9 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .AddInMemoryExporter(metrics)
                 .Build();
 
-            var tags1 = new List<KeyValuePair<string, object>>();
-            tags1.Add(new("tagKey1", "tagValue1"));
             meter.CreateObservableGauge(
                 "test_gauge",
-                () =>
-                {
-                    return new List<Measurement<long>>()
-                    {
-                        new Measurement<long>(123, tags1),
-                    };
-                });
+                () => new Measurement<long>(123, new KeyValuePair<string, object>("tagKey", "tagValue")));
 
             provider.ForceFlush();
 
@@ -131,7 +123,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             Assert.Matches(
                 ("^"
                     + "# TYPE test_gauge gauge\n"
-                    + "test_gauge{tagKey1='tagValue1'} 123 \\d+\n"
+                    + "test_gauge{tagKey='tagValue'} 123 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
