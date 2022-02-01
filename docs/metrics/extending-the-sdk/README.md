@@ -11,8 +11,8 @@ OpenTelemetry .NET SDK has provided the following built-in metric exporters:
 
 * [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
 * [InMemory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
-* [Prometheus](../../../src/OpenTelemetry.Exporter.Prometheus/README.md)
 * [OpenTelemetryProtocol](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+* [Prometheus](../../../src/OpenTelemetry.Exporter.Prometheus/README.md)
 
 Custom exporters can be implemented to send telemetry data to places which are
 not covered by the built-in exporters:
@@ -21,14 +21,14 @@ not covered by the built-in exporters:
   belongs to the [OpenTelemetry](../../../src/OpenTelemetry/README.md) package)
   and implement the `Export` method.
 * Exporters can optionally implement the `OnShutdown` method.
-* Exporters should not throw exceptions from `Export`, and
+* Exporters should not throw exceptions from `Export` and
   `OnShutdown`.
 * Exporters are responsible for any retry logic needed by the scenario. The SDK
   does not implement any retry logic.
 * Exporters should avoid generating telemetry and causing live-loop, this can be
   done via `OpenTelemetry.SuppressInstrumentationScope`.
 * Exporters receives a batch of `Metric`, and each `Metric`
-  can contain many `MetricPoint`s.
+  can contain 1 or more `MetricPoint`s.
 * Exporters should use `Activity.TagObjects` collection instead of
   `Activity.Tags` to obtain the full set of attributes (tags).
 * Exporters should use `ParentProvider.GetResource()` to get the `Resource`
@@ -56,7 +56,7 @@ class MyExporter : BaseExporter<Metric>
 }
 ```
 
-A demo exporter which simply writes metric name and metric point starttime
+A demo exporter which simply writes metric name and metric point start time
 , tags to the console is shown [here](./MyExporter.cs).
 
 Apart from the exporter itself, you should also provide extension methods as
