@@ -22,5 +22,5 @@ public class HistogramConfiguration : MetricStreamConfiguration
     /// Gets or sets a value indicating whether Min, Max
     /// should be collected.
     /// </summary>
-    internal bool RecordMinMax { get; set; } = true;
+    public bool RecordMinMax { get; set; } = true;
 }

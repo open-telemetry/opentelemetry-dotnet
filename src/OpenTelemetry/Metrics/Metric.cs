@@ -93,20 +93,10 @@ namespace OpenTelemetry.Metrics
             {
                 this.MetricType = MetricType.Histogram;
 
-                if (histogramBounds != null
-                    && histogramBounds.Length == 0)
-                {
-                    aggType = AggregationType.HistogramSumCount;
-                }
-                else if (histogramRecordMinMax)
-                {
-                    aggType = AggregationType.HistogramWithMinMax;
-                    this.MetricType = MetricType.HistogramWithMinMax;
-                }
-                else
-                {
-                    aggType = AggregationType.Histogram;
-                }
+                // Use histogramBounds and histogramRecordMinMax to determine the aggregation type
+                aggType = histogramBounds != null && histogramBounds.Length == 0
+                    ? (histogramRecordMinMax ? AggregationType.HistogramSumCountMinMax : AggregationType.HistogramSumCount)
+                    : (histogramRecordMinMax ? AggregationType.HistogramMinMax : AggregationType.Histogram);
             }
             else
             {

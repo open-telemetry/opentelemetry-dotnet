@@ -28,7 +28,6 @@ namespace OpenTelemetry.Metrics
         internal const MetricType METRIC_TYPE_GAUGE = (MetricType)0x20;
         /* internal const MetricType METRIC_TYPE_SUMMARY = 0x30; // not used */
         internal const MetricType METRIC_TYPE_HISTOGRAM = (MetricType)0x40;
-        internal const MetricType METRIC_TYPE_HISTOGRAM_WITH_MIN_MAX = (MetricType)0x50;
 
         internal const MetricType POINT_KIND_MASK = (MetricType)0x0f;
 
@@ -61,12 +60,6 @@ namespace OpenTelemetry.Metrics
         public static bool IsHistogram(this MetricType self)
         {
             return self.HasFlag(METRIC_TYPE_HISTOGRAM);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsHistogramWithMinMax(this MetricType self)
-        {
-            return self.HasFlag(METRIC_TYPE_HISTOGRAM_WITH_MIN_MAX);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -435,8 +435,8 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [MemberData(nameof(MetricTestData.ValidHistogramWithMinMax), MemberType = typeof(MetricTestData))]
-        public void HistogramWithMinMax(double[] values, HistogramConfiguration histogramConfiguration, double expectedMin, double expectedMax)
+        [MemberData(nameof(MetricTestData.ValidHistogramMinMax), MemberType = typeof(MetricTestData))]
+        public void HistogramMinMax(double[] values, HistogramConfiguration histogramConfiguration, double expectedMin, double expectedMax)
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
             var histogram = meter.CreateHistogram<double>("MyHistogram");
@@ -469,8 +469,8 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [MemberData(nameof(MetricTestData.InvalidHistogramWithMinMax), MemberType = typeof(MetricTestData))]
-        public void HistogramWithMinMaxThrows(double[] values, HistogramConfiguration histogramConfiguration)
+        [MemberData(nameof(MetricTestData.InvalidHistogramMinMax), MemberType = typeof(MetricTestData))]
+        public void HistogramMinMaxThrows(double[] values, HistogramConfiguration histogramConfiguration)
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
             var histogram = meter.CreateHistogram<double>("MyHistogram");
@@ -649,7 +649,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void GetHistogramMinThrows()
         {
-            var histogramPoint = new MetricPoint(AggregationType.HistogramWithMinMax, DateTime.Now, null, null, new double[] { 0 });
+            var histogramPoint = new MetricPoint(AggregationType.HistogramMinMax, DateTime.Now, null, null, new double[] { 0 });
 
             var ex = Assert.Throws<InvalidOperationException>(() => histogramPoint.GetHistogramMin());
             Assert.Equal("No values have been recorded yet.", ex.Message);

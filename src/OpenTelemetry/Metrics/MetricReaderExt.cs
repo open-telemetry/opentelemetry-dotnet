@@ -125,7 +125,7 @@ namespace OpenTelemetry.Metrics
                         var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
                         string[] tagKeysInteresting = metricStreamConfig?.TagKeys;
                         double[] histogramBucketBounds = null;
-                        bool histogramRecordMinMax = false;
+                        bool histogramRecordMinMax = true;
 
                         if (metricStreamConfig is HistogramConfiguration histogramConfig)
                         {
