@@ -2,8 +2,7 @@
 
 ## Unreleased
 
-## --help
-\nReleased 2022-Jan-14
+Fix MetricExporter to respect Console and Debug flags.
 
 ## 1.2.0-rc1
 
