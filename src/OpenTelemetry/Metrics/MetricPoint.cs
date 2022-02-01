@@ -288,7 +288,9 @@ namespace OpenTelemetry.Metrics
         public HistogramBuckets GetHistogramBuckets()
         {
             if (this.aggType != AggregationType.Histogram &&
-                this.aggType != AggregationType.HistogramMinMax)
+                this.aggType != AggregationType.HistogramMinMax &&
+                this.aggType != AggregationType.HistogramSumCount &&
+                this.aggType != AggregationType.HistogramSumCountMinMax)
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramBuckets));
             }
