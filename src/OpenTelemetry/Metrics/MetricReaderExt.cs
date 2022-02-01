@@ -24,7 +24,6 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// MetricReader base class.
     /// </summary>
-    /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricreader
     public abstract partial class MetricReader
     {
         private readonly HashSet<string> metricStreamNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

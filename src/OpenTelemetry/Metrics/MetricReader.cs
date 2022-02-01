@@ -25,7 +25,6 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// MetricReader base class.
     /// </summary>
-    /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricreader
     public abstract partial class MetricReader : IDisposable
     {
         private const AggregationTemporality AggregationTemporalityUnspecified = (AggregationTemporality)0;
@@ -63,8 +62,8 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Attempts to collect the metrics, blocks the current thread until
         /// metrics collection completed, shutdown signaled or timed out.
-        /// Asynchronous instrument callbacks, if any, will be triggered
-        /// as well.
+        /// If there are asynchronous instruments involved, their callback
+        /// functions will be triggered.
         /// </summary>
         /// <param name="timeoutMilliseconds">
         /// The number (non-negative) of milliseconds to wait, or
