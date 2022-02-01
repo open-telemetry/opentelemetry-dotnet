@@ -23,7 +23,7 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// MetricReader which does not deal with individual metrics.
+    /// MetricReader base class.
     /// </summary>
     public abstract partial class MetricReader : IDisposable
     {
@@ -34,8 +34,7 @@ namespace OpenTelemetry.Metrics
         private AggregationTemporality temporality = AggregationTemporalityUnspecified;
         private int shutdownCount;
         private TaskCompletionSource<bool> collectionTcs;
-
-        public BaseProvider ParentProvider { get; private set; }
+        private BaseProvider parentProvider;
 
         public AggregationTemporality Temporality
         {
@@ -63,6 +62,8 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Attempts to collect the metrics, blocks the current thread until
         /// metrics collection completed, shutdown signaled or timed out.
+        /// If there are asynchronous instruments involved, their callback
+        /// functions will be triggered.
         /// </summary>
         /// <param name="timeoutMilliseconds">
         /// The number (non-negative) of milliseconds to wait, or
@@ -176,7 +177,7 @@ namespace OpenTelemetry.Metrics
 
         internal virtual void SetParentProvider(BaseProvider parentProvider)
         {
-            this.ParentProvider = parentProvider;
+            this.parentProvider = parentProvider;
         }
 
         /// <summary>
@@ -219,7 +220,7 @@ namespace OpenTelemetry.Metrics
                 ? null
                 : Stopwatch.StartNew();
 
-            var collectObservableInstruments = this.ParentProvider.GetObservableInstrumentCollectCallback();
+            var collectObservableInstruments = this.parentProvider.GetObservableInstrumentCollectCallback();
             collectObservableInstruments?.Invoke();
 
             var metrics = this.GetMetricsBatch();
