@@ -25,6 +25,31 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
     public sealed class PrometheusSerializerTests
     {
+        private readonly List<KeyValuePair<string, object>> tags1;
+        private readonly List<KeyValuePair<string, object>> tags2;
+        private readonly List<KeyValuePair<string, object>> tags3;
+
+        public PrometheusSerializerTests()
+        {
+            this.tags1 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 200),
+                new("verb", "get"),
+            };
+
+            this.tags2 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 200),
+                new("verb", "post"),
+            };
+
+            this.tags3 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 500),
+                new("verb", "get"),
+            };
+        }
+
         [Fact]
         public void GaugeZeroDimension()
         {
@@ -216,7 +241,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
-        public void AsynchronousCounter_Measurement_SingleValue()
+        public void AsynchronousCounter_Measurement_SingleValue_WithTags()
         {
             var buffer = new byte[85000];
             var metrics = new List<Metric>();
@@ -230,7 +255,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             int i = 0;
             var counterLong = meter.CreateObservableCounter(
                 "observable-counter",
-                () => new Measurement<long>(++i * 10));
+                () => new Measurement<long>(++i * 10, this.tags1));
 
             provider.ForceFlush();
 
@@ -238,7 +263,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             Assert.Matches(
                 ("^"
                     + "# TYPE observable_counter counter\n"
-                    + "observable_counter 10 \\d+\n"
+                    + "observable_counter{statusCode=\'200\',verb=\'get\'} 10 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
@@ -273,6 +298,42 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 ("^"
                     + "# TYPE observable_counter counter\n"
                     + "observable_counter 100 \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
+        public void AsynchronousCounter_Measurement_MultipleValues_WithTags()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            int i = 0;
+            var counterLong = meter.CreateObservableCounter(
+                "observable-counter",
+                () => new List<Measurement<long>>()
+                    {
+                        new Measurement<long>(++i, this.tags1),
+                        new Measurement<long>(i * 10, this.tags2),
+                        new Measurement<long>(i * 100, this.tags3),
+                    });
+
+            provider.ForceFlush();
+
+            // Note that only the final value from the list is kept
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE observable_counter counter\n"
+                    + "observable_counter{statusCode=\'200\',verb=\'get\'} 1 \\d+\n"
+                    + "observable_counter{statusCode=\'200\',verb=\'post\'} 10 \\d+\n"
+                    + "observable_counter{statusCode=\'500\',verb=\'get\'} 100 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
