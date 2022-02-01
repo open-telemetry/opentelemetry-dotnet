@@ -22,8 +22,9 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// MetricReader which processes individual metrics.
+    /// MetricReader base class.
     /// </summary>
+    /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricreader
     public abstract partial class MetricReader
     {
         private readonly HashSet<string> metricStreamNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

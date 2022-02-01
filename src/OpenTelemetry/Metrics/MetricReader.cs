@@ -23,8 +23,9 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// MetricReader which does not deal with individual metrics.
+    /// MetricReader base class.
     /// </summary>
+    /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#metricreader
     public abstract partial class MetricReader : IDisposable
     {
         private const AggregationTemporality AggregationTemporalityUnspecified = (AggregationTemporality)0;
@@ -34,8 +35,7 @@ namespace OpenTelemetry.Metrics
         private AggregationTemporality temporality = AggregationTemporalityUnspecified;
         private int shutdownCount;
         private TaskCompletionSource<bool> collectionTcs;
-
-        public BaseProvider ParentProvider { get; private set; }
+        private BaseProvider parentProvider;
 
         public AggregationTemporality Temporality
         {
@@ -63,6 +63,8 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Attempts to collect the metrics, blocks the current thread until
         /// metrics collection completed, shutdown signaled or timed out.
+        /// Asynchronous instrument callbacks, if any, will be triggered
+        /// as well.
         /// </summary>
         /// <param name="timeoutMilliseconds">
         /// The number (non-negative) of milliseconds to wait, or
@@ -176,7 +178,7 @@ namespace OpenTelemetry.Metrics
 
         internal virtual void SetParentProvider(BaseProvider parentProvider)
         {
-            this.ParentProvider = parentProvider;
+            this.parentProvider = parentProvider;
         }
 
         /// <summary>
@@ -219,7 +221,7 @@ namespace OpenTelemetry.Metrics
                 ? null
                 : Stopwatch.StartNew();
 
-            var collectObservableInstruments = this.ParentProvider.GetObservableInstrumentCollectCallback();
+            var collectObservableInstruments = this.parentProvider.GetObservableInstrumentCollectCallback();
             collectObservableInstruments?.Invoke();
 
             var metrics = this.GetMetricsBatch();
