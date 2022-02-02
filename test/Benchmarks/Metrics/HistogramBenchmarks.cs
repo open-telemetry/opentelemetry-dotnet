@@ -43,7 +43,6 @@ namespace Benchmarks.Metrics
     public class HistogramBenchmarks
     {
         private const int MaxValue = 1000;
-        private static readonly string[] DimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
         private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
         private Histogram<long> histogramLong;
         private Histogram<double> histogramDouble;
