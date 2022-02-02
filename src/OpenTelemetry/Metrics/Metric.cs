@@ -25,6 +25,7 @@ namespace OpenTelemetry.Metrics
         internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 };
 
         private readonly AggregatorStore aggStore;
+        private readonly bool allowNegativeMeasurement = true;
 
         internal Metric(
             Instrument instrument,
@@ -54,12 +55,14 @@ namespace OpenTelemetry.Metrics
                 || instrument.GetType() == typeof(Counter<short>)
                 || instrument.GetType() == typeof(Counter<byte>))
             {
+                this.allowNegativeMeasurement = false;
                 aggType = AggregationType.LongSumIncomingDelta;
                 this.MetricType = MetricType.LongSum;
             }
             else if (instrument.GetType() == typeof(Counter<double>)
                 || instrument.GetType() == typeof(Counter<float>))
             {
+                this.allowNegativeMeasurement = false;
                 aggType = AggregationType.DoubleSumIncomingDelta;
                 this.MetricType = MetricType.DoubleSum;
             }
@@ -91,6 +94,7 @@ namespace OpenTelemetry.Metrics
                 || instrument.GetType() == typeof(Histogram<double>))
             {
                 this.MetricType = MetricType.Histogram;
+                this.allowNegativeMeasurement = false;
 
                 if (histogramBounds != null
                     && histogramBounds.Length == 0)
@@ -133,12 +137,26 @@ namespace OpenTelemetry.Metrics
 
         internal void UpdateLong(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            this.aggStore.Update(value, tags);
+            if (!this.allowNegativeMeasurement && value < 0)
+            {
+                // do we log?
+            }
+            else
+            {
+                this.aggStore.Update(value, tags);
+            }
         }
 
         internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
-            this.aggStore.Update(value, tags);
+            if (!this.allowNegativeMeasurement && value < 0)
+            {
+                // do we log?
+            }
+            else
+            {
+                this.aggStore.Update(value, tags);
+            }
         }
 
         internal int Snapshot()

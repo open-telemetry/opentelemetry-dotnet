@@ -12,6 +12,10 @@
   thread.
   ([2844](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2844))
 
+* Bugfix - Histogram and Counter should not only allow non-negative
+  values.
+  ([2846](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2846))
+
 ## 1.2.0-rc1
 
 Released 2021-Nov-29

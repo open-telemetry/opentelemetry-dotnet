@@ -382,6 +382,73 @@ namespace OpenTelemetry.Metrics.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
+        public void CounterAggregationIgnoresNegativeMeasurementsTest(bool exportDelta)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+            var counterLong = meter.CreateCounter<long>("mycounter");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                {
+                    Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+                })
+                .Build();
+
+            counterLong.Add(10);
+            counterLong.Add(10);
+            counterLong.Add(-5);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            long sumReceived = GetLongSum(exportedItems);
+            Assert.Equal(20, sumReceived);
+
+            exportedItems.Clear();
+            counterLong.Add(10);
+            counterLong.Add(10);
+            counterLong.Add(-15);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            sumReceived = GetLongSum(exportedItems);
+            if (exportDelta)
+            {
+                Assert.Equal(20, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(40, sumReceived);
+            }
+
+            exportedItems.Clear();
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            sumReceived = GetLongSum(exportedItems);
+            if (exportDelta)
+            {
+                Assert.Equal(0, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(40, sumReceived);
+            }
+
+            exportedItems.Clear();
+            counterLong.Add(40);
+            counterLong.Add(20);
+            counterLong.Add(-100);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            sumReceived = GetLongSum(exportedItems);
+            if (exportDelta)
+            {
+                Assert.Equal(60, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(100, sumReceived);
+            }
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
         public void ObservableCounterAggregationTest(bool exportDelta)
         {
             var exportedItems = new List<Metric>();
@@ -894,6 +961,79 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(MeterProviderBuilderBase.MaxMetricPointsPerMetricDefault, MetricPointCount());
         }
 
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void HistogramAggregationIgnoresNegativeMeasurementsTest(bool exportDelta)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+            var myhistogram = meter.CreateHistogram<long>("myhistogram");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                {
+                    Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+                })
+                .Build();
+
+            myhistogram.Record(10);
+            myhistogram.Record(20);
+
+            // -ve numbers are ignored.
+            myhistogram.Record(-5);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            var histogramMetric = exportedItems[0];
+            Assert.Equal("myhistogram", histogramMetric.Name);
+            List<MetricPoint> histogramPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in histogramMetric.GetMetricPoints())
+            {
+                histogramPoints.Add(mp);
+            }
+
+            Assert.Single(histogramPoints);
+            var histogramPoint = histogramPoints[0];
+
+            var count = histogramPoint.GetHistogramCount();
+            var sum = histogramPoint.GetHistogramSum();
+
+            Assert.Equal(30, sum);
+            Assert.Equal(2, count);
+
+            exportedItems.Clear();
+            myhistogram.Record(100);
+            myhistogram.Record(200);
+            myhistogram.Record(0);
+
+            // -ve numbers are ignored.
+            myhistogram.Record(-5);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            histogramMetric = exportedItems[0];
+            histogramPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in histogramMetric.GetMetricPoints())
+            {
+                histogramPoints.Add(mp);
+            }
+
+            Assert.Single(histogramPoints);
+            histogramPoint = histogramPoints[0];
+
+            count = histogramPoint.GetHistogramCount();
+            sum = histogramPoint.GetHistogramSum();
+
+            if (exportDelta)
+            {
+                Assert.Equal(300, sum);
+                Assert.Equal(3, count);
+            }
+            else
+            {
+                Assert.Equal(330, sum);
+                Assert.Equal(5, count);
+            }
+        }
+
         [Fact]
         public void MultithreadedLongCounterTest()
         {
@@ -916,7 +1056,7 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000
-            var values = new long[] { -1, 1, 6, 20, 40, 60, 80, 200, 300, 600, 1001 };
+            var values = new long[] { 0, 1, 6, 20, 40, 60, 80, 200, 300, 600, 1001 };
 
             this.MultithreadedHistogramTest(expected, values);
         }
@@ -931,7 +1071,7 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000
-            var values = new double[] { -1.0, 1.0, 6.0, 20.0, 40.0, 60.0, 80.0, 200.0, 300.0, 600.0, 1001.0 };
+            var values = new double[] { 0.0, 1.0, 6.0, 20.0, 40.0, 60.0, 80.0, 200.0, 300.0, 600.0, 1001.0 };
 
             this.MultithreadedHistogramTest(expected, values);
         }

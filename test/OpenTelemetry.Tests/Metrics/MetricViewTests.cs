@@ -365,7 +365,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .Build();
 
             var histogram = meter.CreateHistogram<long>("MyHistogram");
-            histogram.Record(-10);
+            histogram.Record(10);
             histogram.Record(0);
             histogram.Record(1);
             histogram.Record(9);
@@ -392,12 +392,12 @@ namespace OpenTelemetry.Metrics.Tests
             var count = histogramPoint.GetHistogramCount();
             var sum = histogramPoint.GetHistogramSum();
 
-            Assert.Equal(40, sum);
+            Assert.Equal(60, sum);
             Assert.Equal(7, count);
 
             int index = 0;
             int actualCount = 0;
-            var expectedBucketCounts = new long[] { 2, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0 };
+            var expectedBucketCounts = new long[] { 1, 1, 3, 2, 0, 0, 0, 0, 0, 0, 0 };
             foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
             {
                 Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
@@ -419,7 +419,7 @@ namespace OpenTelemetry.Metrics.Tests
             count = histogramPoint.GetHistogramCount();
             sum = histogramPoint.GetHistogramSum();
 
-            Assert.Equal(40, sum);
+            Assert.Equal(60, sum);
             Assert.Equal(7, count);
 
             index = 0;
