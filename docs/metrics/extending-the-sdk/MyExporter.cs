@@ -35,14 +35,23 @@ internal class MyExporter : BaseExporter<Metric>
         using var scope = SuppressInstrumentationScope.Begin();
 
         var sb = new StringBuilder();
-        foreach (var record in batch)
+        foreach (var metric in batch)
         {
             if (sb.Length > 0)
             {
                 sb.Append(", ");
             }
 
-            sb.Append($"{record}");
+            sb.Append($"{metric.Name}");
+
+            foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+            {
+                sb.Append($"{metricPoint.StartTime}");
+                foreach (var metricPointTag in metricPoint.Tags)
+                {
+                    sb.Append($"{metricPointTag.Key} {metricPointTag.Value}");
+                }
+            }
         }
 
         Console.WriteLine($"{this.name}.Export([{sb}])");
