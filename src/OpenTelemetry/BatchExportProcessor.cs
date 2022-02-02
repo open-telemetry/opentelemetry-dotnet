@@ -251,8 +251,15 @@ namespace OpenTelemetry
                         this.exporter.Export(batch);
                     }
 
-                    this.dataExportedNotification.Set();
-                    this.dataExportedNotification.Reset();
+                    try
+                    {
+                        this.dataExportedNotification.Set();
+                        this.dataExportedNotification.Reset();
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        return;
+                    }
                 }
 
                 if (this.circularBuffer.RemovedCount >= this.shutdownDrainTarget)
