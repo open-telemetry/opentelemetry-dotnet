@@ -100,7 +100,7 @@ If you have trouble accessing the doc, please get in touch on
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
 * [Reiley Yang](https://github.com/reyang), Microsoft
-* [Robert Pajak](https://github.com/pellared), Splunk
+* [Robert Paj&#x105;k](https://github.com/pellared), Splunk
 * [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
 [Emeritus
