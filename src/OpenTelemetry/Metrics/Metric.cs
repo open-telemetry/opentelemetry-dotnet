@@ -139,7 +139,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.allowNegativeMeasurement && value < 0)
             {
-                // do we log?
+                // TODO: do we log?
             }
             else
             {
@@ -151,7 +151,7 @@ namespace OpenTelemetry.Metrics
         {
             if (!this.allowNegativeMeasurement && value < 0)
             {
-                // do we log?
+                // TODO: do we log?
             }
             else
             {

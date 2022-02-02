@@ -398,6 +398,8 @@ namespace OpenTelemetry.Metrics.Tests
 
             counterLong.Add(10);
             counterLong.Add(10);
+
+            // -ve numbers are ignored.
             counterLong.Add(-5);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             long sumReceived = GetLongSum(exportedItems);
@@ -406,6 +408,8 @@ namespace OpenTelemetry.Metrics.Tests
             exportedItems.Clear();
             counterLong.Add(10);
             counterLong.Add(10);
+
+            // -ve numbers are ignored.
             counterLong.Add(-15);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             sumReceived = GetLongSum(exportedItems);
