@@ -3,6 +3,7 @@
 ## Unreleased
 
 Fix MetricExporter to respect Console and Debug flags.
+Added `Activity.Links` support to `ConsoleActivityExporter`.
 
 ## 1.2.0-rc1
 
@@ -11,8 +12,6 @@ Released 2021-Nov-29
 * Added configuration options for `MetricReaderType` to allow for configuring
   the `ConsoleMetricExporter` to export either manually or periodically.
   ([#2648](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2648))
-
-* ActivityExporter exports Activity Links.
 
 ## 1.2.0-beta2
 
