@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestHttpServer.cs" Link="TestHttpServer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkPkgVer)" />
     <PackageReference Include="Moq" Version="$(MoqPkgVer)" />
     <PackageReference Include="xunit" Version="$(XUnitPkgVer)" />
@@ -18,7 +22,6 @@
     <DotNetCliToolReference Include="dotnet-xunit" Version="$(DotNetXUnitCliVer)" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsHostingPkgVer)" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="3.1.20" />
-    <PackageReference Include="RichardSzalay.MockHttp" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>

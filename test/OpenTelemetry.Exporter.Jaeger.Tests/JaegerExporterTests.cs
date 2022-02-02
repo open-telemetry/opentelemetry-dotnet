@@ -15,17 +15,17 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Exporter.Jaeger.Implementation.Tests;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
-using RichardSzalay.MockHttp;
 using Thrift.Protocol;
 using Xunit;
 
@@ -113,20 +113,35 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         }
 
         [Theory]
-        [InlineData(JaegerExporterOptions.DefaultJaegerEndpoint)]
-        [InlineData("http://localhost:1234")]
-        [InlineData("http://localhost:1234/foo/bar")]
-        public void HttpClient_Posts_To_Configured_Endpoint(string uri)
+        [InlineData("/api/traces")]
+        [InlineData("/foo/bar")]
+        [InlineData("/")]
+        public void HttpClient_Posts_To_Configured_Endpoint(string uriPath)
         {
             // Arrange
-            var mockHandler = new MockHttpMessageHandler();
-            mockHandler.Expect(HttpMethod.Post, uri)
-                .Respond(HttpStatusCode.OK);
+            ConcurrentDictionary<Guid, string> responses = new ConcurrentDictionary<Guid, string>();
+            using var testServer = TestHttpServer.RunServer(
+                context =>
+                {
+                    context.Response.StatusCode = 200;
 
+                    using StreamReader readStream = new StreamReader(context.Request.InputStream);
+
+                    string requestContent = readStream.ReadToEnd();
+
+                    responses.TryAdd(
+                        Guid.Parse(context.Request.QueryString["requestId"]),
+                        context.Request.Url.LocalPath);
+
+                    context.Response.OutputStream.Close();
+                },
+                out var testServerHost,
+                out var testServerPort);
+
+            var requestId = Guid.NewGuid();
             var options = new JaegerExporterOptions
             {
-                Endpoint = new Uri(uri),
-                HttpClientFactory = () => mockHandler.ToHttpClient(),
+                Endpoint = new Uri($"http://{testServerHost}:{testServerPort}{uriPath}?requestId={requestId}"),
                 Protocol = JaegerExportProtocol.HttpBinaryThrift,
                 ExportProcessorType = ExportProcessorType.Simple,
             };
@@ -139,8 +154,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             jaegerExporter.SendCurrentBatch();
 
             // Assert
-            mockHandler.VerifyNoOutstandingExpectation();
-            mockHandler.VerifyNoOutstandingRequest();
+            Assert.True(responses.ContainsKey(requestId));
+            Assert.Equal(uriPath, responses[requestId]);
         }
 
         [Fact]
