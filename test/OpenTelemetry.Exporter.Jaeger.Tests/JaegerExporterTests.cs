@@ -18,11 +18,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.Jaeger.Implementation;
 using OpenTelemetry.Exporter.Jaeger.Implementation.Tests;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using RichardSzalay.MockHttp;
 using Thrift.Protocol;
 using Xunit;
 
@@ -107,6 +110,37 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             var tracerProvider = serviceProvider.GetRequiredService<TracerProvider>();
 
             Assert.Equal(1, invocations);
+        }
+
+        [Theory]
+        [InlineData(JaegerExporterOptions.DefaultJaegerEndpoint)]
+        [InlineData("http://localhost:1234")]
+        [InlineData("http://localhost:1234/foo/bar")]
+        public void HttpClient_Posts_To_Configured_Endpoint(string uri)
+        {
+            // Arrange
+            var mockHandler = new MockHttpMessageHandler();
+            mockHandler.Expect(HttpMethod.Post, uri)
+                .Respond(HttpStatusCode.OK);
+
+            var options = new JaegerExporterOptions
+            {
+                Endpoint = new Uri(uri),
+                HttpClientFactory = () => mockHandler.ToHttpClient(),
+                Protocol = JaegerExportProtocol.HttpBinaryThrift,
+                ExportProcessorType = ExportProcessorType.Simple,
+            };
+
+            using var jaegerExporter = new JaegerExporter(options);
+
+            // Act
+            jaegerExporter.SetResourceAndInitializeBatch(Resource.Empty);
+            jaegerExporter.AppendSpan(CreateTestJaegerSpan());
+            jaegerExporter.SendCurrentBatch();
+
+            // Assert
+            mockHandler.VerifyNoOutstandingExpectation();
+            mockHandler.VerifyNoOutstandingRequest();
         }
 
         [Fact]
