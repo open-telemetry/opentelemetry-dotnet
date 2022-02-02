@@ -69,7 +69,6 @@ OpenTelemetry.Metrics.MetricReader
 OpenTelemetry.Metrics.MetricReader.Collect(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Metrics.MetricReader.Dispose() -> void
 OpenTelemetry.Metrics.MetricReader.MetricReader() -> void
-OpenTelemetry.Metrics.MetricReader.ParentProvider.get -> OpenTelemetry.BaseProvider
 OpenTelemetry.Metrics.MetricReader.Shutdown(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Metrics.MetricReader.Temporality.get -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.MetricReader.Temporality.set -> void
