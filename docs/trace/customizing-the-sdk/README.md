@@ -39,7 +39,7 @@ startup and disposed at application shutdown. It is important to ensure that the
 provider is not disposed too early. Actual mechanism depends on the application
 type. For example, in a typical ASP.NET application, `TracerProvider` is created
 in `Application_Start`, and disposed in `Application_End` (both methods part of
-Global.asp.cs file) as shown [here](../../../examples/AspNet/Global.asax.cs). In
+Global.asax.cs file) as shown [here](../../../examples/AspNet/Global.asax.cs). In
 a typical ASP.NET Core application, `TracerProvider` lifetime is managed by
 leveraging the built-in Dependency Injection container as shown
 [here](../../../examples/AspNetCore/Startup.cs).
