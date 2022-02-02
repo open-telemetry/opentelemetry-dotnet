@@ -491,6 +491,7 @@ namespace OpenTelemetry.Metrics
                 }
 
                 this.disposed = true;
+                OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(MeterProvider));
             }
 
             base.Dispose(disposing);

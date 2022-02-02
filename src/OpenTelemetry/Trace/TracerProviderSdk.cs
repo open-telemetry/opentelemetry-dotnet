@@ -375,6 +375,7 @@ namespace OpenTelemetry.Trace
                 }
 
                 this.disposed = true;
+                OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(TracerProvider));
             }
 
             base.Dispose(disposing);
