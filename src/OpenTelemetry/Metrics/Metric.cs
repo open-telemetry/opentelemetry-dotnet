@@ -91,9 +91,8 @@ namespace OpenTelemetry.Metrics
                 || instrument.GetType() == typeof(Histogram<float>)
                 || instrument.GetType() == typeof(Histogram<double>))
             {
-                this.MetricType = MetricType.Histogram;
+                this.MetricType = histogramRecordMinMax ? MetricType.HistogramWithMinMax : MetricType.Histogram;
 
-                // Use histogramBounds and histogramRecordMinMax to determine the aggregation type
                 aggType = histogramBounds != null && histogramBounds.Length == 0
                     ? (histogramRecordMinMax ? AggregationType.HistogramSumCountMinMax : AggregationType.HistogramSumCount)
                     : (histogramRecordMinMax ? AggregationType.HistogramMinMax : AggregationType.Histogram);

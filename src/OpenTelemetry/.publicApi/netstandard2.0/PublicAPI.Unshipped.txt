@@ -93,6 +93,7 @@ OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.DoubleGauge = 45 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.DoubleSum = 29 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.Histogram = 64 -> OpenTelemetry.Metrics.MetricType
+OpenTelemetry.Metrics.MetricType.HistogramWithMinMax = 80 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.LongGauge = 42 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.LongSum = 26 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricTypeExtensions
@@ -136,6 +137,7 @@ static OpenTelemetry.Metrics.MeterProviderExtensions.TryFindExporter<T>(this Ope
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsDouble(this OpenTelemetry.Metrics.MetricType self) -> bool
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsGauge(this OpenTelemetry.Metrics.MetricType self) -> bool
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsHistogram(this OpenTelemetry.Metrics.MetricType self) -> bool
+static OpenTelemetry.Metrics.MetricTypeExtensions.IsHistogramWithMinMax(this OpenTelemetry.Metrics.MetricType self) -> bool
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsLong(this OpenTelemetry.Metrics.MetricType self) -> bool
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsSum(this OpenTelemetry.Metrics.MetricType self) -> bool
 static OpenTelemetry.Sdk.CreateMeterProviderBuilder() -> OpenTelemetry.Metrics.MeterProviderBuilder
