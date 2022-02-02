@@ -240,6 +240,7 @@ namespace OpenTelemetry
                     }
                     catch (ObjectDisposedException)
                     {
+                        // the exporter is somehow disposed before the worker thread finishing its job
                         return;
                     }
                 }
@@ -258,6 +259,7 @@ namespace OpenTelemetry
                     }
                     catch (ObjectDisposedException)
                     {
+                        // the exporter is somehow disposed before the worker thread finishing its job
                         return;
                     }
                 }
