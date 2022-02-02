@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Bugfix - Histogram Sum should not be calculated from negative
+  values.
+  ([2736](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2736))
+
 * Make `MetricPoint` of `MetricPointAccessor` readonly.
   ([2736](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2736))
 

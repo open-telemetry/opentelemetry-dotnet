@@ -326,7 +326,11 @@ namespace OpenTelemetry.Metrics
                         lock (this.histogramBuckets.LockObject)
                         {
                             this.runningValue.AsLong++;
-                            this.histogramBuckets.RunningSum += number;
+                            if (number > 0)
+                            {
+                                this.histogramBuckets.RunningSum += number;
+                            }
+
                             this.histogramBuckets.RunningBucketCounts[i]++;
                         }
 
@@ -338,7 +342,10 @@ namespace OpenTelemetry.Metrics
                         lock (this.histogramBuckets.LockObject)
                         {
                             this.runningValue.AsLong++;
-                            this.histogramBuckets.RunningSum += number;
+                            if (number > 0)
+                            {
+                                this.histogramBuckets.RunningSum += number;
+                            }
                         }
 
                         break;

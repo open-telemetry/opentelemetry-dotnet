@@ -68,6 +68,8 @@ namespace OpenTelemetry.Metrics.Tests
             var histogramPoint = new MetricPoint(AggregationType.Histogram, DateTimeOffset.Now, null, null, boundaries);
 
             // 5 recordings <=10
+            // -ve numbers do not contribute to Sum,
+            // but contributes to Count and Buckets
             histogramPoint.Update(-10);
             histogramPoint.Update(0);
             histogramPoint.Update(1);
@@ -84,7 +86,7 @@ namespace OpenTelemetry.Metrics.Tests
             var sum = histogramPoint.GetHistogramSum();
 
             // Sum of all recordings
-            Assert.Equal(40, sum);
+            Assert.Equal(50, sum);
 
             // Count  = # of recordings
             Assert.Equal(7, count);
@@ -108,6 +110,8 @@ namespace OpenTelemetry.Metrics.Tests
             var boundaries = new double[] { };
             var histogramPoint = new MetricPoint(AggregationType.HistogramSumCount, DateTimeOffset.Now, null, null, boundaries);
 
+            // -ve numbers do not contribute to Sum,
+            // but contributes to Count and Buckets
             histogramPoint.Update(-10);
             histogramPoint.Update(0);
             histogramPoint.Update(1);
@@ -122,7 +126,7 @@ namespace OpenTelemetry.Metrics.Tests
             var sum = histogramPoint.GetHistogramSum();
 
             // Sum of all recordings
-            Assert.Equal(40, sum);
+            Assert.Equal(50, sum);
 
             // Count  = # of recordings
             Assert.Equal(7, count);

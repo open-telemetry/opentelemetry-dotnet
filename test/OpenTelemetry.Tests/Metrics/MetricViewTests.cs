@@ -365,6 +365,8 @@ namespace OpenTelemetry.Metrics.Tests
                 .Build();
 
             var histogram = meter.CreateHistogram<long>("MyHistogram");
+            // -ve numbers do not contribute to Sum,
+            // but contributes to Count and Buckets
             histogram.Record(-10);
             histogram.Record(0);
             histogram.Record(1);
@@ -392,7 +394,7 @@ namespace OpenTelemetry.Metrics.Tests
             var count = histogramPoint.GetHistogramCount();
             var sum = histogramPoint.GetHistogramSum();
 
-            Assert.Equal(40, sum);
+            Assert.Equal(50, sum);
             Assert.Equal(7, count);
 
             int index = 0;
@@ -419,7 +421,7 @@ namespace OpenTelemetry.Metrics.Tests
             count = histogramPoint.GetHistogramCount();
             sum = histogramPoint.GetHistogramSum();
 
-            Assert.Equal(40, sum);
+            Assert.Equal(50, sum);
             Assert.Equal(7, count);
 
             index = 0;
