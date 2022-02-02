@@ -133,6 +133,7 @@ namespace OpenTelemetry.Logs
                 }
 
                 this.disposed = true;
+                OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(OpenTelemetryLoggerProvider));
             }
 
             base.Dispose(disposing);
