@@ -46,7 +46,7 @@ namespace OpenTelemetry.Instrumentation
         /// <returns>Property fetched.</returns>
         public T Fetch(object obj)
         {
-            Guard.Null(obj, nameof(obj));
+            Guard.ThrowIfNull(obj, nameof(obj));
 
             if (!this.TryFetch(obj, out T value, true))
             {

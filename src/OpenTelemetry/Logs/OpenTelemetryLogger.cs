@@ -29,8 +29,8 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLogger(string categoryName, OpenTelemetryLoggerProvider provider)
         {
-            Guard.Null(categoryName, nameof(categoryName));
-            Guard.Null(provider, nameof(provider));
+            Guard.ThrowIfNull(categoryName, nameof(categoryName));
+            Guard.ThrowIfNull(provider, nameof(provider));
 
             this.categoryName = categoryName;
             this.provider = provider;
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Logs
                     logLevel,
                     eventId,
                     options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
-                    options.ParseStateValues ? null : (object)state,
+                    options.ParseStateValues ? null : state,
                     exception,
                     options.ParseStateValues ? this.ParseState(state) : null);
 

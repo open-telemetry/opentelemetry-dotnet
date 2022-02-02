@@ -46,7 +46,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public SpanShim(TelemetrySpan span)
         {
-            Guard.Null(span, nameof(span));
+            Guard.ThrowIfNull(span, nameof(span));
 
             if (!span.Context.IsValid)
             {
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
         {
-            Guard.Null(fields, nameof(fields));
+            Guard.ThrowIfNull(fields, nameof(fields));
 
             var payload = ConvertToEventPayload(fields);
             var eventName = payload.Item1;
@@ -141,7 +141,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpan Log(string @event)
         {
-            Guard.Null(@event, nameof(@event));
+            Guard.ThrowIfNull(@event, nameof(@event));
 
             this.Span.AddEvent(@event);
             return this;
@@ -150,7 +150,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpan Log(DateTimeOffset timestamp, string @event)
         {
-            Guard.Null(@event, nameof(@event));
+            Guard.ThrowIfNull(@event, nameof(@event));
 
             this.Span.AddEvent(@event, timestamp);
             return this;
@@ -166,7 +166,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpan SetOperationName(string operationName)
         {
-            Guard.Null(operationName, nameof(operationName));
+            Guard.ThrowIfNull(operationName, nameof(operationName));
 
             this.Span.UpdateName(operationName);
             return this;
@@ -175,7 +175,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpan SetTag(string key, string value)
         {
-            Guard.Null(key, nameof(key));
+            Guard.ThrowIfNull(key, nameof(key));
 
             this.Span.SetAttribute(key, value);
             return this;
@@ -184,7 +184,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpan SetTag(string key, bool value)
         {
-            Guard.Null(key, nameof(key));
+            Guard.ThrowIfNull(key, nameof(key));
 
             // Special case the OpenTracing Error Tag
             // see https://opentracing.io/specification/conventions/
@@ -203,7 +203,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpan SetTag(string key, int value)
         {
-            Guard.Null(key, nameof(key));
+            Guard.ThrowIfNull(key, nameof(key));
 
             this.Span.SetAttribute(key, value);
             return this;
@@ -212,7 +212,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpan SetTag(string key, double value)
         {
-            Guard.Null(key, nameof(key));
+            Guard.ThrowIfNull(key, nameof(key));
 
             this.Span.SetAttribute(key, value);
             return this;

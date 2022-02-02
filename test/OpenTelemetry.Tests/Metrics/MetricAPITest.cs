@@ -100,6 +100,52 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
+        [InlineData("unit")]
+        [InlineData("")]
+        [InlineData(null)]
+        public void MetricUnitIsExportedCorrectly(string unit)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var counter = meter.CreateCounter<long>("name1", unit);
+            counter.Add(10);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal(unit ?? string.Empty, metric.Unit);
+        }
+
+        [Theory]
+        [InlineData("description")]
+        [InlineData("")]
+        [InlineData(null)]
+        public void MetricDescriptionIsExportedCorrectly(string description)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var counter = meter.CreateCounter<long>("name1", null, description);
+            counter.Add(10);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal(description ?? string.Empty, metric.Description);
+        }
+
+        [Theory]
         [InlineData(AggregationTemporality.Cumulative, true)]
         [InlineData(AggregationTemporality.Cumulative, false)]
         [InlineData(AggregationTemporality.Delta, true)]
@@ -123,21 +169,28 @@ namespace OpenTelemetry.Metrics.Tests
 
             using var meterProvider = meterProviderBuilder.Build();
 
-            // Expecting one metric stream.
             var counterLong = meter.CreateCounter<long>("name1");
+            var anotherCounterSameName = meter.CreateCounter<long>("name1");
+
             counterLong.Add(10);
+            anotherCounterSameName.Add(20);
+            counterLong.Add(10);
+            anotherCounterSameName.Add(20);
+
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Single(exportedItems);
 
-            // The following will be ignored as
-            // metric of same name exists.
-            // Metric stream will remain one.
-            var anotherCounterSameName = meter.CreateCounter<long>("name1");
-            anotherCounterSameName.Add(10);
-            counterLong.Add(10);
-            exportedItems.Clear();
-            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("name1", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            var metricPoint1 = metricPoints[0];
+            Assert.Equal(20, metricPoint1.GetSumLong());
         }
 
         [Theory]
@@ -383,6 +436,340 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ObservableCounterWithTagsAggregationTest(bool exportDelta)
+        {
+            var exportedItems = new List<Metric>();
+            var tags1 = new List<KeyValuePair<string, object>>();
+            tags1.Add(new("statusCode", 200));
+            tags1.Add(new("verb", "get"));
+
+            var tags2 = new List<KeyValuePair<string, object>>();
+            tags2.Add(new("statusCode", 200));
+            tags2.Add(new("verb", "post"));
+
+            var tags3 = new List<KeyValuePair<string, object>>();
+            tags3.Add(new("statusCode", 500));
+            tags3.Add(new("verb", "get"));
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+            var counterLong = meter.CreateObservableCounter(
+                "observable-counter",
+                () =>
+                {
+                    return new List<Measurement<long>>()
+                    {
+                        new Measurement<long>(10, tags1),
+                        new Measurement<long>(10, tags2),
+                        new Measurement<long>(10, tags3),
+                    };
+                });
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                {
+                    Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+                })
+                .Build();
+
+            // Export 1
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("observable-counter", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Equal(3, metricPoints.Count);
+
+            var metricPoint1 = metricPoints[0];
+            Assert.Equal(10, metricPoint1.GetSumLong());
+            ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+            var metricPoint2 = metricPoints[1];
+            Assert.Equal(10, metricPoint2.GetSumLong());
+            ValidateMetricPointTags(tags2, metricPoint2.Tags);
+
+            var metricPoint3 = metricPoints[2];
+            Assert.Equal(10, metricPoint3.GetSumLong());
+            ValidateMetricPointTags(tags3, metricPoint3.Tags);
+
+            // Export 2
+            exportedItems.Clear();
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            metric = exportedItems[0];
+            Assert.Equal("observable-counter", metric.Name);
+            metricPoints.Clear();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Equal(3, metricPoints.Count);
+
+            metricPoint1 = metricPoints[0];
+            Assert.Equal(exportDelta ? 0 : 10, metricPoint1.GetSumLong());
+            ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+            metricPoint2 = metricPoints[1];
+            Assert.Equal(exportDelta ? 0 : 10, metricPoint2.GetSumLong());
+            ValidateMetricPointTags(tags2, metricPoint2.Tags);
+
+            metricPoint3 = metricPoints[2];
+            Assert.Equal(exportDelta ? 0 : 10, metricPoint3.GetSumLong());
+            ValidateMetricPointTags(tags3, metricPoint3.Tags);
+        }
+
+        [Theory(Skip = "Known issue.")]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ObservableCounterSpatialAggregationTest(bool exportDelta)
+        {
+            var exportedItems = new List<Metric>();
+            var tags1 = new List<KeyValuePair<string, object>>();
+            tags1.Add(new("statusCode", 200));
+            tags1.Add(new("verb", "get"));
+
+            var tags2 = new List<KeyValuePair<string, object>>();
+            tags2.Add(new("statusCode", 200));
+            tags2.Add(new("verb", "post"));
+
+            var tags3 = new List<KeyValuePair<string, object>>();
+            tags3.Add(new("statusCode", 500));
+            tags3.Add(new("verb", "get"));
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+            var counterLong = meter.CreateObservableCounter(
+                "requestCount",
+                () =>
+                {
+                    return new List<Measurement<long>>()
+                    {
+                        new Measurement<long>(10, tags1),
+                        new Measurement<long>(10, tags2),
+                        new Measurement<long>(10, tags3),
+                    };
+                });
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                {
+                    Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+                })
+                .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = new string[] { } })
+                .Build();
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("requestCount", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+
+            var emptyTags = new List<KeyValuePair<string, object>>();
+            var metricPoint1 = metricPoints[0];
+            ValidateMetricPointTags(emptyTags, metricPoint1.Tags);
+
+            // This will fail, as SDK is not "spatially" aggregating the
+            // requestCount
+            Assert.Equal(30, metricPoint1.GetSumLong());
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void DimensionsAreOrderInsensitiveWithSortedKeysFirst(bool exportDelta)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+            var counterLong = meter.CreateCounter<long>("Counter");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                {
+                    Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+                })
+                .Build();
+
+            // Emit the first metric with the sorted order of tag keys
+            counterLong.Add(5, new("Key1", "Value1"), new("Key2", "Value2"), new("Key3", "Value3"));
+            counterLong.Add(10, new("Key1", "Value1"), new("Key3", "Value3"), new("Key2", "Value2"));
+            counterLong.Add(10, new("Key2", "Value20"), new("Key1", "Value10"), new("Key3", "Value30"));
+
+            // Emit a metric with different set of keys but the same set of values as one of the previous metric points
+            counterLong.Add(25, new("Key4", "Value1"), new("Key5", "Value3"), new("Key6", "Value2"));
+            counterLong.Add(25, new("Key4", "Value1"), new("Key6", "Value3"), new("Key5", "Value2"));
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            List<KeyValuePair<string, object>> expectedTagsForFirstMetricPoint = new List<KeyValuePair<string, object>>()
+            {
+                new("Key1", "Value1"),
+                new("Key2", "Value2"),
+                new("Key3", "Value3"),
+            };
+
+            List<KeyValuePair<string, object>> expectedTagsForSecondMetricPoint = new List<KeyValuePair<string, object>>()
+            {
+                new("Key1", "Value10"),
+                new("Key2", "Value20"),
+                new("Key3", "Value30"),
+            };
+
+            List<KeyValuePair<string, object>> expectedTagsForThirdMetricPoint = new List<KeyValuePair<string, object>>()
+            {
+                new("Key4", "Value1"),
+                new("Key5", "Value3"),
+                new("Key6", "Value2"),
+            };
+
+            List<KeyValuePair<string, object>> expectedTagsForFourthMetricPoint = new List<KeyValuePair<string, object>>()
+            {
+                new("Key4", "Value1"),
+                new("Key5", "Value2"),
+                new("Key6", "Value3"),
+            };
+
+            Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
+            CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, 1);
+            CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, 2);
+            CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, 3);
+            CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFourthMetricPoint, 4);
+            long sumReceived = GetLongSum(exportedItems);
+            Assert.Equal(75, sumReceived);
+
+            exportedItems.Clear();
+
+            counterLong.Add(5, new("Key2", "Value2"), new("Key1", "Value1"), new("Key3", "Value3"));
+            counterLong.Add(5, new("Key2", "Value2"), new("Key1", "Value1"), new("Key3", "Value3"));
+            counterLong.Add(10, new("Key2", "Value2"), new("Key3", "Value3"), new("Key1", "Value1"));
+            counterLong.Add(10, new("Key2", "Value20"), new("Key3", "Value30"), new("Key1", "Value10"));
+            counterLong.Add(20, new("Key4", "Value1"), new("Key6", "Value2"), new("Key5", "Value3"));
+            counterLong.Add(20, new("Key4", "Value1"), new("Key5", "Value2"), new("Key6", "Value3"));
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
+            CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, 1);
+            CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, 2);
+            CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, 3);
+            CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFourthMetricPoint, 4);
+            sumReceived = GetLongSum(exportedItems);
+            if (exportDelta)
+            {
+                Assert.Equal(70, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(145, sumReceived);
+            }
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void DimensionsAreOrderInsensitiveWithUnsortedKeysFirst(bool exportDelta)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+            var counterLong = meter.CreateCounter<long>("Counter");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                {
+                    Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+                })
+                .Build();
+
+            // Emit the first metric with the unsorted order of tag keys
+            counterLong.Add(5, new("Key1", "Value1"), new("Key3", "Value3"), new("Key2", "Value2"));
+            counterLong.Add(10, new("Key1", "Value1"), new("Key2", "Value2"), new("Key3", "Value3"));
+            counterLong.Add(10, new("Key2", "Value20"), new("Key1", "Value10"), new("Key3", "Value30"));
+
+            // Emit a metric with different set of keys but the same set of values as one of the previous metric points
+            counterLong.Add(25, new("Key4", "Value1"), new("Key5", "Value3"), new("Key6", "Value2"));
+            counterLong.Add(25, new("Key4", "Value1"), new("Key6", "Value3"), new("Key5", "Value2"));
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            List<KeyValuePair<string, object>> expectedTagsForFirstMetricPoint = new List<KeyValuePair<string, object>>()
+            {
+                new("Key1", "Value1"),
+                new("Key2", "Value2"),
+                new("Key3", "Value3"),
+            };
+
+            List<KeyValuePair<string, object>> expectedTagsForSecondMetricPoint = new List<KeyValuePair<string, object>>()
+            {
+                new("Key1", "Value10"),
+                new("Key2", "Value20"),
+                new("Key3", "Value30"),
+            };
+
+            List<KeyValuePair<string, object>> expectedTagsForThirdMetricPoint = new List<KeyValuePair<string, object>>()
+            {
+                new("Key4", "Value1"),
+                new("Key5", "Value3"),
+                new("Key6", "Value2"),
+            };
+
+            List<KeyValuePair<string, object>> expectedTagsForFourthMetricPoint = new List<KeyValuePair<string, object>>()
+            {
+                new("Key4", "Value1"),
+                new("Key5", "Value2"),
+                new("Key6", "Value3"),
+            };
+
+            Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
+            CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, 1);
+            CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, 2);
+            CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, 3);
+            CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFourthMetricPoint, 4);
+            long sumReceived = GetLongSum(exportedItems);
+            Assert.Equal(75, sumReceived);
+
+            exportedItems.Clear();
+
+            counterLong.Add(5, new("Key2", "Value2"), new("Key1", "Value1"), new("Key3", "Value3"));
+            counterLong.Add(5, new("Key2", "Value2"), new("Key1", "Value1"), new("Key3", "Value3"));
+            counterLong.Add(10, new("Key2", "Value2"), new("Key3", "Value3"), new("Key1", "Value1"));
+            counterLong.Add(10, new("Key2", "Value20"), new("Key3", "Value30"), new("Key1", "Value10"));
+            counterLong.Add(20, new("Key4", "Value1"), new("Key6", "Value2"), new("Key5", "Value3"));
+            counterLong.Add(20, new("Key4", "Value1"), new("Key5", "Value2"), new("Key6", "Value3"));
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.Equal(4, GetNumberOfMetricPoints(exportedItems));
+            CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, 1);
+            CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, 2);
+            CheckTagsForNthMetricPoint(exportedItems, expectedTagsForThirdMetricPoint, 3);
+            CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFourthMetricPoint, 4);
+            sumReceived = GetLongSum(exportedItems);
+            if (exportDelta)
+            {
+                Assert.Equal(70, sumReceived);
+            }
+            else
+            {
+                Assert.Equal(145, sumReceived);
+            }
+        }
+
+        [Theory]
         [InlineData(AggregationTemporality.Cumulative)]
         [InlineData(AggregationTemporality.Delta)]
         public void TestInstrumentDisposal(AggregationTemporality temporality)
@@ -510,118 +897,43 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void MultithreadedLongCounterTest()
         {
-            var exportedItems = new List<Metric>();
-
-            using var meter = new Meter(Utils.GetCurrentMethodName());
-            var counterLong = meter.CreateCounter<long>("mycounter");
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter.Name)
-                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
-                {
-                    Temporality = AggregationTemporality.Cumulative,
-                })
-                .Build();
-
-            // setup args to threads.
-            var mreToBlockUpdateThreads = new ManualResetEvent(false);
-            var mreToEnsureAllThreadsStarted = new ManualResetEvent(false);
-
-            var argToThread = new UpdateThreadArguments<long>();
-            argToThread.DeltaValueUpdatedByEachCall = deltaLongValueUpdatedByEachCall;
-            argToThread.Counter = counterLong;
-            argToThread.ThreadsStartedCount = 0;
-            argToThread.MreToBlockUpdateThread = mreToBlockUpdateThreads;
-            argToThread.MreToEnsureAllThreadsStart = mreToEnsureAllThreadsStarted;
-
-            Thread[] t = new Thread[numberOfThreads];
-            for (int i = 0; i < numberOfThreads; i++)
-            {
-                t[i] = new Thread(CounterUpdateThread<long>);
-                t[i].Start(argToThread);
-            }
-
-            // Block until all threads started.
-            mreToEnsureAllThreadsStarted.WaitOne();
-
-            Stopwatch sw = Stopwatch.StartNew();
-
-            // unblock all the threads.
-            // (i.e let them start counter.Add)
-            mreToBlockUpdateThreads.Set();
-
-            for (int i = 0; i < numberOfThreads; i++)
-            {
-                // wait for all threads to complete
-                t[i].Join();
-            }
-
-            var timeTakenInMilliseconds = sw.ElapsedMilliseconds;
-            this.output.WriteLine($"Took {timeTakenInMilliseconds} msecs. Total threads: {numberOfThreads}, each thread doing {numberOfMetricUpdateByEachThread} recordings.");
-
-            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-
-            var sumReceived = GetLongSum(exportedItems);
-            var expectedSum = deltaLongValueUpdatedByEachCall * numberOfMetricUpdateByEachThread * numberOfThreads;
-            Assert.Equal(expectedSum, sumReceived);
+            this.MultithreadedCounterTest(deltaLongValueUpdatedByEachCall);
         }
 
         [Fact]
         public void MultithreadedDoubleCounterTest()
         {
-            var exportedItems = new List<Metric>();
+            this.MultithreadedCounterTest(deltaDoubleValueUpdatedByEachCall);
+        }
 
-            using var meter = new Meter(Utils.GetCurrentMethodName());
-            var counterDouble = meter.CreateCounter<double>("mycounter");
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter.Name)
-                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
-                {
-                    Temporality = AggregationTemporality.Cumulative,
-                })
-                .Build();
-
-            // setup args to threads.
-            var mreToBlockUpdateThreads = new ManualResetEvent(false);
-            var mreToEnsureAllThreadsStarted = new ManualResetEvent(false);
-
-            var argToThread = new UpdateThreadArguments<double>();
-            argToThread.DeltaValueUpdatedByEachCall = deltaDoubleValueUpdatedByEachCall;
-            argToThread.Counter = counterDouble;
-            argToThread.ThreadsStartedCount = 0;
-            argToThread.MreToBlockUpdateThread = mreToBlockUpdateThreads;
-            argToThread.MreToEnsureAllThreadsStart = mreToEnsureAllThreadsStarted;
-
-            Thread[] t = new Thread[numberOfThreads];
-            for (int i = 0; i < numberOfThreads; i++)
+        [Fact]
+        public void MultithreadedLongHistogramTest()
+        {
+            var expected = new long[11];
+            for (var i = 0; i < expected.Length; i++)
             {
-                t[i] = new Thread(CounterUpdateThread<double>);
-                t[i].Start(argToThread);
+                expected[i] = numberOfThreads * numberOfMetricUpdateByEachThread;
             }
 
-            // Block until all threads started.
-            mreToEnsureAllThreadsStarted.WaitOne();
+            // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000
+            var values = new long[] { -1, 1, 6, 20, 40, 60, 80, 200, 300, 600, 1001 };
 
-            Stopwatch sw = Stopwatch.StartNew();
+            this.MultithreadedHistogramTest(expected, values);
+        }
 
-            // unblock all the threads.
-            // (i.e let them start counter.Add)
-            mreToBlockUpdateThreads.Set();
-
-            for (int i = 0; i < numberOfThreads; i++)
+        [Fact]
+        public void MultithreadedDoubleHistogramTest()
+        {
+            var expected = new long[11];
+            for (var i = 0; i < expected.Length; i++)
             {
-                // wait for all threads to complete
-                t[i].Join();
+                expected[i] = numberOfThreads * numberOfMetricUpdateByEachThread;
             }
 
-            var timeTakenInMilliseconds = sw.ElapsedMilliseconds;
-            this.output.WriteLine($"Took {timeTakenInMilliseconds} msecs. Total threads: {numberOfThreads}, each thread doing {numberOfMetricUpdateByEachThread} recordings.");
+            // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000
+            var values = new double[] { -1.0, 1.0, 6.0, 20.0, 40.0, 60.0, 80.0, 200.0, 300.0, 600.0, 1001.0 };
 
-            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-
-            var sumReceived = GetDoubleSum(exportedItems);
-            var expectedSum = deltaDoubleValueUpdatedByEachCall * numberOfMetricUpdateByEachThread * numberOfThreads;
-            var difference = Math.Abs(sumReceived - expectedSum);
-            Assert.True(difference <= 0.0001);
+            this.MultithreadedHistogramTest(expected, values);
         }
 
         [Theory]
@@ -691,6 +1003,19 @@ namespace OpenTelemetry.Metrics.Tests
             counter.Add(10, new KeyValuePair<string, object>("key", "value"));
         }
 
+        private static void ValidateMetricPointTags(List<KeyValuePair<string, object>> expectedTags, ReadOnlyTagCollection actualTags)
+        {
+            int tagIndex = 0;
+            foreach (var tag in actualTags)
+            {
+                Assert.Equal(expectedTags[tagIndex].Key, tag.Key);
+                Assert.Equal(expectedTags[tagIndex].Value, tag.Value);
+                tagIndex++;
+            }
+
+            Assert.Equal(expectedTags.Count, tagIndex);
+        }
+
         private static long GetLongSum(List<Metric> metrics)
         {
             long sum = 0;
@@ -733,19 +1058,53 @@ namespace OpenTelemetry.Metrics.Tests
             return sum;
         }
 
+        private static int GetNumberOfMetricPoints(List<Metric> metrics)
+        {
+            int count = 0;
+            foreach (var metric in metrics)
+            {
+                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        // Provide tags input sorted by Key
+        private static void CheckTagsForNthMetricPoint(List<Metric> metrics, List<KeyValuePair<string, object>> tags, int n)
+        {
+            var metric = metrics[0];
+            var metricPointEnumerator = metric.GetMetricPoints().GetEnumerator();
+
+            for (int i = 0; i < n; i++)
+            {
+                Assert.True(metricPointEnumerator.MoveNext());
+            }
+
+            int index = 0;
+            var metricPoint = metricPointEnumerator.Current;
+            foreach (var tag in metricPoint.Tags)
+            {
+                Assert.Equal(tags[index].Key, tag.Key);
+                Assert.Equal(tags[index].Value, tag.Value);
+                index++;
+            }
+        }
+
         private static void CounterUpdateThread<T>(object obj)
             where T : struct, IComparable
         {
-            var arguments = obj as UpdateThreadArguments<T>;
-            if (arguments == null)
+            if (obj is not UpdateThreadArguments<T> arguments)
             {
                 throw new Exception("Invalid args");
             }
 
             var mre = arguments.MreToBlockUpdateThread;
             var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
-            var counter = arguments.Counter;
-            var valueToUpdate = arguments.DeltaValueUpdatedByEachCall;
+            var counter = arguments.Instrument as Counter<T>;
+            var valueToUpdate = arguments.ValuesToRecord[0];
             if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == numberOfThreads)
             {
                 mreToEnsureAllThreadsStart.Set();
@@ -760,14 +1119,149 @@ namespace OpenTelemetry.Metrics.Tests
             }
         }
 
+        private static void HistogramUpdateThread<T>(object obj)
+            where T : struct, IComparable
+        {
+            if (obj is not UpdateThreadArguments<T> arguments)
+            {
+                throw new Exception("Invalid args");
+            }
+
+            var mre = arguments.MreToBlockUpdateThread;
+            var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
+            var histogram = arguments.Instrument as Histogram<T>;
+
+            if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == numberOfThreads)
+            {
+                mreToEnsureAllThreadsStart.Set();
+            }
+
+            // Wait until signalled to start calling update on aggregator
+            mre.WaitOne();
+
+            for (int i = 0; i < numberOfMetricUpdateByEachThread; i++)
+            {
+                for (int j = 0; j < arguments.ValuesToRecord.Length; j++)
+                {
+                    histogram.Record(arguments.ValuesToRecord[j]);
+                }
+            }
+        }
+
+        private void MultithreadedCounterTest<T>(T deltaValueUpdatedByEachCall)
+            where T : struct, IComparable
+        {
+            var metricItems = new List<Metric>();
+            var metricReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(metricItems));
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{typeof(T).Name}.{deltaValueUpdatedByEachCall}");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(metricReader)
+                .Build();
+
+            var argToThread = new UpdateThreadArguments<T>
+            {
+                ValuesToRecord = new T[] { deltaValueUpdatedByEachCall },
+                Instrument = meter.CreateCounter<T>("counter"),
+                MreToBlockUpdateThread = new ManualResetEvent(false),
+                MreToEnsureAllThreadsStart = new ManualResetEvent(false),
+            };
+
+            Thread[] t = new Thread[numberOfThreads];
+            for (int i = 0; i < numberOfThreads; i++)
+            {
+                t[i] = new Thread(CounterUpdateThread<T>);
+                t[i].Start(argToThread);
+            }
+
+            argToThread.MreToEnsureAllThreadsStart.WaitOne();
+            Stopwatch sw = Stopwatch.StartNew();
+            argToThread.MreToBlockUpdateThread.Set();
+
+            for (int i = 0; i < numberOfThreads; i++)
+            {
+                t[i].Join();
+            }
+
+            this.output.WriteLine($"Took {sw.ElapsedMilliseconds} msecs. Total threads: {numberOfThreads}, each thread doing {numberOfMetricUpdateByEachThread} recordings.");
+
+            metricReader.Collect();
+
+            if (typeof(T) == typeof(long))
+            {
+                var sumReceived = GetLongSum(metricItems);
+                var expectedSum = deltaLongValueUpdatedByEachCall * numberOfMetricUpdateByEachThread * numberOfThreads;
+                Assert.Equal(expectedSum, sumReceived);
+            }
+            else if (typeof(T) == typeof(double))
+            {
+                var sumReceived = GetDoubleSum(metricItems);
+                var expectedSum = deltaDoubleValueUpdatedByEachCall * numberOfMetricUpdateByEachThread * numberOfThreads;
+                Assert.Equal(expectedSum, sumReceived, 2);
+            }
+        }
+
+        private void MultithreadedHistogramTest<T>(long[] expected, T[] values)
+            where T : struct, IComparable
+        {
+            var bucketCounts = new long[11];
+            var metricReader = new BaseExportingMetricReader(new TestExporter<Metric>(batch =>
+            {
+                foreach (var metric in batch)
+                {
+                    foreach (var metricPoint in metric.GetMetricPoints())
+                    {
+                        bucketCounts = metricPoint.GetHistogramBuckets().RunningBucketCounts;
+                    }
+                }
+            }));
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{typeof(T).Name}");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddReader(metricReader)
+                .Build();
+
+            var argsToThread = new UpdateThreadArguments<T>
+            {
+                Instrument = meter.CreateHistogram<T>("histogram"),
+                MreToBlockUpdateThread = new ManualResetEvent(false),
+                MreToEnsureAllThreadsStart = new ManualResetEvent(false),
+                ValuesToRecord = values,
+            };
+
+            Thread[] t = new Thread[numberOfThreads];
+            for (int i = 0; i < numberOfThreads; i++)
+            {
+                t[i] = new Thread(HistogramUpdateThread<T>);
+                t[i].Start(argsToThread);
+            }
+
+            argsToThread.MreToEnsureAllThreadsStart.WaitOne();
+            Stopwatch sw = Stopwatch.StartNew();
+            argsToThread.MreToBlockUpdateThread.Set();
+
+            for (int i = 0; i < numberOfThreads; i++)
+            {
+                t[i].Join();
+            }
+
+            this.output.WriteLine($"Took {sw.ElapsedMilliseconds} msecs. Total threads: {numberOfThreads}, each thread doing {numberOfMetricUpdateByEachThread * values.Length} recordings.");
+
+            metricReader.Collect();
+
+            Assert.Equal(expected, bucketCounts);
+        }
+
         private class UpdateThreadArguments<T>
             where T : struct, IComparable
         {
             public ManualResetEvent MreToBlockUpdateThread;
             public ManualResetEvent MreToEnsureAllThreadsStart;
             public int ThreadsStartedCount;
-            public Counter<T> Counter;
-            public T DeltaValueUpdatedByEachCall;
+            public Instrument<T> Instrument;
+            public T[] ValuesToRecord;
         }
     }
 }
