@@ -108,6 +108,7 @@ Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/ma
 
 * [Bruno Garcia](https://github.com/bruno-garcia)
 * [Eddy Nakamura](https://github.com/eddynaka)
+* [Liudmila Molkova](https://github.com/lmolkova)
 * [Mike Goldsmith](https://github.com/MikeGoldsmith)
 * [Paulo Janotti](https://github.com/pjanotti)
 * [Sergey Kanzhelev](https://github.com/SergeyKanzhelev)
