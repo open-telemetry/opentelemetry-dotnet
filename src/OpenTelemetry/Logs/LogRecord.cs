@@ -132,7 +132,7 @@ namespace OpenTelemetry.Logs
                 Guard.ThrowIfNull(value, nameof(this._state));
                 try
                 {
-                    _spinlock.Enter(ref _lockTaken);
+                    _spinlock.Enter(ref this._lockTaken);
 
                     var listKvp = value is IReadOnlyList<KeyValuePair<string, object>> ? value as IReadOnlyList<KeyValuePair<string, object>> : value is IEnumerable<KeyValuePair<string, object>> ? value as IReadOnlyList<KeyValuePair<string, object>> : null;
 
@@ -155,7 +155,7 @@ namespace OpenTelemetry.Logs
                 }
                 finally
                 {
-                    if (_lockTaken)
+                    if (this._lockTaken)
                     {
                         _spinlock.Exit();
                     }
@@ -176,7 +176,7 @@ namespace OpenTelemetry.Logs
                 Guard.ThrowIfNull(value, nameof(this.StateValues));
                 try
                 {
-                    _spinlock.Enter(ref _lockTaken);
+                    _spinlock.Enter(ref this._lockTaken);
                     int kvpCount = value.Count;
                     var tempStateValues = new List<KeyValuePair<string, object>>(kvpCount);
                     for (int i = 0; i < kvpCount; ++i)
@@ -189,7 +189,7 @@ namespace OpenTelemetry.Logs
                 }
                 finally
                 {
-                    if (_lockTaken)
+                    if (this._lockTaken)
                     {
                         _spinlock.Exit();
                     }
