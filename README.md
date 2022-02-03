@@ -89,38 +89,30 @@ doc](https://docs.google.com/document/d/1yjjD6aBcLxlRazYrawukDgrhZMObwHARJbB9glW
 If you have trouble accessing the doc, please get in touch on
 [Slack](https://cloud-native.slack.com/archives/C01N3BC2W7Q).
 
-Approvers
-([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
-
-* [Bruno Garcia](https://github.com/bruno-garcia), Sentry
-* [Eddy Nakamura](https://github.com/eddynaka), Microsoft
-* [Paulo Janotti](https://github.com/pjanotti), Splunk
-* [Reiley Yang](https://github.com/reyang), Microsoft
-* [Robert Pajak](https://github.com/pellared), Splunk
-* [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
-
-*Find more about the approver role in [community
-repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver).*
-
-Maintainers
+[Maintainers](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer)
 ([@open-telemetry/dotnet-maintainers](https://github.com/orgs/open-telemetry/teams/dotnet-maintainers)):
 
 * [Alan West](https://github.com/alanwest), New Relic
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
-* [Mike Goldsmith](https://github.com/MikeGoldsmith), Honeycomb
 * [Mikel Blanchard](https://github.com/CodeBlanch), CoStar Group
-* [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Google
 
-*Find more about the maintainer role in [community
-repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).*
+[Approvers](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver)
+([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
-Triager
-([@open-telemetry/dotnet-triagers](https://github.com/orgs/open-telemetry/teams/dotnet-triagers)):
+* [Reiley Yang](https://github.com/reyang), Microsoft
+* [Robert Paj&#x105;k](https://github.com/pellared), Splunk
+* [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
-* [Victor Lu](https://github.com/victlu), Microsoft
+[Emeritus
+Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/main/community-membership.md#emeritus-maintainerapprovertriager):
 
-*Find more about the triager role in [community
-repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#triager).*
+* [Bruno Garcia](https://github.com/bruno-garcia)
+* [Eddy Nakamura](https://github.com/eddynaka)
+* [Liudmila Molkova](https://github.com/lmolkova)
+* [Mike Goldsmith](https://github.com/MikeGoldsmith)
+* [Paulo Janotti](https://github.com/pjanotti)
+* [Sergey Kanzhelev](https://github.com/SergeyKanzhelev)
+* [Victor Lu](https://github.com/victlu)
 
 ### Thanks to all the people who have contributed
 
