@@ -34,15 +34,15 @@ namespace OpenTelemetry.Logs
             state.Add(scope);
         };
 
-        private static SpinLock _spinlock = default;
+        private static SpinLock spinlock = default;
 
-        private bool _lockTaken = false;
+        private bool lockTaken = false;
 
-        private object _state;
+        private object state;
 
-        private List<KeyValuePair<string, object>> _stateValues;
+        private List<KeyValuePair<string, object>> stateValues;
 
-        private string _formattedMessage;
+        private string formattedMessage;
 
         private List<object> bufferedScopes;
 
@@ -112,11 +112,11 @@ namespace OpenTelemetry.Logs
         /// </summary>
         public string FormattedMessage
         {
-            get => this._formattedMessage;
+            get => this.formattedMessage;
             set
             {
                 Guard.ThrowIfNullOrEmpty(value, nameof(this.FormattedMessage));
-                this._formattedMessage = value;
+                this.formattedMessage = value;
             }
         }
 
@@ -127,13 +127,13 @@ namespace OpenTelemetry.Logs
         /// </summary>
         public object State
         {
-            get => this._state;
+            get => (object)this.state;
             set
             {
-                Guard.ThrowIfNull(value, nameof(this._state));
+                Guard.ThrowIfNull(value, nameof(this.state));
                 try
                 {
-                    _spinlock.Enter(ref this._lockTaken);
+                    spinlock.Enter(ref this.lockTaken);
 
                     var listKvp = value is IReadOnlyList<KeyValuePair<string, object>> ? value as IReadOnlyList<KeyValuePair<string, object>> : value is IEnumerable<KeyValuePair<string, object>> ? value as IEnumerable<KeyValuePair<string, object>> : null;
 
@@ -141,7 +141,7 @@ namespace OpenTelemetry.Logs
                     {
                         listKvp = new List<KeyValuePair<string, object>>
                         {
-                            new KeyValuePair<string, object>(string.Empty, this._state),
+                            new KeyValuePair<string, object>(string.Empty, this.state),
                         };
                     }
 
@@ -153,13 +153,13 @@ namespace OpenTelemetry.Logs
                         tempList.Add(updatedEntry);
                     }
 
-                    this._state = tempList;
+                    this.state = tempList;
                 }
                 finally
                 {
-                    if (this._lockTaken)
+                    if (this.lockTaken)
                     {
-                        _spinlock.Exit();
+                        spinlock.Exit();
                     }
                 }
             }
@@ -172,13 +172,13 @@ namespace OpenTelemetry.Logs
         /// </summary>
         public IReadOnlyList<KeyValuePair<string, object>> StateValues
         {
-            get => (IReadOnlyList<KeyValuePair<string, object>>)this._stateValues;
+            get => (IReadOnlyList<KeyValuePair<string, object>>)this.stateValues;
             set
             {
                 Guard.ThrowIfNull(value, nameof(this.StateValues));
                 try
                 {
-                    _spinlock.Enter(ref this._lockTaken);
+                    spinlock.Enter(ref this.lockTaken);
                     int kvpCount = value.Count;
                     var tempStateValues = new List<KeyValuePair<string, object>>(kvpCount);
                     for (int i = 0; i < kvpCount; ++i)
@@ -187,13 +187,13 @@ namespace OpenTelemetry.Logs
                         tempStateValues.Add(updatedEntry);
                     }
 
-                    this._stateValues = tempStateValues;
+                    this.stateValues = tempStateValues;
                 }
                 finally
                 {
-                    if (this._lockTaken)
+                    if (this.lockTaken)
                     {
-                        _spinlock.Exit();
+                        spinlock.Exit();
                     }
                 }
             }
