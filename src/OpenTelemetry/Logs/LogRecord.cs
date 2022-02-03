@@ -17,7 +17,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
 {
@@ -30,6 +32,16 @@ namespace OpenTelemetry.Logs
         {
             state.Add(scope);
         };
+
+        private SpinLock _spinlock = default;
+
+        private bool _lockTaken = false;
+
+        private object _state;
+
+        private List<KeyValuePair<string, object>> _stateValues;
+
+        private string _formattedMessage;
 
         private List<object> bufferedScopes;
 
@@ -59,9 +71,22 @@ namespace OpenTelemetry.Logs
             this.CategoryName = categoryName;
             this.LogLevel = logLevel;
             this.EventId = eventId;
-            this.FormattedMessage = formattedMessage;
-            this.State = state;
-            this.StateValues = stateValues;
+
+            if (formattedMessage != null)
+            {
+                this.FormattedMessage = formattedMessage;
+            }
+
+            if (state != null)
+            {
+                this.State = state;
+            }
+
+            if (stateValues != null)
+            {
+                this.StateValues = stateValues;
+            }
+
             this.Exception = exception;
         }
 
@@ -81,21 +106,86 @@ namespace OpenTelemetry.Logs
 
         public EventId EventId { get; }
 
-        public string FormattedMessage { get; }
+        /// <summary>
+        /// Gets or sets the FormattedMessage of the log.
+        /// </summary>
+        public string FormattedMessage
+        {
+            get => this._formattedMessage;
+            set
+            {
+                Guard.ThrowIfNull(value, nameof(this.State));
+                try
+                {
+                    Guard.ThrowIfNullOrEmpty(value, nameof(this.FormattedMessage));
+                    this._formattedMessage = value;
+                } finally
+                {
+                    if (_lockTaken)
+                    {
+                        _spinlock.Exit();
+                    }
+                }
+            }
+        }
 
         /// <summary>
-        /// Gets the raw state attached to the log. Set to <see
+        /// Gets or sets the raw state attached to the log. Set to <see
         /// langword="null"/> when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled.
         /// </summary>
-        public object State { get; }
+        public object State
+        {
+            get => this._state;
+            set
+            {
+                Guard.ThrowIfNull(value, nameof(this.State));
+                try
+                {
+                    _spinlock.Enter(ref _lockTaken);
+                    this._state = value;
+                }
+                finally
+                {
+                    if (_lockTaken)
+                    {
+                        _spinlock.Exit();
+                    }
+                }
+            }
+        }
 
         /// <summary>
-        /// Gets the parsed state values attached to the log. Set when <see
+        /// Gets or sets the parsed state values attached to the log. Set when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled
         /// otherwise <see langword="null"/>.
         /// </summary>
-        public IReadOnlyList<KeyValuePair<string, object>> StateValues { get; }
+        public IReadOnlyList<KeyValuePair<string, object>> StateValues
+        {
+            get => (IReadOnlyList<KeyValuePair<string, object>>)this._stateValues;
+            set
+            {
+                Guard.ThrowIfNull(value, nameof(this.StateValues));
+                try
+                {
+                    _spinlock.Enter(ref _lockTaken);
+                    int kvpCount = value.Count;
+                    this._stateValues = new List<KeyValuePair<string, object>>(kvpCount);
+                    for (int i = 0; i < kvpCount; ++i)
+                    {
+                        var updatedEntry = new KeyValuePair<string, object>(value[i].Key, value[i].Value);
+                        this._stateValues.Add(updatedEntry);
+                    }
+                }
+                finally
+                {
+                    if (_lockTaken)
+                    {
+                        _spinlock.Exit();
+                    }
+                }
+            }
+        }
 
         public Exception Exception { get; }
 
