@@ -2,8 +2,9 @@
 
 ## Unreleased
 
-## --help
-\nReleased 2022-Jan-14
+## 1.0.0-rc9
+
+Released 2022-Feb-02
 
 * Fixed an issue with `Filter` and `Enrich` callbacks not firing under certain
   conditions when gRPC is used

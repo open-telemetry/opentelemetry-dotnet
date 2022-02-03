@@ -2,8 +2,9 @@
 
 ## Unreleased
 
-## --help
-\nReleased 2022-Jan-14
+## 1.2.0-rc2
+
+Released 2022-Feb-02
 
 * Make `MetricPoint` of `MetricPointAccessor` readonly.
   ([2736](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2736))
@@ -14,6 +15,10 @@
 * Swallow `ObjectDisposedException` from the `BatchExportProcessor` worker
   thread.
   ([2844](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2844))
+
+* Performance improvement: when emitting metrics, users are strongly advised to
+  provide tags with same Key order, to achieve maximum performance.
+  ([2805](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2805/files))
 
 ## 1.2.0-rc1
 

@@ -2,8 +2,9 @@
 
 ## Unreleased
 
-## --help
-\nReleased 2022-Jan-14
+## 1.2.0-rc2
+
+Released 2022-Feb-02
 
 ## 1.2.0-rc1
 

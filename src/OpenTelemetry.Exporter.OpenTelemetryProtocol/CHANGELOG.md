@@ -6,8 +6,9 @@
 
 ## Unreleased
 
-## --help
-\nReleased 2022-Jan-14
+## 1.2.0-rc2
+
+Released 2022-Feb-02
 
 * Added validation that insecure channel is configured correctly when using
   .NET Core 3.x for gRPC-based exporting.
