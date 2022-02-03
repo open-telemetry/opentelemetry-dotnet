@@ -37,7 +37,7 @@ namespace OpenTelemetry.Logs
 
         private bool _lockTaken = false;
 
-        private object _state;
+        private List<KeyValuePair<string, object>> _stateList;
 
         private List<KeyValuePair<string, object>> _stateValues;
 
@@ -114,7 +114,7 @@ namespace OpenTelemetry.Logs
             get => this._formattedMessage;
             set
             {
-                Guard.ThrowIfNull(value, nameof(this.State));
+                Guard.ThrowIfNull(value, nameof(this.FormattedMessage));
                 try
                 {
                     Guard.ThrowIfNullOrEmpty(value, nameof(this.FormattedMessage));
@@ -136,14 +136,23 @@ namespace OpenTelemetry.Logs
         /// </summary>
         public object State
         {
-            get => this._state;
+            get => (object)this._stateList;
             set
             {
                 Guard.ThrowIfNull(value, nameof(this.State));
                 try
                 {
                     _spinlock.Enter(ref _lockTaken);
-                    this._state = value;
+                    var listKvp = value as IReadOnlyList<KeyValuePair<string, object>>;
+                    int kvpCount = listKvp.Count;
+                    var tempList = new List<KeyValuePair<string, object>>(kvpCount);
+                    for (int i = 0; i < kvpCount; ++i)
+                    {
+                        var updatedEntry = new KeyValuePair<string, object>(listKvp[i].Key, listKvp[i].Value);
+                        tempList.Add(updatedEntry);
+                    }
+
+                    this._stateList = tempList;
                 }
                 finally
                 {
@@ -170,12 +179,14 @@ namespace OpenTelemetry.Logs
                 {
                     _spinlock.Enter(ref _lockTaken);
                     int kvpCount = value.Count;
-                    this._stateValues = new List<KeyValuePair<string, object>>(kvpCount);
+                    var tempStateValues = new List<KeyValuePair<string, object>>(kvpCount);
                     for (int i = 0; i < kvpCount; ++i)
                     {
                         var updatedEntry = new KeyValuePair<string, object>(value[i].Key, value[i].Value);
-                        this._stateValues.Add(updatedEntry);
+                        tempStateValues.Add(updatedEntry);
                     }
+
+                    this._stateValues = tempStateValues;
                 }
                 finally
                 {
