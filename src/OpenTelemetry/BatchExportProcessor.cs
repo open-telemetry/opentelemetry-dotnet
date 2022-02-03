@@ -240,6 +240,7 @@ namespace OpenTelemetry
                     }
                     catch (ObjectDisposedException)
                     {
+                        // the exporter is somehow disposed before the worker thread could finish its job
                         return;
                     }
                 }
@@ -251,8 +252,16 @@ namespace OpenTelemetry
                         this.exporter.Export(batch);
                     }
 
-                    this.dataExportedNotification.Set();
-                    this.dataExportedNotification.Reset();
+                    try
+                    {
+                        this.dataExportedNotification.Set();
+                        this.dataExportedNotification.Reset();
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        // the exporter is somehow disposed before the worker thread could finish its job
+                        return;
+                    }
                 }
 
                 if (this.circularBuffer.RemovedCount >= this.shutdownDrainTarget)
