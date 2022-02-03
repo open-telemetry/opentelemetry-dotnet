@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
@@ -134,7 +135,7 @@ namespace OpenTelemetry.Logs
                 {
                     _spinlock.Enter(ref this._lockTaken);
 
-                    var listKvp = value is IReadOnlyList<KeyValuePair<string, object>> ? value as IReadOnlyList<KeyValuePair<string, object>> : value is IEnumerable<KeyValuePair<string, object>> ? value as IReadOnlyList<KeyValuePair<string, object>> : null;
+                    var listKvp = value is IReadOnlyList<KeyValuePair<string, object>> ? value as IReadOnlyList<KeyValuePair<string, object>> : value is IEnumerable<KeyValuePair<string, object>> ? value as IEnumerable<KeyValuePair<string, object>> : null;
 
                     if (listKvp == null)
                     {
@@ -144,10 +145,11 @@ namespace OpenTelemetry.Logs
                         };
                     }
 
-                    var tempList = new List<KeyValuePair<string, object>>(listKvp.Count);
-                    for (int i = 0; i < listKvp.Count; ++i)
+                    var tempList = new List<KeyValuePair<string, object>>(listKvp.Count());
+
+                    foreach (var kvp in listKvp)
                     {
-                        var updatedEntry = new KeyValuePair<string, object>(listKvp[i].Key, listKvp[i].Value);
+                        var updatedEntry = new KeyValuePair<string, object>(kvp.Key, kvp.Value);
                         tempList.Add(updatedEntry);
                     }
 
