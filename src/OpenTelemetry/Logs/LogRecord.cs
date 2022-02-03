@@ -79,7 +79,8 @@ namespace OpenTelemetry.Logs
 
             if (state != null)
             {
-                this.State = state;
+                //var parsedState = state;
+                //this._stateList = parsedState;
             }
 
             if (stateValues != null)
@@ -136,7 +137,7 @@ namespace OpenTelemetry.Logs
         /// </summary>
         public object State
         {
-            get => (object)this._stateList;
+            get => this._stateList;
             set
             {
                 Guard.ThrowIfNull(value, nameof(this.State));
