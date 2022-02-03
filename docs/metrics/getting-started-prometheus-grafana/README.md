@@ -25,7 +25,7 @@ Add a reference to [Prometheus
 Exporter](../../../src/OpenTelemetry.Exporter.Prometheus/README.md):
 
 ```shell
-dotnet add package OpenTelemetry.Exporter.Prometheus --version 1.2.0-rc1
+dotnet add package OpenTelemetry.Exporter.Prometheus --version 1.2.0-rc2
 ```
 
 Now, we are going to make some small tweaks to the example in the
