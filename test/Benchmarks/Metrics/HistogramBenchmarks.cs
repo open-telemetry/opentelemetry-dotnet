@@ -25,16 +25,23 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
+BenchmarkDotNet=v0.13.1, OS=Windows 10.0.19044.1503 (21H2)
+AMD Ryzen 9 3900X, 1 CPU, 24 logical and 12 physical cores
+.NET SDK=6.0.101
+  [Host]     : .NET 6.0.1 (6.0.121.56705), X64 RyuJIT
+  DefaultJob : .NET 6.0.1 (6.0.121.56705), X64 RyuJIT
+
+
 |                 Method | BoundCount |     Mean |    Error |   StdDev | Allocated |
 |----------------------- |----------- |---------:|---------:|---------:|----------:|
-|   HistogramLongHotPath |         10 | 65.10 ns | 0.694 ns | 0.649 ns |         - |
-| HistogramDoubleHotPath |         10 | 61.06 ns | 0.370 ns | 0.328 ns |         - |
-|   HistogramLongHotPath |         20 | 68.32 ns | 1.237 ns | 1.157 ns |         - |
-| HistogramDoubleHotPath |         20 | 67.71 ns | 0.753 ns | 0.704 ns |         - |
-|   HistogramLongHotPath |         50 | 80.11 ns | 0.864 ns | 0.721 ns |         - |
-| HistogramDoubleHotPath |         50 | 75.49 ns | 0.437 ns | 0.409 ns |         - |
-|   HistogramLongHotPath |        100 | 90.48 ns | 0.296 ns | 0.262 ns |         - |
-| HistogramDoubleHotPath |        100 | 86.93 ns | 0.915 ns | 0.856 ns |         - |
+|   HistogramLongHotPath |         10 | 55.44 ns | 0.211 ns | 0.187 ns |         - |
+| HistogramDoubleHotPath |         10 | 55.69 ns | 0.129 ns | 0.107 ns |         - |
+|   HistogramLongHotPath |         20 | 57.71 ns | 0.297 ns | 0.278 ns |         - |
+| HistogramDoubleHotPath |         20 | 58.10 ns | 0.117 ns | 0.110 ns |         - |
+|   HistogramLongHotPath |         50 | 65.21 ns | 0.356 ns | 0.333 ns |         - |
+| HistogramDoubleHotPath |         50 | 66.34 ns | 0.381 ns | 0.356 ns |         - |
+|   HistogramLongHotPath |        100 | 79.49 ns | 0.804 ns | 0.753 ns |         - |
+| HistogramDoubleHotPath |        100 | 85.77 ns | 0.947 ns | 0.840 ns |         - |
 */
 
 namespace Benchmarks.Metrics
