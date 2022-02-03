@@ -73,6 +73,15 @@ namespace OpenTelemetry.Exporter
                     }
                 }
 
+                if (activity.Links.Any())
+                {
+                    this.WriteLine("Activity.Links:");
+                    foreach (var activityLink in activity.Links)
+                    {
+                        this.WriteLine($"    {activityLink.Context.TraceId} {activityLink.Context.SpanId}");
+                    }
+                }
+
                 var resource = this.ParentProvider.GetResource();
                 if (resource != Resource.Empty)
                 {
