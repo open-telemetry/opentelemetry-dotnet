@@ -24,7 +24,7 @@ Any exceptions to this are noted in the individual `README.md` files.
 If you are new here, please read the getting started docs:
 
 * [logs](./docs/logs/getting-started/README.md)
-* [metrics](./docs/metrics/getting-started/README.md) (experimental)
+* [metrics](./docs/metrics/getting-started/README.md)
 * [trace](./docs/trace/getting-started/README.md)
 
 This repository includes multiple installable components, available on
@@ -71,6 +71,8 @@ most common customization and extension scenarios:
   library](./docs/trace/extending-the-sdk/README.md#instrumentation-library)
 * [Building a custom log
   exporter/processor/sampler](./docs/logs/extending-the-sdk/README.md)
+* [Building a custom metrics
+  exporter/reader/exemplar](./docs/metrics/extending-the-sdk/README.md)
 * [Building a custom trace
   exporter/processor/sampler](./docs/trace/extending-the-sdk/README.md)
 
