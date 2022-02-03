@@ -33,11 +33,11 @@ namespace OpenTelemetry.Logs
             state.Add(scope);
         };
 
-        private SpinLock _spinlock = default;
+        private static SpinLock _spinlock = default;
 
         private bool _lockTaken = false;
 
-        private List<KeyValuePair<string, object>> _stateList;
+        private object _state;
 
         private List<KeyValuePair<string, object>> _stateValues;
 
@@ -79,8 +79,7 @@ namespace OpenTelemetry.Logs
 
             if (state != null)
             {
-                //var parsedState = state;
-                //this._stateList = parsedState;
+                this.State = state;
             }
 
             if (stateValues != null)
@@ -115,18 +114,8 @@ namespace OpenTelemetry.Logs
             get => this._formattedMessage;
             set
             {
-                Guard.ThrowIfNull(value, nameof(this.FormattedMessage));
-                try
-                {
-                    Guard.ThrowIfNullOrEmpty(value, nameof(this.FormattedMessage));
-                    this._formattedMessage = value;
-                } finally
-                {
-                    if (_lockTaken)
-                    {
-                        _spinlock.Exit();
-                    }
-                }
+                Guard.ThrowIfNullOrEmpty(value, nameof(this.FormattedMessage));
+                this._formattedMessage = value;
             }
         }
 
@@ -137,23 +126,32 @@ namespace OpenTelemetry.Logs
         /// </summary>
         public object State
         {
-            get => this._stateList;
+            get => this._state;
             set
             {
-                Guard.ThrowIfNull(value, nameof(this.State));
+                Guard.ThrowIfNull(value, nameof(this._state));
                 try
                 {
                     _spinlock.Enter(ref _lockTaken);
-                    var listKvp = value as IReadOnlyList<KeyValuePair<string, object>>;
-                    int kvpCount = listKvp.Count;
-                    var tempList = new List<KeyValuePair<string, object>>(kvpCount);
-                    for (int i = 0; i < kvpCount; ++i)
+
+                    var listKvp = value is IReadOnlyList<KeyValuePair<string, object>> ? value as IReadOnlyList<KeyValuePair<string, object>> : value is IEnumerable<KeyValuePair<string, object>> ? value as IReadOnlyList<KeyValuePair<string, object>> : null;
+
+                    if (listKvp == null)
+                    {
+                        listKvp = new List<KeyValuePair<string, object>>
+                        {
+                            new KeyValuePair<string, object>(string.Empty, this._state),
+                        };
+                    }
+
+                    var tempList = new List<KeyValuePair<string, object>>(listKvp.Count);
+                    for (int i = 0; i < listKvp.Count; ++i)
                     {
                         var updatedEntry = new KeyValuePair<string, object>(listKvp[i].Key, listKvp[i].Value);
                         tempList.Add(updatedEntry);
                     }
 
-                    this._stateList = tempList;
+                    this._state = tempList;
                 }
                 finally
                 {
