@@ -124,8 +124,6 @@ namespace OpenTelemetry.Internal
 
             Guard.ThrowIfNull(value, nameof(value));
 
-            var spinCountDown = maxSpinCount;
-
             var spinWait = new SpinWait();
             while (true)
             {
@@ -140,7 +138,7 @@ namespace OpenTelemetry.Internal
                 var head = Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot);
                 if (head != headSnapshot)
                 {
-                    if (spinCountDown-- == 0)
+                    if (spinWait.Count >= maxSpinCount)
                     {
                         return false; // exceeded maximum spin count
                     }
