@@ -15,6 +15,7 @@
 // </copyright>
 #if !NET461
 using System;
+using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -25,6 +26,7 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Trace.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests
@@ -105,6 +107,64 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(1, state.Count);
 
             Assert.Equal(message.ToString(), state.ToString());
+        }
+
+        internal class MyExporter : BaseExporter<LogRecord>
+        {
+            private readonly ICollection<LogRecord> exportedItems;
+
+            public MyExporter(ICollection<LogRecord> exportedItems)
+            {
+                this.exportedItems = exportedItems;
+            }
+
+            public override ExportResult Export(in Batch<LogRecord> batch)
+            {
+                // SuppressInstrumentationScope should be used to prevent exporter
+                // code from generating telemetry and causing live-loop.
+                using var scope = SuppressInstrumentationScope.Begin();
+
+                if (this.exportedItems == null)
+                {
+                    return ExportResult.Failure;
+                }
+
+                foreach (var logRecord in batch)
+                {
+                    logRecord.State = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("Key1", "Value1") };
+
+                    this.exportedItems.Add(logRecord);
+                }
+
+                return ExportResult.Success;
+            }
+        }
+
+        [Fact]
+        public void MyTest()
+        {
+            var exportedItems = new List<LogRecord>();
+            var exporterLoggerFactory = LoggerFactory.Create(builder => builder
+                .AddOpenTelemetry(options =>
+                {
+                    options.AddProcessor(new BatchLogRecordExportProcessor(new MyExporter(exportedItems)));
+                }));
+
+            var oldMessage = "Hello, World!";
+            var exporterLogger = exporterLoggerFactory.CreateLogger<LogRecordTest>();
+            exporterLogger.LogInformation(oldMessage);
+            exporterLoggerFactory.Dispose();
+
+            // before update
+            // var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+            // Assert.Equal(oldMessage.ToString(), state.ToString());
+
+            // after update
+            var newKey = "Key1";
+            var newValue = "Value1";
+            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+            Assert.Equal(newKey.ToString(), state[0].Key.ToString());
+            Assert.Equal(newValue.ToString(), state[0].Value.ToString());
         }
 
         [Fact]
