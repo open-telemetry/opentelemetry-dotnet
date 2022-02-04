@@ -19,6 +19,7 @@
   * [Setting Status](#setting-status)
 * [Instrumenting a library/application with OpenTelemetry.API
   Shim](#instrumenting-using-opentelemetryapi-shim)
+* [Troubleshooting](#troubleshooting)
 * [References](#references)
 
 ## Installation
