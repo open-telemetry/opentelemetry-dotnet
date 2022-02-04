@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+    <Description>OpenTelemetry protos for OpenTelemetry .NET</Description>
+    <MinVerTagPrefix>proto-</MinVerTagPrefix>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <OpenTelemetryProtoVersion>0.12.0</OpenTelemetryProtoVersion>
+    <OpenTelemetryProtoUrl>https://github.com/open-telemetry/opentelemetry-proto/archive/refs/tags/v$(OpenTelemetryProtoVersion).zip</OpenTelemetryProtoUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc" Version="$(GrpcPkgVer)" />
+    <PackageReference Include="Google.Protobuf" Version="$(GoogleProtobufPkgVer)" />
+    <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsPkgVer)" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="**/*.proto">
+      <ProtoRoot>opentelemetry-proto-src/opentelemetry-proto-$(OpenTelemetryProtoVersion)</ProtoRoot>
+    </Protobuf>
+  </ItemGroup>
+
+  <Target Name="DownloadOpenTelemetryProto" BeforeTargets="Build">
+    <RemoveDir Directories="opentelemetry-proto-src" />
+
+    <DownloadFile
+      SourceUrl="$(OpenTelemetryProtoUrl)"
+      DestinationFolder="$(MSBuildProjectDirectory)" />
+
+    <Unzip
+      SourceFiles="opentelemetry-proto-$(OpenTelemetryProtoVersion).zip"
+      DestinationFolder="$(MSBuildProjectDirectory)\opentelemetry-proto-src"
+      OverwriteReadOnlyFiles="true" />
+
+    <Delete Files="opentelemetry-proto-src\opentelemetry-proto-$(OpenTelemetryProtoVersion)\opentelemetry\proto\metrics\experimental\metrics_config_service.proto" />
+  </Target>
+</Project>
