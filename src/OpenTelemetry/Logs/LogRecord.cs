@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
 {
@@ -32,6 +33,12 @@ namespace OpenTelemetry.Logs
         };
 
         private List<object> bufferedScopes;
+
+        private object state;
+
+        private IReadOnlyList<KeyValuePair<string, object>> stateValues;
+
+        private string formattedMessage;
 
         internal LogRecord(
             IExternalScopeProvider scopeProvider,
@@ -59,9 +66,22 @@ namespace OpenTelemetry.Logs
             this.CategoryName = categoryName;
             this.LogLevel = logLevel;
             this.EventId = eventId;
-            this.FormattedMessage = formattedMessage;
-            this.State = state;
-            this.StateValues = stateValues;
+
+            if (formattedMessage != null)
+            {
+                this.FormattedMessage = formattedMessage;
+            }
+
+            if (state != null)
+            {
+                this.State = state;
+            }
+
+            if (stateValues != null)
+            {
+                this.StateValues = stateValues;
+            }
+
             this.Exception = exception;
         }
 
@@ -81,21 +101,45 @@ namespace OpenTelemetry.Logs
 
         public EventId EventId { get; }
 
-        public string FormattedMessage { get; set; }
+        public string FormattedMessage
+        {
+            get => this.formattedMessage;
+            set
+            {
+                Guard.ThrowIfNullOrEmpty(value, nameof(this.FormattedMessage));
+                this.formattedMessage = value;
+            }
+        }
 
         /// <summary>
         /// Gets the raw state attached to the log. Set to <see
         /// langword="null"/> when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled.
         /// </summary>
-        public object State { get; set; }
+        public object State
+        {
+            get => this.state;
+            set
+            {
+                Guard.ThrowIfNull(value, nameof(this.State));
+                this.state = value;
+            }
+        }
 
         /// <summary>
         /// Gets the parsed state values attached to the log. Set when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled
         /// otherwise <see langword="null"/>.
         /// </summary>
-        public IReadOnlyList<KeyValuePair<string, object>> StateValues { get; set; }
+        public IReadOnlyList<KeyValuePair<string, object>> StateValues
+        {
+            get => this.stateValues;
+            set
+            {
+                Guard.ThrowIfNull(value, nameof(this.StateValues));
+                this.stateValues = value;
+            }
+        }
 
         public Exception Exception { get; }
 
