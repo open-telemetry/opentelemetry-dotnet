@@ -58,6 +58,8 @@ is configured to subscribe to instruments from the Meter
 `MyCompany.MyProduct.MyLibrary`, and aggregate the measurements in-memory. The
 pre-aggregated metrics are exported to a `ConsoleExporter`.
 
+Metrics Console exporter does not output to the console immediately so you will end up seeing the metrics on the screen after the program has terminated.
+
 ## OpenTelemetry .NET special note
 
 Metrics in OpenTelemetry .NET is a somewhat unique implementation of the
