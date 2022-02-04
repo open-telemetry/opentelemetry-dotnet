@@ -103,6 +103,15 @@ cache duration time period will receive the same previously generated response.
 The default value is `10000` (10 seconds). Set to `0` to disable response
 caching.
 
+## Troubleshooting
+
+This component uses an
+[EventSource](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventsource)
+with the name "OpenTelemetry-Exporter-Prometheus" for its internal logging.
+Please refer to [SDK
+troubleshooting](../opentelemetry/README.md#troubleshooting) for instructions on
+seeing these internal logs.
+
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
