@@ -81,7 +81,7 @@ namespace OpenTelemetry.Internal
         {
             Guard.ThrowIfNull(value, nameof(value));
 
-            var spinWait = new SpinWait();
+            var spinWait = default(SpinWait);
             while (true)
             {
                 var tailSnapshot = this.tail;
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Internal
 
             Guard.ThrowIfNull(value, nameof(value));
 
-            var spinWait = new SpinWait();
+            var spinWait = default(SpinWait);
             while (true)
             {
                 var tailSnapshot = this.tail;
