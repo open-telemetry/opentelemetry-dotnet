@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <OpenTelemetryProtoVersion>0.12.0</OpenTelemetryProtoVersion>
+    <OpenTelemetryProtoVersion>0.3.0</OpenTelemetryProtoVersion>
     <OpenTelemetryProtoUrl>https://github.com/open-telemetry/opentelemetry-proto/archive/refs/tags/v$(OpenTelemetryProtoVersion).zip</OpenTelemetryProtoUrl>
     <OpenTelemetryProtoZipFile>opentelemetry-proto-$(OpenTelemetryProtoVersion).zip</OpenTelemetryProtoZipFile>
     <OpenTelemetryProtoSourceRoot>opentelemetry-proto</OpenTelemetryProtoSourceRoot>
@@ -36,7 +36,5 @@
       SourceFiles="$(OpenTelemetryProtoZipFile)"
       DestinationFolder="$(OpenTelemetryProtoSourceRoot)"
       OverwriteReadOnlyFiles="true" />
-
-    <Delete Files="opentelemetry-proto-src\opentelemetry-proto-$(OpenTelemetryProtoVersion)\opentelemetry\proto\metrics\experimental\metrics_config_service.proto" />
   </Target>
 </Project>
