@@ -28,7 +28,7 @@ dotnet add package --prerelease OpenTelemetry.Exporter.Console
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs):
 
 Run the application again (using `dotnet run`) and you should see the metric
-output from the console, similar to shown below:
+output from the console (metrics will be seen once the program ends), similar to shown below:
 
 **Note:** Metrics Console exporter does not output to the console immediately so you will end up seeing the metrics on the screen after the program has terminated.
 
