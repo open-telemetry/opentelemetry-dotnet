@@ -282,7 +282,7 @@ namespace OpenTelemetry.Trace
 
         internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
         {
-            Guard.Null(processor, nameof(processor));
+            Guard.ThrowIfNull(processor, nameof(processor));
 
             processor.SetParentProvider(this);
 
@@ -375,6 +375,7 @@ namespace OpenTelemetry.Trace
                 }
 
                 this.disposed = true;
+                OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(TracerProvider));
             }
 
             base.Dispose(disposing);

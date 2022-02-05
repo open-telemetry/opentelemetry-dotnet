@@ -27,9 +27,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     {
         protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient)
         {
-            Guard.Null(options, nameof(options));
-            Guard.Null(httpClient, nameof(httpClient));
-            Guard.InvalidTimeout(options.TimeoutMilliseconds, $"{nameof(options)}.{nameof(options.TimeoutMilliseconds)}");
+            Guard.ThrowIfNull(options, nameof(options));
+            Guard.ThrowIfNull(httpClient, nameof(httpClient));
+            Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds, $"{nameof(options)}.{nameof(options.TimeoutMilliseconds)}");
 
             this.Options = options;
             this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));

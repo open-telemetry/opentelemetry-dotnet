@@ -50,7 +50,7 @@ namespace OpenTelemetry.Metrics
 
             foreach (var reader in readers)
             {
-                Guard.Null(reader, nameof(reader));
+                Guard.ThrowIfNull(reader, nameof(reader));
 
                 reader.SetParentProvider(this);
                 reader.SetMaxMetricStreams(maxMetricStreams);
@@ -491,6 +491,7 @@ namespace OpenTelemetry.Metrics
                 }
 
                 this.disposed = true;
+                OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(MeterProvider));
             }
 
             base.Dispose(disposing);

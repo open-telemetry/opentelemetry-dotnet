@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <param name="next"><see cref="RequestDelegate"/>.</param>
         public PrometheusExporterMiddleware(MeterProvider meterProvider, RequestDelegate next)
         {
-            Guard.Null(meterProvider, nameof(meterProvider));
+            Guard.ThrowIfNull(meterProvider, nameof(meterProvider));
 
             if (!meterProvider.TryFindExporter(out PrometheusExporter exporter))
             {
