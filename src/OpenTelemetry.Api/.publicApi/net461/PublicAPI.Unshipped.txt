@@ -9,6 +9,9 @@ OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Value.get -> object
 OpenTelemetry.Context.RemotingRuntimeContextSlot<T>.Value.set -> void
 OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Value.get -> object
 OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Value.set -> void
+OpenTelemetry.Logs.LogRecord.FormattedMessage.set -> void
+OpenTelemetry.Logs.LogRecord.State.set -> void
+OpenTelemetry.Logs.LogRecord.StateValues.set -> void
 OpenTelemetry.Metrics.IDeferredMeterProviderBuilder
 OpenTelemetry.Metrics.IDeferredMeterProviderBuilder.Configure(System.Action<System.IServiceProvider, OpenTelemetry.Metrics.MeterProviderBuilder> configure) -> OpenTelemetry.Metrics.MeterProviderBuilder
 OpenTelemetry.Metrics.MeterProvider

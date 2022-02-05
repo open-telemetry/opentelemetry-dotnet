@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Expose setters for Value, StateValues, and FormattedMessage fields for LogRecord.
+  ()
+
 ## 1.2.0-rc2
 
 Released 2022-Feb-02
