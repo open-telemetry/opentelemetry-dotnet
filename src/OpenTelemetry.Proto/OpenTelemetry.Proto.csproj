@@ -27,7 +27,7 @@
     </Protobuf>
   </ItemGroup>
 
-  <Target Name="DownloadOpenTelemetryProto" BeforeTargets="Build">
+  <Target Name="DownloadOpenTelemetryProto" BeforeTargets="DispatchToInnerBuilds">
     <DownloadFile Condition="!Exists('$(OpenTelemetryProtoZipFile)')"
       SourceUrl="$(OpenTelemetryProtoUrl)"
       DestinationFolder="$(MSBuildProjectDirectory)" />
