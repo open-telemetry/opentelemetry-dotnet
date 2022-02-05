@@ -8,10 +8,6 @@ SPEC_VERSION=v1.7.0
 SCHEMA_URL=https://opentelemetry.io/schemas/$SPEC_VERSION
 GENERATOR_VERSION=0.8.0
 
-# install the dotnet-format tool
-echo "Restoring dotnet-format tool"
-dotnet tool restore
-
 cd ${SCRIPT_DIR}
 
 rm -rf opentelemetry-specification || true
@@ -47,9 +43,8 @@ docker run --rm \
   -Dclass=ResourceSemanticConventions \
   -DschemaUrl=$SCHEMA_URL \
   -Dpkg=OpenTelemetry.Resources
-  
+
 cd ${ROOT_DIR}
 
 echo "Running dotnet-format on the generated files"
-dotnet format -a warn
-dotnet format -w -s warn
+dotnet format --severity warn
