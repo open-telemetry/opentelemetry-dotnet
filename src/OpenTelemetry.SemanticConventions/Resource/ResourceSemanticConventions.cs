@@ -189,14 +189,14 @@ namespace OpenTelemetry.Resources
         /// </summary>
         /// <remarks>
         /// Depending on the cloud provider, use:
-        ///
+        /// 
         /// * **AWS Lambda:** The function [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
         /// Take care not to use the "invoked ARN" directly but replace any
         /// [alias suffix](https://docs.aws.amazon.com/lambda/latest/dg/configuration-aliases.html) with the resolved function version, as the same runtime instance may be invokable with multiple
         /// different aliases.
         /// * **GCP:** The [URI of the resource](https://cloud.google.com/iam/docs/full-resource-names)
         /// * **Azure:** The [Fully Qualified Resource ID](https://docs.microsoft.com/en-us/rest/api/resources/resources/get-by-id).
-        ///
+        /// 
         /// On some providers, it may not be possible to determine the full ID at startup,
         /// which is why this field cannot be made required. For example, on AWS the account ID
         /// part of the ARN is not available without calling another AWS API
@@ -210,13 +210,13 @@ namespace OpenTelemetry.Resources
         /// </summary>
         /// <remarks>
         /// Depending on the cloud provider and platform, use:
-        ///
+        /// 
         /// * **AWS Lambda:** The [function version](https://docs.aws.amazon.com/lambda/latest/dg/configuration-versions.html)
-        ///  (an integer represented as a decimal string).
+        ///   (an integer represented as a decimal string).
         /// * **Google Cloud Run:** The [revision](https://cloud.google.com/run/docs/managing/revisions)
-        ///  (i.e., the function name plus the revision suffix).
+        ///   (i.e., the function name plus the revision suffix).
         /// * **Google Cloud Functions:** The value of the
-        ///  [`K_REVISION` environment variable](https://cloud.google.com/functions/docs/env-var#runtime_environment_variables_set_automatically).
+        ///   [`K_REVISION` environment variable](https://cloud.google.com/functions/docs/env-var#runtime_environment_variables_set_automatically).
         /// * **Azure Functions:** Not applicable. Do not set this attribute.
         /// </remarks>
         public const string AttributeFaasVersion = "faas.version";

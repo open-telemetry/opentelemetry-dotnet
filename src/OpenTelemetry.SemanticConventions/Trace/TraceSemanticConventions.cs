@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace
     public static class TraceSemanticConventions
     {
         /// <summary>
-        /// Attribute for db.instance.
+        /// Attribute for db.instance
         /// </summary>
         public const string AttributeDbInstance = "db.instance";
 
@@ -182,13 +182,13 @@ namespace OpenTelemetry.Trace
         /// This may be actually "in flight" in some languages (e.g. if the exception
         /// is passed to a Context manager's `__exit__` method in Python) but will
         /// usually be caught at the point of recording the exception in most languages.
-        ///
+        /// 
         /// It is usually not possible to determine at the point where an exception is thrown
         /// whether it will escape the scope of a span.
         /// However, it is trivial to know that an exception
         /// will escape, if one checks for an active exception just before ending the span,
         /// as done in the [example above](#exception-end-example).
-        ///
+        /// 
         /// It follows that an exception may still escape the scope of the span
         /// even if the `exception.escaped` attribute was not set or set to false,
         /// since the event might have been recorded at a time where it was not
@@ -468,7 +468,7 @@ namespace OpenTelemetry.Trace
         /// <remarks>
         /// This is not necessarily the same as `net.peer.ip`, which would
         /// identify the network-level peer, which may be a proxy.
-        ///
+        /// 
         /// This attribute should be set when a source of information different
         /// from the one used for `net.peer.ip`, is available even if that other
         /// source just confirms the same value as `net.peer.ip`.
