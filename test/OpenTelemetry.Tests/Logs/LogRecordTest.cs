@@ -15,7 +15,6 @@
 // </copyright>
 #if !NET461
 using System;
-using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,13 +25,20 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Trace.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests
 {
     public sealed class LogRecordTest : IDisposable
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1602:Enumeration items should be documented", Justification = "enum for test")]
+        public enum Field
+        {
+            FormattedMessage,
+            State,
+            StateValues,
+        }
+
         private readonly ILogger logger;
         private readonly List<LogRecord> exportedItems = new List<LogRecord>();
         private readonly ILoggerFactory loggerFactory;
@@ -109,62 +115,50 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(message.ToString(), state.ToString());
         }
 
-        internal class MyExporter : BaseExporter<LogRecord>
-        {
-            private readonly ICollection<LogRecord> exportedItems;
-
-            public MyExporter(ICollection<LogRecord> exportedItems)
-            {
-                this.exportedItems = exportedItems;
-            }
-
-            public override ExportResult Export(in Batch<LogRecord> batch)
-            {
-                // SuppressInstrumentationScope should be used to prevent exporter
-                // code from generating telemetry and causing live-loop.
-                using var scope = SuppressInstrumentationScope.Begin();
-
-                if (this.exportedItems == null)
-                {
-                    return ExportResult.Failure;
-                }
-
-                foreach (var logRecord in batch)
-                {
-                    logRecord.State = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("Key1", "Value1") };
-
-                    this.exportedItems.Add(logRecord);
-                }
-
-                return ExportResult.Success;
-            }
-        }
-
-        [Fact]
-        public void MyTest()
+        [Theory]
+        [InlineData(Field.State)]
+        [InlineData(Field.StateValues)]
+        [InlineData(Field.FormattedMessage)]
+        public void SettersTest(Field fieldName)
         {
             var exportedItems = new List<LogRecord>();
             var exporterLoggerFactory = LoggerFactory.Create(builder => builder
                 .AddOpenTelemetry(options =>
                 {
-                    options.AddProcessor(new BatchLogRecordExportProcessor(new MyExporter(exportedItems)));
+                    options.AddProcessor(new BatchLogRecordExportProcessor(new RedactionExporter(exportedItems, fieldName)));
                 }));
 
-            var oldMessage = "Hello, World!";
             var exporterLogger = exporterLoggerFactory.CreateLogger<LogRecordTest>();
-            exporterLogger.LogInformation(oldMessage);
-            exporterLoggerFactory.Dispose();
+            if (fieldName == Field.State)
+            {
+                exporterLogger.LogInformation($"This should be replaced {0.99}.");
+                exporterLoggerFactory.Dispose();
 
-            // before update
-            // var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
-            // Assert.Equal(oldMessage.ToString(), state.ToString());
+                var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+                Assert.Equal("newStateKey", state[0].Key.ToString());
+                Assert.Equal("newStateValue", state[0].Value.ToString());
+            }
+            else if (fieldName == Field.StateValues)
+            {
+                exporterLogger.Log(
+                    LogLevel.Information,
+                    0,
+                    new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("OldKey", "OldValue") },
+                    null,
+                    (s, e) => "OpenTelemetry!");
+                exporterLoggerFactory.Dispose();
 
-            // after update
-            var newKey = "Key1";
-            var newValue = "Value1";
-            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
-            Assert.Equal(newKey.ToString(), state[0].Key.ToString());
-            Assert.Equal(newValue.ToString(), state[0].Value.ToString());
+                var stateValue = exportedItems[0];
+                Assert.Equal(new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue"), stateValue.StateValues[0]);
+            }
+            else
+            {
+                exporterLogger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
+                exporterLoggerFactory.Dispose();
+
+                var items = exportedItems[0];
+                Assert.Equal("OpenTelemetry Good Night!", items.FormattedMessage);
+            }
         }
 
         [Fact]
@@ -676,6 +670,51 @@ namespace OpenTelemetry.Logs.Tests
             public string Name { get; set; }
 
             public double Price { get; set; }
+        }
+
+        private class RedactionExporter : BaseExporter<LogRecord>
+        {
+            private readonly ICollection<LogRecord> exportedItems;
+
+            private readonly Field fieldToUpdate;
+
+            public RedactionExporter(ICollection<LogRecord> exportedItems, Field fieldToUpdate)
+            {
+                this.exportedItems = exportedItems;
+                this.fieldToUpdate = fieldToUpdate;
+            }
+
+            public override ExportResult Export(in Batch<LogRecord> batch)
+            {
+                // SuppressInstrumentationScope should be used to prevent exporter
+                // code from generating telemetry and causing live-loop.
+                using var scope = SuppressInstrumentationScope.Begin();
+
+                if (this.exportedItems == null)
+                {
+                    return ExportResult.Failure;
+                }
+
+                foreach (var logRecord in batch)
+                {
+                    if (this.fieldToUpdate == Field.State)
+                    {
+                        logRecord.State = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateKey", "newStateValue") };
+                    }
+                    else if (this.fieldToUpdate == Field.StateValues)
+                    {
+                        logRecord.StateValues = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue") };
+                    }
+                    else
+                    {
+                        logRecord.FormattedMessage = "OpenTelemetry Good Night!";
+                    }
+
+                    this.exportedItems.Add(logRecord);
+                }
+
+                return ExportResult.Success;
+            }
         }
 
         private struct StructState : IReadOnlyList<KeyValuePair<string, object>>
