@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Expose setters for Value, StateValues, and FormattedMessage fields for LogRecord.
+* Add setters for Value, StateValues, and FormattedMessage fields for LogRecord.
   ()
 
 ## 1.2.0-rc2
