@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-* Add setters for Value, StateValues, and FormattedMessage fields for LogRecord.
-  ()
+* Add setters for `Value`, `StateValues`, and `FormattedMessage` for LogRecord.
+  ([2864](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2864))
 
 ## 1.2.0-rc2
 
