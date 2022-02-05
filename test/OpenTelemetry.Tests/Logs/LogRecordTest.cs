@@ -673,51 +673,6 @@ namespace OpenTelemetry.Logs.Tests
             public double Price { get; set; }
         }
 
-        private class RedactionExporter : BaseExporter<LogRecord>
-        {
-            private readonly ICollection<LogRecord> exportedItems;
-
-            private readonly Field fieldToUpdate;
-
-            public RedactionExporter(ICollection<LogRecord> exportedItems, Field fieldToUpdate)
-            {
-                this.exportedItems = exportedItems;
-                this.fieldToUpdate = fieldToUpdate;
-            }
-
-            public override ExportResult Export(in Batch<LogRecord> batch)
-            {
-                // SuppressInstrumentationScope should be used to prevent exporter
-                // code from generating telemetry and causing live-loop.
-                using var scope = SuppressInstrumentationScope.Begin();
-
-                if (this.exportedItems == null)
-                {
-                    return ExportResult.Failure;
-                }
-
-                foreach (var logRecord in batch)
-                {
-                    if (this.fieldToUpdate == Field.State)
-                    {
-                        logRecord.State = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateKey", "newStateValue") };
-                    }
-                    else if (this.fieldToUpdate == Field.StateValues)
-                    {
-                        logRecord.StateValues = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue") };
-                    }
-                    else
-                    {
-                        logRecord.FormattedMessage = "OpenTelemetry Good Night!";
-                    }
-
-                    this.exportedItems.Add(logRecord);
-                }
-
-                return ExportResult.Success;
-            }
-        }
-
         private struct StructState : IReadOnlyList<KeyValuePair<string, object>>
         {
             private readonly List<KeyValuePair<string, object>> list;
@@ -779,6 +734,51 @@ namespace OpenTelemetry.Logs.Tests
                 data.BufferLogScopes();
 
                 base.OnEnd(data);
+            }
+        }
+
+        private class RedactionExporter : BaseExporter<LogRecord>
+        {
+            private readonly ICollection<LogRecord> exportedItems;
+
+            private readonly Field fieldToUpdate;
+
+            public RedactionExporter(ICollection<LogRecord> exportedItems, Field fieldToUpdate)
+            {
+                this.exportedItems = exportedItems;
+                this.fieldToUpdate = fieldToUpdate;
+            }
+
+            public override ExportResult Export(in Batch<LogRecord> batch)
+            {
+                // SuppressInstrumentationScope should be used to prevent exporter
+                // code from generating telemetry and causing live-loop.
+                using var scope = SuppressInstrumentationScope.Begin();
+
+                if (this.exportedItems == null)
+                {
+                    return ExportResult.Failure;
+                }
+
+                foreach (var logRecord in batch)
+                {
+                    if (this.fieldToUpdate == Field.State)
+                    {
+                        logRecord.State = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateKey", "newStateValue") };
+                    }
+                    else if (this.fieldToUpdate == Field.StateValues)
+                    {
+                        logRecord.StateValues = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue") };
+                    }
+                    else
+                    {
+                        logRecord.FormattedMessage = "OpenTelemetry Good Night!";
+                    }
+
+                    this.exportedItems.Add(logRecord);
+                }
+
+                return ExportResult.Success;
             }
         }
     }
