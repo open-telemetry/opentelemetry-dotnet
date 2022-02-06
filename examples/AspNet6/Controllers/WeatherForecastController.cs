@@ -14,36 +14,41 @@
 // limitations under the License.
 // </copyright>
 
-namespace Examples.AspNet6.Controllers
+namespace Examples.AspNet6.Controllers;
+using System.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
+
+[ApiController]
+[Route("[controller]")]
+public class WeatherForecastController : ControllerBase
 {
-    using Microsoft.AspNetCore.Mvc;
-
-    [ApiController]
-    [Route("[controller]")]
-    public class WeatherForecastController : ControllerBase
+    private static readonly string[] Summaries = new[]
     {
-        private static readonly string[] Summaries = new[]
-        {
         "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching",
-        };
+    };
 
-        private readonly ILogger<WeatherForecastController> logger;
+    private readonly ILogger<WeatherForecastController> logger;
+    private readonly AspNet6Meter aspNet6Meter;
+    private readonly ActivitySource appSource = new(TracingConstants.ActivitySourceName);
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, AspNet6Meter aspNet6Meter)
+    {
+        this.logger = logger;
+        this.aspNet6Meter = aspNet6Meter;
+    }
+
+    [HttpGet(Name = "GetWeatherForecast")]
+    public IEnumerable<WeatherForecast> Get()
+    {
+        using var activity = this.appSource.StartActivity("Get weather forecast", ActivityKind.Internal);
+        this.aspNet6Meter.Requests.Add(1, KeyValuePair.Create<string, object?>("Method", "WeatherForecast GET"));
+        logger.LogInformation("WeatherForecast GET called");
+        return Enumerable.Range(1, 5).Select(index => new WeatherForecast
         {
-            this.logger = logger;
-        }
-
-        [HttpGet(Name = "GetWeatherForecast")]
-        public IEnumerable<WeatherForecast> Get()
-        {
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)],
-            })
-            .ToArray();
-        }
+            Date = DateTime.Now.AddDays(index),
+            TemperatureC = Random.Shared.Next(-20, 55),
+            Summary = Summaries[Random.Shared.Next(Summaries.Length)],
+        })
+        .ToArray();
     }
 }

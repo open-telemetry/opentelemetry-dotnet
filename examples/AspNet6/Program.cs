@@ -13,6 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using System.Reflection;
+using Examples.AspNet6;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +30,43 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen();
+
+// OpenTelemetry
+var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
+
+var resourceBuilder = ResourceBuilder.CreateDefault()
+        .AddService(TracingConstants.ActivitySourceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName.ToString());
+
+builder.Logging.ClearProviders();
+
+builder.Logging.AddConsole();
+
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options.SetResourceBuilder(resourceBuilder)
+        .AddConsoleExporter()
+        .AddOtlpExporter();
+});
+
+builder.Services.AddOpenTelemetryTracing(options =>
+{
+    options.SetResourceBuilder(resourceBuilder)
+       .AddSource(TracingConstants.ActivitySourceName)
+       .AddHttpClientInstrumentation()
+       .AddConsoleExporter()
+       .AddOtlpExporter();
+});
+
+builder.Services.AddOpenTelemetryMetrics(options =>
+{
+    options.SetResourceBuilder(resourceBuilder)
+        .AddHttpClientInstrumentation()
+        .AddMeter(AspNet6Meter.MeterName)
+        .AddConsoleExporter()
+        .AddOtlpExporter();
+});
+
+builder.Services.AddSingleton<AspNet6Meter>();
 
 var app = builder.Build();
 
