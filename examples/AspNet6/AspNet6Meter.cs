@@ -29,5 +29,4 @@ public class AspNet6Meter
     }
 
     public Counter<long> Requests { get; }
-
 }

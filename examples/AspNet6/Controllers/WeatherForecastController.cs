@@ -42,7 +42,7 @@ public class WeatherForecastController : ControllerBase
     {
         using var activity = this.appSource.StartActivity("Get weather forecast", ActivityKind.Internal);
         this.aspNet6Meter.Requests.Add(1, KeyValuePair.Create<string, object?>("Method", "WeatherForecast GET"));
-        logger.LogInformation("WeatherForecast GET called");
+        this.logger.LogInformation("WeatherForecast GET called");
         return Enumerable.Range(1, 5).Select(index => new WeatherForecast
         {
             Date = DateTime.Now.AddDays(index),
