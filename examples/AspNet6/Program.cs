@@ -35,7 +35,7 @@ builder.Services.AddSwaggerGen();
 var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
 
 var resourceBuilder = ResourceBuilder.CreateDefault()
-        .AddService(TracingConstants.ActivitySourceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName.ToString());
+        .AddService(TracingConstants.ActivitySourceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName);
 
 builder.Logging.ClearProviders();
 
