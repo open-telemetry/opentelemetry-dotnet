@@ -16,7 +16,10 @@
 
 namespace Examples.AspNet6;
 
-internal static class TracingConstants
+using System.Diagnostics;
+
+internal static class Tracing
 {
-    public const string ActivitySourceName = "Examples.AspNet6";
+    public static readonly string ActivitySourceName = "Examples.AspNet6";
+    public static readonly ActivitySource ActivitySource = new(ActivitySourceName, "1.0.0");
 }

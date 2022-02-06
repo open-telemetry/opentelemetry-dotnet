@@ -35,7 +35,8 @@ builder.Services.AddSwaggerGen();
 var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
 
 var resourceBuilder = ResourceBuilder.CreateDefault()
-        .AddService(TracingConstants.ActivitySourceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName);
+        .AddService(Tracing.ActivitySourceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName)
+        .AddTelemetrySdk();
 
 builder.Logging.ClearProviders();
 
@@ -50,9 +51,10 @@ builder.Logging.AddOpenTelemetry(options =>
 
 builder.Services.AddOpenTelemetryTracing(options =>
 {
-    options.SetResourceBuilder(resourceBuilder)
-       .AddSource(TracingConstants.ActivitySourceName)
+    options
+       .SetResourceBuilder(resourceBuilder)
        .AddHttpClientInstrumentation()
+       .AddSource(Tracing.ActivitySourceName)
        .AddConsoleExporter()
        .AddOtlpExporter();
 });
