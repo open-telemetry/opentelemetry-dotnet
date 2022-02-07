@@ -55,11 +55,8 @@ OpenTelemetry.Logs.LogRecord.CategoryName.get -> string
 OpenTelemetry.Logs.LogRecord.EventId.get -> Microsoft.Extensions.Logging.EventId
 OpenTelemetry.Logs.LogRecord.Exception.get -> System.Exception
 OpenTelemetry.Logs.LogRecord.ForEachScope<TState>(System.Action<OpenTelemetry.Logs.LogRecordScope, TState> callback, TState state) -> void
-OpenTelemetry.Logs.LogRecord.FormattedMessage.get -> string
 OpenTelemetry.Logs.LogRecord.LogLevel.get -> Microsoft.Extensions.Logging.LogLevel
 OpenTelemetry.Logs.LogRecord.SpanId.get -> System.Diagnostics.ActivitySpanId
-OpenTelemetry.Logs.LogRecord.State.get -> object
-OpenTelemetry.Logs.LogRecord.StateValues.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
 OpenTelemetry.Logs.LogRecord.Timestamp.get -> System.DateTime
 OpenTelemetry.Logs.LogRecord.TraceFlags.get -> System.Diagnostics.ActivityTraceFlags
 OpenTelemetry.Logs.LogRecord.TraceId.get -> System.Diagnostics.ActivityTraceId
