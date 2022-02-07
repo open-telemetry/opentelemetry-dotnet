@@ -41,7 +41,6 @@ public class WeatherForecastController : ControllerBase
     {
         using var activity = Tracing.ActivitySource.StartActivity("WeatherForecast GET", ActivityKind.Internal);
         activity?.SetStartTime(DateTime.UtcNow);
-        var stopwatch = Stopwatch.StartNew();
         this.aspNet6Meter.Requests.Add(1, KeyValuePair.Create<string, object?>("Method", "WeatherForecast GET"));
         this.logger.LogInformation("WeatherForecast GET called");
         var result = Enumerable.Range(1, 5).Select(index => new WeatherForecast
@@ -51,8 +50,6 @@ public class WeatherForecastController : ControllerBase
             Summary = Summaries[Random.Shared.Next(Summaries.Length)],
         })
         .ToArray();
-        activity?.SetTag("Duration (ms)", stopwatch.ElapsedMilliseconds);
-        activity?.SetEndTime(DateTime.UtcNow);
         return result;
     }
 }
