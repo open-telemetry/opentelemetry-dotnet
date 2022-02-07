@@ -122,7 +122,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
 
-            var options = new OtlpExporterOptions {Protocol = OtlpExportProtocol.Grpc};
+            var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.Grpc };
 
             Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
             Assert.Equal(OtlpExportProtocol.Grpc, options.Protocol);
@@ -131,7 +131,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void OtlpExporterOptions_ProtocolSetterDoesNotOverrideCustomEndpointFromSetter()
         {
-            var options = new OtlpExporterOptions {Endpoint = new Uri("http://test:8888"), Protocol = OtlpExportProtocol.Grpc};
+            var options = new OtlpExporterOptions { Endpoint = new Uri("http://test:8888"), Protocol = OtlpExportProtocol.Grpc };
 
             Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
             Assert.Equal(OtlpExportProtocol.Grpc, options.Protocol);
