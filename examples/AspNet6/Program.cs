@@ -53,6 +53,7 @@ builder.Services.AddOpenTelemetryTracing(options =>
 {
     options
        .SetResourceBuilder(resourceBuilder)
+       .SetSampler(new AlwaysOnSampler())
        .AddHttpClientInstrumentation()
        .AddSource(Tracing.ActivitySourceName)
        .AddConsoleExporter()
