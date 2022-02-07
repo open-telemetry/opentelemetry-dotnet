@@ -6,6 +6,9 @@
 
 ## Unreleased
 
+* Fixed the default endpoint for OTLP exporter over HTTP/Protobuf.
+  ([#2686](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2868))
+
 ## 1.2.0-rc2
 
 Released 2022-Feb-02
