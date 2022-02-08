@@ -8,11 +8,10 @@ and shows how to setup
 3. OpenTelemetry metrics
 
 `ResourceBuilder` is associated with OpenTelemetry to associate the
-service name, version and the machine on which this program is running. 
+service name, version and the machine on which this program is running.
 
 The sample rate is set to emit all the traces using `AlwaysOnSampler`.
 You can try out different samplers like `TraceIdRatioBasedSampler`.
-
 
 ## References
 
