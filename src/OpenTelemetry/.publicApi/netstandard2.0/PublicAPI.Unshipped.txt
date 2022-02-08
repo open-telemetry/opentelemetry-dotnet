@@ -1,9 +1,9 @@
 OpenTelemetry.BaseExporter<T>.ForceFlush(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Batch<T>.Batch(T[] items, int count) -> void
 OpenTelemetry.Batch<T>.Count.get -> long
-OpenTelemetry.Logs.LogRecord.FormattedMessage.set -> void
-OpenTelemetry.Logs.LogRecord.State.set -> void
-OpenTelemetry.Logs.LogRecord.StateValues.set -> void
+OpenTelemetry.Logs.LogRecord.SetFormattedMessage(string formattedMessage) -> void
+OpenTelemetry.Logs.LogRecord.SetState(object state) -> void
+OpenTelemetry.Logs.LogRecord.SetStateValues(System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>> stateValues) -> void
 OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporality.Cumulative = 1 -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporality.Delta = 2 -> OpenTelemetry.Metrics.AggregationTemporality

@@ -34,12 +34,6 @@ namespace OpenTelemetry.Logs
 
         private List<object> bufferedScopes;
 
-        private object state;
-
-        private IReadOnlyList<KeyValuePair<string, object>> stateValues;
-
-        private string formattedMessage;
-
         internal LogRecord(
             IExternalScopeProvider scopeProvider,
             DateTime timestamp,
@@ -101,49 +95,43 @@ namespace OpenTelemetry.Logs
 
         public EventId EventId { get; }
 
-        public string FormattedMessage
-        {
-            get => this.formattedMessage;
-            set
-            {
-                Guard.ThrowIfNullOrEmpty(value, nameof(this.FormattedMessage));
-                this.formattedMessage = value;
-            }
-        }
+        public string FormattedMessage { get; private set; }
 
         /// <summary>
-        /// Gets or sets the raw state attached to the log. Set to <see
+        /// Gets the raw state attached to the log. Set to <see
         /// langword="null"/> when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled.
         /// </summary>
-        public object State
-        {
-            get => this.state;
-            set
-            {
-                Guard.ThrowIfNull(value, nameof(this.State));
-                this.state = value;
-            }
-        }
+        public object State { get; private set; }
 
         /// <summary>
-        /// Gets or sets the parsed state values attached to the log. Set when <see
+        /// Gets the parsed state values attached to the log. Set when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled
         /// otherwise <see langword="null"/>.
         /// </summary>
-        public IReadOnlyList<KeyValuePair<string, object>> StateValues
-        {
-            get => this.stateValues;
-            set
-            {
-                Guard.ThrowIfNull(value, nameof(this.StateValues));
-                this.stateValues = value;
-            }
-        }
+        public IReadOnlyList<KeyValuePair<string, object>> StateValues { get; private set; }
 
         public Exception Exception { get; }
 
         internal IExternalScopeProvider ScopeProvider { get; set; }
+
+        public void SetStateValues(IReadOnlyList<KeyValuePair<string, object>> stateValues)
+        {
+            Guard.ThrowIfNull(stateValues, nameof(this.StateValues));
+            this.StateValues = stateValues;
+        }
+
+        public void SetState(object state)
+        {
+            Guard.ThrowIfNull(state, nameof(this.State));
+            this.State = state;
+        }
+
+        public void SetFormattedMessage(string formattedMessage)
+        {
+            Guard.ThrowIfNullOrEmpty(formattedMessage, nameof(this.FormattedMessage));
+            this.FormattedMessage = formattedMessage;
+        }
 
         /// <summary>
         /// Executes callback for each currently active scope objects in order
