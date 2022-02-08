@@ -81,7 +81,7 @@ namespace OpenTelemetry.Metrics
 
             // Setup Listener
             Func<Instrument, bool> shouldListenTo = instrument => false;
-            if (meterSources.Any(s => s.Contains('*')))
+            if (meterSources.Any(s => s.Contains('*') || s.Contains('?')))
             {
                 var regex = this.GetWildcardRegex(meterSources);
                 shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);

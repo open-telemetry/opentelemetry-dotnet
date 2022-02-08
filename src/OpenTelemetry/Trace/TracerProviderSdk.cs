@@ -52,7 +52,7 @@ namespace OpenTelemetry.Trace
             var legacyActivityWildcardModeRegex = this.GetWildcardRegex();
             foreach (var legacyName in legacyActivityOperationNames)
             {
-                if (legacyName.Contains('*'))
+                if (legacyName.Contains('*') || legacyName.Contains('?'))
                 {
                     legacyActivityWildcardMode = true;
                     legacyActivityWildcardModeRegex = this.GetWildcardRegex(legacyActivityOperationNames);
@@ -221,7 +221,7 @@ namespace OpenTelemetry.Trace
                 // Validation of source name is already done in builder.
                 foreach (var name in sources)
                 {
-                    if (name.Contains('*'))
+                    if (name.Contains('*') || name.Contains('?'))
                     {
                         wildcardMode = true;
                         break;
