@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -50,13 +49,13 @@ namespace OpenTelemetry.Trace
             this.supportLegacyActivity = legacyActivityOperationNames.Count > 0;
 
             bool legacyActivityWildcardMode = false;
-            Regex legacyActivityWildcardModeRegex = null;
+            var legacyActivityWildcardModeRegex = this.GetWildcardRegex();
             foreach (var legacyName in legacyActivityOperationNames)
             {
                 if (legacyName.Contains('*'))
                 {
                     legacyActivityWildcardMode = true;
-                    legacyActivityWildcardModeRegex = GetWildcardRegex(legacyActivityOperationNames);
+                    legacyActivityWildcardModeRegex = this.GetWildcardRegex(legacyActivityOperationNames);
                     break;
                 }
             }
@@ -231,7 +230,7 @@ namespace OpenTelemetry.Trace
 
                 if (wildcardMode)
                 {
-                    var regex = GetWildcardRegex(sources);
+                    var regex = this.GetWildcardRegex(sources);
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
@@ -264,12 +263,6 @@ namespace OpenTelemetry.Trace
 
             ActivitySource.AddActivityListener(listener);
             this.listener = listener;
-
-            Regex GetWildcardRegex(IEnumerable<string> collection)
-            {
-                var pattern = '^' + string.Join("|", from name in collection select "(?:" + Regex.Escape(name).Replace("\\*", ".*") + ')') + '$';
-                return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            }
         }
 
         internal Resource Resource { get; }

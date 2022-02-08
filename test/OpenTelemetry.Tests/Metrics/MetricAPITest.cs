@@ -249,7 +249,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             var exportedItems = new List<Metric>();
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
-                .AddMeter("AbcCompany.XyzProduct.*")
+                .AddMeter("AbcCompany.XyzProduct.Component?")
                 .AddMeter("DefCompany.*.ComponentC")
                 .AddMeter("GhiCompany.qweProduct.ComponentN") // Mixing of non-wildcard meter name and wildcard meter name.
                 .AddInMemoryExporter(exportedItems);
