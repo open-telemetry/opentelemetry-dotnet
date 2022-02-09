@@ -210,14 +210,11 @@ namespace OpenTelemetry.Trace
                 this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
             }
 
+            // Sources can be null. This happens when user
+            // is only interested in InstrumentationLibraries
+            // which do not depend on ActivitySources.
             if (sources.Any())
             {
-                // Sources can be null. This happens when user
-                // is only interested in InstrumentationLibraries
-                // which do not depend on ActivitySources.
-
-                var wildcardMode = false;
-
                 // Validation of source name is already done in builder.
                 if (sources.Any(s => WildcardHelper.ContainsWildcard(s)))
                 {
