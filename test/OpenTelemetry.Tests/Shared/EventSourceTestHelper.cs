@@ -35,36 +35,34 @@ namespace OpenTelemetry.Tests
 
         private static void VerifyMethodImplementation(EventSource eventSource, MethodInfo eventMethod)
         {
-            using (var listener = new TestEventListener())
+            using var listener = new TestEventListener();
+            listener.EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
+            try
             {
-                listener.EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
-                try
+                object[] eventArguments = GenerateEventArguments(eventMethod);
+                eventMethod.Invoke(eventSource, eventArguments);
+
+                EventWrittenEventArgs actualEvent = null;
+
+                actualEvent = listener.Messages.First(q => q.EventName == eventMethod.Name);
+
+                VerifyEventId(eventMethod, actualEvent);
+                VerifyEventLevel(eventMethod, actualEvent);
+
+                if (eventMethod.Name != "ExporterErrorResult")
                 {
-                    object[] eventArguments = GenerateEventArguments(eventMethod);
-                    eventMethod.Invoke(eventSource, eventArguments);
-
-                    EventWrittenEventArgs actualEvent = null;
-
-                    actualEvent = listener.Messages.First(q => q.EventName == eventMethod.Name);
-
-                    VerifyEventId(eventMethod, actualEvent);
-                    VerifyEventLevel(eventMethod, actualEvent);
-
-                    if (eventMethod.Name != "ExporterErrorResult")
-                    {
-                        VerifyEventMessage(eventMethod, actualEvent, eventArguments);
-                    }
+                    VerifyEventMessage(eventMethod, actualEvent, eventArguments);
                 }
-                catch (Exception e)
-                {
-                    var name = eventMethod.DeclaringType.Name + "." + eventMethod.Name;
+            }
+            catch (Exception e)
+            {
+                var name = eventMethod.DeclaringType.Name + "." + eventMethod.Name;
 
-                    throw new Exception("Method '" + name + "' is implemented incorrectly.", e);
-                }
-                finally
-                {
-                    listener.ClearMessages();
-                }
+                throw new Exception("Method '" + name + "' is implemented incorrectly.", e);
+            }
+            finally
+            {
+                listener.ClearMessages();
             }
         }
 
