@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace Examples.AspNetCore6.Controllers;
+namespace Examples.AspNetCore.Controllers;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 

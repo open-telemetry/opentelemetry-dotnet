@@ -15,7 +15,7 @@
 // </copyright>
 
 using System.Reflection;
-using Examples.AspNetCore6;
+using Examples.AspNetCore;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Logs;

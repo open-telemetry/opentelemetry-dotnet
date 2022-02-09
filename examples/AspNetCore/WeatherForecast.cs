@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace Examples.AspNetCore6
+namespace Examples.AspNetCore
 {
     public class WeatherForecast
     {
