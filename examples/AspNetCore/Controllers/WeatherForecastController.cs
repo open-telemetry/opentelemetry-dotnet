@@ -28,12 +28,12 @@ public class WeatherForecastController : ControllerBase
     };
 
     private readonly ILogger<WeatherForecastController> logger;
-    private readonly AspNetCoreMeter aspNet6Meter;
+    private readonly ExampleMeter exampleMeter;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger, AspNetCoreMeter aspNet6Meter)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, ExampleMeter exampleMeter)
     {
         this.logger = logger;
-        this.aspNet6Meter = aspNet6Meter;
+        this.exampleMeter = exampleMeter;
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
@@ -50,7 +50,7 @@ public class WeatherForecastController : ControllerBase
         })
         .ToArray();
 
-        this.aspNet6Meter.WeatherTypeCounter.Add(1, KeyValuePair.Create<string, object?>("Type", result[0].Summary));
+        this.exampleMeter.WeatherTypeCounter.Add(1, KeyValuePair.Create<string, object?>("Type", result[0].Summary));
         return result;
     }
 }

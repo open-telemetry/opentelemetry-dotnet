@@ -103,7 +103,7 @@ builder.Services.AddOpenTelemetryMetrics(options =>
 {
     options.SetResourceBuilder(resourceBuilder)
         .AddHttpClientInstrumentation()
-        .AddMeter(AspNetCoreMeter.MeterName);
+        .AddMeter(ExampleMeter.MeterName);
 
     var metricsExporter = builder.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
     switch (metricsExporter)
@@ -126,7 +126,7 @@ builder.Services.AddOpenTelemetryMetrics(options =>
     }
 });
 
-builder.Services.AddSingleton<AspNetCoreMeter>();
+builder.Services.AddSingleton<ExampleMeter>();
 
 var app = builder.Build();
 

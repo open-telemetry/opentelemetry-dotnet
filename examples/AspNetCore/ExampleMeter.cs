@@ -1,4 +1,4 @@
-// <copyright file="AspNetCoreMeter.cs" company="OpenTelemetry Authors">
+// <copyright file="ExampleMeter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,13 +16,13 @@
 
 namespace Examples.AspNetCore;
 using System.Diagnostics.Metrics;
-public class AspNetCoreMeter
+public class ExampleMeter
 {
     public const string MeterName = "Example.AspNetCoreMeter";
 
     private readonly Meter meter;
 
-    public AspNetCoreMeter()
+    public ExampleMeter()
     {
         this.meter = new Meter(MeterName);
         this.WeatherTypeCounter = this.meter.CreateCounter<long>("WeatherTypeCounter");
