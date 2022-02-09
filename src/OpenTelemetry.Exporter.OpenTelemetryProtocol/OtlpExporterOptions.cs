@@ -55,6 +55,11 @@ namespace OpenTelemetry.Exporter
         /// </summary>
         public OtlpExporterOptions()
         {
+            if (EnvironmentVariableHelper.LoadUri(EndpointEnvVarName, out Uri parsedEndpoint))
+            {
+                this.endpoint = parsedEndpoint;
+            }
+
             if (EnvironmentVariableHelper.LoadString(HeadersEnvVarName, out string headersEnvVar))
             {
                 this.Headers = headersEnvVar;
@@ -67,20 +72,15 @@ namespace OpenTelemetry.Exporter
 
             if (EnvironmentVariableHelper.LoadString(ProtocolEnvVarName, out string protocolEnvVar))
             {
-                var parsedProtocol = protocolEnvVar.ToOtlpExportProtocol();
-                if (parsedProtocol.HasValue)
+                var protocol = protocolEnvVar.ToOtlpExportProtocol();
+                if (protocol.HasValue)
                 {
-                    this.Protocol = parsedProtocol.Value;
+                    this.Protocol = protocol.Value;
                 }
                 else
                 {
                     throw new FormatException($"{ProtocolEnvVarName} environment variable has an invalid value: '${protocolEnvVar}'");
                 }
-            }
-
-            if (EnvironmentVariableHelper.LoadUri(EndpointEnvVarName, out Uri parsedEndpoint))
-            {
-                this.endpoint = parsedEndpoint;
             }
 
             this.HttpClientFactory = this.DefaultHttpClientFactory = () =>
