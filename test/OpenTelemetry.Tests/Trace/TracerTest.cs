@@ -89,8 +89,7 @@ namespace OpenTelemetry.Trace.Tests
             async Task DoSomeAsyncWork()
             {
                 await Task.Delay(10);
-                var newRootSpan = TracerProvider.Default.GetTracer("tracername").StartRootSpan("RootSpan2");
-                using (Tracer.WithSpan(newRootSpan))
+                using (tracer.GetTracer("tracername").StartRootSpan("RootSpan2"))
                 {
                     await Task.Delay(10);
                 }
@@ -102,7 +101,18 @@ namespace OpenTelemetry.Trace.Tests
             }
 
             Assert.Equal(2, exportedItems.Count);
-            Assert.NotEqual(exportedItems[0].TraceId, exportedItems[1].TraceId);
+
+            var rootSpan2 = exportedItems[0];
+            var rootSpan1 = exportedItems[1];
+            Assert.Equal("RootSpan2", rootSpan2.DisplayName);
+            Assert.Equal("RootSpan1", rootSpan1.DisplayName);
+            Assert.Equal(default(ActivitySpanId), rootSpan1.ParentSpanId);
+
+            // This is where this test currently fails
+            // rootSpan2 should be a root span of a new trace and not a child of rootSpan1
+            Assert.Equal(default(ActivitySpanId), rootSpan2.ParentSpanId);
+            Assert.NotEqual(rootSpan2.TraceId, rootSpan1.TraceId);
+            Assert.NotEqual(rootSpan2.ParentSpanId, rootSpan1.SpanId);
         }
 
         [Fact]
