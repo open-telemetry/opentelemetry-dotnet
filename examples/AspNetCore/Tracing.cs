@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace Examples.AspNet6;
+namespace Examples.AspNetCore6;
 
 using System.Diagnostics;
 

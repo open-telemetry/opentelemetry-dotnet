@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-namespace Examples.AspNet6.Controllers;
+namespace Examples.AspNetCore6.Controllers;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,9 +28,9 @@ public class WeatherForecastController : ControllerBase
     };
 
     private readonly ILogger<WeatherForecastController> logger;
-    private readonly AspNet6Meter aspNet6Meter;
+    private readonly AspNetCoreMeter aspNet6Meter;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger, AspNet6Meter aspNet6Meter)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, AspNetCoreMeter aspNet6Meter)
     {
         this.logger = logger;
         this.aspNet6Meter = aspNet6Meter;
@@ -41,7 +41,6 @@ public class WeatherForecastController : ControllerBase
     {
         using var activity = Tracing.ActivitySource.StartActivity("WeatherForecast GET", ActivityKind.Internal);
         activity?.SetStartTime(DateTime.UtcNow);
-        this.aspNet6Meter.Requests.Add(1, KeyValuePair.Create<string, object?>("Method", "WeatherForecast GET"));
         this.logger.LogInformation("WeatherForecast GET called");
         var result = Enumerable.Range(1, 5).Select(index => new WeatherForecast
         {
@@ -50,6 +49,8 @@ public class WeatherForecastController : ControllerBase
             Summary = Summaries[Random.Shared.Next(Summaries.Length)],
         })
         .ToArray();
+
+        this.aspNet6Meter.Requests.Add(1, KeyValuePair.Create<string, object?>("Type", result[0].Summary));
         return result;
     }
 }

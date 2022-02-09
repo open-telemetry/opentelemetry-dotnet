@@ -1,4 +1,4 @@
-// <copyright file="AspNet6Meter.cs" company="OpenTelemetry Authors">
+// <copyright file="AspNetCoreMeter.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,15 +14,15 @@
 // limitations under the License.
 // </copyright>
 
-namespace Examples.AspNet6;
+namespace Examples.AspNetCore6;
 using System.Diagnostics.Metrics;
-public class AspNet6Meter
+public class AspNetCoreMeter
 {
     public const string MeterName = "Example.AspNet6Meter";
 
     private readonly Meter meter;
 
-    public AspNet6Meter()
+    public AspNetCoreMeter()
     {
         this.meter = new Meter(MeterName);
         this.Requests = this.meter.CreateCounter<long>("Requests");
