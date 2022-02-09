@@ -24,9 +24,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     /// <summary>Class for sending OTLP metrics export request over gRPC.</summary>
     internal sealed class OtlpGrpcLogExportClient : BaseOtlpGrpcExportClient<OtlpCollector.ExportLogsServiceRequest>
     {
-        private readonly OtlpCollector.LogsService.ILogsServiceClient logsClient;
+        private readonly OtlpCollector.LogsService.LogsServiceClient logsClient;
 
-        public OtlpGrpcLogExportClient(OtlpExporterOptions options, OtlpCollector.LogsService.ILogsServiceClient logsServiceClient = null)
+        public OtlpGrpcLogExportClient(OtlpExporterOptions options, OtlpCollector.LogsService.LogsServiceClient logsServiceClient = null)
             : base(options)
         {
             if (logsServiceClient != null)
