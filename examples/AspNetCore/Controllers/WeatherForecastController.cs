@@ -39,17 +39,26 @@ public class WeatherForecastController : ControllerBase
     [HttpGet(Name = "GetWeatherForecast")]
     public IEnumerable<WeatherForecast> Get()
     {
-        using var activity = Tracing.ActivitySource.StartActivity("WeatherForecast GET", ActivityKind.Internal);
         this.logger.LogInformation("WeatherForecast GET called");
-        var result = Enumerable.Range(1, 5).Select(index => new WeatherForecast
+        WeatherForecast[] result;
+        using (var activity = Tracing.ActivitySource.StartActivity("Getting weather data.", ActivityKind.Internal))
+        {
+            result = GetWeatherData();
+            Activity.Current?.SetTag("Got data.", result);
+        }
+
+        this.exampleMeter.WeatherTypeCounter.Add(1, KeyValuePair.Create<string, object?>("Type", result[0].Summary));
+        return result;
+    }
+
+    private static WeatherForecast[] GetWeatherData()
+    {
+        return Enumerable.Range(1, 5).Select(index => new WeatherForecast
         {
             Date = DateTime.Now.AddDays(index),
             TemperatureC = Random.Shared.Next(-20, 55),
             Summary = Summaries[Random.Shared.Next(Summaries.Length)],
         })
         .ToArray();
-
-        this.exampleMeter.WeatherTypeCounter.Add(1, KeyValuePair.Create<string, object?>("Type", result[0].Summary));
-        return result;
     }
 }

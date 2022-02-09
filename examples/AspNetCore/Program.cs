@@ -40,32 +40,39 @@ builder.Services.AddSwaggerGen();
 var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
 
 var resourceBuilder = ResourceBuilder.CreateDefault()
-        .AddService(serviceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName)
-        .AddTelemetrySdk();
+        .AddService(serviceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName);
 
 builder.Logging.ClearProviders();
 
 builder.Logging.AddOpenTelemetry(options =>
 {
-    options.SetResourceBuilder(resourceBuilder)
-        .AddConsoleExporter()
-        .AddOtlpExporter();
+    options.SetResourceBuilder(resourceBuilder);
+    var metricsExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
+    switch (metricsExporter)
+    {
+        case "otlp":
+            options.AddOtlpExporter();
+            break;
+        default:
+            options.AddConsoleExporter();
+            break;
+    }
 });
 
 builder.Services.AddOpenTelemetryTracing(options =>
 {
     options
-       .SetSampler(new AlwaysOnSampler())
-       .AddHttpClientInstrumentation()
-       .AddSource(Tracing.ActivitySourceName);
+        .SetResourceBuilder(resourceBuilder)
+        .SetSampler(new AlwaysOnSampler())
+        .AddHttpClientInstrumentation()
+        .AddSource(Tracing.ActivitySourceName);
 
     // Switch between Zipkin/Jaeger/OTLP by setting UseExporter in appsettings.json.
     var tracingExporter = builder.Configuration.GetValue<string>("UseTracingExporter").ToLowerInvariant();
     switch (tracingExporter)
     {
         case "jaeger":
-            options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Jaeger:ServiceName")))
-                .AddJaegerExporter();
+            options.AddJaegerExporter();
 
             builder.Services.Configure<JaegerExporterOptions>(builder.Configuration.GetSection("Jaeger"));
 
@@ -74,17 +81,13 @@ builder.Services.AddOpenTelemetryTracing(options =>
             break;
 
         case "zipkin":
-            options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Zipkin:ServiceName")))
-                .AddZipkinExporter();
+            options.AddZipkinExporter();
 
             builder.Services.Configure<ZipkinExporterOptions>(builder.Configuration.GetSection("Zipkin"));
             break;
 
         case "otlp":
-            // Adding the OtlpExporter creates a GrpcChannel.
-
-            options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Otlp:ServiceName")))
-                .AddOtlpExporter(otlpOptions =>
+            options.AddOtlpExporter(otlpOptions =>
                 {
                     otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
                 });
