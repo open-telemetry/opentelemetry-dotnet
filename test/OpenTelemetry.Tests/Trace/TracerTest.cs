@@ -15,7 +15,9 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
@@ -72,6 +74,35 @@ namespace OpenTelemetry.Trace.Tests
 
             var span3 = this.tracer.StartRootSpan(null, SpanKind.Client, default);
             Assert.Null(span3.Activity.DisplayName);
+        }
+
+        [Fact(Skip = "See https://github.com/open-telemetry/opentelemetry-dotnet/issues/2803")]
+        public async Task Tracer_StartRootSpan_StartsNewTrace()
+        {
+            var exportedItems = new List<Activity>();
+
+            using var tracer = Sdk.CreateTracerProviderBuilder()
+                .AddSource("tracername")
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            async Task DoSomeAsyncWork()
+            {
+                await Task.Delay(10);
+                var newRootSpan = TracerProvider.Default.GetTracer("tracername").StartRootSpan("RootSpan2");
+                using (Tracer.WithSpan(newRootSpan))
+                {
+                    await Task.Delay(10);
+                }
+            }
+
+            using (tracer.GetTracer("tracername").StartActiveSpan("RootSpan1"))
+            {
+                await DoSomeAsyncWork();
+            }
+
+            Assert.Equal(2, exportedItems.Count);
+            Assert.NotEqual(exportedItems[0].TraceId, exportedItems[1].TraceId);
         }
 
         [Fact]
