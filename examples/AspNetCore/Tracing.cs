@@ -20,6 +20,6 @@ using System.Diagnostics;
 
 internal static class Tracing
 {
-    public static readonly string ActivitySourceName = "Examples.AspNet6";
+    public static readonly string ActivitySourceName = "Examples.AspNetCore";
     public static readonly ActivitySource ActivitySource = new(ActivitySourceName, "1.0.0");
 }
