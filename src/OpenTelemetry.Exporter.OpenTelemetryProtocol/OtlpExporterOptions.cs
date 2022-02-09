@@ -196,7 +196,7 @@ namespace OpenTelemetry.Exporter
         public Func<HttpClient> HttpClientFactory { get; set; }
 
         /// <summary>
-        /// Gets a value indicating whether <see cref="Endpoint" /> was programmatically modified.
+        /// Gets a value indicating whether <see cref="Endpoint" /> was modified via its setter.
         /// </summary>
         internal bool ProgrammaticallyModifiedEndpoint { get; private set; }
     }
