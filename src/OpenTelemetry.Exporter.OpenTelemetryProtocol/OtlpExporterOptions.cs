@@ -45,12 +45,10 @@ namespace OpenTelemetry.Exporter
         internal readonly Func<HttpClient> DefaultHttpClientFactory;
 
         private const string DefaultGrpcEndpoint = "http://localhost:4317";
-        private const string DefaultHttpProtobufEndpoint = "http://localhost:4318";
+        private const string DefaultHttpEndpoint = "http://localhost:4318";
         private const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
 
-        private OtlpExportProtocol protocol;
         private Uri endpoint;
-        private bool isCustomEndpointSet;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
@@ -79,14 +77,10 @@ namespace OpenTelemetry.Exporter
                     throw new FormatException($"{ProtocolEnvVarName} environment variable has an invalid value: '${protocolEnvVar}'");
                 }
             }
-            else
-            {
-                this.Protocol = DefaultOtlpExportProtocol;
-            }
 
             if (EnvironmentVariableHelper.LoadUri(EndpointEnvVarName, out Uri parsedEndpoint))
             {
-                this.SetEndpoint(parsedEndpoint, custom: true);
+                this.endpoint = parsedEndpoint;
             }
 
             this.HttpClientFactory = this.DefaultHttpClientFactory = () =>
@@ -107,10 +101,21 @@ namespace OpenTelemetry.Exporter
         /// </summary>
         public Uri Endpoint
         {
-            get => this.endpoint;
+            get
+            {
+                if (this.endpoint == null)
+                {
+                    this.endpoint = this.Protocol == OtlpExportProtocol.Grpc
+                        ? new Uri(DefaultGrpcEndpoint)
+                        : new Uri(DefaultHttpEndpoint);
+                }
+
+                return this.endpoint;
+            }
+
             set
             {
-                this.SetEndpoint(value, custom: true);
+                this.endpoint = value;
                 this.ProgrammaticallyModifiedEndpoint = true;
             }
         }
@@ -129,24 +134,7 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Gets or sets the the OTLP transport protocol. Supported values: Grpc and HttpProtobuf.
         /// </summary>
-        public OtlpExportProtocol Protocol
-        {
-            get => this.protocol;
-            set
-            {
-                this.protocol = value;
-
-                switch (value)
-                {
-                    case OtlpExportProtocol.Grpc:
-                        this.SetEndpoint(new Uri(DefaultGrpcEndpoint));
-                        break;
-                    case OtlpExportProtocol.HttpProtobuf:
-                        this.SetEndpoint(new Uri(DefaultHttpProtobufEndpoint));
-                        break;
-                }
-            }
-        }
+        public OtlpExportProtocol Protocol { get; set; } = DefaultOtlpExportProtocol;
 
         /// <summary>
         /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
@@ -211,21 +199,5 @@ namespace OpenTelemetry.Exporter
         /// Gets a value indicating whether <see cref="Endpoint" /> was programmatically modified.
         /// </summary>
         internal bool ProgrammaticallyModifiedEndpoint { get; private set; }
-
-        private void SetEndpoint(Uri value, bool custom = false)
-        {
-            if (custom)
-            {
-                this.isCustomEndpointSet = true;
-                this.endpoint = value;
-            }
-            else
-            {
-                if (!this.isCustomEndpointSet)
-                {
-                    this.endpoint = value;
-                }
-            }
-        }
     }
 }
