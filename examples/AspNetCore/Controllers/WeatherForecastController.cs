@@ -40,7 +40,6 @@ public class WeatherForecastController : ControllerBase
     public IEnumerable<WeatherForecast> Get()
     {
         using var activity = Tracing.ActivitySource.StartActivity("WeatherForecast GET", ActivityKind.Internal);
-        activity?.SetStartTime(DateTime.UtcNow);
         this.logger.LogInformation("WeatherForecast GET called");
         var result = Enumerable.Range(1, 5).Select(index => new WeatherForecast
         {
