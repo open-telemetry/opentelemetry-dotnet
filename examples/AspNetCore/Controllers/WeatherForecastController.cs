@@ -50,7 +50,7 @@ public class WeatherForecastController : ControllerBase
         })
         .ToArray();
 
-        this.aspNet6Meter.Requests.Add(1, KeyValuePair.Create<string, object?>("Type", result[0].Summary));
+        this.aspNet6Meter.WeatherTypeCounter.Add(1, KeyValuePair.Create<string, object?>("Type", result[0].Summary));
         return result;
     }
 }

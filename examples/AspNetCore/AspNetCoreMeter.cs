@@ -18,15 +18,15 @@ namespace Examples.AspNetCore6;
 using System.Diagnostics.Metrics;
 public class AspNetCoreMeter
 {
-    public const string MeterName = "Example.AspNet6Meter";
+    public const string MeterName = "Example.AspNetCoreMeter";
 
     private readonly Meter meter;
 
     public AspNetCoreMeter()
     {
         this.meter = new Meter(MeterName);
-        this.Requests = this.meter.CreateCounter<long>("Requests");
+        this.WeatherTypeCounter = this.meter.CreateCounter<long>("WeatherTypeCounter");
     }
 
-    public Counter<long> Requests { get; }
+    public Counter<long> WeatherTypeCounter { get; }
 }
