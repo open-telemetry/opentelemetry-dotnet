@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System.Reflection;
 using Examples.AspNet6;
 using OpenTelemetry.Logs;
@@ -21,6 +22,8 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var serviceName = "AspNet6ExampleService";
 
 // Add services to the container.
 
@@ -35,12 +38,10 @@ builder.Services.AddSwaggerGen();
 var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
 
 var resourceBuilder = ResourceBuilder.CreateDefault()
-        .AddService(Tracing.ActivitySourceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName)
+        .AddService(serviceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName)
         .AddTelemetrySdk();
 
 builder.Logging.ClearProviders();
-
-builder.Logging.AddConsole();
 
 builder.Logging.AddOpenTelemetry(options =>
 {

@@ -4,8 +4,8 @@ This example uses the new WebApplication host that ships with .Net 6
 and shows how to setup
 
 1. OpenTelemetry logging
-2. OpenTelemetry tracing
-3. OpenTelemetry metrics
+2. OpenTelemetry metrics
+3. OpenTelemetry tracing
 
 `ResourceBuilder` is associated with OpenTelemetry to associate the
 service name, version and the machine on which this program is running.
