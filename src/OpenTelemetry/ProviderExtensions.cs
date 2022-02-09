@@ -15,9 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -71,19 +68,6 @@ namespace OpenTelemetry
             }
 
             return null;
-        }
-
-        internal static Regex GetWildcardRegex(this BaseProvider baseProvider, IEnumerable<string> wildcards = default)
-        {
-            if (wildcards == null)
-            {
-                return null;
-            }
-
-            var pattern = string.Join(
-                "|",
-                from w in wildcards select "(?:" + Regex.Escape(w).Replace("\\*", ".*").Replace("\\?", ".") + ')');
-            return new Regex('^' + pattern + '$', RegexOptions.Compiled | RegexOptions.IgnoreCase);
         }
     }
 }

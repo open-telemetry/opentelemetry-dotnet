@@ -49,13 +49,13 @@ namespace OpenTelemetry.Trace
             this.supportLegacyActivity = legacyActivityOperationNames.Count > 0;
 
             bool legacyActivityWildcardMode = false;
-            var legacyActivityWildcardModeRegex = this.GetWildcardRegex();
+            var legacyActivityWildcardModeRegex = WildcardHelper.GetWildcardRegex();
             foreach (var legacyName in legacyActivityOperationNames)
             {
-                if (legacyName.Contains('*') || legacyName.Contains('?'))
+                if (WildcardHelper.ContainsWildcard(legacyName))
                 {
                     legacyActivityWildcardMode = true;
-                    legacyActivityWildcardModeRegex = this.GetWildcardRegex(legacyActivityOperationNames);
+                    legacyActivityWildcardModeRegex = WildcardHelper.GetWildcardRegex(legacyActivityOperationNames);
                     break;
                 }
             }
@@ -219,18 +219,9 @@ namespace OpenTelemetry.Trace
                 var wildcardMode = false;
 
                 // Validation of source name is already done in builder.
-                foreach (var name in sources)
+                if (sources.Any(s => WildcardHelper.ContainsWildcard(s)))
                 {
-                    if (name.Contains('*') || name.Contains('?'))
-                    {
-                        wildcardMode = true;
-                        break;
-                    }
-                }
-
-                if (wildcardMode)
-                {
-                    var regex = this.GetWildcardRegex(sources);
+                    var regex = WildcardHelper.GetWildcardRegex(sources);
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
