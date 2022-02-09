@@ -126,7 +126,7 @@ namespace OpenTelemetry.Logs.Tests
             var exporterLoggerFactory = LoggerFactory.Create(builder => builder
                 .AddOpenTelemetry(options =>
                 {
-                    options.AddProcessor(new BatchLogRecordExportProcessor(new RedactionExporter(exportedItems, fieldName)));
+                    options.AddProcessor(new RedactionProcessor(exportedItems, fieldName));
                 }));
 
             var exporterLogger = exporterLoggerFactory.CreateLogger<LogRecordTest>();
@@ -737,48 +737,34 @@ namespace OpenTelemetry.Logs.Tests
             }
         }
 
-        private class RedactionExporter : BaseExporter<LogRecord>
+        private class RedactionProcessor : BaseProcessor<LogRecord>
         {
             private readonly ICollection<LogRecord> exportedItems;
 
             private readonly Field fieldToUpdate;
 
-            public RedactionExporter(ICollection<LogRecord> exportedItems, Field fieldToUpdate)
+            public RedactionProcessor(ICollection<LogRecord> exportedItems, Field fieldToUpdate)
             {
                 this.exportedItems = exportedItems;
                 this.fieldToUpdate = fieldToUpdate;
             }
 
-            public override ExportResult Export(in Batch<LogRecord> batch)
+            public override void OnEnd(LogRecord logRecord)
             {
-                // SuppressInstrumentationScope should be used to prevent exporter
-                // code from generating telemetry and causing live-loop.
-                using var scope = SuppressInstrumentationScope.Begin();
-
-                if (this.exportedItems == null)
+                if (this.fieldToUpdate == Field.State)
                 {
-                    return ExportResult.Failure;
+                    logRecord.SetState(new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateKey", "newStateValue") });
+                }
+                else if (this.fieldToUpdate == Field.StateValues)
+                {
+                    logRecord.SetStateValues(new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue") });
+                }
+                else
+                {
+                    logRecord.SetFormattedMessage("OpenTelemetry Good Night!");
                 }
 
-                foreach (var logRecord in batch)
-                {
-                    if (this.fieldToUpdate == Field.State)
-                    {
-                        logRecord.SetState(new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateKey", "newStateValue") });
-                    }
-                    else if (this.fieldToUpdate == Field.StateValues)
-                    {
-                        logRecord.SetStateValues(new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue") });
-                    }
-                    else
-                    {
-                        logRecord.SetFormattedMessage("OpenTelemetry Good Night!");
-                    }
-
-                    this.exportedItems.Add(logRecord);
-                }
-
-                return ExportResult.Success;
+                this.exportedItems.Add(logRecord);
             }
         }
     }
