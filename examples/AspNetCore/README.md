@@ -1,4 +1,4 @@
-# OpenTelemetry .Net 6  Web API Example
+# OpenTelemetry ASP.Net Core 6  Web API Example
 
 This example uses the new WebApplication host that ships with .Net 6
 and shows how to setup
