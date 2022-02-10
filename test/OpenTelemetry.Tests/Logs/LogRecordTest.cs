@@ -168,8 +168,8 @@ namespace OpenTelemetry.Logs.Tests
                     options.AddProcessor(new RedactionProcessor(exportedItems, Field.FormattedMessage));
                 }));
 
-            var exporterLogger = loggerFactory.CreateLogger<LogRecordTest>();
-            exporterLogger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+            logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
 
             var item = exportedItems[0];
             Assert.Equal("OpenTelemetry Good Night!", item.FormattedMessage);
