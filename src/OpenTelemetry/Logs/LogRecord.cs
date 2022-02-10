@@ -81,40 +81,25 @@ namespace OpenTelemetry.Logs
 
         public EventId EventId { get; }
 
-        public string FormattedMessage { get; private set; }
+        public string FormattedMessage { get; set; }
 
         /// <summary>
-        /// Gets the raw state attached to the log. Set to <see
+        /// Gets or sets the raw state attached to the log. Set to <see
         /// langword="null"/> when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled.
         /// </summary>
-        public object State { get; private set; }
+        public object State { get; set; }
 
         /// <summary>
-        /// Gets the parsed state values attached to the log. Set when <see
+        /// Gets or sets the parsed state values attached to the log. Set when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled
         /// otherwise <see langword="null"/>.
         /// </summary>
-        public IReadOnlyList<KeyValuePair<string, object>> StateValues { get; private set; }
+        public IReadOnlyList<KeyValuePair<string, object>> StateValues { get; set; }
 
         public Exception Exception { get; }
 
         internal IExternalScopeProvider ScopeProvider { get; set; }
-
-        public void SetStateValues(IReadOnlyList<KeyValuePair<string, object>> stateValues)
-        {
-            this.StateValues = stateValues;
-        }
-
-        public void SetState(object state)
-        {
-            this.State = state;
-        }
-
-        public void SetFormattedMessage(string formattedMessage)
-        {
-            this.FormattedMessage = formattedMessage;
-        }
 
         /// <summary>
         /// Executes callback for each currently active scope objects in order

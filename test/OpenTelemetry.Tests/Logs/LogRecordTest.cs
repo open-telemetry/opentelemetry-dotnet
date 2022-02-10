@@ -764,15 +764,15 @@ namespace OpenTelemetry.Logs.Tests
             {
                 if (this.fieldToUpdate == Field.State)
                 {
-                    logRecord.SetState(new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateKey", "newStateValue") });
+                    logRecord.State = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateKey", "newStateValue") };
                 }
                 else if (this.fieldToUpdate == Field.StateValues)
                 {
-                    logRecord.SetStateValues(new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue") });
+                    logRecord.StateValues = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue") };
                 }
                 else
                 {
-                    logRecord.SetFormattedMessage("OpenTelemetry Good Night!");
+                    logRecord.FormattedMessage = "OpenTelemetry Good Night!";
                 }
 
                 this.exportedItems.Add(logRecord);
