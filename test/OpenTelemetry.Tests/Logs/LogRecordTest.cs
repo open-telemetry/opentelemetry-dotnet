@@ -116,50 +116,63 @@ namespace OpenTelemetry.Logs.Tests
             StateValues,
         }
 
-        [Theory]
-        [InlineData(Field.State)]
-        [InlineData(Field.StateValues)]
-        [InlineData(Field.FormattedMessage)]
-        public void SettersTest(Field fieldName)
+        [Fact]
+        public void StateCanBeSetByProcessor()
         {
             var exportedItems = new List<LogRecord>();
-            var exporterLoggerFactory = LoggerFactory.Create(builder => builder
+            using var loggerFactory = LoggerFactory.Create(builder => builder
                 .AddOpenTelemetry(options =>
                 {
-                    options.AddProcessor(new RedactionProcessor(exportedItems, fieldName));
+                    options.AddProcessor(new RedactionProcessor(exportedItems, Field.State));
                 }));
 
-            var exporterLogger = exporterLoggerFactory.CreateLogger<LogRecordTest>();
-            if (fieldName == Field.State)
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
             {
-                exporterLogger.LogInformation($"This should be replaced {0.99}.");
-                exporterLoggerFactory.Dispose();
+                logger.LogInformation($"This should be replaced {0.99}.");
 
                 var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
                 Assert.Equal("newStateKey", state[0].Key.ToString());
                 Assert.Equal("newStateValue", state[0].Value.ToString());
             }
-            else if (fieldName == Field.StateValues)
-            {
-                exporterLogger.Log(
-                    LogLevel.Information,
-                    0,
-                    new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("OldKey", "OldValue") },
-                    null,
-                    (s, e) => "OpenTelemetry!");
-                exporterLoggerFactory.Dispose();
+        }
 
-                var stateValue = exportedItems[0];
-                Assert.Equal(new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue"), stateValue.StateValues[0]);
-            }
-            else
-            {
-                exporterLogger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
-                exporterLoggerFactory.Dispose();
+        [Fact]
+        public void StateValuesCanBeSetByProcessor()
+        {
+            var exportedItems = new List<LogRecord>();
+            using var loggerFactory = LoggerFactory.Create(builder => builder
+                .AddOpenTelemetry(options =>
+                {
+                    options.AddProcessor(new RedactionProcessor(exportedItems, Field.StateValues));
+                }));
 
-                var items = exportedItems[0];
-                Assert.Equal("OpenTelemetry Good Night!", items.FormattedMessage);
-            }
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+            logger.Log(
+                LogLevel.Information,
+                0,
+                new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("OldKey", "OldValue") },
+                null,
+                (s, e) => "OpenTelemetry!");
+
+            var stateValue = exportedItems[0];
+            Assert.Equal(new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue"), stateValue.StateValues[0]);
+        }
+
+        [Fact]
+        public void FormattedMessageCanBeSetByProcessor()
+        {
+            var exportedItems = new List<LogRecord>();
+            using var loggerFactory = LoggerFactory.Create(builder => builder
+                .AddOpenTelemetry(options =>
+                {
+                    options.AddProcessor(new RedactionProcessor(exportedItems, Field.FormattedMessage));
+                }));
+
+            var exporterLogger = loggerFactory.CreateLogger<LogRecordTest>();
+            exporterLogger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
+
+            var item = exportedItems[0];
+            Assert.Equal("OpenTelemetry Good Night!", item.FormattedMessage);
         }
 
         [Fact]
