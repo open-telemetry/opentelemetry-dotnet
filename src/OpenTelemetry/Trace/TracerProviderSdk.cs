@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -50,13 +49,13 @@ namespace OpenTelemetry.Trace
             this.supportLegacyActivity = legacyActivityOperationNames.Count > 0;
 
             bool legacyActivityWildcardMode = false;
-            Regex legacyActivityWildcardModeRegex = null;
+            var legacyActivityWildcardModeRegex = WildcardHelper.GetWildcardRegex();
             foreach (var legacyName in legacyActivityOperationNames)
             {
-                if (legacyName.Contains('*'))
+                if (WildcardHelper.ContainsWildcard(legacyName))
                 {
                     legacyActivityWildcardMode = true;
-                    legacyActivityWildcardModeRegex = GetWildcardRegex(legacyActivityOperationNames);
+                    legacyActivityWildcardModeRegex = WildcardHelper.GetWildcardRegex(legacyActivityOperationNames);
                     break;
                 }
             }
@@ -211,27 +210,15 @@ namespace OpenTelemetry.Trace
                 this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
             }
 
+            // Sources can be null. This happens when user
+            // is only interested in InstrumentationLibraries
+            // which do not depend on ActivitySources.
             if (sources.Any())
             {
-                // Sources can be null. This happens when user
-                // is only interested in InstrumentationLibraries
-                // which do not depend on ActivitySources.
-
-                var wildcardMode = false;
-
                 // Validation of source name is already done in builder.
-                foreach (var name in sources)
+                if (sources.Any(s => WildcardHelper.ContainsWildcard(s)))
                 {
-                    if (name.Contains('*'))
-                    {
-                        wildcardMode = true;
-                        break;
-                    }
-                }
-
-                if (wildcardMode)
-                {
-                    var regex = GetWildcardRegex(sources);
+                    var regex = WildcardHelper.GetWildcardRegex(sources);
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
@@ -264,12 +251,6 @@ namespace OpenTelemetry.Trace
 
             ActivitySource.AddActivityListener(listener);
             this.listener = listener;
-
-            Regex GetWildcardRegex(IEnumerable<string> collection)
-            {
-                var pattern = '^' + string.Join("|", from name in collection select "(?:" + Regex.Escape(name).Replace("\\*", ".*") + ')') + '$';
-                return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            }
         }
 
         internal Resource Resource { get; }

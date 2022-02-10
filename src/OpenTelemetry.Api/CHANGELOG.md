@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Improved wildcard support for `AddSource`, `AddMeter` to cover `?` (which
+ matches exactly one character).
+ ([#2875](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2875))
+
 ## 1.2.0-rc2
 
 Released 2022-Feb-02
