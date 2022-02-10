@@ -48,7 +48,7 @@ var resourceBuilder = tracingExporter switch
     "jaeger" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Jaeger:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
     "zipkin" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Zipkin:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
     "otlp" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Otlp:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
-    _ => ResourceBuilder.CreateDefault().AddService("AspNetCoreExample", serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    _ => ResourceBuilder.CreateDefault().AddService(serviceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
 };
 
 builder.Logging.ClearProviders();
@@ -57,7 +57,7 @@ builder.Logging.AddOpenTelemetry(options =>
 {
     options.SetResourceBuilder(resourceBuilder);
     var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
-    switch (metricsExporter)
+    switch (logExporter)
     {
         case "otlp":
             options.AddOtlpExporter();
@@ -106,7 +106,6 @@ builder.Services.AddOpenTelemetryTracing(options =>
             break;
     }
 });
-
 
 builder.Services.AddOpenTelemetryMetrics(options =>
 {
