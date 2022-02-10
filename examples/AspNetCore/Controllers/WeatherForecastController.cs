@@ -47,7 +47,7 @@ public class WeatherForecastController : ControllerBase
         using (var activity = ActivitySource.StartActivity("Getting weather data.", ActivityKind.Internal))
         {
             result = GetWeatherData();
-            activity?.SetTag("Got data.", result);
+            activity?.SetTag("Number of weather records", result.Length);
         }
 
         this.exampleMeter.WeatherTypeCounter.Add(1, KeyValuePair.Create<string, object?>("Type", result[0].Summary));
