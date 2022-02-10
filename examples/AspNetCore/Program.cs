@@ -47,7 +47,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddOpenTelemetry(options =>
 {
     options.SetResourceBuilder(resourceBuilder);
-    var metricsExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
+    var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
     switch (metricsExporter)
     {
         case "otlp":
