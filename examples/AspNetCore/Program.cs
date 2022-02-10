@@ -96,12 +96,10 @@ builder.Services.AddOpenTelemetryTracing(options =>
 
         default:
             options.AddConsoleExporter();
-
-            // For options which can be bound from IConfiguration.
-            builder.Services.Configure<AspNetCoreInstrumentationOptions>(builder.Configuration.GetSection("AspNetCoreInstrumentation"));
             break;
     }
 });
+
 
 builder.Services.AddOpenTelemetryMetrics(options =>
 {
@@ -131,6 +129,8 @@ builder.Services.AddOpenTelemetryMetrics(options =>
 });
 
 builder.Services.AddSingleton<ExampleMeter>();
+
+builder.Services.Configure<AspNetCoreInstrumentationOptions>(builder.Configuration.GetSection("AspNetCoreInstrumentation"));
 
 var app = builder.Build();
 
