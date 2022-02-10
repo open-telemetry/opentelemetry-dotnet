@@ -31,13 +31,6 @@ namespace OpenTelemetry.Logs.Tests
 {
     public sealed class LogRecordTest : IDisposable
     {
-        private enum Field
-        {
-            FormattedMessage,
-            State,
-            StateValues,
-        }
-
         private readonly ILogger logger;
         private readonly List<LogRecord> exportedItems = new List<LogRecord>();
         private readonly ILoggerFactory loggerFactory;
@@ -61,6 +54,13 @@ namespace OpenTelemetry.Logs.Tests
             });
 
             this.logger = this.loggerFactory.CreateLogger<LogRecordTest>();
+        }
+
+        private enum Field
+        {
+            FormattedMessage,
+            State,
+            StateValues,
         }
 
         [Fact]
