@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
 {
@@ -60,22 +59,9 @@ namespace OpenTelemetry.Logs
             this.CategoryName = categoryName;
             this.LogLevel = logLevel;
             this.EventId = eventId;
-
-            if (formattedMessage != null)
-            {
-                this.FormattedMessage = formattedMessage;
-            }
-
-            if (state != null)
-            {
-                this.State = state;
-            }
-
-            if (stateValues != null)
-            {
-                this.StateValues = stateValues;
-            }
-
+            this.FormattedMessage = formattedMessage;
+            this.State = state;
+            this.StateValues = stateValues;
             this.Exception = exception;
         }
 
@@ -117,19 +103,16 @@ namespace OpenTelemetry.Logs
 
         public void SetStateValues(IReadOnlyList<KeyValuePair<string, object>> stateValues)
         {
-            Guard.ThrowIfNull(stateValues, nameof(this.StateValues));
             this.StateValues = stateValues;
         }
 
         public void SetState(object state)
         {
-            Guard.ThrowIfNull(state, nameof(this.State));
             this.State = state;
         }
 
         public void SetFormattedMessage(string formattedMessage)
         {
-            Guard.ThrowIfNullOrEmpty(formattedMessage, nameof(this.FormattedMessage));
             this.FormattedMessage = formattedMessage;
         }
 
