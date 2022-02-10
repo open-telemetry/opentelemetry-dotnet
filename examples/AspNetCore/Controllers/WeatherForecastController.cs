@@ -22,6 +22,9 @@ using Microsoft.AspNetCore.Mvc;
 [Route("[controller]")]
 public class WeatherForecastController : ControllerBase
 {
+    public static readonly string ActivitySourceName = "Examples.AspNetCore";
+    private static readonly ActivitySource ActivitySource = new(ActivitySourceName, "1.0.0");
+
     private static readonly string[] Summaries = new[]
     {
         "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching",
@@ -41,7 +44,7 @@ public class WeatherForecastController : ControllerBase
     {
         this.logger.LogInformation("WeatherForecast GET called");
         WeatherForecast[] result;
-        using (var activity = Tracing.ActivitySource.StartActivity("Getting weather data.", ActivityKind.Internal))
+        using (var activity = ActivitySource.StartActivity("Getting weather data.", ActivityKind.Internal))
         {
             result = GetWeatherData();
             activity?.SetTag("Got data.", result);

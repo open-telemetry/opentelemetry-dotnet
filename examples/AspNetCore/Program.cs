@@ -16,6 +16,7 @@
 
 using System.Reflection;
 using Examples.AspNetCore;
+using Examples.AspNetCore.Controllers;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Logs;
@@ -39,8 +40,16 @@ builder.Services.AddSwaggerGen();
 // OpenTelemetry
 var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
 
-var resourceBuilder = ResourceBuilder.CreateDefault()
-        .AddService(serviceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName);
+// Switch between Zipkin/Jaeger/OTLP by setting UseExporter in appsettings.json.
+var tracingExporter = builder.Configuration.GetValue<string>("UseTracingExporter").ToLowerInvariant();
+
+var resourceBuilder = tracingExporter switch
+{
+    "jaeger" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Jaeger:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    "zipkin" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Zipkin:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    "otlp" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Otlp:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    _ => ResourceBuilder.CreateDefault().AddService("AspNetCoreExample", serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+};
 
 builder.Logging.ClearProviders();
 
@@ -66,10 +75,8 @@ builder.Services.AddOpenTelemetryTracing(options =>
         .SetSampler(new AlwaysOnSampler())
         .AddHttpClientInstrumentation()
         .AddAspNetCoreInstrumentation()
-        .AddSource(Tracing.ActivitySourceName);
+        .AddSource(WeatherForecastController.ActivitySourceName);
 
-    // Switch between Zipkin/Jaeger/OTLP by setting UseExporter in appsettings.json.
-    var tracingExporter = builder.Configuration.GetValue<string>("UseTracingExporter").ToLowerInvariant();
     switch (tracingExporter)
     {
         case "jaeger":
