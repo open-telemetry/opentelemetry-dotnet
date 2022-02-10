@@ -65,6 +65,7 @@ builder.Services.AddOpenTelemetryTracing(options =>
         .SetResourceBuilder(resourceBuilder)
         .SetSampler(new AlwaysOnSampler())
         .AddHttpClientInstrumentation()
+        .AddAspNetCoreInstrumentation()
         .AddSource(Tracing.ActivitySourceName);
 
     // Switch between Zipkin/Jaeger/OTLP by setting UseExporter in appsettings.json.
