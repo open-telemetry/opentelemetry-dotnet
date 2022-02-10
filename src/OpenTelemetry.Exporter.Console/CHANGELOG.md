@@ -2,7 +2,12 @@
 
 ## Unreleased
 
+## 1.2.0-rc2
+
+Released 2022-Feb-02
+
 Fix MetricExporter to respect Console and Debug flags.
+Added `Activity.Links` support to `ConsoleActivityExporter`.
 
 ## 1.2.0-rc1
 
