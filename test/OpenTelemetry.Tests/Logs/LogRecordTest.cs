@@ -31,6 +31,13 @@ namespace OpenTelemetry.Logs.Tests
 {
     public sealed class LogRecordTest : IDisposable
     {
+        private enum Field
+        {
+            FormattedMessage,
+            State,
+            StateValues,
+        }
+
         private readonly ILogger logger;
         private readonly List<LogRecord> exportedItems = new List<LogRecord>();
         private readonly ILoggerFactory loggerFactory;
@@ -105,15 +112,6 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(1, state.Count);
 
             Assert.Equal(message.ToString(), state.ToString());
-        }
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1602:Enumeration items should be documented", Justification = "enum for test")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.OrderingRules", "SA1201:Elements should appear in the correct order", Justification = "enum for test")]
-        public enum Field
-        {
-            FormattedMessage,
-            State,
-            StateValues,
         }
 
         [Fact]
