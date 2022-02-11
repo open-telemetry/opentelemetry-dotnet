@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace
 
             foreach (var name in names)
             {
-                Guard.ThrowIfNullOrWhitespace(name, nameof(name));
+                Guard.ThrowIfNullOrWhitespace(name);
 
                 // TODO: We need to fix the listening model.
                 // Today it ignores version.
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public override TracerProviderBuilder AddLegacySource(string operationName)
         {
-            Guard.ThrowIfNullOrWhitespace(operationName, nameof(operationName));
+            Guard.ThrowIfNullOrWhitespace(operationName);
 
             this.legacyActivityOperationNames.Add(operationName);
 

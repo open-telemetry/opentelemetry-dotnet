@@ -65,7 +65,7 @@ namespace OpenTelemetry.Metrics
 
             foreach (var name in names)
             {
-                Guard.ThrowIfNullOrWhitespace(name, nameof(name));
+                Guard.ThrowIfNullOrWhitespace(name);
 
                 this.meterSources.Add(name);
             }
