@@ -14,9 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -25,51 +28,162 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
     public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
-        [Fact]
-        public void ToOtlpLogRecordTest()
-        {
-            // Just a basic test to demonstrate an
-            // approach useful for testing.
-            // This needs to be expanded to
-            // actually test the conversion.
-            List<LogRecord> logRecords = new List<LogRecord>();
+        private readonly ILogger logger;
+        private readonly List<LogRecord> exportedItems = new();
+        private readonly ILoggerFactory loggerFactory;
+        private OpenTelemetryLoggerOptions options;
 
-            using var loggerFactory = LoggerFactory.Create(builder =>
+        public OtlpLogExporterTests()
+        {
+            this.loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
                 {
-                    options.IncludeFormattedMessage = true;
-                    options.ParseStateValues = true;
-                    options.AddInMemoryExporter(logRecords);
+                    this.options = options;
+                    this.options.AddInMemoryExporter(this.exportedItems);
                 });
             });
 
-            // TODO:
-            // Validate attributes, severity, traceid,spanid etc.
+            this.logger = this.loggerFactory.CreateLogger<OtlpLogExporterTests>();
+        }
 
-            var logger = loggerFactory.CreateLogger("log-category");
-            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
-            Assert.Single(logRecords);
-            var logRecord = logRecords[0];
+        [Fact]
+        public void CheckToOtlpLogRecordStateValues()
+        {
+            this.options.IncludeFormattedMessage = true;
+            this.options.ParseStateValues = true;
+
+            this.logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            Assert.Single(this.exportedItems);
+
+            var logRecord = this.exportedItems[0];
             var otlpLogRecord = logRecord.ToOtlpLog();
             Assert.NotNull(otlpLogRecord);
             Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
-            logRecords.Clear();
+        }
 
-            logger.LogInformation(new EventId(10, null), "Hello from {name} {price}.", "tomato", 2.99);
-            Assert.Single(logRecords);
-            logRecord = logRecords[0];
+        [Fact]
+        public void CheckToOtlpLogRecordEventId()
+        {
+            this.options.IncludeFormattedMessage = true;
+            this.options.ParseStateValues = true;
+
+            this.logger.LogInformation(new EventId(10, null), "Hello from {name} {price}.", "tomato", 2.99);
+            Assert.Single(this.exportedItems);
+
+            var logRecord = this.exportedItems[0];
+            var otlpLogRecord = logRecord.ToOtlpLog();
+            Assert.NotNull(otlpLogRecord);
+            Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
+            this.exportedItems.Clear();
+
+            this.logger.LogInformation(new EventId(10, "MyEvent10"), "Hello from {name} {price}.", "tomato", 2.99);
+            Assert.Single(this.exportedItems);
+
+            logRecord = this.exportedItems[0];
             otlpLogRecord = logRecord.ToOtlpLog();
             Assert.NotNull(otlpLogRecord);
             Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
-            logRecords.Clear();
+        }
 
-            logger.LogInformation(new EventId(10, "MyEvent10"), "Hello from {name} {price}.", "tomato", 2.99);
-            Assert.Single(logRecords);
-            logRecord = logRecords[0];
-            otlpLogRecord = logRecord.ToOtlpLog();
+        [Fact]
+        public void CheckToOtlpLogRecordTraceIdSpanIdFlagWithDroppedActivity()
+        {
+            this.logger.LogInformation("Log within a dropped activity");
+            var logRecord = this.exportedItems[0];
+            var otlpLogRecord = logRecord.ToOtlpLog();
+
+            Assert.Null(Activity.Current);
+            Assert.True(otlpLogRecord.TraceId.IsEmpty);
+            Assert.True(otlpLogRecord.SpanId.IsEmpty);
+            Assert.True(otlpLogRecord.Flags == 0);
+        }
+
+        [Fact]
+        public void CheckToOtlpLogRecordSpanIdTraceIdFlag()
+        {
+            // preparation
+            var sampler = new AlwaysOnSampler();
+            var exportedActivityList = new List<Activity>();
+            var activitySourceName = "toOtlpLogRecordTest";
+            var activitySource = new ActivitySource(activitySourceName);
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource(activitySourceName)
+                .SetSampler(sampler)
+                .AddInMemoryExporter(exportedActivityList)
+                .Build();
+
+            using var activity = activitySource.StartActivity("Activity");
+
+            // execution
+            this.logger.LogInformation("Log within activity marked as RecordOnly");
+
+            // assertion
+            var logRecord = this.exportedItems[0];
+            var otlpLogRecord = logRecord.ToOtlpLog();
+
+            var currentActivity = Activity.Current;
+            Assert.NotNull(Activity.Current);
+
+            var expectedTraceId = currentActivity.TraceId;
+            var expectedSpanId = currentActivity.SpanId;
+            Assert.Equal(expectedTraceId.ToString(), ActivityTraceId.CreateFromBytes(otlpLogRecord.TraceId.ToByteArray()).ToString());
+            Assert.Equal(expectedSpanId.ToString(), ActivitySpanId.CreateFromBytes(otlpLogRecord.SpanId.ToByteArray()).ToString());
+            Assert.Equal((uint)logRecord.TraceFlags, otlpLogRecord.Flags);
+        }
+
+        [Fact]
+        public void CheckToOtlpLogRecordSeverityText()
+        {
+            this.options.IncludeFormattedMessage = true;
+
+            this.logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            Assert.Single(this.exportedItems);
+
+            var logRecord = this.exportedItems[0];
+            var otlpLogRecord = logRecord.ToOtlpLog();
+
             Assert.NotNull(otlpLogRecord);
-            Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
+            Assert.Equal(logRecord.LogLevel.ToString(), otlpLogRecord.SeverityText);
+        }
+
+        [Fact]
+        public void CheckToOtlpLogRecordFormattedMessage()
+        {
+            this.options.IncludeFormattedMessage = true;
+
+            this.logger.LogInformation("OpenTelemetry!");
+            Assert.Single(this.exportedItems);
+
+            var logRecord = this.exportedItems[0];
+            var otlpLogRecord = logRecord.ToOtlpLog();
+
+            Assert.NotNull(otlpLogRecord);
+            Assert.Equal(logRecord.FormattedMessage, otlpLogRecord.Body.StringValue);
+        }
+
+        [Fact]
+        public void CheckToOtlpLogRecordExceptionAttributes()
+        {
+            var exceptionMessage = "Exception Message";
+            var exception = new Exception(exceptionMessage);
+            var message = "Exception Occurred";
+            this.logger.LogInformation(exception, message);
+
+            var logRecord = this.exportedItems[0];
+            var loggedException = logRecord.Exception;
+            var otlpLogRecord = logRecord.ToOtlpLog();
+
+            Assert.NotNull(otlpLogRecord);
+            var otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
+            Assert.Contains(SemanticConventions.AttributeExceptionType, otlpLogRecordAttributes);
+            Assert.Contains(logRecord.Exception.GetType().Name, otlpLogRecordAttributes);
+
+            Assert.Contains(SemanticConventions.AttributeExceptionMessage, otlpLogRecordAttributes);
+            Assert.Contains(logRecord.Exception.Message, otlpLogRecordAttributes);
+
+            Assert.Contains(SemanticConventions.AttributeExceptionStacktrace, otlpLogRecordAttributes);
+            Assert.Contains(logRecord.Exception.ToInvariantString(), otlpLogRecordAttributes);
         }
     }
 }
