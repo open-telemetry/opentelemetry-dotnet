@@ -32,10 +32,17 @@ namespace OpenTelemetry.Exporter
         {
             foreach (var activity in batch)
             {
-                this.WriteLine($"Activity.Id:          {activity.Id}");
-                if (!string.IsNullOrEmpty(activity.ParentId))
+                this.WriteLine($"Activity.TraceId:          {activity.TraceId}");
+                this.WriteLine($"Activity.SpanId:           {activity.SpanId}");
+                this.WriteLine($"Activity.TraceFlags:           {activity.ActivityTraceFlags}");
+                if (!string.IsNullOrEmpty(activity.TraceStateString))
                 {
-                    this.WriteLine($"Activity.ParentId:    {activity.ParentId}");
+                    this.WriteLine($"Activity.TraceState:    {activity.TraceStateString}");
+                }
+
+                if (activity.ParentSpanId != default)
+                {
+                    this.WriteLine($"Activity.ParentSpanId:    {activity.ParentSpanId}");
                 }
 
                 this.WriteLine($"Activity.ActivitySourceName: {activity.Source.Name}");
@@ -45,7 +52,7 @@ namespace OpenTelemetry.Exporter
                 this.WriteLine($"Activity.Duration:    {activity.Duration}");
                 if (activity.TagObjects.Any())
                 {
-                    this.WriteLine("Activity.TagObjects:");
+                    this.WriteLine("Activity.Tags:");
                     foreach (var tag in activity.TagObjects)
                     {
                         var array = tag.Value as Array;
