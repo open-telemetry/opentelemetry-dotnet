@@ -35,7 +35,7 @@ namespace OpenTelemetry.Internal
         /// <param name="paramName">The parameter name to use in the thrown exception.</param>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ThrowIfNull(object value, string paramName = DefaultParamName)
+        public static void ThrowIfNull(object value, [CallerArgumentExpression("value")] string paramName = null)
         {
             if (value is null)
             {
