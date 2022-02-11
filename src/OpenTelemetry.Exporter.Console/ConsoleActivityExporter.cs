@@ -39,6 +39,7 @@ namespace OpenTelemetry.Exporter
                 {
                     this.WriteLine($"Activity.TraceState:    {activity.TraceStateString}");
                 }
+
                 if (activity.ParentSpanId != default)
                 {
                     this.WriteLine($"Activity.ParentSpanId:    {activity.ParentSpanId}");
