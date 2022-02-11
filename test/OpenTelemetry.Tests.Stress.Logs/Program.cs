@@ -23,6 +23,7 @@ namespace OpenTelemetry.Tests.Stress;
 public partial class Program
 {
     private static ILogger logger;
+    private static PayloadClass payload = new PayloadClass();
 
     public static void Main()
     {
@@ -45,7 +46,7 @@ public partial class Program
         logger.Log(
             logLevel: LogLevel.Information,
             eventId: 2,
-            state: new PayloadStruct { },
+            state: payload,
             exception: null,
             formatter: (state, ex) => string.Empty);
     }
