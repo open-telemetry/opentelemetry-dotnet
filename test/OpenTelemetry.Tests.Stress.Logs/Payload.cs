@@ -1,4 +1,4 @@
-// <copyright file="PayloadClass.cs" company="OpenTelemetry Authors">
+// <copyright file="Payload.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Tests.Stress;
 
-internal class PayloadClass
+internal class Payload
 {
     public int Field001 = 0;
     public float Field002 = 2.718281828f;

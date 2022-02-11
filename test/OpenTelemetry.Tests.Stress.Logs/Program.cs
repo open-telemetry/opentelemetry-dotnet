@@ -23,7 +23,7 @@ namespace OpenTelemetry.Tests.Stress;
 public partial class Program
 {
     private static ILogger logger;
-    private static PayloadClass payload = new PayloadClass();
+    private static Payload payload = new Payload();
 
     public static void Main()
     {
