@@ -221,11 +221,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task CheckEnrichmentWhenSampling()
         {
-            await CheckEnrichment(new AlwaysOffSampler(), 0).ConfigureAwait(false);
-            await CheckEnrichment(new AlwaysOnSampler(), 2).ConfigureAwait(false);
+            await CheckEnrichment(new AlwaysOffSampler(), 0, this.url).ConfigureAwait(false);
+            await CheckEnrichment(new AlwaysOnSampler(), 2, this.url).ConfigureAwait(false);
         }
 
-        private static async Task CheckEnrichment(Sampler sampler, int expect)
+        private static async Task CheckEnrichment(Sampler sampler, int expect, string url)
         {
             Counter = 0;
             var processor = new Mock<BaseProcessor<Activity>>();
@@ -236,7 +236,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Build())
             {
                 using var c = new HttpClient();
-                using var r = await c.GetAsync("https://opentelemetry.io/").ConfigureAwait(false);
+                using var r = await c.GetAsync(url).ConfigureAwait(false);
             }
 
             Assert.Equal(expect, Counter);
