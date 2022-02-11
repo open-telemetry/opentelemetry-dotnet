@@ -26,7 +26,7 @@ Released 2021-Nov-29
 
 * Prevent accessing activity Id before sampler runs in case of legacy
   activities.
-  ([2659](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2659))
+  ([#2659](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2659))
 
 * Added `ReadOnlyTagCollection` and expose `Tags` on `MetricPoint` instead of
   `Keys`+`Values`
