@@ -35,6 +35,86 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void TracerProviderSdkAddSource()
+        {
+            using var source1 = new ActivitySource($"{Utils.GetCurrentMethodName()}.1");
+            using var source2 = new ActivitySource($"{Utils.GetCurrentMethodName()}.2");
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource(source1.Name)
+                .Build();
+
+            using (var activity = source1.StartActivity("test"))
+            {
+                Assert.NotNull(activity);
+            }
+
+            using (var activity = source2.StartActivity("test"))
+            {
+                Assert.Null(activity);
+            }
+        }
+
+        [Fact]
+        public void TracerProviderSdkAddSourceWithWildcards()
+        {
+            using var source1 = new ActivitySource($"{Utils.GetCurrentMethodName()}.A");
+            using var source2 = new ActivitySource($"{Utils.GetCurrentMethodName()}.Ab");
+            using var source3 = new ActivitySource($"{Utils.GetCurrentMethodName()}.Abc");
+            using var source4 = new ActivitySource($"{Utils.GetCurrentMethodName()}.B");
+
+            using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource($"{Utils.GetCurrentMethodName()}.*")
+                .Build())
+            {
+                using (var activity = source1.StartActivity("test"))
+                {
+                    Assert.NotNull(activity);
+                }
+
+                using (var activity = source2.StartActivity("test"))
+                {
+                    Assert.NotNull(activity);
+                }
+
+                using (var activity = source3.StartActivity("test"))
+                {
+                    Assert.NotNull(activity);
+                }
+
+                using (var activity = source4.StartActivity("test"))
+                {
+                    Assert.NotNull(activity);
+                }
+            }
+
+            using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource($"{Utils.GetCurrentMethodName()}.?")
+                .Build())
+            {
+                using (var activity = source1.StartActivity("test"))
+                {
+                    Assert.NotNull(activity);
+                }
+
+                using (var activity = source2.StartActivity("test"))
+                {
+                    Assert.Null(activity);
+                }
+
+                using (var activity = source3.StartActivity("test"))
+                {
+                    Assert.Null(activity);
+                }
+
+                using (var activity = source4.StartActivity("test"))
+                {
+                    Assert.NotNull(activity);
+                }
+            }
+        }
+
+        [Fact]
         public void TracerProviderSdkInvokesSamplingWithCorrectParameters()
         {
             var testSampler = new TestSampler();
