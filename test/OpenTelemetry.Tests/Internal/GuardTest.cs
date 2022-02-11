@@ -15,12 +15,22 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using OpenTelemetry.Internal;
 using Xunit;
 
 namespace OpenTelemetry.Tests.Internal
 {
+#pragma warning disable SA1402 // File may only contain a single type
+#pragma warning disable SA1649 // File name should match first type name
+    public class Thing
+#pragma warning restore SA1649 // File name should match first type name
+#pragma warning restore SA1402 // File may only contain a single type
+    {
+        public string Bar { get; set; }
+    }
+
     public class GuardTest
     {
         [Fact]
@@ -33,8 +43,20 @@ namespace OpenTelemetry.Tests.Internal
             Guard.ThrowIfNull("hello");
 
             // Invalid
-            var ex1 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(null, "null"));
+            object potato = null;
+            var ex1 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(potato));
             Assert.Contains("Must not be null", ex1.Message);
+            Assert.Equal("potato", ex1.ParamName);
+
+            object @event = null;
+            ex1 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(@event));
+            Assert.Contains("Must not be null", ex1.Message);
+            Assert.Equal("@event", ex1.ParamName);
+
+            Thing thing = null;
+            ex1 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(thing?.Bar));
+            Assert.Contains("Must not be null", ex1.Message);
+            Assert.Equal("thing?.Bar", ex1.ParamName);
         }
 
         [Fact]

@@ -19,7 +19,39 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
+#if !NETCOREAPP3_0_OR_GREATER
+namespace System.Runtime.CompilerServices
+{
+    /// <summary>
+    /// Allows capturing of the expressions passed to a method.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+#pragma warning disable SA1402 // File may only contain a single type
+#pragma warning disable SA1649 // File name should match first type name
+    internal sealed class CallerArgumentExpressionAttribute : Attribute
+#pragma warning restore SA1649 // File name should match first type name
+#pragma warning restore SA1402 // File may only contain a single type
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CallerArgumentExpressionAttribute"/> class.
+        /// </summary>
+        /// <param name="parameterName">The name of the targeted parameter.</param>
+        public CallerArgumentExpressionAttribute(string parameterName)
+        {
+            this.ParameterName = parameterName;
+        }
+
+        /// <summary>
+        /// Gets the target parameter name of the CallerArgumentExpression.
+        /// </summary>
+        public string ParameterName { get; }
+    }
+}
+#endif
+
+#pragma warning disable SA1403 // File may only contain a single namespace
 namespace OpenTelemetry.Internal
+#pragma warning restore SA1403 // File may only contain a single namespace
 {
     /// <summary>
     /// Methods for guarding against exception throwing values.

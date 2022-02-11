@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace
             Func<TInstrumentation> instrumentationFactory)
             where TInstrumentation : class
         {
-            Guard.ThrowIfNull(instrumentationFactory, nameof(instrumentationFactory));
+            Guard.ThrowIfNull(instrumentationFactory);
 
             this.instrumentationFactories.Add(
                 new InstrumentationFactory(
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public override TracerProviderBuilder AddSource(params string[] names)
         {
-            Guard.ThrowIfNull(names, nameof(names));
+            Guard.ThrowIfNull(names);
 
             foreach (var name in names)
             {
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetSampler(Sampler sampler)
         {
-            Guard.ThrowIfNull(sampler, nameof(sampler));
+            Guard.ThrowIfNull(sampler);
 
             this.sampler = sampler;
             return this;
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
-            Guard.ThrowIfNull(resourceBuilder, nameof(resourceBuilder));
+            Guard.ThrowIfNull(resourceBuilder);
 
             this.resourceBuilder = resourceBuilder;
             return this;
@@ -156,7 +156,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder AddProcessor(BaseProcessor<Activity> processor)
         {
-            Guard.ThrowIfNull(processor, nameof(processor));
+            Guard.ThrowIfNull(processor);
 
             this.processors.Add(processor);
 

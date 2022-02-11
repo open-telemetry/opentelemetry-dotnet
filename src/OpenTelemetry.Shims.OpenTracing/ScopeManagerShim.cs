@@ -37,7 +37,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public ScopeManagerShim(Tracer tracer)
         {
-            Guard.ThrowIfNull(tracer, nameof(tracer));
+            Guard.ThrowIfNull(tracer);
 
             this.tracer = tracer;
         }

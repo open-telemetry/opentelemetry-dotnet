@@ -41,7 +41,7 @@ namespace OpenTelemetry
         /// <param name="count">The number of items in the batch.</param>
         public Batch(T[] items, int count)
         {
-            Guard.ThrowIfNull(items, nameof(items));
+            Guard.ThrowIfNull(items);
             Guard.ThrowIfOutOfRange(count, nameof(count), 0, items.Length);
 
             this.item = null;

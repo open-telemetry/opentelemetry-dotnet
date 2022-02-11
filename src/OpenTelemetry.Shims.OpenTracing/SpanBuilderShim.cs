@@ -81,8 +81,8 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         public SpanBuilderShim(Tracer tracer, string spanName, IList<string> rootOperationNamesForActivityBasedAutoInstrumentations = null)
         {
-            Guard.ThrowIfNull(tracer, nameof(tracer));
-            Guard.ThrowIfNull(spanName, nameof(spanName));
+            Guard.ThrowIfNull(tracer);
+            Guard.ThrowIfNull(spanName);
 
             this.tracer = tracer;
             this.spanName = spanName;
@@ -130,7 +130,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                 return this;
             }
 
-            Guard.ThrowIfNull(referenceType, nameof(referenceType));
+            Guard.ThrowIfNull(referenceType);
 
             // TODO There is no relation between OpenTracing.References (referenceType) and OpenTelemetry Link
             var actualContext = GetOpenTelemetrySpanContext(referencedContext);
@@ -279,7 +279,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.BooleanTag tag, bool value)
         {
-            Guard.ThrowIfNull(tag?.Key, $"{nameof(tag)}?.{nameof(tag.Key)}");
+            Guard.ThrowIfNull(tag?.Key);
 
             return this.WithTag(tag.Key, value);
         }
@@ -287,7 +287,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.IntOrStringTag tag, string value)
         {
-            Guard.ThrowIfNull(tag?.Key, $"{nameof(tag)}?.{nameof(tag.Key)}");
+            Guard.ThrowIfNull(tag?.Key);
 
             if (int.TryParse(value, out var result))
             {
@@ -300,7 +300,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.IntTag tag, int value)
         {
-            Guard.ThrowIfNull(tag?.Key, $"{nameof(tag)}?.{nameof(tag.Key)}");
+            Guard.ThrowIfNull(tag?.Key);
 
             return this.WithTag(tag.Key, value);
         }
@@ -308,7 +308,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <inheritdoc/>
         public ISpanBuilder WithTag(global::OpenTracing.Tag.StringTag tag, string value)
         {
-            Guard.ThrowIfNull(tag?.Key, $"{nameof(tag)}?.{nameof(tag.Key)}");
+            Guard.ThrowIfNull(tag?.Key);
 
             return this.WithTag(tag.Key, value);
         }

@@ -79,7 +79,7 @@ namespace OpenTelemetry.Internal
         /// </returns>
         public bool Add(T value)
         {
-            Guard.ThrowIfNull(value, nameof(value));
+            Guard.ThrowIfNull(value);
 
             while (true)
             {
@@ -119,7 +119,7 @@ namespace OpenTelemetry.Internal
                 return this.Add(value);
             }
 
-            Guard.ThrowIfNull(value, nameof(value));
+            Guard.ThrowIfNull(value);
 
             var spinCountDown = maxSpinCount;
 
