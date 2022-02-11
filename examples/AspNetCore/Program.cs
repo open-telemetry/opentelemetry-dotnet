@@ -14,9 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
 using System.Reflection;
 using Examples.AspNetCore;
-using Examples.AspNetCore.Controllers;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Logs;
@@ -29,7 +29,6 @@ var builder = WebApplication.CreateBuilder(args);
 var serviceName = "AspNetCoreExampleService";
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -39,6 +38,12 @@ builder.Services.AddSwaggerGen();
 
 // OpenTelemetry
 var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
+
+const string ActivitySourceName = "Examples.AspNetCore";
+
+ActivitySource activitySource = new(ActivitySourceName, "1.0.0");
+
+builder.Services.AddSingleton(activitySource);
 
 // Switch between Zipkin/Jaeger/OTLP by setting UseExporter in appsettings.json.
 var tracingExporter = builder.Configuration.GetValue<string>("UseTracingExporter").ToLowerInvariant();
@@ -75,7 +80,7 @@ builder.Services.AddOpenTelemetryTracing(options =>
         .SetSampler(new AlwaysOnSampler())
         .AddHttpClientInstrumentation()
         .AddAspNetCoreInstrumentation()
-        .AddSource(WeatherForecastController.ActivitySourceName);
+        .AddSource(ActivitySourceName);
 
     switch (tracingExporter)
     {
@@ -103,6 +108,7 @@ builder.Services.AddOpenTelemetryTracing(options =>
 
         default:
             options.AddConsoleExporter();
+
             break;
     }
 });

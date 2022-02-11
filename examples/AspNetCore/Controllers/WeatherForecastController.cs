@@ -22,9 +22,6 @@ using Microsoft.AspNetCore.Mvc;
 [Route("[controller]")]
 public class WeatherForecastController : ControllerBase
 {
-    public static readonly string ActivitySourceName = "Examples.AspNetCore";
-    private static readonly ActivitySource ActivitySource = new(ActivitySourceName, "1.0.0");
-
     private static readonly string[] Summaries = new[]
     {
         "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching",
@@ -32,11 +29,13 @@ public class WeatherForecastController : ControllerBase
 
     private readonly ILogger<WeatherForecastController> logger;
     private readonly ExampleMeter exampleMeter;
+    private readonly ActivitySource activitySource;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger, ExampleMeter exampleMeter)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, ExampleMeter exampleMeter, ActivitySource activitySource)
     {
         this.logger = logger;
         this.exampleMeter = exampleMeter;
+        this.activitySource = activitySource;
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
@@ -44,7 +43,7 @@ public class WeatherForecastController : ControllerBase
     {
         this.logger.LogInformation("WeatherForecast GET called");
         WeatherForecast[] result;
-        using (var activity = ActivitySource.StartActivity("Getting weather data.", ActivityKind.Internal))
+        using (var activity = this.activitySource?.StartActivity("Getting weather data.", ActivityKind.Internal))
         {
             result = GetWeatherData();
             activity?.SetTag("Number of weather records", result.Length);
