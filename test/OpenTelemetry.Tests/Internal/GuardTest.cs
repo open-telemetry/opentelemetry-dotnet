@@ -49,14 +49,14 @@ namespace OpenTelemetry.Tests.Internal
             Assert.Equal("potato", ex1.ParamName);
 
             object @event = null;
-            ex1 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(@event));
-            Assert.Contains("Must not be null", ex1.Message);
-            Assert.Equal("@event", ex1.ParamName);
+            var ex2 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(@event));
+            Assert.Contains("Must not be null", ex2.Message);
+            Assert.Equal("@event", ex2.ParamName);
 
             Thing thing = null;
-            ex1 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(thing?.Bar));
-            Assert.Contains("Must not be null", ex1.Message);
-            Assert.Equal("thing?.Bar", ex1.ParamName);
+            var ex3 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(thing?.Bar));
+            Assert.Contains("Must not be null", ex3.Message);
+            Assert.Equal("thing?.Bar", ex3.ParamName);
         }
 
         [Fact]
@@ -69,9 +69,16 @@ namespace OpenTelemetry.Tests.Internal
             // Invalid
             var ex1 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrEmpty(null));
             Assert.Contains("Must not be null or empty", ex1.Message);
+            Assert.Equal("null", ex1.ParamName);
 
             var ex2 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrEmpty(string.Empty));
             Assert.Contains("Must not be null or empty", ex2.Message);
+            Assert.Equal("string.Empty", ex2.ParamName);
+
+            var x = string.Empty;
+            var ex3 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrEmpty(x));
+            Assert.Contains("Must not be null or empty", ex3.Message);
+            Assert.Equal("x", ex3.ParamName);
         }
 
         [Fact]

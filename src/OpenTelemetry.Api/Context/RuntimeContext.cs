@@ -41,7 +41,7 @@ namespace OpenTelemetry.Context
         /// <returns>The slot registered.</returns>
         public static RuntimeContextSlot<T> RegisterSlot<T>(string slotName)
         {
-            Guard.ThrowIfNullOrEmpty(slotName, nameof(slotName));
+            Guard.ThrowIfNullOrEmpty(slotName);
 
             lock (Slots)
             {
@@ -66,7 +66,7 @@ namespace OpenTelemetry.Context
         /// <returns>The slot previously registered.</returns>
         public static RuntimeContextSlot<T> GetSlot<T>(string slotName)
         {
-            Guard.ThrowIfNullOrEmpty(slotName, nameof(slotName));
+            Guard.ThrowIfNullOrEmpty(slotName);
             var slot = GuardNotFound(slotName);
             var contextSlot = Guard.ThrowIfNotOfType<RuntimeContextSlot<T>>(slot, nameof(slot));
             return contextSlot;
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Context
         /// <param name="value">The value to be set.</param>
         public static void SetValue(string slotName, object value)
         {
-            Guard.ThrowIfNullOrEmpty(slotName, nameof(slotName));
+            Guard.ThrowIfNullOrEmpty(slotName);
             var slot = GuardNotFound(slotName);
             var runtimeContextSlotValueAccessor = Guard.ThrowIfNotOfType<IRuntimeContextSlotValueAccessor>(slot, nameof(slot));
             runtimeContextSlotValueAccessor.Value = value;
@@ -140,7 +140,7 @@ namespace OpenTelemetry.Context
         /// <returns>The value retrieved from the context slot.</returns>
         public static object GetValue(string slotName)
         {
-            Guard.ThrowIfNullOrEmpty(slotName, nameof(slotName));
+            Guard.ThrowIfNullOrEmpty(slotName);
             var slot = GuardNotFound(slotName);
             var runtimeContextSlotValueAccessor = Guard.ThrowIfNotOfType<IRuntimeContextSlotValueAccessor>(slot, nameof(slot));
             return runtimeContextSlotValueAccessor.Value;
