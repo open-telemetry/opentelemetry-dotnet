@@ -127,6 +127,15 @@ services.AddHttpClient(
 Note: The single instance returned by `HttpClientFactory` is reused by all
 export requests.
 
+## Troubleshooting
+
+This component uses an
+[EventSource](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventsource)
+with the name "OpenTelemetry-Exporter-OpenTelemetryProtocol" for its internal
+logging. Please refer to [SDK
+troubleshooting](../opentelemetry/README.md#troubleshooting) for instructions on
+seeing these internal logs.
+
 ## References
 
 * [OpenTelemetry

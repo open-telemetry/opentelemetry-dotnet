@@ -221,6 +221,15 @@ This instrumentation automatically sets Activity Status to Error if the Http
 StatusCode is >= 400. Additionally, `RecordException` feature may be turned on,
 to store the exception to the Activity itself as ActivityEvent.
 
+## Troubleshooting
+
+This component uses an
+[EventSource](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventsource)
+with the name "OpenTelemetry-Instrumentation-Http" for its internal logging.
+Please refer to [SDK
+troubleshooting](../opentelemetry/README.md#troubleshooting) for instructions on
+seeing these internal logs.
+
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
