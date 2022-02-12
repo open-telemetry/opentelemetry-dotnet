@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using OpenTelemetry.Internal;
 using Xunit;
@@ -90,12 +89,15 @@ namespace OpenTelemetry.Tests.Internal
             // Invalid
             var ex1 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrWhitespace(null));
             Assert.Contains("Must not be null or whitespace", ex1.Message);
+            Assert.Equal("null", ex1.ParamName);
 
             var ex2 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrWhitespace(string.Empty));
             Assert.Contains("Must not be null or whitespace", ex2.Message);
+            Assert.Equal("string.Empty", ex2.ParamName);
 
             var ex3 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrWhitespace(" \t\n\r"));
             Assert.Contains("Must not be null or whitespace", ex3.Message);
+            Assert.Equal("\" \\t\\n\\r\"", ex3.ParamName);
         }
 
         [Fact]
@@ -109,6 +111,7 @@ namespace OpenTelemetry.Tests.Internal
             // Invalid
             var ex1 = Assert.Throws<ArgumentOutOfRangeException>(() => Guard.ThrowIfInvalidTimeout(-100));
             Assert.Contains("Must be non-negative or 'Timeout.Infinite'", ex1.Message);
+            Assert.Equal("-100", ex1.ParamName);
         }
 
         [Fact]
@@ -155,7 +158,7 @@ namespace OpenTelemetry.Tests.Internal
 
             // Invalid
             var ex1 = Assert.Throws<InvalidCastException>(() => Guard.ThrowIfNotOfType<double>(100));
-            Assert.Equal("Cannot cast 'N/A' from 'Int32' to 'Double'", ex1.Message);
+            Assert.Equal("Cannot cast '100' from 'Int32' to 'Double'", ex1.Message);
         }
 
         [Fact]
@@ -167,6 +170,7 @@ namespace OpenTelemetry.Tests.Internal
             // Invalid
             var ex1 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfZero(0));
             Assert.Contains("Must not be zero", ex1.Message);
+            Assert.Equal("0", ex1.ParamName);
         }
     }
 }

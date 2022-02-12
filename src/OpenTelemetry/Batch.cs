@@ -42,7 +42,7 @@ namespace OpenTelemetry
         public Batch(T[] items, int count)
         {
             Guard.ThrowIfNull(items);
-            Guard.ThrowIfOutOfRange(count, nameof(count), 0, items.Length);
+            Guard.ThrowIfOutOfRange(count, min: 0, max: items.Length);
 
             this.item = null;
             this.circularBuffer = null;

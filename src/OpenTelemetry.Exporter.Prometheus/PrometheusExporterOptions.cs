@@ -87,7 +87,7 @@ namespace OpenTelemetry.Exporter
             get => this.scrapeResponseCacheDurationMilliseconds;
             set
             {
-                Guard.ThrowIfOutOfRange(value, nameof(value), min: 0);
+                Guard.ThrowIfOutOfRange(value, min: 0);
 
                 this.scrapeResponseCacheDurationMilliseconds = value;
             }

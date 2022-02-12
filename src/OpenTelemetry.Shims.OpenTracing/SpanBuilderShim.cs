@@ -321,7 +321,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <exception cref="ArgumentException">span is not a valid SpanShim object.</exception>
         private static TelemetrySpan GetOpenTelemetrySpan(ISpan span)
         {
-            var shim = Guard.ThrowIfNotOfType<SpanShim>(span, nameof(span));
+            var shim = Guard.ThrowIfNotOfType<SpanShim>(span);
 
             return shim.Span;
         }
@@ -334,7 +334,7 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <exception cref="ArgumentException">context is not a valid SpanContextShim object.</exception>
         private static SpanContext GetOpenTelemetrySpanContext(ISpanContext spanContext)
         {
-            var shim = Guard.ThrowIfNotOfType<SpanContextShim>(spanContext, nameof(spanContext));
+            var shim = Guard.ThrowIfNotOfType<SpanContextShim>(spanContext);
 
             return shim.SpanContext;
         }

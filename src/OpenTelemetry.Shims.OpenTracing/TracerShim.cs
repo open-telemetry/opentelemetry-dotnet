@@ -93,7 +93,7 @@ namespace OpenTelemetry.Shims.OpenTracing
             TCarrier carrier)
         {
             Guard.ThrowIfNull(spanContext);
-            var shim = Guard.ThrowIfNotOfType<SpanContextShim>(spanContext, nameof(spanContext));
+            var shim = Guard.ThrowIfNotOfType<SpanContextShim>(spanContext);
             Guard.ThrowIfNull(format);
             Guard.ThrowIfNull(carrier);
 

@@ -29,7 +29,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         {
             Guard.ThrowIfNull(options);
             Guard.ThrowIfNull(httpClient);
-            Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds, $"{nameof(options)}.{nameof(options.TimeoutMilliseconds)}");
+            Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds);
 
             this.Options = options;
             this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));

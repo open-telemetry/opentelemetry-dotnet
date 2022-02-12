@@ -68,7 +68,7 @@ namespace OpenTelemetry.Context
         {
             Guard.ThrowIfNullOrEmpty(slotName);
             var slot = GuardNotFound(slotName);
-            var contextSlot = Guard.ThrowIfNotOfType<RuntimeContextSlot<T>>(slot, nameof(slot));
+            var contextSlot = Guard.ThrowIfNotOfType<RuntimeContextSlot<T>>(slot);
             return contextSlot;
         }
 
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Context
         {
             Guard.ThrowIfNullOrEmpty(slotName);
             var slot = GuardNotFound(slotName);
-            var runtimeContextSlotValueAccessor = Guard.ThrowIfNotOfType<IRuntimeContextSlotValueAccessor>(slot, nameof(slot));
+            var runtimeContextSlotValueAccessor = Guard.ThrowIfNotOfType<IRuntimeContextSlotValueAccessor>(slot);
             runtimeContextSlotValueAccessor.Value = value;
         }
 
@@ -142,7 +142,7 @@ namespace OpenTelemetry.Context
         {
             Guard.ThrowIfNullOrEmpty(slotName);
             var slot = GuardNotFound(slotName);
-            var runtimeContextSlotValueAccessor = Guard.ThrowIfNotOfType<IRuntimeContextSlotValueAccessor>(slot, nameof(slot));
+            var runtimeContextSlotValueAccessor = Guard.ThrowIfNotOfType<IRuntimeContextSlotValueAccessor>(slot);
             return runtimeContextSlotValueAccessor.Value;
         }
 
