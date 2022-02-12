@@ -125,18 +125,18 @@ namespace OpenTelemetry.Logs.Tests
                 }));
 
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
-            {
-                logger.LogInformation($"This should be replaced {0.99}.");
+            logger.LogInformation($"This should be replaced {0.99}.");
 
-                var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
-                Assert.Equal("newStateKey", state[0].Key.ToString());
-                Assert.Equal("newStateValue", state[0].Value.ToString());
-            }
+            var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+            Assert.Equal("newStateKey", state[0].Key.ToString());
+            Assert.Equal("newStateValue", state[0].Value.ToString());
         }
 
         [Fact]
         public void StateValuesCanBeSetByProcessor()
         {
+            this.options.ParseStateValues = true;
+
             using var loggerFactory = LoggerFactory.Create(builder => builder
                 .AddOpenTelemetry(options =>
                 {
@@ -145,12 +145,7 @@ namespace OpenTelemetry.Logs.Tests
                 }));
 
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
-            logger.Log(
-                LogLevel.Information,
-                0,
-                new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("OldKey", "OldValue") },
-                null,
-                (s, e) => "OpenTelemetry!");
+            logger.LogInformation($"This should be replaced {0.99}.");
 
             var stateValue = this.exportedItems[0];
             Assert.Equal(new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue"), stateValue.StateValues[0]);
