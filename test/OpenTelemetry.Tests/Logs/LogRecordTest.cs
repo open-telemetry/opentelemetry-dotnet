@@ -117,18 +117,18 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void StateCanBeSetByProcessor()
         {
-            var exportedItems = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder => builder
                 .AddOpenTelemetry(options =>
                 {
-                    options.AddProcessor(new RedactionProcessor(exportedItems, Field.State));
+                    options.AddProcessor(new RedactionProcessor(Field.State));
+                    options.AddInMemoryExporter(this.exportedItems);
                 }));
 
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
             {
                 logger.LogInformation($"This should be replaced {0.99}.");
 
-                var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+                var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
                 Assert.Equal("newStateKey", state[0].Key.ToString());
                 Assert.Equal("newStateValue", state[0].Value.ToString());
             }
@@ -137,11 +137,11 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void StateValuesCanBeSetByProcessor()
         {
-            var exportedItems = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder => builder
                 .AddOpenTelemetry(options =>
                 {
-                    options.AddProcessor(new RedactionProcessor(exportedItems, Field.StateValues));
+                    options.AddProcessor(new RedactionProcessor(Field.StateValues));
+                    options.AddInMemoryExporter(this.exportedItems);
                 }));
 
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
@@ -152,24 +152,24 @@ namespace OpenTelemetry.Logs.Tests
                 null,
                 (s, e) => "OpenTelemetry!");
 
-            var stateValue = exportedItems[0];
+            var stateValue = this.exportedItems[0];
             Assert.Equal(new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue"), stateValue.StateValues[0]);
         }
 
         [Fact]
         public void FormattedMessageCanBeSetByProcessor()
         {
-            var exportedItems = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder => builder
                 .AddOpenTelemetry(options =>
                 {
-                    options.AddProcessor(new RedactionProcessor(exportedItems, Field.FormattedMessage));
+                    options.AddProcessor(new RedactionProcessor(Field.FormattedMessage));
+                    options.AddInMemoryExporter(this.exportedItems);
                 }));
 
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
             logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
 
-            var item = exportedItems[0];
+            var item = this.exportedItems[0];
             Assert.Equal("OpenTelemetry Good Night!", item.FormattedMessage);
         }
 
@@ -750,13 +750,10 @@ namespace OpenTelemetry.Logs.Tests
 
         private class RedactionProcessor : BaseProcessor<LogRecord>
         {
-            private readonly ICollection<LogRecord> exportedItems;
-
             private readonly Field fieldToUpdate;
 
-            public RedactionProcessor(ICollection<LogRecord> exportedItems, Field fieldToUpdate)
+            public RedactionProcessor(Field fieldToUpdate)
             {
-                this.exportedItems = exportedItems;
                 this.fieldToUpdate = fieldToUpdate;
             }
 
@@ -774,8 +771,6 @@ namespace OpenTelemetry.Logs.Tests
                 {
                     logRecord.FormattedMessage = "OpenTelemetry Good Night!";
                 }
-
-                this.exportedItems.Add(logRecord);
             }
         }
     }
