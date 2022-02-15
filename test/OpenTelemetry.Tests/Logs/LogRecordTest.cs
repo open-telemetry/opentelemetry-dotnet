@@ -133,7 +133,6 @@ namespace OpenTelemetry.Logs.Tests
             using var loggerFactory = LoggerFactory.Create(builder => builder
                 .AddOpenTelemetry(options =>
                 {
-                    options.AddProcessor(new RedactionProcessor(Field.State));
                     options.AddInMemoryExporter(this.exportedItems);
                     options.ParseStateValues = true;
                 }));
@@ -159,7 +158,6 @@ namespace OpenTelemetry.Logs.Tests
             using var loggerFactory = LoggerFactory.Create(builder => builder
                 .AddOpenTelemetry(options =>
                 {
-                    options.AddProcessor(new RedactionProcessor(Field.State));
                     options.AddInMemoryExporter(this.exportedItems);
                     options.IncludeFormattedMessage = true;
                 }));
