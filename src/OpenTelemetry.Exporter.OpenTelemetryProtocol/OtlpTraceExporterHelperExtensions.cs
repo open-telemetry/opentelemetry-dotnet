@@ -52,13 +52,11 @@ namespace OpenTelemetry.Trace
             Action<OtlpExporterOptions> configure,
             IServiceProvider serviceProvider)
         {
-            var originalEndpoint = exporterOptions.Endpoint;
-
             configure?.Invoke(exporterOptions);
 
             exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
-            exporterOptions.AppendExportPath(originalEndpoint, OtlpExporterOptions.TracesExportPath);
+            exporterOptions.AppendExportPath(OtlpExporterOptions.TracesExportPath);
 
             var otlpExporter = new OtlpTraceExporter(exporterOptions);
 

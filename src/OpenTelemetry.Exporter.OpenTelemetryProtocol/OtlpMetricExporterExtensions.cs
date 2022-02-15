@@ -52,13 +52,11 @@ namespace OpenTelemetry.Metrics
             Action<OtlpExporterOptions> configure,
             IServiceProvider serviceProvider)
         {
-            var initialEndpoint = options.Endpoint;
-
             configure?.Invoke(options);
 
             options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
 
-            options.AppendExportPath(initialEndpoint, OtlpExporterOptions.MetricsExportPath);
+            options.AppendExportPath(OtlpExporterOptions.MetricsExportPath);
 
             var metricExporter = new OtlpMetricExporter(options);
 
