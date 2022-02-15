@@ -115,7 +115,67 @@ namespace OpenTelemetry.Logs.Tests
         }
 
         [Fact]
-        public void StateCanBeSetByProcessor()
+        public void CheckStateCanBeSet()
+        {
+            var message = $"This should be replaced {0.99}.";
+            this.logger.LogInformation(message);
+
+            var logRecord = this.exportedItems[0];
+            logRecord.State = "newState";
+
+            var expectedState = "newState";
+            Assert.Equal(expectedState, logRecord.State);
+        }
+
+        [Fact]
+        public void CheckStateValuesCanBeSet()
+        {
+            using var loggerFactory = LoggerFactory.Create(builder => builder
+                .AddOpenTelemetry(options =>
+                {
+                    options.AddProcessor(new RedactionProcessor(Field.State));
+                    options.AddInMemoryExporter(this.exportedItems);
+                    options.ParseStateValues = true;
+                }));
+
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+            logger.Log(
+                LogLevel.Information,
+                0,
+                new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("Key1", "Value1") },
+                null,
+                (s, e) => "OpenTelemetry!");
+
+            var logRecord = this.exportedItems[0];
+            var expectedStateValues = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("Key2", "Value2") };
+            logRecord.StateValues = expectedStateValues;
+
+            Assert.Equal(expectedStateValues, logRecord.StateValues);
+        }
+
+        [Fact]
+        public void CheckFormattedMessageCanBeSet()
+        {
+            using var loggerFactory = LoggerFactory.Create(builder => builder
+                .AddOpenTelemetry(options =>
+                {
+                    options.AddProcessor(new RedactionProcessor(Field.State));
+                    options.AddInMemoryExporter(this.exportedItems);
+                    options.IncludeFormattedMessage = true;
+                }));
+
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+            logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
+
+            var logRecord = this.exportedItems[0];
+            var expectedFormattedMessage = "OpenTelemetry Good Night!";
+            logRecord.FormattedMessage = expectedFormattedMessage;
+
+            Assert.Equal(expectedFormattedMessage, logRecord.FormattedMessage);
+        }
+
+        [Fact]
+        public void CheckStateCanBeSetByProcessor()
         {
             using var loggerFactory = LoggerFactory.Create(builder => builder
                 .AddOpenTelemetry(options =>
@@ -133,15 +193,14 @@ namespace OpenTelemetry.Logs.Tests
         }
 
         [Fact]
-        public void StateValuesCanBeSetByProcessor()
+        public void CheckStateValuesCanBeSetByProcessor()
         {
-            this.options.ParseStateValues = true;
-
             using var loggerFactory = LoggerFactory.Create(builder => builder
                 .AddOpenTelemetry(options =>
                 {
                     options.AddProcessor(new RedactionProcessor(Field.StateValues));
                     options.AddInMemoryExporter(this.exportedItems);
+                    options.ParseStateValues = true;
                 }));
 
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
@@ -152,13 +211,14 @@ namespace OpenTelemetry.Logs.Tests
         }
 
         [Fact]
-        public void FormattedMessageCanBeSetByProcessor()
+        public void CheckFormattedMessageCanBeSetByProcessor()
         {
             using var loggerFactory = LoggerFactory.Create(builder => builder
                 .AddOpenTelemetry(options =>
                 {
                     options.AddProcessor(new RedactionProcessor(Field.FormattedMessage));
                     options.AddInMemoryExporter(this.exportedItems);
+                    options.IncludeFormattedMessage = true;
                 }));
 
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
