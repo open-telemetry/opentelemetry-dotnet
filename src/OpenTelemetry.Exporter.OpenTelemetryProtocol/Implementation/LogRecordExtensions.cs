@@ -85,9 +85,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 }
             }
 
-            if (logRecord.EventId != default)
+            if (logRecord.EventId.Id != default)
             {
                 otlpLogRecord.Attributes.AddIntAttribute(nameof(logRecord.EventId.Id), logRecord.EventId.Id);
+            }
+
+            if (!string.IsNullOrEmpty(logRecord.EventId.Name))
+            {
                 otlpLogRecord.Attributes.AddStringAttribute(nameof(logRecord.EventId.Name), logRecord.EventId.Name);
             }
 

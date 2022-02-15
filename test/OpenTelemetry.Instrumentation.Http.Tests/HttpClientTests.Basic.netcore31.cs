@@ -354,7 +354,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .Build())
             {
                 using var c = new HttpClient();
-                using var r = await c.GetAsync("https://opentelemetry.io/").ConfigureAwait(false);
+                using var r = await c.GetAsync(this.url).ConfigureAwait(false);
             }
 
             Assert.Equal(5, activityProcessor.Invocations.Count);

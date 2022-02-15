@@ -521,6 +521,48 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
+        public void ViewToDropSingleInstrumentObservableCounter()
+        {
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView("observableCounterNotInteresting", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            // Expecting one metric stream.
+            meter.CreateObservableCounter("observableCounterNotInteresting", () => { return 10; }, "ms");
+            meter.CreateObservableCounter("observableCounterInteresting", () => { return 10; }, "ms");
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("observableCounterInteresting", metric.Name);
+        }
+
+        [Fact]
+        public void ViewToDropSingleInstrumentObservableGauge()
+        {
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView("observableGaugeNotInteresting", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            // Expecting one metric stream.
+            meter.CreateObservableGauge("observableGaugeNotInteresting", () => { return 10; }, "ms");
+            meter.CreateObservableGauge("observableGaugeInteresting", () => { return 10; }, "ms");
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("observableGaugeInteresting", metric.Name);
+        }
+
+        [Fact]
         public void ViewToDropMultipleInstruments()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
