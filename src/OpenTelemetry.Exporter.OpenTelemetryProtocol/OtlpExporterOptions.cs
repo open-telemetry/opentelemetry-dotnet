@@ -44,14 +44,20 @@ namespace OpenTelemetry.Exporter
 
         internal readonly Func<HttpClient> DefaultHttpClientFactory;
 
+        private const string DefaultGrpcEndpoint = "http://localhost:4317";
+        private const string DefaultHttpEndpoint = "http://localhost:4318";
+        private const OtlpExportProtocol DefaultOtlpExportProtocol = OtlpExportProtocol.Grpc;
+
+        private Uri endpoint;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
         /// </summary>
         public OtlpExporterOptions()
         {
-            if (EnvironmentVariableHelper.LoadUri(EndpointEnvVarName, out Uri endpoint))
+            if (EnvironmentVariableHelper.LoadUri(EndpointEnvVarName, out Uri parsedEndpoint))
             {
-                this.Endpoint = endpoint;
+                this.endpoint = parsedEndpoint;
             }
 
             if (EnvironmentVariableHelper.LoadString(HeadersEnvVarName, out string headersEnvVar))
@@ -79,7 +85,7 @@ namespace OpenTelemetry.Exporter
 
             this.HttpClientFactory = this.DefaultHttpClientFactory = () =>
             {
-                return new HttpClient()
+                return new HttpClient
                 {
                     Timeout = TimeSpan.FromMilliseconds(this.TimeoutMilliseconds),
                 };
@@ -89,9 +95,30 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Gets or sets the target to which the exporter is going to send telemetry.
         /// Must be a valid Uri with scheme (http or https) and host, and
-        /// may contain a port and path. The default value is http://localhost:4317.
+        /// may contain a port and path. The default value is
+        /// * http://localhost:4317 for <see cref="OtlpExportProtocol.Grpc"/>
+        /// * http://localhost:4318 for <see cref="OtlpExportProtocol.HttpProtobuf"/>.
         /// </summary>
-        public Uri Endpoint { get; set; } = new Uri("http://localhost:4317");
+        public Uri Endpoint
+        {
+            get
+            {
+                if (this.endpoint == null)
+                {
+                    this.endpoint = this.Protocol == OtlpExportProtocol.Grpc
+                        ? new Uri(DefaultGrpcEndpoint)
+                        : new Uri(DefaultHttpEndpoint);
+                }
+
+                return this.endpoint;
+            }
+
+            set
+            {
+                this.endpoint = value;
+                this.ProgrammaticallyModifiedEndpoint = true;
+            }
+        }
 
         /// <summary>
         /// Gets or sets optional headers for the connection. Refer to the <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables">
@@ -107,7 +134,7 @@ namespace OpenTelemetry.Exporter
         /// <summary>
         /// Gets or sets the the OTLP transport protocol. Supported values: Grpc and HttpProtobuf.
         /// </summary>
-        public OtlpExportProtocol Protocol { get; set; } = OtlpExportProtocol.Grpc;
+        public OtlpExportProtocol Protocol { get; set; } = DefaultOtlpExportProtocol;
 
         /// <summary>
         /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
@@ -167,5 +194,10 @@ namespace OpenTelemetry.Exporter
         /// </list>
         /// </remarks>
         public Func<HttpClient> HttpClientFactory { get; set; }
+
+        /// <summary>
+        /// Gets a value indicating whether <see cref="Endpoint" /> was modified via its setter.
+        /// </summary>
+        internal bool ProgrammaticallyModifiedEndpoint { get; private set; }
     }
 }
