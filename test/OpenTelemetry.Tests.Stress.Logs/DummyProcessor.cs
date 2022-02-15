@@ -1,4 +1,4 @@
-// <copyright file="IResourceDetector.cs" company="OpenTelemetry Authors">
+// <copyright file="DummyProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,14 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Resources
+using OpenTelemetry;
+using OpenTelemetry.Logs;
+
+namespace OpenTelemetry.Tests.Stress;
+
+internal class DummyProcessor : BaseProcessor<LogRecord>
 {
-    /// <summary>
-    /// An interface for Resource detectors.
-    /// </summary>
-    public interface IResourceDetector
+    public override void OnEnd(LogRecord record)
     {
-        /// <summary>
-        /// Called to get a resource with attributes from detector.
-        /// </summary>
-        /// <returns>An instance of <see cref="Resource"/>.</returns>
-        Resource Detect();
     }
 }
