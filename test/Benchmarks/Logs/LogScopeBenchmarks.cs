@@ -57,16 +57,14 @@ namespace Benchmarks.Logs
                     new KeyValuePair<string, object>("item5", "value5"),
                 }));
 
-            this.logRecord = new LogRecord(
-                this.scopeProvider,
-                DateTime.UtcNow,
-                "Benchmark",
-                LogLevel.Information,
-                0,
-                "Message",
-                null,
-                null,
-                null);
+            this.logRecord = new LogRecord
+            {
+                ScopeProvider = this.scopeProvider,
+                Timestamp = DateTime.UtcNow,
+                CategoryName = "Benchmark",
+                LogLevel = LogLevel.Information,
+                FormattedMessage = "Message",
+            };
         }
 
         [Benchmark]
