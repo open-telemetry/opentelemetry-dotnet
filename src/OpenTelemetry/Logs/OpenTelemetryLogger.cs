@@ -69,6 +69,10 @@ namespace OpenTelemetry.Logs
                     record.TraceState = activity.TraceStateString;
                     record.TraceFlags = activity.ActivityTraceFlags;
                 }
+
+                /*
+                Note: need to clean these up if the LogRecord is retrieved from a pool
+
                 else
                 {
                     record.TraceId = default;
@@ -76,18 +80,23 @@ namespace OpenTelemetry.Logs
                     record.TraceState = default;
                     record.TraceFlags = default;
                 }
+                */
 
                 record.FormattedMessage = options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null;
 
                 if (options.ParseStateValues)
                 {
-                    record.State = null;
+                    // Note: need to clean these up if the LogRecord is retrieved from a pool
+                    // record.State = null;
+
                     record.StateValues = this.ParseState(state);
                 }
                 else
                 {
                     record.State = state;
-                    record.StateValues = null;
+
+                    // Note: need to clean these up if the LogRecord is retrieved from a pool
+                    // record.StateValues = null;
                 }
 
                 if (options.IncludeScopes)
