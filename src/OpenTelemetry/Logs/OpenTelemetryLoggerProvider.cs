@@ -27,7 +27,6 @@ namespace OpenTelemetry.Logs
     {
         internal readonly OpenTelemetryLoggerOptions Options;
         internal BaseProcessor<LogRecord> Processor;
-        internal LogRecordPool Pool = new LogRecordPool();
         internal Resource Resource;
         private readonly Hashtable loggers = new Hashtable();
         private bool disposed;

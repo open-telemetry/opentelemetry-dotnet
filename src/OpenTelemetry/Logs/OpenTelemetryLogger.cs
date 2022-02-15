@@ -51,17 +51,15 @@ namespace OpenTelemetry.Logs
             {
                 var provider = this.provider;
                 var options = provider.Options;
-                var pool = provider.Pool;
 
-                var record = pool.Get();
-
-                record.AddRef();
-
-                record.Timestamp = DateTime.UtcNow;
-                record.CategoryName = this.categoryName;
-                record.LogLevel = logLevel;
-                record.EventId = eventId;
-                record.Exception = exception;
+                var record = new LogRecord
+                {
+                    Timestamp = DateTime.UtcNow,
+                    CategoryName = this.categoryName,
+                    LogLevel = logLevel,
+                    EventId = eventId,
+                    Exception = exception,
+                };
 
                 var activity = Activity.Current;
                 if (activity != null)
@@ -101,11 +99,6 @@ namespace OpenTelemetry.Logs
                 else
                 {
                     processor.OnEnd(record);
-                }
-
-                if (record.Release() == 0)
-                {
-                    pool.Return(record);
                 }
             }
         }

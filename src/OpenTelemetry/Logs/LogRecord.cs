@@ -17,8 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Logs
@@ -33,7 +31,6 @@ namespace OpenTelemetry.Logs
             state.Add(scope);
         };
 
-        private int refcount;
         private List<object> bufferedScopes;
 
         internal LogRecord()
@@ -124,18 +121,6 @@ namespace OpenTelemetry.Logs
             this.ScopeProvider?.ForEachScope(AddScopeToBufferedList, scopes);
 
             this.bufferedScopes = scopes;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal int AddRef()
-        {
-            return Interlocked.Increment(ref this.refcount);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal int Release()
-        {
-            return Interlocked.Decrement(ref this.refcount);
         }
 
         private readonly struct ScopeForEachState<TState>
