@@ -17,6 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Logs
@@ -31,73 +33,46 @@ namespace OpenTelemetry.Logs
             state.Add(scope);
         };
 
+        private int refcount;
         private List<object> bufferedScopes;
 
-        internal LogRecord(
-            IExternalScopeProvider scopeProvider,
-            DateTime timestamp,
-            string categoryName,
-            LogLevel logLevel,
-            EventId eventId,
-            string formattedMessage,
-            object state,
-            Exception exception,
-            IReadOnlyList<KeyValuePair<string, object>> stateValues)
+        internal LogRecord()
         {
-            this.ScopeProvider = scopeProvider;
-
-            var activity = Activity.Current;
-            if (activity != null)
-            {
-                this.TraceId = activity.TraceId;
-                this.SpanId = activity.SpanId;
-                this.TraceState = activity.TraceStateString;
-                this.TraceFlags = activity.ActivityTraceFlags;
-            }
-
-            this.Timestamp = timestamp;
-            this.CategoryName = categoryName;
-            this.LogLevel = logLevel;
-            this.EventId = eventId;
-            this.FormattedMessage = formattedMessage;
-            this.State = state;
-            this.StateValues = stateValues;
-            this.Exception = exception;
         }
 
-        public DateTime Timestamp { get; }
+        public DateTime Timestamp { get; internal set; }
 
-        public ActivityTraceId TraceId { get; }
+        public ActivityTraceId TraceId { get; internal set; }
 
-        public ActivitySpanId SpanId { get; }
+        public ActivitySpanId SpanId { get; internal set; }
 
-        public ActivityTraceFlags TraceFlags { get; }
+        public ActivityTraceFlags TraceFlags { get; internal set; }
 
-        public string TraceState { get; }
+        public string TraceState { get; internal set; }
 
-        public string CategoryName { get; }
+        public string CategoryName { get; internal set; }
 
-        public LogLevel LogLevel { get; }
+        public LogLevel LogLevel { get; internal set; }
 
-        public EventId EventId { get; }
+        public EventId EventId { get; internal set; }
 
-        public string FormattedMessage { get; }
+        public string FormattedMessage { get; internal set; }
 
         /// <summary>
         /// Gets the raw state attached to the log. Set to <see
         /// langword="null"/> when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled.
         /// </summary>
-        public object State { get; }
+        public object State { get; internal set; }
 
         /// <summary>
         /// Gets the parsed state values attached to the log. Set when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled
         /// otherwise <see langword="null"/>.
         /// </summary>
-        public IReadOnlyList<KeyValuePair<string, object>> StateValues { get; }
+        public IReadOnlyList<KeyValuePair<string, object>> StateValues { get; internal set; }
 
-        public Exception Exception { get; }
+        public Exception Exception { get; internal set; }
 
         internal IExternalScopeProvider ScopeProvider { get; set; }
 
@@ -149,6 +124,18 @@ namespace OpenTelemetry.Logs
             this.ScopeProvider?.ForEachScope(AddScopeToBufferedList, scopes);
 
             this.bufferedScopes = scopes;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal int AddRef()
+        {
+            return Interlocked.Increment(ref this.refcount);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal int Release()
+        {
+            return Interlocked.Decrement(ref this.refcount);
         }
 
         private readonly struct ScopeForEachState<TState>

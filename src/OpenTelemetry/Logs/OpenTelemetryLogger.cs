@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
@@ -40,8 +41,7 @@ namespace OpenTelemetry.Logs
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-            if (!this.IsEnabled(logLevel)
-                || Sdk.SuppressInstrumentation)
+            if (!this.IsEnabled(logLevel) || Sdk.SuppressInstrumentation)
             {
                 return;
             }
@@ -49,22 +49,64 @@ namespace OpenTelemetry.Logs
             var processor = this.provider.Processor;
             if (processor != null)
             {
-                var options = this.provider.Options;
+                var provider = this.provider;
+                var options = provider.Options;
+                var pool = provider.Pool;
 
-                var record = new LogRecord(
-                    options.IncludeScopes ? this.ScopeProvider : null,
-                    DateTime.UtcNow,
-                    this.categoryName,
-                    logLevel,
-                    eventId,
-                    options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
-                    options.ParseStateValues ? null : state,
-                    exception,
-                    options.ParseStateValues ? this.ParseState(state) : null);
+                var record = pool.Get();
 
-                processor.OnEnd(record);
+                record.AddRef();
 
-                record.ScopeProvider = null;
+                record.Timestamp = DateTime.UtcNow;
+                record.CategoryName = this.categoryName;
+                record.LogLevel = logLevel;
+                record.EventId = eventId;
+                record.Exception = exception;
+
+                var activity = Activity.Current;
+                if (activity != null)
+                {
+                    record.TraceId = activity.TraceId;
+                    record.SpanId = activity.SpanId;
+                    record.TraceState = activity.TraceStateString;
+                    record.TraceFlags = activity.ActivityTraceFlags;
+                }
+                else
+                {
+                    record.TraceId = default;
+                    record.SpanId = default;
+                    record.TraceState = default;
+                    record.TraceFlags = default;
+                }
+
+                record.FormattedMessage = options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null;
+
+                if (options.ParseStateValues)
+                {
+                    record.State = null;
+                    record.StateValues = this.ParseState(state);
+                }
+                else
+                {
+                    record.State = state;
+                    record.StateValues = null;
+                }
+
+                if (options.IncludeScopes)
+                {
+                    record.ScopeProvider = this.ScopeProvider;
+                    processor.OnEnd(record);
+                    record.ScopeProvider = null;
+                }
+                else
+                {
+                    processor.OnEnd(record);
+                }
+
+                if (record.Release() == 0)
+                {
+                    pool.Return(record);
+                }
             }
         }
 
