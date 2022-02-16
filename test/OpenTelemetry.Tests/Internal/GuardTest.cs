@@ -16,10 +16,9 @@
 
 using System;
 using System.Threading;
-using OpenTelemetry.Internal;
 using Xunit;
 
-namespace OpenTelemetry.Tests.Internal
+namespace OpenTelemetry.Internal.Tests
 {
     public class GuardTest
     {
