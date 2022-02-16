@@ -18,6 +18,7 @@ using System;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry;
 using OpenTelemetry.Extensions.Hosting.Implementation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
@@ -91,6 +92,10 @@ namespace Microsoft.Extensions.DependencyInjection
             Guard.ThrowIfNull(services);
             Guard.ThrowIfNull(createTracerProvider);
 
+            // Accessing Sdk class is just to trigger its static ctor,
+            // which sets default Propagators and default Activity Id format
+            _ = Sdk.SuppressInstrumentation;
+
             try
             {
                 services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
@@ -114,6 +119,10 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             Debug.Assert(services != null, $"{nameof(services)} must not be null");
             Debug.Assert(createMeterProvider != null, $"{nameof(createMeterProvider)} must not be null");
+
+            // Accessing Sdk class is just to trigger its static ctor,
+            // which sets default Propagators and default Activity Id format
+            _ = Sdk.SuppressInstrumentation;
 
             try
             {
