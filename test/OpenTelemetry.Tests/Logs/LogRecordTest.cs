@@ -117,7 +117,7 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckStateCanBeSet()
         {
-            var message = $"This should be replaced {0.99}.";
+            var message = $"This does not matter.";
             this.logger.LogInformation(message);
 
             var logRecord = this.exportedItems[0];
@@ -130,46 +130,47 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckStateValuesCanBeSet()
         {
-            using var loggerFactory = LoggerFactory.Create(builder => builder
-                .AddOpenTelemetry(options =>
-                {
-                    options.AddInMemoryExporter(this.exportedItems);
-                    options.ParseStateValues = true;
-                }));
+            try
+            {
+                this.options.ParseStateValues = true;
 
-            var logger = loggerFactory.CreateLogger<LogRecordTest>();
-            logger.Log(
-                LogLevel.Information,
-                0,
-                new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("Key1", "Value1") },
-                null,
-                (s, e) => "OpenTelemetry!");
+                this.logger.Log(
+                    LogLevel.Information,
+                    0,
+                    new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("Key1", "Value1") },
+                    null,
+                    (s, e) => "OpenTelemetry!");
 
-            var logRecord = this.exportedItems[0];
-            var expectedStateValues = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("Key2", "Value2") };
-            logRecord.StateValues = expectedStateValues;
+                var logRecord = this.exportedItems[0];
+                var expectedStateValues = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("Key2", "Value2") };
+                logRecord.StateValues = expectedStateValues;
 
-            Assert.Equal(expectedStateValues, logRecord.StateValues);
+                Assert.Equal(expectedStateValues, logRecord.StateValues);
+            }
+            finally
+            {
+                this.options.ParseStateValues = false;
+            }
         }
 
         [Fact]
         public void CheckFormattedMessageCanBeSet()
         {
-            using var loggerFactory = LoggerFactory.Create(builder => builder
-                .AddOpenTelemetry(options =>
-                {
-                    options.AddInMemoryExporter(this.exportedItems);
-                    options.IncludeFormattedMessage = true;
-                }));
+            try
+            {
+                this.options.IncludeFormattedMessage = true;
+                this.logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
 
-            var logger = loggerFactory.CreateLogger<LogRecordTest>();
-            logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
+                var logRecord = this.exportedItems[0];
+                var expectedFormattedMessage = "OpenTelemetry Good Night!";
+                logRecord.FormattedMessage = expectedFormattedMessage;
 
-            var logRecord = this.exportedItems[0];
-            var expectedFormattedMessage = "OpenTelemetry Good Night!";
-            logRecord.FormattedMessage = expectedFormattedMessage;
-
-            Assert.Equal(expectedFormattedMessage, logRecord.FormattedMessage);
+                Assert.Equal(expectedFormattedMessage, logRecord.FormattedMessage);
+            }
+            finally
+            {
+                this.options.IncludeFormattedMessage = false;
+            }
         }
 
         [Fact]
@@ -183,7 +184,7 @@ namespace OpenTelemetry.Logs.Tests
                 }));
 
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
-            logger.LogInformation($"This should be replaced {0.99}.");
+            logger.LogInformation($"This does not matter.");
 
             var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
             Assert.Equal("newStateKey", state[0].Key.ToString());
@@ -202,7 +203,7 @@ namespace OpenTelemetry.Logs.Tests
                 }));
 
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
-            logger.LogInformation($"This should be replaced {0.99}.");
+            logger.LogInformation("This does not matter.");
 
             var stateValue = this.exportedItems[0];
             Assert.Equal(new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue"), stateValue.StateValues[0]);
