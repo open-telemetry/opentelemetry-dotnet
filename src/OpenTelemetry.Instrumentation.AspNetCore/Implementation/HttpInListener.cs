@@ -196,12 +196,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
                 else if (activity.GetStatus().StatusCode == StatusCode.Unset)
                 {
-                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
                 }
 #else
                 if (activity.GetStatus().StatusCode == StatusCode.Unset)
                 {
-                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
                 }
 #endif
 
