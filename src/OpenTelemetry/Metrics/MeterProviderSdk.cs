@@ -49,7 +49,7 @@ namespace OpenTelemetry.Metrics
 
             foreach (var reader in readers)
             {
-                Guard.ThrowIfNull(reader, nameof(reader));
+                Guard.ThrowIfNull(reader);
 
                 reader.SetParentProvider(this);
                 reader.SetMaxMetricStreams(maxMetricStreams);
