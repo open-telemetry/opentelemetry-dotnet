@@ -1,7 +1,7 @@
 # Changelog
 
 * Fix: Http server span status is now unset for `400`-`499`.
-  ([#2789](https://github.com/open-telemetry/opentelemetry-js/pull/2789/files))
+  ([#2904](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2904))
 
 ## Unreleased
 
