@@ -16,10 +16,9 @@
 
 using System;
 using System.Threading;
-using OpenTelemetry.Internal;
 using Xunit;
 
-namespace OpenTelemetry.Tests.Internal
+namespace OpenTelemetry.Internal.Tests
 {
 #pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name
