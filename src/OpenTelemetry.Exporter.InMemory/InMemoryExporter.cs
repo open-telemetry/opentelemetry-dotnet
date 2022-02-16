@@ -22,10 +22,12 @@ namespace OpenTelemetry.Exporter
         where T : class
     {
         private readonly ICollection<T> exportedItems;
+        private readonly bool isMetric;
 
         public InMemoryExporter(ICollection<T> exportedItems)
         {
             this.exportedItems = exportedItems;
+            this.isMetric = typeof(T) == typeof(Metrics.Metric);
         }
 
         public override ExportResult Export(in Batch<T> batch)
@@ -33,6 +35,13 @@ namespace OpenTelemetry.Exporter
             if (this.exportedItems == null)
             {
                 return ExportResult.Failure;
+            }
+
+            // Note: this mitigates the growing ExportedItems issue.
+            // Need to discuss if this is an acceptible change.
+            if (this.isMetric)
+            {
+                this.exportedItems.Clear();
             }
 
             foreach (var data in batch)

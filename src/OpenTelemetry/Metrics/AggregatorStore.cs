@@ -155,6 +155,17 @@ namespace OpenTelemetry.Metrics
         internal MetricPointsAccessor GetMetricPoints()
             => new(this.metricPoints, this.currentMetricPointBatch, this.batchSize);
 
+        internal MetricPointsAccessor GetDeepCloneMetricPoints()
+        {
+            var deepClonedMetricPoints = new MetricPoint[this.metricPoints.Length];
+            for (int i = 0; i < this.metricPoints.Length; i++)
+            {
+                deepClonedMetricPoints[i] = this.metricPoints[i].DeepCopy();
+            }
+
+            return new MetricPointsAccessor(deepClonedMetricPoints, this.currentMetricPointBatch, this.batchSize, this.startTimeExclusive, this.endTimeInclusive);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void InitializeZeroTagPointIfNotInitialized()
         {
