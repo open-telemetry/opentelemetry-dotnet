@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             Action<AspNetCoreInstrumentationOptions> configureAspNetCoreInstrumentationOptions = null)
         {
-            Guard.ThrowIfNull(builder, nameof(builder));
+            Guard.ThrowIfNull(builder);
 
             if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
             {

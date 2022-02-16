@@ -21,6 +21,15 @@ using Xunit;
 
 namespace OpenTelemetry.Tests.Internal
 {
+#pragma warning disable SA1402 // File may only contain a single type
+#pragma warning disable SA1649 // File name should match first type name
+    public class Thing
+#pragma warning restore SA1649 // File name should match first type name
+#pragma warning restore SA1402 // File may only contain a single type
+    {
+        public string Bar { get; set; }
+    }
+
     public class GuardTest
     {
         [Fact]
@@ -33,8 +42,20 @@ namespace OpenTelemetry.Tests.Internal
             Guard.ThrowIfNull("hello");
 
             // Invalid
-            var ex1 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(null, "null"));
+            object potato = null;
+            var ex1 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(potato));
             Assert.Contains("Must not be null", ex1.Message);
+            Assert.Equal("potato", ex1.ParamName);
+
+            object @event = null;
+            var ex2 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(@event));
+            Assert.Contains("Must not be null", ex2.Message);
+            Assert.Equal("@event", ex2.ParamName);
+
+            Thing thing = null;
+            var ex3 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(thing?.Bar));
+            Assert.Contains("Must not be null", ex3.Message);
+            Assert.Equal("thing?.Bar", ex3.ParamName);
         }
 
         [Fact]
@@ -47,9 +68,16 @@ namespace OpenTelemetry.Tests.Internal
             // Invalid
             var ex1 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrEmpty(null));
             Assert.Contains("Must not be null or empty", ex1.Message);
+            Assert.Equal("null", ex1.ParamName);
 
             var ex2 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrEmpty(string.Empty));
             Assert.Contains("Must not be null or empty", ex2.Message);
+            Assert.Equal("string.Empty", ex2.ParamName);
+
+            var x = string.Empty;
+            var ex3 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrEmpty(x));
+            Assert.Contains("Must not be null or empty", ex3.Message);
+            Assert.Equal("x", ex3.ParamName);
         }
 
         [Fact]
@@ -61,12 +89,15 @@ namespace OpenTelemetry.Tests.Internal
             // Invalid
             var ex1 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrWhitespace(null));
             Assert.Contains("Must not be null or whitespace", ex1.Message);
+            Assert.Equal("null", ex1.ParamName);
 
             var ex2 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrWhitespace(string.Empty));
             Assert.Contains("Must not be null or whitespace", ex2.Message);
+            Assert.Equal("string.Empty", ex2.ParamName);
 
             var ex3 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrWhitespace(" \t\n\r"));
             Assert.Contains("Must not be null or whitespace", ex3.Message);
+            Assert.Equal("\" \\t\\n\\r\"", ex3.ParamName);
         }
 
         [Fact]
@@ -80,6 +111,7 @@ namespace OpenTelemetry.Tests.Internal
             // Invalid
             var ex1 = Assert.Throws<ArgumentOutOfRangeException>(() => Guard.ThrowIfInvalidTimeout(-100));
             Assert.Contains("Must be non-negative or 'Timeout.Infinite'", ex1.Message);
+            Assert.Equal("-100", ex1.ParamName);
         }
 
         [Fact]
@@ -126,7 +158,7 @@ namespace OpenTelemetry.Tests.Internal
 
             // Invalid
             var ex1 = Assert.Throws<InvalidCastException>(() => Guard.ThrowIfNotOfType<double>(100));
-            Assert.Equal("Cannot cast 'N/A' from 'Int32' to 'Double'", ex1.Message);
+            Assert.Equal("Cannot cast '100' from 'Int32' to 'Double'", ex1.Message);
         }
 
         [Fact]
@@ -138,6 +170,7 @@ namespace OpenTelemetry.Tests.Internal
             // Invalid
             var ex1 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfZero(0));
             Assert.Contains("Must not be zero", ex1.Message);
+            Assert.Equal("0", ex1.ParamName);
         }
     }
 }

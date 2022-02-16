@@ -54,7 +54,7 @@ namespace OpenTelemetry.Exporter
             get => this.httpListenerPrefixes;
             set
             {
-                Guard.ThrowIfNull(value, nameof(this.httpListenerPrefixes));
+                Guard.ThrowIfNull(value);
 
                 foreach (string inputUri in value)
                 {
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Exporter
             get => this.scrapeResponseCacheDurationMilliseconds;
             set
             {
-                Guard.ThrowIfOutOfRange(value, nameof(value), min: 0);
+                Guard.ThrowIfOutOfRange(value, min: 0);
 
                 this.scrapeResponseCacheDurationMilliseconds = value;
             }
