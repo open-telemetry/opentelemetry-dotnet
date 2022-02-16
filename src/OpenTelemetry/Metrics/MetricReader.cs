@@ -84,7 +84,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         public bool Collect(int timeoutMilliseconds = Timeout.Infinite)
         {
-            Guard.ThrowIfInvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
+            Guard.ThrowIfInvalidTimeout(timeoutMilliseconds);
 
             var shouldRunCollect = false;
             var tcs = this.collectionTcs;
@@ -147,7 +147,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         public bool Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
-            Guard.ThrowIfInvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
+            Guard.ThrowIfInvalidTimeout(timeoutMilliseconds);
 
             if (Interlocked.CompareExchange(ref this.shutdownCount, 1, 0) != 0)
             {

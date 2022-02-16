@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace
             IConnectionMultiplexer connection = null,
             Action<StackExchangeRedisCallsInstrumentationOptions> configure = null)
         {
-            Guard.ThrowIfNull(builder, nameof(builder));
+            Guard.ThrowIfNull(builder);
 
             if (builder is not IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
             {
