@@ -1,0 +1,4 @@
+Compat issues with assembly OpenTelemetry.Exporter.OpenTelemetryProtocol:
+CannotRemoveAttribute : Attribute 'System.Runtime.CompilerServices.CompilerGeneratedAttribute' exists on 'OpenTelemetry.Exporter.OtlpExporterOptions.Endpoint.get()' in the contract but not the implementation.
+CannotRemoveAttribute : Attribute 'System.Runtime.CompilerServices.CompilerGeneratedAttribute' exists on 'OpenTelemetry.Exporter.OtlpExporterOptions.Endpoint.set(System.Uri)' in the contract but not the implementation.
+Total Issues: 2
