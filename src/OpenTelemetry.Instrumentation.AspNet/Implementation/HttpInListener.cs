@@ -135,7 +135,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 if (activity.GetStatus().StatusCode == StatusCode.Unset)
                 {
-                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
                 }
 
                 var routeData = context.Request.RequestContext.RouteData;
