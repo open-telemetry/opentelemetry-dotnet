@@ -21,6 +21,7 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
 
@@ -132,17 +133,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void CheckToOtlpLogRecordSpanIdTraceIdAndFlag()
         {
-            // preparation
-            var exportedActivityList = new List<Activity>();
-            var activitySourceName = "toOtlpLogRecordTest";
-            var activitySource = new ActivitySource(activitySourceName);
-            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .AddSource(activitySourceName)
-                .SetSampler(new AlwaysOnSampler())
-                .AddInMemoryExporter(exportedActivityList)
-                .Build();
-
-            using var activity = activitySource.StartActivity("Activity");
             List<LogRecord> logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
@@ -154,18 +144,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
 
-            // execution
-            logger.LogInformation("Log within activity marked as RecordOnly");
+            var expectedTraceId = ActivityTraceId.CreateRandom();
+            var expectedSpanId = ActivitySpanId.CreateRandom();
+            using (var activity = new Activity(Utils.GetCurrentMethodName()).Start())
+            {
+                logger.LogInformation("Log within an activity.");
 
-            // assertion
+                expectedTraceId = activity.TraceId;
+                expectedSpanId = activity.SpanId;
+            }
+
             var logRecord = logRecords[0];
             var otlpLogRecord = logRecord.ToOtlpLog();
 
-            var currentActivity = Activity.Current;
-            Assert.NotNull(Activity.Current);
-
-            var expectedTraceId = currentActivity.TraceId;
-            var expectedSpanId = currentActivity.SpanId;
             Assert.Equal(expectedTraceId.ToString(), ActivityTraceId.CreateFromBytes(otlpLogRecord.TraceId.ToByteArray()).ToString());
             Assert.Equal(expectedSpanId.ToString(), ActivitySpanId.CreateFromBytes(otlpLogRecord.SpanId.ToByteArray()).ToString());
             Assert.Equal((uint)logRecord.TraceFlags, otlpLogRecord.Flags);
@@ -231,11 +222,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 });
             });
 
-            var exceptionMessage = "Exception Message";
-            var exception = new Exception(exceptionMessage);
-            var message = "Exception Occurred";
             var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-            logger.LogInformation(exception, message);
+            logger.LogInformation(new Exception("Exception Message"), "Exception Occurred");
 
             var logRecord = logRecords[0];
             var loggedException = logRecord.Exception;
