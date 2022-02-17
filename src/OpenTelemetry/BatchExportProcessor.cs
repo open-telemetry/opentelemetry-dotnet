@@ -61,10 +61,10 @@ namespace OpenTelemetry
             int maxExportBatchSize = DefaultMaxExportBatchSize)
             : base(exporter)
         {
-            Guard.ThrowIfOutOfRange(maxQueueSize, nameof(maxQueueSize), min: 1);
-            Guard.ThrowIfOutOfRange(maxExportBatchSize, nameof(maxExportBatchSize), min: 1, max: maxQueueSize, maxName: nameof(maxQueueSize));
-            Guard.ThrowIfOutOfRange(scheduledDelayMilliseconds, nameof(scheduledDelayMilliseconds), min: 1);
-            Guard.ThrowIfOutOfRange(exporterTimeoutMilliseconds, nameof(exporterTimeoutMilliseconds), min: 0);
+            Guard.ThrowIfOutOfRange(maxQueueSize, min: 1);
+            Guard.ThrowIfOutOfRange(maxExportBatchSize, min: 1, max: maxQueueSize, maxName: nameof(maxQueueSize));
+            Guard.ThrowIfOutOfRange(scheduledDelayMilliseconds, min: 1);
+            Guard.ThrowIfOutOfRange(exporterTimeoutMilliseconds, min: 0);
 
             this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
@@ -240,6 +240,7 @@ namespace OpenTelemetry
                     }
                     catch (ObjectDisposedException)
                     {
+                        // the exporter is somehow disposed before the worker thread could finish its job
                         return;
                     }
                 }
@@ -251,8 +252,16 @@ namespace OpenTelemetry
                         this.exporter.Export(batch);
                     }
 
-                    this.dataExportedNotification.Set();
-                    this.dataExportedNotification.Reset();
+                    try
+                    {
+                        this.dataExportedNotification.Set();
+                        this.dataExportedNotification.Reset();
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        // the exporter is somehow disposed before the worker thread could finish its job
+                        return;
+                    }
                 }
 
                 if (this.circularBuffer.RemovedCount >= this.shutdownDrainTarget)

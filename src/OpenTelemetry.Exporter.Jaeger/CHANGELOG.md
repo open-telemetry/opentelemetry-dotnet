@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.2.0-rc2
+
+Released 2022-Feb-02
+
+* Improved span duration's precision from millisecond to microsecond
+  ([#2814](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2814))
+
 ## 1.2.0-rc1
 
 Released 2021-Nov-29

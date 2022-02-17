@@ -34,7 +34,87 @@ namespace OpenTelemetry.Trace.Tests
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         }
 
-        [Fact(Skip = "Get around GitHub failure")]
+        [Fact]
+        public void TracerProviderSdkAddSource()
+        {
+            using var source1 = new ActivitySource($"{Utils.GetCurrentMethodName()}.1");
+            using var source2 = new ActivitySource($"{Utils.GetCurrentMethodName()}.2");
+
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource(source1.Name)
+                .Build();
+
+            using (var activity = source1.StartActivity("test"))
+            {
+                Assert.NotNull(activity);
+            }
+
+            using (var activity = source2.StartActivity("test"))
+            {
+                Assert.Null(activity);
+            }
+        }
+
+        [Fact]
+        public void TracerProviderSdkAddSourceWithWildcards()
+        {
+            using var source1 = new ActivitySource($"{Utils.GetCurrentMethodName()}.A");
+            using var source2 = new ActivitySource($"{Utils.GetCurrentMethodName()}.Ab");
+            using var source3 = new ActivitySource($"{Utils.GetCurrentMethodName()}.Abc");
+            using var source4 = new ActivitySource($"{Utils.GetCurrentMethodName()}.B");
+
+            using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource($"{Utils.GetCurrentMethodName()}.*")
+                .Build())
+            {
+                using (var activity = source1.StartActivity("test"))
+                {
+                    Assert.NotNull(activity);
+                }
+
+                using (var activity = source2.StartActivity("test"))
+                {
+                    Assert.NotNull(activity);
+                }
+
+                using (var activity = source3.StartActivity("test"))
+                {
+                    Assert.NotNull(activity);
+                }
+
+                using (var activity = source4.StartActivity("test"))
+                {
+                    Assert.NotNull(activity);
+                }
+            }
+
+            using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource($"{Utils.GetCurrentMethodName()}.?")
+                .Build())
+            {
+                using (var activity = source1.StartActivity("test"))
+                {
+                    Assert.NotNull(activity);
+                }
+
+                using (var activity = source2.StartActivity("test"))
+                {
+                    Assert.Null(activity);
+                }
+
+                using (var activity = source3.StartActivity("test"))
+                {
+                    Assert.Null(activity);
+                }
+
+                using (var activity = source4.StartActivity("test"))
+                {
+                    Assert.NotNull(activity);
+                }
+            }
+        }
+
+        [Fact]
         public void TracerProviderSdkInvokesSamplingWithCorrectParameters()
         {
             var testSampler = new TestSampler();
@@ -101,10 +181,15 @@ namespace OpenTelemetry.Trace.Tests
             using (var fromInvalidW3CIdParent =
                 activitySource.StartActivity("customContext", ActivityKind.Client, "InvalidW3CIdParent"))
             {
-                // OpenTelemetry ActivityContext does not support
-                // non W3C Ids. Starting activity with non W3C Ids
-                // will result in no activity being created.
-                Assert.Null(fromInvalidW3CIdParent);
+                // Verify that StartActivity returns an instance of Activity.
+                Assert.NotNull(fromInvalidW3CIdParent);
+
+                // Verify that the TestSampler was invoked and received the correct params.
+                Assert.Equal(fromInvalidW3CIdParent.TraceId, testSampler.LatestSamplingParameters.TraceId);
+
+                // OpenTelemetry ActivityContext does not support non W3C Ids.
+                Assert.Null(fromInvalidW3CIdParent.ParentId);
+                Assert.Equal(default(ActivitySpanId), fromInvalidW3CIdParent.ParentSpanId);
             }
         }
 

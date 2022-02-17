@@ -18,6 +18,7 @@ using System;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry;
 using OpenTelemetry.Extensions.Hosting.Implementation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
@@ -48,7 +49,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Action<TracerProviderBuilder> configure)
         {
-            Guard.ThrowIfNull(configure, nameof(configure));
+            Guard.ThrowIfNull(configure);
 
             var builder = new TracerProviderBuilderHosting(services);
             configure(builder);
@@ -73,7 +74,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetryMetrics(this IServiceCollection services, Action<MeterProviderBuilder> configure)
         {
-            Guard.ThrowIfNull(configure, nameof(configure));
+            Guard.ThrowIfNull(configure);
 
             var builder = new MeterProviderBuilderHosting(services);
             configure(builder);
@@ -88,8 +89,12 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         private static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Func<IServiceProvider, TracerProvider> createTracerProvider)
         {
-            Guard.ThrowIfNull(services, nameof(services));
-            Guard.ThrowIfNull(createTracerProvider, nameof(createTracerProvider));
+            Guard.ThrowIfNull(services);
+            Guard.ThrowIfNull(createTracerProvider);
+
+            // Accessing Sdk class is just to trigger its static ctor,
+            // which sets default Propagators and default Activity Id format
+            _ = Sdk.SuppressInstrumentation;
 
             try
             {
@@ -114,6 +119,10 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             Debug.Assert(services != null, $"{nameof(services)} must not be null");
             Debug.Assert(createMeterProvider != null, $"{nameof(createMeterProvider)} must not be null");
+
+            // Accessing Sdk class is just to trigger its static ctor,
+            // which sets default Propagators and default Activity Id format
+            _ = Sdk.SuppressInstrumentation;
 
             try
             {

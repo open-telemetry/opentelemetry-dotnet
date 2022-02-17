@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Linq;
-using System.Text.RegularExpressions;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -50,7 +49,7 @@ namespace OpenTelemetry.Metrics
 
             foreach (var reader in readers)
             {
-                Guard.ThrowIfNull(reader, nameof(reader));
+                Guard.ThrowIfNull(reader);
 
                 reader.SetParentProvider(this);
                 reader.SetMaxMetricStreams(maxMetricStreams);
@@ -82,9 +81,9 @@ namespace OpenTelemetry.Metrics
 
             // Setup Listener
             Func<Instrument, bool> shouldListenTo = instrument => false;
-            if (meterSources.Any(s => s.Contains('*')))
+            if (meterSources.Any(s => WildcardHelper.ContainsWildcard(s)))
             {
-                var regex = GetWildcardRegex(meterSources);
+                var regex = WildcardHelper.GetWildcardRegex(meterSources);
                 shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
             }
             else if (meterSources.Any())
@@ -235,12 +234,6 @@ namespace OpenTelemetry.Metrics
             }
 
             this.listener.Start();
-
-            static Regex GetWildcardRegex(IEnumerable<string> collection)
-            {
-                var pattern = '^' + string.Join("|", from name in collection select "(?:" + Regex.Escape(name).Replace("\\*", ".*") + ')') + '$';
-                return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            }
         }
 
         internal Resource Resource { get; }
@@ -491,6 +484,7 @@ namespace OpenTelemetry.Metrics
                 }
 
                 this.disposed = true;
+                OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(MeterProvider));
             }
 
             base.Dispose(disposing);

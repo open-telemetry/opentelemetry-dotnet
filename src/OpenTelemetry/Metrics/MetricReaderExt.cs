@@ -22,7 +22,7 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// MetricReader which processes individual metrics.
+    /// MetricReader base class.
     /// </summary>
     public abstract partial class MetricReader
     {
