@@ -108,7 +108,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
-        public void CheckToOtlpLogRecordTraceIdSpanIdFlagWithDroppedActivity()
+        public void CheckToOtlpLogRecordTraceIdSpanIdFlagWithNoActivity()
         {
             List<LogRecord> logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
@@ -120,7 +120,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             });
 
             var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-            logger.LogInformation("Log within a dropped activity");
+            logger.LogInformation("Log when there is no activity.");
             var logRecord = logRecords[0];
             var otlpLogRecord = logRecord.ToOtlpLog();
 
@@ -144,8 +144,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
 
-            var expectedTraceId = ActivityTraceId.CreateRandom();
-            var expectedSpanId = ActivitySpanId.CreateRandom();
+            ActivityTraceId expectedTraceId = default;
+            ActivitySpanId expectedSpanId = default;
             using (var activity = new Activity(Utils.GetCurrentMethodName()).Start())
             {
                 logger.LogInformation("Log within an activity.");
