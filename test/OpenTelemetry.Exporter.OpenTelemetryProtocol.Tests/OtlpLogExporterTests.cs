@@ -133,19 +133,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         public void CheckToOtlpLogRecordSpanIdTraceIdAndFlag()
         {
             // preparation
-            var sampler = new AlwaysOnSampler();
             var exportedActivityList = new List<Activity>();
             var activitySourceName = "toOtlpLogRecordTest";
             var activitySource = new ActivitySource(activitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(activitySourceName)
-                .SetSampler(sampler)
+                .SetSampler(new AlwaysOnSampler())
                 .AddInMemoryExporter(exportedActivityList)
                 .Build();
 
             using var activity = activitySource.StartActivity("Activity");
-
-            // execution
             List<LogRecord> logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
@@ -156,6 +153,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             });
 
             var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+
+            // execution
             logger.LogInformation("Log within activity marked as RecordOnly");
 
             // assertion
