@@ -14,9 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using OpenTelemetry.Metrics;
-
-namespace OpenTelemetry.Exporter;
+namespace OpenTelemetry.Metrics;
 
 /// <summary>
 /// Options for configuring either a <see cref="BaseExportingMetricReader"/> or <see cref="PeriodicExportingMetricReader"/> .
