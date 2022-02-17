@@ -30,7 +30,7 @@ namespace OpenTelemetry
 
         public CompositeProcessor(IEnumerable<BaseProcessor<T>> processors)
         {
-            Guard.ThrowIfNull(processors, nameof(processors));
+            Guard.ThrowIfNull(processors);
 
             using var iter = processors.GetEnumerator();
             if (!iter.MoveNext())
@@ -49,7 +49,7 @@ namespace OpenTelemetry
 
         public CompositeProcessor<T> AddProcessor(BaseProcessor<T> processor)
         {
-            Guard.ThrowIfNull(processor, nameof(processor));
+            Guard.ThrowIfNull(processor);
 
             var node = new DoublyLinkedListNode(processor)
             {
