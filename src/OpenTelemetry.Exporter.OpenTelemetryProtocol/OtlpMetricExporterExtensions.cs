@@ -98,7 +98,7 @@ namespace OpenTelemetry.Metrics
 
             exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
 
-            options.AppendExportPath(OtlpExporterOptions.MetricsExportPath);
+            exporterOptions.AppendExportPath(OtlpExporterOptions.MetricsExportPath);
 
             var metricExporter = new OtlpMetricExporter(exporterOptions);
 
