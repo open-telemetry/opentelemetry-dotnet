@@ -360,6 +360,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(37, providerName);
         }
 
+        [Event(38, Message = "Measurements from View '{0}', will be ignored. Reason: '{1}'. Suggested action: '{2}'", Level = EventLevel.Warning)]
+        public void MetricViewIgnored(string viewName, string reason, string fix)
+        {
+            this.WriteEvent(38, viewName, reason, fix);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {

@@ -119,6 +119,35 @@ namespace OpenTelemetry.Metrics
                             var metricStreamConfig = viewConfig(instrument);
                             if (metricStreamConfig != null)
                             {
+                                // Validate histogram bounds
+                                if (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfiguration)
+                                {
+                                    if (histogramConfiguration.Boundaries != null)
+                                    {
+                                        if (!MeterProviderBuilderExtensions.HasValidHistogramBoundaries(histogramConfiguration.Boundaries))
+                                        {
+                                            OpenTelemetrySdkEventSource.Log.MetricViewIgnored(
+                                                metricStreamConfig.Name,
+                                                "Histogram bounds are invalid.",
+                                                "Histogram bounds must be in ascending order with distinct values. double.NaN is not allowed");
+                                            continue;
+                                        }
+
+                                        // Remove any infinity values from the histogram boundaries
+                                        histogramConfiguration.Boundaries = histogramConfiguration.Boundaries.Where(x => x != double.NegativeInfinity && x != double.PositiveInfinity).ToArray();
+
+                                        // If the resulting boundaries is empty, use (-inf, +inf) as the single bucket
+                                        if (!Enumerable.Any(histogramConfiguration.Boundaries))
+                                        {
+                                            histogramConfiguration.Boundaries = new double[] { double.NegativeInfinity, double.PositiveInfinity };
+                                        }
+                                    }
+                                    else
+                                    {
+                                        histogramConfiguration.Boundaries = Metric.DefaultHistogramBounds;
+                                    }
+                                }
+
                                 metricStreamConfigs.Add(metricStreamConfig);
                             }
                         }

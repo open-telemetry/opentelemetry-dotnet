@@ -44,10 +44,14 @@ namespace OpenTelemetry.Metrics.Tests
         public static IEnumerable<object[]> InvalidHistogramBoundaries
            => new List<object[]>
            {
-                    new object[] { new double[] { 0, 0 } },
-                    new object[] { new double[] { 1, 0 } },
-                    new object[] { new double[] { 0, 1, 1, 2 } },
-                    new object[] { new double[] { 0, 1, 2, -1 } },
+                    new object[] { new double[] { 0, 0 } }, // Not distinct
+                    new object[] { new double[] { 1, 0 } }, // Descending order
+                    new object[] { new double[] { 0, 1, 1, 2 } }, // Not distinct
+                    new object[] { new double[] { 0, 1, 2, -1 } }, // Descending order
+                    new object[] { new double[] { double.NaN } }, // NaN
+                    new object[] { new double[] { 0, 1, 2, double.NegativeInfinity } }, // Descending order -Inf
+                    new object[] { new double[] { 0, 1, 2, double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity } }, // Not distinct, +Inf
+                    new object[] { new double[] { double.PositiveInfinity, 0, 1, 2 } }, // Descending order
            };
     }
 }

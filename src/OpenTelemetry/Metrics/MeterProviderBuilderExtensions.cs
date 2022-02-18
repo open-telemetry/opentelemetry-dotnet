@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics.Metrics;
+using System.Linq;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -107,9 +108,28 @@ namespace OpenTelemetry.Metrics
             if (metricStreamConfiguration is ExplicitBucketHistogramConfiguration histogramConfiguration)
             {
                 // Validate histogram boundaries
-                if (histogramConfiguration.Boundaries != null && !IsSortedAndDistinct(histogramConfiguration.Boundaries))
+                if (histogramConfiguration.Boundaries != null)
                 {
-                    throw new ArgumentException($"Histogram boundaries must be in ascending order with distinct values", nameof(histogramConfiguration.Boundaries));
+                    if (Enumerable.Any(histogramConfiguration.Boundaries))
+                    {
+                        if (!HasValidHistogramBoundaries(histogramConfiguration.Boundaries))
+                        {
+                            throw new ArgumentException("Histogram bounds must be in ascending order with distinct values. double.NaN is not allowed.");
+                        }
+
+                        // Remove any infinity values from the histogram boundaries
+                        histogramConfiguration.Boundaries = histogramConfiguration.Boundaries.Where(x => x != double.NegativeInfinity && x != double.PositiveInfinity).ToArray();
+
+                        // If the resulting boundaries is empty, use (-inf, +inf) as the single bucket
+                        if (!Enumerable.Any(histogramConfiguration.Boundaries))
+                        {
+                            histogramConfiguration.Boundaries = new double[] { double.NegativeInfinity, double.PositiveInfinity };
+                        }
+                    }
+                    else
+                    {
+                        histogramConfiguration.Boundaries = Metric.DefaultHistogramBounds;
+                    }
                 }
             }
 
@@ -223,11 +243,11 @@ namespace OpenTelemetry.Metrics
             return null;
         }
 
-        private static bool IsSortedAndDistinct(double[] values)
+        internal static bool HasValidHistogramBoundaries(double[] values)
         {
-            for (int i = 1; i < values.Length; i++)
+            for (int i = 0; i < values.Length; i++)
             {
-                if (values[i] <= values[i - 1])
+                if (double.IsNaN(values[i]) || (i > 0 && values[i] <= values[i - 1]))
                 {
                     return false;
                 }

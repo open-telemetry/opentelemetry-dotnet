@@ -127,7 +127,7 @@ namespace OpenTelemetry.Metrics.Tests
             var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
                 .AddView("name1", new ExplicitBucketHistogramConfiguration { Boundaries = boundaries }));
 
-            Assert.Contains("Histogram boundaries must be in ascending order with distinct values", ex.Message);
+            Assert.Contains("Histogram bounds must be in ascending order with distinct values. double.NaN is not allowed.", ex.Message);
         }
 
         [Theory]
