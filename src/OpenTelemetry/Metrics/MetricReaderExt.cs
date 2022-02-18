@@ -27,6 +27,7 @@ namespace OpenTelemetry.Metrics
     public abstract partial class MetricReader
     {
         private readonly HashSet<string> metricStreamNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<MetricIdentity, Metric> metricIdentityToMetric = new Dictionary<MetricIdentity, Metric>();
         private readonly object instrumentCreationLock = new object();
         private int maxMetricStreams;
         private int maxMetricPointsPerMetricStream;
@@ -39,10 +40,17 @@ namespace OpenTelemetry.Metrics
             var meterName = instrument.Meter.Name;
             var metricName = instrument.Name;
             var metricStreamName = $"{meterName}.{metricName}";
+            var metricIdentity = new MetricIdentity(meterName, metricName, instrument.Unit, instrument.Description, instrument.GetType());
             lock (this.instrumentCreationLock)
             {
+                if (this.metricIdentityToMetric.TryGetValue(metricIdentity, out var existingMetric))
+                {
+                    return existingMetric;
+                }
+
                 if (this.metricStreamNames.Contains(metricStreamName))
                 {
+                    // TODO: This should still be a warning, but do we allow a separate a new metric stream to be created?
                     OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Metric name conflicting with existing name.", "Either change the name of the instrument or change name using View.");
                     return null;
                 }
@@ -56,6 +64,7 @@ namespace OpenTelemetry.Metrics
                 else
                 {
                     var metric = new Metric(instrument, this.Temporality, metricName, instrument.Description, this.maxMetricPointsPerMetricStream);
+                    this.metricIdentityToMetric[metricIdentity] = metric;
                     this.metrics[index] = metric;
                     this.metricStreamNames.Add(metricStreamName);
                     return metric;
