@@ -137,14 +137,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                         return httpContext.Request.Path != filter;
                     };
 
-                    if (setStatusToErrorInEnrich)
-                    {
-                        options.Enrich = GetEnrichmentAction(Status.Error);
-                    }
-                    else
-                    {
-                        options.Enrich = GetEnrichmentAction(default);
-                    }
+                    options.Enrich = GetEnrichmentAction(setStatusToErrorInEnrich ? Status.Error : default);
 
                     options.RecordException = recordException;
                 })
@@ -205,7 +198,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             }
 
             // Host includes port if it isn't 80 or 443.
-            if (expectedUri.Port == 80 || expectedUri.Port == 443)
+            if (expectedUri.Port is 80 or 443)
             {
                 Assert.Equal(
                     expectedUri.Host,
