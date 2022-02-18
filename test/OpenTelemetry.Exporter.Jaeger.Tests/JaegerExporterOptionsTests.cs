@@ -48,17 +48,21 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         {
             Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentHostEnvVarKey, "jeager-host");
             Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentPortEnvVarKey, "123");
+            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelProtocolEnvVarKey, "http/thrift.binary");
 
             var options = new JaegerExporterOptions();
 
             Assert.Equal("jeager-host", options.AgentHost);
             Assert.Equal(123, options.AgentPort);
+            Assert.Equal(JaegerExportProtocol.HttpBinaryThrift, options.Protocol);
         }
 
-        [Fact]
-        public void JaegerExporterOptions_InvalidPortEnvironmentVariableOverride()
+        [Theory]
+        [InlineData(JaegerExporterOptions.OTelAgentPortEnvVarKey)]
+        [InlineData(JaegerExporterOptions.OTelProtocolEnvVarKey)]
+        public void JaegerExporterOptions_InvalidEnvironmentVariableOverride(string envVar)
         {
-            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentPortEnvVarKey, "invalid");
+            Environment.SetEnvironmentVariable(envVar, "invalid");
 
             Assert.Throws<FormatException>(() => new JaegerExporterOptions());
         }

@@ -66,8 +66,8 @@ properties:
 
   | Protocol       | Description                                           |
   |----------------|-------------------------------------------------------|
-  |UdpCompactThrift| Apache Thrift compact over UDP to a Jaeger Agent.     |
-  |HttpBinaryThrift| Apache Thrift binary over HTTP to a Jaeger Collector. |
+  |`udp/thrift.compact`| Apache Thrift compact over UDP to a Jaeger Agent.     |
+  |`http/thrift.binary`| Apache Thrift binary over HTTP to a Jaeger Collector. |
 
 See the [`TestJaegerExporter.cs`](../../examples/Console/TestJaegerExporter.cs)
 for an example of how to use the exporter.

@@ -44,10 +44,18 @@ namespace OpenTelemetry.Exporter
 
         public JaegerExporterOptions()
         {
-            if (EnvironmentVariableHelper.LoadString(OTelProtocolEnvVarKey, out string protocolEnvVar)
-                && Enum.TryParse(protocolEnvVar, ignoreCase: true, out JaegerExportProtocol protocol))
+            if (EnvironmentVariableHelper.LoadString(OTelProtocolEnvVarKey, out string protocolEnvVar))
             {
-                this.Protocol = protocol;
+                var protocol = protocolEnvVar.ToJaegerExportProtocol();
+
+                if (protocol.HasValue)
+                {
+                    this.Protocol = protocol.Value;
+                }
+                else
+                {
+                    throw new FormatException($"{OTelProtocolEnvVarKey} environment variable has an invalid value: '{protocolEnvVar}'");
+                }
             }
 
             if (EnvironmentVariableHelper.LoadString(OTelAgentHostEnvVarKey, out string agentHostEnvVar))
