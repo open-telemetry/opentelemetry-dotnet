@@ -23,12 +23,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
     {
         public JaegerExporterOptionsTests()
         {
-            this.ClearEnvVars();
+            ClearEnvVars();
         }
 
         public void Dispose()
         {
-            this.ClearEnvVars();
+            ClearEnvVars();
         }
 
         [Fact]
@@ -84,10 +84,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             Assert.Equal("OTEL_EXPORTER_JAEGER_ENDPOINT", JaegerExporterOptions.OTelEndpointEnvVarKey);
         }
 
-        private void ClearEnvVars()
+        private static void ClearEnvVars()
         {
             Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentHostEnvVarKey, null);
             Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentPortEnvVarKey, null);
+            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelProtocolEnvVarKey, null);
         }
     }
 }
