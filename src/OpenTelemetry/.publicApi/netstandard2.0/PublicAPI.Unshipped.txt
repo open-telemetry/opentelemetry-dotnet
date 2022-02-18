@@ -1,6 +1,14 @@
 OpenTelemetry.BaseExporter<T>.ForceFlush(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Batch<T>.Batch(T[] items, int count) -> void
 OpenTelemetry.Batch<T>.Count.get -> long
+OpenTelemetry.Metrics.MetricReaderOptions
+OpenTelemetry.Metrics.MetricReaderOptions.MetricReaderOptions() -> void
+OpenTelemetry.Metrics.MetricReaderOptions.MetricReaderType.get -> OpenTelemetry.Metrics.MetricReaderType
+OpenTelemetry.Metrics.MetricReaderOptions.MetricReaderType.set -> void
+OpenTelemetry.Metrics.MetricReaderOptions.PeriodicExportingMetricReaderOptions.get -> OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
+OpenTelemetry.Metrics.MetricReaderOptions.PeriodicExportingMetricReaderOptions.set -> void
+OpenTelemetry.Metrics.MetricReaderOptions.Temporality.get -> OpenTelemetry.Metrics.AggregationTemporality
+OpenTelemetry.Metrics.MetricReaderOptions.Temporality.set -> void
 OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporality.Cumulative = 1 -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporality.Delta = 2 -> OpenTelemetry.Metrics.AggregationTemporality
