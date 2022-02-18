@@ -78,8 +78,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         [Fact]
         public void JaegerExporterOptions_EnvironmentVariableNames()
         {
+            Assert.Equal("OTEL_EXPORTER_JAEGER_PROTOCOL", JaegerExporterOptions.OTelProtocolEnvVarKey);
             Assert.Equal("OTEL_EXPORTER_JAEGER_AGENT_HOST", JaegerExporterOptions.OTelAgentHostEnvVarKey);
             Assert.Equal("OTEL_EXPORTER_JAEGER_AGENT_PORT", JaegerExporterOptions.OTelAgentPortEnvVarKey);
+            Assert.Equal("OTEL_EXPORTER_JAEGER_ENDPOINT", JaegerExporterOptions.OTelEndpointEnvVarKey);
         }
 
         private void ClearEnvVars()
