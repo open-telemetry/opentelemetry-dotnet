@@ -41,8 +41,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             bool? debug,
             bool? shared)
         {
-            Guard.ThrowIfNullOrWhitespace(traceId, nameof(traceId));
-            Guard.ThrowIfNullOrWhitespace(id, nameof(id));
+            Guard.ThrowIfNullOrWhitespace(traceId);
+            Guard.ThrowIfNullOrWhitespace(id);
 
             this.TraceId = traceId;
             this.ParentId = parentId;

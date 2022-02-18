@@ -1,14 +1,25 @@
 # Changelog
 
-* Changed `OtlpLogExporter` to convert `ILogger` structured log inputs to
-  `Attributes` in OpenTelemetry (only active when `ParseStateValues` is `true`
-  on `OpenTelemetryLoggerOptions`)
-
 ## Unreleased
+
+* LogExporter bug fix to handle null EventName.
+  ([#2871](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2871))
+
+* Fixed the default endpoint for OTLP exporter over HTTP/Protobuf.
+  The default value is `http://localhost:4318`.
+  ([#2868](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2868))
+
+## 1.2.0-rc2
+
+Released 2022-Feb-02
 
 * Added validation that insecure channel is configured correctly when using
   .NET Core 3.x for gRPC-based exporting.
   ([#2691](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2691))
+
+* Changed `OtlpLogExporter` to convert `ILogger` structured log inputs to
+  `Attributes` in OpenTelemetry (only active when `ParseStateValues` is `true`
+  on `OpenTelemetryLoggerOptions`)
 
 ## 1.2.0-rc1
 

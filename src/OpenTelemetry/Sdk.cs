@@ -55,19 +55,26 @@ namespace OpenTelemetry
         }
 
         /// <summary>
-        /// Creates MeterProviderBuilder which should be used to build MeterProvider.
+        /// Creates a <see cref="MeterProviderBuilder"/> which is used to build
+        /// a <see cref="MeterProvider"/>. In a typical application, a single
+        /// <see cref="MeterProvider"/> is created at application startup and disposed
+        /// at application shutdown. It is important to ensure that the provider is not
+        /// disposed too early.
         /// </summary>
-        /// <returns>MeterProviderBuilder instance, which should be used to build MeterProvider.</returns>
+        /// <returns><see cref="MeterProviderBuilder"/> instance, which is used to build a <see cref="MeterProvider"/>.</returns>
         public static MeterProviderBuilder CreateMeterProviderBuilder()
         {
             return new MeterProviderBuilderSdk();
         }
 
         /// <summary>
-        /// Creates TracerProviderBuilder which should be used to build
-        /// TracerProvider.
+        /// Creates a <see cref="TracerProviderBuilder"/> which is used to build
+        /// a <see cref="TracerProvider"/>. In a typical application, a single
+        /// <see cref="TracerProvider"/> is created at application startup and disposed
+        /// at application shutdown. It is important to ensure that the provider is not
+        /// disposed too early.
         /// </summary>
-        /// <returns>TracerProviderBuilder instance, which should be used to build TracerProvider.</returns>
+        /// <returns><see cref="TracerProviderBuilder"/> instance, which is used to build a <see cref="TracerProvider"/>.</returns>
         public static TracerProviderBuilder CreateTracerProviderBuilder()
         {
             return new TracerProviderBuilderSdk();

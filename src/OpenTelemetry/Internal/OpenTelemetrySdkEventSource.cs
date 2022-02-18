@@ -354,6 +354,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(36, instrumentName, reason, fix);
         }
 
+        [Event(37, Message = "'{0}' Disposed.", Level = EventLevel.Informational)]
+        public void ProviderDisposed(string providerName)
+        {
+            this.WriteEvent(37, providerName);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {

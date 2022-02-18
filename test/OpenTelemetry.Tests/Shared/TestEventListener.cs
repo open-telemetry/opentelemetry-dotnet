@@ -92,10 +92,7 @@ namespace OpenTelemetry.Tests
         {
             // Check for null because this method is called by the base class constror before we can initialize it
             Action<EventSource> callback = this.OnOnEventSourceCreated;
-            if (callback != null)
-            {
-                callback(eventSource);
-            }
+            callback?.Invoke(eventSource);
         }
     }
 }

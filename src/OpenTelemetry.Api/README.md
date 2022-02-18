@@ -19,6 +19,7 @@
   * [Setting Status](#setting-status)
 * [Instrumenting a library/application with OpenTelemetry.API
   Shim](#instrumenting-using-opentelemetryapi-shim)
+* [Troubleshooting](#troubleshooting)
 * [References](#references)
 
 ## Installation
@@ -501,6 +502,15 @@ describes more kinds of instruments.
 ### Instrument types
 
 // TODO - add all instruments.
+
+## Troubleshooting
+
+This component uses an
+[EventSource](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventsource)
+with the name "OpenTelemetry-Api" for its internal logging.
+Please refer to [SDK
+troubleshooting](../opentelemetry/README.md#troubleshooting) for instructions on
+seeing these internal logs.
 
 ## References
 

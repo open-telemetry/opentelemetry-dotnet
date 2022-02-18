@@ -58,7 +58,7 @@ namespace OpenTelemetry.Logs
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions AddProcessor(BaseProcessor<LogRecord> processor)
         {
-            Guard.ThrowIfNull(processor, nameof(processor));
+            Guard.ThrowIfNull(processor);
 
             this.Processors.Add(processor);
 
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Logs
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
-            Guard.ThrowIfNull(resourceBuilder, nameof(resourceBuilder));
+            Guard.ThrowIfNull(resourceBuilder);
 
             this.ResourceBuilder = resourceBuilder;
             return this;

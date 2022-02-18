@@ -26,13 +26,13 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 {
     internal sealed class HttpInListener : IDisposable
     {
-        private readonly PropertyFetcher<object> routeFetcher = new PropertyFetcher<object>("Route");
-        private readonly PropertyFetcher<string> routeTemplateFetcher = new PropertyFetcher<string>("RouteTemplate");
+        private readonly PropertyFetcher<object> routeFetcher = new("Route");
+        private readonly PropertyFetcher<string> routeTemplateFetcher = new("RouteTemplate");
         private readonly AspNetInstrumentationOptions options;
 
         public HttpInListener(AspNetInstrumentationOptions options)
         {
-            Guard.ThrowIfNull(options, nameof(options));
+            Guard.ThrowIfNull(options);
 
             this.options = options;
 
@@ -57,12 +57,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         /// <returns>Span uri value.</returns>
         private static string GetUriTagValueFromRequestUri(Uri uri)
         {
-            if (string.IsNullOrEmpty(uri.UserInfo))
-            {
-                return uri.ToString();
-            }
-
-            return string.Concat(uri.Scheme, Uri.SchemeDelimiter, uri.Authority, uri.PathAndQuery, uri.Fragment);
+            return string.IsNullOrEmpty(uri.UserInfo) ? uri.ToString() : string.Concat(uri.Scheme, Uri.SchemeDelimiter, uri.Authority, uri.PathAndQuery, uri.Fragment);
         }
 
         private void OnStartActivity(Activity activity, HttpContext context)
@@ -135,7 +130,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 
                 if (activity.GetStatus().StatusCode == StatusCode.Unset)
                 {
-                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
                 }
 
                 var routeData = context.Request.RequestContext.RouteData;

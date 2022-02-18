@@ -183,7 +183,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                     if (currentStatusCode == StatusCode.Unset)
                     {
-                        activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode));
+                        activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode));
                     }
 
                     try
