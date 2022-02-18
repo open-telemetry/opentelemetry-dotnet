@@ -119,9 +119,9 @@ namespace OpenTelemetry.Metrics
                             var metricStreamConfig = viewConfig(instrument);
                             if (metricStreamConfig != null)
                             {
-                                // Validate histogram bounds
                                 if (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfiguration)
                                 {
+                                    // Validate histogram bounds
                                     if (histogramConfiguration.Boundaries != null)
                                     {
                                         if (!MeterProviderBuilderExtensions.HasValidHistogramBoundaries(histogramConfiguration.Boundaries))
@@ -134,9 +134,9 @@ namespace OpenTelemetry.Metrics
                                         }
 
                                         // Remove any infinity values from the histogram boundaries
-                                        histogramConfiguration.Boundaries = histogramConfiguration.Boundaries.Where(x => x != double.NegativeInfinity && x != double.PositiveInfinity).ToArray();
+                                        histogramConfiguration.Boundaries = histogramConfiguration.Boundaries.Where(x => !double.IsInfinity(x)).ToArray();
 
-                                        // If the resulting boundaries is empty, use (-inf, +inf) as the single bucket
+                                        // If empty bounds, use (-inf, +inf) as the single bucket
                                         if (!Enumerable.Any(histogramConfiguration.Boundaries))
                                         {
                                             histogramConfiguration.Boundaries = new double[] { double.NegativeInfinity, double.PositiveInfinity };
@@ -144,6 +144,7 @@ namespace OpenTelemetry.Metrics
                                     }
                                     else
                                     {
+                                        // Use default value when bounds are null
                                         histogramConfiguration.Boundaries = Metric.DefaultHistogramBounds;
                                     }
                                 }

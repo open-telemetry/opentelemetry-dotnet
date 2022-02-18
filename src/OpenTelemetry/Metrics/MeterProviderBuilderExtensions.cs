@@ -110,26 +110,24 @@ namespace OpenTelemetry.Metrics
                 // Validate histogram boundaries
                 if (histogramConfiguration.Boundaries != null)
                 {
-                    if (Enumerable.Any(histogramConfiguration.Boundaries))
+                    if (!HasValidHistogramBoundaries(histogramConfiguration.Boundaries))
                     {
-                        if (!HasValidHistogramBoundaries(histogramConfiguration.Boundaries))
-                        {
-                            throw new ArgumentException("Histogram bounds must be in ascending order with distinct values. double.NaN is not allowed.");
-                        }
-
-                        // Remove any infinity values from the histogram boundaries
-                        histogramConfiguration.Boundaries = histogramConfiguration.Boundaries.Where(x => x != double.NegativeInfinity && x != double.PositiveInfinity).ToArray();
-
-                        // If the resulting boundaries is empty, use (-inf, +inf) as the single bucket
-                        if (!Enumerable.Any(histogramConfiguration.Boundaries))
-                        {
-                            histogramConfiguration.Boundaries = new double[] { double.NegativeInfinity, double.PositiveInfinity };
-                        }
+                        throw new ArgumentException("Histogram bounds must be in ascending order with distinct values. double.NaN is not allowed.");
                     }
-                    else
+
+                    // Remove any infinity values from the histogram boundaries
+                    histogramConfiguration.Boundaries = histogramConfiguration.Boundaries.Where(x => !double.IsInfinity(x)).ToArray();
+
+                    // If empty bounds, use (-inf, +inf) as the single bucket
+                    if (!Enumerable.Any(histogramConfiguration.Boundaries))
                     {
-                        histogramConfiguration.Boundaries = Metric.DefaultHistogramBounds;
+                        histogramConfiguration.Boundaries = new double[] { double.NegativeInfinity, double.PositiveInfinity };
                     }
+                }
+                else
+                {
+                    // Use default value when bounds are null
+                    histogramConfiguration.Boundaries = Metric.DefaultHistogramBounds;
                 }
             }
 
