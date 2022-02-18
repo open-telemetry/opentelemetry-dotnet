@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             Action<SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions = null)
         {
-            Guard.ThrowIfNull(builder, nameof(builder));
+            Guard.ThrowIfNull(builder);
 
             var sqlOptions = new SqlClientInstrumentationOptions();
             configureSqlClientInstrumentationOptions?.Invoke(sqlOptions);

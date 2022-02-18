@@ -54,7 +54,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         public HttpInListener(AspNetCoreInstrumentationOptions options)
             : base(DiagnosticSourceName)
         {
-            Guard.ThrowIfNull(options, nameof(options));
+            Guard.ThrowIfNull(options);
 
             this.options = options;
         }
@@ -196,12 +196,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
                 else if (activity.GetStatus().StatusCode == StatusCode.Unset)
                 {
-                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
                 }
 #else
                 if (activity.GetStatus().StatusCode == StatusCode.Unset)
                 {
-                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
                 }
 #endif
 

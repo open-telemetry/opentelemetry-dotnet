@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Fixes an issue where the initialization of some aspects of the SDK can be
+  delayed when using the `AddOpenTelemetryTracing` and
+  `AddOpenTelemetryMetrics` methods. Namely, self-diagnostics and the default
+  context propagator responsible for propagating trace context and baggage.
+  ([#2901](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2901))
+
 ## 1.0.0-rc9
 
 Released 2022-Feb-02
