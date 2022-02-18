@@ -42,7 +42,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
             get => this.textMapPropagator;
             set
             {
-                Guard.ThrowIfNull(value, nameof(value));
+                Guard.ThrowIfNull(value);
 
                 this.textMapPropagator = value;
             }

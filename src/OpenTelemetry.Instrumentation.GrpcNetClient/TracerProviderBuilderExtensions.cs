@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             Action<GrpcClientInstrumentationOptions> configure = null)
         {
-            Guard.ThrowIfNull(builder, nameof(builder));
+            Guard.ThrowIfNull(builder);
 
             var grpcOptions = new GrpcClientInstrumentationOptions();
             configure?.Invoke(grpcOptions);

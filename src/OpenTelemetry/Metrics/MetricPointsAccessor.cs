@@ -33,7 +33,7 @@ namespace OpenTelemetry.Metrics
 
         internal MetricPointsAccessor(MetricPoint[] metricsPoints, int[] metricPointsToProcess, long targetCount, DateTimeOffset start, DateTimeOffset end)
         {
-            Guard.ThrowIfNull(metricsPoints, nameof(metricsPoints));
+            Guard.ThrowIfNull(metricsPoints);
 
             this.metricsPoints = metricsPoints;
             this.metricPointsToProcess = metricPointsToProcess;
