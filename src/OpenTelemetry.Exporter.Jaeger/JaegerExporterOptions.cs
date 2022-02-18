@@ -35,7 +35,7 @@ namespace OpenTelemetry.Exporter
     {
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
 
-        internal const string OtelProtocolEnvVarKey = "OTEL_EXPORTER_JAEGER_PROTOCOL";
+        internal const string OTelProtocolEnvVarKey = "OTEL_EXPORTER_JAEGER_PROTOCOL";
         internal const string OTelAgentHostEnvVarKey = "OTEL_EXPORTER_JAEGER_AGENT_HOST";
         internal const string OTelAgentPortEnvVarKey = "OTEL_EXPORTER_JAEGER_AGENT_PORT";
         internal const string OTelEndpointEnvVarKey = "OTEL_EXPORTER_JAEGER_ENDPOINT";
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter
 
         public JaegerExporterOptions()
         {
-            if (EnvironmentVariableHelper.LoadString(OtelProtocolEnvVarKey, out string protocolEnvVar)
+            if (EnvironmentVariableHelper.LoadString(OTelProtocolEnvVarKey, out string protocolEnvVar)
                 && Enum.TryParse(protocolEnvVar, ignoreCase: true, out JaegerExportProtocol protocol))
             {
                 this.Protocol = protocol;
