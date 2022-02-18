@@ -135,10 +135,7 @@ namespace OpenTelemetry.Instrumentation
                         return true;
                     }
 
-                    if (this.innerFetcher == null)
-                    {
-                        this.innerFetcher = Create(obj.GetType().GetTypeInfo(), this.propertyName);
-                    }
+                    this.innerFetcher ??= Create(obj.GetType().GetTypeInfo(), this.propertyName);
 
                     return this.innerFetcher.TryFetch(obj, out value);
                 }

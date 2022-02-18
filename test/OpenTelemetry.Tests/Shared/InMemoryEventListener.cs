@@ -21,7 +21,7 @@ namespace OpenTelemetry.Tests
 {
     internal class InMemoryEventListener : EventListener
     {
-        public ConcurrentQueue<EventWrittenEventArgs> Events = new ConcurrentQueue<EventWrittenEventArgs>();
+        public ConcurrentQueue<EventWrittenEventArgs> Events = new();
 
         public InMemoryEventListener(EventSource eventSource, EventLevel minLevel = EventLevel.Verbose)
         {
