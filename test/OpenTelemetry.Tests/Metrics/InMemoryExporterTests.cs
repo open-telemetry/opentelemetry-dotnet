@@ -46,26 +46,20 @@ namespace OpenTelemetry.Metrics.Tests
             counter.Add(10, new KeyValuePair<string, object>("tag1", "value1"));
 
             meterProvider.ForceFlush();
-
-            var metric = exportedItems[0]; // Only one Metric object is added to the collection at this point
-            var metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
-            Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
-            ref readonly var metricPointForFirstExport = ref metricPointsEnumerator.Current;
-            Assert.Equal(10, metricPointForFirstExport.GetSumLong());
+            Assert.Single(exportedItems); // verify that List<metrics> contains 1 item
+            var metricPoint1 = GetSingleMetricPoint(exportedItems[0]);
+            Assert.Equal(10, metricPoint1.GetSumLong());
 
             // Emit 25 for the MetricPoint with a single key-vaue pair: ("tag1", "value1")
             counter.Add(25, new KeyValuePair<string, object>("tag1", "value1"));
 
             meterProvider.ForceFlush();
-
-            metric = exportedItems[0]; // Second Metric object is added to the collection at this point
-            metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
-            Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
-            var metricPointForSecondExport = metricPointsEnumerator.Current;
-            Assert.Equal(25, metricPointForSecondExport.GetSumLong());
+            Assert.Single(exportedItems); // verify that List<metrics> contains 1 item
+            var metricPoint2 = GetSingleMetricPoint(exportedItems[0]);
+            Assert.Equal(25, metricPoint2.GetSumLong());
 
             // MetricPoint.LongValue for the first exporter metric should still be 10
-            Assert.Equal(10, metricPointForFirstExport.GetSumLong());
+            Assert.Equal(10, metricPoint1.GetSumLong());
         }
 
         [Fact]
@@ -104,7 +98,7 @@ namespace OpenTelemetry.Metrics.Tests
 
         private static MetricPoint GetSingleMetricPoint(Metric metric)
         {
-            var metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
+            var metricPointsEnumerator = metric.GetDeepCloneMetricPoints().GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
             ref readonly var metricPoint = ref metricPointsEnumerator.Current;
             Assert.False(metricPointsEnumerator.MoveNext());

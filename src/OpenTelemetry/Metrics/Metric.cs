@@ -128,9 +128,11 @@ namespace OpenTelemetry.Metrics
 
         public MetricPointsAccessor GetMetricPoints()
         {
-            // Note: This appears to be safe for all existing unit tests.
-            // This is safe because the enumerator only moves forward.
-            // This may not be desirable for all use cases, in which we would need a new public method.
+            return this.aggStore.GetMetricPoints();
+        }
+
+        public MetricPointsAccessor GetDeepCloneMetricPoints()
+        {
             return this.aggStore.GetDeepCloneMetricPoints();
         }
 

@@ -72,22 +72,22 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        //internal MetricPoint(MetricPoint other)
-        //{
-        //    Note: This is an alternative to the DeepCopy method below.
-        //    I'm not a fan of this because it creates extra maintenance.
-
-        //    this.aggType = other.aggType;
-        //    this.HistogramBuckets = other.HistogramBuckets?.DeepClone();
-        //    this.runningValue = other.runningValue;
-        //    this.snapshotValue = other.snapshotValue;
-        //    this.deltaLastValue = other.deltaLastValue;
-        //    this.Tags = other.Tags;
-        //    this.MetricPointStatus = other.MetricPointStatus;
-        //    this.Tags = other.Tags;
-        //    this.StartTime = other.StartTime;
-        //    this.EndTime = other.EndTime;
-        //}
+        // internal MetricPoint(MetricPoint other)
+        // {
+        // Note: This is an alternative to the DeepCopy method below.
+        // I'm not a fan of this because it creates extra maintenance.
+        //
+        // this.aggType = other.aggType;
+        // this.HistogramBuckets = other.HistogramBuckets?.DeepClone();
+        // this.runningValue = other.runningValue;
+        // this.snapshotValue = other.snapshotValue;
+        // this.deltaLastValue = other.deltaLastValue;
+        // this.Tags = other.Tags;
+        // this.MetricPointStatus = other.MetricPointStatus;
+        // this.Tags = other.Tags;
+        // this.StartTime = other.StartTime;
+        // this.EndTime = other.EndTime;
+        // }
 
         /// <summary>
         /// Gets the tags associated with the metric point.
@@ -245,7 +245,7 @@ namespace OpenTelemetry.Metrics
         /// <remarks>
         /// Applies to <see cref="MetricType.Histogram"/> metric type.
         /// </remarks>
-        /// <returns><see cref="Metrics.HistogramBuckets"/>.</returns>
+        /// <returns><see cref="HistogramBuckets"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public HistogramBuckets GetHistogramBuckets()
         {
