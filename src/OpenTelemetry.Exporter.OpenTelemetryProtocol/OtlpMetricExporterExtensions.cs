@@ -102,11 +102,6 @@ namespace OpenTelemetry.Metrics
 
             var metricExporter = new OtlpMetricExporter(exporterOptions);
 
-            if (metricReaderOptions.Temporality == (AggregationTemporality)0)
-            {
-                metricReaderOptions.Temporality = AggregationTemporality.Cumulative;
-            }
-
             if (metricReaderOptions.MetricReaderType == (MetricReaderType)(-1))
             {
                 metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;

@@ -21,32 +21,14 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public class MetricReaderOptions
 {
-    private const AggregationTemporality AggregationTemporalityUnspecified = (AggregationTemporality)0;
     private const MetricReaderType MetricReaderTypeUnspecified = (MetricReaderType)(-1);
-    private AggregationTemporality temporality = AggregationTemporalityUnspecified;
     private MetricReaderType metricReaderType = MetricReaderTypeUnspecified;
 
     /// <summary>
     /// Gets or sets the AggregationTemporality used for Histogram
     /// and Sum metrics.
     /// </summary>
-    public AggregationTemporality Temporality
-    {
-        get
-        {
-            if (this.temporality == AggregationTemporalityUnspecified)
-            {
-                this.temporality = AggregationTemporality.Cumulative;
-            }
-
-            return this.temporality;
-        }
-
-        set
-        {
-            this.temporality = value;
-        }
-    }
+    public AggregationTemporality Temporality { get; set; } = AggregationTemporality.Cumulative;
 
     /// <summary>
     /// Gets or sets the <see cref="MetricReaderType" /> to use. Defaults to <c>MetricReaderType.Manual</c>.
