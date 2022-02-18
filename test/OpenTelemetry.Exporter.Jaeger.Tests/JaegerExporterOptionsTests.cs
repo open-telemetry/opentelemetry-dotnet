@@ -40,6 +40,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             Assert.Equal(6831, options.AgentPort);
             Assert.Equal(4096, options.MaxPayloadSizeInBytes);
             Assert.Equal(ExportProcessorType.Batch, options.ExportProcessorType);
+            Assert.Equal(JaegerExportProtocol.UdpCompactThrift, options.Protocol);
         }
 
         [Fact]
