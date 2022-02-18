@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Make `IResourceDetector` public to allow custom implementations of resource detectors.
+  ([2897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2897))
+
 ## 1.2.0-rc2
 
 Released 2022-Feb-02
