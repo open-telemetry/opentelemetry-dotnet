@@ -43,12 +43,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private const string DiagnosticSourceName = "Microsoft.AspNetCore";
         private const string UnknownHostName = "UNKNOWN-HOST";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
-        private readonly PropertyFetcher<HttpContext> startContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
-        private readonly PropertyFetcher<HttpContext> stopContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
-        private readonly PropertyFetcher<Exception> stopExceptionFetcher = new PropertyFetcher<Exception>("Exception");
-        private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new PropertyFetcher<object>("actionDescriptor");
-        private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new PropertyFetcher<object>("AttributeRouteInfo");
-        private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new PropertyFetcher<string>("Template");
+        private readonly PropertyFetcher<HttpContext> startContextFetcher = new("HttpContext");
+        private readonly PropertyFetcher<HttpContext> stopContextFetcher = new("HttpContext");
+        private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
+        private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new("actionDescriptor");
+        private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new("AttributeRouteInfo");
+        private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new("Template");
         private readonly AspNetCoreInstrumentationOptions options;
 
         public HttpInListener(AspNetCoreInstrumentationOptions options)
@@ -87,7 +87,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // Ensure context extraction irrespective of sampling decision
             var request = context.Request;
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
-            if (!(textMapPropagator is TraceContextPropagator))
+            if (textMapPropagator is not TraceContextPropagator)
             {
                 var ctx = textMapPropagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
@@ -144,7 +144,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/http.md
 
-                if (request.Host.Port == null || request.Host.Port == 80 || request.Host.Port == 443)
+                if (request.Host.Port is null or 80 or 443)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpHost, request.Host.Host);
                 }
@@ -235,7 +235,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
-            if (!(textMapPropagator is TraceContextPropagator))
+            if (textMapPropagator is not TraceContextPropagator)
             {
                 Baggage.Current = default;
             }
