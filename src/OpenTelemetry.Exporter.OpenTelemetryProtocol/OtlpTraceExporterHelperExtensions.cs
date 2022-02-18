@@ -33,7 +33,7 @@ namespace OpenTelemetry.Trace
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
         public static TracerProviderBuilder AddOtlpExporter(this TracerProviderBuilder builder, Action<OtlpExporterOptions> configure = null)
         {
-            Guard.ThrowIfNull(builder, nameof(builder));
+            Guard.ThrowIfNull(builder);
 
             if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
             {
@@ -52,13 +52,11 @@ namespace OpenTelemetry.Trace
             Action<OtlpExporterOptions> configure,
             IServiceProvider serviceProvider)
         {
-            var originalEndpoint = exporterOptions.Endpoint;
-
             configure?.Invoke(exporterOptions);
 
             exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
-            exporterOptions.AppendExportPath(originalEndpoint, OtlpExporterOptions.TracesExportPath);
+            exporterOptions.AppendExportPath(OtlpExporterOptions.TracesExportPath);
 
             var otlpExporter = new OtlpTraceExporter(exporterOptions);
 
