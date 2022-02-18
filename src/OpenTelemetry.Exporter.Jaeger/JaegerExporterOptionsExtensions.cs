@@ -19,7 +19,7 @@ namespace OpenTelemetry.Exporter;
 internal static class JaegerExporterOptionsExtensions
 {
     public static JaegerExportProtocol? ToJaegerExportProtocol(this string protocol) =>
-        protocol.Trim() switch
+        protocol?.Trim() switch
         {
             "udp/thrift.compact" => JaegerExportProtocol.UdpCompactThrift,
             "http/thrift.binary" => JaegerExportProtocol.HttpBinaryThrift,
