@@ -166,8 +166,9 @@ A PR is considered to be **ready to merge** when:
 * Urgent fix can take exception as long as it has been actively communicated.
 
 Any Maintainer can merge the PR once it is **ready to merge**. Note, that some
-PRs may not be merged immediately if repo is in the process of a major release
-and the new feature doesn't fit it.
+PRs may not be merged immediately if the repo is in the process of a major
+release and the new feature doesn't fit it/ the new feature needs more bake time
+before releasing stable version with it.
 
 If a PR has been stuck (e.g. there are lots of debates and people couldn't agree
 on each other), the owner should try to get people aligned by:
