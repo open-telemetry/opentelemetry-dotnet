@@ -147,22 +147,6 @@ namespace OpenTelemetry.Exporter
         public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
 
         /// <summary>
-        /// Gets or sets the <see cref="MetricReaderType" /> to use. Defaults to <c>MetricReaderType.Periodic</c>.
-        /// </summary>
-        public MetricReaderType MetricReaderType { get; set; } = MetricReaderType.Periodic;
-
-        /// <summary>
-        /// Gets or sets the <see cref="PeriodicExportingMetricReaderOptions" /> options. Ignored unless <c>MetricReaderType</c> is <c>Periodic</c>.
-        /// </summary>
-        public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions { get; set; } = new PeriodicExportingMetricReaderOptions();
-
-        /// <summary>
-        /// Gets or sets the AggregationTemporality used for Histogram
-        /// and Sum metrics.
-        /// </summary>
-        public AggregationTemporality AggregationTemporality { get; set; } = AggregationTemporality.Cumulative;
-
-        /// <summary>
         /// Gets or sets the factory function called to create the <see
         /// cref="HttpClient"/> instance that will be used at runtime to
         /// transmit telemetry over HTTP. The returned instance will be reused

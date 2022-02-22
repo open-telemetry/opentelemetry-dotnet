@@ -117,6 +117,9 @@ namespace Examples.Console
 
         [Option("useExporter", Default = "console", HelpText = "Options include otlp or console.", Required = false)]
         public string UseExporter { get; set; }
+
+        [Option('p', "useGrpc", HelpText = "Use gRPC or HTTP when using the OTLP exporter", Required = false, Default = true)]
+        public bool UseGrpc { get; set; }
     }
 
     [Verb("grpc", HelpText = "Specify the options required to test Grpc.Net.Client")]
