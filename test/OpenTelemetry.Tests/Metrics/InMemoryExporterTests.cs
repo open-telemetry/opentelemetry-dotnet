@@ -16,17 +16,15 @@
 
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Tests;
-
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests
 {
     public class InMemoryExporterTests
     {
-        [Fact]
+        [Fact(Skip = "To be run after https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361 is fixed")]
         public void InMemoryExporterShouldDeepCopyMetricPoints()
         {
             var exportedItems = new List<Metric>();
@@ -58,7 +56,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush();
 
-            metric = exportedItems[0]; // Second Metric object is added to the collection at this point
+            metric = exportedItems[1]; // Second Metric object is added to the collection at this point
             metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
             var metricPointForSecondExport = metricPointsEnumerator.Current;
@@ -66,49 +64,6 @@ namespace OpenTelemetry.Metrics.Tests
 
             // MetricPoint.LongValue for the first exporter metric should still be 10
             Assert.Equal(10, metricPointForFirstExport.GetSumLong());
-        }
-
-        [Fact]
-        public void Investigate_2361()
-        {
-            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361
-
-            var exportedItems = new List<Metric>();
-
-            using var meter = new Meter(Utils.GetCurrentMethodName());
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter.Name)
-                .AddInMemoryExporter(exportedItems)
-                .Build();
-
-            int i = 0;
-            var counterLong = meter.CreateObservableCounter(
-                "observable-counter",
-                () => ++i * 10);
-
-            meterProvider.ForceFlush();
-            Assert.Equal(1, i); // verify that callback is invoked when calling Flush
-            Assert.Single(exportedItems); // verify that List<metrics> contains 1 item
-            var metricPoint1 = GetSingleMetricPoint(exportedItems[0]);
-            Assert.Equal(10, metricPoint1.GetSumLong());
-
-            meterProvider.ForceFlush();
-            Assert.Equal(2, i); // verify that callback is invoked when calling Flush
-            Assert.Single(exportedItems); // verify that List<metrics> contains 1 item
-            var metricPoint2 = GetSingleMetricPoint(exportedItems[0]);
-            Assert.Equal(20, metricPoint2.GetSumLong());
-
-            // Retest 1st item, this is expected to be unchanged.
-            Assert.Equal(10, metricPoint1.GetSumLong());
-        }
-
-        private static MetricPoint GetSingleMetricPoint(Metric metric)
-        {
-            var metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
-            Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
-            ref readonly var metricPoint = ref metricPointsEnumerator.Current;
-            Assert.False(metricPointsEnumerator.MoveNext());
-            return metricPoint;
         }
     }
 }

@@ -30,8 +30,7 @@ namespace OpenTelemetry.Metrics
 
         private readonly AggregationType aggType;
 
-        // Note: not necessary to remove this, but makes DeepCopy easier.
-        //private readonly HistogramBuckets histogramBuckets;
+        private readonly HistogramBuckets histogramBuckets;
 
         // Represents temporality adjusted "value" for double/long metric types or "count" when histogram
         private MetricPointValueStorage runningValue;
@@ -61,37 +60,20 @@ namespace OpenTelemetry.Metrics
 
             if (this.aggType == AggregationType.Histogram)
             {
-                this.HistogramBuckets = new HistogramBuckets(histogramExplicitBounds);
+                this.histogramBuckets = new HistogramBuckets(histogramExplicitBounds);
             }
             else if (this.aggType == AggregationType.HistogramSumCount)
             {
-                this.HistogramBuckets = new HistogramBuckets(null);
+                this.histogramBuckets = new HistogramBuckets(null);
             }
             else
             {
-                this.HistogramBuckets = null;
+                this.histogramBuckets = null;
             }
 
             // Note: Intentionally set last because this is used to detect valid MetricPoints.
             this.aggregatorStore = aggregatorStore;
         }
-
-        //internal MetricPoint(MetricPoint other)
-        //{
-        //    Note: This is an alternative to the DeepCopy method below.
-        //    I'm not a fan of this because it creates extra maintenance.
-
-        //    this.aggType = other.aggType;
-        //    this.HistogramBuckets = other.HistogramBuckets?.DeepClone();
-        //    this.runningValue = other.runningValue;
-        //    this.snapshotValue = other.snapshotValue;
-        //    this.deltaLastValue = other.deltaLastValue;
-        //    this.Tags = other.Tags;
-        //    this.MetricPointStatus = other.MetricPointStatus;
-        //    this.Tags = other.Tags;
-        //    this.StartTime = other.StartTime;
-        //    this.EndTime = other.EndTime;
-        //}
 
         /// <summary>
         /// Gets the tags associated with the metric point.
@@ -119,13 +101,6 @@ namespace OpenTelemetry.Metrics
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private set;
-        }
-
-        // Note: changing this to a Property loses the "readonly",
-        // but enables DeepCopy using the MemberwiseClone pattern below.
-        private HistogramBuckets HistogramBuckets
-        {
-            get; set;
         }
 
         /// <summary>
@@ -233,7 +208,7 @@ namespace OpenTelemetry.Metrics
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramSum));
             }
 
-            return this.HistogramBuckets.SnapshotSum;
+            return this.histogramBuckets.SnapshotSum;
         }
 
         /// <summary>
@@ -242,7 +217,7 @@ namespace OpenTelemetry.Metrics
         /// <remarks>
         /// Applies to <see cref="MetricType.Histogram"/> metric type.
         /// </remarks>
-        /// <returns><see cref="Metrics.HistogramBuckets"/>.</returns>
+        /// <returns><see cref="HistogramBuckets"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly HistogramBuckets GetHistogramBuckets()
         {
@@ -251,17 +226,7 @@ namespace OpenTelemetry.Metrics
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramBuckets));
             }
 
-            return this.HistogramBuckets;
-        }
-
-        // this would be easier to maintain.
-        // Currently this doesn't work because histogramBuckets is readonly, but could hack using Reflection.
-        internal MetricPoint DeepCopy()
-        {
-            var other = (MetricPoint)this.MemberwiseClone();
-            other.HistogramBuckets = this.HistogramBuckets?.DeepCopy();
-
-            return other;
+            return this.histogramBuckets;
         }
 
         internal readonly MetricPoint Copy()
@@ -358,20 +323,20 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.Histogram:
                     {
                         int i;
-                        for (i = 0; i < this.HistogramBuckets.ExplicitBounds.Length; i++)
+                        for (i = 0; i < this.histogramBuckets.ExplicitBounds.Length; i++)
                         {
                             // Upper bound is inclusive
-                            if (number <= this.HistogramBuckets.ExplicitBounds[i])
+                            if (number <= this.histogramBuckets.ExplicitBounds[i])
                             {
                                 break;
                             }
                         }
 
-                        lock (this.HistogramBuckets.LockObject)
+                        lock (this.histogramBuckets.LockObject)
                         {
                             this.runningValue.AsLong++;
-                            this.HistogramBuckets.RunningSum += number;
-                            this.HistogramBuckets.RunningBucketCounts[i]++;
+                            this.histogramBuckets.RunningSum += number;
+                            this.histogramBuckets.RunningBucketCounts[i]++;
                         }
 
                         break;
@@ -379,10 +344,10 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramSumCount:
                     {
-                        lock (this.HistogramBuckets.LockObject)
+                        lock (this.histogramBuckets.LockObject)
                         {
                             this.runningValue.AsLong++;
-                            this.HistogramBuckets.RunningSum += number;
+                            this.histogramBuckets.RunningSum += number;
                         }
 
                         break;
@@ -504,22 +469,22 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        lock (this.HistogramBuckets.LockObject)
+                        lock (this.histogramBuckets.LockObject)
                         {
                             this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            this.HistogramBuckets.SnapshotSum = this.HistogramBuckets.RunningSum;
+                            this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
                             if (outputDelta)
                             {
                                 this.runningValue.AsLong = 0;
-                                this.HistogramBuckets.RunningSum = 0;
+                                this.histogramBuckets.RunningSum = 0;
                             }
 
-                            for (int i = 0; i < this.HistogramBuckets.RunningBucketCounts.Length; i++)
+                            for (int i = 0; i < this.histogramBuckets.RunningBucketCounts.Length; i++)
                             {
-                                this.HistogramBuckets.SnapshotBucketCounts[i] = this.HistogramBuckets.RunningBucketCounts[i];
+                                this.histogramBuckets.SnapshotBucketCounts[i] = this.histogramBuckets.RunningBucketCounts[i];
                                 if (outputDelta)
                                 {
-                                    this.HistogramBuckets.RunningBucketCounts[i] = 0;
+                                    this.histogramBuckets.RunningBucketCounts[i] = 0;
                                 }
                             }
 
@@ -531,14 +496,14 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramSumCount:
                     {
-                        lock (this.HistogramBuckets.LockObject)
+                        lock (this.histogramBuckets.LockObject)
                         {
                             this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            this.HistogramBuckets.SnapshotSum = this.HistogramBuckets.RunningSum;
+                            this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
                             if (outputDelta)
                             {
                                 this.runningValue.AsLong = 0;
-                                this.HistogramBuckets.RunningSum = 0;
+                                this.histogramBuckets.RunningSum = 0;
                             }
 
                             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
