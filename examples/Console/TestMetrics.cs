@@ -79,11 +79,13 @@ namespace Examples.Console
             else
             {
                 providerBuilder
-                    .AddConsoleExporter(o =>
+                    .AddConsoleExporter((exporterOptions, metricReaderOptions) =>
                     {
-                        o.MetricReaderType = MetricReaderType.Periodic;
-                        o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
-                        o.AggregationTemporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
+                        exporterOptions.Targets = ConsoleExporterOutputTargets.Console;
+
+                        metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
+                        metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
+                        metricReaderOptions.Temporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                     });
             }
 
