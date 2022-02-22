@@ -21,6 +21,7 @@ using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 
@@ -66,11 +67,13 @@ namespace Examples.Console
                 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
                 providerBuilder
-                    .AddOtlpExporter(o =>
+                    .AddOtlpExporter((exporterOptions, metricReaderOptions) =>
                     {
-                        o.MetricReaderType = MetricReaderType.Periodic;
-                        o.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
-                        o.AggregationTemporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
+                        exporterOptions.Protocol = options.UseGrpc ? OtlpExportProtocol.Grpc : OtlpExportProtocol.HttpProtobuf;
+
+                        metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
+                        metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
+                        metricReaderOptions.Temporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                     });
             }
             else

@@ -56,12 +56,12 @@ The following environment variables can be used to override the default
 values of the `OtlpExporterOptions`
 (following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md)).
 
-| Environment variable          | `OtlpExporterOptions` property    |
-| ------------------------------| ----------------------------------|
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | `Endpoint`                        |
-| `OTEL_EXPORTER_OTLP_HEADERS`  | `Headers`                         |
-| `OTEL_EXPORTER_OTLP_TIMEOUT`  | `TimeoutMilliseconds`             |
-| `OTEL_EXPORTER_OTLP_PROTOCOL` | `Protocol` (grpc or http/protobuf)|
+| Environment variable          | `OtlpExporterOptions` property        |
+| ------------------------------| --------------------------------------|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `Endpoint`                            |
+| `OTEL_EXPORTER_OTLP_HEADERS`  | `Headers`                             |
+| `OTEL_EXPORTER_OTLP_TIMEOUT`  | `TimeoutMilliseconds`                 |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `Protocol` (`grpc` or `http/protobuf`)|
 
 `FormatException` is thrown in case of an invalid value for any of the
 supported environment variables.

@@ -79,7 +79,7 @@ namespace OpenTelemetry.Exporter
                 }
                 else
                 {
-                    throw new FormatException($"{ProtocolEnvVarName} environment variable has an invalid value: '${protocolEnvVar}'");
+                    throw new FormatException($"{ProtocolEnvVarName} environment variable has an invalid value: '{protocolEnvVar}'");
                 }
             }
 
@@ -145,22 +145,6 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
         /// </summary>
         public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
-
-        /// <summary>
-        /// Gets or sets the <see cref="MetricReaderType" /> to use. Defaults to <c>MetricReaderType.Periodic</c>.
-        /// </summary>
-        public MetricReaderType MetricReaderType { get; set; } = MetricReaderType.Periodic;
-
-        /// <summary>
-        /// Gets or sets the <see cref="PeriodicExportingMetricReaderOptions" /> options. Ignored unless <c>MetricReaderType</c> is <c>Periodic</c>.
-        /// </summary>
-        public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions { get; set; } = new PeriodicExportingMetricReaderOptions();
-
-        /// <summary>
-        /// Gets or sets the AggregationTemporality used for Histogram
-        /// and Sum metrics.
-        /// </summary>
-        public AggregationTemporality AggregationTemporality { get; set; } = AggregationTemporality.Cumulative;
 
         /// <summary>
         /// Gets or sets the factory function called to create the <see

@@ -78,7 +78,7 @@ namespace OpenTelemetry.Internal
 
             if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out result))
             {
-                throw new FormatException($"{envVarKey} environment variable has an invalid value: '${value}'");
+                throw new FormatException($"{envVarKey} environment variable has an invalid value: '{value}'");
             }
 
             return true;
