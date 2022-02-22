@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using System.Linq;
 using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -351,12 +352,18 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("renamedStream2", exportedItems[1].Name);
         }
 
-        [Fact]
-        public void ViewToProduceCustomHistogramBound()
+        [Theory]
+        [MemberData(nameof(MetricTestData.ValidHistogramData), MemberType = typeof(MetricTestData))]
+        public void ViewToProduceCustomHistogramBound(
+            double[] boundaries,
+            double[] values,
+            long expectedCount,
+            double expectedSum,
+            long[] expectedDefaultCounts,
+            long[] expectedCustomCounts)
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
             var exportedItems = new List<Metric>();
-            var boundaries = new double[] { 10, 20 };
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .AddView("MyHistogram", new ExplicitBucketHistogramConfiguration() { Name = "MyHistogramDefaultBound" })
@@ -364,14 +371,13 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
-            var histogram = meter.CreateHistogram<long>("MyHistogram");
-            histogram.Record(-10);
-            histogram.Record(0);
-            histogram.Record(1);
-            histogram.Record(9);
-            histogram.Record(10);
-            histogram.Record(11);
-            histogram.Record(19);
+            var histogram = meter.CreateHistogram<double>("MyHistogram");
+            foreach (var value in values)
+            {
+
+                histogram.Record(value);
+            }
+
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Equal(2, exportedItems.Count);
             var metricDefault = exportedItems[0];
@@ -392,15 +398,14 @@ namespace OpenTelemetry.Metrics.Tests
             var count = histogramPoint.GetHistogramCount();
             var sum = histogramPoint.GetHistogramSum();
 
-            Assert.Equal(40, sum);
-            Assert.Equal(7, count);
+            Assert.Equal(expectedSum, sum);
+            Assert.Equal(expectedCount, count);
 
             int index = 0;
             int actualCount = 0;
-            var expectedBucketCounts = new long[] { 2, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0 };
             foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
             {
-                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+                Assert.Equal(expectedDefaultCounts[index], histogramMeasurement.BucketCount);
                 index++;
                 actualCount++;
             }
@@ -419,20 +424,30 @@ namespace OpenTelemetry.Metrics.Tests
             count = histogramPoint.GetHistogramCount();
             sum = histogramPoint.GetHistogramSum();
 
-            Assert.Equal(40, sum);
-            Assert.Equal(7, count);
+            Assert.Equal(expectedSum, sum);
+            Assert.Equal(expectedCount, count);
+
+            // Don't evaluate custom bucket counts for type HistogramSumCount
+            if (expectedCustomCounts == null)
+            {
+                return;
+            }
 
             index = 0;
             actualCount = 0;
-            expectedBucketCounts = new long[] { 5, 2, 0 };
             foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
             {
-                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+                Assert.Equal(expectedCustomCounts[index], histogramMeasurement.BucketCount);
                 index++;
                 actualCount++;
             }
 
-            Assert.Equal(boundaries.Length + 1, actualCount);
+            // Only count non infinity bounds since they will be omitted
+            var customBoundsCount = boundaries == null
+                ? Metric.DefaultHistogramBounds.Length + 1
+                : boundaries.Where(x => !double.IsInfinity(x)).Count() + 1;
+
+            Assert.Equal(customBoundsCount, actualCount);
         }
 
         [Fact]

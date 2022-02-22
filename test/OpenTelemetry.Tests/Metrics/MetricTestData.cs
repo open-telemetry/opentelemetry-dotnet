@@ -53,5 +53,55 @@ namespace OpenTelemetry.Metrics.Tests
                     new object[] { new double[] { 0, 1, 2, double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity } }, // Not distinct, +Inf
                     new object[] { new double[] { double.PositiveInfinity, 0, 1, 2 } }, // Descending order
            };
+
+        public static IEnumerable<object[]> ValidHistogramData
+           => new List<object[]>
+           {
+                    new object[] // basic custom bounds
+                    {
+                        new double[] { 10, 20 },
+                        new double[] { -10, 0, 1, 9, 10, 11, 19 },
+                        7,
+                        40,
+                        new long[] { 2, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0 },
+                        new long[] { 5, 2, 0 },
+                    },
+                    new object[] // null bounds will use default bounds
+                    {
+                        null,
+                        new double[] { -10, 0, 1, 9, 10, 11, 19 },
+                        7,
+                        40,
+                        new long[] { 2, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0 },
+                        new long[] { 2, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0 },
+                    },
+                    new object[] // infinite bounds will be ignored
+                    {
+                        new double[] { double.NegativeInfinity, 5 },
+                        new double[] { -10, 0, 1, 9, 10, 11, 19 },
+                        7,
+                        40,
+                        new long[] { 2, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0 },
+                        new long[] { 3, 4 },
+                    },
+                    new object[] // empty bounds will only record sum and count
+                    {
+                        new double[] { },
+                        new double[] { -10, 0, 1, 9, 10, 11, 19 },
+                        7,
+                        40,
+                        new long[] { 2, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0 },
+                        null,
+                    },
+                    new object[] // only infinity bounds will only record sum and count
+                    {
+                        new double[] { double.NegativeInfinity, double.PositiveInfinity },
+                        new double[] { -10, 0, 1, 9, 10, 11, 19 },
+                        7,
+                        40,
+                        new long[] { 2, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0 },
+                        null,
+                    },
+           };
     }
 }
