@@ -69,10 +69,10 @@ namespace OpenTelemetry.Exporter
 
             var request = new OtlpCollector.ExportMetricsServiceRequest();
 
-            request.AddMetrics(this.ProcessResource, metrics);
-
             try
             {
+                request.AddMetrics(this.ProcessResource, metrics);
+
                 if (!this.exportClient.SendExportRequest(request))
                 {
                     return ExportResult.Failure;
