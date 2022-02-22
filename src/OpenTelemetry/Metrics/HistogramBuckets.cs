@@ -43,10 +43,6 @@ namespace OpenTelemetry.Metrics
 
         public Enumerator GetEnumerator() => new(this);
 
-        // This works because all private fields are value types.
-        // If this class changes significantly, this may need to change.
-        internal HistogramBuckets DeepCopy() => (HistogramBuckets)this.MemberwiseClone();
-
         /// <summary>
         /// Enumerates the elements of a <see cref="HistogramBuckets"/>.
         /// </summary>
