@@ -155,12 +155,12 @@ namespace OpenTelemetry.Exporter
             }
         }
 
-        internal static void AppendExportPath(this OtlpExporterOptions options, Uri initialEndpoint, string exportRelativePath)
+        internal static void AppendExportPath(this OtlpExporterOptions options, string exportRelativePath)
         {
             // The exportRelativePath is only appended when the options.Endpoint property wasn't set by the user,
             // the protocol is HttpProtobuf and the OTEL_EXPORTER_OTLP_ENDPOINT environment variable
             // is present. If the user provides a custom value for options.Endpoint that value is taken as is.
-            if (ReferenceEquals(initialEndpoint, options.Endpoint))
+            if (!options.ProgrammaticallyModifiedEndpoint)
             {
                 if (options.Protocol == OtlpExportProtocol.HttpProtobuf)
                 {

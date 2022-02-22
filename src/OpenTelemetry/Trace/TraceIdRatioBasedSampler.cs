@@ -37,7 +37,7 @@ namespace OpenTelemetry.Trace
         /// </param>
         public TraceIdRatioBasedSampler(double probability)
         {
-            Guard.ThrowIfOutOfRange(probability, nameof(probability), min: 0.0, max: 1.0);
+            Guard.ThrowIfOutOfRange(probability, min: 0.0, max: 1.0);
 
             this.probability = probability;
 
