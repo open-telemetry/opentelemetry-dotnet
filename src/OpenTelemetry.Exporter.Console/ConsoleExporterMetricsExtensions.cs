@@ -49,11 +49,11 @@ namespace OpenTelemetry.Metrics
             {
                 return deferredMeterProviderBuilder.Configure((sp, builder) =>
                 {
-                    AddConsoleExporter(builder, sp.GetOptions<ConsoleExporterOptions>(), sp.GetOptions<MetricReaderOptions>(), configureExporter, null, sp);
+                    AddConsoleExporter(builder, sp.GetOptions<ConsoleExporterOptions>(), sp.GetOptions<MetricReaderOptions>(), configureExporter, null);
                 });
             }
 
-            return AddConsoleExporter(builder, new ConsoleExporterOptions(), new MetricReaderOptions(), configureExporter, null, serviceProvider: null);
+            return AddConsoleExporter(builder, new ConsoleExporterOptions(), new MetricReaderOptions(), configureExporter, null);
         }
 
         /// <summary>
@@ -72,11 +72,11 @@ namespace OpenTelemetry.Metrics
             {
                 return deferredMeterProviderBuilder.Configure((sp, builder) =>
                 {
-                    AddConsoleExporter(builder, sp.GetOptions<ConsoleExporterOptions>(), sp.GetOptions<MetricReaderOptions>(), null, configureExporterAndMetricReader, sp);
+                    AddConsoleExporter(builder, sp.GetOptions<ConsoleExporterOptions>(), sp.GetOptions<MetricReaderOptions>(), null, configureExporterAndMetricReader);
                 });
             }
 
-            return AddConsoleExporter(builder, new ConsoleExporterOptions(), new MetricReaderOptions(), null, configureExporterAndMetricReader, serviceProvider: null);
+            return AddConsoleExporter(builder, new ConsoleExporterOptions(), new MetricReaderOptions(), null, configureExporterAndMetricReader);
         }
 
         private static MeterProviderBuilder AddConsoleExporter(
@@ -84,8 +84,7 @@ namespace OpenTelemetry.Metrics
             ConsoleExporterOptions exporterOptions,
             MetricReaderOptions metricReaderOptions,
             Action<ConsoleExporterOptions> configureExporter,
-            Action<ConsoleExporterOptions, MetricReaderOptions> configureExporterAndMetricReader,
-            IServiceProvider serviceProvider)
+            Action<ConsoleExporterOptions, MetricReaderOptions> configureExporterAndMetricReader)
         {
             if (configureExporterAndMetricReader != null)
             {
