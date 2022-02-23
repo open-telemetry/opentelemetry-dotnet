@@ -70,10 +70,10 @@ namespace OpenTelemetry.Exporter
 
             var request = new OtlpCollector.ExportLogsServiceRequest();
 
-            request.AddBatch(this.ProcessResource, logRecordBatch);
-
             try
             {
+                request.AddBatch(this.ProcessResource, logRecordBatch);
+
                 if (!this.exportClient.SendExportRequest(request))
                 {
                     return ExportResult.Failure;
