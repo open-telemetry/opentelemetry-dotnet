@@ -37,7 +37,7 @@ namespace OpenTelemetry
 
         public override void OnEnd(LogRecord data)
         {
-            data.BufferLogScopes();
+            data.Buffer();
 
             base.OnEnd(data);
         }

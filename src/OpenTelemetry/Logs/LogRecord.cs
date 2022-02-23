@@ -31,7 +31,9 @@ namespace OpenTelemetry.Logs
             state.Add(scope);
         };
 
+        private readonly IReadOnlyList<KeyValuePair<string, object>> stateValues;
         private List<object> bufferedScopes;
+        private List<KeyValuePair<string, object>> bufferedStateValues;
 
         internal LogRecord(
             IExternalScopeProvider scopeProvider,
@@ -61,7 +63,7 @@ namespace OpenTelemetry.Logs
             this.EventId = eventId;
             this.FormattedMessage = formattedMessage;
             this.State = state;
-            this.StateValues = stateValues;
+            this.stateValues = stateValues;
             this.Exception = exception;
         }
 
@@ -95,7 +97,13 @@ namespace OpenTelemetry.Logs
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled
         /// otherwise <see langword="null"/>.
         /// </summary>
-        public IReadOnlyList<KeyValuePair<string, object>> StateValues { get; }
+        /// <remarks>
+        /// Note: StateValues are only available during the lifecycle of the log
+        /// message being written. If you need to capture state to be used later
+        /// (for example in batching scenarios), call <see cref="Buffer"/> to
+        /// safely capture the values (incurs allocation).
+        /// </remarks>
+        public IReadOnlyList<KeyValuePair<string, object>> StateValues => this.bufferedStateValues ?? this.stateValues;
 
         public Exception Exception { get; }
 
@@ -109,9 +117,8 @@ namespace OpenTelemetry.Logs
         /// <remarks>
         /// Note: Scopes are only available during the lifecycle of the log
         /// message being written. If you need to capture scopes to be used
-        /// later (for example in batching scenarios), call <see
-        /// cref="BufferLogScopes"/> to safely capture the values (incurs
-        /// allocation).
+        /// later (for example in batching scenarios), call <see cref="Buffer"/>
+        /// to safely capture the values (incurs allocation).
         /// </remarks>
         /// <typeparam name="TState">State.</typeparam>
         /// <param name="callback">The callback to be executed for every scope object.</param>
@@ -134,21 +141,28 @@ namespace OpenTelemetry.Logs
         }
 
         /// <summary>
-        /// Buffers the scopes attached to the log into a list so that they can
+        /// Buffers the states &amp; scopes attached to the log so that they can
         /// be safely processed after the log message lifecycle has ended.
         /// </summary>
-        internal void BufferLogScopes()
+        internal void Buffer()
         {
-            if (this.ScopeProvider == null || this.bufferedScopes != null)
+            if (this.stateValues != null && this.bufferedStateValues == null)
             {
-                return;
+                // Note: We copy the state values to capture anything deferred.
+                // See:
+                // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2905
+
+                this.bufferedStateValues = new(this.stateValues);
             }
 
-            List<object> scopes = new List<object>();
+            if (this.ScopeProvider != null && this.bufferedScopes == null)
+            {
+                List<object> scopes = new List<object>();
 
-            this.ScopeProvider?.ForEachScope(AddScopeToBufferedList, scopes);
+                this.ScopeProvider?.ForEachScope(AddScopeToBufferedList, scopes);
 
-            this.bufferedScopes = scopes;
+                this.bufferedScopes = scopes;
+            }
         }
 
         private readonly struct ScopeForEachState<TState>

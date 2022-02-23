@@ -32,7 +32,7 @@ namespace OpenTelemetry.Logs.Tests
     public sealed class LogRecordTest : IDisposable
     {
         private readonly ILogger logger;
-        private readonly List<LogRecord> exportedItems = new List<LogRecord>();
+        private readonly List<LogRecord> exportedItems = new();
         private readonly ILoggerFactory loggerFactory;
         private readonly BaseExportProcessor<LogRecord> processor;
         private readonly BaseExporter<LogRecord> exporter;
@@ -606,6 +606,39 @@ namespace OpenTelemetry.Logs.Tests
             }
         }
 
+        [Fact]
+        public void DisposingStateTest()
+        {
+            this.options.ParseStateValues = true;
+            try
+            {
+                DisposingState state = new DisposingState("Hello world");
+
+                this.logger.Log(
+                    LogLevel.Information,
+                    0,
+                    state,
+                    null,
+                    (s, e) => "OpenTelemetry!");
+                var logRecord = this.exportedItems[0];
+
+                state.Dispose();
+
+                Assert.Null(logRecord.State);
+                Assert.NotNull(logRecord.StateValues);
+                Assert.Equal(1, logRecord.StateValues.Count);
+
+                KeyValuePair<string, object> actualState = logRecord.StateValues[0];
+
+                Assert.Same("Value", actualState.Key);
+                Assert.Same("Hello world", actualState.Value);
+            }
+            finally
+            {
+                this.options.ParseStateValues = false;
+            }
+        }
+
         public void Dispose()
         {
             this.loggerFactory?.Dispose();
@@ -676,10 +709,58 @@ namespace OpenTelemetry.Logs.Tests
 
             public override void OnEnd(LogRecord data)
             {
-                data.BufferLogScopes();
+                data.Buffer();
 
                 base.OnEnd(data);
             }
+        }
+
+        private sealed class DisposingState : IReadOnlyList<KeyValuePair<string, object>>, IDisposable
+        {
+            private string value;
+            private bool disposed;
+
+            public DisposingState(string value)
+            {
+                this.Value = value;
+            }
+
+            public int Count => 1;
+
+            public string Value
+            {
+                get
+                {
+                    if (this.disposed)
+                    {
+                        throw new ObjectDisposedException(nameof(DisposingState));
+                    }
+
+                    return this.value;
+                }
+                private set => this.value = value;
+            }
+
+            public KeyValuePair<string, object> this[int index] => index switch
+            {
+                0 => new KeyValuePair<string, object>(nameof(this.Value), this.Value),
+                _ => throw new IndexOutOfRangeException(nameof(index)),
+            };
+
+            public void Dispose()
+            {
+                this.disposed = true;
+            }
+
+            public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+            {
+                for (var i = 0; i < this.Count; i++)
+                {
+                    yield return this[i];
+                }
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
         }
     }
 }
