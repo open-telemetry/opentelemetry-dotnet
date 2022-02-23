@@ -80,8 +80,8 @@ namespace OpenTelemetry.Metrics.Tests
             this.AssertLongSumValueForMetric(exportedItems1[1], 100);
             this.AssertLongSumValueForMetric(exportedItems2[1], 200);
 
-            exportedItems1.Clear();
-            exportedItems2.Clear();
+            // exportedItems1.Clear();
+            // exportedItems2.Clear();
 
             counter.Add(15, new KeyValuePair<string, object>("key", "value"));
 

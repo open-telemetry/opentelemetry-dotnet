@@ -48,7 +48,6 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush();
             Assert.Single(exportedItems);
 
-            exportedItems.Clear();
             meterProvider.ForceFlush();
             if (temporality == AggregationTemporality.Cumulative)
             {

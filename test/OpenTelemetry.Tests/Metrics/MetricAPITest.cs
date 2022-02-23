@@ -230,7 +230,7 @@ namespace OpenTelemetry.Metrics.Tests
             var anotherCounterSameNameDiffMeter = meter2.CreateCounter<long>("name1");
             anotherCounterSameNameDiffMeter.Add(10);
             counterLong.Add(10);
-            exportedItems.Clear();
+
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Equal(2, exportedItems.Count);
         }
@@ -338,7 +338,6 @@ namespace OpenTelemetry.Metrics.Tests
             long sumReceived = GetLongSum(exportedItems);
             Assert.Equal(20, sumReceived);
 
-            exportedItems.Clear();
             counterLong.Add(10);
             counterLong.Add(10);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
@@ -352,7 +351,6 @@ namespace OpenTelemetry.Metrics.Tests
                 Assert.Equal(40, sumReceived);
             }
 
-            exportedItems.Clear();
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             sumReceived = GetLongSum(exportedItems);
             if (exportDelta)
@@ -364,7 +362,6 @@ namespace OpenTelemetry.Metrics.Tests
                 Assert.Equal(40, sumReceived);
             }
 
-            exportedItems.Clear();
             counterLong.Add(40);
             counterLong.Add(20);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
@@ -410,7 +407,6 @@ namespace OpenTelemetry.Metrics.Tests
             long sumReceived = GetLongSum(exportedItems);
             Assert.Equal(10, sumReceived);
 
-            exportedItems.Clear();
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             sumReceived = GetLongSum(exportedItems);
             if (exportDelta)
@@ -422,7 +418,6 @@ namespace OpenTelemetry.Metrics.Tests
                 Assert.Equal(20, sumReceived);
             }
 
-            exportedItems.Clear();
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             sumReceived = GetLongSum(exportedItems);
             if (exportDelta)
@@ -500,7 +495,7 @@ namespace OpenTelemetry.Metrics.Tests
             ValidateMetricPointTags(tags3, metricPoint3.Tags);
 
             // Export 2
-            exportedItems.Clear();
+            // exportedItems.Clear();
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Single(exportedItems);
             metric = exportedItems[0];
@@ -651,7 +646,7 @@ namespace OpenTelemetry.Metrics.Tests
             long sumReceived = GetLongSum(exportedItems);
             Assert.Equal(75, sumReceived);
 
-            exportedItems.Clear();
+            // exportedItems.Clear();
 
             counterLong.Add(5, new("Key2", "Value2"), new("Key1", "Value1"), new("Key3", "Value3"));
             counterLong.Add(5, new("Key2", "Value2"), new("Key1", "Value1"), new("Key3", "Value3"));
@@ -742,7 +737,7 @@ namespace OpenTelemetry.Metrics.Tests
             long sumReceived = GetLongSum(exportedItems);
             Assert.Equal(75, sumReceived);
 
-            exportedItems.Clear();
+            // exportedItems.Clear();
 
             counterLong.Add(5, new("Key2", "Value2"), new("Key1", "Value1"), new("Key3", "Value3"));
             counterLong.Add(5, new("Key2", "Value2"), new("Key1", "Value1"), new("Key3", "Value3"));
@@ -794,7 +789,8 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Equal(2, exportedItems.Count);
-            exportedItems.Clear();
+
+            // exportedItems.Clear();
 
             counter1.Add(10, new KeyValuePair<string, object>("key", "value"));
             counter2.Add(10, new KeyValuePair<string, object>("key", "value"));
@@ -802,13 +798,15 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Equal(2, exportedItems.Count);
-            exportedItems.Clear();
+
+            // exportedItems.Clear();
 
             counter1.Add(10, new KeyValuePair<string, object>("key", "value"));
             counter2.Add(10, new KeyValuePair<string, object>("key", "value"));
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Single(exportedItems);
-            exportedItems.Clear();
+
+            // exportedItems.Clear();
 
             counter1.Add(10, new KeyValuePair<string, object>("key", "value"));
             counter2.Add(10, new KeyValuePair<string, object>("key", "value"));
@@ -816,7 +814,8 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Single(exportedItems);
-            exportedItems.Clear();
+
+            // exportedItems.Clear();
 
             counter1.Add(10, new KeyValuePair<string, object>("key", "value"));
             counter2.Add(10, new KeyValuePair<string, object>("key", "value"));
@@ -869,7 +868,7 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Equal(MeterProviderBuilderBase.MaxMetricPointsPerMetricDefault, MetricPointCount());
 
-            exportedItems.Clear();
+            // exportedItems.Clear();
             counterLong.Add(10);
             for (int i = 0; i < MeterProviderBuilderBase.MaxMetricPointsPerMetricDefault + 1; i++)
             {
@@ -889,7 +888,8 @@ namespace OpenTelemetry.Metrics.Tests
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueA"));
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueB"));
             counterLong.Add(10, new KeyValuePair<string, object>("key", "valueC"));
-            exportedItems.Clear();
+
+            // exportedItems.Clear();
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Equal(MeterProviderBuilderBase.MaxMetricPointsPerMetricDefault, MetricPointCount());
         }
