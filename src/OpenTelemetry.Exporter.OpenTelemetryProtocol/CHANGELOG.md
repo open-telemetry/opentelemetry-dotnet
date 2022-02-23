@@ -9,6 +9,11 @@
   The default value is `http://localhost:4318`.
   ([#2868](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2868))
 
+* Removes metric related configuration options from `OtlpExporterOptions`.
+  `MetricReaderType`, `PeriodicExporterMetricReaderOptions`, and `Temporality`
+  are now configurable via the `MetricReaderOptions`.
+  ([#2717](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2717))
+
 ## 1.2.0-rc2
 
 Released 2022-Feb-02

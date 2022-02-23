@@ -20,6 +20,26 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry
 {
     /// <summary>
+    /// Type of Export Processor to be used.
+    /// </summary>
+    public enum ExportProcessorType
+    {
+        /// <summary>
+        /// Use SimpleExportProcessor.
+        /// Refer to the <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#simple-processor">
+        /// specification</a> for more information.
+        /// </summary>
+        Simple,
+
+        /// <summary>
+        /// Use BatchExportProcessor.
+        /// Refer to <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#batching-processor">
+        /// specification</a> for more information.
+        /// </summary>
+        Batch,
+    }
+
+    /// <summary>
     /// Implements processor that exports telemetry objects.
     /// </summary>
     /// <typeparam name="T">The type of telemetry object to be exported.</typeparam>
