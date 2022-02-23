@@ -173,9 +173,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
 
-            options.AppendExportPath(options.Endpoint, "test/path");
+            options.AppendExportPath("test/path");
 
-            Assert.Equal("http://localhost:4317/", options.Endpoint.AbsoluteUri);
+            Assert.Equal("http://localhost:4318/", options.Endpoint.AbsoluteUri);
         }
 
         [Fact]
@@ -185,7 +185,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
 
-            options.AppendExportPath(options.Endpoint, "test/path");
+            options.AppendExportPath("test/path");
 
             Assert.Equal("http://test:8888/test/path", options.Endpoint.AbsoluteUri);
 
@@ -198,10 +198,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
 
             var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
-            var originalEndpoint = options.Endpoint;
             options.Endpoint = new Uri("http://test:8888");
 
-            options.AppendExportPath(originalEndpoint, "test/path");
+            options.AppendExportPath("test/path");
 
             Assert.Equal("http://test:8888/", options.Endpoint.AbsoluteUri);
 
@@ -219,7 +218,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var originalEndpoint = options.Endpoint;
             options.Endpoint = new Uri(endpoint);
 
-            options.AppendExportPath(originalEndpoint, "test/path");
+            options.AppendExportPath("test/path");
 
             Assert.Equal(endpoint, options.Endpoint.AbsoluteUri);
         }

@@ -19,7 +19,7 @@ namespace OpenTelemetry.Resources
     /// <summary>
     /// An interface for Resource detectors.
     /// </summary>
-    internal interface IResourceDetector
+    public interface IResourceDetector
     {
         /// <summary>
         /// Called to get a resource with attributes from detector.

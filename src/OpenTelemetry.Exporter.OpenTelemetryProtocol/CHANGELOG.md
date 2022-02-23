@@ -3,7 +3,11 @@
 ## Unreleased
 
 * LogExporter bug fix to handle null EventName.
-  ([#2870](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2871))
+  ([#2871](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2871))
+
+* Fixed the default endpoint for OTLP exporter over HTTP/Protobuf.
+  The default value is `http://localhost:4318`.
+  ([#2868](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2868))
 
 ## 1.2.0-rc2
 

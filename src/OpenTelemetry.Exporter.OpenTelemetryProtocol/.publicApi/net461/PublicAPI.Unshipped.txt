@@ -1,6 +1,4 @@
 OpenTelemetry.Exporter.OtlpExporterOptions
-OpenTelemetry.Exporter.OtlpExporterOptions.AggregationTemporality.get -> OpenTelemetry.Metrics.AggregationTemporality
-OpenTelemetry.Exporter.OtlpExporterOptions.AggregationTemporality.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.BatchExportProcessorOptions.get -> OpenTelemetry.BatchExportProcessorOptions<System.Diagnostics.Activity>
 OpenTelemetry.Exporter.OtlpExporterOptions.BatchExportProcessorOptions.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.Endpoint.get -> System.Uri
@@ -9,10 +7,6 @@ OpenTelemetry.Exporter.OtlpExporterOptions.ExportProcessorType.get -> OpenTeleme
 OpenTelemetry.Exporter.OtlpExporterOptions.ExportProcessorType.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.Headers.get -> string
 OpenTelemetry.Exporter.OtlpExporterOptions.Headers.set -> void
-OpenTelemetry.Exporter.OtlpExporterOptions.MetricReaderType.get -> OpenTelemetry.Metrics.MetricReaderType
-OpenTelemetry.Exporter.OtlpExporterOptions.MetricReaderType.set -> void
-OpenTelemetry.Exporter.OtlpExporterOptions.PeriodicExportingMetricReaderOptions.get -> OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
-OpenTelemetry.Exporter.OtlpExporterOptions.PeriodicExportingMetricReaderOptions.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.HttpClientFactory.get -> System.Func<System.Net.Http.HttpClient>
 OpenTelemetry.Exporter.OtlpExporterOptions.HttpClientFactory.set -> void
 OpenTelemetry.Exporter.OtlpExporterOptions.OtlpExporterOptions() -> void
@@ -33,5 +27,7 @@ override OpenTelemetry.Exporter.OtlpMetricExporter.Export(in OpenTelemetry.Batch
 override OpenTelemetry.Exporter.OtlpMetricExporter.OnShutdown(int timeoutMilliseconds) -> bool
 override OpenTelemetry.Exporter.OtlpTraceExporter.Export(in OpenTelemetry.Batch<System.Diagnostics.Activity> activityBatch) -> OpenTelemetry.ExportResult
 override OpenTelemetry.Exporter.OtlpTraceExporter.OnShutdown(int timeoutMilliseconds) -> bool
-static OpenTelemetry.Metrics.OtlpMetricExporterExtensions.AddOtlpExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions> configure = null) -> OpenTelemetry.Metrics.MeterProviderBuilder
+static OpenTelemetry.Metrics.OtlpMetricExporterExtensions.AddOtlpExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder) -> OpenTelemetry.Metrics.MeterProviderBuilder
+static OpenTelemetry.Metrics.OtlpMetricExporterExtensions.AddOtlpExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions, OpenTelemetry.Metrics.MetricReaderOptions> configureExporterAndMetricReader) -> OpenTelemetry.Metrics.MeterProviderBuilder
+static OpenTelemetry.Metrics.OtlpMetricExporterExtensions.AddOtlpExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions> configureExporter) -> OpenTelemetry.Metrics.MeterProviderBuilder
 static OpenTelemetry.Trace.OtlpTraceExporterHelperExtensions.AddOtlpExporter(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Exporter.OtlpExporterOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder
