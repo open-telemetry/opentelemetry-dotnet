@@ -64,10 +64,10 @@ properties:
 
 * `Protocol`: The protocol to use. The default value is `UdpCompactThrift`.
 
-  | Protocol       | Description                                           |
-  |----------------|-------------------------------------------------------|
-  |UdpCompactThrift| Apache Thrift compact over UDP to a Jaeger Agent.     |
-  |HttpBinaryThrift| Apache Thrift binary over HTTP to a Jaeger Collector. |
+  | Protocol         | Description                                           |
+  |------------------|-------------------------------------------------------|
+  |`UdpCompactThrift`| Apache Thrift compact over UDP to a Jaeger Agent.     |
+  |`HttpBinaryThrift`| Apache Thrift binary over HTTP to a Jaeger Collector. |
 
 See the [`TestJaegerExporter.cs`](../../examples/Console/TestJaegerExporter.cs)
 for an example of how to use the exporter.
@@ -75,14 +75,17 @@ for an example of how to use the exporter.
 ## Environment Variables
 
 The following environment variables can be used to override the default
-values of the `JaegerExporterOptions`.
+values of the `JaegerExporterOptions`
+(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#jaeger-exporter)).
 
-| Environment variable               | `JaegerExporterOptions` property |
-| ---------------------------------- | -------------------------------- |
-| `OTEL_EXPORTER_JAEGER_AGENT_HOST`  | `AgentHost`                      |
-| `OTEL_EXPORTER_JAEGER_AGENT_PORT`  | `AgentPort`                      |
-| `OTEL_EXPORTER_JAEGER_ENDPOINT`    | `Endpoint`                       |
-| `OTEL_EXPORTER_JAEGER_PROTOCOL`    | `Protocol`                       |
+  <!-- markdownlint-disable MD013 -->
+| Environment variable              | `JaegerExporterOptions` property                          |
+|-----------------------------------|-----------------------------------------------------------|
+| `OTEL_EXPORTER_JAEGER_AGENT_HOST` | `AgentHost`                                               |
+| `OTEL_EXPORTER_JAEGER_AGENT_PORT` | `AgentPort`                                               |
+| `OTEL_EXPORTER_JAEGER_ENDPOINT`   | `Endpoint`                                                |
+| `OTEL_EXPORTER_JAEGER_PROTOCOL`   | `Protocol` (`udp/thrift.compact` or `http/thrift.binary`) |
+  <!-- markdownlint-enable MD013 -->
 
 `FormatException` is thrown in case of an invalid value for any of the
 supported environment variables.

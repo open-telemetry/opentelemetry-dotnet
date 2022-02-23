@@ -79,7 +79,7 @@ namespace OpenTelemetry.Exporter
                 }
                 else
                 {
-                    throw new FormatException($"{ProtocolEnvVarName} environment variable has an invalid value: '${protocolEnvVar}'");
+                    throw new FormatException($"{ProtocolEnvVarName} environment variable has an invalid value: '{protocolEnvVar}'");
                 }
             }
 
