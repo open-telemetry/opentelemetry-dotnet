@@ -14,6 +14,13 @@
   are now configurable via the `MetricReaderOptions`.
   ([#2717](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2717))
 
+* Exporter bug fix to not throw exceptions from Export method.
+  ([#2915](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2915))
+
+* OTLP LogExporter modified to not drop the whole batch if a single log from the
+  batch is invalid.
+  ([#2934](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2934))
+
 ## 1.2.0-rc2
 
 Released 2022-Feb-02
