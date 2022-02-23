@@ -20,7 +20,6 @@ using System.Diagnostics.Metrics;
 using System.Threading;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
@@ -76,11 +75,14 @@ namespace Benchmarks.Metrics
             }
 
             var exportedItems = new List<Metric>();
-            var reader = new PeriodicExportingMetricReader(new InMemoryExporter<Metric>(exportedItems), 1000);
 
             this.provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name)
-                .AddReader(reader)
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+                {
+                    metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
+                    metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
+                })
                 .AddView(this.histogramLong.Name, new ExplicitBucketHistogramConfiguration() { Boundaries = this.bounds })
                 .AddView(this.histogramDouble.Name, new ExplicitBucketHistogramConfiguration() { Boundaries = this.bounds })
                 .Build();
