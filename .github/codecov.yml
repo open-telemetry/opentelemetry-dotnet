@@ -6,10 +6,8 @@ coverage:
   round: down
   range: "70...100"
   status:
+    project: off
     patch: off
-    project:
-      default:
-        if_ci_failed: success
 
 parsers:
   gcov:
