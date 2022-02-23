@@ -7,6 +7,10 @@
   in the [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/9a0a3300c6269c2837a1d7c9c5232ec816f63222/specification/sdk-environment-variables.md?plain=1#L129).
   ([#2914](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2914))
 
+* Use SuppressInstrumentationScope in Export method to prevent
+  internal operations from being instrumented.
+  ([#2935](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2935))
+
 ## 1.2.0-rc2
 
 Released 2022-Feb-02

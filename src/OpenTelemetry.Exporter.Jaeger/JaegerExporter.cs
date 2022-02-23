@@ -94,6 +94,9 @@ namespace OpenTelemetry.Exporter
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> activityBatch)
         {
+            // Prevent Jaeger's HTTP operations from being instrumented.
+            using var scope = SuppressInstrumentationScope.Begin();
+
             try
             {
                 if (this.Batch == null)
