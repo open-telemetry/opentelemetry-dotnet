@@ -7,7 +7,9 @@ coverage:
   range: "70...100"
   status:
     patch: off
-    if_ci_failed: success
+    project:
+      default:
+        if_ci_failed: success
 
 parsers:
   gcov:
