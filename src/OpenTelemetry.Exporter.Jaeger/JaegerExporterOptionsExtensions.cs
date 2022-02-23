@@ -1,4 +1,4 @@
-// <copyright file="ConsoleExporterOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="JaegerExporterOptionsExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,13 +14,15 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Exporter;
+
+internal static class JaegerExporterOptionsExtensions
 {
-    public class ConsoleExporterOptions
-    {
-        /// <summary>
-        /// Gets or sets the output targets for the console exporter.
-        /// </summary>
-        public ConsoleExporterOutputTargets Targets { get; set; } = ConsoleExporterOutputTargets.Console;
-    }
+    public static JaegerExportProtocol? ToJaegerExportProtocol(this string protocol) =>
+        protocol?.Trim() switch
+        {
+            "udp/thrift.compact" => JaegerExportProtocol.UdpCompactThrift,
+            "http/thrift.binary" => JaegerExportProtocol.HttpBinaryThrift,
+            _ => null,
+        };
 }

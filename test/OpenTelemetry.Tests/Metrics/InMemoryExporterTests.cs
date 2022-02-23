@@ -16,7 +16,6 @@
 
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -32,9 +31,9 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    Temporality = AggregationTemporality.Delta,
+                    metricReaderOptions.Temporality = AggregationTemporality.Delta;
                 })
                 .Build();
 

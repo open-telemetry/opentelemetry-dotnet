@@ -32,18 +32,8 @@ namespace OpenTelemetry.Metrics.Tests
         public void SdkSupportsMultipleReaders(AggregationTemporality aggregationTemporality, bool hasViews)
         {
             var exportedItems1 = new List<Metric>();
-            using var deltaExporter1 = new InMemoryExporter<Metric>(exportedItems1);
-            using var deltaReader1 = new BaseExportingMetricReader(deltaExporter1)
-            {
-                Temporality = AggregationTemporality.Delta,
-            };
-
             var exportedItems2 = new List<Metric>();
-            using var deltaExporter2 = new InMemoryExporter<Metric>(exportedItems2);
-            using var deltaReader2 = new BaseExportingMetricReader(deltaExporter2)
-            {
-                Temporality = aggregationTemporality,
-            };
+
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{aggregationTemporality}.{hasViews}");
 
             var counter = meter.CreateCounter<long>("counter");
@@ -55,8 +45,14 @@ namespace OpenTelemetry.Metrics.Tests
 
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(deltaReader1)
-                .AddReader(deltaReader2);
+                .AddInMemoryExporter(exportedItems1, metricReaderOptions =>
+                {
+                    metricReaderOptions.Temporality = AggregationTemporality.Delta;
+                })
+                .AddInMemoryExporter(exportedItems2, metricReaderOptions =>
+                {
+                    metricReaderOptions.Temporality = aggregationTemporality;
+                });
 
             if (hasViews)
             {

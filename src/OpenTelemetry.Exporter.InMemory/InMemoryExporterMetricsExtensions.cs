@@ -14,16 +14,20 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// Extension methods to simplify registering of the InMemory exporter.
+    /// </summary>
     public static class InMemoryExporterMetricsExtensions
     {
         /// <summary>
-        /// Adds InMemory exporter to the TracerProvider.
+        /// Adds InMemory metric exporter to the <see cref="MeterProviderBuilder"/> using default options.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
         /// <param name="exportedItems">Collection which will be populated with the exported MetricItem.</param>
@@ -33,7 +37,61 @@ namespace OpenTelemetry.Metrics
             Guard.ThrowIfNull(builder);
             Guard.ThrowIfNull(exportedItems);
 
-            return builder.AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems)));
+            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            {
+                return deferredMeterProviderBuilder.Configure((sp, builder) =>
+                {
+                    AddInMemoryExporter(builder, exportedItems, sp.GetOptions<MetricReaderOptions>(), null);
+                });
+            }
+
+            return AddInMemoryExporter(builder, exportedItems, new MetricReaderOptions(), null);
+        }
+
+        /// <summary>
+        /// Adds InMemory metric exporter to the <see cref="MeterProviderBuilder"/> using default options.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
+        /// <param name="exportedItems">Collection which will be populated with the exported MetricItem.</param>
+        /// <param name="configureMetricReader"><see cref="MetricReader"/> configuration options.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
+        public static MeterProviderBuilder AddInMemoryExporter(this MeterProviderBuilder builder, ICollection<Metric> exportedItems, Action<MetricReaderOptions> configureMetricReader)
+        {
+            Guard.ThrowIfNull(builder);
+            Guard.ThrowIfNull(exportedItems);
+
+            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            {
+                return deferredMeterProviderBuilder.Configure((sp, builder) =>
+                {
+                    AddInMemoryExporter(builder, exportedItems, sp.GetOptions<MetricReaderOptions>(), configureMetricReader);
+                });
+            }
+
+            return AddInMemoryExporter(builder, exportedItems, new MetricReaderOptions(), configureMetricReader);
+        }
+
+        private static MeterProviderBuilder AddInMemoryExporter(
+            MeterProviderBuilder builder,
+            ICollection<Metric> exportedItems,
+            MetricReaderOptions metricReaderOptions,
+            Action<MetricReaderOptions> configureMetricReader)
+        {
+            configureMetricReader?.Invoke(metricReaderOptions);
+
+            var metricExporter = new InMemoryExporter<Metric>(exportedItems);
+
+            if (metricReaderOptions.MetricReaderType == (MetricReaderType)(-1))
+            {
+                metricReaderOptions.MetricReaderType = MetricReaderType.Manual;
+            }
+
+            var metricReader = metricReaderOptions.MetricReaderType == MetricReaderType.Manual
+                ? new BaseExportingMetricReader(metricExporter)
+                : new PeriodicExportingMetricReader(metricExporter, metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
+
+            metricReader.Temporality = metricReaderOptions.Temporality;
+            return builder.AddReader(metricReader);
         }
     }
 }
