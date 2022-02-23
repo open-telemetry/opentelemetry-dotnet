@@ -1,4 +1,4 @@
-// <copyright file="MetricIdentity.cs" company="OpenTelemetry Authors">
+// <copyright file="InstrumentIdentity.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,9 @@ using System;
 
 namespace OpenTelemetry.Metrics
 {
-    internal readonly struct MetricIdentity : IEquatable<MetricIdentity>
+    internal readonly struct InstrumentIdentity : IEquatable<InstrumentIdentity>
     {
-        public MetricIdentity(string meterName, string instrumentName, string unit, string description, Type instrumentType)
+        public InstrumentIdentity(string meterName, string instrumentName, string unit, string description, Type instrumentType)
         {
             this.MeterName = meterName;
             this.InstrumentName = instrumentName;
@@ -39,16 +39,16 @@ namespace OpenTelemetry.Metrics
 
         public readonly Type InstrumentType { get; }
 
-        public static bool operator ==(MetricIdentity metricIdentity1, MetricIdentity metricIdentity2) => metricIdentity1.Equals(metricIdentity2);
+        public static bool operator ==(InstrumentIdentity metricIdentity1, InstrumentIdentity metricIdentity2) => metricIdentity1.Equals(metricIdentity2);
 
-        public static bool operator !=(MetricIdentity metricIdentity1, MetricIdentity metricIdentity2) => !metricIdentity1.Equals(metricIdentity2);
+        public static bool operator !=(InstrumentIdentity metricIdentity1, InstrumentIdentity metricIdentity2) => !metricIdentity1.Equals(metricIdentity2);
 
         public readonly override bool Equals(object obj)
         {
-            return obj is MetricIdentity other && this.Equals(other);
+            return obj is InstrumentIdentity other && this.Equals(other);
         }
 
-        public bool Equals(MetricIdentity other)
+        public bool Equals(InstrumentIdentity other)
         {
             return this.InstrumentType == other.InstrumentType
                 && this.MeterName == other.MeterName
