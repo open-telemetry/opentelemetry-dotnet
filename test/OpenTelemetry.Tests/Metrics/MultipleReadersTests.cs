@@ -43,6 +43,11 @@ namespace OpenTelemetry.Metrics.Tests
             long GetValue() => values[index++];
             var gauge = meter.CreateObservableGauge("gauge", () => GetValue());
 
+            int indexSum = 0;
+            var valuesSum = new long[] { 1000, 1200, 1300, 1400 };
+            long GetSum() => valuesSum[indexSum++];
+            var observableCounter = meter.CreateObservableCounter("obs-counter", () => GetSum());
+
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportedItems1, metricReaderOptions =>
@@ -57,6 +62,8 @@ namespace OpenTelemetry.Metrics.Tests
             if (hasViews)
             {
                 meterProviderBuilder.AddView("counter", "renamedCounter");
+                meterProviderBuilder.AddView("gauge", "renamedGauge");
+                meterProviderBuilder.AddView("obs-counter", "renamedObservableCounter");
             }
 
             using var meterProvider = meterProviderBuilder.Build();
@@ -65,8 +72,31 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush();
 
-            Assert.Equal(2, exportedItems1.Count);
-            Assert.Equal(2, exportedItems2.Count);
+            Assert.Equal(3, exportedItems1.Count);
+            Assert.Equal(3, exportedItems2.Count);
+
+            if (hasViews)
+            {
+                Assert.Equal("renamedCounter", exportedItems1[0].Name);
+                Assert.Equal("renamedCounter", exportedItems2[0].Name);
+
+                Assert.Equal("renamedGauge", exportedItems1[1].Name);
+                Assert.Equal("renamedGauge", exportedItems2[1].Name);
+
+                Assert.Equal("renamedObservableCounter", exportedItems1[2].Name);
+                Assert.Equal("renamedObservableCounter", exportedItems2[2].Name);
+            }
+            else
+            {
+                Assert.Equal("counter", exportedItems1[0].Name);
+                Assert.Equal("counter", exportedItems2[0].Name);
+
+                Assert.Equal("gauge", exportedItems1[1].Name);
+                Assert.Equal("gauge", exportedItems2[1].Name);
+
+                Assert.Equal("obs-counter", exportedItems1[2].Name);
+                Assert.Equal("obs-counter", exportedItems2[2].Name);
+            }
 
             // Check value exported for Counter
             this.AssertLongSumValueForMetric(exportedItems1[0], 10);
@@ -76,6 +106,17 @@ namespace OpenTelemetry.Metrics.Tests
             this.AssertLongSumValueForMetric(exportedItems1[1], 100);
             this.AssertLongSumValueForMetric(exportedItems2[1], 200);
 
+            // Check value exported for ObservableCounter
+            this.AssertLongSumValueForMetric(exportedItems1[2], 1000);
+            if (aggregationTemporality == AggregationTemporality.Delta)
+            {
+                this.AssertLongSumValueForMetric(exportedItems2[2], 1200);
+            }
+            else
+            {
+                this.AssertLongSumValueForMetric(exportedItems2[2], 1200);
+            }
+
             exportedItems1.Clear();
             exportedItems2.Clear();
 
@@ -83,8 +124,8 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush();
 
-            Assert.Equal(2, exportedItems1.Count);
-            Assert.Equal(2, exportedItems2.Count);
+            Assert.Equal(3, exportedItems1.Count);
+            Assert.Equal(3, exportedItems2.Count);
 
             // Check value exported for Counter
             this.AssertLongSumValueForMetric(exportedItems1[0], 15);
@@ -100,6 +141,17 @@ namespace OpenTelemetry.Metrics.Tests
             // Check value exported for Gauge
             this.AssertLongSumValueForMetric(exportedItems1[1], 300);
             this.AssertLongSumValueForMetric(exportedItems2[1], 400);
+
+            // Check value exported for ObservableCounter
+            this.AssertLongSumValueForMetric(exportedItems1[2], 300);
+            if (aggregationTemporality == AggregationTemporality.Delta)
+            {
+                this.AssertLongSumValueForMetric(exportedItems2[2], 200);
+            }
+            else
+            {
+                this.AssertLongSumValueForMetric(exportedItems2[2], 1400);
+            }
         }
 
         private void AssertLongSumValueForMetric(Metric metric, long value)
