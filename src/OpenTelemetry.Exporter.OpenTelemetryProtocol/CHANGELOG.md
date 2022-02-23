@@ -17,8 +17,9 @@
 * Exporter bug fix to not throw exceptions from Export method.
   ([#2915](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2915))
 
-* OTLP LogExporter modified to not drop whole batch if a single log from the
+* OTLP LogExporter modified to not drop the whole batch if a single log from the
   batch is invalid.
+  ([#2934](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2934))
 
 ## 1.2.0-rc2
 

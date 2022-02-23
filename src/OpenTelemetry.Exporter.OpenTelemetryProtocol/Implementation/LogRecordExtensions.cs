@@ -44,12 +44,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             var instrumentationLibraryLogs = new OtlpLogs.InstrumentationLibraryLogs();
             resourceLogs.InstrumentationLibraryLogs.Add(instrumentationLibraryLogs);
 
-            foreach (var item in logRecordBatch)
+            foreach (var logRecord in logRecordBatch)
             {
-                var logRecord = item.ToOtlpLog();
-                if (logRecord != null)
+                var otlpLogRecord = logRecord.ToOtlpLog();
+                if (otlpLogRecord != null)
                 {
-                    instrumentationLibraryLogs.Logs.Add(logRecord);
+                    instrumentationLibraryLogs.Logs.Add(otlpLogRecord);
                 }
             }
         }
