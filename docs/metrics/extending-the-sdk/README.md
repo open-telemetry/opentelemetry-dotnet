@@ -28,10 +28,10 @@ not covered by the built-in exporters:
 * Exporters should avoid generating telemetry and causing live-loop, this can be
   done via `OpenTelemetry.SuppressInstrumentationScope`.
 * Exporters receives a batch of `Metric`, and each `Metric`
-  can contain 1 or more `MetricPoint`s. After export, users are expected to
-  perform all actions with the exported Metrics and MetricPoints. Once control
-  is returned, exporter can no longer assume the state of the Batch.
-  (TODO: I need help with the statement here.)
+  can contain 1 or more `MetricPoint`s. The exporter should perform all actions 
+  with the `Metric`s and `MetricsPoint`s in the Batch before returning control from 
+  `Export`, once the control is returned, the exporter can no longer assume the 
+  state of the Batch or anything inside it.
 * Exporters should use `Activity.TagObjects` collection instead of
   `Activity.Tags` to obtain the full set of attributes (tags).
 * Exporters should use `ParentProvider.GetResource()` to get the `Resource`
