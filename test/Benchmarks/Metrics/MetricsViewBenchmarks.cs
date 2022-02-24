@@ -20,7 +20,6 @@ using System.Diagnostics.Metrics;
 using System.Threading;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
