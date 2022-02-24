@@ -77,7 +77,7 @@ namespace Benchmarks.Metrics
         public void Setup()
         {
             this.meter = new Meter(Utils.GetCurrentMethodName());
-            this.histogram = this.meter.CreateHistogram<long>("histogramLong");
+            this.histogram = this.meter.CreateHistogram<long>("histogram");
 
             // Evenly distribute the bound values over the range [0, MaxValue)
             this.bounds = new double[this.BoundCount];
