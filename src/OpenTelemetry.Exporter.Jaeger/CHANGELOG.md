@@ -12,7 +12,9 @@
   This change must also be made if you manually configure the
   `JaegerExporterOptions` class - the `Endpoint` must now include the path.
   For most environments, this will be `/api/traces`. The effective default
-  is still `http://localhost:14268/api/traces`.
+  is still `http://localhost:14268/api/traces`. This was done to match
+  the clarified [specification](https://github.com/open-telemetry/opentelemetry-specification/pull/2333))
+  ([#2847](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2847))
 
 ## 1.2.0-rc2
 
