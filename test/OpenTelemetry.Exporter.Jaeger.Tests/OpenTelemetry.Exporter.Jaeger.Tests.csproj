@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Unit test project for Jaeger Exporter for OpenTelemetry</Description>
     <TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
@@ -27,6 +27,7 @@
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="Includes\EventSourceTestHelper.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestActivityProcessor.cs" Link="Includes\TestActivityProcessor.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestEventListener.cs" Link="Includes\TestEventListener.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestHttpServer.cs" Link="Includes\TestHttpServer.cs" />
   </ItemGroup>
 
 </Project>
