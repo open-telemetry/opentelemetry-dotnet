@@ -5,7 +5,7 @@
 * Make `IResourceDetector` public to allow custom implementations of resource detectors.
   ([2897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2897))
 
-* `BatchLogRecordExportProcessor` will now buffer log states to fix issues with
+* `BatchLogRecordExportProcessor` now buffers log states to fix issues with
   disposing ASP.NET Core `HttpContext`s.
   ([#2932](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2932))
 
