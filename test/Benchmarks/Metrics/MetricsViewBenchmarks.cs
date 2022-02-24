@@ -20,7 +20,6 @@ using System.Diagnostics.Metrics;
 using System.Threading;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
@@ -89,7 +88,7 @@ namespace Benchmarks.Metrics
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(this.meter.Name)
-                    .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(this.metrics)))
+                    .AddInMemoryExporter(this.metrics)
                     .Build();
             }
             else if (this.ViewConfig == ViewConfiguration.ViewNoInstrSelect)
@@ -97,7 +96,7 @@ namespace Benchmarks.Metrics
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(this.meter.Name)
                     .AddView("nomatch", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
-                    .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(this.metrics)))
+                    .AddInMemoryExporter(this.metrics)
                     .Build();
             }
             else if (this.ViewConfig == ViewConfiguration.ViewSelectsInstr)
@@ -105,7 +104,7 @@ namespace Benchmarks.Metrics
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(this.meter.Name)
                     .AddView(this.counter.Name, new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
-                    .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(this.metrics)))
+                    .AddInMemoryExporter(this.metrics)
                     .Build();
             }
         }

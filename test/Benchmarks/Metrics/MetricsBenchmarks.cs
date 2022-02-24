@@ -20,7 +20,6 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
@@ -71,13 +70,14 @@ namespace Benchmarks.Metrics
             this.meter = new Meter(Utils.GetCurrentMethodName());
 
             var exportedItems = new List<Metric>();
-            var reader = new PeriodicExportingMetricReader(new InMemoryExporter<Metric>(exportedItems), 1000)
-            {
-                Temporality = this.AggregationTemporality,
-            };
             this.provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name) // All instruments from this meter are enabled.
-                .AddReader(reader)
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+                {
+                    metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
+                    metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
+                    metricReaderOptions.Temporality = this.AggregationTemporality;
+                })
                 .Build();
 
             this.counter = this.meter.CreateCounter<long>("counter");

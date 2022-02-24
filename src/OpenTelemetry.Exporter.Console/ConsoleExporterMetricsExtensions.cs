@@ -20,31 +20,94 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// Extension methods to simplify registering of the Console exporter.
+    /// </summary>
     public static class ConsoleExporterMetricsExtensions
     {
         /// <summary>
-        /// Adds Console exporter to the TracerProvider.
+        /// Adds <see cref="ConsoleMetricExporter"/> to the <see cref="MeterProviderBuilder"/> using default options.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The objects should not be disposed.")]
-        public static MeterProviderBuilder AddConsoleExporter(this MeterProviderBuilder builder, Action<ConsoleExporterOptions> configure = null)
+        public static MeterProviderBuilder AddConsoleExporter(this MeterProviderBuilder builder)
+        {
+            return AddConsoleExporter(builder, options => { });
+        }
+
+        /// <summary>
+        /// Adds <see cref="ConsoleMetricExporter"/> to the <see cref="MeterProviderBuilder"/>.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
+        /// <param name="configureExporter">Exporter configuration options.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
+        public static MeterProviderBuilder AddConsoleExporter(this MeterProviderBuilder builder, Action<ConsoleExporterOptions> configureExporter)
         {
             Guard.ThrowIfNull(builder);
 
-            var options = new ConsoleExporterOptions();
-            configure?.Invoke(options);
+            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            {
+                return deferredMeterProviderBuilder.Configure((sp, builder) =>
+                {
+                    AddConsoleExporter(builder, sp.GetOptions<ConsoleExporterOptions>(), sp.GetOptions<MetricReaderOptions>(), configureExporter, null);
+                });
+            }
 
-            var exporter = new ConsoleMetricExporter(options);
+            return AddConsoleExporter(builder, new ConsoleExporterOptions(), new MetricReaderOptions(), configureExporter, null);
+        }
 
-            var reader = options.MetricReaderType == MetricReaderType.Manual
-                ? new BaseExportingMetricReader(exporter)
-                : new PeriodicExportingMetricReader(exporter, options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
+        /// <summary>
+        /// Adds <see cref="ConsoleMetricExporter"/> to the <see cref="MeterProviderBuilder"/>.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
+        /// <param name="configureExporterAndMetricReader">Exporter and <see cref="MetricReader"/> configuration options.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
+        public static MeterProviderBuilder AddConsoleExporter(
+            this MeterProviderBuilder builder,
+            Action<ConsoleExporterOptions, MetricReaderOptions> configureExporterAndMetricReader)
+        {
+            Guard.ThrowIfNull(builder, nameof(builder));
 
-            reader.Temporality = options.AggregationTemporality;
+            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            {
+                return deferredMeterProviderBuilder.Configure((sp, builder) =>
+                {
+                    AddConsoleExporter(builder, sp.GetOptions<ConsoleExporterOptions>(), sp.GetOptions<MetricReaderOptions>(), null, configureExporterAndMetricReader);
+                });
+            }
 
-            return builder.AddReader(reader);
+            return AddConsoleExporter(builder, new ConsoleExporterOptions(), new MetricReaderOptions(), null, configureExporterAndMetricReader);
+        }
+
+        private static MeterProviderBuilder AddConsoleExporter(
+            MeterProviderBuilder builder,
+            ConsoleExporterOptions exporterOptions,
+            MetricReaderOptions metricReaderOptions,
+            Action<ConsoleExporterOptions> configureExporter,
+            Action<ConsoleExporterOptions, MetricReaderOptions> configureExporterAndMetricReader)
+        {
+            if (configureExporterAndMetricReader != null)
+            {
+                configureExporterAndMetricReader.Invoke(exporterOptions, metricReaderOptions);
+            }
+            else
+            {
+                configureExporter?.Invoke(exporterOptions);
+            }
+
+            var metricExporter = new ConsoleMetricExporter(exporterOptions);
+
+            if (metricReaderOptions.MetricReaderType == (MetricReaderType)(-1))
+            {
+                metricReaderOptions.MetricReaderType = MetricReaderType.Manual;
+            }
+
+            var metricReader = metricReaderOptions.MetricReaderType == MetricReaderType.Manual
+                ? new BaseExportingMetricReader(metricExporter)
+                : new PeriodicExportingMetricReader(metricExporter, metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
+
+            metricReader.Temporality = metricReaderOptions.Temporality;
+            return builder.AddReader(metricReader);
         }
     }
 }

@@ -25,7 +25,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Moq;
 using Newtonsoft.Json;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -55,16 +54,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             var processor = new Mock<BaseProcessor<Activity>>();
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
-            var metricItems = new List<Metric>();
-            var metricExporter = new InMemoryExporter<Metric>(metricItems);
+            var metrics = new List<Metric>();
 
-            var metricReader = new BaseExportingMetricReader(metricExporter)
-            {
-                Temporality = AggregationTemporality.Cumulative,
-            };
             var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddHttpClientInstrumentation()
-                .AddReader(metricReader)
+                .AddInMemoryExporter(metrics)
                 .Build();
 
             using (serverLifeTime)
@@ -107,7 +101,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             meterProvider.Dispose();
 
-            var requestMetrics = metricItems
+            var requestMetrics = metrics
                 .Where(metric => metric.Name == "http.client.duration")
                 .ToArray();
 
