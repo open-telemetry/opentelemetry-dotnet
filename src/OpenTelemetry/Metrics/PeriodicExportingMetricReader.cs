@@ -22,9 +22,9 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// MetricReader implementation which exports metrics to the configured
-    /// MetricExporter upon <see cref="MetricReader.Collect(int)"/>.
-    /// Automatically invokes collect at configured time intervals.
+    /// MetricReader implementation which collects metrics based on
+    /// a user-configurable time interval and passes the metrics to
+    /// the configured MetricExporter.
     /// </summary>
     public class PeriodicExportingMetricReader : BaseExportingMetricReader
     {
