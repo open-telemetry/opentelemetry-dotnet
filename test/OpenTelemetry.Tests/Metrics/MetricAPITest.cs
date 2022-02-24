@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;

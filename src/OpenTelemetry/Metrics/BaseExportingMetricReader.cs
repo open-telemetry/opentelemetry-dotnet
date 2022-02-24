@@ -21,12 +21,20 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// MetricReader implementation which exports metrics to the configured
+    /// MetricExporter upon <see cref="MetricReader.Collect(int)"/>.
+    /// </summary>
     public class BaseExportingMetricReader : MetricReader
     {
         protected readonly BaseExporter<Metric> exporter;
         private readonly ExportModes supportedExportModes = ExportModes.Push | ExportModes.Pull;
         private bool disposed;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BaseExportingMetricReader"/> class.
+        /// </summary>
+        /// <param name="exporter">Exporter instance to export Metrics to.</param>
         public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
             Guard.ThrowIfNull(exporter);

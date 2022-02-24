@@ -24,6 +24,8 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         /// <remarks>
         /// The array must be in ascending order with distinct values.
+        /// Empty array means no histogram buckets will be generated.
+        /// Null means default bucket boundaries will be used.
         /// </remarks>
         public double[] Boundaries { get; set; }
     }
