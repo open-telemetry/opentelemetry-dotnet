@@ -16,7 +16,6 @@
 
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -151,6 +150,51 @@ namespace OpenTelemetry.Metrics.Tests
             else
             {
                 this.AssertLongSumValueForMetric(exportedItems2[2], 1400);
+            }
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void ObservableInstrumentCallbacksInvokedForEachReaders(bool hasViews)
+        {
+            var exportedItems1 = new List<Metric>();
+            var exportedItems2 = new List<Metric>();
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{hasViews}");
+            int callbackInvocationCount = 0;
+            var gauge = meter.CreateObservableGauge("gauge", () =>
+            {
+                callbackInvocationCount++;
+                return 10 * callbackInvocationCount;
+            });
+
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems1)
+                .AddInMemoryExporter(exportedItems2);
+
+            if (hasViews)
+            {
+                meterProviderBuilder.AddView("gauge", "renamedGauge");
+            }
+
+            using var meterProvider = meterProviderBuilder.Build();
+            meterProvider.ForceFlush();
+
+            // VALIDATE
+            Assert.Equal(2, callbackInvocationCount);
+            Assert.Single(exportedItems1);
+            Assert.Single(exportedItems2);
+
+            if (hasViews)
+            {
+                Assert.Equal("renamedGauge", exportedItems1[0].Name);
+                Assert.Equal("renamedGauge", exportedItems2[0].Name);
+            }
+            else
+            {
+                Assert.Equal("gauge", exportedItems1[0].Name);
+                Assert.Equal("gauge", exportedItems2[0].Name);
             }
         }
 
