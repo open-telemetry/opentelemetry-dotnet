@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter
             if (this.isMetric)
             {
                 // By design, The MetricApi reuses Metrics (MetricReader.metricsCurrentBatch).
-                // This means that exported Metrics will always reflect the the latest values.
+                // This means that exported Metrics will always reflect the latest values.
                 // Here, we clear the exported collection to prevent populating
                 // this with duplicate instances of the same Metric.
                 this.exportedItems.Clear();
