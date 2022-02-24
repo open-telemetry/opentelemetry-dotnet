@@ -31,7 +31,7 @@ namespace OpenTelemetry.Logs
             state.Add(scope);
         };
 
-        private readonly IReadOnlyList<KeyValuePair<string, object>> stateValues;
+        private IReadOnlyList<KeyValuePair<string, object>> stateValues;
         private List<object> bufferedScopes;
         private List<KeyValuePair<string, object>> bufferedStateValues;
 
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Logs
         /// langword="null"/> when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled.
         /// </summary>
-        public object State { get; }
+        public object State { get; private set; }
 
         /// <summary>
         /// Gets the parsed state values attached to the log. Set when <see
@@ -107,7 +107,10 @@ namespace OpenTelemetry.Logs
 
         public Exception Exception { get; }
 
-        internal IExternalScopeProvider ScopeProvider { get; set; }
+        internal IExternalScopeProvider ScopeProvider { get; private set; }
+
+        // Note: Used by unit tests.
+        internal IReadOnlyList<KeyValuePair<string, object>> ParsedStateValues => this.stateValues;
 
         /// <summary>
         /// Executes callback for each currently active scope objects in order
@@ -163,6 +166,16 @@ namespace OpenTelemetry.Logs
 
                 this.bufferedScopes = scopes;
             }
+        }
+
+        /// <summary>
+        /// Clear data which should not be accessed after the log message lifecycle has ended.
+        /// </summary>
+        internal void Clear()
+        {
+            this.State = null;
+            this.stateValues = null;
+            this.ScopeProvider = null;
         }
 
         private readonly struct ScopeForEachState<TState>

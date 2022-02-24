@@ -64,7 +64,7 @@ namespace OpenTelemetry.Logs
 
                 processor.OnEnd(record);
 
-                record.ScopeProvider = null;
+                record.Clear();
             }
         }
 
