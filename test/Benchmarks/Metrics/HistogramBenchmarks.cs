@@ -64,7 +64,7 @@ namespace Benchmarks.Metrics
         private const int MaxValue = 1000;
         private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
         private static readonly Random Random = ThreadLocalRandom.Value;
-        private Histogram<long> histogramLong;
+        private Histogram<long> histogram;
         private MeterProvider provider;
         private Meter meter;
         private double[] bounds;
@@ -77,7 +77,7 @@ namespace Benchmarks.Metrics
         public void Setup()
         {
             this.meter = new Meter(Utils.GetCurrentMethodName());
-            this.histogramLong = this.meter.CreateHistogram<long>("histogramLong");
+            this.histogram = this.meter.CreateHistogram<long>("histogramLong");
 
             // Evenly distribute the bound values over the range [0, MaxValue)
             this.bounds = new double[this.BoundCount];
@@ -95,7 +95,7 @@ namespace Benchmarks.Metrics
                     metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
                     metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
                 })
-                .AddView(this.histogramLong.Name, new ExplicitBucketHistogramConfiguration() { Boundaries = this.bounds })
+                .AddView(this.histogram.Name, new ExplicitBucketHistogramConfiguration() { Boundaries = this.bounds })
                 .Build();
         }
 
@@ -109,14 +109,14 @@ namespace Benchmarks.Metrics
         [Benchmark]
         public void HistogramHotPath()
         {
-            this.histogramLong.Record(Random.Next(MaxValue));
+            this.histogram.Record(Random.Next(MaxValue));
         }
 
         [Benchmark]
         public void HistogramWith1LabelHotPath()
         {
             var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[Random.Next(0, 2)]);
-            this.histogramLong.Record(Random.Next(MaxValue), tag1);
+            this.histogram.Record(Random.Next(MaxValue), tag1);
         }
 
         [Benchmark]
@@ -125,7 +125,7 @@ namespace Benchmarks.Metrics
             var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[Random.Next(0, 10)]);
             var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[Random.Next(0, 10)]);
             var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[Random.Next(0, 10)]);
-            this.histogramLong.Record(Random.Next(MaxValue), tag1, tag2, tag3);
+            this.histogram.Record(Random.Next(MaxValue), tag1, tag2, tag3);
         }
 
         [Benchmark]
@@ -139,7 +139,7 @@ namespace Benchmarks.Metrics
                 { "DimName4", this.dimensionValues[Random.Next(0, 5)] },
                 { "DimName5", this.dimensionValues[Random.Next(0, 10)] },
             };
-            this.histogramLong.Record(Random.Next(MaxValue), tags);
+            this.histogram.Record(Random.Next(MaxValue), tags);
         }
 
         [Benchmark]
@@ -155,7 +155,7 @@ namespace Benchmarks.Metrics
                 { "DimName6", this.dimensionValues[Random.Next(0, 2)] },
                 { "DimName7", this.dimensionValues[Random.Next(0, 1)] },
             };
-            this.histogramLong.Record(Random.Next(MaxValue), tags);
+            this.histogram.Record(Random.Next(MaxValue), tags);
         }
     }
 }
