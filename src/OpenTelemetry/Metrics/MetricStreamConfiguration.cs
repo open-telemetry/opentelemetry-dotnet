@@ -28,6 +28,9 @@ namespace OpenTelemetry.Metrics
 #pragma warning restore SA1602 // Enumeration items should be documented
     }
 
+    /// <summary>
+    /// Holds the configuration for a MetricStream.
+    /// </summary>
     public class MetricStreamConfiguration
     {
         public static readonly MetricStreamConfiguration Drop = new DropConfiguration();
@@ -40,7 +43,9 @@ namespace OpenTelemetry.Metrics
 
         internal virtual Aggregation Aggregation { get; set; }
 
-        // TODO: MetricPoints caps can be configured here
+        // TODO: MetricPoints caps can be configured here on
+        // a per stream basis, when we add such a capability
+        // in the future.
 
         private sealed class DropConfiguration : MetricStreamConfiguration
         {
