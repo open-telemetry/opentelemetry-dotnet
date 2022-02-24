@@ -144,7 +144,7 @@ namespace OpenTelemetry.Logs
         }
 
         /// <summary>
-        /// Buffers the states &amp; scopes attached to the log so that they can
+        /// Buffers the states and scopes attached to the log so that they can
         /// be safely processed after the log message lifecycle has ended.
         /// </summary>
         internal void Buffer()
