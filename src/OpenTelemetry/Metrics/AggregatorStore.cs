@@ -25,6 +25,7 @@ namespace OpenTelemetry.Metrics
 {
     internal sealed class AggregatorStore
     {
+        private static readonly string MetricPointCapHitFixMessage = "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
         private readonly object lockZeroTags = new object();
         private readonly HashSet<string> tagKeysInteresting;
         private readonly int tagsKeysInterestingCount;
@@ -313,7 +314,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
                     {
-                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.");
+                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
                     }
 
                     return;
@@ -336,7 +337,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
                     {
-                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.");
+                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
                     }
 
                     return;
@@ -359,7 +360,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
                     {
-                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.");
+                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
                     }
 
                     return;
@@ -382,7 +383,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
                     {
-                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.");
+                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
                     }
 
                     return;
