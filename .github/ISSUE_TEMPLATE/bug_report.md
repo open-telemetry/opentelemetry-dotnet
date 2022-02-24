@@ -6,8 +6,9 @@ labels: bug
 
 # Bug Report
 
-List of [NuGet packages](https://www.nuget.org/profiles/OpenTelemetry) and
-version that you are using (e.g. `OpenTelemetry 1.0.2`):
+List of [all OpenTelemetry NuGet
+packages](https://www.nuget.org/profiles/OpenTelemetry) and version that you are
+using (e.g. `OpenTelemetry 1.0.2`):
 
 * TBD
 
@@ -31,7 +32,9 @@ What did you see instead?
 ## Reproduce
 
 Create a self-contained project using the template of your choice, apply the
-minimum required code to result in the issue you're observing.
+minimum required code to result in the issue you're observing. You may start
+from the apps in the [docs](../docs/) folder, and modify to demonstrate the
+issue.
 
 We will close this issue if:
 
