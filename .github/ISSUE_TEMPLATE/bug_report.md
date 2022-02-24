@@ -32,9 +32,7 @@ What did you see instead?
 ## Reproduce
 
 Create a self-contained project using the template of your choice, apply the
-minimum required code to result in the issue you're observing. You may start
-from the apps in the [docs](../docs/) folder, and modify to demonstrate the
-issue.
+minimum required code to result in the issue you're observing.
 
 We will close this issue if:
 
