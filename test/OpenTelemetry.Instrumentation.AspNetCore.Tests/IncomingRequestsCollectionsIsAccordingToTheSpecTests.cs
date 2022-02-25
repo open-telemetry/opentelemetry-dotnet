@@ -47,12 +47,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Theory]
-        [InlineData("/api/values", "user-agent", 503, "503")]
-        [InlineData("/api/values", null, 503, null)]
-        [InlineData("/api/exception", null, 503, null)]
-        [InlineData("/api/exception", null, 503, null, true)]
+        [InlineData("/api/values", null, "user-agent", 503, "503")]
+        [InlineData("/api/values", "?query=1", null, 503, null)]
+        [InlineData("/api/exception", null, null, 503, null)]
+        [InlineData("/api/exception", null, null, 503, null, true)]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan(
             string urlPath,
+            string query,
             string userAgent,
             int statusCode,
             string reasonPhrase,
@@ -79,7 +80,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     }
 
                     // Act
-                    var response = await client.GetAsync(urlPath);
+                    var path = urlPath;
+                    if (query != null)
+                    {
+                        path += query;
+                    }
+
+                    var response = await client.GetAsync(path);
                 }
                 catch (Exception)
                 {
@@ -107,7 +114,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
             Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
             Assert.Equal(urlPath, activity.GetTagValue(SpanAttributeConstants.HttpPathKey));
-            Assert.Equal($"http://localhost{urlPath}", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
+            Assert.Equal($"http://localhost{urlPath}{query}", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
             Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
 
             if (statusCode == 503)
