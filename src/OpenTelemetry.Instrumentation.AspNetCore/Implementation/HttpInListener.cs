@@ -22,7 +22,6 @@ using System.Reflection;
 #if !NETSTANDARD2_0
 using System.Runtime.CompilerServices;
 #endif
-using System.Text;
 using Microsoft.AspNetCore.Http;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
@@ -331,7 +330,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             });
 #else
-            return new StringBuilder(length)
+            return new System.Text.StringBuilder(length)
                 .Append(scheme)
                 .Append(Uri.SchemeDelimiter)
                 .Append(host)
