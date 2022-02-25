@@ -24,7 +24,7 @@ Open a console, run the right command from the current folder:
 
 ```sh
 dotnet run --framework net6.0 --configuration Release
-dotnet run --framework net6.0 --configuration Release counter 
+dotnet run --framework net6.0 --configuration Release counter
 ```
 
 - To run the stress test for `Histogram`, run the following command
