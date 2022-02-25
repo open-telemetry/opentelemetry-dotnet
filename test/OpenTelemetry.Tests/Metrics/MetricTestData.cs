@@ -62,28 +62,45 @@ namespace OpenTelemetry.Metrics.Tests
                         new double[] { 10, 20 },
                         new double[] { -10, 0, 1, 9, 10, 11, 19 },
                         40,
+                        7,
                         new long[] { 5, 2, 0 },
+                        false,
                     },
                     new object[] // null bounds will use default bounds
                     {
                         null,
                         new double[] { -10, 0, 1, 9, 10, 11, 19 },
                         40,
+                        7,
                         new long[] { 2, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0 },
+                        false,
                     },
                     new object[] // infinite bounds will be ignored
                     {
                         new double[] { double.NegativeInfinity, 5 },
                         new double[] { -10, 0, 1, 9, 10, 11, 19 },
                         40,
+                        7,
                         new long[] { 3, 4 },
+                        false,
                     },
-                    new object[] // only infinity bounds will only record sum and count
+                    new object[] // only infinity bounds will have a single bucket
                     {
                         new double[] { double.NegativeInfinity, double.PositiveInfinity },
                         new double[] { -10, 0, 1, 9, 10, 11, 19 },
                         40,
+                        7,
                         new long[] { 7 },
+                        false,
+                    },
+                    new object[] // empty bounds will only record sum and count
+                    {
+                        new double[] { double.NegativeInfinity, double.PositiveInfinity },
+                        new double[] { -10, 0, 1, 9, 10, 11, 19 },
+                        40,
+                        7,
+                        null,
+                        true,
                     },
            };
     }

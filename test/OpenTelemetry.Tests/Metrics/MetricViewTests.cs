@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using System.Linq;
 using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -442,7 +441,9 @@ namespace OpenTelemetry.Metrics.Tests
             double[] boundaries,
             double[] values,
             double expectedSum,
-            long[] expectedCounts)
+            long expectedCount,
+            long[] expectedCounts,
+            bool expectedNoBuckets)
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
             var exportedItems = new List<Metric>();
@@ -477,7 +478,7 @@ namespace OpenTelemetry.Metrics.Tests
             var sum = histogramPoint.GetHistogramSum();
 
             Assert.Equal(expectedSum, sum);
-            Assert.Equal(expectedCounts.Aggregate((x, y) => x + y), count);
+            Assert.Equal(expectedCount, count);
 
             int index = 0;
             foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
@@ -486,45 +487,7 @@ namespace OpenTelemetry.Metrics.Tests
                 index++;
             }
 
-            // TODO: HistogramBuckets.movenext() returns false
-        }
-
-        [Fact]
-        public void EmptyHistogramBounds()
-        {
-            using var meter = new Meter(Utils.GetCurrentMethodName());
-            var histogram = meter.CreateHistogram<double>("MyHistogram");
-
-            var exportedItems = new List<Metric>();
-            using var meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter.Name)
-                .AddView(histogram.Name, new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { } })
-                .AddInMemoryExporter(exportedItems)
-                .Build();
-
-            histogram.Record(5);
-            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-            Assert.Single(exportedItems);
-            var metric = exportedItems[0];
-
-            Assert.Equal(histogram.Name, metric.Name);
-
-            List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric.GetMetricPoints())
-            {
-                metricPoints.Add(mp);
-            }
-
-            Assert.Single(metricPoints);
-            var histogramPoint = metricPoints[0];
-
-            var count = histogramPoint.GetHistogramCount();
-            var sum = histogramPoint.GetHistogramSum();
-
-            // Check sum, count, and that histogram has no bounds.
-            Assert.Equal(5, sum);
-            Assert.Equal(1, count);
-            Assert.False(histogramPoint.GetHistogramBuckets().GetEnumerator().MoveNext());
+            Assert.Equal(expectedNoBuckets, index == 0);
         }
 
         [Fact]

@@ -119,37 +119,15 @@ namespace OpenTelemetry.Metrics
                             var metricStreamConfig = viewConfig(instrument);
                             if (metricStreamConfig != null)
                             {
-                                if (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfiguration)
+                                // Validate and Clean Histogram Bounds
+                                if (!MeterProviderBuilderExtensions.CleanHistogramBounds(
+                                    metricStreamConfig,
+                                    () => OpenTelemetrySdkEventSource.Log.MetricViewIgnored(
+                                        metricStreamConfig.Name,
+                                        "Histogram bounds are invalid.",
+                                        "Histogram bounds must be in ascending order with distinct values. double.NaN is not allowed")))
                                 {
-                                    // Validate histogram bounds
-                                    if (histogramConfiguration.Boundaries != null)
-                                    {
-                                        if (histogramConfiguration.Boundaries.Length > 0)
-                                        {
-                                            if (!MeterProviderBuilderExtensions.HasValidHistogramBoundaries(histogramConfiguration.Boundaries))
-                                            {
-                                                OpenTelemetrySdkEventSource.Log.MetricViewIgnored(
-                                                    metricStreamConfig.Name,
-                                                    "Histogram bounds are invalid.",
-                                                    "Histogram bounds must be in ascending order with distinct values. double.NaN is not allowed");
-                                                continue;
-                                            }
-
-                                            // Remove any infinity values from the histogram boundaries
-                                            histogramConfiguration.Boundaries = histogramConfiguration.Boundaries.Where(x => !double.IsInfinity(x)).ToArray();
-
-                                            // If empty bounds, use (-inf, +inf) as the single bucket
-                                            if (!Enumerable.Any(histogramConfiguration.Boundaries))
-                                            {
-                                                histogramConfiguration.Boundaries = new double[] { double.NegativeInfinity, double.PositiveInfinity };
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        // Use default value when bounds are null
-                                        histogramConfiguration.Boundaries = Metric.DefaultHistogramBounds;
-                                    }
+                                    continue;
                                 }
 
                                 metricStreamConfigs.Add(metricStreamConfig);

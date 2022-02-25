@@ -105,36 +105,9 @@ namespace OpenTelemetry.Metrics
                     nameof(instrumentName));
             }
 
-            if (metricStreamConfiguration is ExplicitBucketHistogramConfiguration histogramConfiguration)
-            {
-                // Validate histogram boundaries
-                if (histogramConfiguration.Boundaries != null)
-                {
-                    // Only validate non-empty bounds.
-                    // Empty bounds will result in using AggregationType.HistogramSumCount.
-                    if (histogramConfiguration.Boundaries.Length > 0)
-                    {
-                        if (!HasValidHistogramBoundaries(histogramConfiguration.Boundaries))
-                        {
-                            throw new ArgumentException("Histogram bounds must be in ascending order with distinct values. double.NaN is not allowed.");
-                        }
-
-                        // Remove any infinity values from the histogram boundaries
-                        histogramConfiguration.Boundaries = histogramConfiguration.Boundaries.Where(x => !double.IsInfinity(x)).ToArray();
-
-                        // If empty bounds, use (-inf, +inf) as the single bucket
-                        if (!Enumerable.Any(histogramConfiguration.Boundaries))
-                        {
-                            histogramConfiguration.Boundaries = new double[] { double.NegativeInfinity, double.PositiveInfinity };
-                        }
-                    }
-                }
-                else
-                {
-                    // Use default value when bounds are null
-                    histogramConfiguration.Boundaries = Metric.DefaultHistogramBounds;
-                }
-            }
+            CleanHistogramBounds(
+                metricStreamConfiguration,
+                () => throw new ArgumentException("Histogram bounds must be in ascending order with distinct values. double.NaN is not allowed."));
 
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
@@ -253,6 +226,41 @@ namespace OpenTelemetry.Metrics
                 if (double.IsNaN(values[i]) || (i > 0 && values[i] <= values[i - 1]))
                 {
                     return false;
+                }
+            }
+
+            return true;
+        }
+
+        internal static bool CleanHistogramBounds(MetricStreamConfiguration metricStreamConfig, Action onErrorFunction)
+        {
+            if (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfiguration)
+            {
+                // Validate histogram bounds
+                if (histogramConfiguration.Boundaries != null)
+                {
+                    if (histogramConfiguration.Boundaries.Length > 0)
+                    {
+                        if (!HasValidHistogramBoundaries(histogramConfiguration.Boundaries))
+                        {
+                            onErrorFunction();
+                            return false;
+                        }
+
+                        // Remove any infinity values from the histogram boundaries
+                        histogramConfiguration.Boundaries = histogramConfiguration.Boundaries.Where(x => !double.IsInfinity(x)).ToArray();
+
+                        // If empty bounds, use (-inf, +inf) as the single bucket
+                        if (!Enumerable.Any(histogramConfiguration.Boundaries))
+                        {
+                            histogramConfiguration.Boundaries = new double[] { double.NegativeInfinity, double.PositiveInfinity };
+                        }
+                    }
+                }
+                else
+                {
+                    // Use default value when bounds are null
+                    histogramConfiguration.Boundaries = Metric.DefaultHistogramBounds;
                 }
             }
 
