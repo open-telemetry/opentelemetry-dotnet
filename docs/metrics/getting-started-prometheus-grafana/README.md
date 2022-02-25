@@ -1,12 +1,14 @@
 # Getting Started with Prometheus and Grafana
 
-- [Export metrics from the application](#export-metrics-from-the-application)
-  - [Check results in the browser](#check-results-in-the-browser)
-- [Collect metrics using Prometheus](#collect-metrics-using-prometheus)
-  - [Configuration](#configuration)
-  - [Start Prometheus](#start-prometheus)
-  - [View results in Prometheus](#view-results-in-prometheus)
-- [Explore metrics using Grafana](#explore-metrics-using-grafana)
+- [Getting Started with Prometheus and Grafana](#getting-started-with-prometheus-and-grafana)
+  - [Export metrics from the application](#export-metrics-from-the-application)
+    - [Check results in the browser](#check-results-in-the-browser)
+  - [Collect metrics using Prometheus](#collect-metrics-using-prometheus)
+    - [Configuration](#configuration)
+    - [Start Prometheus](#start-prometheus)
+    - [View results in Prometheus](#view-results-in-prometheus)
+    - [Explore metrics using Grafana](#explore-metrics-using-grafana)
+  - [Learn more](#learn-more)
 
 ## Export metrics from the application
 
@@ -152,7 +154,15 @@ Follow the instructions in the Grafana getting started
 [doc](https://grafana.com/docs/grafana/latest/getting-started/getting-started/#step-2-log-in)
 to log in.
 
-After successfully logging in, click on the explore option on the left panel of
+After successfully logging in, first, click on the Configuration icon
+on the panel at the left hand side. And click on Prometheus. 
+For the value for the URI column, type in the default endpoint of 
+Prometheus as suggested by the UI.
+```
+http://localhost:9090
+```
+
+Then, click on the Explore icon on the left panel of
 the website - we should be able to write some queries to explore our metrics
 now!
 
