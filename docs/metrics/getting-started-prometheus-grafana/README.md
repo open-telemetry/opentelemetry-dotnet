@@ -155,7 +155,7 @@ Follow the instructions in the Grafana getting started
 to log in.
 
 After successfully logging in, click on the Configuration icon
-on the panel at the left hand side, and click on Prometheus. 
+on the panel at the left hand side, and click on Prometheus.
 Type in the default endpoint of Prometheus as suggested by the UI
 as the value for the URI.
 ```
