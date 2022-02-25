@@ -32,28 +32,28 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
   DefaultJob : .NET 6.0.2 (6.0.222.6406), X64 RyuJIT
 
 
-|                      Method | BoundCount |      Mean |    Error |   StdDev |    Median | Allocated |
-|---------------------------- |----------- |----------:|---------:|---------:|----------:|----------:|
-|            HistogramHotPath |         10 |  49.45 ns | 1.013 ns | 1.902 ns |  50.42 ns |         - |
-|  HistogramWith1LabelHotPath |         10 |  89.33 ns | 0.323 ns | 0.270 ns |  89.38 ns |         - |
-| HistogramWith3LabelsHotPath |         10 | 176.37 ns | 1.693 ns | 1.501 ns | 176.24 ns |         - |
-| HistogramWith5LabelsHotPath |         10 | 264.33 ns | 2.254 ns | 1.883 ns | 265.06 ns |         - |
-| HistogramWith7LabelsHotPath |         10 | 318.65 ns | 2.808 ns | 2.627 ns | 317.88 ns |         - |
-|            HistogramHotPath |         20 |  47.66 ns | 0.154 ns | 0.129 ns |  47.66 ns |         - |
-|  HistogramWith1LabelHotPath |         20 |  88.38 ns | 0.391 ns | 0.346 ns |  88.43 ns |         - |
-| HistogramWith3LabelsHotPath |         20 | 184.54 ns | 1.977 ns | 1.849 ns | 185.45 ns |         - |
-| HistogramWith5LabelsHotPath |         20 | 271.21 ns | 3.180 ns | 2.655 ns | 271.93 ns |         - |
-| HistogramWith7LabelsHotPath |         20 | 320.97 ns | 1.790 ns | 1.675 ns | 320.62 ns |         - |
-|            HistogramHotPath |         50 |  54.83 ns | 0.279 ns | 0.247 ns |  54.79 ns |         - |
-|  HistogramWith1LabelHotPath |         50 |  95.65 ns | 0.204 ns | 0.191 ns |  95.57 ns |         - |
-| HistogramWith3LabelsHotPath |         50 | 197.58 ns | 1.124 ns | 1.052 ns | 197.73 ns |         - |
-| HistogramWith5LabelsHotPath |         50 | 275.50 ns | 1.078 ns | 0.955 ns | 275.59 ns |         - |
-| HistogramWith7LabelsHotPath |         50 | 331.57 ns | 2.632 ns | 2.462 ns | 331.11 ns |         - |
-|            HistogramHotPath |        100 |  66.91 ns | 0.247 ns | 0.206 ns |  66.90 ns |         - |
-|  HistogramWith1LabelHotPath |        100 | 108.24 ns | 1.120 ns | 0.875 ns | 108.29 ns |         - |
-| HistogramWith3LabelsHotPath |        100 | 207.67 ns | 0.610 ns | 0.476 ns | 207.70 ns |         - |
-| HistogramWith5LabelsHotPath |        100 | 292.93 ns | 1.694 ns | 1.502 ns | 292.97 ns |         - |
-| HistogramWith7LabelsHotPath |        100 | 350.70 ns | 4.753 ns | 4.214 ns | 349.39 ns |         - |
+|                      Method | BoundCount |      Mean |    Error |   StdDev | Allocated |
+|---------------------------- |----------- |----------:|---------:|---------:|----------:|
+|            HistogramHotPath |         10 |  45.27 ns | 0.384 ns | 0.359 ns |         - |
+|  HistogramWith1LabelHotPath |         10 |  89.99 ns | 0.373 ns | 0.312 ns |         - |
+| HistogramWith3LabelsHotPath |         10 | 185.34 ns | 3.184 ns | 3.667 ns |         - |
+| HistogramWith5LabelsHotPath |         10 | 266.69 ns | 1.391 ns | 1.301 ns |         - |
+| HistogramWith7LabelsHotPath |         10 | 323.20 ns | 1.834 ns | 1.531 ns |         - |
+|            HistogramHotPath |         20 |  48.69 ns | 0.347 ns | 0.307 ns |         - |
+|  HistogramWith1LabelHotPath |         20 |  93.84 ns | 0.696 ns | 0.651 ns |         - |
+| HistogramWith3LabelsHotPath |         20 | 189.82 ns | 1.208 ns | 1.071 ns |         - |
+| HistogramWith5LabelsHotPath |         20 | 269.23 ns | 2.027 ns | 1.693 ns |         - |
+| HistogramWith7LabelsHotPath |         20 | 329.92 ns | 1.272 ns | 1.128 ns |         - |
+|            HistogramHotPath |         50 |  55.73 ns | 0.339 ns | 0.317 ns |         - |
+|  HistogramWith1LabelHotPath |         50 | 100.38 ns | 0.455 ns | 0.425 ns |         - |
+| HistogramWith3LabelsHotPath |         50 | 200.02 ns | 1.011 ns | 0.844 ns |         - |
+| HistogramWith5LabelsHotPath |         50 | 279.94 ns | 1.595 ns | 1.492 ns |         - |
+| HistogramWith7LabelsHotPath |         50 | 346.88 ns | 1.064 ns | 0.943 ns |         - |
+|            HistogramHotPath |        100 |  66.39 ns | 0.167 ns | 0.148 ns |         - |
+|  HistogramWith1LabelHotPath |        100 | 114.98 ns | 1.340 ns | 1.253 ns |         - |
+| HistogramWith3LabelsHotPath |        100 | 220.52 ns | 1.723 ns | 1.528 ns |         - |
+| HistogramWith5LabelsHotPath |        100 | 299.10 ns | 1.950 ns | 1.629 ns |         - |
+| HistogramWith7LabelsHotPath |        100 | 356.25 ns | 2.153 ns | 1.798 ns |         - |
 */
 
 namespace Benchmarks.Metrics
@@ -62,7 +62,7 @@ namespace Benchmarks.Metrics
     public class HistogramBenchmarks
     {
         private const int MaxValue = 1000;
-        private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
+        private Random random = new Random();
         private Histogram<long> histogram;
         private MeterProvider provider;
         private Meter meter;
@@ -108,58 +108,53 @@ namespace Benchmarks.Metrics
         [Benchmark]
         public void HistogramHotPath()
         {
-            var random = ThreadLocalRandom.Value;
-            this.histogram.Record(random.Next(MaxValue));
+            this.histogram.Record(this.random.Next(MaxValue));
         }
 
         [Benchmark]
         public void HistogramWith1LabelHotPath()
         {
-            var random = ThreadLocalRandom.Value;
-            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[random.Next(0, 2)]);
-            this.histogram.Record(random.Next(MaxValue), tag1);
+            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 2)]);
+            this.histogram.Record(this.random.Next(MaxValue), tag1);
         }
 
         [Benchmark]
         public void HistogramWith3LabelsHotPath()
         {
-            var random = ThreadLocalRandom.Value;
-            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[random.Next(0, 10)]);
-            var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[random.Next(0, 10)]);
-            var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[random.Next(0, 10)]);
-            this.histogram.Record(random.Next(MaxValue), tag1, tag2, tag3);
+            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
+            var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[this.random.Next(0, 10)]);
+            var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[this.random.Next(0, 10)]);
+            this.histogram.Record(this.random.Next(MaxValue), tag1, tag2, tag3);
         }
 
         [Benchmark]
         public void HistogramWith5LabelsHotPath()
         {
-            var random = ThreadLocalRandom.Value;
             var tags = new TagList
             {
-                { "DimName1", this.dimensionValues[random.Next(0, 2)] },
-                { "DimName2", this.dimensionValues[random.Next(0, 2)] },
-                { "DimName3", this.dimensionValues[random.Next(0, 5)] },
-                { "DimName4", this.dimensionValues[random.Next(0, 5)] },
-                { "DimName5", this.dimensionValues[random.Next(0, 10)] },
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[this.random.Next(0, 10)] },
             };
-            this.histogram.Record(random.Next(MaxValue), tags);
+            this.histogram.Record(this.random.Next(MaxValue), tags);
         }
 
         [Benchmark]
         public void HistogramWith7LabelsHotPath()
         {
-            var random = ThreadLocalRandom.Value;
             var tags = new TagList
             {
-                { "DimName1", this.dimensionValues[random.Next(0, 2)] },
-                { "DimName2", this.dimensionValues[random.Next(0, 2)] },
-                { "DimName3", this.dimensionValues[random.Next(0, 5)] },
-                { "DimName4", this.dimensionValues[random.Next(0, 5)] },
-                { "DimName5", this.dimensionValues[random.Next(0, 5)] },
-                { "DimName6", this.dimensionValues[random.Next(0, 2)] },
-                { "DimName7", this.dimensionValues[random.Next(0, 1)] },
+                { "DimName1", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
+                { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
+                { "DimName7", this.dimensionValues[this.random.Next(0, 1)] },
             };
-            this.histogram.Record(random.Next(MaxValue), tags);
+            this.histogram.Record(this.random.Next(MaxValue), tags);
         }
     }
 }
