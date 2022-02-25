@@ -6,6 +6,15 @@
   Supported values: `udp/thrift.compact` and `http/thrift.binary` defined
   in the [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/9a0a3300c6269c2837a1d7c9c5232ec816f63222/specification/sdk-environment-variables.md?plain=1#L129).
   ([#2914](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2914))
+* Change handling of `OTEL_EXPORTER_JAEGER_ENDPOINT` to require the path to
+  post. Previous versions of this library would append `/api/traces` to the
+  value specified in this variable, but now the application author must do so.
+  This change must also be made if you manually configure the
+  `JaegerExporterOptions` class - the `Endpoint` must now include the path.
+  For most environments, this will be `/api/traces`. The effective default
+  is still `http://localhost:14268/api/traces`. This was done to match
+  the clarified [specification](https://github.com/open-telemetry/opentelemetry-specification/pull/2333))
+  ([#2847](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2847))
 
 ## 1.2.0-rc2
 

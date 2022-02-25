@@ -22,7 +22,7 @@ using System.Threading;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Stores details about a metric data point.
+    /// Represents a metric data point.
     /// </summary>
     public struct MetricPoint
     {

@@ -21,6 +21,11 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// MetricReader implementation which collects metrics based on
+    /// a user-configurable time interval and passes the metrics to
+    /// the configured MetricExporter.
+    /// </summary>
     public class PeriodicExportingMetricReader : BaseExportingMetricReader
     {
         internal const int DefaultExportIntervalMilliseconds = 60000;
@@ -33,6 +38,12 @@ namespace OpenTelemetry.Metrics
         private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
         private bool disposed;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PeriodicExportingMetricReader"/> class.
+        /// </summary>
+        /// <param name="exporter">Exporter instance to export Metrics to.</param>
+        /// <param name="exportIntervalMilliseconds">The interval in milliseconds between two consecutive exports. The default value is 60000.</param>
+        /// <param name="exportTimeoutMilliseconds">How long the export can run before it is cancelled. The default value is 30000.</param>
         public PeriodicExportingMetricReader(
             BaseExporter<Metric> exporter,
             int exportIntervalMilliseconds = DefaultExportIntervalMilliseconds,
