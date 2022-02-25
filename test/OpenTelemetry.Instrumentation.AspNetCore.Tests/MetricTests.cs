@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 #if NETCOREAPP3_1
@@ -57,15 +56,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         public async Task RequestMetricIsCaptured()
         {
             var metricItems = new List<Metric>();
-            var metricExporter = new InMemoryExporter<Metric>(metricItems);
 
-            var metricReader = new BaseExportingMetricReader(metricExporter)
-            {
-                Temporality = AggregationTemporality.Cumulative,
-            };
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddAspNetCoreInstrumentation()
-                .AddReader(metricReader)
+                .AddInMemoryExporter(metricItems)
                 .Build();
 
             using (var client = this.factory.CreateClient())

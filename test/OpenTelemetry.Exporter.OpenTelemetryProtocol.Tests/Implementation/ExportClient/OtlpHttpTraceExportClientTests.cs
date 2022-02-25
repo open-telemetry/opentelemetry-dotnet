@@ -32,7 +32,7 @@ using OpenTelemetry.Trace;
 using Xunit;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
-namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.ExportClient
+namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
     public class OtlpHttpTraceExportClientTests
     {

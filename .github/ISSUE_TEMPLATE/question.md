@@ -6,15 +6,5 @@ labels: question
 
 # Question
 
-**Describe your environment.**
+Use [Github Discussions](https://github.com/open-telemetry/opentelemetry-dotnet/discussions/new).
 
-Describe any aspect of your environment relevant to the question.
-
-**What are you trying to achieve?**
-
-What did you expect to see?
-
-## Additional Context
-
-Add any other context about the problem here. If you followed an existing
-documentation, please share the link to it.
