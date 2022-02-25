@@ -114,6 +114,8 @@ OpenTelemetry.ReadOnlyTagCollection.GetEnumerator() -> OpenTelemetry.ReadOnlyTag
 OpenTelemetry.ReadOnlyTagCollection.ReadOnlyTagCollection() -> void
 OpenTelemetry.Resources.IResourceDetector
 OpenTelemetry.Resources.IResourceDetector.Detect() -> OpenTelemetry.Resources.Resource
+OpenTelemetry.SimpleLogRecordExportProcessor.BufferLogData.get -> bool
+OpenTelemetry.SimpleLogRecordExportProcessor.BufferLogData.set -> void
 OpenTelemetry.Trace.BatchExportActivityProcessorOptions
 OpenTelemetry.Trace.BatchExportActivityProcessorOptions.BatchExportActivityProcessorOptions() -> void
 override OpenTelemetry.BaseExportProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> bool
@@ -125,6 +127,7 @@ override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddInstrumentation<TInst
 override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddMeter(params string[] names) -> OpenTelemetry.Metrics.MeterProviderBuilder
 override OpenTelemetry.Metrics.PeriodicExportingMetricReader.Dispose(bool disposing) -> void
 override OpenTelemetry.Metrics.PeriodicExportingMetricReader.OnShutdown(int timeoutMilliseconds) -> bool
+override OpenTelemetry.SimpleLogRecordExportProcessor.OnEnd(OpenTelemetry.Logs.LogRecord data) -> void
 readonly OpenTelemetry.Metrics.BaseExportingMetricReader.exporter -> OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric>
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddReader(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, OpenTelemetry.Metrics.MetricReader reader) -> OpenTelemetry.Metrics.MeterProviderBuilder
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddView(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, string instrumentName, OpenTelemetry.Metrics.MetricStreamConfiguration metricStreamConfiguration) -> OpenTelemetry.Metrics.MeterProviderBuilder

@@ -27,7 +27,11 @@ namespace OpenTelemetry.Logs
             Guard.ThrowIfNull(loggerOptions);
             Guard.ThrowIfNull(exportedItems);
 
-            return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems)));
+            return loggerOptions.AddProcessor(
+                new SimpleLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems))
+                {
+                    BufferLogData = true,
+                });
         }
     }
 }

@@ -24,5 +24,27 @@ namespace OpenTelemetry
             : base(exporter)
         {
         }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether or not log data should be buffered.
+        /// </summary>
+        /// <remarks>
+        /// Note: Log state and scopes are only available during the lifecycle
+        /// of the log message being written. If you need to capture data to be
+        /// used later (for example in batching scenarios), set <see
+        /// cref="BufferLogData"/> to <see langword="true"/>.
+        /// </remarks>
+        public bool BufferLogData { get; set; }
+
+        /// <inheritdoc/>
+        public override void OnEnd(LogRecord data)
+        {
+            if (this.BufferLogData)
+            {
+                data.Buffer();
+            }
+
+            base.OnEnd(data);
+        }
     }
 }
