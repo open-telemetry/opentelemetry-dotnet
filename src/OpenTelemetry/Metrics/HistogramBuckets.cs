@@ -32,6 +32,8 @@ namespace OpenTelemetry.Metrics
 
         internal double SnapshotSum;
 
+        internal int UsingHistogram = 0;
+
         internal HistogramBuckets(double[] explicitBounds)
         {
             this.ExplicitBounds = explicitBounds;

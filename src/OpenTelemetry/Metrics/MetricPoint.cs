@@ -323,11 +323,20 @@ namespace OpenTelemetry.Metrics
                             }
                         }
 
-                        lock (this.histogramBuckets.LockObject)
+                        var sw = default(SpinWait);
+                        while (true)
                         {
-                            this.runningValue.AsLong++;
-                            this.histogramBuckets.RunningSum += number;
-                            this.histogramBuckets.RunningBucketCounts[i]++;
+                            if (Interlocked.Exchange(ref this.histogramBuckets.UsingHistogram, 1) == 0)
+                            {
+                                this.runningValue.AsLong++;
+                                this.histogramBuckets.RunningSum += number;
+                                this.histogramBuckets.RunningBucketCounts[i]++;
+
+                                this.histogramBuckets.UsingHistogram = 0;
+                                break;
+                            }
+
+                            sw.SpinOnce();
                         }
 
                         break;
