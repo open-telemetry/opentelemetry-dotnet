@@ -99,6 +99,8 @@ namespace OpenTelemetry.Metrics
                     var meterName = instrument.Meter.Name;
                     var metricName = metricStreamConfig?.Name ?? instrument.Name;
                     var metricStreamName = $"{meterName}.{metricName}";
+                    var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
+                    var instrumentIdentity = new InstrumentIdentity(meterName, metricName, instrument.Unit, metricDescription, instrument.GetType());
 
                     if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricName))
                     {
@@ -108,6 +110,11 @@ namespace OpenTelemetry.Metrics
                             "Metric name is invalid.",
                             "The name must comply with the OpenTelemetry specification.");
 
+                        continue;
+                    }
+
+                    if (this.instrumentIdentityToMetric.TryGetValue(instrumentIdentity, out var existingMetric))
+                    {
                         continue;
                     }
 
@@ -131,12 +138,12 @@ namespace OpenTelemetry.Metrics
                     else
                     {
                         Metric metric;
-                        var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
                         string[] tagKeysInteresting = metricStreamConfig?.TagKeys;
                         double[] histogramBucketBounds = (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfig
                             && histogramConfig.Boundaries != null) ? histogramConfig.Boundaries : null;
                         metric = new Metric(instrument, this.Temporality, metricName, metricDescription, this.maxMetricPointsPerMetricStream, histogramBucketBounds, tagKeysInteresting);
 
+                        this.instrumentIdentityToMetric[instrumentIdentity] = metric;
                         this.metrics[index] = metric;
                         metrics.Add(metric);
                         this.metricStreamNames.Add(metricStreamName);
