@@ -114,6 +114,7 @@ OpenTelemetry.ReadOnlyTagCollection.GetEnumerator() -> OpenTelemetry.ReadOnlyTag
 OpenTelemetry.ReadOnlyTagCollection.ReadOnlyTagCollection() -> void
 OpenTelemetry.Resources.IResourceDetector
 OpenTelemetry.Resources.IResourceDetector.Detect() -> OpenTelemetry.Resources.Resource
+OpenTelemetry.Resources.Resource.Resource(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes) -> void
 OpenTelemetry.Trace.BatchExportActivityProcessorOptions
 OpenTelemetry.Trace.BatchExportActivityProcessorOptions.BatchExportActivityProcessorOptions() -> void
 override OpenTelemetry.BaseExportProcessor<T>.OnForceFlush(int timeoutMilliseconds) -> bool
