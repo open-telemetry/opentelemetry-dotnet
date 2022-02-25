@@ -28,7 +28,6 @@ internal class MyResourceDetector : IResourceDetector
             new KeyValuePair<string, object>("key", "val"),
         };
 
-        Resource resource = new(attributes);
-        return resource;
+        return new(attributes);
     }
 }
