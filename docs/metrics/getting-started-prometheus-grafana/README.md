@@ -6,7 +6,7 @@
   - [Configuration](#configuration)
   - [Start Prometheus](#start-prometheus)
   - [View results in Prometheus](#view-results-in-prometheus)
-  - [Explore metrics using Grafana](#explore-metrics-using-grafana)
+- [Explore metrics using Grafana](#explore-metrics-using-grafana)
 - [Learn more](#learn-more)
 
 ## Export metrics from the application
@@ -141,7 +141,7 @@ Now we know how to configure Prometheus server and deploy OpenTelemetry
 `PrometheusExporter` to export our metrics. Next, we are going to explore a tool
 called Grafana, which has powerful visualizations for the metrics.
 
-### Explore metrics using Grafana
+## Explore metrics using Grafana
 
 [Install Grafana](https://grafana.com/docs/grafana/latest/installation/).
 
