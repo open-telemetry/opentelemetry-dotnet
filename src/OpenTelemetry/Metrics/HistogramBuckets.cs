@@ -14,81 +14,91 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Metrics
+using System.Linq;
+
+namespace OpenTelemetry.Metrics;
+
+/// <summary>
+/// A collection of <see cref="HistogramBucket"/>s associated with a histogram metric type.
+/// </summary>
+// Note: Does not implement IEnumerable<> to prevent accidental boxing.
+public class HistogramBuckets
 {
-    /// <summary>
-    /// A collection of <see cref="HistogramBucket"/>s associated with a histogram metric type.
-    /// </summary>
-    // Note: Does not implement IEnumerable<> to prevent accidental boxing.
-    public class HistogramBuckets
+    internal readonly double[] ExplicitBounds;
+
+    internal readonly long[] RunningBucketCounts;
+
+    internal readonly long[] SnapshotBucketCounts;
+
+    internal double RunningSum;
+
+    internal double SnapshotSum;
+
+    internal HistogramBuckets(double[] explicitBounds)
     {
-        internal readonly double[] ExplicitBounds;
-
-        internal readonly long[] RunningBucketCounts;
-
-        internal readonly long[] SnapshotBucketCounts;
-
-        internal double RunningSum;
-
-        internal double SnapshotSum;
-
-        internal HistogramBuckets(double[] explicitBounds)
+        this.ExplicitBounds = explicitBounds;
+        if (explicitBounds != null)
         {
-            this.ExplicitBounds = explicitBounds;
-            this.RunningBucketCounts = explicitBounds != null ? new long[explicitBounds.Length + 1] : null;
-            this.SnapshotBucketCounts = explicitBounds != null ? new long[explicitBounds.Length + 1] : new long[0];
+            var numBuckets = explicitBounds.Where(x => !double.IsInfinity(x)).Count() + 1;
+            this.RunningBucketCounts = new long[numBuckets];
+            this.SnapshotBucketCounts = new long[numBuckets];
+        }
+        else
+        {
+            this.RunningBucketCounts = null;
+            this.SnapshotBucketCounts = new long[0];
+        }
+    }
+
+    internal object LockObject => this.SnapshotBucketCounts;
+
+    public Enumerator GetEnumerator() => new(this);
+
+    /// <summary>
+    /// Enumerates the elements of a <see cref="HistogramBuckets"/>.
+    /// </summary>
+    // Note: Does not implement IEnumerator<> to prevent accidental boxing.
+    public struct Enumerator
+    {
+        private readonly int numberOfBuckets;
+        private readonly HistogramBuckets histogramMeasurements;
+        private int index;
+
+        internal Enumerator(HistogramBuckets histogramMeasurements)
+        {
+            this.histogramMeasurements = histogramMeasurements;
+            this.index = 0;
+            this.Current = default;
+            this.numberOfBuckets = histogramMeasurements.SnapshotBucketCounts.Length;
         }
 
-        internal object LockObject => this.SnapshotBucketCounts;
-
-        public Enumerator GetEnumerator() => new(this);
+        /// <summary>
+        /// Gets the <see cref="HistogramBucket"/> at the current position of the enumerator.
+        /// </summary>
+        public HistogramBucket Current { get; private set; }
 
         /// <summary>
-        /// Enumerates the elements of a <see cref="HistogramBuckets"/>.
+        /// Advances the enumerator to the next element of the <see
+        /// cref="HistogramBuckets"/>.
         /// </summary>
-        // Note: Does not implement IEnumerator<> to prevent accidental boxing.
-        public struct Enumerator
+        /// <returns><see langword="true"/> if the enumerator was
+        /// successfully advanced to the next element; <see
+        /// langword="false"/> if the enumerator has passed the end of the
+        /// collection.</returns>
+        public bool MoveNext()
         {
-            private readonly int numberOfBuckets;
-            private readonly HistogramBuckets histogramMeasurements;
-            private int index;
-
-            internal Enumerator(HistogramBuckets histogramMeasurements)
+            if (this.index < this.numberOfBuckets)
             {
-                this.histogramMeasurements = histogramMeasurements;
-                this.index = 0;
-                this.Current = default;
-                this.numberOfBuckets = histogramMeasurements.SnapshotBucketCounts.Length;
+                double explicitBound = this.index < this.numberOfBuckets - 1
+                    ? this.histogramMeasurements.ExplicitBounds[this.index]
+                    : double.PositiveInfinity;
+                long bucketCount = this.histogramMeasurements.SnapshotBucketCounts[this.index];
+                this.Current = new HistogramBucket(explicitBound, bucketCount);
+                this.index++;
+                return true;
             }
 
-            /// <summary>
-            /// Gets the <see cref="HistogramBucket"/> at the current position of the enumerator.
-            /// </summary>
-            public HistogramBucket Current { get; private set; }
-
-            /// <summary>
-            /// Advances the enumerator to the next element of the <see
-            /// cref="HistogramBuckets"/>.
-            /// </summary>
-            /// <returns><see langword="true"/> if the enumerator was
-            /// successfully advanced to the next element; <see
-            /// langword="false"/> if the enumerator has passed the end of the
-            /// collection.</returns>
-            public bool MoveNext()
-            {
-                if (this.index < this.numberOfBuckets)
-                {
-                    double explicitBound = this.index < this.numberOfBuckets - 1
-                        ? this.histogramMeasurements.ExplicitBounds[this.index]
-                        : double.PositiveInfinity;
-                    long bucketCount = this.histogramMeasurements.SnapshotBucketCounts[this.index];
-                    this.Current = new HistogramBucket(explicitBound, bucketCount);
-                    this.index++;
-                    return true;
-                }
-
-                return false;
-            }
+            return false;
         }
     }
 }
