@@ -219,31 +219,17 @@ namespace OpenTelemetry.Metrics
             return null;
         }
 
-        internal static bool HasValidHistogramBoundaries(double[] values)
-        {
-            for (int i = 0; i < values.Length; i++)
-            {
-                if (double.IsNaN(values[i]) || (i > 0 && values[i] <= values[i - 1]))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        internal static bool CleanHistogramBounds(MetricStreamConfiguration metricStreamConfig, Action onErrorFunction)
+        internal static bool CleanHistogramBounds(MetricStreamConfiguration metricStreamConfig, Action onInvalidFunction)
         {
             if (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfiguration)
             {
-                // Validate histogram bounds
                 if (histogramConfiguration.Boundaries != null)
                 {
                     if (histogramConfiguration.Boundaries.Length > 0)
                     {
                         if (!HasValidHistogramBoundaries(histogramConfiguration.Boundaries))
                         {
-                            onErrorFunction();
+                            onInvalidFunction();
                             return false;
                         }
 
@@ -261,6 +247,19 @@ namespace OpenTelemetry.Metrics
                 {
                     // Use default value when bounds are null
                     histogramConfiguration.Boundaries = Metric.DefaultHistogramBounds;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool HasValidHistogramBoundaries(double[] values)
+        {
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (double.IsNaN(values[i]) || (i > 0 && values[i] <= values[i - 1]))
+                {
+                    return false;
                 }
             }
 
