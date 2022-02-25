@@ -41,7 +41,7 @@ public partial class Program
         StressMeter.CreateObservableGauge("Process.VirtualMemorySize64", () => process.VirtualMemorySize64);
     }
 
-    public static void Stress(int concurrency = 0, int prometheusPort = 0)
+    public static void Stress(Action run, int concurrency = 0, int prometheusPort = 0)
     {
 #if DEBUG
         Console.WriteLine("***WARNING*** The current build is DEBUG which may affect timing!");
@@ -164,7 +164,7 @@ public partial class Program
                     statistics[i] = 0;
                     while (bContinue)
                     {
-                        Run();
+                        run();
                         statistics[i]++;
                     }
                 });
