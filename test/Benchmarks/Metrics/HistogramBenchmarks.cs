@@ -63,7 +63,6 @@ namespace Benchmarks.Metrics
     {
         private const int MaxValue = 1000;
         private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
-        private static readonly Random Random = ThreadLocalRandom.Value;
         private Histogram<long> histogram;
         private MeterProvider provider;
         private Meter meter;
@@ -109,53 +108,58 @@ namespace Benchmarks.Metrics
         [Benchmark]
         public void HistogramHotPath()
         {
-            this.histogram.Record(Random.Next(MaxValue));
+            var random = ThreadLocalRandom.Value;
+            this.histogram.Record(random.Next(MaxValue));
         }
 
         [Benchmark]
         public void HistogramWith1LabelHotPath()
         {
-            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[Random.Next(0, 2)]);
-            this.histogram.Record(Random.Next(MaxValue), tag1);
+            var random = ThreadLocalRandom.Value;
+            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[random.Next(0, 2)]);
+            this.histogram.Record(random.Next(MaxValue), tag1);
         }
 
         [Benchmark]
         public void HistogramWith3LabelsHotPath()
         {
-            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[Random.Next(0, 10)]);
-            var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[Random.Next(0, 10)]);
-            var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[Random.Next(0, 10)]);
-            this.histogram.Record(Random.Next(MaxValue), tag1, tag2, tag3);
+            var random = ThreadLocalRandom.Value;
+            var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[random.Next(0, 10)]);
+            var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[random.Next(0, 10)]);
+            var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[random.Next(0, 10)]);
+            this.histogram.Record(random.Next(MaxValue), tag1, tag2, tag3);
         }
 
         [Benchmark]
         public void HistogramWith5LabelsHotPath()
         {
+            var random = ThreadLocalRandom.Value;
             var tags = new TagList
             {
-                { "DimName1", this.dimensionValues[Random.Next(0, 2)] },
-                { "DimName2", this.dimensionValues[Random.Next(0, 2)] },
-                { "DimName3", this.dimensionValues[Random.Next(0, 5)] },
-                { "DimName4", this.dimensionValues[Random.Next(0, 5)] },
-                { "DimName5", this.dimensionValues[Random.Next(0, 10)] },
+                { "DimName1", this.dimensionValues[random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[random.Next(0, 10)] },
             };
-            this.histogram.Record(Random.Next(MaxValue), tags);
+            this.histogram.Record(random.Next(MaxValue), tags);
         }
 
         [Benchmark]
         public void HistogramWith7LabelsHotPath()
         {
+            var random = ThreadLocalRandom.Value;
             var tags = new TagList
             {
-                { "DimName1", this.dimensionValues[Random.Next(0, 2)] },
-                { "DimName2", this.dimensionValues[Random.Next(0, 2)] },
-                { "DimName3", this.dimensionValues[Random.Next(0, 5)] },
-                { "DimName4", this.dimensionValues[Random.Next(0, 5)] },
-                { "DimName5", this.dimensionValues[Random.Next(0, 5)] },
-                { "DimName6", this.dimensionValues[Random.Next(0, 2)] },
-                { "DimName7", this.dimensionValues[Random.Next(0, 1)] },
+                { "DimName1", this.dimensionValues[random.Next(0, 2)] },
+                { "DimName2", this.dimensionValues[random.Next(0, 2)] },
+                { "DimName3", this.dimensionValues[random.Next(0, 5)] },
+                { "DimName4", this.dimensionValues[random.Next(0, 5)] },
+                { "DimName5", this.dimensionValues[random.Next(0, 5)] },
+                { "DimName6", this.dimensionValues[random.Next(0, 2)] },
+                { "DimName7", this.dimensionValues[random.Next(0, 1)] },
             };
-            this.histogram.Record(Random.Next(MaxValue), tags);
+            this.histogram.Record(random.Next(MaxValue), tags);
         }
     }
 }
