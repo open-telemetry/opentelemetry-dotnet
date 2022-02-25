@@ -25,7 +25,7 @@ dotnet run
 Add a reference to [Prometheus
 Exporter](../../../src/OpenTelemetry.Exporter.Prometheus/README.md):
 
-```shell
+```sh
 dotnet add package OpenTelemetry.Exporter.Prometheus --version 1.2.0-rc2
 ```
 
@@ -158,7 +158,7 @@ on the panel at the left hand side, and click on Prometheus.
 Type in the default endpoint of Prometheus as suggested by the UI
 as the value for the URI.
 
-```
+```console
 http://localhost:9090
 ```
 
