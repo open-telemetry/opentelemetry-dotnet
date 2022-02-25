@@ -145,43 +145,29 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(description ?? string.Empty, metric.Description);
         }
 
-        [Theory]
-        [InlineData(AggregationTemporality.Cumulative, true)]
-        [InlineData(AggregationTemporality.Cumulative, false)]
-        [InlineData(AggregationTemporality.Delta, true)]
-        [InlineData(AggregationTemporality.Delta, false)]
-        public void DuplicateInstrumentNamesFromSameMeterAreNotAllowed(AggregationTemporality temporality, bool hasView)
+        [Fact]
+        public void DuplicateInstrumentRegistration_NoViews_IdenticalInstruments()
         {
             var exportedItems = new List<Metric>();
 
-            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
-                {
-                    metricReaderOptions.Temporality = temporality;
-                });
-
-            if (hasView)
-            {
-                meterProviderBuilder.AddView("name1", new MetricStreamConfiguration() { Description = "description" });
-            }
+                .AddInMemoryExporter(exportedItems);
 
             using var meterProvider = meterProviderBuilder.Build();
 
-            var counterLong = meter.CreateCounter<long>("name1");
-            var anotherCounterSameName = meter.CreateCounter<long>("name1");
+            var instrument = meter.CreateCounter<long>("instrumentName", "instrumentUnit", "instrumentDescription");
+            var duplicateInstrument = meter.CreateCounter<long>("instrumentName", "instrumentUnit", "instrumentDescription");
 
-            counterLong.Add(10);
-            anotherCounterSameName.Add(20);
-            counterLong.Add(10);
-            anotherCounterSameName.Add(20);
+            instrument.Add(10);
+            duplicateInstrument.Add(20);
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Single(exportedItems);
 
             var metric = exportedItems[0];
-            Assert.Equal("name1", metric.Name);
+            Assert.Equal("instrumentName", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
             foreach (ref readonly var mp in metric.GetMetricPoints())
             {
@@ -190,7 +176,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             Assert.Single(metricPoints);
             var metricPoint1 = metricPoints[0];
-            Assert.Equal(20, metricPoint1.GetSumLong());
+            Assert.Equal(30, metricPoint1.GetSumLong());
         }
 
         [Theory]
