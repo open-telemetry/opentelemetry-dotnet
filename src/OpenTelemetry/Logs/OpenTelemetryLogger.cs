@@ -88,7 +88,7 @@ namespace OpenTelemetry.Logs
             }
             else
             {
-                return new List<KeyValuePair<string, object>>
+                return new LoggerStateCopy
                 {
                     new KeyValuePair<string, object>(string.Empty, state),
                 };
@@ -97,6 +97,11 @@ namespace OpenTelemetry.Logs
 
         internal class LoggerStateCopy : List<KeyValuePair<string, object>>
         {
+            public LoggerStateCopy()
+                : base(1)
+            {
+            }
+
             public LoggerStateCopy(IEnumerable<KeyValuePair<string, object>> stateValues)
                 : base(stateValues)
             {
