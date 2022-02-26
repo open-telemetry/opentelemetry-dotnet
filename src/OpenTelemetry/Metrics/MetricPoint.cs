@@ -328,9 +328,12 @@ namespace OpenTelemetry.Metrics
                         {
                             if (Interlocked.Exchange(ref this.histogramBuckets.UsingHistogram, 1) == 0)
                             {
-                                this.runningValue.AsLong++;
-                                this.histogramBuckets.RunningSum += number;
-                                this.histogramBuckets.RunningBucketCounts[i]++;
+                                unchecked
+                                {
+                                    this.runningValue.AsLong++;
+                                    this.histogramBuckets.RunningSum += number;
+                                    this.histogramBuckets.RunningBucketCounts[i]++;
+                                }
 
                                 this.histogramBuckets.UsingHistogram = 0;
                                 break;
