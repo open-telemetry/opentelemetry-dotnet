@@ -27,11 +27,22 @@ namespace OpenTelemetry.Logs
             Guard.ThrowIfNull(loggerOptions);
             Guard.ThrowIfNull(exportedItems);
 
-            return loggerOptions.AddProcessor(
-                new SimpleLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems))
-                {
-                    BufferLogData = true,
-                });
+            return loggerOptions.AddProcessor(new BufferingSimpleLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems)));
+        }
+
+        private sealed class BufferingSimpleLogRecordExportProcessor : SimpleExportProcessor<LogRecord>
+        {
+            public BufferingSimpleLogRecordExportProcessor(BaseExporter<LogRecord> exporter)
+                : base(exporter)
+            {
+            }
+
+            public override void OnEnd(LogRecord data)
+            {
+                data.Buffer();
+
+                base.OnEnd(data);
+            }
         }
     }
 }

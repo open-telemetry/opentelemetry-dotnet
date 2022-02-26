@@ -101,9 +101,8 @@ namespace OpenTelemetry.Logs
         /// Note: StateValues are only available during the lifecycle of the log
         /// message being written. If you need to capture state to be used later
         /// (for example in batching scenarios), use <see
-        /// cref="BatchLogRecordExportProcessor"/> or set <see
-        /// cref="SimpleLogRecordExportProcessor.BufferLogData"/> to <see
-        /// langword="true"/>.
+        /// cref="BatchLogRecordExportProcessor"/> which will automatically
+        /// buffer log data.
         /// </remarks>
         public IReadOnlyList<KeyValuePair<string, object>> StateValues => this.bufferedStateValues ?? this.stateValues;
 
@@ -123,9 +122,8 @@ namespace OpenTelemetry.Logs
         /// Note: Scopes are only available during the lifecycle of the log
         /// message being written. If you need to capture scopes to be used
         /// later (for example in batching scenarios), use <see
-        /// cref="BatchLogRecordExportProcessor"/> or set <see
-        /// cref="SimpleLogRecordExportProcessor.BufferLogData"/> to <see
-        /// langword="true"/>.
+        /// cref="BatchLogRecordExportProcessor"/> which will automatically
+        /// buffer log data.
         /// </remarks>
         /// <typeparam name="TState">State.</typeparam>
         /// <param name="callback">The callback to be executed for every scope object.</param>
