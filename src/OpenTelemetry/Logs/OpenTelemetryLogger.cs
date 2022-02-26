@@ -84,7 +84,7 @@ namespace OpenTelemetry.Logs
             }
             else if (state is IEnumerable<KeyValuePair<string, object>> stateValues)
             {
-                return new List<KeyValuePair<string, object>>(stateValues);
+                return new LoggerStateCopy(stateValues);
             }
             else
             {
@@ -92,6 +92,14 @@ namespace OpenTelemetry.Logs
                 {
                     new KeyValuePair<string, object>(string.Empty, state),
                 };
+            }
+        }
+
+        internal class LoggerStateCopy : List<KeyValuePair<string, object>>
+        {
+            public LoggerStateCopy(IEnumerable<KeyValuePair<string, object>> stateValues)
+                : base(stateValues)
+            {
             }
         }
     }

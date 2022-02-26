@@ -33,7 +33,7 @@ namespace OpenTelemetry.Logs
 
         private IReadOnlyList<KeyValuePair<string, object>> stateValues;
         private List<object> bufferedScopes;
-        private List<KeyValuePair<string, object>> bufferedStateValues;
+        private IReadOnlyList<KeyValuePair<string, object>> bufferedStateValues;
 
         internal LogRecord(
             IExternalScopeProvider scopeProvider,
@@ -159,7 +159,27 @@ namespace OpenTelemetry.Logs
                 // See:
                 // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2905
 
-                this.bufferedStateValues = new(this.stateValues);
+                if (this.stateValues is OpenTelemetryLogger.LoggerStateCopy loggerStateCopy)
+                {
+                    // In this case state was already copied/buffered.
+                    this.bufferedStateValues = loggerStateCopy;
+                }
+                else if (this.stateValues is ICollection<KeyValuePair<string, object>> collection)
+                {
+                    KeyValuePair<string, object>[] bufferedStateValues = new KeyValuePair<string, object>[this.stateValues.Count];
+                    collection.CopyTo(bufferedStateValues, 0);
+                    this.bufferedStateValues = bufferedStateValues;
+                }
+                else
+                {
+                    KeyValuePair<string, object>[] bufferedStateValues = new KeyValuePair<string, object>[this.stateValues.Count];
+                    for (int i = 0; i < bufferedStateValues.Length; i++)
+                    {
+                        bufferedStateValues[i] = this.stateValues[i];
+                    }
+
+                    this.bufferedStateValues = bufferedStateValues;
+                }
             }
 
             if (this.ScopeProvider != null && this.bufferedScopes == null)
