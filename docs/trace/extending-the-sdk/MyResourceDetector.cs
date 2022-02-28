@@ -20,14 +20,36 @@ using OpenTelemetry.Resources;
 
 internal class MyResourceDetector : IResourceDetector
 {
+    public const string EnVarkey = "myEnVarkey";
+
     public Resource Detect()
     {
-        Console.WriteLine("Implement customized detection behavior for MyResourceDector:");
-        var attributes = new List<KeyValuePair<string, object>>
+        var resource = Resource.Empty;
+        if (this.LoadString(EnVarkey, out string envAttributeVal))
         {
-            new KeyValuePair<string, object>("key", "val"),
-        };
+            resource = new Resource(new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>(EnVarkey, envAttributeVal),
+            });
+        }
 
-        return new(attributes);
+        return resource;
+    }
+
+    internal bool LoadString(string envVarKey, out string result)
+    {
+        result = null;
+
+        try
+        {
+            result = Environment.GetEnvironmentVariable(envVarKey);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Exception: {0}.", ex);
+            return false;
+        }
+
+        return !string.IsNullOrEmpty(result);
     }
 }

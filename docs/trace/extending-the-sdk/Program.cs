@@ -16,6 +16,7 @@
 
 using System.Diagnostics;
 using OpenTelemetry;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 public class Program
@@ -27,6 +28,7 @@ public class Program
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new MySampler())
             .AddSource("OTel.Demo")
+            .SetResourceBuilder(ResourceBuilder.CreateEmpty().AddMyResourceDetector())
             .AddProcessor(new MyProcessor("ProcessorA"))
             .AddProcessor(new MyProcessor("ProcessorB"))
             .AddProcessor(new SimpleActivityExportProcessor(new MyExporter("ExporterX")))
