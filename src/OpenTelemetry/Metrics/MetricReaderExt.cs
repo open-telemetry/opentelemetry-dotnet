@@ -50,7 +50,7 @@ namespace OpenTelemetry.Metrics
 
                 if (this.metricStreamNames.Contains(metricStreamName))
                 {
-                    OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Metric name conflicting with existing name.", "Either change the name of the instrument or change name using View.");
+                    OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(metricName, instrument.Meter.Name, "Metric instrument has the same name as an existing one but differs by description, unit, or instrument type.", "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
                 }
 
                 var index = ++this.metricIndex;
@@ -118,7 +118,7 @@ namespace OpenTelemetry.Metrics
 
                     if (this.metricStreamNames.Contains(metricStreamName))
                     {
-                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Metric name conflicting with existing name.", "Either change the name of the instrument or change name using MeterProviderBuilder.AddView.");
+                        OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(metricName, instrument.Meter.Name, "Metric instrument has the same name as an existing one but differs by description, unit, or instrument type.", "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
                     }
 
                     if (metricStreamConfig?.Aggregation == Aggregation.Drop)
