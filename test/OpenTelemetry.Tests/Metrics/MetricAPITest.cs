@@ -178,6 +178,238 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(30, metricPoint1.GetSumLong());
         }
 
+        [Fact]
+        public void DuplicateInstrumentRegistration_NoViews_DuplicateInstruments_DifferentDescription()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var instrument = meter.CreateCounter<long>("instrumentName", "instrumentUnit", "instrumentDescription1");
+            var duplicateInstrument = meter.CreateCounter<long>("instrumentName", "instrumentUnit", "instrumentDescription2");
+
+            instrument.Add(10);
+            duplicateInstrument.Add(20);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Equal(2, exportedItems.Count);
+
+            var metric1 = exportedItems[0];
+            var metric2 = exportedItems[1];
+            Assert.Equal("instrumentDescription1", metric1.Description);
+            Assert.Equal("instrumentDescription2", metric2.Description);
+
+            List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric1.GetMetricPoints())
+            {
+                metric1MetricPoints.Add(mp);
+            }
+
+            Assert.Single(metric1MetricPoints);
+            var metricPoint1 = metric1MetricPoints[0];
+            Assert.Equal(10, metricPoint1.GetSumLong());
+
+            List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric2.GetMetricPoints())
+            {
+                metric2MetricPoints.Add(mp);
+            }
+
+            Assert.Single(metric2MetricPoints);
+            var metricPoint2 = metric2MetricPoints[0];
+            Assert.Equal(20, metricPoint2.GetSumLong());
+        }
+
+        [Fact]
+        public void DuplicateInstrumentRegistration_NoViews_DuplicateInstruments_DifferentUnit()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var instrument = meter.CreateCounter<long>("instrumentName", "instrumentUnit1", "instrumentDescription");
+            var duplicateInstrument = meter.CreateCounter<long>("instrumentName", "instrumentUnit2", "instrumentDescription");
+
+            instrument.Add(10);
+            duplicateInstrument.Add(20);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Equal(2, exportedItems.Count);
+
+            var metric1 = exportedItems[0];
+            var metric2 = exportedItems[1];
+            Assert.Equal("instrumentUnit1", metric1.Unit);
+            Assert.Equal("instrumentUnit2", metric2.Unit);
+
+            List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric1.GetMetricPoints())
+            {
+                metric1MetricPoints.Add(mp);
+            }
+
+            Assert.Single(metric1MetricPoints);
+            var metricPoint1 = metric1MetricPoints[0];
+            Assert.Equal(10, metricPoint1.GetSumLong());
+
+            List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric2.GetMetricPoints())
+            {
+                metric2MetricPoints.Add(mp);
+            }
+
+            Assert.Single(metric2MetricPoints);
+            var metricPoint2 = metric2MetricPoints[0];
+            Assert.Equal(20, metricPoint2.GetSumLong());
+        }
+
+        [Fact]
+        public void DuplicateInstrumentRegistration_NoViews_DuplicateInstruments_DifferentDataType()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var instrument = meter.CreateCounter<long>("instrumentName", "instrumentUnit", "instrumentDescription");
+            var duplicateInstrument = meter.CreateCounter<double>("instrumentName", "instrumentUnit", "instrumentDescription");
+
+            instrument.Add(10);
+            duplicateInstrument.Add(20);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Equal(2, exportedItems.Count);
+
+            var metric1 = exportedItems[0];
+            var metric2 = exportedItems[1];
+
+            List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric1.GetMetricPoints())
+            {
+                metric1MetricPoints.Add(mp);
+            }
+
+            Assert.Single(metric1MetricPoints);
+            var metricPoint1 = metric1MetricPoints[0];
+            Assert.Equal(10, metricPoint1.GetSumLong());
+
+            List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric2.GetMetricPoints())
+            {
+                metric2MetricPoints.Add(mp);
+            }
+
+            Assert.Single(metric2MetricPoints);
+            var metricPoint2 = metric2MetricPoints[0];
+            Assert.Equal(20D, metricPoint2.GetSumDouble());
+        }
+
+        [Fact]
+        public void DuplicateInstrumentRegistration_NoViews_DuplicateInstruments_DifferentInstrumentType()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var instrument = meter.CreateCounter<long>("instrumentName", "instrumentUnit", "instrumentDescription");
+            var duplicateInstrument = meter.CreateHistogram<long>("instrumentName", "instrumentUnit", "instrumentDescription");
+
+            instrument.Add(10);
+            duplicateInstrument.Record(20);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Equal(2, exportedItems.Count);
+
+            var metric1 = exportedItems[0];
+            var metric2 = exportedItems[1];
+
+            List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric1.GetMetricPoints())
+            {
+                metric1MetricPoints.Add(mp);
+            }
+
+            Assert.Single(metric1MetricPoints);
+            var metricPoint1 = metric1MetricPoints[0];
+            Assert.Equal(10, metricPoint1.GetSumLong());
+
+            List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric2.GetMetricPoints())
+            {
+                metric2MetricPoints.Add(mp);
+            }
+
+            Assert.Single(metric2MetricPoints);
+            var metricPoint2 = metric2MetricPoints[0];
+            Assert.Equal(1, metricPoint2.GetHistogramCount());
+            Assert.Equal(20D, metricPoint2.GetHistogramSum());
+        }
+
+        [Fact]
+        public void DuplicateInstrumentRegistration_WithViews_DuplicateInstruments_DifferentDescription()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView("instrumentName", new MetricStreamConfiguration { Description = "newDescription1" })
+                .AddView("instrumentName", new MetricStreamConfiguration { Description = "newDescription2" })
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var instrument = meter.CreateCounter<long>("instrumentName", "instrumentUnit", "instrumentDescription");
+
+            instrument.Add(10);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Equal(2, exportedItems.Count);
+
+            var metric1 = exportedItems[0];
+            var metric2 = exportedItems[1];
+            Assert.Equal("newDescription1", metric1.Description);
+            Assert.Equal("newDescription2", metric2.Description);
+
+            List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric1.GetMetricPoints())
+            {
+                metric1MetricPoints.Add(mp);
+            }
+
+            Assert.Single(metric1MetricPoints);
+            var metricPoint1 = metric1MetricPoints[0];
+            Assert.Equal(10, metricPoint1.GetSumLong());
+
+            List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric2.GetMetricPoints())
+            {
+                metric2MetricPoints.Add(mp);
+            }
+
+            Assert.Single(metric2MetricPoints);
+            var metricPoint2 = metric2MetricPoints[0];
+            Assert.Equal(10, metricPoint2.GetSumLong());
+        }
+
         [Theory]
         [InlineData(AggregationTemporality.Cumulative, true)]
         [InlineData(AggregationTemporality.Cumulative, false)]
