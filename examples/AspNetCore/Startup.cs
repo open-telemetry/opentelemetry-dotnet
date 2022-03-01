@@ -124,6 +124,7 @@ namespace Examples.AspNetCore
             services.AddOpenTelemetryMetrics(builder =>
             {
                 builder.AddAspNetCoreInstrumentation();
+                builder.AddHttpClientInstrumentation();
 
                 switch (metricsExporter)
                 {
