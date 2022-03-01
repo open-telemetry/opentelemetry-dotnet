@@ -20,14 +20,7 @@ internal static class MyResourceDectectorExtensions
 {
     internal static ResourceBuilder AddMyResourceDetector(this ResourceBuilder resourceBuilder)
     {
-        var myResourceDetector = new MyResourceDetector();
-        var resource = myResourceDetector.Detect();
-
-        if (resource != null)
-        {
-            resourceBuilder.AddDetector(myResourceDetector);
-        }
-
+        resourceBuilder.AddDetector(new MyResourceDetector());
         return resourceBuilder;
     }
 }
