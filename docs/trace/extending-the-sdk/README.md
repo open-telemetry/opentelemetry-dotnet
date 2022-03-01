@@ -4,7 +4,7 @@
 * [Building your own instrumentation library](#instrumentation-library)
 * [Building your own processor](#processor)
 * [Building your own sampler](#sampler)
-* [Building your own resourceDetector](#resourceDetector)
+* [Building your own resource detector](#resourcedetector)
 * [References](#references)
 
 ## Exporter
