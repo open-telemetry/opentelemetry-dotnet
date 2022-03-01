@@ -28,7 +28,7 @@ public class Program
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new MySampler())
             .AddSource("OTel.Demo")
-            .SetResourceBuilder(ResourceBuilder.CreateEmpty().AddMyResourceDetector())
+            .SetResourceBuilder(ResourceBuilder.CreateEmpty().AddDetector(new MyResourceDetector()))
             .AddProcessor(new MyProcessor("ProcessorA"))
             .AddProcessor(new MyProcessor("ProcessorB"))
             .AddProcessor(new SimpleActivityExportProcessor(new MyExporter("ExporterX")))
