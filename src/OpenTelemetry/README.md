@@ -335,7 +335,6 @@ While it is possible to view these logs using tools such as
 etc., this SDK also ships a [self-diagnostics](#self-diagnostics) feature, which
 helps troubleshooting.
 
-
 ## Self-diagnostics
 
 OpenTelemetry SDK ships with built-in "self-diagnostics" feature. This feature,
