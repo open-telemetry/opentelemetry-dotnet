@@ -14,42 +14,19 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using OpenTelemetry.Resources;
 
 internal class MyResourceDetector : IResourceDetector
 {
-    public const string EnVarkey = "myEnVarkey";
 
     public Resource Detect()
     {
-        var resource = Resource.Empty;
-        if (this.LoadString(EnVarkey, out string envAttributeVal))
+        var attributes = new List<KeyValuePair<string, object>>
         {
-            resource = new Resource(new List<KeyValuePair<string, object>>
-            {
-                new KeyValuePair<string, object>(EnVarkey, envAttributeVal),
-            });
-        }
+            new KeyValuePair<string, object>("key", "val"),
+        };
 
-        return resource;
-    }
-
-    internal bool LoadString(string envVarKey, out string result)
-    {
-        result = null;
-
-        try
-        {
-            result = Environment.GetEnvironmentVariable(envVarKey);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Exception: {0}.", ex);
-            return false;
-        }
-
-        return !string.IsNullOrEmpty(result);
+        return new Resource(attributes);
     }
 }

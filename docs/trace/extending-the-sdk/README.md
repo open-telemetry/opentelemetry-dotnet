@@ -295,6 +295,7 @@ class MySampler : Sampler
 A demo sampler is shown [here](./MySampler.cs).
 
 ## ResourceDetector
+
 Custom ResourceDetector can be implemented:
 
 * ResourceDetectors should inherit from
