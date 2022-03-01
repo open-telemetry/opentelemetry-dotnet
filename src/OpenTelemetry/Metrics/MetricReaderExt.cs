@@ -50,9 +50,7 @@ namespace OpenTelemetry.Metrics
 
                 if (this.metricStreamNames.Contains(metricStreamName))
                 {
-                    // TODO: This should still be a warning, but do we allow a separate a new metric stream to be created?
                     OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Metric name conflicting with existing name.", "Either change the name of the instrument or change name using View.");
-                    return null;
                 }
 
                 var index = ++this.metricIndex;
@@ -121,7 +119,6 @@ namespace OpenTelemetry.Metrics
                     if (this.metricStreamNames.Contains(metricStreamName))
                     {
                         OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Metric name conflicting with existing name.", "Either change the name of the instrument or change name using MeterProviderBuilder.AddView.");
-                        continue;
                     }
 
                     if (metricStreamConfig?.Aggregation == Aggregation.Drop)
