@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics
             this.MeterName = meterName;
             this.InstrumentName = instrumentName;
             this.Unit = unit;
-            this.Descripton = description;
+            this.Description = description;
             this.InstrumentType = instrumentType;
         }
 
@@ -35,7 +35,7 @@ namespace OpenTelemetry.Metrics
 
         public readonly string Unit { get; }
 
-        public readonly string Descripton { get; }
+        public readonly string Description { get; }
 
         public readonly Type InstrumentType { get; }
 
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Metrics
                 && this.MeterName == other.MeterName
                 && this.InstrumentName == other.InstrumentName
                 && this.Unit == other.Unit
-                && this.Descripton == other.Descripton;
+                && this.Description == other.Description;
         }
 
         public readonly override int GetHashCode()
@@ -66,7 +66,7 @@ namespace OpenTelemetry.Metrics
                 hash = (hash * 31) + this.MeterName.GetHashCode();
                 hash = (hash * 31) + this.InstrumentName.GetHashCode();
                 hash = this.Unit == null ? hash : (hash * 31) + this.Unit.GetHashCode();
-                hash = this.Descripton == null ? hash : (hash * 31) + this.Descripton.GetHashCode();
+                hash = this.Description == null ? hash : (hash * 31) + this.Description.GetHashCode();
                 return hash;
             }
         }
