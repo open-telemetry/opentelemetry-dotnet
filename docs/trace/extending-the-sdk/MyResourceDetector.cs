@@ -19,7 +19,6 @@ using OpenTelemetry.Resources;
 
 internal class MyResourceDetector : IResourceDetector
 {
-
     public Resource Detect()
     {
         var attributes = new List<KeyValuePair<string, object>>
