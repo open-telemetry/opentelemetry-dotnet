@@ -6,7 +6,7 @@
   detectors.
   ([2897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2897))
 
-* Implement lock-free updates for Histogram
+* Perf improvement for Histogram updates, by implementing lock-free updates.
   ([2951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2951))
 
 ## 1.2.0-rc2
