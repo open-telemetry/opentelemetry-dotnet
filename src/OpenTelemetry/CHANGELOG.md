@@ -6,8 +6,9 @@
   detectors.
   ([2897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2897))
 
-* Perf improvement for HistogramSumCount updates, by implementing lock-free
+* Perf improvement for Histogram and HistogramSumCount by implementing lock-free
   updates.
+  ([2951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2951))
   ([2961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2961))
 
 ## 1.2.0-rc2
