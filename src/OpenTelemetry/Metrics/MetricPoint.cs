@@ -326,7 +326,7 @@ namespace OpenTelemetry.Metrics
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.Exchange(ref this.histogramBuckets.UsingHistogram, 1) == 0)
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 unchecked
                                 {
@@ -335,7 +335,7 @@ namespace OpenTelemetry.Metrics
                                     this.histogramBuckets.RunningBucketCounts[i]++;
                                 }
 
-                                this.histogramBuckets.UsingHistogram = 0;
+                                this.histogramBuckets.IsCriticalSectionOccupied = 0;
                                 break;
                             }
 

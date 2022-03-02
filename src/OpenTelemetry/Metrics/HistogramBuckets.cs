@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics
 
         internal double SnapshotSum;
 
-        internal int UsingHistogram = 0;
+        internal int IsCriticalSectionOccupied = 0;
 
         internal HistogramBuckets(double[] explicitBounds)
         {
