@@ -26,27 +26,27 @@ using OpenTelemetry.Tests;
 /*
 // * Summary *
 
-BenchmarkDotNet=v0.13.1, OS=Windows 10.0.19043.1288 (21H1/May2021Update)
-Intel Xeon CPU E5-1650 v4 3.60GHz, 1 CPU, 12 logical and 6 physical cores
-.NET SDK=6.0.100
-  [Host]     : .NET 6.0.0 (6.0.21.52210), X64 RyuJIT
-  DefaultJob : .NET 6.0.0 (6.0.21.52210), X64 RyuJIT
+BenchmarkDotNet=v0.13.1, OS=Windows 10.0.22000
+Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
+.NET SDK=6.0.200
+  [Host]     : .NET 6.0.2 (6.0.222.6406), X64 RyuJIT
+  DefaultJob : .NET 6.0.2 (6.0.222.6406), X64 RyuJIT
 
 
-|                    Method | AggregationTemporality |      Mean |     Error |    StdDev |    Median | Allocated |
-|-------------------------- |----------------------- |----------:|----------:|----------:|----------:|----------:|
-|            CounterHotPath |             Cumulative |  19.35 ns |  0.419 ns |  0.946 ns |  19.25 ns |         - |
-| CounterWith1LabelsHotPath |             Cumulative |  97.25 ns |  1.973 ns |  3.657 ns |  96.57 ns |         - |
-| CounterWith3LabelsHotPath |             Cumulative | 467.93 ns |  9.265 ns | 16.228 ns | 466.28 ns |         - |
-| CounterWith5LabelsHotPath |             Cumulative | 746.34 ns | 14.804 ns | 34.014 ns | 749.77 ns |         - |
-| CounterWith6LabelsHotPath |             Cumulative | 858.71 ns | 17.180 ns | 37.711 ns | 855.80 ns |         - |
-| CounterWith7LabelsHotPath |             Cumulative | 972.73 ns | 19.371 ns | 39.130 ns | 970.10 ns |         - |
-|            CounterHotPath |                  Delta |  20.27 ns |  0.415 ns |  0.912 ns |  20.36 ns |         - |
-| CounterWith1LabelsHotPath |                  Delta |  98.39 ns |  1.979 ns |  4.891 ns |  98.67 ns |         - |
-| CounterWith3LabelsHotPath |                  Delta | 483.07 ns |  9.694 ns | 22.850 ns | 478.88 ns |         - |
-| CounterWith5LabelsHotPath |                  Delta | 723.44 ns | 14.472 ns | 24.574 ns | 722.89 ns |         - |
-| CounterWith6LabelsHotPath |                  Delta | 850.73 ns | 16.661 ns | 19.187 ns | 850.21 ns |         - |
-| CounterWith7LabelsHotPath |                  Delta | 946.01 ns | 18.713 ns | 43.742 ns | 930.80 ns |         - |
+|                    Method | AggregationTemporality |      Mean |    Error |   StdDev | Allocated |
+|-------------------------- |----------------------- |----------:|---------:|---------:|----------:|
+|            CounterHotPath |             Cumulative |  16.60 ns | 0.120 ns | 0.094 ns |         - |
+| CounterWith1LabelsHotPath |             Cumulative |  56.42 ns | 0.413 ns | 0.367 ns |         - |
+| CounterWith3LabelsHotPath |             Cumulative | 138.44 ns | 1.153 ns | 1.079 ns |         - |
+| CounterWith5LabelsHotPath |             Cumulative | 229.78 ns | 3.422 ns | 3.201 ns |         - |
+| CounterWith6LabelsHotPath |             Cumulative | 251.65 ns | 0.954 ns | 0.892 ns |         - |
+| CounterWith7LabelsHotPath |             Cumulative | 282.55 ns | 2.009 ns | 1.781 ns |         - |
+|            CounterHotPath |                  Delta |  16.48 ns | 0.116 ns | 0.108 ns |         - |
+| CounterWith1LabelsHotPath |                  Delta |  57.38 ns | 0.322 ns | 0.285 ns |         - |
+| CounterWith3LabelsHotPath |                  Delta | 140.44 ns | 1.155 ns | 0.964 ns |         - |
+| CounterWith5LabelsHotPath |                  Delta | 224.01 ns | 2.034 ns | 1.699 ns |         - |
+| CounterWith6LabelsHotPath |                  Delta | 249.92 ns | 1.548 ns | 1.372 ns |         - |
+| CounterWith7LabelsHotPath |                  Delta | 281.87 ns | 1.979 ns | 1.852 ns |         - |
 
 */
 
@@ -93,14 +93,14 @@ namespace Benchmarks.Metrics
         [Benchmark]
         public void CounterHotPath()
         {
-            this.counter?.Add(100);
+            this.counter.Add(100);
         }
 
         [Benchmark]
         public void CounterWith1LabelsHotPath()
         {
             var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 2)]);
-            this.counter?.Add(100, tag1);
+            this.counter.Add(100, tag1);
         }
 
         [Benchmark]
@@ -109,7 +109,7 @@ namespace Benchmarks.Metrics
             var tag1 = new KeyValuePair<string, object>("DimName1", this.dimensionValues[this.random.Next(0, 10)]);
             var tag2 = new KeyValuePair<string, object>("DimName2", this.dimensionValues[this.random.Next(0, 10)]);
             var tag3 = new KeyValuePair<string, object>("DimName3", this.dimensionValues[this.random.Next(0, 10)]);
-            this.counter?.Add(100, tag1, tag2, tag3);
+            this.counter.Add(100, tag1, tag2, tag3);
         }
 
         [Benchmark]
@@ -123,7 +123,7 @@ namespace Benchmarks.Metrics
                 { "DimName4", this.dimensionValues[this.random.Next(0, 5)] },
                 { "DimName5", this.dimensionValues[this.random.Next(0, 10)] },
             };
-            this.counter?.Add(100, tags);
+            this.counter.Add(100, tags);
         }
 
         [Benchmark]
@@ -138,7 +138,7 @@ namespace Benchmarks.Metrics
                 { "DimName5", this.dimensionValues[this.random.Next(0, 5)] },
                 { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
             };
-            this.counter?.Add(100, tags);
+            this.counter.Add(100, tags);
         }
 
         [Benchmark]
@@ -154,7 +154,7 @@ namespace Benchmarks.Metrics
                 { "DimName6", this.dimensionValues[this.random.Next(0, 2)] },
                 { "DimName7", this.dimensionValues[this.random.Next(0, 1)] },
             };
-            this.counter?.Add(100, tags);
+            this.counter.Add(100, tags);
         }
     }
 }
