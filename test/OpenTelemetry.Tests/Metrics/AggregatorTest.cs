@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections;
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests
