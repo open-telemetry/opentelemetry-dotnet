@@ -22,7 +22,7 @@ public partial class Program
 {
     public static void Main()
     {
-        Stress(Run, concurrency: 1, prometheusPort: 9184);
+        Stress(concurrency: 1, prometheusPort: 9184);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

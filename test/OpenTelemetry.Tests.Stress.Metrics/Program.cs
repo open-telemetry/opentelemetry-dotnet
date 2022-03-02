@@ -25,14 +25,17 @@ namespace OpenTelemetry.Tests.Stress;
 public partial class Program
 {
     private const int ArraySize = 10;
-    private const int MaxHistogramMeasurement = 1000;
+
+    // private const int MaxHistogramMeasurement = 1000;
+
     private static readonly Meter TestMeter = new Meter(Utils.GetCurrentMethodName());
     private static readonly Counter<long> TestCounter = TestMeter.CreateCounter<long>("TestCounter");
-    private static readonly Histogram<long> TestHistogram = TestMeter.CreateHistogram<long>("TestHistogram");
     private static readonly string[] DimensionValues = new string[ArraySize];
     private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());
 
-    public static void Main(string[] args)
+    // private static readonly Histogram<long> TestHistogram = TestMeter.CreateHistogram<long>("TestHistogram");
+
+    public static void Main()
     {
         for (int i = 0; i < ArraySize; i++)
         {
@@ -49,23 +52,11 @@ public partial class Program
             })
             .Build();
 
-        Action run = RunCounter;
-        if (args.Length > 0)
-        {
-            var command = args[0];
-            run = command.ToLower() switch
-            {
-                "counter" => RunCounter,
-                "histogram" => RunHistogram,
-                _ => RunCounter,
-            };
-        }
-
-        Stress(run, prometheusPort: 9184);
+        Stress(prometheusPort: 9184);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static void RunCounter()
+    protected static void Run()
     {
         var random = ThreadLocalRandom.Value;
         TestCounter.Add(
@@ -75,13 +66,14 @@ public partial class Program
             new("DimName3", DimensionValues[random.Next(0, ArraySize)]));
     }
 
-    protected static void RunHistogram()
-    {
-        var random = ThreadLocalRandom.Value;
-        TestHistogram.Record(
-            random.Next(MaxHistogramMeasurement),
-            new("DimName1", DimensionValues[random.Next(0, ArraySize)]),
-            new("DimName2", DimensionValues[random.Next(0, ArraySize)]),
-            new("DimName3", DimensionValues[random.Next(0, ArraySize)]));
-    }
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // protected static void Run()
+    // {
+    //    var random = ThreadLocalRandom.Value;
+    //    TestHistogram.Record(
+    //        random.Next(MaxHistogramMeasurement),
+    //        new("DimName1", DimensionValues[random.Next(0, ArraySize)]),
+    //        new("DimName2", DimensionValues[random.Next(0, ArraySize)]),
+    //        new("DimName3", DimensionValues[random.Next(0, ArraySize)]));
+    // }
 }
