@@ -315,5 +315,7 @@ A demo ResourceDetector is shown [here](./MyResourceDetector.cs).
   specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#span-exporter)
 * [Processor
   specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#span-processor)
+* [Resource
+  specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
 * [Sampler
   specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler)

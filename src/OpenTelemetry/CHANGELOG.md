@@ -2,34 +2,30 @@
 
 ## Unreleased
 
-* Publicize required methods to allow for custom implementations of resource
-  detectors.
-  ([2949](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2949/))
-
-* Make `IResourceDetector` public to allow custom implementations of resource
-  detectors.
-  ([2897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2897))
+* Added support for implementing custom `ResourceDetector`.
+  ([#2949](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2949/)
+  [#2897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2897))
 
 * Perf improvement for Histogram, by implementing lock-free updates.
-  ([2951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2951))
+  ([#2951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2951))
 
 ## 1.2.0-rc2
 
 Released 2022-Feb-02
 
 * Make `MetricPoint` of `MetricPointAccessor` readonly.
-  ([2736](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2736))
+  ([#2736](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2736))
 
 * Fail-fast when using AddView with guaranteed conflict.
-  ([2751](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2751))
+  ([#2751](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2751))
 
 * Swallow `ObjectDisposedException` from the `BatchExportProcessor` worker
   thread.
-  ([2844](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2844))
+  ([#2844](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2844))
 
 * Performance improvement: when emitting metrics, users are strongly advised to
   provide tags with same Key order, to achieve maximum performance.
-  ([2805](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2805/files))
+  ([#2805](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2805/files))
 
 ## 1.2.0-rc1
 
