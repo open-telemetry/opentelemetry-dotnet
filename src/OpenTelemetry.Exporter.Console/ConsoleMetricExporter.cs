@@ -41,7 +41,7 @@ namespace OpenTelemetry.Exporter
                     {
                         if (resourceAttribute.Key.Equals("service.name"))
                         {
-                            this.WriteLine("Service.Name" + resourceAttribute.Value);
+                            this.WriteLine("Service.Name=" + resourceAttribute.Value);
                         }
                     }
                 }
