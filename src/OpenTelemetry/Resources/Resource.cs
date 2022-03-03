@@ -35,7 +35,7 @@ namespace OpenTelemetry.Resources
         /// Initializes a new instance of the <see cref="Resource"/> class.
         /// </summary>
         /// <param name="attributes">An <see cref="IEnumerable{T}"/> of attributes that describe the resource.</param>
-        internal Resource(IEnumerable<KeyValuePair<string, object>> attributes)
+        public Resource(IEnumerable<KeyValuePair<string, object>> attributes)
         {
             if (attributes == null)
             {
