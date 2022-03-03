@@ -27,7 +27,7 @@ namespace OpenTelemetry.Exporter.Prometheus
     /// <summary>
     /// ASP.NET Core middleware for exposing a Prometheus metrics scraping endpoint.
     /// </summary>
-    internal sealed class PrometheusExporterMiddleware
+    public sealed class PrometheusExporterMiddleware
     {
         private readonly PrometheusExporter exporter;
 
