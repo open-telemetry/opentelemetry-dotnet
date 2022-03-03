@@ -410,6 +410,63 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(10, metricPoint2.GetSumLong());
         }
 
+        [Fact]
+        public void DuplicateInstrumentRegistration_WithViews_TwoInstruments_ThreeStreams()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView((instrument) =>
+                {
+                    return new MetricStreamConfiguration { Name = "MetricStreamA", Description = "description" };
+                })
+                .AddView((instrument) =>
+                {
+                    return instrument.Description == "description1"
+                        ? new MetricStreamConfiguration { Name = "MetricStreamB" }
+                        : new MetricStreamConfiguration { Name = "MetricStreamC" };
+                })
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var instrument1 = meter.CreateCounter<long>("name", "unit", "description1");
+            var instrument2 = meter.CreateCounter<long>("name", "unit", "description2");
+
+            instrument1.Add(10);
+            instrument2.Add(10);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Equal(3, exportedItems.Count);
+
+            var metricA = exportedItems[0];
+            var metricB = exportedItems[1];
+            var metricC = exportedItems[2];
+
+            Assert.Equal("MetricStreamA", metricA.Name);
+            Assert.Equal(20, GetAggregatedValue(metricA));
+
+            Assert.Equal("MetricStreamB", metricB.Name);
+            Assert.Equal(10, GetAggregatedValue(metricB));
+
+            Assert.Equal("MetricStreamC", metricC.Name);
+            Assert.Equal(10, GetAggregatedValue(metricC));
+
+            long GetAggregatedValue(Metric metric)
+            {
+                var metricPoints = new List<MetricPoint>();
+                foreach (ref readonly var mp in metric.GetMetricPoints())
+                {
+                    metricPoints.Add(mp);
+                }
+
+                Assert.Single(metricPoints);
+                return metricPoints[0].GetSumLong();
+            }
+        }
+
         [Theory]
         [InlineData(AggregationTemporality.Cumulative, true)]
         [InlineData(AggregationTemporality.Cumulative, false)]

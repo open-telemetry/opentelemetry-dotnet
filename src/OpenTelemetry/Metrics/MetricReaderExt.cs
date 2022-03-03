@@ -113,6 +113,7 @@ namespace OpenTelemetry.Metrics
 
                     if (this.instrumentIdentityToMetric.TryGetValue(instrumentIdentity, out var existingMetric))
                     {
+                        metrics.Add(existingMetric);
                         continue;
                     }
 
