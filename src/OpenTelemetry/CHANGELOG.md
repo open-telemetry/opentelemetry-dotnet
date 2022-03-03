@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Added support for implementing customized `ResourceDetector`.
+* Added support for implementing custom `ResourceDetector`.
   ([2949](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2949/))
   ([2897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2897))
 
