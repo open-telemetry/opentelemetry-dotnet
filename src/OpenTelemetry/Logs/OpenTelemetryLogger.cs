@@ -29,8 +29,8 @@ namespace OpenTelemetry.Logs
 
         internal OpenTelemetryLogger(string categoryName, OpenTelemetryLoggerProvider provider)
         {
-            Guard.ThrowIfNull(categoryName, nameof(categoryName));
-            Guard.ThrowIfNull(provider, nameof(provider));
+            Guard.ThrowIfNull(categoryName);
+            Guard.ThrowIfNull(provider);
 
             this.categoryName = categoryName;
             this.provider = provider;

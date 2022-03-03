@@ -15,6 +15,7 @@
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="$(BenchmarkDotNetPkgVer)" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="$(MicrosoftExtensionsLoggingPkgVer)" />
+    <PackageReference Include="Moq" Version="$(MoqPkgVer)" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">

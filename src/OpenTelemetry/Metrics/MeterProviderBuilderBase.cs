@@ -47,7 +47,7 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc />
         public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
         {
-            Guard.ThrowIfNull(instrumentationFactory, nameof(instrumentationFactory));
+            Guard.ThrowIfNull(instrumentationFactory);
 
             this.instrumentationFactories.Add(
                 new InstrumentationFactory(
@@ -61,11 +61,11 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc />
         public override MeterProviderBuilder AddMeter(params string[] names)
         {
-            Guard.ThrowIfNull(names, nameof(names));
+            Guard.ThrowIfNull(names);
 
             foreach (var name in names)
             {
-                Guard.ThrowIfNullOrWhitespace(name, nameof(name));
+                Guard.ThrowIfNullOrWhitespace(name);
 
                 this.meterSources.Add(name);
             }

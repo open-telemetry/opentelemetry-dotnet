@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Threading;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -100,6 +99,52 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
+        [InlineData("unit")]
+        [InlineData("")]
+        [InlineData(null)]
+        public void MetricUnitIsExportedCorrectly(string unit)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var counter = meter.CreateCounter<long>("name1", unit);
+            counter.Add(10);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal(unit ?? string.Empty, metric.Unit);
+        }
+
+        [Theory]
+        [InlineData("description")]
+        [InlineData("")]
+        [InlineData(null)]
+        public void MetricDescriptionIsExportedCorrectly(string description)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var counter = meter.CreateCounter<long>("name1", null, description);
+            counter.Add(10);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal(description ?? string.Empty, metric.Description);
+        }
+
+        [Theory]
         [InlineData(AggregationTemporality.Cumulative, true)]
         [InlineData(AggregationTemporality.Cumulative, false)]
         [InlineData(AggregationTemporality.Delta, true)]
@@ -111,9 +156,9 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    Temporality = temporality,
+                    metricReaderOptions.Temporality = temporality;
                 });
 
             if (hasView)
@@ -123,21 +168,28 @@ namespace OpenTelemetry.Metrics.Tests
 
             using var meterProvider = meterProviderBuilder.Build();
 
-            // Expecting one metric stream.
             var counterLong = meter.CreateCounter<long>("name1");
+            var anotherCounterSameName = meter.CreateCounter<long>("name1");
+
             counterLong.Add(10);
+            anotherCounterSameName.Add(20);
+            counterLong.Add(10);
+            anotherCounterSameName.Add(20);
+
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Single(exportedItems);
 
-            // The following will be ignored as
-            // metric of same name exists.
-            // Metric stream will remain one.
-            var anotherCounterSameName = meter.CreateCounter<long>("name1");
-            anotherCounterSameName.Add(10);
-            counterLong.Add(10);
-            exportedItems.Clear();
-            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("name1", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            var metricPoint1 = metricPoints[0];
+            Assert.Equal(20, metricPoint1.GetSumLong());
         }
 
         [Theory]
@@ -154,9 +206,9 @@ namespace OpenTelemetry.Metrics.Tests
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter1.Name)
                 .AddMeter(meter2.Name)
-                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    Temporality = temporality,
+                    metricReaderOptions.Temporality = temporality;
                 });
 
             if (hasView)
@@ -196,7 +248,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             var exportedItems = new List<Metric>();
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
-                .AddMeter("AbcCompany.XyzProduct.*")
+                .AddMeter("AbcCompany.XyzProduct.Component?")
                 .AddMeter("DefCompany.*.ComponentC")
                 .AddMeter("GhiCompany.qweProduct.ComponentN") // Mixing of non-wildcard meter name and wildcard meter name.
                 .AddInMemoryExporter(exportedItems);
@@ -273,9 +325,9 @@ namespace OpenTelemetry.Metrics.Tests
             var counterLong = meter.CreateCounter<long>("mycounter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+                    metricReaderOptions.Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                 })
                 .Build();
 
@@ -347,9 +399,9 @@ namespace OpenTelemetry.Metrics.Tests
 
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+                    metricReaderOptions.Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                 })
                 .Build();
 
@@ -385,6 +437,158 @@ namespace OpenTelemetry.Metrics.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
+        public void ObservableCounterWithTagsAggregationTest(bool exportDelta)
+        {
+            var exportedItems = new List<Metric>();
+            var tags1 = new List<KeyValuePair<string, object>>();
+            tags1.Add(new("statusCode", 200));
+            tags1.Add(new("verb", "get"));
+
+            var tags2 = new List<KeyValuePair<string, object>>();
+            tags2.Add(new("statusCode", 200));
+            tags2.Add(new("verb", "post"));
+
+            var tags3 = new List<KeyValuePair<string, object>>();
+            tags3.Add(new("statusCode", 500));
+            tags3.Add(new("verb", "get"));
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+            var counterLong = meter.CreateObservableCounter(
+                "observable-counter",
+                () =>
+                {
+                    return new List<Measurement<long>>()
+                    {
+                        new Measurement<long>(10, tags1),
+                        new Measurement<long>(10, tags2),
+                        new Measurement<long>(10, tags3),
+                    };
+                });
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+                {
+                    metricReaderOptions.Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
+                })
+                .Build();
+
+            // Export 1
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("observable-counter", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Equal(3, metricPoints.Count);
+
+            var metricPoint1 = metricPoints[0];
+            Assert.Equal(10, metricPoint1.GetSumLong());
+            ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+            var metricPoint2 = metricPoints[1];
+            Assert.Equal(10, metricPoint2.GetSumLong());
+            ValidateMetricPointTags(tags2, metricPoint2.Tags);
+
+            var metricPoint3 = metricPoints[2];
+            Assert.Equal(10, metricPoint3.GetSumLong());
+            ValidateMetricPointTags(tags3, metricPoint3.Tags);
+
+            // Export 2
+            exportedItems.Clear();
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            metric = exportedItems[0];
+            Assert.Equal("observable-counter", metric.Name);
+            metricPoints.Clear();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Equal(3, metricPoints.Count);
+
+            metricPoint1 = metricPoints[0];
+            Assert.Equal(exportDelta ? 0 : 10, metricPoint1.GetSumLong());
+            ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+            metricPoint2 = metricPoints[1];
+            Assert.Equal(exportDelta ? 0 : 10, metricPoint2.GetSumLong());
+            ValidateMetricPointTags(tags2, metricPoint2.Tags);
+
+            metricPoint3 = metricPoints[2];
+            Assert.Equal(exportDelta ? 0 : 10, metricPoint3.GetSumLong());
+            ValidateMetricPointTags(tags3, metricPoint3.Tags);
+        }
+
+        [Theory(Skip = "Known issue.")]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ObservableCounterSpatialAggregationTest(bool exportDelta)
+        {
+            var exportedItems = new List<Metric>();
+            var tags1 = new List<KeyValuePair<string, object>>();
+            tags1.Add(new("statusCode", 200));
+            tags1.Add(new("verb", "get"));
+
+            var tags2 = new List<KeyValuePair<string, object>>();
+            tags2.Add(new("statusCode", 200));
+            tags2.Add(new("verb", "post"));
+
+            var tags3 = new List<KeyValuePair<string, object>>();
+            tags3.Add(new("statusCode", 500));
+            tags3.Add(new("verb", "get"));
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+            var counterLong = meter.CreateObservableCounter(
+                "requestCount",
+                () =>
+                {
+                    return new List<Measurement<long>>()
+                    {
+                        new Measurement<long>(10, tags1),
+                        new Measurement<long>(10, tags2),
+                        new Measurement<long>(10, tags3),
+                    };
+                });
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+                {
+                    metricReaderOptions.Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
+                })
+                .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = new string[] { } })
+                .Build();
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("requestCount", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+
+            var emptyTags = new List<KeyValuePair<string, object>>();
+            var metricPoint1 = metricPoints[0];
+            ValidateMetricPointTags(emptyTags, metricPoint1.Tags);
+
+            // This will fail, as SDK is not "spatially" aggregating the
+            // requestCount
+            Assert.Equal(30, metricPoint1.GetSumLong());
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
         public void DimensionsAreOrderInsensitiveWithSortedKeysFirst(bool exportDelta)
         {
             var exportedItems = new List<Metric>();
@@ -393,9 +597,9 @@ namespace OpenTelemetry.Metrics.Tests
             var counterLong = meter.CreateCounter<long>("Counter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+                    metricReaderOptions.Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                 })
                 .Build();
 
@@ -484,9 +688,9 @@ namespace OpenTelemetry.Metrics.Tests
             var counterLong = meter.CreateCounter<long>("Counter");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative,
+                    metricReaderOptions.Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                 })
                 .Build();
 
@@ -578,9 +782,9 @@ namespace OpenTelemetry.Metrics.Tests
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter1.Name)
                 .AddMeter(meter2.Name)
-                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    Temporality = temporality,
+                    metricReaderOptions.Temporality = temporality;
                 })
                 .Build();
 
@@ -645,9 +849,9 @@ namespace OpenTelemetry.Metrics.Tests
             var counterLong = meter.CreateCounter<long>("mycounterCapTest");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    Temporality = temporality,
+                    metricReaderOptions.Temporality = temporality;
                 })
                 .Build();
 
@@ -798,6 +1002,19 @@ namespace OpenTelemetry.Metrics.Tests
             counter.Add(10, new KeyValuePair<string, object>("key", "value"));
         }
 
+        private static void ValidateMetricPointTags(List<KeyValuePair<string, object>> expectedTags, ReadOnlyTagCollection actualTags)
+        {
+            int tagIndex = 0;
+            foreach (var tag in actualTags)
+            {
+                Assert.Equal(expectedTags[tagIndex].Key, tag.Key);
+                Assert.Equal(expectedTags[tagIndex].Value, tag.Value);
+                tagIndex++;
+            }
+
+            Assert.Equal(expectedTags.Count, tagIndex);
+        }
+
         private static long GetLongSum(List<Metric> metrics)
         {
             long sum = 0;
@@ -934,12 +1151,11 @@ namespace OpenTelemetry.Metrics.Tests
             where T : struct, IComparable
         {
             var metricItems = new List<Metric>();
-            var metricReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(metricItems));
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{typeof(T).Name}.{deltaValueUpdatedByEachCall}");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(metricReader)
+                .AddInMemoryExporter(metricItems)
                 .Build();
 
             var argToThread = new UpdateThreadArguments<T>
@@ -968,7 +1184,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             this.output.WriteLine($"Took {sw.ElapsedMilliseconds} msecs. Total threads: {numberOfThreads}, each thread doing {numberOfMetricUpdateByEachThread} recordings.");
 
-            metricReader.Collect();
+            meterProvider.ForceFlush();
 
             if (typeof(T) == typeof(long))
             {

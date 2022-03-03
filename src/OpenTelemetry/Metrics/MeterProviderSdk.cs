@@ -56,7 +56,7 @@ namespace OpenTelemetry.Metrics
 
             foreach (var reader in readers)
             {
-                Guard.ThrowIfNull(reader, nameof(reader));
+                Guard.ThrowIfNull(reader);
 
                 reader.SetParentProvider(this);
                 reader.SetMaxMetricStreams(maxMetricStreams);
@@ -108,9 +108,9 @@ namespace OpenTelemetry.Metrics
 
             // Setup Listener
             Func<Instrument, bool> shouldListenTo = instrument => false;
-            if (meterSources.Any(s => s.Contains('*')))
+            if (meterSources.Any(s => WildcardHelper.ContainsWildcard(s)))
             {
-                var regex = GetWildcardRegex(meterSources);
+                var regex = WildcardHelper.GetWildcardRegex(meterSources);
                 shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
             }
             else if (meterSources.Any())
@@ -534,11 +534,10 @@ namespace OpenTelemetry.Metrics
                 }
 
                 this.disposed = true;
+                OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(MeterProvider));
             }
 
             base.Dispose(disposing);
-
-            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"{nameof(MeterProviderSdk)}.{nameof(this.Dispose)} completed.");
         }
     }
 }
