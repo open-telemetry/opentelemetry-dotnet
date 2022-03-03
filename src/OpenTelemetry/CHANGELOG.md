@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Publicize required methods to allow for custom implementations of resource
+  detectors.
+  ([2949](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2949/))
+
 * Make `IResourceDetector` public to allow custom implementations of resource
   detectors.
   ([2897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2897))
