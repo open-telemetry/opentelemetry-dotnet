@@ -20,7 +20,6 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -273,12 +272,6 @@ namespace OpenTelemetry.Metrics
             }
 
             this.listener.Start();
-
-            static Regex GetWildcardRegex(IEnumerable<string> collection)
-            {
-                var pattern = '^' + string.Join("|", from name in collection select "(?:" + Regex.Escape(name).Replace("\\*", ".*") + ')') + '$';
-                return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            }
 
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Setup completed.");
         }

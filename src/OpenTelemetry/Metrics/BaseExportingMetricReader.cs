@@ -91,11 +91,18 @@ namespace OpenTelemetry.Metrics
             // TODO: Do we need to consider timeout here?
             try
             {
-                OpenTelemetrySdkEventSource.Log.MetricReaderEvent($"{nameof(BaseExportingMetricReader)}.{nameof(this.ProcessMetrics)} is calling {nameof(this.exporter)}.{nameof(this.exporter.Export)} method.");
+                OpenTelemetrySdkEventSource.Log.MetricReaderEvent("BaseExportingMetricReader calling Exporter.Export method.");
                 var result = this.exporter.Export(metrics);
-                OpenTelemetrySdkEventSource.Log.MetricReaderEvent($"{nameof(this.exporter)}.{nameof(this.exporter.Export)} returned {result}.");
-
-                return result == ExportResult.Success;
+                if (result == ExportResult.Success)
+                {
+                    OpenTelemetrySdkEventSource.Log.MetricReaderEvent("Exporter.Export succeeded.");
+                    return true;
+                }
+                else
+                {
+                    OpenTelemetrySdkEventSource.Log.MetricReaderEvent("Exporter.Export failed.");
+                    return false;
+                }
             }
             catch (Exception ex)
             {

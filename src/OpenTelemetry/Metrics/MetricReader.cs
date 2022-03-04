@@ -86,7 +86,7 @@ namespace OpenTelemetry.Metrics
         {
             Guard.ThrowIfInvalidTimeout(timeoutMilliseconds);
 
-            OpenTelemetrySdkEventSource.Log.MetricReaderEvent($"{nameof(MetricReader)}.{nameof(this.Collect)} method called with {nameof(timeoutMilliseconds)} = {timeoutMilliseconds}.");
+            OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.Collect method called.");
             var shouldRunCollect = false;
             var tcs = this.collectionTcs;
 
@@ -126,7 +126,14 @@ namespace OpenTelemetry.Metrics
 
             tcs.TrySetResult(result);
 
-            OpenTelemetrySdkEventSource.Log.MetricReaderEvent($"{nameof(MetricReader)}.{nameof(this.Collect)} method is returning {result}.");
+            if (result)
+            {
+                OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.Collect succeeded.");
+            }
+            else
+            {
+                OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.Collect failed.");
+            }
 
             return result;
         }
@@ -153,7 +160,7 @@ namespace OpenTelemetry.Metrics
         {
             Guard.ThrowIfInvalidTimeout(timeoutMilliseconds);
 
-            OpenTelemetrySdkEventSource.Log.MetricReaderEvent($"{nameof(MetricReader)}.{nameof(this.Shutdown)} called with {nameof(timeoutMilliseconds)} = {timeoutMilliseconds}.");
+            OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.Shutdown called.");
 
             if (Interlocked.CompareExchange(ref this.shutdownCount, 1, 0) != 0)
             {
@@ -172,7 +179,14 @@ namespace OpenTelemetry.Metrics
 
             this.shutdownTcs.TrySetResult(result);
 
-            OpenTelemetrySdkEventSource.Log.MetricReaderEvent($"{nameof(MetricReader)}.{nameof(this.Shutdown)} method is returning {result}.");
+            if (result)
+            {
+                OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.Shutdown succeeded.");
+            }
+            else
+            {
+                OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.Shutdown failed.");
+            }
 
             return result;
         }
@@ -225,7 +239,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         protected virtual bool OnCollect(int timeoutMilliseconds)
         {
-            OpenTelemetrySdkEventSource.Log.MetricReaderEvent($"{nameof(MetricReader)}.{nameof(this.OnCollect)} called with {nameof(timeoutMilliseconds)} = {timeoutMilliseconds}.");
+            OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.OnCollect called.");
 
             var sw = timeoutMilliseconds == Timeout.Infinite
                 ? null
@@ -238,9 +252,21 @@ namespace OpenTelemetry.Metrics
 
             var metrics = this.GetMetricsBatch();
 
+            bool result;
             if (sw == null)
             {
-                return this.ProcessMetrics(metrics, Timeout.Infinite);
+                OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics called.");
+                result = this.ProcessMetrics(metrics, Timeout.Infinite);
+                if (result)
+                {
+                    OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics succeeded.");
+                }
+                else
+                {
+                    OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics failed.");
+                }
+
+                return result;
             }
             else
             {
@@ -248,10 +274,22 @@ namespace OpenTelemetry.Metrics
 
                 if (timeout <= 0)
                 {
+                    OpenTelemetrySdkEventSource.Log.MetricReaderEvent("OnCollect failed timeout period has elapsed.");
                     return false;
                 }
 
-                return this.ProcessMetrics(metrics, (int)timeout);
+                OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics called.");
+                result = this.ProcessMetrics(metrics, (int)timeout);
+                if (result)
+                {
+                    OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics succeeded.");
+                }
+                else
+                {
+                    OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics failed.");
+                }
+
+                return result;
             }
         }
 

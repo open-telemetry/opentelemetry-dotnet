@@ -180,6 +180,24 @@ namespace OpenTelemetry.Internal
             }
         }
 
+        [NonEvent]
+        public void MeterProviderSdkEvent(string message)
+        {
+            if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+            {
+                this.WriteMeterProviderSdkEvent(message);
+            }
+        }
+
+        [NonEvent]
+        public void MetricReaderEvent(string message)
+        {
+            if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+            {
+                this.WriteMetricReaderEvent(message);
+            }
+        }
+
         [Event(1, Message = "Span processor queue size reached maximum. Throttling spans.", Level = EventLevel.Warning)]
         public void SpanProcessorQueueIsExhausted()
         {
@@ -361,13 +379,13 @@ namespace OpenTelemetry.Internal
         }
 
         [Event(38, Message = "MeterProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
-        public void MeterProviderSdkEvent(string message)
+        public void WriteMeterProviderSdkEvent(string message)
         {
             this.WriteEvent(38, message);
         }
 
         [Event(39, Message = "MetricReader event: '{0}'", Level = EventLevel.Verbose)]
-        public void MetricReaderEvent(string message)
+        public void WriteMetricReaderEvent(string message)
         {
             this.WriteEvent(39, message);
         }
