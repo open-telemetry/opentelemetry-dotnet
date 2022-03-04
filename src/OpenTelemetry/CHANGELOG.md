@@ -13,6 +13,10 @@
 
   ([#2916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2916))
 
+* The `Meter` property on `OpenTelemetry.Metrics.Metric` has been removed.
+  It now has `MeterName` and `MeterVersion` properties.
+  ([#2916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2916))
+
 * Added support for implementing custom `ResourceDetector`.
   ([#2949](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2949/)
   [#2897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2897))
