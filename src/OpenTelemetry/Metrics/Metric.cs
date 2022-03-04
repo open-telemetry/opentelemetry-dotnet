@@ -32,12 +32,10 @@ namespace OpenTelemetry.Metrics
         internal Metric(
             InstrumentIdentity instrumentIdentity,
             AggregationTemporality temporality,
-            string metricName,
             int maxMetricPointsPerMetricStream,
             double[] histogramBounds = null,
             string[] tagKeysInteresting = null)
         {
-            this.Name = metricName;
             this.InstrumentIdentity = instrumentIdentity;
 
             AggregationType aggType;
@@ -107,7 +105,7 @@ namespace OpenTelemetry.Metrics
                 throw new NotSupportedException($"Unsupported Instrument Type: {instrumentIdentity.InstrumentType.FullName}");
             }
 
-            this.aggStore = new AggregatorStore(metricName, aggType, temporality, maxMetricPointsPerMetricStream, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
+            this.aggStore = new AggregatorStore(instrumentIdentity.InstrumentName, aggType, temporality, maxMetricPointsPerMetricStream, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
             this.Temporality = temporality;
             this.InstrumentDisposed = false;
         }
@@ -116,7 +114,7 @@ namespace OpenTelemetry.Metrics
 
         public AggregationTemporality Temporality { get; private set; }
 
-        public string Name { get; private set; }
+        public string Name => this.InstrumentIdentity.InstrumentName;
 
         public string Description => this.InstrumentIdentity.Description;
 
