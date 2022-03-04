@@ -58,7 +58,7 @@ captures this and sends it to the `ConsoleExporter` which displays logs on the c
 
 ## Configure Filtering
 
-OpenTelemetry's provider is `OpenTelemetryLoggerProvider` and filtering rules 
+OpenTelemetry's provider is `OpenTelemetryLoggerProvider` and filtering rules
 can define the minimum [`LogLevel`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.loglevel)
 applied to providers and categories.
 
