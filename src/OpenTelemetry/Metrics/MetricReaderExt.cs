@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Internal;
@@ -27,7 +28,7 @@ namespace OpenTelemetry.Metrics
     public abstract partial class MetricReader
     {
         private readonly HashSet<string> metricStreamNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<InstrumentIdentity, Metric> instrumentIdentityToMetric = new Dictionary<InstrumentIdentity, Metric>();
+        private readonly ConcurrentDictionary<InstrumentIdentity, Metric> instrumentIdentityToMetric = new ConcurrentDictionary<InstrumentIdentity, Metric>();
         private readonly object instrumentCreationLock = new object();
         private int maxMetricStreams;
         private int maxMetricPointsPerMetricStream;
@@ -231,6 +232,7 @@ namespace OpenTelemetry.Metrics
                         if (metric.InstrumentDisposed)
                         {
                             metricPointSize = metric.Snapshot();
+                            this.instrumentIdentityToMetric.TryRemove(metric.InstrumentIdentity, out var _);
                             this.metrics[i] = null;
                         }
                         else
