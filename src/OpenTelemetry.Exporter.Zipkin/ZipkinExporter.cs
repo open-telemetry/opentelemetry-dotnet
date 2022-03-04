@@ -60,16 +60,16 @@ namespace OpenTelemetry.Exporter
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> batch)
         {
-            if (this.LocalEndpoint == null)
-            {
-                this.SetLocalEndpointFromResource(this.ParentProvider.GetResource());
-            }
-
             // Prevent Zipkin's HTTP operations from being instrumented.
             using var scope = SuppressInstrumentationScope.Begin();
 
             try
             {
+                if (this.LocalEndpoint == null)
+                {
+                    this.SetLocalEndpointFromResource(this.ParentProvider.GetResource());
+                }
+
                 var requestUri = this.options.Endpoint;
 
                 using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)

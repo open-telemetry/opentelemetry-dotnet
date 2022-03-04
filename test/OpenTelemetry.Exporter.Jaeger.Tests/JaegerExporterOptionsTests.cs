@@ -41,7 +41,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             Assert.Equal(4096, options.MaxPayloadSizeInBytes);
             Assert.Equal(ExportProcessorType.Batch, options.ExportProcessorType);
             Assert.Equal(JaegerExportProtocol.UdpCompactThrift, options.Protocol);
-            Assert.Equal(new Uri("http://localhost:14268"), options.Endpoint);
+            Assert.Equal(JaegerExporterOptions.DefaultJaegerEndpoint, options.Endpoint.ToString());
         }
 
         [Fact]

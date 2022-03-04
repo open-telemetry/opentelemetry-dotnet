@@ -1,4 +1,4 @@
-// <copyright file="ConsoleExporterOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="MyResourceDetector.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,13 +14,18 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Exporter
+using System.Collections.Generic;
+using OpenTelemetry.Resources;
+
+internal class MyResourceDetector : IResourceDetector
 {
-    public class ConsoleExporterOptions
+    public Resource Detect()
     {
-        /// <summary>
-        /// Gets or sets the output targets for the console exporter.
-        /// </summary>
-        public ConsoleExporterOutputTargets Targets { get; set; } = ConsoleExporterOutputTargets.Console;
+        var attributes = new List<KeyValuePair<string, object>>
+        {
+            new KeyValuePair<string, object>("key", "val"),
+        };
+
+        return new Resource(attributes);
     }
 }
