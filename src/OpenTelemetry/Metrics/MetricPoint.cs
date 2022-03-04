@@ -347,10 +347,22 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramSumCount:
                     {
-                        lock (this.histogramBuckets.LockObject)
+                        var sw = default(SpinWait);
+                        while (true)
                         {
-                            this.runningValue.AsLong++;
-                            this.histogramBuckets.RunningSum += number;
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                unchecked
+                                {
+                                    this.runningValue.AsLong++;
+                                    this.histogramBuckets.RunningSum += number;
+                                }
+
+                                this.histogramBuckets.IsCriticalSectionOccupied = 0;
+                                break;
+                            }
+
+                            sw.SpinOnce();
                         }
 
                         break;
