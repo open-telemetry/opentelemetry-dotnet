@@ -78,7 +78,7 @@ to learn more.
 ## TracerProvider
 
 As shown in the above program, a valid `TracerProvider` must be configured and
-built to collect traces with OpenTelemetry .NET Sdk. `TracerProvider` holds all
+built to collect traces with OpenTelemetry .NET SDK. `TracerProvider` holds all
 the configuration for tracing like samplers, processors, etc, and is highly
 [customizable](../../../src/OpenTelemetry#tracing-configuration).
 
