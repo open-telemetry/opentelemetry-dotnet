@@ -467,6 +467,35 @@ namespace OpenTelemetry.Metrics.Tests
             }
         }
 
+        [Fact]
+        public void DuplicateInstrumentNamesFromDifferentMetersWithSameNameDifferentVersion()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}", "1.0");
+            using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}", "2.0");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter1.Name)
+                .AddMeter(meter2.Name)
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            // Expecting one metric stream.
+            var counterLong = meter1.CreateCounter<long>("name1");
+            counterLong.Add(10);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+
+            // Expeecting another metric stream since the meter differs by version
+            var anotherCounterSameNameDiffMeter = meter2.CreateCounter<long>("name1");
+            anotherCounterSameNameDiffMeter.Add(10);
+            counterLong.Add(10);
+            exportedItems.Clear();
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Equal(2, exportedItems.Count);
+        }
+
         [Theory]
         [InlineData(AggregationTemporality.Cumulative, true)]
         [InlineData(AggregationTemporality.Cumulative, false)]

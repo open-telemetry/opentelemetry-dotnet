@@ -15,21 +15,25 @@
 // </copyright>
 
 using System;
+using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
     internal readonly struct InstrumentIdentity : IEquatable<InstrumentIdentity>
     {
-        public InstrumentIdentity(string meterName, string instrumentName, string unit, string description, Type instrumentType)
+        public InstrumentIdentity(Meter meter, string instrumentName, string unit, string description, Type instrumentType)
         {
-            this.MeterName = meterName;
+            this.MeterName = meter.Name;
+            this.MeterVersion = meter.Version ?? string.Empty;
             this.InstrumentName = instrumentName;
-            this.Unit = unit;
-            this.Description = description;
+            this.Unit = unit ?? string.Empty;
+            this.Description = description ?? string.Empty;
             this.InstrumentType = instrumentType;
         }
 
         public readonly string MeterName { get; }
+
+        public readonly string MeterVersion { get; }
 
         public readonly string InstrumentName { get; }
 
@@ -52,6 +56,7 @@ namespace OpenTelemetry.Metrics
         {
             return this.InstrumentType == other.InstrumentType
                 && this.MeterName == other.MeterName
+                && this.MeterVersion == other.MeterVersion
                 && this.InstrumentName == other.InstrumentName
                 && this.Unit == other.Unit
                 && this.Description == other.Description;
@@ -64,6 +69,7 @@ namespace OpenTelemetry.Metrics
                 int hash = 17;
                 hash = (hash * 31) + this.InstrumentType.GetHashCode();
                 hash = (hash * 31) + this.MeterName.GetHashCode();
+                hash = (hash * 31) + this.MeterVersion.GetHashCode();
                 hash = (hash * 31) + this.InstrumentName.GetHashCode();
                 hash = this.Unit == null ? hash : (hash * 31) + this.Unit.GetHashCode();
                 hash = this.Description == null ? hash : (hash * 31) + this.Description.GetHashCode();
