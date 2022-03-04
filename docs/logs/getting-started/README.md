@@ -72,7 +72,8 @@ applied to providers and categories.
     },
     "OpenTelemetry": { // alias for OpenTelemetryLoggingProvider
       "LogLevel": {
-        "Default": "Error" // Overrides preceding LogLevel:Default
+        "Default": "Error", // Overrides preceding LogLevel:Default
+        "category name": "Warning"
       }
     }
   }
@@ -80,7 +81,8 @@ applied to providers and categories.
 ```
 
 This example uses the "OpenTelemetry" alias for the `OpenTelemetryLoggingProvider`.
-Here OpenTelemetry is given a default of "Error" which overrides the global default "Information".
+Here the `OpenTelemetryLoggingProvider` is given a default of "Error" which overrides
+the global default "Information". A user defined category has a unique value of "Warning".
 
 ### via code
 
