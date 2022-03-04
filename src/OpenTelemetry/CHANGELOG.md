@@ -6,8 +6,10 @@
   ([#2949](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2949/)
   [#2897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2897))
 
-* Perf improvement for Histogram, by implementing lock-free updates.
-  ([#2951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2951))
+* Perf improvement for Histogram and HistogramSumCount by implementing lock-free
+  updates.
+  ([2951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2951))
+  ([2961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2961))
 
 ## 1.2.0-rc2
 
