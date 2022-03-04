@@ -243,11 +243,6 @@ namespace OpenTelemetry.Metrics
                         }
                     }
                 }
-                else
-                {
-                    // Use default value when bounds are null
-                    histogramConfiguration.Boundaries = Metric.DefaultHistogramBounds;
-                }
             }
 
             return true;
