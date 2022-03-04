@@ -2,10 +2,6 @@
 
 ## Unreleased
 
-* Make `IResourceDetector` public to allow custom implementations of resource
-  detectors.
-  ([#2897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2897))
-
 * Instantiating multiple metric instruments with the same name and also
   identical in all other respects - same type, description, and unit - result
   in a single metric stream aggregating measurements from all the identical
@@ -17,8 +13,14 @@
 
   ([#2916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2916))
 
-* Perf improvement for Histogram, by implementing lock-free updates.
-  ([#2951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2951))
+* Added support for implementing custom `ResourceDetector`.
+  ([#2949](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2949/)
+  [#2897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2897))
+
+* Perf improvement for Histogram and HistogramSumCount by implementing lock-free
+  updates.
+  ([#2951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2951)
+  [#2961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2961))
 
 ## 1.2.0-rc2
 

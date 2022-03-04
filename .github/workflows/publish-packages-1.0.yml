@@ -32,11 +32,6 @@ jobs:
         fetch-depth: 0 # fetching all
         ref: ${{ matrix.branches }}
 
-    - uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '6.0.x'
-        include-prerelease: true
-
     - name: Install dependencies
       run: dotnet restore
 
