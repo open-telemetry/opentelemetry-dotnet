@@ -95,7 +95,7 @@ namespace OpenTelemetry.Metrics.Tests
                     },
                     new object[] // empty bounds will only record sum and count
                     {
-                        new double[] { double.NegativeInfinity, double.PositiveInfinity },
+                        new double[] { },
                         new double[] { -10, 0, 1, 9, 10, 11, 19 },
                         40,
                         7,
