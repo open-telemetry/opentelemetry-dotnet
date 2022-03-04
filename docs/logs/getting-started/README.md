@@ -53,13 +53,46 @@ What does the above program do?
 
 The program uses the
 [`ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
-API to log a formatted string with a severity level of Information. Click
-[here](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.loglevel)
-for more information on the different logs levels. Opentelemetry captures this
-and sends it to `ConsoleExporter`. `ConsoleExporter` simply displays it on the
-console.
+API to log a formatted string with a severity level of Information. OpenTelemetry
+captures this and sends it to the `ConsoleExporter` which displays logs on the console.
+
+## Configure Filtering
+
+OpenTelemetry's provider is `OpenTelemetryLoggerProvider` and filtering rules 
+can define the minimum [`LogLevel`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.loglevel)
+applied to providers and categories.
+
+### via appsettings.json
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+    },
+    "OpenTelemetry": { // alias for OpenTelemetryLoggingProvider
+      "LogLevel": {
+        "Default": "Error" // Overrides preceding LogLevel:Default
+      }
+    }
+  }
+}
+```
+
+This example uses the "OpenTelemetry" alias for the `OpenTelemetryLoggingProvider`.
+Here OpenTelemetry is given a default of "Error" which overrides the global default "Information".
+
+### via code
+
+```csharp
+ILoggingBuilder.AddFilter<OpenTelemetryLoggerProvider>("category name", LogLevel.Error);
+```
+
+This example defines "Error" as the minimum `LogLevel` for the combination of
+`OpenTelemetryLoggerProvider` and a user defined category.
 
 ## Learn more
 
+* See also the official guide for [Logging in .NET](https://docs.microsoft.com/dotnet/core/extensions/logging)
 * If you want to build a custom exporter/processor/sampler, refer to [extending
   the SDK](../extending-the-sdk/README.md).
