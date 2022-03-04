@@ -70,9 +70,9 @@ applied to providers and categories.
     "LogLevel": {
       "Default": "Information",
     },
-    "OpenTelemetry": { // alias for OpenTelemetryLoggingProvider
+    "OpenTelemetry": {
       "LogLevel": {
-        "Default": "Error", // Overrides preceding LogLevel:Default
+        "Default": "Error",
         "category name": "Warning"
       }
     }
