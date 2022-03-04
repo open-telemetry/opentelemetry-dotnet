@@ -140,7 +140,7 @@ namespace OpenTelemetry.Metrics
                         this.Collect(this.exportTimeoutMilliseconds); // TODO: do we want to use the shutdown timeout here?
                         return;
                     case WaitHandle.WaitTimeout: // timer
-                        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect becasue the export interval has elapsed.");
+                        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because the export interval has elapsed.");
                         this.Collect(this.exportTimeoutMilliseconds);
                         break;
                 }
