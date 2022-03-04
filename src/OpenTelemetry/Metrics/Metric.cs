@@ -126,7 +126,7 @@ namespace OpenTelemetry.Metrics
 
         public string MeterVersion => this.InstrumentIdentity.MeterVersion;
 
-        internal InstrumentIdentity InstrumentIdentity { get; set; }
+        internal InstrumentIdentity InstrumentIdentity { get; private set; }
 
         internal bool InstrumentDisposed { get; set; }
 
