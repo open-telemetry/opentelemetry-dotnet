@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Internal;
@@ -27,6 +28,7 @@ namespace OpenTelemetry.Metrics
     public abstract partial class MetricReader
     {
         private readonly HashSet<string> metricStreamNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<InstrumentIdentity, Metric> instrumentIdentityToMetric = new ConcurrentDictionary<InstrumentIdentity, Metric>();
         private readonly object instrumentCreationLock = new object();
         private int maxMetricStreams;
         private int maxMetricPointsPerMetricStream;
@@ -37,14 +39,24 @@ namespace OpenTelemetry.Metrics
         internal Metric AddMetricWithNoViews(Instrument instrument)
         {
             var meterName = instrument.Meter.Name;
+            var meterVersion = instrument.Meter.Version;
             var metricName = instrument.Name;
-            var metricStreamName = $"{meterName}.{metricName}";
+            var metricStreamName = $"{meterName}.{meterVersion}.{metricName}";
+            var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, instrument.Description, instrument.GetType());
             lock (this.instrumentCreationLock)
             {
+                if (this.instrumentIdentityToMetric.TryGetValue(instrumentIdentity, out var existingMetric))
+                {
+                    return existingMetric;
+                }
+
                 if (this.metricStreamNames.Contains(metricStreamName))
                 {
-                    OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Metric name conflicting with existing name.", "Either change the name of the instrument or change name using View.");
-                    return null;
+                    OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
+                        metricName,
+                        meterName,
+                        "Metric instrument has the same name as an existing one but differs by description, unit, or instrument type. Measurements from this instrument will still be exported but may result in conflicts.",
+                        "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
                 }
 
                 var index = ++this.metricIndex;
@@ -55,7 +67,8 @@ namespace OpenTelemetry.Metrics
                 }
                 else
                 {
-                    var metric = new Metric(instrument, this.Temporality, metricName, instrument.Description, this.maxMetricPointsPerMetricStream);
+                    var metric = new Metric(instrumentIdentity, this.Temporality, this.maxMetricPointsPerMetricStream);
+                    this.instrumentIdentityToMetric[instrumentIdentity] = metric;
                     this.metrics[index] = metric;
                     this.metricStreamNames.Add(metricStreamName);
                     return metric;
@@ -88,8 +101,11 @@ namespace OpenTelemetry.Metrics
                 {
                     var metricStreamConfig = metricStreamConfigs[i];
                     var meterName = instrument.Meter.Name;
+                    var meterVersion = instrument.Meter.Version;
                     var metricName = metricStreamConfig?.Name ?? instrument.Name;
-                    var metricStreamName = $"{meterName}.{metricName}";
+                    var metricStreamName = $"{meterName}.{meterVersion}.{metricName}";
+                    var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
+                    var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, metricDescription, instrument.GetType());
 
                     if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricName))
                     {
@@ -102,10 +118,19 @@ namespace OpenTelemetry.Metrics
                         continue;
                     }
 
+                    if (this.instrumentIdentityToMetric.TryGetValue(instrumentIdentity, out var existingMetric))
+                    {
+                        metrics.Add(existingMetric);
+                        continue;
+                    }
+
                     if (this.metricStreamNames.Contains(metricStreamName))
                     {
-                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Metric name conflicting with existing name.", "Either change the name of the instrument or change name using MeterProviderBuilder.AddView.");
-                        continue;
+                        OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
+                            metricName,
+                            meterName,
+                            "Metric instrument has the same name as an existing one but differs by description, unit, or instrument type. Measurements from this instrument will still be exported but may result in conflicts.",
+                            "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
                     }
 
                     if (metricStreamConfig?.Aggregation == Aggregation.Drop)
@@ -122,12 +147,12 @@ namespace OpenTelemetry.Metrics
                     else
                     {
                         Metric metric;
-                        var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
                         string[] tagKeysInteresting = metricStreamConfig?.TagKeys;
                         double[] histogramBucketBounds = (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfig
                             && histogramConfig.Boundaries != null) ? histogramConfig.Boundaries : null;
-                        metric = new Metric(instrument, this.Temporality, metricName, metricDescription, this.maxMetricPointsPerMetricStream, histogramBucketBounds, tagKeysInteresting);
+                        metric = new Metric(instrumentIdentity, this.Temporality, this.maxMetricPointsPerMetricStream, histogramBucketBounds, tagKeysInteresting);
 
+                        this.instrumentIdentityToMetric[instrumentIdentity] = metric;
                         this.metrics[index] = metric;
                         metrics.Add(metric);
                         this.metricStreamNames.Add(metricStreamName);
@@ -215,6 +240,7 @@ namespace OpenTelemetry.Metrics
                         if (metric.InstrumentDisposed)
                         {
                             metricPointSize = metric.Snapshot();
+                            this.instrumentIdentityToMetric.TryRemove(metric.InstrumentIdentity, out var _);
                             this.metrics[i] = null;
                         }
                         else
