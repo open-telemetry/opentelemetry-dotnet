@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-rc3
+
+Released 2022-Mar-04
+
 * LogExporter bug fix to handle null EventName.
   ([#2871](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2871))
 
