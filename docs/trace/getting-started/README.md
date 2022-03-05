@@ -54,10 +54,17 @@ The `ActivitySource` instance is used to start an `Activity` which represents an
 [OpenTelemetry
 Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span).
 An OpenTelemetry
-[TracerProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#tracerprovider)
+[TracerProvider](#tracerprovider)
 is configured to subscribe to the activities from the source
 `MyCompany.MyProduct.MyLibrary`, and export it to `ConsoleExporter`.
 `ConsoleExporter` simply displays it on the console.
+
+## TracerProvider
+
+As shown in the above program, a valid `TracerProvider` must be configured and
+built to collect traces with OpenTelemetry .NET SDK. `TracerProvider` holds all
+the configuration for tracing like samplers, processors, etc, and is highly
+[customizable](../../../src/OpenTelemetry/README.md#tracing-configuration).
 
 ## OpenTelemetry .NET and relation with .NET Activity API
 
