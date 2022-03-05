@@ -59,6 +59,13 @@ is configured to subscribe to the activities from the source
 `MyCompany.MyProduct.MyLibrary`, and export it to `ConsoleExporter`.
 `ConsoleExporter` simply displays it on the console.
 
+## TracerProvider
+
+As shown in the above program, a valid `TracerProvider` must be configured and
+built to collect traces with OpenTelemetry .NET Sdk. `TracerProvider` holds all
+the configuration for tracing like samplers, processors, etc, and is highly
+[customizable](../../../src/OpenTelemetry#tracing-configuration).
+
 ## OpenTelemetry .NET and relation with .NET Activity API
 
 If you tried the above program, you may have already noticed that the terms
@@ -74,13 +81,6 @@ and
 respectively. Read
 [this](../../../src/OpenTelemetry.Api/README.md#introduction-to-opentelemetry-net-tracing-api)
 to learn more.
-
-## TracerProvider
-
-As shown in the above program, a valid `TracerProvider` must be configured and
-built to collect traces with OpenTelemetry .NET Sdk. `TracerProvider` holds all
-the configuration for tracing like samplers, processors, etc, and is highly
-[customizable](../../../src/OpenTelemetry#tracing-configuration).
 
 ## Learn more
 
