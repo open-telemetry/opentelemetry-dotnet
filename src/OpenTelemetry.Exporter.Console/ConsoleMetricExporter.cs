@@ -62,13 +62,13 @@ namespace OpenTelemetry.Exporter
                     msg.Append($", Unit: {metric.Unit}");
                 }
 
-                if (!string.IsNullOrEmpty(metric.Meter.Name))
+                if (!string.IsNullOrEmpty(metric.MeterName))
                 {
-                    msg.Append($", Meter: {metric.Meter.Name}");
+                    msg.Append($", Meter: {metric.MeterName}");
 
-                    if (!string.IsNullOrEmpty(metric.Meter.Version))
+                    if (!string.IsNullOrEmpty(metric.MeterVersion))
                     {
-                        msg.Append($"/{metric.Meter.Version}");
+                        msg.Append($"/{metric.MeterVersion}");
                     }
                 }
 
