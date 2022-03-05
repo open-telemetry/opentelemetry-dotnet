@@ -21,6 +21,8 @@ namespace OpenTelemetry.Metrics
 {
     internal readonly struct InstrumentIdentity : IEquatable<InstrumentIdentity>
     {
+        private readonly int hashCode;
+
         public InstrumentIdentity(Meter meter, string instrumentName, string unit, string description, Type instrumentType)
         {
             this.MeterName = meter.Name;
@@ -29,6 +31,18 @@ namespace OpenTelemetry.Metrics
             this.Unit = unit ?? string.Empty;
             this.Description = description ?? string.Empty;
             this.InstrumentType = instrumentType;
+
+            unchecked
+            {
+                var hash = 17;
+                hash = (hash * 31) + this.InstrumentType.GetHashCode();
+                hash = (hash * 31) + this.MeterName.GetHashCode();
+                hash = (hash * 31) + this.MeterVersion.GetHashCode();
+                hash = (hash * 31) + this.InstrumentName.GetHashCode();
+                hash = this.Unit == null ? hash : (hash * 31) + this.Unit.GetHashCode();
+                hash = this.Description == null ? hash : (hash * 31) + this.Description.GetHashCode();
+                this.hashCode = hash;
+            }
         }
 
         public readonly string MeterName { get; }
@@ -62,19 +76,6 @@ namespace OpenTelemetry.Metrics
                 && this.Description == other.Description;
         }
 
-        public readonly override int GetHashCode()
-        {
-            unchecked
-            {
-                int hash = 17;
-                hash = (hash * 31) + this.InstrumentType.GetHashCode();
-                hash = (hash * 31) + this.MeterName.GetHashCode();
-                hash = (hash * 31) + this.MeterVersion.GetHashCode();
-                hash = (hash * 31) + this.InstrumentName.GetHashCode();
-                hash = this.Unit == null ? hash : (hash * 31) + this.Unit.GetHashCode();
-                hash = this.Description == null ? hash : (hash * 31) + this.Description.GetHashCode();
-                return hash;
-            }
-        }
+        public readonly override int GetHashCode() => this.hashCode;
     }
 }
