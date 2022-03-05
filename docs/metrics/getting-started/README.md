@@ -63,7 +63,7 @@ pre-aggregated metrics are exported to a `ConsoleExporter`.
 
 As shown in the above program, a valid `MeterProvider` must be configured and
 built to collect metrics with OpenTelemetry .NET SDK. `MeterProvider` holds all
-the configuration for metrics like `Meter` names, readers, etc, and is highly
+the configuration for metrics like `Meter` names, readers, etc. and is highly
 [customizable](../customizing-the-sdk/README.md#meterprovider-configuration).
 
 ## OpenTelemetry .NET special note
