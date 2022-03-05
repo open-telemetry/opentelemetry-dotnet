@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-rc3
+
+Released 2022-Mar-04
+
 * Instantiating multiple metric instruments with the same name and also
   identical in all other respects - same type, description, and unit - result
   in a single metric stream aggregating measurements from all the identical
