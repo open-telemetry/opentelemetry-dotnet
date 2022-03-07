@@ -106,15 +106,6 @@ namespace Examples.Console
         [Option("defaultCollection", Default = 1000, HelpText = "Default collection period in milliseconds.", Required = false)]
         public int DefaultCollectionPeriodMilliseconds { get; set; }
 
-        [Option("runtime", Default = 5000, HelpText = "Run time in milliseconds.", Required = false)]
-        public int RunTime { get; set; }
-
-        [Option("tasks", Default = 1, HelpText = "Run # of concurrent tasks.", Required = false)]
-        public int NumTasks { get; set; }
-
-        [Option("maxLoops", Default = 0, HelpText = "Maximum number of loops/iterations per task. (0 = No Limit)", Required = false)]
-        public int MaxLoops { get; set; }
-
         [Option("useExporter", Default = "console", HelpText = "Options include otlp or console.", Required = false)]
         public string UseExporter { get; set; }
 
