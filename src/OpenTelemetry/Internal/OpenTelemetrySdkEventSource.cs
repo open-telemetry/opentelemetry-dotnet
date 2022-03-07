@@ -180,15 +180,6 @@ namespace OpenTelemetry.Internal
             }
         }
 
-        [NonEvent]
-        public void MetricReaderEvent(string message)
-        {
-            if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
-            {
-                this.WriteMetricReaderEvent(message);
-            }
-        }
-
         [Event(1, Message = "Span processor queue size reached maximum. Throttling spans.", Level = EventLevel.Warning)]
         public void SpanProcessorQueueIsExhausted()
         {
@@ -382,7 +373,7 @@ namespace OpenTelemetry.Internal
         }
 
         [Event(40, Message = "MetricReader event: '{0}'", Level = EventLevel.Verbose)]
-        public void WriteMetricReaderEvent(string message)
+        public void MetricReaderEvent(string message)
         {
             this.WriteEvent(40, message);
         }
