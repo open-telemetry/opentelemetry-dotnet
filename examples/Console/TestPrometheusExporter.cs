@@ -84,9 +84,22 @@ internal class TestPrometheusExporter
         });
 
         System.Console.WriteLine($"PrometheusExporter is listening on http://localhost:{port}/metrics/");
-        System.Console.WriteLine($"Press any key to exit...");
-        System.Console.ReadKey();
-        token.Cancel();
+        System.Console.WriteLine($"Press Esc key to exit...");
+        while (true)
+        {
+            if (System.Console.KeyAvailable)
+            {
+                var key = System.Console.ReadKey(true).Key;
+                if (key == ConsoleKey.Escape)
+                {
+                    token.Cancel();
+                    System.Console.WriteLine($"Exiting...");
+                    break;
+                }
+            }
+
+            Task.Delay(200).Wait();
+        }
 
         return null;
     }
