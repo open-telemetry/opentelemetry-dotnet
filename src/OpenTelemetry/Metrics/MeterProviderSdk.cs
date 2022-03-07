@@ -273,7 +273,7 @@ namespace OpenTelemetry.Metrics
 
             this.listener.Start();
 
-            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Setup completed.");
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("MeterProvider built successfully.");
         }
 
         internal Resource Resource { get; }
