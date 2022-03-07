@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-rc3
+
+Released 2022-Mar-04
+
 * Modified Export method to catch all exceptions.
   ([#2935](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2935))
 
