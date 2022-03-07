@@ -45,7 +45,7 @@ internal class TestPrometheusExporter
         scrape_configs:
           - job_name: "opentelemetry"
             static_configs:
-              - targets: ["localhost:9484"]
+              - targets: ["localhost:9464"]
         */
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -83,7 +83,7 @@ internal class TestPrometheusExporter
             }
         });
 
-        System.Console.WriteLine($"PrometheusExporter is making metrics available on http://localhost:{port}/metrics/");
+        System.Console.WriteLine($"PrometheusExporter exposes metrics via http://localhost:{port}/metrics/");
         System.Console.WriteLine($"Press Esc key to exit...");
         while (true)
         {
