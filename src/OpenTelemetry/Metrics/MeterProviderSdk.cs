@@ -45,7 +45,7 @@ namespace OpenTelemetry.Metrics
             int maxMetricPointsPerMetricStream,
             IEnumerable<MetricReader> readers)
         {
-            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Setup started.");
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Building MeterProvider.");
 
             StringBuilder exportersAdded = new StringBuilder();
             StringBuilder instrumentationFactoriesAdded = new StringBuilder();
