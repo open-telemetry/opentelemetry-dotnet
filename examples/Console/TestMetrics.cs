@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
@@ -116,80 +115,51 @@ namespace Examples.Console
                 });
             }
 
-            var cts = new CancellationTokenSource();
-
-            var tasks = new List<Task>();
-
-            for (int i = 0; i < options.NumTasks; i++)
+            System.Console.WriteLine("Press any key to exit.");
+            while (!System.Console.KeyAvailable)
             {
-                var taskno = i;
+                histogram?.Record(10);
 
-                tasks.Add(Task.Run(() =>
-                {
-                    System.Console.WriteLine($"Task started {taskno + 1}/{options.NumTasks}.");
+                histogram?.Record(
+                    100,
+                    new KeyValuePair<string, object>("tag1", "value1"));
 
-                    var loops = 0;
+                histogram?.Record(
+                    200,
+                    new KeyValuePair<string, object>("tag1", "value2"),
+                    new KeyValuePair<string, object>("tag2", "value2"));
 
-                    while (!cts.IsCancellationRequested)
-                    {
-                        if (options.MaxLoops > 0 && loops >= options.MaxLoops)
-                        {
-                            break;
-                        }
+                histogram?.Record(
+                    100,
+                    new KeyValuePair<string, object>("tag1", "value1"));
 
-                        histogram?.Record(10);
+                histogram?.Record(
+                    200,
+                    new KeyValuePair<string, object>("tag2", "value2"),
+                    new KeyValuePair<string, object>("tag1", "value2"));
 
-                        histogram?.Record(
-                            100,
-                            new KeyValuePair<string, object>("tag1", "value1"));
+                counter?.Add(10);
 
-                        histogram?.Record(
-                            200,
-                            new KeyValuePair<string, object>("tag1", "value2"),
-                            new KeyValuePair<string, object>("tag2", "value2"));
+                counter?.Add(
+                    100,
+                    new KeyValuePair<string, object>("tag1", "value1"));
 
-                        histogram?.Record(
-                            100,
-                            new KeyValuePair<string, object>("tag1", "value1"));
+                counter?.Add(
+                    200,
+                    new KeyValuePair<string, object>("tag1", "value2"),
+                    new KeyValuePair<string, object>("tag2", "value2"));
 
-                        histogram?.Record(
-                            200,
-                            new KeyValuePair<string, object>("tag2", "value2"),
-                            new KeyValuePair<string, object>("tag1", "value2"));
+                counter?.Add(
+                    100,
+                    new KeyValuePair<string, object>("tag1", "value1"));
 
-                        counter?.Add(10);
+                counter?.Add(
+                    200,
+                    new KeyValuePair<string, object>("tag2", "value2"),
+                    new KeyValuePair<string, object>("tag1", "value2"));
 
-                        counter?.Add(
-                            100,
-                            new KeyValuePair<string, object>("tag1", "value1"));
-
-                        counter?.Add(
-                            200,
-                            new KeyValuePair<string, object>("tag1", "value2"),
-                            new KeyValuePair<string, object>("tag2", "value2"));
-
-                        counter?.Add(
-                            100,
-                            new KeyValuePair<string, object>("tag1", "value1"));
-
-                        counter?.Add(
-                            200,
-                            new KeyValuePair<string, object>("tag2", "value2"),
-                            new KeyValuePair<string, object>("tag1", "value2"));
-
-                        loops++;
-                    }
-                }));
+                Task.Delay(500).Wait();
             }
-
-            cts.CancelAfter(options.RunTime);
-            System.Console.WriteLine($"Wait for {options.RunTime} milliseconds.");
-            while (!cts.IsCancellationRequested)
-            {
-                Task.Delay(1000).Wait();
-            }
-
-            Task.WaitAll(tasks.ToArray());
 
             return null;
         }
