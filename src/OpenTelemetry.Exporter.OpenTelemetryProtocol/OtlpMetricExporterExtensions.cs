@@ -104,7 +104,9 @@ namespace OpenTelemetry.Metrics
 
             var metricReader = metricReaderOptions.MetricReaderType == MetricReaderType.Manual
                 ? new BaseExportingMetricReader(metricExporter)
-                : new PeriodicExportingMetricReader(metricExporter, metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
+                : new PeriodicExportingMetricReader(
+                    metricExporter,
+                    metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds ?? 60000);
 
             metricReader.Temporality = metricReaderOptions.Temporality;
             return builder.AddReader(metricReader);
