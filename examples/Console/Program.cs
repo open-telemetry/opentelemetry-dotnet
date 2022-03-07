@@ -31,7 +31,7 @@ namespace Examples.Console
         /// dotnet run --project Examples.Console.csproj inmemory
         /// dotnet run --project Examples.Console.csproj zipkin -u http://localhost:9411/api/v2/spans
         /// dotnet run --project Examples.Console.csproj jaeger -h localhost -p 6831
-        /// dotnet run --project Examples.Console.csproj prometheus -p 9184 -d 2
+        /// dotnet run --project Examples.Console.csproj prometheus -p 9464
         /// dotnet run --project Examples.Console.csproj otlp -e "http://localhost:4317" -p "grpc"
         /// dotnet run --project Examples.Console.csproj zpages
         /// dotnet run --project Examples.Console.csproj metrics --help
