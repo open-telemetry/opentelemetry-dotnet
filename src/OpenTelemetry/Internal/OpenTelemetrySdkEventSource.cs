@@ -181,15 +181,6 @@ namespace OpenTelemetry.Internal
         }
 
         [NonEvent]
-        public void MeterProviderSdkEvent(string message)
-        {
-            if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
-            {
-                this.WriteMeterProviderSdkEvent(message);
-            }
-        }
-
-        [NonEvent]
         public void MetricReaderEvent(string message)
         {
             if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
@@ -385,7 +376,7 @@ namespace OpenTelemetry.Internal
         }
 
         [Event(39, Message = "MeterProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
-        public void WriteMeterProviderSdkEvent(string message)
+        public void MeterProviderSdkEvent(string message)
         {
             this.WriteEvent(39, message);
         }
