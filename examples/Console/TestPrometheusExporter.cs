@@ -36,7 +36,7 @@ internal class TestPrometheusExporter
 
     internal static object Run(int port)
     {
-        /* prometheus.yml
+        /* prometheus.yml example. Adjust port as per actual.
 
         global:
           scrape_interval: 1s
@@ -45,7 +45,7 @@ internal class TestPrometheusExporter
         scrape_configs:
           - job_name: "opentelemetry"
             static_configs:
-              - targets: ["localhost:9184"]
+              - targets: ["localhost:9484"]
         */
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -83,7 +83,7 @@ internal class TestPrometheusExporter
             }
         });
 
-        System.Console.WriteLine($"PrometheusExporter is listening on http://localhost:{port}/metrics/");
+        System.Console.WriteLine($"PrometheusExporter is making metrics available on http://localhost:{port}/metrics/");
         System.Console.WriteLine($"Press Esc key to exit...");
         while (true)
         {
