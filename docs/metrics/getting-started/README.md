@@ -54,10 +54,17 @@ instance named "MyCompany.MyProduct.MyLibrary" and then creates a
 instrument from it. This counter is used to report several metric measurements.
 
 An OpenTelemetry
-[MeterProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meterprovider)
+[MeterProvider](#meterprovider)
 is configured to subscribe to instruments from the Meter
 `MyCompany.MyProduct.MyLibrary`, and aggregate the measurements in-memory. The
 pre-aggregated metrics are exported to a `ConsoleExporter`.
+
+## MeterProvider
+
+As shown in the above program, a valid `MeterProvider` must be configured and
+built to collect metrics with OpenTelemetry .NET SDK. `MeterProvider` holds all
+the configuration for metrics like `Meter` names, readers, etc. and is highly
+[customizable](../customizing-the-sdk/README.md#meterprovider-configuration).
 
 ## OpenTelemetry .NET special note
 
