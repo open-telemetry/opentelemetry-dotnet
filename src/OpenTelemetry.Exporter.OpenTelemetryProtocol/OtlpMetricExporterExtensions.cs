@@ -102,11 +102,6 @@ namespace OpenTelemetry.Metrics
 
             var metricExporter = new OtlpMetricExporter(exporterOptions);
 
-            if (metricReaderOptions.MetricReaderType == (MetricReaderType)(-1))
-            {
-                metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
-            }
-
             var metricReader = metricReaderOptions.MetricReaderType == MetricReaderType.Manual
                 ? new BaseExportingMetricReader(metricExporter)
                 : new PeriodicExportingMetricReader(metricExporter, metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);

@@ -81,11 +81,6 @@ namespace OpenTelemetry.Metrics
 
             var metricExporter = new InMemoryExporter<Metric>(exportedItems);
 
-            if (metricReaderOptions.MetricReaderType == (MetricReaderType)(-1))
-            {
-                metricReaderOptions.MetricReaderType = MetricReaderType.Manual;
-            }
-
             var metricReader = metricReaderOptions.MetricReaderType == MetricReaderType.Manual
                 ? new BaseExportingMetricReader(metricExporter)
                 : new PeriodicExportingMetricReader(metricExporter, metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
