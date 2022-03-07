@@ -378,16 +378,22 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(37, providerName);
         }
 
-        [Event(38, Message = "MeterProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
-        public void WriteMeterProviderSdkEvent(string message)
+        [Event(38, Message = "Duplicate Instrument '{0}', Meter '{1}' encountered. Reason: '{2}'. Suggested action: '{3}'", Level = EventLevel.Warning)]
+        public void DuplicateMetricInstrument(string instrumentName, string meterName, string reason, string fix)
         {
-            this.WriteEvent(38, message);
+            this.WriteEvent(38, instrumentName, meterName, reason, fix);
         }
 
-        [Event(39, Message = "MetricReader event: '{0}'", Level = EventLevel.Verbose)]
-        public void WriteMetricReaderEvent(string message)
+        [Event(39, Message = "MeterProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
+        public void WriteMeterProviderSdkEvent(string message)
         {
             this.WriteEvent(39, message);
+        }
+
+        [Event(40, Message = "MetricReader event: '{0}'", Level = EventLevel.Verbose)]
+        public void WriteMetricReaderEvent(string message)
+        {
+            this.WriteEvent(40, message);
         }
 
 #if DEBUG
