@@ -66,7 +66,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
         /// <summary>
-        /// Start exporter.
+        /// Start Http Server.
         /// </summary>
         /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the HTTP server.</param>
         public void Start(CancellationToken token = default)
