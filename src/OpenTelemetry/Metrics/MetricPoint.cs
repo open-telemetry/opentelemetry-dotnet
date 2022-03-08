@@ -313,16 +313,13 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        // If -inf is the first bound, +inf will be the second of two bounds
-                        // in which case there is only a single bucket, so set the bucket
-                        // index to increment should be zero.
                         int i = 0;
-                        if (!double.IsNegativeInfinity(this.histogramBuckets.ExplicitBounds[0]))
+                        if (this.histogramBuckets.RunningBucketCounts.Length != 1)
                         {
                             for (; i < this.histogramBuckets.ExplicitBounds.Length; i++)
                             {
                                 // Upper bound is inclusive
-                                if (number <= this.histogramBuckets.ExplicitBounds[i])
+                                if (number <= this.histogramBuckets.ExplicitBounds[i++])
                                 {
                                     break;
                                 }

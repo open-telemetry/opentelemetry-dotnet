@@ -237,7 +237,7 @@ namespace OpenTelemetry.Metrics
                         histogramConfiguration.Boundaries = histogramConfiguration.Boundaries.Where(x => !double.IsInfinity(x)).ToArray();
 
                         // If empty bounds, use (-inf, +inf) as the single bucket
-                        if (!Enumerable.Any(histogramConfiguration.Boundaries))
+                        if (histogramConfiguration.Boundaries.Length == 0)
                         {
                             histogramConfiguration.Boundaries = new double[] { double.NegativeInfinity, double.PositiveInfinity };
                         }
