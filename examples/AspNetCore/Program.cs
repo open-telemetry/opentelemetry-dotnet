@@ -96,6 +96,13 @@ builder.Services.AddOpenTelemetryTracing(options =>
     }
 });
 
+builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
+{
+    opt.IncludeScopes = true;
+    opt.ParseStateValues = true;
+    opt.IncludeFormattedMessage = true;
+});
+
 // For options which can be bound from IConfiguration.
 builder.Services.Configure<AspNetCoreInstrumentationOptions>(builder.Configuration.GetSection("AspNetCoreInstrumentation"));
 
