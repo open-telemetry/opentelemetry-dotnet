@@ -25,23 +25,23 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet=v0.13.1, OS=Windows 10.0.19044.1503 (21H2)
+BenchmarkDotNet=v0.13.1, OS=Windows 10.0.19044.1566 (21H2)
 AMD Ryzen 9 3900X, 1 CPU, 24 logical and 12 physical cores
-.NET SDK=6.0.101
-  [Host]     : .NET 6.0.1 (6.0.121.56705), X64 RyuJIT
-  DefaultJob : .NET 6.0.1 (6.0.121.56705), X64 RyuJIT
+.NET SDK=6.0.200
+  [Host]     : .NET 6.0.2 (6.0.222.6406), X64 RyuJIT
+  DefaultJob : .NET 6.0.2 (6.0.222.6406), X64 RyuJIT
 
 
 |                 Method | BoundCount |     Mean |    Error |   StdDev | Allocated |
 |----------------------- |----------- |---------:|---------:|---------:|----------:|
-|   HistogramLongHotPath |         10 | 55.44 ns | 0.211 ns | 0.187 ns |         - |
-| HistogramDoubleHotPath |         10 | 55.69 ns | 0.129 ns | 0.107 ns |         - |
-|   HistogramLongHotPath |         20 | 57.71 ns | 0.297 ns | 0.278 ns |         - |
-| HistogramDoubleHotPath |         20 | 58.10 ns | 0.117 ns | 0.110 ns |         - |
-|   HistogramLongHotPath |         50 | 65.21 ns | 0.356 ns | 0.333 ns |         - |
-| HistogramDoubleHotPath |         50 | 66.34 ns | 0.381 ns | 0.356 ns |         - |
-|   HistogramLongHotPath |        100 | 79.49 ns | 0.804 ns | 0.753 ns |         - |
-| HistogramDoubleHotPath |        100 | 85.77 ns | 0.947 ns | 0.840 ns |         - |
+|   HistogramLongHotPath |         10 | 53.30 ns | 0.713 ns | 0.667 ns |         - |
+| HistogramDoubleHotPath |         10 | 53.18 ns | 0.267 ns | 0.236 ns |         - |
+|   HistogramLongHotPath |         20 | 56.39 ns | 0.487 ns | 0.431 ns |         - |
+| HistogramDoubleHotPath |         20 | 55.08 ns | 0.236 ns | 0.209 ns |         - |
+|   HistogramLongHotPath |         50 | 61.95 ns | 0.318 ns | 0.265 ns |         - |
+| HistogramDoubleHotPath |         50 | 60.00 ns | 0.201 ns | 0.188 ns |         - |
+|   HistogramLongHotPath |        100 | 69.57 ns | 0.299 ns | 0.279 ns |         - |
+| HistogramDoubleHotPath |        100 | 68.41 ns | 0.229 ns | 0.214 ns |         - |
 */
 
 namespace Benchmarks.Metrics
