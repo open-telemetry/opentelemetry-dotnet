@@ -366,6 +366,18 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(38, instrumentName, meterName, reason, fix);
         }
 
+        [Event(39, Message = "MeterProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
+        public void MeterProviderSdkEvent(string message)
+        {
+            this.WriteEvent(39, message);
+        }
+
+        [Event(40, Message = "MetricReader event: '{0}'", Level = EventLevel.Verbose)]
+        public void MetricReaderEvent(string message)
+        {
+            this.WriteEvent(40, message);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {

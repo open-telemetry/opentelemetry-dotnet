@@ -27,14 +27,14 @@ namespace Examples.Console
         /// Main method - invoke this using command line.
         /// For example:
         ///
-        /// dotnet run -p Examples.Console.csproj console
-        /// dotnet run -p Examples.Console.csproj inmemory
-        /// dotnet run -p Examples.Console.csproj zipkin -u http://localhost:9411/api/v2/spans
-        /// dotnet run -p Examples.Console.csproj jaeger -h localhost -p 6831
-        /// dotnet run -p Examples.Console.csproj prometheus -p 9184 -d 2
-        /// dotnet run -p Examples.Console.csproj otlp -e "http://localhost:4317" -p "grpc"
-        /// dotnet run -p Examples.Console.csproj zpages
-        /// dotnet run -p Examples.Console.csproj metrics --help
+        /// dotnet run --project Examples.Console.csproj console
+        /// dotnet run --project Examples.Console.csproj inmemory
+        /// dotnet run --project Examples.Console.csproj zipkin -u http://localhost:9411/api/v2/spans
+        /// dotnet run --project Examples.Console.csproj jaeger -h localhost -p 6831
+        /// dotnet run --project Examples.Console.csproj prometheus -p 9464
+        /// dotnet run --project Examples.Console.csproj otlp -e "http://localhost:4317" -p "grpc"
+        /// dotnet run --project Examples.Console.csproj zpages
+        /// dotnet run --project Examples.Console.csproj metrics --help
         ///
         /// The above must be run from the project root folder
         /// (eg: C:\repos\opentelemetry-dotnet\examples\Console\).
@@ -84,7 +84,7 @@ namespace Examples.Console
     [Verb("prometheus", HelpText = "Specify the options required to test Prometheus")]
     internal class PrometheusOptions
     {
-        [Option('p', "port", Default = 9184, HelpText = "The port to expose metrics. The endpoint will be http://localhost:port/metrics/ (this is the port from which your Prometheus server scraps metrics from.)", Required = false)]
+        [Option('p', "port", Default = 9464, HelpText = "The port to expose metrics. The endpoint will be http://localhost:port/metrics/ (this is the port from which your Prometheus server scraps metrics from.)", Required = false)]
         public int Port { get; set; }
     }
 

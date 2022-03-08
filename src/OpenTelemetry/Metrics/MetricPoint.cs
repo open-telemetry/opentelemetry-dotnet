@@ -290,12 +290,24 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.DoubleSumIncomingDelta:
                     {
                         double initValue, newValue;
-                        do
+                        var sw = default(SpinWait);
+                        while (true)
                         {
                             initValue = this.runningValue.AsDouble;
-                            newValue = initValue + number;
+
+                            unchecked
+                            {
+                                newValue = initValue + number;
+                            }
+
+                            if (initValue == Interlocked.CompareExchange(ref this.runningValue.AsDouble, newValue, initValue))
+                            {
+                                break;
+                            }
+
+                            sw.SpinOnce();
                         }
-                        while (initValue != Interlocked.CompareExchange(ref this.runningValue.AsDouble, newValue, initValue));
+
                         break;
                     }
 
