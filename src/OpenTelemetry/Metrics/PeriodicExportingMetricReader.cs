@@ -132,12 +132,15 @@ namespace OpenTelemetry.Metrics
                 switch (index)
                 {
                     case 0: // export
+                        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because Export was triggered.");
                         this.Collect(this.exportTimeoutMilliseconds);
                         break;
                     case 1: // shutdown
+                        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because Shutdown was triggered.");
                         this.Collect(this.exportTimeoutMilliseconds); // TODO: do we want to use the shutdown timeout here?
                         return;
                     case WaitHandle.WaitTimeout: // timer
+                        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because the export interval has elapsed.");
                         this.Collect(this.exportTimeoutMilliseconds);
                         break;
                 }
