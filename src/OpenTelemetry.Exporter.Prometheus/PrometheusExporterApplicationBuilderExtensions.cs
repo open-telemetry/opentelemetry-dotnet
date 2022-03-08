@@ -20,7 +20,6 @@ using System;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
 
 namespace Microsoft.AspNetCore.Builder
