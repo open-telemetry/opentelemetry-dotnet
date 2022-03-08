@@ -28,7 +28,7 @@ namespace OpenTelemetry.Metrics
         Manual,
 
         /// <summary>
-        /// Use the <see cref="PeriodicExportingMetricReader" />.
+        /// Uses the <see cref="PeriodicExportingMetricReader" />.
         /// <c>MetricReader.Collect()</c> will be invoked on a defined interval.
         /// </summary>
         Periodic,

@@ -60,10 +60,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     continue;
                 }
 
-                var meterName = metric.Meter.Name;
+                var meterName = metric.MeterName;
                 if (!metricsByLibrary.TryGetValue(meterName, out var instrumentationLibraryMetrics))
                 {
-                    instrumentationLibraryMetrics = GetMetricListFromPool(meterName, metric.Meter.Version);
+                    instrumentationLibraryMetrics = GetMetricListFromPool(meterName, metric.MeterVersion);
 
                     metricsByLibrary.Add(meterName, instrumentationLibraryMetrics);
                     resourceMetrics.InstrumentationLibraryMetrics.Add(instrumentationLibraryMetrics);

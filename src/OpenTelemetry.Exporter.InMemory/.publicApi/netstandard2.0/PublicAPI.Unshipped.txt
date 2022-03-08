@@ -1,2 +1,3 @@
 OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions
 static OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions.AddInMemoryExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Collections.Generic.ICollection<OpenTelemetry.Metrics.Metric> exportedItems) -> OpenTelemetry.Metrics.MeterProviderBuilder
+static OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions.AddInMemoryExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Collections.Generic.ICollection<OpenTelemetry.Metrics.Metric> exportedItems, System.Action<OpenTelemetry.Metrics.MetricReaderOptions> configureMetricReader) -> OpenTelemetry.Metrics.MeterProviderBuilder

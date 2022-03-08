@@ -22,7 +22,7 @@ using System.Threading;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Stores details about a metric data point.
+    /// Represents a metric data point.
     /// </summary>
     public struct MetricPoint
     {
@@ -290,12 +290,24 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.DoubleSumIncomingDelta:
                     {
                         double initValue, newValue;
-                        do
+                        var sw = default(SpinWait);
+                        while (true)
                         {
                             initValue = this.runningValue.AsDouble;
-                            newValue = initValue + number;
+
+                            unchecked
+                            {
+                                newValue = initValue + number;
+                            }
+
+                            if (initValue == Interlocked.CompareExchange(ref this.runningValue.AsDouble, newValue, initValue))
+                            {
+                                break;
+                            }
+
+                            sw.SpinOnce();
                         }
-                        while (initValue != Interlocked.CompareExchange(ref this.runningValue.AsDouble, newValue, initValue));
+
                         break;
                     }
 
@@ -323,11 +335,23 @@ namespace OpenTelemetry.Metrics
                             }
                         }
 
-                        lock (this.histogramBuckets.LockObject)
+                        var sw = default(SpinWait);
+                        while (true)
                         {
-                            this.runningValue.AsLong++;
-                            this.histogramBuckets.RunningSum += number;
-                            this.histogramBuckets.RunningBucketCounts[i]++;
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                unchecked
+                                {
+                                    this.runningValue.AsLong++;
+                                    this.histogramBuckets.RunningSum += number;
+                                    this.histogramBuckets.RunningBucketCounts[i]++;
+                                }
+
+                                this.histogramBuckets.IsCriticalSectionOccupied = 0;
+                                break;
+                            }
+
+                            sw.SpinOnce();
                         }
 
                         break;
@@ -335,10 +359,22 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramSumCount:
                     {
-                        lock (this.histogramBuckets.LockObject)
+                        var sw = default(SpinWait);
+                        while (true)
                         {
-                            this.runningValue.AsLong++;
-                            this.histogramBuckets.RunningSum += number;
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            {
+                                unchecked
+                                {
+                                    this.runningValue.AsLong++;
+                                    this.histogramBuckets.RunningSum += number;
+                                }
+
+                                this.histogramBuckets.IsCriticalSectionOccupied = 0;
+                                break;
+                            }
+
+                            sw.SpinOnce();
                         }
 
                         break;
