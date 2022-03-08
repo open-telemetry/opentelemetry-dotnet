@@ -33,6 +33,30 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
     public class OtlpMetricsExporterTests
     {
         [Fact]
+        public void TestAddOtlpExporter_SetsCorrectMetricReaderDefaults()
+        {
+            var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddOtlpExporter()
+                .Build();
+
+            var bindingFlags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+
+            var metricReader = typeof(MetricReader)
+                .Assembly
+                .GetType("OpenTelemetry.Metrics.MeterProviderSdk")
+                .GetField("reader", bindingFlags)
+                .GetValue(meterProvider) as PeriodicExportingMetricReader;
+
+            Assert.NotNull(metricReader);
+
+            var exportIntervalMilliseconds = (int)typeof(PeriodicExportingMetricReader)
+                .GetField("exportIntervalMilliseconds", bindingFlags)
+                .GetValue(metricReader);
+
+            Assert.Equal(60000, exportIntervalMilliseconds);
+        }
+
+        [Fact]
         public void UserHttpFactoryCalled()
         {
             OtlpExporterOptions options = new OtlpExporterOptions();
