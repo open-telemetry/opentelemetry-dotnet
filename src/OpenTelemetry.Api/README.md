@@ -80,7 +80,7 @@ propagated out of proc using
 OpenTelemetry SDK ships a BaggagePropagator and enables it by default.
 
 It is important to note that `Baggage` is not automatically attached to any
-telemetry. User *must* explicitly read `Baggage` and use it to enrich metrics,
+telemetry. User *can* explicitly read `Baggage` and use it to enrich metrics,
 logs and traces. An example of doing this for traces is shown
 [here](../../docs/trace/extending-the-sdk/README.md#processor).
 
