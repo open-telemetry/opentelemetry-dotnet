@@ -15,19 +15,21 @@
 
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="$(MicrosoftAspNetCoreHttpFeaturesPkgVer)" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="$(MicrosoftAspNetCoreHttpAbstractionsPkgVer)" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="$(MicrosoftAspNetCoreHttpFeaturesPkgVer)" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="$(MicrosoftAspNetCoreHttpAbstractionsPkgVer)" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="$(MicrosoftAspNetCoreHttpFeaturesPkgVer)" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="$(MicrosoftAspNetCoreHttpFeaturesNet3PkgVer)" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
