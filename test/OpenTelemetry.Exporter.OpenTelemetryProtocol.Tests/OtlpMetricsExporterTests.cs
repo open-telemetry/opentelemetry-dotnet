@@ -30,7 +30,7 @@ using OtlpMetrics = Opentelemetry.Proto.Metrics.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
-    public class OtlpMetricsExporterTests
+    public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
     {
         [Fact]
         public void TestAddOtlpExporter_SetsCorrectMetricReaderDefaults()
