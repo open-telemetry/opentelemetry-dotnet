@@ -10,7 +10,7 @@ You can use the filtering either in configuration
 (for example, by using an appsettings.json file) or in code.
 A full example is shown in [Program.cs](./Program.cs).
 
-### via appsettings.json
+## via appsettings.json
 
 This example uses the `OpenTelemetry`
 [alias](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.provideraliasattribute)
@@ -25,7 +25,7 @@ A full example is shown in [appsettings.json](./appsettings.json).
     "LogLevel": {
       "Default": "Information",
     },
-    "OpenTelemetry": { // alias for OpenTelemetryLoggerProvider
+    "OpenTelemetry": {
       "LogLevel": {
         "Default": "Error",
         "category name": "Warning"
@@ -35,7 +35,7 @@ A full example is shown in [appsettings.json](./appsettings.json).
 }
 ```
 
-### via code
+## via code
 
 This example defines "Error" as the default `LogLevel`.
 This example defines "Information" as the minimum `LogLevel` for a user defined category.
