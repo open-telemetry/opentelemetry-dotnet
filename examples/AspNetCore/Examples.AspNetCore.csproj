@@ -17,7 +17,7 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs\OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.AspNetCore\OpenTelemetry.Instrumentation.AspNetCore.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.Http\OpenTelemetry.Instrumentation.Http.csproj" />
-    <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Jaeger\OpenTelemetry.Exporter.Jaeger.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj" />
     <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.Zipkin\OpenTelemetry.Exporter.Zipkin.csproj" />
   </ItemGroup>
