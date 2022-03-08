@@ -30,68 +30,63 @@ namespace OpenTelemetry.Metrics
         private readonly AggregatorStore aggStore;
 
         internal Metric(
-            Instrument instrument,
+            InstrumentIdentity instrumentIdentity,
             AggregationTemporality temporality,
-            string metricName,
-            string metricDescription,
             int maxMetricPointsPerMetricStream,
             double[] histogramBounds = null,
             string[] tagKeysInteresting = null)
         {
-            this.Name = metricName;
-            this.Description = metricDescription ?? string.Empty;
-            this.Unit = instrument.Unit ?? string.Empty;
-            this.Meter = instrument.Meter;
+            this.InstrumentIdentity = instrumentIdentity;
 
             AggregationType aggType;
-            if (instrument.GetType() == typeof(ObservableCounter<long>)
-                || instrument.GetType() == typeof(ObservableCounter<int>)
-                || instrument.GetType() == typeof(ObservableCounter<short>)
-                || instrument.GetType() == typeof(ObservableCounter<byte>))
+            if (instrumentIdentity.InstrumentType == typeof(ObservableCounter<long>)
+                || instrumentIdentity.InstrumentType == typeof(ObservableCounter<int>)
+                || instrumentIdentity.InstrumentType == typeof(ObservableCounter<short>)
+                || instrumentIdentity.InstrumentType == typeof(ObservableCounter<byte>))
             {
                 aggType = AggregationType.LongSumIncomingCumulative;
                 this.MetricType = MetricType.LongSum;
             }
-            else if (instrument.GetType() == typeof(Counter<long>)
-                || instrument.GetType() == typeof(Counter<int>)
-                || instrument.GetType() == typeof(Counter<short>)
-                || instrument.GetType() == typeof(Counter<byte>))
+            else if (instrumentIdentity.InstrumentType == typeof(Counter<long>)
+                || instrumentIdentity.InstrumentType == typeof(Counter<int>)
+                || instrumentIdentity.InstrumentType == typeof(Counter<short>)
+                || instrumentIdentity.InstrumentType == typeof(Counter<byte>))
             {
                 aggType = AggregationType.LongSumIncomingDelta;
                 this.MetricType = MetricType.LongSum;
             }
-            else if (instrument.GetType() == typeof(Counter<double>)
-                || instrument.GetType() == typeof(Counter<float>))
+            else if (instrumentIdentity.InstrumentType == typeof(Counter<double>)
+                || instrumentIdentity.InstrumentType == typeof(Counter<float>))
             {
                 aggType = AggregationType.DoubleSumIncomingDelta;
                 this.MetricType = MetricType.DoubleSum;
             }
-            else if (instrument.GetType() == typeof(ObservableCounter<double>)
-                || instrument.GetType() == typeof(ObservableCounter<float>))
+            else if (instrumentIdentity.InstrumentType == typeof(ObservableCounter<double>)
+                || instrumentIdentity.InstrumentType == typeof(ObservableCounter<float>))
             {
                 aggType = AggregationType.DoubleSumIncomingCumulative;
                 this.MetricType = MetricType.DoubleSum;
             }
-            else if (instrument.GetType() == typeof(ObservableGauge<double>)
-                || instrument.GetType() == typeof(ObservableGauge<float>))
+            else if (instrumentIdentity.InstrumentType == typeof(ObservableGauge<double>)
+                || instrumentIdentity.InstrumentType == typeof(ObservableGauge<float>))
             {
                 aggType = AggregationType.DoubleGauge;
                 this.MetricType = MetricType.DoubleGauge;
             }
-            else if (instrument.GetType() == typeof(ObservableGauge<long>)
-                || instrument.GetType() == typeof(ObservableGauge<int>)
-                || instrument.GetType() == typeof(ObservableGauge<short>)
-                || instrument.GetType() == typeof(ObservableGauge<byte>))
+            else if (instrumentIdentity.InstrumentType == typeof(ObservableGauge<long>)
+                || instrumentIdentity.InstrumentType == typeof(ObservableGauge<int>)
+                || instrumentIdentity.InstrumentType == typeof(ObservableGauge<short>)
+                || instrumentIdentity.InstrumentType == typeof(ObservableGauge<byte>))
             {
                 aggType = AggregationType.LongGauge;
                 this.MetricType = MetricType.LongGauge;
             }
-            else if (instrument.GetType() == typeof(Histogram<long>)
-                || instrument.GetType() == typeof(Histogram<int>)
-                || instrument.GetType() == typeof(Histogram<short>)
-                || instrument.GetType() == typeof(Histogram<byte>)
-                || instrument.GetType() == typeof(Histogram<float>)
-                || instrument.GetType() == typeof(Histogram<double>))
+            else if (instrumentIdentity.InstrumentType == typeof(Histogram<long>)
+                || instrumentIdentity.InstrumentType == typeof(Histogram<int>)
+                || instrumentIdentity.InstrumentType == typeof(Histogram<short>)
+                || instrumentIdentity.InstrumentType == typeof(Histogram<byte>)
+                || instrumentIdentity.InstrumentType == typeof(Histogram<float>)
+                || instrumentIdentity.InstrumentType == typeof(Histogram<double>))
             {
                 this.MetricType = MetricType.Histogram;
 
@@ -107,10 +102,10 @@ namespace OpenTelemetry.Metrics
             }
             else
             {
-                throw new NotSupportedException($"Unsupported Instrument Type: {instrument.GetType().FullName}");
+                throw new NotSupportedException($"Unsupported Instrument Type: {instrumentIdentity.InstrumentType.FullName}");
             }
 
-            this.aggStore = new AggregatorStore(metricName, aggType, temporality, maxMetricPointsPerMetricStream, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
+            this.aggStore = new AggregatorStore(instrumentIdentity.InstrumentName, aggType, temporality, maxMetricPointsPerMetricStream, histogramBounds ?? DefaultHistogramBounds, tagKeysInteresting);
             this.Temporality = temporality;
             this.InstrumentDisposed = false;
         }
@@ -119,13 +114,17 @@ namespace OpenTelemetry.Metrics
 
         public AggregationTemporality Temporality { get; private set; }
 
-        public string Name { get; private set; }
+        public string Name => this.InstrumentIdentity.InstrumentName;
 
-        public string Description { get; private set; }
+        public string Description => this.InstrumentIdentity.Description;
 
-        public string Unit { get; private set; }
+        public string Unit => this.InstrumentIdentity.Unit;
 
-        public Meter Meter { get; private set; }
+        public string MeterName => this.InstrumentIdentity.MeterName;
+
+        public string MeterVersion => this.InstrumentIdentity.MeterVersion;
+
+        internal InstrumentIdentity InstrumentIdentity { get; private set; }
 
         internal bool InstrumentDisposed { get; set; }
 
