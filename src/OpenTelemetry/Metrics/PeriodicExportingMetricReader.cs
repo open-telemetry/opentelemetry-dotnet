@@ -111,14 +111,14 @@ namespace OpenTelemetry.Metrics
 
         private void ExporterProc()
         {
-            var sw = Stopwatch.StartNew();
+            int index;
+            int timeout;
             var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
+            var sw = Stopwatch.StartNew();
 
             while (true)
             {
-                var timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
-
-                int index;
+                timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
 
                 try
                 {
