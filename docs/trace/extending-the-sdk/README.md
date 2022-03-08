@@ -243,7 +243,7 @@ A demo processor is shown [here](./MyProcessor.cs).
 
 ### Enriching Processor
 
-A common use case of writing custom processor is to enrich Activities with
+A common use case of writing custom processor is to enrich activities with
 additional tags. An example of such an "EnrichingProcessor" is shown
 [here](./MyEnrichingProcessor.cs). Such processors must be added *before* the
 exporters.
