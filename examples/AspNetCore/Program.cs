@@ -96,6 +96,18 @@ builder.Services.AddOpenTelemetryTracing(options =>
     }
 });
 
+// For options which can be bound from IConfiguration.
+builder.Services.Configure<AspNetCoreInstrumentationOptions>(builder.Configuration.GetSection("AspNetCoreInstrumentation"));
+
+// For options which can be configured from code only.
+builder.Services.Configure<AspNetCoreInstrumentationOptions>(options =>
+{
+    options.Filter = (req) =>
+    {
+        return req.Request.Host != null;
+    };
+});
+
 builder.Services.AddOpenTelemetryMetrics(options =>
 {
     options.SetResourceBuilder(resourceBuilder)
@@ -111,12 +123,18 @@ builder.Services.AddOpenTelemetryMetrics(options =>
             options.AddOtlpExporter();
             break;
         default:
-            options.AddConsoleExporter();
+            options.AddConsoleExporter((exporterOptions, metricReaderOptions) =>
+            {
+                exporterOptions.Targets = ConsoleExporterOutputTargets.Console;
+
+                // The ConsoleMetricExporter defaults to a manual collect cycle.
+                // This configuration causes metrics to be exported to stdout on a 10s interval.
+                metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
+                metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10000;
+            });
             break;
     }
 });
-
-builder.Services.Configure<AspNetCoreInstrumentationOptions>(builder.Configuration.GetSection("AspNetCoreInstrumentation"));
 
 // Add services to the container.
 builder.Services.AddControllers();

@@ -15,5 +15,5 @@ You can try out different samplers like `TraceIdRatioBasedSampler`.
 
 ## References
 
-* [ASP.NET Core 3.1 Example](https://github.com/open-telemetry/opentelemetry-dotnet/tree/core-1.1.0/examples/AspNetCore)
+* [ASP.NET Core 3.1 Example](https://github.com/open-telemetry/opentelemetry-dotnet/tree/98cb28974af43fc893ab80a8cead6e2d4163e144/examples/AspNetCore)
 * [OpenTelemetry Project](https://opentelemetry.io/)
