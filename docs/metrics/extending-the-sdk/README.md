@@ -27,7 +27,7 @@ not covered by the built-in exporters:
   does not implement any retry logic.
 * Exporters should avoid generating telemetry and causing live-loop, this can be
   done via `OpenTelemetry.SuppressInstrumentationScope`.
-* Exporters receives a batch of `Metric`, and each `Metric` can contain 1 or
+* Exporters receive a batch of `Metric`, and each `Metric` can contain one or
   more `MetricPoint`s. The exporter should perform all actions with the
   `Metric`s and `MetricsPoint`s in the Batch before returning control from
   `Export`, once the control is returned, the exporter can no longer make any
