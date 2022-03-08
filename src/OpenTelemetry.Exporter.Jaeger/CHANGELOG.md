@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-rc3
+
+Released 2022-Mar-04
+
 * Change supported values for `OTEL_EXPORTER_JAEGER_PROTOCOL`
   Supported values: `udp/thrift.compact` and `http/thrift.binary` defined
   in the [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/9a0a3300c6269c2837a1d7c9c5232ec816f63222/specification/sdk-environment-variables.md?plain=1#L129).
