@@ -40,23 +40,7 @@ var resourceBuilder = tracingExporter switch
     _ => ResourceBuilder.CreateDefault().AddService(serviceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
 };
 
-builder.Logging.ClearProviders();
-
-builder.Logging.AddOpenTelemetry(options =>
-{
-    options.SetResourceBuilder(resourceBuilder);
-    var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
-    switch (logExporter)
-    {
-        case "otlp":
-            options.AddOtlpExporter();
-            break;
-        default:
-            options.AddConsoleExporter();
-            break;
-    }
-});
-
+// Traces
 builder.Services.AddOpenTelemetryTracing(options =>
 {
     options
@@ -96,6 +80,27 @@ builder.Services.AddOpenTelemetryTracing(options =>
     }
 });
 
+// For options which can be bound from IConfiguration.
+builder.Services.Configure<AspNetCoreInstrumentationOptions>(builder.Configuration.GetSection("AspNetCoreInstrumentation"));
+
+// Logging
+builder.Logging.ClearProviders();
+
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options.SetResourceBuilder(resourceBuilder);
+    var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
+    switch (logExporter)
+    {
+        case "otlp":
+            options.AddOtlpExporter();
+            break;
+        default:
+            options.AddConsoleExporter();
+            break;
+    }
+});
+
 builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
 {
     opt.IncludeScopes = true;
@@ -103,9 +108,7 @@ builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
     opt.IncludeFormattedMessage = true;
 });
 
-// For options which can be bound from IConfiguration.
-builder.Services.Configure<AspNetCoreInstrumentationOptions>(builder.Configuration.GetSection("AspNetCoreInstrumentation"));
-
+// Metrics
 builder.Services.AddOpenTelemetryMetrics(options =>
 {
     options.SetResourceBuilder(resourceBuilder)
@@ -156,5 +159,12 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+var metricsExporter = builder.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
+
+if (metricsExporter == "prometheus")
+{
+    app.UseOpenTelemetryPrometheusScrapingEndpoint();
+}
 
 app.Run();
