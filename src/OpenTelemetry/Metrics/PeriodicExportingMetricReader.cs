@@ -111,14 +111,14 @@ namespace OpenTelemetry.Metrics
 
         private void ExporterProc()
         {
-            var sw = Stopwatch.StartNew();
+            int index;
+            int timeout;
             var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
+            var sw = Stopwatch.StartNew();
 
             while (true)
             {
-                var timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
-
-                int index;
+                timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
 
                 try
                 {
@@ -132,12 +132,15 @@ namespace OpenTelemetry.Metrics
                 switch (index)
                 {
                     case 0: // export
+                        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because Export was triggered.");
                         this.Collect(this.exportTimeoutMilliseconds);
                         break;
                     case 1: // shutdown
+                        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because Shutdown was triggered.");
                         this.Collect(this.exportTimeoutMilliseconds); // TODO: do we want to use the shutdown timeout here?
                         return;
                     case WaitHandle.WaitTimeout: // timer
+                        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because the export interval has elapsed.");
                         this.Collect(this.exportTimeoutMilliseconds);
                         break;
                 }

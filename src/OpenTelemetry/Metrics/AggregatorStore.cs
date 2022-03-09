@@ -33,7 +33,6 @@ namespace OpenTelemetry.Metrics
         private readonly ConcurrentDictionary<Tags, int> tagsToMetricPointIndexDictionary =
             new ConcurrentDictionary<Tags, int>();
 
-        private readonly AggregationTemporality temporality;
         private readonly string name;
         private readonly string metricPointCapHitMessage;
         private readonly bool outputDelta;
@@ -65,8 +64,7 @@ namespace OpenTelemetry.Metrics
             this.metricPoints = new MetricPoint[maxMetricPoints];
             this.currentMetricPointBatch = new int[maxMetricPoints];
             this.aggType = aggType;
-            this.temporality = temporality;
-            this.outputDelta = temporality == AggregationTemporality.Delta ? true : false;
+            this.outputDelta = temporality == AggregationTemporality.Delta;
             this.histogramBounds = histogramBounds;
             this.startTimeExclusive = DateTimeOffset.UtcNow;
             if (tagKeysInteresting == null)
@@ -102,7 +100,7 @@ namespace OpenTelemetry.Metrics
         {
             this.batchSize = 0;
             var indexSnapshot = Math.Min(this.metricPointIndex, this.maxMetricPoints - 1);
-            if (this.temporality == AggregationTemporality.Delta)
+            if (this.outputDelta)
             {
                 this.SnapshotDelta(indexSnapshot);
             }
@@ -125,7 +123,7 @@ namespace OpenTelemetry.Metrics
                     continue;
                 }
 
-                metricPoint.TakeSnapshot(this.outputDelta);
+                metricPoint.TakeSnapshot(outputDelta: true);
                 this.currentMetricPointBatch[this.batchSize] = i;
                 this.batchSize++;
             }
@@ -146,7 +144,7 @@ namespace OpenTelemetry.Metrics
                     continue;
                 }
 
-                metricPoint.TakeSnapshot(this.outputDelta);
+                metricPoint.TakeSnapshot(outputDelta: false);
                 this.currentMetricPointBatch[this.batchSize] = i;
                 this.batchSize++;
             }
