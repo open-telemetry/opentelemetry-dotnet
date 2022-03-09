@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Http;
@@ -26,8 +25,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     {
         private readonly PropertyFetcher<HttpContext> stopContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
         private readonly Meter meter;
-
-        private Histogram<double> httpServerDuration;
+        private readonly Histogram<double> httpServerDuration;
 
         public HttpInMetricsListener(string name, Meter meter)
             : base(name)
@@ -55,12 +53,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             // TODO: This is just a minimal set of attributes. See the spec for additional attributes:
             // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#http-server
-            var tags = new KeyValuePair<string, object>[]
+            var tags = new TagList
             {
-                new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, context.Request.Method),
-                new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, context.Request.Scheme),
-                new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode),
-                new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, context.Request.Protocol),
+                { SemanticConventions.AttributeHttpMethod, context.Request.Method },
+                { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
+                { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode },
+                { SemanticConventions.AttributeHttpFlavor, context.Request.Protocol },
             };
 
             this.httpServerDuration.Record(activity.Duration.TotalMilliseconds, tags);
