@@ -87,9 +87,9 @@ the configuration for metrics like `Meter` names, readers, etc. and is highly
 ## OpenTelemetry .NET special note
 
 Metrics in OpenTelemetry .NET is a somewhat unique implementation of the
-OpenTelemetry project, as most of the Metrics API are incorporated directly
-into the .NET runtime itself. From a high level, what this means is that you
-can instrument your application by simply depending on
+OpenTelemetry project, as most of the Metrics API are made part of the [.NET
+runtime](https://github.com/dotnet/runtime) itself. From a high level, what this
+means is that you can instrument your application by simply depending on
 `System.Diagnostics.DiagnosticSource` package.
 
 ## Learn more
