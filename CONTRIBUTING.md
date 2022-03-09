@@ -44,7 +44,7 @@ You can contribute to this project from a Windows, macOS or Linux machine.
 On all platforms, the minimum requirements are:
 
 * Git client and command line tools.
-* .NET Core 3.1+
+* .NET Core 6.0+
 
 ### Linux or MacOS
 
