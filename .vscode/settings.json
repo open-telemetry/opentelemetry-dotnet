@@ -1,8 +1,0 @@
-{
-  "cSpell.words": [
-    "cref",
-    "otel",
-    "unvalidated"
-  ],
-  "dotnet-test-explorer.testProjectPath": "test/**/*.Tests.csproj"
-}
