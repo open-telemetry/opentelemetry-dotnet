@@ -4,6 +4,5 @@
     "otel",
     "unvalidated"
   ],
-  "dotnet-test-explorer.runInParallel": true,
   "dotnet-test-explorer.testProjectPath": "test/**/*.Tests.csproj"
 }
