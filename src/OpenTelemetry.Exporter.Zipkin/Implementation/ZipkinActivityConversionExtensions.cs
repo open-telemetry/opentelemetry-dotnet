@@ -48,13 +48,15 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             if (activity.Status == ActivityStatusCode.Ok || activity.Status == ActivityStatusCode.Error)
             {
                 PooledList<KeyValuePair<string, object>>.Add(
-                                ref tagState.Tags,
-                                new KeyValuePair<string, object>(
-                                    SpanAttributeConstants.StatusCodeKey,
-                                    StatusHelper.GetTagValueForActivityStatusCode(activity.Status)));
+                    ref tagState.Tags,
+                    new KeyValuePair<string, object>(
+                        SpanAttributeConstants.StatusCodeKey,
+                        StatusHelper.GetTagValueForActivityStatusCode(activity.Status)));
             }
             else
             {
+                // In the rare cases when both ActivityStatus and Status Tags were set,
+                // ActivityStatus takes precedence over status tags.
                 activity.EnumerateTags(ref tagState);
             }
 
@@ -83,9 +85,17 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 }
             }
 
-            if (activity.Status == ActivityStatusCode.Error || tagState.StatusCode == StatusCode.Error)
+            // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
+            if (activity.StatusDescription != null)
             {
-                // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
+                PooledList<KeyValuePair<string, object>>.Add(
+                    ref tagState.Tags,
+                    new KeyValuePair<string, object>(
+                        ZipkinErrorFlagTagName,
+                        activity.StatusDescription ?? string.Empty));
+            }
+            else if (tagState.StatusCode == StatusCode.Error)
+            {
                 PooledList<KeyValuePair<string, object>>.Add(
                     ref tagState.Tags,
                     new KeyValuePair<string, object>(

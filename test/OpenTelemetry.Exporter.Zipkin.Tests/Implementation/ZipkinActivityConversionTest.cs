@@ -103,7 +103,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
 
             // Assert
-
             Assert.Equal(expectedStatusCode, activity.GetStatus().StatusCode);
 
             if (expectedStatusCode == StatusCode.Unset)
@@ -134,9 +133,9 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
         public void ToZipkinSpan_Activity_Status_And_StatusDescription_is_Set(ActivityStatusCode expectedStatusCode)
         {
             // Arrange
+            const string description = "Description when ActivityStatusCode is Error.";
             var activity = ZipkinExporterTests.CreateTestActivity();
-
-            activity.SetStatus(expectedStatusCode);
+            activity.SetStatus(expectedStatusCode, description);
 
             // Act
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
@@ -155,7 +154,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
 
             if (expectedStatusCode == ActivityStatusCode.Error)
             {
-                Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == string.Empty);
+                Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == description);
             }
             else
             {
@@ -164,14 +163,15 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
         }
 
         [Theory]
-        [InlineData(ActivityStatusCode.Ok, "ERROR")]
         [InlineData(ActivityStatusCode.Error, "OK")]
+        [InlineData(ActivityStatusCode.Ok, "ERROR")]
         public void ActivityStatus_Takes_precedence_Over_Status_Tags(ActivityStatusCode activityStatus, string statusCodeTagValue)
         {
             // Arrange
+            const string description = "Description when ActivityStatusCode is Error.";
             var activity = ZipkinExporterTests.CreateTestActivity();
 
-            activity.SetStatus(activityStatus);
+            activity.SetStatus(activityStatus, description);
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
 
             // Act
@@ -179,12 +179,15 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
 
             // Assert
             Assert.Equal(
-                    StatusHelper.GetTagValueForActivityStatusCode(activityStatus),
-                    zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+                StatusHelper.GetTagValueForActivityStatusCode(activityStatus),
+                zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
 
             if (activityStatus == ActivityStatusCode.Error)
             {
-                Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == string.Empty);
+                Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == description);
+
+                // ActivityStatusDescription takes higher precedence.
+                Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == statusCodeTagValue);
             }
             else
             {

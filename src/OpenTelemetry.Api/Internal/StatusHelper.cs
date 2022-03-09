@@ -45,23 +45,6 @@ namespace OpenTelemetry.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static StatusCode? GetStatusCodeForTagValue(string statusCodeTagValue)
-        {
-            return statusCodeTagValue switch
-            {
-                /*
-                 * Note: Order here does matter for perf. Unset is
-                 * first because assumption is most spans will be
-                 * Unset, then Error. Ok is not set by the SDK.
-                 */
-                string _ when UnsetStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Unset,
-                string _ when ErrorStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Error,
-                string _ when OkStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Ok,
-                _ => null,
-            };
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string GetTagValueForActivityStatusCode(ActivityStatusCode activityStatusCode)
         {
             return activityStatusCode switch
@@ -74,6 +57,23 @@ namespace OpenTelemetry.Internal
                 ActivityStatusCode.Unset => UnsetStatusCodeTagValue,
                 ActivityStatusCode.Error => ErrorStatusCodeTagValue,
                 ActivityStatusCode.Ok => OkStatusCodeTagValue,
+                _ => null,
+            };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static StatusCode? GetStatusCodeForTagValue(string statusCodeTagValue)
+        {
+            return statusCodeTagValue switch
+            {
+                /*
+                 * Note: Order here does matter for perf. Unset is
+                 * first because assumption is most spans will be
+                 * Unset, then Error. Ok is not set by the SDK.
+                 */
+                string _ when UnsetStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Unset,
+                string _ when ErrorStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Error,
+                string _ when OkStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Ok,
                 _ => null,
             };
         }
