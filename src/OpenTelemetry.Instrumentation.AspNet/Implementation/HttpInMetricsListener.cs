@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Web;
@@ -25,7 +24,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
 {
     internal sealed class HttpInMetricsListener : IDisposable
     {
-        private Histogram<double> httpServerDuration;
+        private readonly Histogram<double> httpServerDuration;
 
         public HttpInMetricsListener(Meter meter)
         {
@@ -42,11 +41,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
         {
             // TODO: This is just a minimal set of attributes. See the spec for additional attributes:
             // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#http-server
-            var tags = new KeyValuePair<string, object>[]
+            var tags = new TagList
             {
-                new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, context.Request.HttpMethod),
-                new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, context.Request.Url.Scheme),
-                new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode),
+                { SemanticConventions.AttributeHttpMethod, context.Request.HttpMethod },
+                { SemanticConventions.AttributeHttpScheme, context.Request.Url.Scheme },
+                { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode },
             };
 
             this.httpServerDuration.Record(activity.Duration.TotalMilliseconds, tags);

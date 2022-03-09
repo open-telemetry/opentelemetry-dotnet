@@ -30,6 +30,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
         public void HttpDurationMetricIsEmitted()
         {
             string url = "http://localhost/api/value";
+            double duration = 0;
             HttpContext.Current = new HttpContext(
                 new HttpRequest(string.Empty, url, string.Empty),
                 new HttpResponse(new StringWriter()));
@@ -38,7 +39,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             // as it is created using activitysource inside TelemetryHttpModule
             // TODO: This should not be needed once the dependency on activity is removed from metrics
             using var traceprovider = Sdk.CreateTracerProviderBuilder()
-                .AddAspNetInstrumentation()
+                .AddAspNetInstrumentation(opts => opts.Enrich
+                = (activity, eventName, rawObject) =>
+                {
+                    if (eventName.Equals("OnStopActivity"))
+                    {
+                        duration = activity.Duration.TotalMilliseconds;
+                    }
+                })
                 .Build();
 
             var exportedItems = new List<Metric>();
@@ -68,7 +76,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.Equal(MetricType.Histogram, exportedItems[0].MetricType);
             Assert.Equal("http.server.duration", exportedItems[0].Name);
             Assert.Equal(1L, count);
-            Assert.True(sum > 0);
+            Assert.Equal(duration, sum);
         }
     }
 }
