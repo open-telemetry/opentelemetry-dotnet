@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-rc3
+
+Released 2022-Mar-04
+
 * Adds the ability to configure `MetricReaderOptions` via the
   `AddInMemoryExporter` extension method.
   ([#2931](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2931))
