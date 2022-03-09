@@ -1,5 +1,7 @@
 # Changelog
 
+* Added ASP.NET metrics instrumentation to collect `http.server.duration`.
+  ([#2985](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2985))
 * Fix: Http server span status is now unset for `400`-`499`.
   ([#2904](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2904))
 
