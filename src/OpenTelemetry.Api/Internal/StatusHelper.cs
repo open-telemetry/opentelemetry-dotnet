@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Trace;
 
@@ -57,23 +56,6 @@ namespace OpenTelemetry.Internal
                 string _ when UnsetStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Unset,
                 string _ when ErrorStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Error,
                 string _ when OkStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Ok,
-                _ => null,
-            };
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string GetTagValueForActivityStatusCode(ActivityStatusCode activityStatusCode)
-        {
-            return activityStatusCode switch
-            {
-                /*
-                 * Note: Order here does matter for perf. Unset is
-                 * first because assumption is most spans will be
-                 * Unset, then Error, then Ok.
-                 */
-                ActivityStatusCode.Unset => UnsetStatusCodeTagValue,
-                ActivityStatusCode.Error => ErrorStatusCodeTagValue,
-                ActivityStatusCode.Ok => OkStatusCodeTagValue,
                 _ => null,
             };
         }
