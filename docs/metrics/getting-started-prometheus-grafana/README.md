@@ -7,6 +7,7 @@
   - [Start Prometheus](#start-prometheus)
   - [View results in Prometheus](#view-results-in-prometheus)
 - [Explore metrics using Grafana](#explore-metrics-using-grafana)
+- [Learn more](#learn-more)
 
 ## Export metrics from the application
 
@@ -24,7 +25,7 @@ dotnet run
 Add a reference to [Prometheus
 Exporter](../../../src/OpenTelemetry.Exporter.Prometheus/README.md):
 
-```shell
+```sh
 dotnet add package OpenTelemetry.Exporter.Prometheus --version 1.2.0-rc2
 ```
 
@@ -140,7 +141,7 @@ Now we know how to configure Prometheus server and deploy OpenTelemetry
 `PrometheusExporter` to export our metrics. Next, we are going to explore a tool
 called Grafana, which has powerful visualizations for the metrics.
 
-### Explore metrics using Grafana
+## Explore metrics using Grafana
 
 [Install Grafana](https://grafana.com/docs/grafana/latest/installation/).
 
@@ -152,7 +153,16 @@ Follow the instructions in the Grafana getting started
 [doc](https://grafana.com/docs/grafana/latest/getting-started/getting-started/#step-2-log-in)
 to log in.
 
-After successfully logging in, click on the explore option on the left panel of
+After successfully logging in, click on the Configuration icon
+on the panel at the left hand side, and click on Prometheus.
+Type in the default endpoint of Prometheus as suggested by the UI
+as the value for the URI.
+
+```console
+http://localhost:9090
+```
+
+Then, click on the Explore icon on the left panel of
 the website - we should be able to write some queries to explore our metrics
 now!
 
