@@ -79,6 +79,11 @@ propagated out of proc using
 [Propagators](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/context/api-propagators.md).
 OpenTelemetry SDK ships a BaggagePropagator and enables it by default.
 
+It is important to note that `Baggage` is not automatically attached to any
+telemetry. User *can* explicitly read `Baggage` and use it to enrich metrics,
+logs and traces. An example of doing this for traces is shown
+[here](../../docs/trace/extending-the-sdk/README.md#processor).
+
 ```csharp
 // Use GetBaggage to get all the key/value pairs present in Baggage
 foreach (var item in Baggage.GetBaggage())
@@ -509,7 +514,7 @@ This component uses an
 [EventSource](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventsource)
 with the name "OpenTelemetry-Api" for its internal logging.
 Please refer to [SDK
-troubleshooting](../opentelemetry/README.md#troubleshooting) for instructions on
+troubleshooting](../OpenTelemetry/README.md#troubleshooting) for instructions on
 seeing these internal logs.
 
 ## References

@@ -86,9 +86,7 @@ namespace OpenTelemetry.Resources
             return finalResource;
         }
 
-        // Internal until spec is finalized.
-        // https://github.com/open-telemetry/oteps/blob/master/text/0111-auto-resource-detection.md
-        internal ResourceBuilder AddDetector(IResourceDetector resourceDetector)
+        public ResourceBuilder AddDetector(IResourceDetector resourceDetector)
         {
             Guard.ThrowIfNull(resourceDetector);
 
