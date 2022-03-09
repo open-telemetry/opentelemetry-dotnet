@@ -319,7 +319,7 @@ namespace OpenTelemetry.Metrics
                             for (; i < this.histogramBuckets.ExplicitBounds.Length; i++)
                             {
                                 // Upper bound is inclusive
-                                if (number <= this.histogramBuckets.ExplicitBounds[i++])
+                                if (number <= this.histogramBuckets.ExplicitBounds[i])
                                 {
                                     break;
                                 }
