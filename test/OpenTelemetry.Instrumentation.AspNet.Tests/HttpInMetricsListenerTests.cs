@@ -77,6 +77,36 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             Assert.Equal("http.server.duration", exportedItems[0].Name);
             Assert.Equal(1L, count);
             Assert.Equal(duration, sum);
+
+            Assert.Equal(3, metricPoints[0].Tags.Count);
+            string httpMethod = null;
+            int httpStatusCode = 0;
+            string httpScheme = null;
+
+            foreach (var tag in metricPoints[0].Tags)
+            {
+                if (tag.Key == SemanticConventions.AttributeHttpMethod)
+                {
+                    httpMethod = (string)tag.Value;
+                    continue;
+                }
+
+                if (tag.Key == SemanticConventions.AttributeHttpStatusCode)
+                {
+                    httpStatusCode = (int)tag.Value;
+                    continue;
+                }
+
+                if (tag.Key == SemanticConventions.AttributeHttpScheme)
+                {
+                    httpScheme = (string)tag.Value;
+                    continue;
+                }
+            }
+
+            Assert.Equal("GET", httpMethod);
+            Assert.Equal(200, httpStatusCode);
+            Assert.Equal("http", httpScheme);
         }
     }
 }
