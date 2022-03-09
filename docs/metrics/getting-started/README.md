@@ -59,6 +59,24 @@ is configured to subscribe to instruments from the Meter
 `MyCompany.MyProduct.MyLibrary`, and aggregate the measurements in-memory. The
 pre-aggregated metrics are exported to a `ConsoleExporter`.
 
+```mermaid
+graph LR
+
+subgraph SDK
+  MeterProvider
+  MetricReader[BaseExportingMetricReader]
+  ConsoleExporter
+end
+
+subgraph API
+  Instrument["Meter(#quot;MyCompany.MyProduct.MyLibrary#quot;, #quot;1.0#quot;)<br/>Counter(#quot;MyFruitCounter#quot;)"]
+end
+
+Instrument --> | Measurements | MeterProvider
+
+MeterProvider --> | Metrics | MetricReader --> | Push | ConsoleExporter
+```
+
 ## MeterProvider
 
 As shown in the above program, a valid `MeterProvider` must be configured and

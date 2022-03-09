@@ -2,6 +2,9 @@
 
 * Fix: Http server span status is now unset for `400`-`499`.
   ([#2904](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2904))
+* Fix: drop direct reference of the `Microsoft.AspNetCore.Http.Features` from
+  net5 & net6 targets (already part of the FrameworkReference since the net5).
+  ([#2860](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2860))
 
 ## Unreleased
 
