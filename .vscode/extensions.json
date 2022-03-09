@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "editorconfig.editorconfig",
+    "formulahendry.dotnet-test-explorer",
+    "ms-dotnettools.csharp",
+    "streetsidesoftware.code-spell-checker"
+  ]
+}
