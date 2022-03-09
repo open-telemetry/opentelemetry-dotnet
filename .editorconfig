@@ -120,11 +120,20 @@ dotnet_style_parentheses_in_relational_binary_operators = always_for_clarity:sil
 dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:silent
 dotnet_style_parentheses_in_other_operators = never_if_unnecessary:silent
 
-# Rules without specific configuration values
+# Code analyzers
+# CA1031: Do not catch general exception types
 dotnet_diagnostic.CA1031.severity = none
+
+# CA1303: Do not pass literals as localized parameters
 dotnet_diagnostic.CA1303.severity = none
+
+# IDE0001: Simplify name
 dotnet_diagnostic.IDE0001.severity = warning
+
+# IDE0002: Simplify member access
 dotnet_diagnostic.IDE0002.severity = warning
+
+# IDE0005: Remove unnecessary import
 dotnet_diagnostic.IDE0005.severity = warning
 
 [obj/**.cs]
