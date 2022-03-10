@@ -103,6 +103,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
 
             // Assert
+
             Assert.Equal(expectedStatusCode, activity.GetStatus().StatusCode);
 
             if (expectedStatusCode == StatusCode.Unset)
