@@ -15,11 +15,11 @@
 // </copyright>
 
 using System;
-using System.Net.Http;
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 #if !NETFRAMEWORK
 using OpenTelemetry.Internal;
+using System.Net.Http;
 #endif
 
 namespace OpenTelemetry.Trace
