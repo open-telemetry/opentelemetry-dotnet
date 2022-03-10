@@ -23,7 +23,7 @@ namespace OpenTelemetry.Exporter
 {
     internal static class PeerServiceResolver
     {
-        private static readonly Dictionary<string, int> PeerServiceKeyResolutionDictionary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+        private static readonly Dictionary<string, int> PeerServiceKeyResolutionDictionary = new(StringComparer.OrdinalIgnoreCase)
         {
             [SemanticConventions.AttributePeerService] = 0, // priority 0 (highest).
             ["peer.hostname"] = 1,

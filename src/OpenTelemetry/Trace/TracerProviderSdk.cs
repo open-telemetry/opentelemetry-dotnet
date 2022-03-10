@@ -28,7 +28,7 @@ namespace OpenTelemetry.Trace
     {
         internal int ShutdownCount;
 
-        private readonly List<object> instrumentations = new List<object>();
+        private readonly List<object> instrumentations = new();
         private readonly ActivityListener listener;
         private readonly Sampler sampler;
         private readonly Action<Activity> getRequestedDataAction;

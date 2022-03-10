@@ -42,8 +42,8 @@ namespace OpenTelemetry.Context.Propagation.Tests
                 return new string[] { v };
             };
 
-        private readonly B3Propagator b3propagator = new B3Propagator();
-        private readonly B3Propagator b3PropagatorSingleHeader = new B3Propagator(true);
+        private readonly B3Propagator b3propagator = new();
+        private readonly B3Propagator b3PropagatorSingleHeader = new(true);
 
         private readonly ITestOutputHelper output;
 

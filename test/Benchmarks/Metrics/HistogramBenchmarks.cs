@@ -61,7 +61,7 @@ namespace Benchmarks.Metrics
     public class HistogramBenchmarks
     {
         private const int MaxValue = 1000;
-        private Random random = new Random();
+        private Random random = new();
         private Histogram<long> histogram;
         private MeterProvider provider;
         private Meter meter;
