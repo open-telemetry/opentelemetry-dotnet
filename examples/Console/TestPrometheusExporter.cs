@@ -28,11 +28,11 @@ namespace Examples.Console;
 
 internal class TestPrometheusExporter
 {
-    private static readonly Meter MyMeter = new Meter("MyMeter");
-    private static readonly Meter MyMeter2 = new Meter("MyMeter2");
+    private static readonly Meter MyMeter = new("MyMeter");
+    private static readonly Meter MyMeter2 = new("MyMeter2");
     private static readonly Counter<double> Counter = MyMeter.CreateCounter<double>("myCounter", description: "A counter for demonstration purpose.");
     private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("myHistogram");
-    private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());
+    private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
 
     internal static object Run(int port)
     {
