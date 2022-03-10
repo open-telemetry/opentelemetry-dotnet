@@ -33,7 +33,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         internal static void AddBatch(
             this OtlpCollector.ExportLogsServiceRequest request,
             OtlpResource.Resource processResource,
-            in Batch<LogRecord> logRecordBatch)
+            in Batch<OtlpLogs.LogRecord> logRecordBatch)
         {
             OtlpLogs.ResourceLogs resourceLogs = new OtlpLogs.ResourceLogs
             {
@@ -46,11 +46,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             foreach (var logRecord in logRecordBatch)
             {
-                var otlpLogRecord = logRecord.ToOtlpLog();
-                if (otlpLogRecord != null)
-                {
-                    instrumentationLibraryLogs.Logs.Add(otlpLogRecord);
-                }
+                instrumentationLibraryLogs.Logs.Add(logRecord);
             }
         }
 

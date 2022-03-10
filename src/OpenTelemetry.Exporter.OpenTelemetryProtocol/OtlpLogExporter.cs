@@ -19,6 +19,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Logs;
 using OtlpCollector = Opentelemetry.Proto.Collector.Logs.V1;
+using OtlpLogs = Opentelemetry.Proto.Logs.V1;
 using OtlpResource = Opentelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter
@@ -27,7 +28,7 @@ namespace OpenTelemetry.Exporter
     /// Exporter consuming <see cref="LogRecord"/> and exporting the data using
     /// the OpenTelemetry protocol (OTLP).
     /// </summary>
-    internal class OtlpLogExporter : BaseExporter<LogRecord>
+    internal class OtlpLogExporter : BaseExporter<OtlpLogs.LogRecord>
     {
         private readonly IExportClient<OtlpCollector.ExportLogsServiceRequest> exportClient;
 
@@ -63,7 +64,7 @@ namespace OpenTelemetry.Exporter
         internal OtlpResource.Resource ProcessResource => this.processResource ??= this.ParentProvider.GetResource().ToOtlpResource();
 
         /// <inheritdoc/>
-        public override ExportResult Export(in Batch<LogRecord> logRecordBatch)
+        public override ExportResult Export(in Batch<OtlpLogs.LogRecord> logRecordBatch)
         {
             // Prevents the exporter's gRPC and HTTP operations from being instrumented.
             using var scope = SuppressInstrumentationScope.Begin();

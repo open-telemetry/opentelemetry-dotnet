@@ -14,7 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
@@ -26,9 +30,10 @@ namespace OpenTelemetry.Logs
     public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISupportExternalScope
     {
         internal readonly OpenTelemetryLoggerOptions Options;
-        internal BaseProcessor<LogRecord> Processor;
         internal Resource Resource;
-        private readonly Hashtable loggers = new Hashtable();
+        private readonly Hashtable loggers = new(StringComparer.OrdinalIgnoreCase);
+        private LinkedListNode head;
+        private LinkedListNode tail;
         private bool disposed;
         private IExternalScopeProvider scopeProvider;
 
@@ -57,6 +62,8 @@ namespace OpenTelemetry.Logs
             }
         }
 
+        internal IInlineLogProcessor Processor => this.head?.Value;
+
         void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)
         {
             this.scopeProvider = scopeProvider;
@@ -75,7 +82,7 @@ namespace OpenTelemetry.Logs
 
         public ILogger CreateLogger(string categoryName)
         {
-            if (!(this.loggers[categoryName] is OpenTelemetryLogger logger))
+            if (this.loggers[categoryName] is not OpenTelemetryLogger logger)
             {
                 lock (this.loggers)
                 {
@@ -96,26 +103,27 @@ namespace OpenTelemetry.Logs
         }
 
         internal OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
+            => this.AddProcessor(BuildLegacyLogRecord, processor);
+
+        internal OpenTelemetryLoggerProvider AddProcessor<T>(LogConverter<T> logConverter, BaseProcessor<T> processor)
+            where T : class
         {
+            Guard.ThrowIfNull(logConverter);
             Guard.ThrowIfNull(processor);
 
             processor.SetParentProvider(this);
 
-            if (this.Processor == null)
+            var node = new LinkedListNode(
+                new InlineLogProcessor<T>(logConverter, processor));
+            if (this.head == null)
             {
-                this.Processor = processor;
-            }
-            else if (this.Processor is CompositeProcessor<LogRecord> compositeProcessor)
-            {
-                compositeProcessor.AddProcessor(processor);
+                this.head = node;
+                this.tail = node;
             }
             else
             {
-                this.Processor = new CompositeProcessor<LogRecord>(new[]
-                {
-                    this.Processor,
-                    processor,
-                });
+                this.tail.Next = node;
+                this.tail = node;
             }
 
             return this;
@@ -128,8 +136,8 @@ namespace OpenTelemetry.Logs
                 if (disposing)
                 {
                     // Wait for up to 5 seconds grace period
-                    this.Processor?.Shutdown(5000);
-                    this.Processor?.Dispose();
+                    this.ShutdownProcessors(5000);
+                    this.DisposeProcessors();
                 }
 
                 this.disposed = true;
@@ -138,5 +146,141 @@ namespace OpenTelemetry.Logs
 
             base.Dispose(disposing);
         }
+
+        private static LogRecord BuildLegacyLogRecord(string categoryName, DateTime timestamp, LogLevel logLevel, EventId eventId, object state, IReadOnlyList<KeyValuePair<string, object>> parsedState, IExternalScopeProvider scopeProvider, Exception exception, string formattedLogMessage)
+        {
+            return new LogRecord(
+                scopeProvider,
+                timestamp,
+                categoryName,
+                logLevel,
+                eventId,
+                formattedLogMessage,
+                state,
+                exception,
+                parsedState);
+        }
+
+        private void ShutdownProcessors(int timeoutMilliseconds)
+        {
+            var sw = timeoutMilliseconds == Timeout.Infinite
+                ? null
+                : Stopwatch.StartNew();
+
+            for (var cur = this.head; cur != null; cur = cur.Next)
+            {
+                if (sw == null)
+                {
+                    cur.Value.Shutdown(Timeout.Infinite);
+                }
+                else
+                {
+                    var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+
+                    // notify all the processors, even if we run overtime
+                    cur.Value.Shutdown((int)Math.Max(timeout, 0));
+                }
+            }
+        }
+
+        private void DisposeProcessors()
+        {
+            for (var cur = this.head; cur != null; cur = cur.Next)
+            {
+                try
+                {
+                    cur.Value?.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+                }
+            }
+        }
+
+        private class LinkedListNode
+        {
+            public readonly IInlineLogProcessor Value;
+
+            public LinkedListNode(IInlineLogProcessor value)
+            {
+                this.Value = value;
+            }
+
+            public LinkedListNode Next { get; set; }
+        }
+    }
+
+    public delegate T LogConverter<T>(
+        string categoryName,
+        DateTime timestamp,
+        LogLevel logLevel,
+        EventId eventId,
+        object state,
+        IReadOnlyList<KeyValuePair<string, object>> parsedState,
+        IExternalScopeProvider scopeProvider,
+        Exception exception,
+        string formattedLogMessage);
+
+    internal sealed class InlineLogProcessor<T> : IInlineLogProcessor
+        where T : class
+    {
+        private readonly LogConverter<T> logConverter;
+        private readonly BaseProcessor<T> innerProcessor;
+
+        public InlineLogProcessor(
+            LogConverter<T> logConverter,
+            BaseProcessor<T> innerProcessor)
+        {
+            this.logConverter = logConverter;
+            this.innerProcessor = innerProcessor;
+        }
+
+        public void Log(
+            string categoryName,
+            DateTime timestamp,
+            LogLevel logLevel,
+            EventId eventId,
+            object state,
+            IReadOnlyList<KeyValuePair<string, object>> parsedState,
+            IExternalScopeProvider scopeProvider,
+            Exception exception,
+            string formattedLogMessage)
+        {
+            T record = this.logConverter(
+                categoryName,
+                timestamp,
+                logLevel,
+                eventId,
+                state,
+                parsedState,
+                scopeProvider,
+                exception,
+                formattedLogMessage);
+
+            this.innerProcessor.OnEnd(record);
+        }
+
+        public bool Shutdown(int timeoutMilliseconds = Timeout.Infinite)
+            => this.innerProcessor.Shutdown(timeoutMilliseconds);
+
+        public void Dispose()
+            => this.innerProcessor.Dispose();
+    }
+
+    internal interface IInlineLogProcessor : IDisposable
+    {
+        void Log(
+            string categoryName,
+            DateTime timestamp,
+            LogLevel logLevel,
+            EventId eventId,
+            object state,
+            IReadOnlyList<KeyValuePair<string, object>> parsedState,
+            IExternalScopeProvider scopeProvider,
+            Exception exception,
+            string formattedLogMessage);
+
+        bool Shutdown(int timeoutMilliseconds = Timeout.Infinite);
     }
 }

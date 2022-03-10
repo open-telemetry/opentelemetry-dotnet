@@ -51,20 +51,16 @@ namespace OpenTelemetry.Logs
             {
                 var options = this.provider.Options;
 
-                var record = new LogRecord(
-                    options.IncludeScopes ? this.ScopeProvider : null,
-                    DateTime.UtcNow,
+                processor.Log(
                     this.categoryName,
+                    DateTime.UtcNow,
                     logLevel,
                     eventId,
-                    options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
                     options.ParseStateValues ? null : state,
+                    options.ParseStateValues ? this.ParseState(state) : null,
+                    options.IncludeScopes ? this.ScopeProvider : null,
                     exception,
-                    options.ParseStateValues ? this.ParseState(state) : null);
-
-                processor.OnEnd(record);
-
-                record.ScopeProvider = null;
+                    options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null);
             }
         }
 
