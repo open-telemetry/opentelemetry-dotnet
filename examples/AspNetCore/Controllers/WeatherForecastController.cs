@@ -14,58 +14,51 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using Examples.AspNetCore.Models;
+namespace Examples.AspNetCore.Controllers;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
-namespace Examples.AspNetCore.Controllers
+[ApiController]
+[Route("[controller]")]
+public class WeatherForecastController : ControllerBase
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class WeatherForecastController : ControllerBase
+    private static readonly string[] Summaries = new[]
     {
-        private static readonly string[] Summaries = new[]
-        {
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching",
-        };
+    };
 
-        private static readonly HttpClient HttpClient = new();
+    private static readonly HttpClient HttpClient = new HttpClient();
 
-        private readonly ILogger<WeatherForecastController> logger;
+    private readonly ILogger<WeatherForecastController> logger;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger)
+    {
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    [HttpGet]
+    public IEnumerable<WeatherForecast> Get()
+    {
+        using var scope = this.logger.BeginScope("{Id}", Guid.NewGuid().ToString("N"));
+
+        // Making an http call here to serve as an example of
+        // how dependency calls will be captured and treated
+        // automatically as child of incoming request.
+        var res = HttpClient.GetStringAsync("http://google.com").Result;
+        var rng = new Random();
+        var forecast = Enumerable.Range(1, 5).Select(index => new WeatherForecast
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        }
+            Date = DateTime.Now.AddDays(index),
+            TemperatureC = rng.Next(-20, 55),
+            Summary = Summaries[rng.Next(Summaries.Length)],
+        })
+        .ToArray();
 
-        [HttpGet]
-        public IEnumerable<WeatherForecast> Get()
-        {
-            using var scope = this.logger.BeginScope("{Id}", Guid.NewGuid().ToString("N"));
+        this.logger.LogInformation(
+            "WeatherForecasts generated {count}: {forecasts}",
+            forecast.Length,
+            forecast);
 
-            // Making an http call here to serve as an example of
-            // how dependency calls will be captured and treated
-            // automatically as child of incoming request.
-            var res = HttpClient.GetStringAsync("http://google.com").Result;
-            var rng = new Random();
-            var forecast = Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = rng.Next(-20, 55),
-                Summary = Summaries[rng.Next(Summaries.Length)],
-            })
-            .ToArray();
-
-            this.logger.LogInformation(
-                "WeatherForecasts generated {count}: {forecasts}",
-                forecast.Length,
-                forecast);
-
-            return forecast;
-        }
+        return forecast;
     }
 }

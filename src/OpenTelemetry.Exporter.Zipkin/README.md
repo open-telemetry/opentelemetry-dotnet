@@ -60,7 +60,7 @@ This exporter allows easy configuration of `ZipkinExporterOptions` from
 dependency injection container, when used in conjunction with
 [`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md).
 
-See the [Startup](../../examples/AspNetCore/Startup.cs) class of the ASP.NET
+See the [Startup](../../examples/AspNetCore/Program.cs) class of the ASP.NET
 Core application for example use.
 
 ### Configuration using Environment Variables
