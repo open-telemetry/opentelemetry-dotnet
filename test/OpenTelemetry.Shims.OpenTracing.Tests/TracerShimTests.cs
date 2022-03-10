@@ -19,11 +19,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using global::OpenTracing;
-using global::OpenTracing.Propagation;
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
+using OpenTracing;
+using OpenTracing.Propagation;
 using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests
@@ -42,7 +42,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             Assert.Throws<ArgumentNullException>(() => new TracerShim(null, new TraceContextPropagator()));
 
             // null context format
-            var tracerMock = new Mock<Trace.Tracer>();
+            var tracerMock = new Mock<Tracer>();
             Assert.Throws<ArgumentNullException>(() => new TracerShim(TracerProvider.Default.GetTracer("test"), null));
         }
 
