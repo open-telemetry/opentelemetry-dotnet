@@ -43,12 +43,12 @@ namespace OpenTelemetry.Shims.OpenTracing
         /// <summary>
         /// The OpenTelemetry links. These correspond loosely to OpenTracing references.
         /// </summary>
-        private readonly List<Link> links = new List<Link>();
+        private readonly List<Link> links = new();
 
         /// <summary>
         /// The OpenTelemetry attributes. These correspond to OpenTracing Tags.
         /// </summary>
-        private readonly List<KeyValuePair<string, object>> attributes = new List<KeyValuePair<string, object>>();
+        private readonly List<KeyValuePair<string, object>> attributes = new();
 
         /// <summary>
         /// The set of operation names for System.Diagnostics.Activity based automatic instrumentations that indicate a root span.

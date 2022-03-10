@@ -26,7 +26,7 @@ namespace OpenTelemetry.Context
     /// </summary>
     public static class RuntimeContext
     {
-        private static readonly ConcurrentDictionary<string, object> Slots = new ConcurrentDictionary<string, object>();
+        private static readonly ConcurrentDictionary<string, object> Slots = new();
 
         /// <summary>
         /// Gets or sets the actual context carrier implementation.

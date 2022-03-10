@@ -27,7 +27,7 @@ namespace OpenTelemetry.Internal
         /// <summary>
         /// Long-living object that hold relevant resources.
         /// </summary>
-        private static readonly SelfDiagnostics Instance = new SelfDiagnostics();
+        private static readonly SelfDiagnostics Instance = new();
         private readonly SelfDiagnosticsConfigRefresher configRefresher;
 
         static SelfDiagnostics()
