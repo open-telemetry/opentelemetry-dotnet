@@ -36,7 +36,7 @@ services.AddMassTransit(x =>
 services.AddMassTransitHostedService();
 
 // Add OpenTelemetry and MassTransit instrumentation
-services.AddOpenTelemetrySdk(x =>
+services.AddOpenTelemetryTracing(x =>
 {
     x.AddMassTransitInstrumentation();
     x.UseJaegerExporter(config => // Configure Jaeger);
