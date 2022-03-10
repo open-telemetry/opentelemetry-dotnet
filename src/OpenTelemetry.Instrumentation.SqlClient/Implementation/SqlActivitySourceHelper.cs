@@ -38,7 +38,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
         private static readonly Version Version = typeof(SqlActivitySourceHelper).Assembly.GetName().Version;
 #pragma warning disable SA1202 // Elements should be ordered by access <- In this case, Version MUST come before ActivitySource otherwise null ref exception is thrown.
-        internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+        internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
 #pragma warning restore SA1202 // Elements should be ordered by access
     }
 }

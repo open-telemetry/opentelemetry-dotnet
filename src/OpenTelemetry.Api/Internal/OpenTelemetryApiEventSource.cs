@@ -26,7 +26,7 @@ namespace OpenTelemetry.Internal
     [EventSource(Name = "OpenTelemetry-Api")]
     internal class OpenTelemetryApiEventSource : EventSource
     {
-        public static OpenTelemetryApiEventSource Log = new OpenTelemetryApiEventSource();
+        public static OpenTelemetryApiEventSource Log = new();
 
         [NonEvent]
         public void ActivityContextExtractException(string format, Exception ex)
