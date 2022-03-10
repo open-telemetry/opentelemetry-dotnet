@@ -18,8 +18,8 @@ using System;
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 #if !NETFRAMEWORK
-using OpenTelemetry.Internal;
 using System.Net.Http;
+using OpenTelemetry.Internal;
 #endif
 
 namespace OpenTelemetry.Trace
