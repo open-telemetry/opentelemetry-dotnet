@@ -52,7 +52,7 @@ namespace Benchmarks.Metrics
         private string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
 
         // TODO: Confirm if this needs to be thread-safe
-        private Random random = new Random();
+        private Random random = new();
 
         [Params(false, true)]
         public bool UseWithRef { get; set; }

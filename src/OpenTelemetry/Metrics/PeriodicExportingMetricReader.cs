@@ -34,8 +34,8 @@ namespace OpenTelemetry.Metrics
         private readonly int exportIntervalMilliseconds;
         private readonly int exportTimeoutMilliseconds;
         private readonly Thread exporterThread;
-        private readonly AutoResetEvent exportTrigger = new AutoResetEvent(false);
-        private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
+        private readonly AutoResetEvent exportTrigger = new(false);
+        private readonly ManualResetEvent shutdownTrigger = new(false);
         private bool disposed;
 
         /// <summary>
@@ -111,14 +111,14 @@ namespace OpenTelemetry.Metrics
 
         private void ExporterProc()
         {
-            var sw = Stopwatch.StartNew();
+            int index;
+            int timeout;
             var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
+            var sw = Stopwatch.StartNew();
 
             while (true)
             {
-                var timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
-
-                int index;
+                timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
 
                 try
                 {

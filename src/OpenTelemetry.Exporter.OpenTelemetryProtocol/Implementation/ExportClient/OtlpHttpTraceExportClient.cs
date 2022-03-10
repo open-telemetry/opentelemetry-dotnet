@@ -56,7 +56,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
         internal sealed class ExportRequestContent : HttpContent
         {
-            private static readonly MediaTypeHeaderValue ProtobufMediaTypeHeader = new MediaTypeHeaderValue(MediaContentType);
+            private static readonly MediaTypeHeaderValue ProtobufMediaTypeHeader = new(MediaContentType);
 
             private readonly OtlpCollector.ExportTraceServiceRequest exportRequest;
 

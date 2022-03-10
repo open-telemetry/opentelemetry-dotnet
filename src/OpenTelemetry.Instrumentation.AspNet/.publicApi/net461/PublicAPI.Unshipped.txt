@@ -6,5 +6,7 @@ OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions.Filter.get -> 
 OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions.Filter.set -> void
 OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions.RecordException.get -> bool
 OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions.RecordException.set -> void
+OpenTelemetry.Metrics.MeterProviderBuilderExtensions
 OpenTelemetry.Trace.TracerProviderBuilderExtensions
+static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddAspNetInstrumentation(this OpenTelemetry.Metrics.MeterProviderBuilder builder) -> OpenTelemetry.Metrics.MeterProviderBuilder
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddAspNetInstrumentation(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Instrumentation.AspNet.AspNetInstrumentationOptions> configureAspNetInstrumentationOptions = null) -> OpenTelemetry.Trace.TracerProviderBuilder

@@ -29,11 +29,11 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
         internal static readonly AssemblyName AssemblyName = typeof(GrpcClientDiagnosticListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
-        internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+        internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
 
         private readonly GrpcClientInstrumentationOptions options;
-        private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new PropertyFetcher<HttpRequestMessage>("Request");
-        private readonly PropertyFetcher<HttpResponseMessage> stopRequestFetcher = new PropertyFetcher<HttpResponseMessage>("Response");
+        private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new("Request");
+        private readonly PropertyFetcher<HttpResponseMessage> stopRequestFetcher = new("Response");
 
         public GrpcClientDiagnosticListener(GrpcClientInstrumentationOptions options)
             : base("Grpc.Net.Client")

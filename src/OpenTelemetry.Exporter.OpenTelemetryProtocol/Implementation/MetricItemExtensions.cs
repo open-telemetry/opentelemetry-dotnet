@@ -32,7 +32,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class MetricItemExtensions
     {
-        private static readonly ConcurrentBag<OtlpMetrics.InstrumentationLibraryMetrics> MetricListPool = new ConcurrentBag<OtlpMetrics.InstrumentationLibraryMetrics>();
+        private static readonly ConcurrentBag<OtlpMetrics.InstrumentationLibraryMetrics> MetricListPool = new();
         private static readonly Action<RepeatedField<OtlpMetrics.Metric>, int> RepeatedFieldOfMetricSetCountAction = CreateRepeatedFieldOfMetricSetCountAction();
 
         internal static void AddMetrics(

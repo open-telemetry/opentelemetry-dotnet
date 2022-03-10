@@ -229,7 +229,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 using var source = new ActivitySource("test-source");
 
                 var propagator = new Mock<TextMapPropagator>();
-                propagator.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+                propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
                     .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
                     {
                         action(message, "customField", "customValue");
@@ -321,7 +321,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
                 bool isPropagatorCalled = false;
                 var propagator = new Mock<TextMapPropagator>();
-                propagator.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+                propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
                     .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
                     {
                         isPropagatorCalled = true;
@@ -383,7 +383,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
                 bool isPropagatorCalled = false;
                 var propagator = new Mock<TextMapPropagator>();
-                propagator.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+                propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
                     .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
                     {
                         isPropagatorCalled = true;

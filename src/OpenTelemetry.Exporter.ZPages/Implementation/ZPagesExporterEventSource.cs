@@ -26,7 +26,7 @@ namespace OpenTelemetry.Exporter.ZPages.Implementation
     [EventSource(Name = "OpenTelemetry-Exporter-ZPages")]
     internal class ZPagesExporterEventSource : EventSource
     {
-        public static ZPagesExporterEventSource Log = new ZPagesExporterEventSource();
+        public static ZPagesExporterEventSource Log = new();
 
         [NonEvent]
         public void FailedExport(Exception ex)
