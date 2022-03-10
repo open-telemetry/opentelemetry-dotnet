@@ -26,12 +26,12 @@ namespace OpenTelemetry.Metrics
     internal sealed class AggregatorStore
     {
         private static readonly string MetricPointCapHitFixMessage = "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
-        private readonly object lockZeroTags = new object();
+        private readonly object lockZeroTags = new();
         private readonly HashSet<string> tagKeysInteresting;
         private readonly int tagsKeysInterestingCount;
 
         private readonly ConcurrentDictionary<Tags, int> tagsToMetricPointIndexDictionary =
-            new ConcurrentDictionary<Tags, int>();
+            new();
 
         private readonly string name;
         private readonly string metricPointCapHitMessage;
