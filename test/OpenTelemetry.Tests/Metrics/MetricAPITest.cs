@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Linq;
 using System.Threading;
 using OpenTelemetry.Tests;
 using Xunit;
@@ -465,6 +466,57 @@ namespace OpenTelemetry.Metrics.Tests
                 Assert.Single(metricPoints);
                 return metricPoints[0].GetSumLong();
             }
+        }
+
+        [Fact]
+        public void DuplicateInstrumentRegistration_WithViews_OneInstrument_MultipleViews_OneStream()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView((instrument) =>
+                {
+                    return new MetricStreamConfiguration { TagKeys = new[]{ "key1" }};
+                })
+                .AddView((instrument) =>
+                {
+                    return new MetricStreamConfiguration { TagKeys = new[]{ "key2" }};
+                })
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var instrument1 = meter.CreateCounter<long>("name");
+
+            var tags = new List<KeyValuePair<string, object>>();
+            tags.Add(new("key1", "value"));
+            tags.Add(new("key2", "value"));
+
+            instrument1.Add(10, tags.ToArray());
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Equal(1, exportedItems.Count);
+
+            var metric = exportedItems[0];
+
+            Assert.Equal("name", metric.Name);
+
+            var metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            var metricPoint = metricPoints[0];
+
+            // Only the first view takes affect from the perspective of selecting tags
+            ValidateMetricPointTags(tags.Take(1).ToList(), metricPoint.Tags);
+
+            // But the presense of the two views cause the value to be recorded twice
+            Assert.Equal(20, metricPoint.GetSumLong());
         }
 
         [Fact]
