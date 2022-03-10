@@ -31,7 +31,7 @@ namespace OpenTelemetry
     public readonly struct Baggage : IEquatable<Baggage>
     {
         private static readonly RuntimeContextSlot<BaggageHolder> RuntimeContextSlot = RuntimeContext.RegisterSlot<BaggageHolder>("otel.baggage");
-        private static readonly Dictionary<string, string> EmptyBaggage = new Dictionary<string, string>();
+        private static readonly Dictionary<string, string> EmptyBaggage = new();
 
         private readonly Dictionary<string, string> baggage;
 
@@ -239,7 +239,7 @@ namespace OpenTelemetry
         /// <returns>Baggage item or <see langword="null"/> if nothing was found.</returns>
         public string GetBaggage(string name)
         {
-            Guard.ThrowIfNullOrEmpty(name, nameof(name));
+            Guard.ThrowIfNullOrEmpty(name);
 
             return this.baggage != null && this.baggage.TryGetValue(name, out string value)
                 ? value

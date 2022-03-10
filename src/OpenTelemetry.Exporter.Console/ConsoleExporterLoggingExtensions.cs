@@ -23,14 +23,14 @@ namespace OpenTelemetry.Logs
     public static class ConsoleExporterLoggingExtensions
     {
         /// <summary>
-        /// Adds Console Exporter as a configuration to the OpenTelemetry ILoggingBuilder.
+        /// Adds Console exporter with OpenTelemetryLoggerOptions.
         /// </summary>
         /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
         public static OpenTelemetryLoggerOptions AddConsoleExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<ConsoleExporterOptions> configure = null)
         {
-            Guard.ThrowIfNull(loggerOptions, nameof(loggerOptions));
+            Guard.ThrowIfNull(loggerOptions);
 
             var options = new ConsoleExporterOptions();
             configure?.Invoke(options);

@@ -2,11 +2,51 @@
 
 ## Unreleased
 
+## 1.2.0-rc3
+
+Released 2022-Mar-04
+
+* Instantiating multiple metric instruments with the same name and also
+  identical in all other respects - same type, description, and unit - result
+  in a single metric stream aggregating measurements from all the identical
+  instruments.
+
+  Instantiating multiple metric instruments with the same name but differ in
+  some respect - different type, description, or unit - will result in a
+  separate metric stream for each distinct instrument.
+
+  ([#2916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2916))
+
+* The `Meter` property on `OpenTelemetry.Metrics.Metric` has been removed.
+  It now has `MeterName` and `MeterVersion` properties.
+  ([#2916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2916))
+
+* Added support for implementing custom `ResourceDetector`.
+  ([#2949](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2949/)
+  [#2897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2897))
+
+* Perf improvement for Histogram and HistogramSumCount by implementing lock-free
+  updates.
+  ([#2951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2951)
+  [#2961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2961))
+
+## 1.2.0-rc2
+
+Released 2022-Feb-02
+
 * Make `MetricPoint` of `MetricPointAccessor` readonly.
-  ([2736](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2736))
+  ([#2736](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2736))
 
 * Fail-fast when using AddView with guaranteed conflict.
-  ([2751](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2751))
+  ([#2751](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2751))
+
+* Swallow `ObjectDisposedException` from the `BatchExportProcessor` worker
+  thread.
+  ([#2844](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2844))
+
+* Performance improvement: when emitting metrics, users are strongly advised to
+  provide tags with same Key order, to achieve maximum performance.
+  ([#2805](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2805))
 
 ## 1.2.0-rc1
 
@@ -14,7 +54,7 @@ Released 2021-Nov-29
 
 * Prevent accessing activity Id before sampler runs in case of legacy
   activities.
-  ([2659](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2659))
+  ([#2659](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2659))
 
 * Added `ReadOnlyTagCollection` and expose `Tags` on `MetricPoint` instead of
   `Keys`+`Values`

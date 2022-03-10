@@ -2,7 +2,21 @@
 
 ## Unreleased
 
+## 1.2.0-rc3
+
+Released 2022-Mar-04
+
+* Removes metric related configuration options from `ConsoleExporterOptions`.
+  `MetricReaderType`, `PeriodicExporterMetricReaderOptions`, and `Temporality`
+  are now configurable via the `MetricReaderOptions`.
+  ([#2929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2929))
+
+## 1.2.0-rc2
+
+Released 2022-Feb-02
+
 Fix MetricExporter to respect Console and Debug flags.
+Added `Activity.Links` support to `ConsoleActivityExporter`.
 
 ## 1.2.0-rc1
 

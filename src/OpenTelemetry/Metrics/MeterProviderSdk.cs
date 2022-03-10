@@ -19,7 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Text;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -28,9 +28,9 @@ namespace OpenTelemetry.Metrics
     internal sealed class MeterProviderSdk : MeterProvider
     {
         internal int ShutdownCount;
-        private readonly List<object> instrumentations = new List<object>();
+        private readonly List<object> instrumentations = new();
         private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs;
-        private readonly object collectLock = new object();
+        private readonly object collectLock = new();
         private readonly MeterListener listener;
         private readonly MetricReader reader;
         private readonly CompositeMetricReader compositeMetricReader;
@@ -45,12 +45,17 @@ namespace OpenTelemetry.Metrics
             int maxMetricPointsPerMetricStream,
             IEnumerable<MetricReader> readers)
         {
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Building MeterProvider.");
+
+            StringBuilder exportersAdded = new StringBuilder();
+            StringBuilder instrumentationFactoriesAdded = new StringBuilder();
+
             this.Resource = resource;
             this.viewConfigs = viewConfigs;
 
             foreach (var reader in readers)
             {
-                Guard.ThrowIfNull(reader, nameof(reader));
+                Guard.ThrowIfNull(reader);
 
                 reader.SetParentProvider(this);
                 reader.SetMaxMetricStreams(maxMetricStreams);
@@ -68,6 +73,18 @@ namespace OpenTelemetry.Metrics
                 {
                     this.reader = new CompositeMetricReader(new[] { this.reader, reader });
                 }
+
+                if (reader is BaseExportingMetricReader baseExportingMetricReader)
+                {
+                    exportersAdded.Append(((BaseExportingMetricReader)reader).Exporter);
+                    exportersAdded.Append(';');
+                }
+            }
+
+            if (exportersAdded.Length != 0)
+            {
+                exportersAdded.Remove(exportersAdded.Length - 1, 1);
+                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Exporters added = \"{exportersAdded}\".");
             }
 
             this.compositeMetricReader = this.reader as CompositeMetricReader;
@@ -77,14 +94,22 @@ namespace OpenTelemetry.Metrics
                 foreach (var instrumentationFactory in instrumentationFactories)
                 {
                     this.instrumentations.Add(instrumentationFactory.Factory());
+                    instrumentationFactoriesAdded.Append(instrumentationFactory.Name);
+                    instrumentationFactoriesAdded.Append(';');
                 }
+            }
+
+            if (instrumentationFactoriesAdded.Length != 0)
+            {
+                instrumentationFactoriesAdded.Remove(instrumentationFactoriesAdded.Length - 1, 1);
+                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Instrumentations added = \"{instrumentationFactoriesAdded}\".");
             }
 
             // Setup Listener
             Func<Instrument, bool> shouldListenTo = instrument => false;
-            if (meterSources.Any(s => s.Contains('*')))
+            if (meterSources.Any(s => WildcardHelper.ContainsWildcard(s)))
             {
-                var regex = GetWildcardRegex(meterSources);
+                var regex = WildcardHelper.GetWildcardRegex(meterSources);
                 shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
             }
             else if (meterSources.Any())
@@ -93,8 +118,12 @@ namespace OpenTelemetry.Metrics
                 shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
             }
 
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Listening to following meters = \"{string.Join(";", meterSources)}\".");
+
             this.listener = new MeterListener();
             var viewConfigCount = this.viewConfigs.Count;
+
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Number of views configured = {viewConfigCount}.");
 
             // We expect that all the readers to be added are provided before MeterProviderSdk is built.
             // If there are no readers added, we do not enable measurements for the instruments.
@@ -110,6 +139,8 @@ namespace OpenTelemetry.Metrics
 
                     try
                     {
+                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Started publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+
                         // Creating list with initial capacity as the maximum
                         // possible size, to avoid any array resize/copy internally.
                         // There may be excess space wasted, but it'll eligible for
@@ -153,6 +184,8 @@ namespace OpenTelemetry.Metrics
                                 }
                             }
                         }
+
+                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Succeeded publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
                     }
                     catch (Exception)
                     {
@@ -184,6 +217,8 @@ namespace OpenTelemetry.Metrics
 
                     try
                     {
+                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Started publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+
                         if (!MeterProviderBuilderSdk.IsValidInstrumentName(instrument.Name))
                         {
                             OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
@@ -214,6 +249,8 @@ namespace OpenTelemetry.Metrics
                                 }
                             }
                         }
+
+                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Succeeded publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
                     }
                     catch (Exception)
                     {
@@ -236,11 +273,7 @@ namespace OpenTelemetry.Metrics
 
             this.listener.Start();
 
-            static Regex GetWildcardRegex(IEnumerable<string> collection)
-            {
-                var pattern = '^' + string.Join("|", from name in collection select "(?:" + Regex.Escape(name).Replace("\\*", ".*") + ')') + '$';
-                return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            }
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("MeterProvider built successfully.");
         }
 
         internal Resource Resource { get; }
@@ -442,6 +475,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         internal bool OnForceFlush(int timeoutMilliseconds)
         {
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"{nameof(MeterProviderSdk)}.{nameof(this.OnForceFlush)} called with {nameof(timeoutMilliseconds)} = {timeoutMilliseconds}.");
             return this.reader?.Collect(timeoutMilliseconds) ?? true;
         }
 
@@ -463,11 +497,13 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         internal bool OnShutdown(int timeoutMilliseconds)
         {
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"{nameof(MeterProviderSdk)}.{nameof(this.OnShutdown)} called with {nameof(timeoutMilliseconds)} = {timeoutMilliseconds}.");
             return this.reader?.Shutdown(timeoutMilliseconds) ?? true;
         }
 
         protected override void Dispose(bool disposing)
         {
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"{nameof(MeterProviderSdk)}.{nameof(this.Dispose)} started.");
             if (!this.disposed)
             {
                 if (disposing)
@@ -491,6 +527,7 @@ namespace OpenTelemetry.Metrics
                 }
 
                 this.disposed = true;
+                OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(MeterProvider));
             }
 
             base.Dispose(disposing);

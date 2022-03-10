@@ -470,7 +470,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
 
         private class TestHttpRequest : HttpRequestBase
         {
-            private readonly NameValueCollection headers = new NameValueCollection();
+            private readonly NameValueCollection headers = new();
 
             public override NameValueCollection Headers => this.headers;
 

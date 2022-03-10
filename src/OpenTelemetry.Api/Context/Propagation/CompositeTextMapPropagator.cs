@@ -35,7 +35,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <param name="propagators">List of <see cref="TextMapPropagator"/> wire context propagator.</param>
         public CompositeTextMapPropagator(IEnumerable<TextMapPropagator> propagators)
         {
-            Guard.ThrowIfNull(propagators, nameof(propagators));
+            Guard.ThrowIfNull(propagators);
 
             this.propagators = new List<TextMapPropagator>(propagators);
         }

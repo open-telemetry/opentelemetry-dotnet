@@ -35,19 +35,28 @@ namespace OpenTelemetry.Exporter
     {
         internal const int DefaultMaxPayloadSizeInBytes = 4096;
 
-        internal const string OtelProtocolEnvVarKey = "OTEL_EXPORTER_JAEGER_PROTOCOL";
+        internal const string OTelProtocolEnvVarKey = "OTEL_EXPORTER_JAEGER_PROTOCOL";
         internal const string OTelAgentHostEnvVarKey = "OTEL_EXPORTER_JAEGER_AGENT_HOST";
         internal const string OTelAgentPortEnvVarKey = "OTEL_EXPORTER_JAEGER_AGENT_PORT";
         internal const string OTelEndpointEnvVarKey = "OTEL_EXPORTER_JAEGER_ENDPOINT";
+        internal const string DefaultJaegerEndpoint = "http://localhost:14268/api/traces";
 
         internal static readonly Func<HttpClient> DefaultHttpClientFactory = () => new HttpClient();
 
         public JaegerExporterOptions()
         {
-            if (EnvironmentVariableHelper.LoadString(OtelProtocolEnvVarKey, out string protocolEnvVar)
-                && Enum.TryParse(protocolEnvVar, ignoreCase: true, out JaegerExportProtocol protocol))
+            if (EnvironmentVariableHelper.LoadString(OTelProtocolEnvVarKey, out string protocolEnvVar))
             {
-                this.Protocol = protocol;
+                var protocol = protocolEnvVar.ToJaegerExportProtocol();
+
+                if (protocol.HasValue)
+                {
+                    this.Protocol = protocol.Value;
+                }
+                else
+                {
+                    throw new FormatException($"{OTelProtocolEnvVarKey} environment variable has an invalid value: '{protocolEnvVar}'");
+                }
             }
 
             if (EnvironmentVariableHelper.LoadString(OTelAgentHostEnvVarKey, out string agentHostEnvVar))
@@ -80,9 +89,10 @@ namespace OpenTelemetry.Exporter
         public int AgentPort { get; set; } = 6831;
 
         /// <summary>
-        /// Gets or sets the Jaeger HTTP endpoint. Default value: "http://localhost:14268".
+        /// Gets or sets the Jaeger HTTP endpoint. Default value: "http://localhost:14268/api/traces".
+        /// Typically https://jaeger-server-name:14268/api/traces.
         /// </summary>
-        public Uri Endpoint { get; set; } = new Uri("http://localhost:14268");
+        public Uri Endpoint { get; set; } = new Uri(DefaultJaegerEndpoint);
 
         /// <summary>
         /// Gets or sets the maximum payload size in bytes. Default value: 4096.

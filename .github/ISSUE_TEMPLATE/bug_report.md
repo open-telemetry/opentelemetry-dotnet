@@ -6,8 +6,9 @@ labels: bug
 
 # Bug Report
 
-List of [NuGet packages](https://www.nuget.org/profiles/OpenTelemetry) and
-version that you are using (e.g. `OpenTelemetry 1.0.2`):
+List of [all OpenTelemetry NuGet
+packages](https://www.nuget.org/profiles/OpenTelemetry) and version that you are
+using (e.g. `OpenTelemetry 1.0.2`):
 
 * TBD
 

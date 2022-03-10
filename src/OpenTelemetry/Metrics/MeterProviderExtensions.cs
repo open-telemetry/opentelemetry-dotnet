@@ -42,8 +42,8 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         public static bool ForceFlush(this MeterProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
-            Guard.ThrowIfNull(provider, nameof(provider));
-            Guard.ThrowIfInvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
+            Guard.ThrowIfNull(provider);
+            Guard.ThrowIfInvalidTimeout(timeoutMilliseconds);
 
             if (provider is MeterProviderSdk meterProviderSdk)
             {
@@ -82,8 +82,8 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         public static bool Shutdown(this MeterProvider provider, int timeoutMilliseconds = Timeout.Infinite)
         {
-            Guard.ThrowIfNull(provider, nameof(provider));
-            Guard.ThrowIfInvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
+            Guard.ThrowIfNull(provider);
+            Guard.ThrowIfInvalidTimeout(timeoutMilliseconds);
 
             if (provider is MeterProviderSdk meterProviderSdk)
             {

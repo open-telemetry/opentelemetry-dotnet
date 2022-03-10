@@ -28,8 +28,8 @@ namespace OpenTelemetry.Exporter.Prometheus
     internal sealed class PrometheusExporterHttpServer : IDisposable
     {
         private readonly PrometheusExporter exporter;
-        private readonly HttpListener httpListener = new HttpListener();
-        private readonly object syncObject = new object();
+        private readonly HttpListener httpListener = new();
+        private readonly object syncObject = new();
 
         private CancellationTokenSource tokenSource;
         private Task workerThread;
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
         public PrometheusExporterHttpServer(PrometheusExporter exporter)
         {
-            Guard.ThrowIfNull(exporter, nameof(exporter));
+            Guard.ThrowIfNull(exporter);
 
             this.exporter = exporter;
             if ((exporter.Options.HttpListenerPrefixes?.Count ?? 0) <= 0)
@@ -66,7 +66,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
         /// <summary>
-        /// Start exporter.
+        /// Start Http Server.
         /// </summary>
         /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the HTTP server.</param>
         public void Start(CancellationToken token = default)

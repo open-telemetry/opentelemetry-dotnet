@@ -22,18 +22,14 @@ using OpenTelemetry.Metrics;
 
 public class Program
 {
-    private static readonly Meter MyMeter = new Meter("MyCompany.MyProduct.MyLibrary", "1.0");
+    private static readonly Meter MyMeter = new("MyCompany.MyProduct.MyLibrary", "1.0");
     private static readonly Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
 
     public static void Main(string[] args)
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter("MyCompany.MyProduct.MyLibrary")
-            .AddPrometheusExporter(opt =>
-            {
-                opt.StartHttpListener = true;
-                opt.HttpListenerPrefixes = new string[] { $"http://localhost:9184/" };
-            })
+            .AddPrometheusExporter(options => { options.StartHttpListener = true; })
             .Build();
 
         Console.WriteLine("Press any key to exit");

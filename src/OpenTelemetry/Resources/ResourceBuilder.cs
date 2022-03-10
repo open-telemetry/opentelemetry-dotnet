@@ -24,7 +24,7 @@ namespace OpenTelemetry.Resources
     /// </summary>
     public class ResourceBuilder
     {
-        private readonly List<Resource> resources = new List<Resource>();
+        private readonly List<Resource> resources = new();
 
         private ResourceBuilder()
         {
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Resources
         /// </summary>
         /// <returns>Created <see cref="ResourceBuilder"/>.</returns>
         public static ResourceBuilder CreateEmpty()
-            => new ResourceBuilder();
+            => new();
 
         /// <summary>
         /// Clears the <see cref="Resource"/>s added to the builder.
@@ -86,11 +86,9 @@ namespace OpenTelemetry.Resources
             return finalResource;
         }
 
-        // Internal until spec is finalized.
-        // https://github.com/open-telemetry/oteps/blob/master/text/0111-auto-resource-detection.md
-        internal ResourceBuilder AddDetector(IResourceDetector resourceDetector)
+        public ResourceBuilder AddDetector(IResourceDetector resourceDetector)
         {
-            Guard.ThrowIfNull(resourceDetector, nameof(resourceDetector));
+            Guard.ThrowIfNull(resourceDetector);
 
             Resource resource = resourceDetector.Detect();
 
@@ -104,7 +102,7 @@ namespace OpenTelemetry.Resources
 
         internal ResourceBuilder AddResource(Resource resource)
         {
-            Guard.ThrowIfNull(resource, nameof(resource));
+            Guard.ThrowIfNull(resource);
 
             this.resources.Add(resource);
 

@@ -26,11 +26,11 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     internal sealed class MeterProviderBuilderHosting : MeterProviderBuilderBase, IDeferredMeterProviderBuilder
     {
-        private readonly List<Action<IServiceProvider, MeterProviderBuilder>> configurationActions = new List<Action<IServiceProvider, MeterProviderBuilder>>();
+        private readonly List<Action<IServiceProvider, MeterProviderBuilder>> configurationActions = new();
 
         public MeterProviderBuilderHosting(IServiceCollection services)
         {
-            Guard.ThrowIfNull(services, nameof(services));
+            Guard.ThrowIfNull(services);
 
             this.Services = services;
         }
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Metrics
 
         public MeterProviderBuilder Configure(Action<IServiceProvider, MeterProviderBuilder> configure)
         {
-            Guard.ThrowIfNull(configure, nameof(configure));
+            Guard.ThrowIfNull(configure);
 
             this.configurationActions.Add(configure);
             return this;
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Metrics
 
         public MeterProvider Build(IServiceProvider serviceProvider)
         {
-            Guard.ThrowIfNull(serviceProvider, nameof(serviceProvider));
+            Guard.ThrowIfNull(serviceProvider);
 
             // Note: Not using a foreach loop because additional actions can be
             // added during each call.

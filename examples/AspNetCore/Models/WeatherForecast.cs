@@ -14,9 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
-namespace Examples.AspNetCore.Models
+namespace Examples.AspNetCore
 {
     public class WeatherForecast
     {
@@ -26,6 +24,6 @@ namespace Examples.AspNetCore.Models
 
         public int TemperatureF => 32 + (int)(this.TemperatureC / 0.5556);
 
-        public string Summary { get; set; }
+        public string? Summary { get; set; }
     }
 }

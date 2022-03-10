@@ -1,11 +1,7 @@
-OpenTelemetry.Exporter.ConsoleExporterOptions.AggregationTemporality.get -> OpenTelemetry.Metrics.AggregationTemporality
-OpenTelemetry.Exporter.ConsoleExporterOptions.AggregationTemporality.set -> void
-OpenTelemetry.Exporter.ConsoleExporterOptions.MetricReaderType.get -> OpenTelemetry.Metrics.MetricReaderType
-OpenTelemetry.Exporter.ConsoleExporterOptions.MetricReaderType.set -> void
-OpenTelemetry.Exporter.ConsoleExporterOptions.PeriodicExportingMetricReaderOptions.get -> OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
-OpenTelemetry.Exporter.ConsoleExporterOptions.PeriodicExportingMetricReaderOptions.set -> void
 OpenTelemetry.Exporter.ConsoleMetricExporter
 OpenTelemetry.Exporter.ConsoleMetricExporter.ConsoleMetricExporter(OpenTelemetry.Exporter.ConsoleExporterOptions options) -> void
 OpenTelemetry.Metrics.ConsoleExporterMetricsExtensions
 override OpenTelemetry.Exporter.ConsoleMetricExporter.Export(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric> batch) -> OpenTelemetry.ExportResult
-static OpenTelemetry.Metrics.ConsoleExporterMetricsExtensions.AddConsoleExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Action<OpenTelemetry.Exporter.ConsoleExporterOptions> configure = null) -> OpenTelemetry.Metrics.MeterProviderBuilder
+static OpenTelemetry.Metrics.ConsoleExporterMetricsExtensions.AddConsoleExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder) -> OpenTelemetry.Metrics.MeterProviderBuilder
+static OpenTelemetry.Metrics.ConsoleExporterMetricsExtensions.AddConsoleExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Action<OpenTelemetry.Exporter.ConsoleExporterOptions, OpenTelemetry.Metrics.MetricReaderOptions> configureExporterAndMetricReader) -> OpenTelemetry.Metrics.MeterProviderBuilder
+static OpenTelemetry.Metrics.ConsoleExporterMetricsExtensions.AddConsoleExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Action<OpenTelemetry.Exporter.ConsoleExporterOptions> configureExporter) -> OpenTelemetry.Metrics.MeterProviderBuilder
