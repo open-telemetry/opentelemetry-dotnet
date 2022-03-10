@@ -42,6 +42,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new PropertyFetcher<Exception>("Exception");
         private readonly PropertyFetcher<TaskStatus> stopRequestStatusFetcher = new PropertyFetcher<TaskStatus>("RequestTaskStatus");
         private readonly bool httpClientSupportsW3C;
+        private readonly bool net7;
         private readonly HttpClientInstrumentationOptions options;
 
         public HttpHandlerDiagnosticListener(HttpClientInstrumentationOptions options)
@@ -62,6 +63,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 this.httpClientSupportsW3C = match.Success && int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture) >= 3;
             }
 
+            this.net7 = typeof(HttpClient).Assembly.GetName().Version.Major >= 7;
             this.options = options;
         }
 
@@ -77,7 +79,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             // By this time, samplers have already run and
             // activity.IsAllDataRequested populated accordingly.
 
-            if (Sdk.SuppressInstrumentation)
+            if (Sdk.SuppressInstrumentation || (this.net7 && activity.Source.Name != "System.Net.Http"))
             {
                 return;
             }
@@ -127,8 +129,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-                ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
-                ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
+                if (!this.net7)
+                {
+                    ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+                    ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
+                }
 
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
                 activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
@@ -151,6 +156,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public override void OnStopActivity(Activity activity, object payload)
         {
+            if (this.net7 && activity.Source.Name != "System.Net.Http")
+            {
+                return;
+            }
+
             if (activity.IsAllDataRequested)
             {
                 // https://github.com/dotnet/runtime/blob/master/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
@@ -200,6 +210,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public override void OnException(Activity activity, object payload)
         {
+            if (this.net7 && activity.Source.Name != "System.Net.Http")
+            {
+                return;
+            }
+
             if (activity.IsAllDataRequested)
             {
                 if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
