@@ -14,67 +14,163 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using System.Reflection;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
-namespace Examples.AspNetCore
+var builder = WebApplication.CreateBuilder(args);
+
+var serviceName = "AspNetCoreExampleService";
+
+// OpenTelemetry
+var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
+
+// Switch between Zipkin/Jaeger/OTLP by setting UseExporter in appsettings.json.
+var tracingExporter = builder.Configuration.GetValue<string>("UseTracingExporter").ToLowerInvariant();
+
+var resourceBuilder = tracingExporter switch
 {
-    public class Program
+    "jaeger" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Jaeger:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    "zipkin" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Zipkin:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    "otlp" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Otlp:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    _ => ResourceBuilder.CreateDefault().AddService(serviceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+};
+
+// Traces
+builder.Services.AddOpenTelemetryTracing(options =>
+{
+    options
+        .SetResourceBuilder(resourceBuilder)
+        .SetSampler(new AlwaysOnSampler())
+        .AddHttpClientInstrumentation()
+        .AddAspNetCoreInstrumentation();
+
+    switch (tracingExporter)
     {
-        public static void Main(string[] args)
-        {
-            CreateHostBuilder(args).Build().Run();
-        }
+        case "jaeger":
+            options.AddJaegerExporter();
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
+            builder.Services.Configure<JaegerExporterOptions>(builder.Configuration.GetSection("Jaeger"));
+
+            // Customize the HttpClient that will be used when JaegerExporter is configured for HTTP transport.
+            builder.Services.AddHttpClient("JaegerExporter", configureClient: (client) => client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
+            break;
+
+        case "zipkin":
+            options.AddZipkinExporter();
+
+            builder.Services.Configure<ZipkinExporterOptions>(builder.Configuration.GetSection("Zipkin"));
+            break;
+
+        case "otlp":
+            options.AddOtlpExporter(otlpOptions =>
                 {
-                    webBuilder.UseStartup<Startup>();
-                })
-                .ConfigureLogging((context, builder) =>
-                {
-                    builder.ClearProviders();
-                    builder.AddConsole();
-
-                    var logExporter = context.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
-                    switch (logExporter)
-                    {
-                        case "otlp":
-                            // Adding the OtlpExporter creates a GrpcChannel.
-                            // This switch must be set before creating a GrpcChannel when calling an insecure gRPC service.
-                            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
-                            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-                            builder.AddOpenTelemetry(options =>
-                            {
-                                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(context.Configuration.GetValue<string>("Otlp:ServiceName")));
-                                options.AddOtlpExporter(otlpOptions =>
-                                 {
-                                     otlpOptions.Endpoint = new Uri(context.Configuration.GetValue<string>("Otlp:Endpoint"));
-                                 });
-                            });
-                            break;
-
-                        default:
-                            builder.AddOpenTelemetry(options =>
-                            {
-                                options.AddConsoleExporter();
-                            });
-                            break;
-                    }
-
-                    builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
-                    {
-                        opt.IncludeScopes = true;
-                        opt.ParseStateValues = true;
-                        opt.IncludeFormattedMessage = true;
-                    });
+                    otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
                 });
+            break;
+
+        default:
+            options.AddConsoleExporter();
+
+            break;
     }
+});
+
+// For options which can be bound from IConfiguration.
+builder.Services.Configure<AspNetCoreInstrumentationOptions>(builder.Configuration.GetSection("AspNetCoreInstrumentation"));
+
+// Logging
+builder.Logging.ClearProviders();
+
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options.SetResourceBuilder(resourceBuilder);
+    var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
+    switch (logExporter)
+    {
+        case "otlp":
+            options.AddOtlpExporter(otlpOptions =>
+            {
+                otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
+            });
+            break;
+        default:
+            options.AddConsoleExporter();
+            break;
+    }
+});
+
+builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
+{
+    opt.IncludeScopes = true;
+    opt.ParseStateValues = true;
+    opt.IncludeFormattedMessage = true;
+});
+
+// Metrics
+builder.Services.AddOpenTelemetryMetrics(options =>
+{
+    options.SetResourceBuilder(resourceBuilder)
+        .AddHttpClientInstrumentation();
+
+    var metricsExporter = builder.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
+    switch (metricsExporter)
+    {
+        case "prometheus":
+            options.AddPrometheusExporter();
+            break;
+        case "otlp":
+            options.AddOtlpExporter(otlpOptions =>
+            {
+                otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
+            });
+            break;
+        default:
+            options.AddConsoleExporter((exporterOptions, metricReaderOptions) =>
+            {
+                exporterOptions.Targets = ConsoleExporterOutputTargets.Console;
+
+                // The ConsoleMetricExporter defaults to a manual collect cycle.
+                // This configuration causes metrics to be exported to stdout on a 10s interval.
+                metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
+                metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10000;
+            });
+            break;
+    }
+});
+
+// Add services to the container.
+builder.Services.AddControllers();
+
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
+
+app.UseHttpsRedirection();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+var metricsExporter = builder.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
+
+if (metricsExporter == "prometheus")
+{
+    app.UseOpenTelemetryPrometheusScrapingEndpoint();
+}
+
+app.Run();
