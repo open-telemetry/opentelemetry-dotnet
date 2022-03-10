@@ -490,33 +490,25 @@ namespace OpenTelemetry.Metrics.Tests
 
             var instrument1 = meter.CreateCounter<long>("name");
 
-            var tags = new List<KeyValuePair<string, object>>();
-            tags.Add(new("key1", "value"));
-            tags.Add(new("key2", "value"));
+            var tags = new KeyValuePair<string, object>[]
+            {
+                new("key1", "value"),
+                new("key2", "value"),
+            };
 
-            instrument1.Add(10, tags.ToArray());
+            instrument1.Add(10, tags);
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-            Assert.Equal(1, exportedItems.Count);
 
-            var metric = exportedItems[0];
-
-            Assert.Equal("name", metric.Name);
-
-            var metricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric.GetMetricPoints())
-            {
-                metricPoints.Add(mp);
-            }
-
-            Assert.Single(metricPoints);
-            var metricPoint = metricPoints[0];
-
-            // Only the first view takes affect from the perspective of selecting tags
-            ValidateMetricPointTags(tags.Take(1).ToList(), metricPoint.Tags);
-
-            // But the presense of the two views cause the value to be recorded twice
-            Assert.Equal(20, metricPoint.GetSumLong());
+            var items = exportedItems.ToArray();
+            Assert.Equal(2, items.Length);
+            Assert.Equal("name", items[0].Name);
+            Assert.Equal("name", items[1].Name);
+            Assert.Equal(20, GetLongSum(items.ToList()));
+            var firstItem = 0..1;
+            var secondItem = 1..;
+            CheckTagsForNthMetricPoint(items[firstItem].ToList(), tags[firstItem].ToList(), 1);
+            CheckTagsForNthMetricPoint(items[secondItem].ToList(), tags[secondItem].ToList(), 1);
         }
 
         [Fact]

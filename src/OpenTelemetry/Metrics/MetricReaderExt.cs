@@ -120,8 +120,11 @@ namespace OpenTelemetry.Metrics
 
                     if (this.instrumentIdentityToMetric.TryGetValue(instrumentIdentity, out var existingMetric))
                     {
-                        metrics.Add(existingMetric);
-                        continue;
+                        if (!metrics.Contains(existingMetric))
+                        {
+                            metrics.Add(existingMetric);
+                            continue;
+                        }
                     }
 
                     if (this.metricStreamNames.Contains(metricStreamName))
