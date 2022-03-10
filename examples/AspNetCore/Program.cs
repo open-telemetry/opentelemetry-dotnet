@@ -93,7 +93,10 @@ builder.Logging.AddOpenTelemetry(options =>
     switch (logExporter)
     {
         case "otlp":
-            options.AddOtlpExporter();
+            options.AddOtlpExporter(otlpOptions =>
+            {
+                otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
+            });
             break;
         default:
             options.AddConsoleExporter();
@@ -121,7 +124,10 @@ builder.Services.AddOpenTelemetryMetrics(options =>
             options.AddPrometheusExporter();
             break;
         case "otlp":
-            options.AddOtlpExporter();
+            options.AddOtlpExporter(otlpOptions =>
+            {
+                otlpOptions.Endpoint = new Uri(builder.Configuration.GetValue<string>("Otlp:Endpoint"));
+            });
             break;
         default:
             options.AddConsoleExporter((exporterOptions, metricReaderOptions) =>
