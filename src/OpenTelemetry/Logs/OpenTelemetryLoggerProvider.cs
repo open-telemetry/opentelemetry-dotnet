@@ -28,7 +28,7 @@ namespace OpenTelemetry.Logs
         internal readonly OpenTelemetryLoggerOptions Options;
         internal BaseProcessor<LogRecord> Processor;
         internal Resource Resource;
-        private readonly Hashtable loggers = new Hashtable();
+        private readonly Hashtable loggers = new();
         private bool disposed;
         private IExternalScopeProvider scopeProvider;
 

@@ -241,11 +241,26 @@ class MyProcessor : BaseProcessor<Activity>
 
 A demo processor is shown [here](./MyProcessor.cs).
 
+### Enriching Processor
+
+A common use case of writing custom processor is to enrich activities with
+additional tags. An example of such an "EnrichingProcessor" is shown
+[here](./MyEnrichingProcessor.cs). Such processors must be added *before* the
+exporters.
+
+This processor also shows how to enrich `Activity` with additional tags from the
+`Baggage`.
+
+Many [instrumentation libraries](#instrumentation-library) shipped from this
+repo provides a built-in `Enrich` option, which may also be used to enrich
+activities. Instrumentation library provided approach may offer additional
+capabilities such as offering easy access to more context (library specific).
+
 ### Filtering Processor
 
-A common use case of writing custom processor is to filter Activities from being
-exported. Such a "FilteringProcessor" can be written as a wrapper around an
-underlying processor. An example "FilteringProcessor" is shown
+Another common use case of writing custom processor is to filter Activities from
+being exported. Such a "FilteringProcessor" can be written as a wrapper around
+an underlying processor. An example "FilteringProcessor" is shown
 [here](./MyFilteringProcessor.cs).
 
 When using such a filtering processor, instead of using extension method to

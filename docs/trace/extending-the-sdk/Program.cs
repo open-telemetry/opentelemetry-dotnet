@@ -21,7 +21,7 @@ using OpenTelemetry.Trace;
 
 public class Program
 {
-    private static readonly ActivitySource DemoSource = new ActivitySource("OTel.Demo");
+    private static readonly ActivitySource DemoSource = new("OTel.Demo");
 
     public static void Main()
     {

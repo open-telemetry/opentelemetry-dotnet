@@ -34,8 +34,8 @@ namespace OpenTelemetry.Metrics
         private readonly int exportIntervalMilliseconds;
         private readonly int exportTimeoutMilliseconds;
         private readonly Thread exporterThread;
-        private readonly AutoResetEvent exportTrigger = new AutoResetEvent(false);
-        private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
+        private readonly AutoResetEvent exportTrigger = new(false);
+        private readonly ManualResetEvent shutdownTrigger = new(false);
         private bool disposed;
 
         /// <summary>

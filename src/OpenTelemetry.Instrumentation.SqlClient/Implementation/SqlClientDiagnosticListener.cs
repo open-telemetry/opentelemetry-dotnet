@@ -32,13 +32,13 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         public const string SqlDataWriteCommandError = "System.Data.SqlClient.WriteCommandError";
         public const string SqlMicrosoftWriteCommandError = "Microsoft.Data.SqlClient.WriteCommandError";
 
-        private readonly PropertyFetcher<object> commandFetcher = new PropertyFetcher<object>("Command");
-        private readonly PropertyFetcher<object> connectionFetcher = new PropertyFetcher<object>("Connection");
-        private readonly PropertyFetcher<object> dataSourceFetcher = new PropertyFetcher<object>("DataSource");
-        private readonly PropertyFetcher<object> databaseFetcher = new PropertyFetcher<object>("Database");
-        private readonly PropertyFetcher<CommandType> commandTypeFetcher = new PropertyFetcher<CommandType>("CommandType");
-        private readonly PropertyFetcher<object> commandTextFetcher = new PropertyFetcher<object>("CommandText");
-        private readonly PropertyFetcher<Exception> exceptionFetcher = new PropertyFetcher<Exception>("Exception");
+        private readonly PropertyFetcher<object> commandFetcher = new("Command");
+        private readonly PropertyFetcher<object> connectionFetcher = new("Connection");
+        private readonly PropertyFetcher<object> dataSourceFetcher = new("DataSource");
+        private readonly PropertyFetcher<object> databaseFetcher = new("Database");
+        private readonly PropertyFetcher<CommandType> commandTypeFetcher = new("CommandType");
+        private readonly PropertyFetcher<object> commandTextFetcher = new("CommandText");
+        private readonly PropertyFetcher<Exception> exceptionFetcher = new("Exception");
         private readonly SqlClientInstrumentationOptions options;
 
         public SqlClientDiagnosticListener(string sourceName, SqlClientInstrumentationOptions options)

@@ -40,7 +40,7 @@ namespace OpenTelemetry.Logs
         /// of the scope.
         /// </summary>
         /// <returns><see cref="Enumerator"/>.</returns>
-        public Enumerator GetEnumerator() => new Enumerator(this.Scope);
+        public Enumerator GetEnumerator() => new(this.Scope);
 
         /// <summary>
         /// LogRecordScope enumerator.
