@@ -24,15 +24,15 @@ namespace Benchmarks.Trace
     [MemoryDiagnoser]
     public class TraceBenchmarks
     {
-        private readonly ActivitySource sourceWithNoListener = new ActivitySource("Benchmark.NoListener");
-        private readonly ActivitySource sourceWithPropagationDataListner = new ActivitySource("Benchmark.PropagationDataListner");
-        private readonly ActivitySource sourceWithAllDataListner = new ActivitySource("Benchmark.AllDataListner");
-        private readonly ActivitySource sourceWithAllDataAndRecordedListner = new ActivitySource("Benchmark.AllDataAndRecordedListner");
-        private readonly ActivitySource sourceWithOneProcessor = new ActivitySource("Benchmark.OneProcessor");
-        private readonly ActivitySource sourceWithTwoProcessors = new ActivitySource("Benchmark.TwoProcessors");
-        private readonly ActivitySource sourceWithThreeProcessors = new ActivitySource("Benchmark.ThreeProcessors");
-        private readonly ActivitySource sourceWithOneLegacyActivityOperationNameSubscription = new ActivitySource("Benchmark.OneInstrumentation");
-        private readonly ActivitySource sourceWithTwoLegacyActivityOperationNameSubscriptions = new ActivitySource("Benchmark.TwoInstrumentations");
+        private readonly ActivitySource sourceWithNoListener = new("Benchmark.NoListener");
+        private readonly ActivitySource sourceWithPropagationDataListner = new("Benchmark.PropagationDataListner");
+        private readonly ActivitySource sourceWithAllDataListner = new("Benchmark.AllDataListner");
+        private readonly ActivitySource sourceWithAllDataAndRecordedListner = new("Benchmark.AllDataAndRecordedListner");
+        private readonly ActivitySource sourceWithOneProcessor = new("Benchmark.OneProcessor");
+        private readonly ActivitySource sourceWithTwoProcessors = new("Benchmark.TwoProcessors");
+        private readonly ActivitySource sourceWithThreeProcessors = new("Benchmark.ThreeProcessors");
+        private readonly ActivitySource sourceWithOneLegacyActivityOperationNameSubscription = new("Benchmark.OneInstrumentation");
+        private readonly ActivitySource sourceWithTwoLegacyActivityOperationNameSubscriptions = new("Benchmark.TwoInstrumentations");
 
         public TraceBenchmarks()
         {

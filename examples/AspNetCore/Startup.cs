@@ -124,6 +124,7 @@ namespace Examples.AspNetCore
             services.AddOpenTelemetryMetrics(builder =>
             {
                 builder.AddAspNetCoreInstrumentation();
+                builder.AddHttpClientInstrumentation();
 
                 switch (metricsExporter)
                 {
@@ -134,16 +135,20 @@ namespace Examples.AspNetCore
                         builder.AddOtlpExporter();
                         break;
                     default:
-                        builder.AddConsoleExporter(options =>
+                        builder.AddConsoleExporter((exporterOptions, metricReaderOptions) =>
                         {
+                            exporterOptions.Targets = ConsoleExporterOutputTargets.Console;
+
                             // The ConsoleMetricExporter defaults to a manual collect cycle.
                             // This configuration causes metrics to be exported to stdout on a 10s interval.
-                            options.MetricReaderType = MetricReaderType.Periodic;
-                            options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10000;
+                            metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
+                            metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10000;
                         });
                         break;
                 }
             });
+
+            services.Configure<PrometheusExporterOptions>(this.Configuration.GetSection("Prometheus"));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

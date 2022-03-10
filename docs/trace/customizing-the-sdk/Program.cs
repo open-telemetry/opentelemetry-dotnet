@@ -20,16 +20,16 @@ using OpenTelemetry.Trace;
 
 public class Program
 {
-    private static readonly ActivitySource MyLibraryActivitySource = new ActivitySource(
+    private static readonly ActivitySource MyLibraryActivitySource = new(
         "MyCompany.MyProduct.MyLibrary");
 
-    private static readonly ActivitySource ComponentAActivitySource = new ActivitySource(
+    private static readonly ActivitySource ComponentAActivitySource = new(
         "AbcCompany.XyzProduct.ComponentA");
 
-    private static readonly ActivitySource ComponentBActivitySource = new ActivitySource(
+    private static readonly ActivitySource ComponentBActivitySource = new(
         "AbcCompany.XyzProduct.ComponentB");
 
-    private static readonly ActivitySource SomeOtherActivitySource = new ActivitySource(
+    private static readonly ActivitySource SomeOtherActivitySource = new(
         "SomeCompany.SomeProduct.SomeComponent");
 
     public static void Main()

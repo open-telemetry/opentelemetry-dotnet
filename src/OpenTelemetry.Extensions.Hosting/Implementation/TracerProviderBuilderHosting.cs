@@ -26,7 +26,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     internal sealed class TracerProviderBuilderHosting : TracerProviderBuilderBase, IDeferredTracerProviderBuilder
     {
-        private readonly List<Action<IServiceProvider, TracerProviderBuilder>> configurationActions = new List<Action<IServiceProvider, TracerProviderBuilder>>();
+        private readonly List<Action<IServiceProvider, TracerProviderBuilder>> configurationActions = new();
 
         public TracerProviderBuilderHosting(IServiceCollection services)
         {

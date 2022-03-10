@@ -31,9 +31,9 @@ namespace OpenTelemetry.Internal
     [EventSource(Name = "OpenTelemetry-Sdk")]
     internal class OpenTelemetrySdkEventSource : EventSource
     {
-        public static OpenTelemetrySdkEventSource Log = new OpenTelemetrySdkEventSource();
+        public static OpenTelemetrySdkEventSource Log = new();
 #if DEBUG
-        public static OpenTelemetryEventListener Listener = new OpenTelemetryEventListener();
+        public static OpenTelemetryEventListener Listener = new();
 #endif
 
         [NonEvent]
@@ -360,16 +360,34 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(37, providerName);
         }
 
-        [Event(38, Message = "Measurements from View '{0}', will be ignored. Reason: '{1}'. Suggested action: '{2}'", Level = EventLevel.Warning)]
+        [Event(38, Message = "Duplicate Instrument '{0}', Meter '{1}' encountered. Reason: '{2}'. Suggested action: '{3}'", Level = EventLevel.Warning)]
+        public void DuplicateMetricInstrument(string instrumentName, string meterName, string reason, string fix)
+        {
+            this.WriteEvent(38, instrumentName, meterName, reason, fix);
+        }
+
+        [Event(39, Message = "MeterProviderSdk event: '{0}'", Level = EventLevel.Verbose)]
+        public void MeterProviderSdkEvent(string message)
+        {
+            this.WriteEvent(39, message);
+        }
+
+        [Event(40, Message = "MetricReader event: '{0}'", Level = EventLevel.Verbose)]
+        public void MetricReaderEvent(string message)
+        {
+            this.WriteEvent(40, message);
+        }
+        
+        [Event(41, Message = "Measurements from View '{0}', will be ignored. Reason: '{1}'. Suggested action: '{2}'", Level = EventLevel.Warning)]
         public void MetricViewIgnored(string viewName, string reason, string fix)
         {
-            this.WriteEvent(38, viewName, reason, fix);
+            this.WriteEvent(41, viewName, reason, fix);
         }
 
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {
-            private readonly List<EventSource> eventSources = new List<EventSource>();
+            private readonly List<EventSource> eventSources = new();
 
             public override void Dispose()
             {
