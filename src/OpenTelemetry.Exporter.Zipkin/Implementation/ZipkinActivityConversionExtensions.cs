@@ -53,8 +53,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                         SpanAttributeConstants.StatusCodeKey,
                         StatusHelper.GetTagValueForActivityStatusCode(activity.Status)));
 
-                // In the case when both Activity Status and Status tag were set,
-                // ActivityStatus takes precedence over status tags.
+                // In the case when both activity status and status tag were set,
+                // activity status takes precedence over status tag.
                 tagState.StatusCode = StatusCode.Unset;
                 tagState.StatusDescription = string.Empty;
             }
