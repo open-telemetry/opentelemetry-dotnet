@@ -70,11 +70,15 @@ the configuration for tracing like samplers, processors, etc. and is highly
 
 If you tried the above program, you may have already noticed that the terms
 `ActivitySource` and `Activity` were used instead of `Tracer` and `Span` from
-OpenTelemetry specification. This results from the fact that, OpenTelemetry .NET
-is a somewhat unique implementation of the OpenTelemetry project, as parts of
-the tracing API are incorporated directly into the .NET runtime itself. From a
-high level, what this means is that the `Activity` and `ActivitySource` classes
-from .NET runtime represent the OpenTelemetry concepts of
+OpenTelemetry specification. This results from the fact that, Traces in
+OpenTelemetry .NET is a somewhat unique implementation of the OpenTelemetry
+project, as most of the [Trace
+API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md)
+is implemented by the [.NET runtime](https://github.com/dotnet/runtime) itself.
+From a high level, what this means is that you can instrument your application
+by simply depending on `System.Diagnostics.DiagnosticSource` package, which
+provides `Activity` and `ActivitySource` classes representing the OpenTelemetry
+concepts of
 [Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span)
 and
 [Tracer](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#tracer)
