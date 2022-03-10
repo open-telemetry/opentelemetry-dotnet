@@ -31,9 +31,9 @@ namespace OpenTelemetry.Internal
     [EventSource(Name = "OpenTelemetry-Sdk")]
     internal class OpenTelemetrySdkEventSource : EventSource
     {
-        public static OpenTelemetrySdkEventSource Log = new OpenTelemetrySdkEventSource();
+        public static OpenTelemetrySdkEventSource Log = new();
 #if DEBUG
-        public static OpenTelemetryEventListener Listener = new OpenTelemetryEventListener();
+        public static OpenTelemetryEventListener Listener = new();
 #endif
 
         [NonEvent]
@@ -381,7 +381,7 @@ namespace OpenTelemetry.Internal
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {
-            private readonly List<EventSource> eventSources = new List<EventSource>();
+            private readonly List<EventSource> eventSources = new();
 
             public override void Dispose()
             {

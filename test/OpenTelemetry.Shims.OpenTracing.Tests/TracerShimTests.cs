@@ -183,7 +183,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         /// <seealso cref="OpenTracing.Propagation.ITextMap" />
         private class TextMapCarrier : ITextMap
         {
-            private readonly Dictionary<string, string> map = new Dictionary<string, string>();
+            private readonly Dictionary<string, string> map = new();
 
             public IDictionary<string, string> Map => this.map;
 
@@ -203,7 +203,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         /// <seealso cref="OpenTracing.Propagation.IBinary" />
         private class BinaryCarrier : IBinary
         {
-            private readonly MemoryStream carrierStream = new MemoryStream();
+            private readonly MemoryStream carrierStream = new();
 
             public MemoryStream Get() => this.carrierStream;
 
