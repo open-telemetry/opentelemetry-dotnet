@@ -1,6 +1,6 @@
 # Getting Started with OpenTelemetry .NET in 5 Minutes
 
-First, download and install the [.NET Core
+First, download and install the [.NET
 SDK](https://dotnet.microsoft.com/download) on your computer.
 
 Create a new console application and run it:
