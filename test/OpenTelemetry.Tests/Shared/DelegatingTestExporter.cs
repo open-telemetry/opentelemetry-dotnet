@@ -21,7 +21,7 @@ namespace OpenTelemetry.Tests
     public class DelegatingTestExporter<T> : BaseExporter<T>
         where T : class
     {
-        public List<ExportResult> ExportResults = new List<ExportResult>();
+        public List<ExportResult> ExportResults = new();
 
         private readonly BaseExporter<T> exporter;
 

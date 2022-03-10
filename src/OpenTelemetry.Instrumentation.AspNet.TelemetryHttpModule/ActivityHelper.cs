@@ -33,11 +33,11 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// Key to store the state in HttpContext.
         /// </summary>
         internal const string ContextKey = "__AspnetInstrumentationContext__";
-        internal static readonly object StartedButNotSampledObj = new object();
+        internal static readonly object StartedButNotSampledObj = new();
 
         private const string BaggageSlotName = "otel.baggage";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
-        private static readonly ActivitySource AspNetSource = new ActivitySource(
+        private static readonly ActivitySource AspNetSource = new(
             TelemetryHttpModule.AspNetSourceName,
             typeof(ActivityHelper).Assembly.GetName().Version.ToString());
 

@@ -22,7 +22,7 @@ namespace OpenTelemetry.Tests
 {
     internal class TestHttpServer
     {
-        private static readonly Random GlobalRandom = new Random();
+        private static readonly Random GlobalRandom = new();
 
         public static IDisposable RunServer(Action<HttpListenerContext> action, out string host, out int port)
         {
@@ -53,7 +53,7 @@ namespace OpenTelemetry.Tests
         {
             private readonly Task httpListenerTask;
             private readonly HttpListener listener;
-            private readonly AutoResetEvent initialized = new AutoResetEvent(false);
+            private readonly AutoResetEvent initialized = new(false);
 
             public RunningServer(Action<HttpListenerContext> action, string host, int port)
             {
