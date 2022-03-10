@@ -147,6 +147,8 @@ namespace Examples.AspNetCore
                         break;
                 }
             });
+
+            services.Configure<PrometheusExporterOptions>(this.Configuration.GetSection("Prometheus"));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
