@@ -52,12 +52,31 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                     new KeyValuePair<string, object>(
                         SpanAttributeConstants.StatusCodeKey,
                         StatusHelper.GetTagValueForActivityStatusCode(activity.Status)));
-            }
-            else
-            {
-                // In the rare cases when both ActivityStatus and Status Tags were set,
+
+                // In the case when both Activity Status and Status tag were set,
                 // ActivityStatus takes precedence over status tags.
-                activity.EnumerateTags(ref tagState);
+                tagState.StatusCode = StatusCode.Unset;
+                tagState.StatusDescription = string.Empty;
+            }
+
+            activity.EnumerateTags(ref tagState);
+
+            // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
+            if (activity.Status == ActivityStatusCode.Error)
+            {
+                PooledList<KeyValuePair<string, object>>.Add(
+                    ref tagState.Tags,
+                    new KeyValuePair<string, object>(
+                        ZipkinErrorFlagTagName,
+                        activity.StatusDescription ?? string.Empty));
+            }
+            else if (tagState.StatusCode == StatusCode.Error)
+            {
+                PooledList<KeyValuePair<string, object>>.Add(
+                    ref tagState.Tags,
+                    new KeyValuePair<string, object>(
+                        ZipkinErrorFlagTagName,
+                        tagState.StatusDescription ?? string.Empty));
             }
 
             var activitySource = activity.Source;
@@ -83,24 +102,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                         PooledList<KeyValuePair<string, object>>.Add(ref tagState.Tags, new KeyValuePair<string, object>(SemanticConventions.AttributePeerService, peerServiceName));
                     }
                 }
-            }
-
-            // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
-            if (activity.StatusDescription != null)
-            {
-                PooledList<KeyValuePair<string, object>>.Add(
-                    ref tagState.Tags,
-                    new KeyValuePair<string, object>(
-                        ZipkinErrorFlagTagName,
-                        activity.StatusDescription ?? string.Empty));
-            }
-            else if (tagState.StatusCode == StatusCode.Error)
-            {
-                PooledList<KeyValuePair<string, object>>.Add(
-                    ref tagState.Tags,
-                    new KeyValuePair<string, object>(
-                        ZipkinErrorFlagTagName,
-                        tagState.StatusDescription ?? string.Empty));
             }
 
             EventEnumerationState eventState = default;

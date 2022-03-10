@@ -133,15 +133,15 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
         [InlineData(ActivityStatusCode.Error)]
         public void ToZipkinSpan_Activity_Status_And_StatusDescription_is_Set(ActivityStatusCode expectedStatusCode)
         {
-            // Arrange
+            // Arrange.
             const string description = "Description when ActivityStatusCode is Error.";
             var activity = ZipkinExporterTests.CreateTestActivity();
             activity.SetStatus(expectedStatusCode, description);
 
-            // Act
+            // Act.
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
 
-            // Assert
+            // Assert.
             if (expectedStatusCode == ActivityStatusCode.Unset)
             {
                 Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == SpanAttributeConstants.StatusCodeKey);
@@ -155,45 +155,81 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
 
             if (expectedStatusCode == ActivityStatusCode.Error)
             {
-                Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == description);
+                Assert.Contains(
+                    zipkinSpan.Tags, t =>
+                    t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName &&
+                    (string)t.Value == description);
             }
             else
             {
-                Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == "error");
+                Assert.DoesNotContain(
+                    zipkinSpan.Tags, t =>
+                    t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName);
             }
         }
 
-        [Theory]
-        [InlineData(ActivityStatusCode.Error, "OK")]
-        [InlineData(ActivityStatusCode.Ok, "ERROR")]
-        public void ActivityStatus_Takes_precedence_Over_Status_Tags(ActivityStatusCode activityStatus, string statusCodeTagValue)
+        [Fact]
+        public void ActivityStatus_Takes_precedence_Over_Status_Tags_ActivityStatusCodeIsOk()
         {
-            // Arrange
-            const string description = "Description when ActivityStatusCode is Error.";
+            // Arrange.
             var activity = ZipkinExporterTests.CreateTestActivity();
+            activity.SetStatus(ActivityStatusCode.Ok);
+            activity.SetTag(
+                SpanAttributeConstants.StatusCodeKey,
+                "This value won't be added because Activity status takes precedence when both Activity Status and statusTag were set.");
 
-            activity.SetStatus(activityStatus, description);
-            activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
+            // Enrich activity with additional tags.
+            activity.SetTag("mycustomTag", "myCustomTagValue");
 
-            // Act
+            // Act.
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
 
-            // Assert
+            // Assert.
             Assert.Equal(
-                StatusHelper.GetTagValueForActivityStatusCode(activityStatus),
+                StatusHelper.GetTagValueForActivityStatusCode(ActivityStatusCode.Ok),
                 zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
 
-            if (activityStatus == ActivityStatusCode.Error)
-            {
-                Assert.Contains(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == description);
+            // Ensure additional Activity tags were being converted.
+            Assert.Contains(zipkinSpan.Tags, t => t.Key == "mycustomTag" && (string)t.Value == "myCustomTagValue");
+            Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName);
+        }
 
-                // ActivityStatusDescription takes higher precedence.
-                Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == "error" && (string)t.Value == statusCodeTagValue);
-            }
-            else
-            {
-                Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == "error");
-            }
+        [Fact]
+        public void ActivityStatus_Takes_precedence_Over_Status_Tags_ActivityStatusCodeIsError()
+        {
+            // Arrange.
+            var activity = ZipkinExporterTests.CreateTestActivity();
+
+            const string description = "Description when ActivityStatusCode is Error.";
+            activity.SetStatus(ActivityStatusCode.Error, description);
+            string statusCodeTagValue = "This value won't be added because Activity status takes precedence when both Activity Status and statusTag were set.";
+            activity.SetTag(
+                SpanAttributeConstants.StatusCodeKey,
+                statusCodeTagValue);
+
+            // Enrich activity with additional tags.
+            activity.SetTag("mycustomTag", "myCustomTagValue");
+
+            // Act.
+            var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
+
+            // Assert.
+            Assert.Equal(
+                StatusHelper.GetTagValueForActivityStatusCode(ActivityStatusCode.Error),
+                zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+
+            // ActivityStatusDescription takes higher precedence.
+            Assert.Contains(
+                zipkinSpan.Tags, t =>
+                t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName &&
+                (string)t.Value == description);
+            Assert.DoesNotContain(
+                zipkinSpan.Tags, t =>
+                t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName &&
+                (string)t.Value == statusCodeTagValue);
+
+            // Ensure additional Activity tags were being converted.
+            Assert.Contains(zipkinSpan.Tags, t => t.Key == "mycustomTag" && (string)t.Value == "myCustomTagValue");
         }
     }
 }
