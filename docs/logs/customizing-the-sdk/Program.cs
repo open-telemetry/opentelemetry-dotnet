@@ -17,7 +17,6 @@
 using Microsoft.Extensions.Logging;
 
 using OpenTelemetry.Logs;
-using OpenTelemetry.Resources;
 
 public class Program
 {
@@ -28,14 +27,6 @@ public class Program
             builder.AddConsole();
             builder.AddOpenTelemetry(options =>
             {
-                options.IncludeScopes = false;
-                options.IncludeFormattedMessage = false;
-                options.ParseStateValues = false;
-                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
-                        serviceName: "MyService",
-                        serviceVersion: "1.0.0"
-                        ));
-                // options.AddProcessor(new MyProcessor("MyProcessor")); // excluded from this example. Please see "extending-the-sdk".
                 options.AddConsoleExporter();
             });
         });
@@ -45,16 +36,6 @@ public class Program
         logger.LogInformation("Hello Information");
         logger.LogWarning("Hello Warning");
         logger.LogError("Hello Error");
-
-        // **TESTING options.IncludeFormattedMesasge and options.ParseStateValues
-        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
-
-        // **TESTING options.IncludeScopes
-        using (logger.BeginScope("My Scope 1"))
-        using (logger.BeginScope("My Scope 2"))
-        {
-            logger.LogInformation("Hello Information within scope");
-        }
 
         loggerFactory.Dispose(); // flush
     }
