@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* The `PeriodicExportingMetricReader` now accepts an
+  `ExportIntervalMilliseconds` of `-1` indicating an infinite export interval
+  period.
+  ([#2982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2982))
+
 ## 1.2.0-rc3
 
 Released 2022-Mar-04

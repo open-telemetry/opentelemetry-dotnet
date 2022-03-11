@@ -55,42 +55,40 @@ namespace Utils.Messaging
                 // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/messaging.md#span-name
                 var activityName = $"{RabbitMqHelper.TestQueueName} send";
 
-                using (var activity = ActivitySource.StartActivity(activityName, ActivityKind.Producer))
+                using var activity = ActivitySource.StartActivity(activityName, ActivityKind.Producer);
+                var props = this.channel.CreateBasicProperties();
+
+                // Depending on Sampling (and whether a listener is registered or not), the
+                // activity above may not be created.
+                // If it is created, then propagate its context.
+                // If it is not created, the propagate the Current context,
+                // if any.
+                ActivityContext contextToInject = default;
+                if (activity != null)
                 {
-                    var props = this.channel.CreateBasicProperties();
-
-                    // Depending on Sampling (and whether a listener is registered or not), the
-                    // activity above may not be created.
-                    // If it is created, then propagate its context.
-                    // If it is not created, the propagate the Current context,
-                    // if any.
-                    ActivityContext contextToInject = default;
-                    if (activity != null)
-                    {
-                        contextToInject = activity.Context;
-                    }
-                    else if (Activity.Current != null)
-                    {
-                        contextToInject = Activity.Current.Context;
-                    }
-
-                    // Inject the ActivityContext into the message headers to propagate trace context to the receiving service.
-                    Propagator.Inject(new PropagationContext(contextToInject, Baggage.Current), props, this.InjectTraceContextIntoBasicProperties);
-
-                    // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
-                    RabbitMqHelper.AddMessagingTags(activity);
-                    var body = $"Published message: DateTime.Now = {DateTime.Now}.";
-
-                    this.channel.BasicPublish(
-                        exchange: RabbitMqHelper.DefaultExchangeName,
-                        routingKey: RabbitMqHelper.TestQueueName,
-                        basicProperties: props,
-                        body: Encoding.UTF8.GetBytes(body));
-
-                    this.logger.LogInformation($"Message sent: [{body}]");
-
-                    return body;
+                    contextToInject = activity.Context;
                 }
+                else if (Activity.Current != null)
+                {
+                    contextToInject = Activity.Current.Context;
+                }
+
+                // Inject the ActivityContext into the message headers to propagate trace context to the receiving service.
+                Propagator.Inject(new PropagationContext(contextToInject, Baggage.Current), props, this.InjectTraceContextIntoBasicProperties);
+
+                // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
+                RabbitMqHelper.AddMessagingTags(activity);
+                var body = $"Published message: DateTime.Now = {DateTime.Now}.";
+
+                this.channel.BasicPublish(
+                    exchange: RabbitMqHelper.DefaultExchangeName,
+                    routingKey: RabbitMqHelper.TestQueueName,
+                    basicProperties: props,
+                    body: Encoding.UTF8.GetBytes(body));
+
+                this.logger.LogInformation($"Message sent: [{body}]");
+
+                return body;
             }
             catch (Exception ex)
             {
