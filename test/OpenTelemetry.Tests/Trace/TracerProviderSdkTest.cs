@@ -195,12 +195,14 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData(SamplingDecision.RecordAndSample)]
         public void TracerProviderSdkSamplerAttributesAreAppliedToActivity(SamplingDecision sampling)
         {
-            var testSampler = new TestSampler();
-            testSampler.SamplingAction = (samplingParams) =>
+            var testSampler = new TestSampler
             {
-                var attributes = new Dictionary<string, object>();
-                attributes.Add("tagkeybysampler", "tagvalueaddedbysampler");
-                return new SamplingResult(sampling, attributes);
+                SamplingAction = (samplingParams) =>
+                {
+                    var attributes = new Dictionary<string, object>();
+                    attributes.Add("tagkeybysampler", "tagvalueaddedbysampler");
+                    return new SamplingResult(sampling, attributes);
+                },
             };
 
             using var activitySource = new ActivitySource(ActivitySourceName);
@@ -937,9 +939,11 @@ namespace OpenTelemetry.Trace.Tests
         {
             // Create some parent activity.
             string tracestate = "a=b;c=d";
-            var activityLocalParent = new Activity("TestParent");
-            activityLocalParent.ActivityTraceFlags = traceFlags;
-            activityLocalParent.TraceStateString = tracestate;
+            var activityLocalParent = new Activity("TestParent")
+            {
+                ActivityTraceFlags = traceFlags,
+                TraceStateString = tracestate,
+            };
             activityLocalParent.Start();
 
             var operationNameForLegacyActivity = "TestOperationName";
