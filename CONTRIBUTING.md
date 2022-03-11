@@ -44,7 +44,7 @@ You can contribute to this project from a Windows, macOS or Linux machine.
 On all platforms, the minimum requirements are:
 
 * Git client and command line tools.
-* .NET Core 3.1+
+* .NET 6.0+
 
 ### Linux or MacOS
 
@@ -114,14 +114,6 @@ Add your fork as an origin:
 git remote add fork https://github.com/YOUR_GITHUB_USERNAME/opentelemetry-dotnet.git
 ```
 
-By default your work will be targeting the `main` branch. If you want to work on
-the experimental metrics feature, please switch to the `metrics` feature branch:
-
-```sh
-# only do this when you want to work on the experimental metrics feature
-git checkout metrics
-```
-
 Run tests:
 
 ```sh
@@ -174,8 +166,8 @@ A PR is considered to be **ready to merge** when:
 * Urgent fix can take exception as long as it has been actively communicated.
 
 Any Maintainer can merge the PR once it is **ready to merge**. Note, that some
-PR may not be merged immediately if repo is being in process of a major release
-and the new feature doesn't fit it.
+PRs may not be merged immediately if the repo is in the process of a release and
+the maintainers decided to defer the PR to the next release train.
 
 If a PR has been stuck (e.g. there are lots of debates and people couldn't agree
 on each other), the owner should try to get people aligned by:

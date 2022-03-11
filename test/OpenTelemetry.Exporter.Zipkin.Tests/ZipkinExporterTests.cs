@@ -35,7 +35,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
     public class ZipkinExporterTests : IDisposable
     {
         private const string TraceId = "e8ea7e9ac72de94e91fabc613f9686b2";
-        private static readonly ConcurrentDictionary<Guid, string> Responses = new ConcurrentDictionary<Guid, string>();
+        private static readonly ConcurrentDictionary<Guid, string> Responses = new();
 
         private readonly IDisposable testServer;
         private readonly string testServerHost;

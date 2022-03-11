@@ -21,7 +21,7 @@ using OpenTelemetry.Trace;
 
 public class Program
 {
-    private static readonly ActivitySource MyActivitySource = new ActivitySource(
+    private static readonly ActivitySource MyActivitySource = new(
         "MyCompany.MyProduct.MyLibrary");
 
     public static void Main()

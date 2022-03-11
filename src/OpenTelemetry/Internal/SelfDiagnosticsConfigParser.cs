@@ -33,13 +33,13 @@ namespace OpenTelemetry.Internal
         /// </summary>
         private const int ConfigBufferSize = 4 * 1024;
 
-        private static readonly Regex LogDirectoryRegex = new Regex(
+        private static readonly Regex LogDirectoryRegex = new(
             @"""LogDirectory""\s*:\s*""(?<LogDirectory>.*?)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static readonly Regex FileSizeRegex = new Regex(
+        private static readonly Regex FileSizeRegex = new(
             @"""FileSize""\s*:\s*(?<FileSize>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static readonly Regex LogLevelRegex = new Regex(
+        private static readonly Regex LogLevelRegex = new(
             @"""LogLevel""\s*:\s*""(?<LogLevel>.*?)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         // This class is called in SelfDiagnosticsConfigRefresher.UpdateMemoryMappedFileFromConfiguration
