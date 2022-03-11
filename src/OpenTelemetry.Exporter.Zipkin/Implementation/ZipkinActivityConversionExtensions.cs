@@ -94,7 +94,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                         ZipkinErrorFlagTagName,
                         activity.StatusDescription ?? string.Empty));
             }
-            else if (tagState.StatusCode == StatusCode.Error)
+            else if (activity.Status == ActivityStatusCode.Unset && tagState.StatusCode == StatusCode.Error)
             {
                 PooledList<KeyValuePair<string, object>>.Add(
                     ref tagState.Tags,
