@@ -228,8 +228,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                         return true;
                     }
                 }
-
-                if (activityTag.Value is int intVal && activityTag.Key == SemanticConventions.AttributeNetPeerPort)
+                else if (activityTag.Value is int intVal && activityTag.Key == SemanticConventions.AttributeNetPeerPort)
                 {
                     PeerServiceResolver.InspectTag(ref this, key, intVal);
                 }
