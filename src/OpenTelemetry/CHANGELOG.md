@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Fix bug where multiple views selecting a single instrument can result in
+  duplicate updates to a single metric point.
+  ([#3006](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3006))
+
 ## 1.2.0-rc3
 
 Released 2022-Mar-04
