@@ -478,11 +478,11 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddMeter(meter.Name)
                 .AddView((instrument) =>
                 {
-                    return new MetricStreamConfiguration { TagKeys = new[]{ "key1" }};
+                    return new MetricStreamConfiguration { TagKeys = new[] { "key1" } };
                 })
                 .AddView((instrument) =>
                 {
-                    return new MetricStreamConfiguration { TagKeys = new[]{ "key2" }};
+                    return new MetricStreamConfiguration { TagKeys = new[] { "key2" } };
                 })
                 .AddInMemoryExporter(exportedItems);
 
