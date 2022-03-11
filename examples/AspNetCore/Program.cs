@@ -115,7 +115,8 @@ builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
 builder.Services.AddOpenTelemetryMetrics(options =>
 {
     options.SetResourceBuilder(resourceBuilder)
-        .AddHttpClientInstrumentation();
+        .AddHttpClientInstrumentation()
+        .AddAspNetCoreInstrumentation();
 
     var metricsExporter = builder.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
     switch (metricsExporter)
@@ -132,8 +133,6 @@ builder.Services.AddOpenTelemetryMetrics(options =>
         default:
             options.AddConsoleExporter((exporterOptions, metricReaderOptions) =>
             {
-                exporterOptions.Targets = ConsoleExporterOutputTargets.Console;
-
                 // The ConsoleMetricExporter defaults to a manual collect cycle.
                 // This configuration causes metrics to be exported to stdout on a 10s interval.
                 metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
