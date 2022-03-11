@@ -70,6 +70,7 @@ namespace Examples.AspNet
 
             // Metrics
             // Note: Tracerprovider is needed for metrics to work
+            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2994
 
             var meterBuilder = Sdk.CreateMeterProviderBuilder()
                  .AddAspNetInstrumentation()
