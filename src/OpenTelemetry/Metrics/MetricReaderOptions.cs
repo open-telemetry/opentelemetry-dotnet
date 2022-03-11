@@ -21,9 +21,6 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public class MetricReaderOptions
 {
-    private const MetricReaderType MetricReaderTypeUnspecified = (MetricReaderType)(-1);
-    private MetricReaderType metricReaderType = MetricReaderTypeUnspecified;
-
     /// <summary>
     /// Gets or sets the AggregationTemporality used for Histogram
     /// and Sum metrics.
@@ -31,25 +28,9 @@ public class MetricReaderOptions
     public AggregationTemporality Temporality { get; set; } = AggregationTemporality.Cumulative;
 
     /// <summary>
-    /// Gets or sets the <see cref="MetricReaderType" /> to use. Defaults to <c>MetricReaderType.Manual</c>.
+    /// Gets or sets the <see cref="MetricReaderType" /> to use. Defaults to <c>MetricReaderType.Periodic</c>.
     /// </summary>
-    public MetricReaderType MetricReaderType
-    {
-        get
-        {
-            if (this.metricReaderType == MetricReaderTypeUnspecified)
-            {
-                this.metricReaderType = MetricReaderType.Manual;
-            }
-
-            return this.metricReaderType;
-        }
-
-        set
-        {
-            this.metricReaderType = value;
-        }
-    }
+    public MetricReaderType MetricReaderType { get; set; } = MetricReaderType.Periodic;
 
     /// <summary>
     /// Gets or sets the <see cref="PeriodicExportingMetricReaderOptions" /> options. Ignored unless <c>MetricReaderType</c> is <c>Periodic</c>.
