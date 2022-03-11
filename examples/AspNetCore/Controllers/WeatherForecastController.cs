@@ -15,7 +15,7 @@
 // </copyright>
 
 namespace Examples.AspNetCore.Controllers;
-using System.Diagnostics;
+
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
