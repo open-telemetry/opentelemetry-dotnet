@@ -323,11 +323,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                                .Build())
             {
                 using var c = new HttpClient();
-                using (var inMemoryEventListener = new InMemoryEventListener(HttpInstrumentationEventSource.Log))
-                {
-                    await c.GetAsync(this.url);
-                    Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
-                }
+                using var inMemoryEventListener = new InMemoryEventListener(HttpInstrumentationEventSource.Log);
+                await c.GetAsync(this.url);
+                Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
             }
 
             Assert.Equal(4, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose/OnStart called.

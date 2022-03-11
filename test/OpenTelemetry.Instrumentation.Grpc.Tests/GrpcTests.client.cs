@@ -340,12 +340,10 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     .AddProcessor(processor.Object)
                     .Build())
                 {
-                    using (var activity = source.StartActivity("parent"))
-                    {
-                        var channel = GrpcChannel.ForAddress(uri);
-                        var client = new Greeter.GreeterClient(channel);
-                        var rs = client.SayHello(new HelloRequest(), headers);
-                    }
+                    using var activity = source.StartActivity("parent");
+                    var channel = GrpcChannel.ForAddress(uri);
+                    var client = new Greeter.GreeterClient(channel);
+                    var rs = client.SayHello(new HelloRequest(), headers);
                 }
 
                 Assert.Equal(7, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose called.
@@ -404,14 +402,12 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     .AddProcessor(processor.Object)
                     .Build())
                 {
-                    using (var activity = source.StartActivity("parent"))
+                    using var activity = source.StartActivity("parent");
+                    using (SuppressInstrumentationScope.Begin())
                     {
-                        using (SuppressInstrumentationScope.Begin())
-                        {
-                            var channel = GrpcChannel.ForAddress(uri);
-                            var client = new Greeter.GreeterClient(channel);
-                            var rs = client.SayHello(new HelloRequest());
-                        }
+                        var channel = GrpcChannel.ForAddress(uri);
+                        var client = new Greeter.GreeterClient(channel);
+                        var rs = client.SayHello(new HelloRequest());
                     }
                 }
 
