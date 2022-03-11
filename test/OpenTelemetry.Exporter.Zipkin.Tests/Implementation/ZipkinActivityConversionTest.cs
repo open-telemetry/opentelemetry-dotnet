@@ -187,6 +187,9 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
                 StatusHelper.GetTagValueForActivityStatusCode(ActivityStatusCode.Ok),
                 zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
 
+            Assert.Contains(zipkinSpan.Tags, t => t.Key == "otel.status_code" && (string)t.Value == "OK");
+            Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == "otel.status_code" && (string)t.Value == "ERROR");
+
             // Ensure additional Activity tags were being converted.
             Assert.Contains(zipkinSpan.Tags, t => t.Key == "myCustomTag" && (string)t.Value == "myCustomTagValue");
             Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName);
