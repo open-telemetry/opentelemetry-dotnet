@@ -39,6 +39,9 @@ public class Program
         // unstructured log
         logger.LogInformation("Hello, World!");
 
+        // String interpolation, as in the below line, results in unstructured logging, and is not recommended
+        // logger.LogInformation($"Hello from potato {0.99}.");
+
         // structured log with template
         logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
 
