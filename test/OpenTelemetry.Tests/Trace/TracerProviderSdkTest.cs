@@ -140,12 +140,10 @@ namespace OpenTelemetry.Trace.Tests
             using (var parent = activitySource.StartActivity("parent", ActivityKind.Client))
             {
                 Assert.Equal(parent.TraceId, testSampler.LatestSamplingParameters.TraceId);
-                using (var child = activitySource.StartActivity("child"))
-                {
-                    Assert.Equal(child.TraceId, testSampler.LatestSamplingParameters.TraceId);
-                    Assert.Equal(parent.TraceId, child.TraceId);
-                    Assert.Equal(parent.SpanId, child.ParentSpanId);
-                }
+                using var child = activitySource.StartActivity("child");
+                Assert.Equal(child.TraceId, testSampler.LatestSamplingParameters.TraceId);
+                Assert.Equal(parent.TraceId, child.TraceId);
+                Assert.Equal(parent.SpanId, child.ParentSpanId);
             }
 
             var customContext = new ActivityContext(
@@ -178,19 +176,17 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.Equal(expectedParentSpanId, fromCustomContextAsString.ParentSpanId);
             }
 
-            using (var fromInvalidW3CIdParent =
-                activitySource.StartActivity("customContext", ActivityKind.Client, "InvalidW3CIdParent"))
-            {
-                // Verify that StartActivity returns an instance of Activity.
-                Assert.NotNull(fromInvalidW3CIdParent);
+            // Verify that StartActivity returns an instance of Activity.
+            using var fromInvalidW3CIdParent =
+                activitySource.StartActivity("customContext", ActivityKind.Client, "InvalidW3CIdParent");
+            Assert.NotNull(fromInvalidW3CIdParent);
 
-                // Verify that the TestSampler was invoked and received the correct params.
-                Assert.Equal(fromInvalidW3CIdParent.TraceId, testSampler.LatestSamplingParameters.TraceId);
+            // Verify that the TestSampler was invoked and received the correct params.
+            Assert.Equal(fromInvalidW3CIdParent.TraceId, testSampler.LatestSamplingParameters.TraceId);
 
-                // OpenTelemetry ActivityContext does not support non W3C Ids.
-                Assert.Null(fromInvalidW3CIdParent.ParentId);
-                Assert.Equal(default(ActivitySpanId), fromInvalidW3CIdParent.ParentSpanId);
-            }
+            // OpenTelemetry ActivityContext does not support non W3C Ids.
+            Assert.Null(fromInvalidW3CIdParent.ParentId);
+            Assert.Equal(default(ActivitySpanId), fromInvalidW3CIdParent.ParentSpanId);
         }
 
         [Theory]
@@ -213,14 +209,12 @@ namespace OpenTelemetry.Trace.Tests
                 .SetSampler(testSampler)
                 .Build();
 
-            using (var rootActivity = activitySource.StartActivity("root"))
+            using var rootActivity = activitySource.StartActivity("root");
+            Assert.NotNull(rootActivity);
+            Assert.Equal(rootActivity.TraceId, testSampler.LatestSamplingParameters.TraceId);
+            if (sampling != SamplingDecision.Drop)
             {
-                Assert.NotNull(rootActivity);
-                Assert.Equal(rootActivity.TraceId, testSampler.LatestSamplingParameters.TraceId);
-                if (sampling != SamplingDecision.Drop)
-                {
-                    Assert.Contains(new KeyValuePair<string, object>("tagkeybysampler", "tagvalueaddedbysampler"), rootActivity.TagObjects);
-                }
+                Assert.Contains(new KeyValuePair<string, object>("tagkeybysampler", "tagvalueaddedbysampler"), rootActivity.TagObjects);
             }
         }
 
@@ -273,12 +267,10 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.False(activity.IsAllDataRequested);
                 Assert.False(activity.Recorded);
 
-                using (var innerActivity = activitySource.StartActivity("inner"))
-                {
-                    // This is not a root activity.
-                    // If sampling returns false, no activity is created at all.
-                    Assert.Null(innerActivity);
-                }
+                // This is not a root activity.
+                // If sampling returns false, no activity is created at all.
+                using var innerActivity = activitySource.StartActivity("inner");
+                Assert.Null(innerActivity);
             }
         }
 
@@ -294,10 +286,8 @@ namespace OpenTelemetry.Trace.Tests
                     .SetSampler(testSampler)
                     .Build();
 
-            using (var activity = activitySource.StartActivity("root"))
-            {
-                Assert.Null(activity);
-            }
+            using var activity = activitySource.StartActivity("root");
+            Assert.Null(activity);
         }
 
         [Fact]
