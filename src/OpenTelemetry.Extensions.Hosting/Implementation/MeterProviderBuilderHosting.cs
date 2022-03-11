@@ -26,7 +26,7 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     internal sealed class MeterProviderBuilderHosting : MeterProviderBuilderBase, IDeferredMeterProviderBuilder
     {
-        private readonly List<Action<IServiceProvider, MeterProviderBuilder>> configurationActions = new List<Action<IServiceProvider, MeterProviderBuilder>>();
+        private readonly List<Action<IServiceProvider, MeterProviderBuilder>> configurationActions = new();
 
         public MeterProviderBuilderHosting(IServiceCollection services)
         {

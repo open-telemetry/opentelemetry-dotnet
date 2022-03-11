@@ -31,7 +31,7 @@ namespace Benchmarks.Exporter
     {
         private Meter meter;
         private MeterProvider meterProvider;
-        private List<Metric> metrics = new List<Metric>();
+        private List<Metric> metrics = new();
         private byte[] buffer = new byte[85000];
 
         [Params(1, 1000, 10000)]

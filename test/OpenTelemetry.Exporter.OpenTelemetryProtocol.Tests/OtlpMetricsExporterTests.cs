@@ -240,11 +240,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(
-                    new BaseExportingMetricReader(new InMemoryExporter<Metric>(metrics))
-                    {
-                        Temporality = aggregationTemporality,
-                    })
+                .AddInMemoryExporter(metrics, metricReaderOptions =>
+                {
+                    metricReaderOptions.Temporality = aggregationTemporality;
+                })
                 .Build();
 
             var attributes = ToAttributes(keysValues).ToArray();
@@ -334,13 +333,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             var metrics = new List<Metric>();
 
-            var metricReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(metrics));
-            metricReader.Temporality = aggregationTemporality;
-
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(metricReader)
+                .AddInMemoryExporter(metrics, metricReaderOptions =>
+                {
+                    metricReaderOptions.Temporality = aggregationTemporality;
+                })
                 .Build();
 
             var attributes = ToAttributes(keysValues).ToArray();

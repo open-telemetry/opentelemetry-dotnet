@@ -43,22 +43,21 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
         public void W3CTraceContextTestSuite(string value)
         {
             // Arrange
-            using (var server = new InProcessServer(this.output))
-            {
-                // Act
-                // Run Python script in test folder of W3C Trace Context repository
-                string result = RunCommand("python", "trace-context/test/test.py http://127.0.0.1:5000/api/forward");
+            using var server = new InProcessServer(this.output);
 
-                // Assert
-                // Assert on the last line
-                // TODO: fix W3C Trace Context test suite
-                // ASP NET Core 2.1: FAILED (failures=1)
-                // ASP NET Core 3.1: FAILED (failures=3)
-                // ASP NET Core 5.0: FAILED (failures=3)
-                string lastLine = ParseLastLine(result);
-                this.output.WriteLine("result:" + result);
-                Assert.StartsWith("FAILED", lastLine);
-            }
+            // Act
+            // Run Python script in test folder of W3C Trace Context repository
+            string result = RunCommand("python", "trace-context/test/test.py http://127.0.0.1:5000/api/forward");
+
+            // Assert
+            // Assert on the last line
+            // TODO: fix W3C Trace Context test suite
+            // ASP NET Core 2.1: FAILED (failures=1)
+            // ASP NET Core 3.1: FAILED (failures=3)
+            // ASP NET Core 5.0: FAILED (failures=3)
+            string lastLine = ParseLastLine(result);
+            this.output.WriteLine("result:" + result);
+            Assert.StartsWith("FAILED", lastLine);
         }
 
         private static string RunCommand(string command, string args)

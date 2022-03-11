@@ -81,33 +81,31 @@ namespace Examples.Console
             // Start another activity. If another activity was already started, it'll use that activity as the parent activity.
             // In this example, the main method already started a activity, so that'll be the parent activity, and this will be
             // a child activity.
-            using (Activity activity = activitySource.StartActivity("DoWork"))
+            using Activity activity = activitySource.StartActivity("DoWork");
+            try
             {
-                try
-                {
-                    db.StringSet("key", "value " + DateTime.Now.ToLongDateString());
+                db.StringSet("key", "value " + DateTime.Now.ToLongDateString());
 
-                    System.Console.WriteLine("Doing busy work");
-                    Thread.Sleep(1000);
+                System.Console.WriteLine("Doing busy work");
+                Thread.Sleep(1000);
 
-                    // run a command, in this case a GET
-                    var myVal = db.StringGet("key");
+                // run a command, in this case a GET
+                var myVal = db.StringGet("key");
 
-                    System.Console.WriteLine(myVal);
-                }
-                catch (ArgumentOutOfRangeException e)
-                {
-                    activity.SetStatus(Status.Error.WithDescription(e.ToString()));
-                }
+                System.Console.WriteLine(myVal);
+            }
+            catch (ArgumentOutOfRangeException e)
+            {
+                activity.SetStatus(Status.Error.WithDescription(e.ToString()));
+            }
 
-                // Annotate our activity to capture metadata about our operation
-                var attributes = new Dictionary<string, object>
+            // Annotate our activity to capture metadata about our operation
+            var attributes = new Dictionary<string, object>
                 {
                     { "use", "demo" },
                 };
-                ActivityTagsCollection eventTags = new ActivityTagsCollection(attributes);
-                activity.AddEvent(new ActivityEvent("Invoking DoWork", default, eventTags));
-            }
+            ActivityTagsCollection eventTags = new ActivityTagsCollection(attributes);
+            activity.AddEvent(new ActivityEvent("Invoking DoWork", default, eventTags));
         }
     }
 }

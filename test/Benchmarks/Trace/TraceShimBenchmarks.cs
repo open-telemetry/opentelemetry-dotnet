@@ -58,34 +58,26 @@ namespace Benchmarks.Trace
         [Benchmark]
         public void NoListener()
         {
-            using (var activity = this.tracerWithNoListener.StartActiveSpan("Benchmark"))
-            {
-                // this activity won't be created as there is no listener
-            }
+            // this activity won't be created as there is no listener
+            using var activity = this.tracerWithNoListener.StartActiveSpan("Benchmark");
         }
 
         [Benchmark]
         public void OneProcessor()
         {
-            using (var activity = this.tracerWithOneProcessor.StartActiveSpan("Benchmark"))
-            {
-            }
+            using var activity = this.tracerWithOneProcessor.StartActiveSpan("Benchmark");
         }
 
         [Benchmark]
         public void TwoProcessors()
         {
-            using (var activity = this.tracerWithTwoProcessors.StartActiveSpan("Benchmark"))
-            {
-            }
+            using var activity = this.tracerWithTwoProcessors.StartActiveSpan("Benchmark");
         }
 
         [Benchmark]
         public void ThreeProcessors()
         {
-            using (var activity = this.tracerWithThreeProcessors.StartActiveSpan("Benchmark"))
-            {
-            }
+            using var activity = this.tracerWithThreeProcessors.StartActiveSpan("Benchmark");
         }
 
         internal class DummyActivityProcessor : BaseProcessor<Activity>

@@ -67,7 +67,7 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        public Enumerator GetEnumerator() => new Enumerator(this.head);
+        public Enumerator GetEnumerator() => new(this.head);
 
         /// <inheritdoc/>
         internal override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
@@ -141,10 +141,9 @@ namespace OpenTelemetry.Metrics
                         {
                             cur.Value?.Dispose();
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
-                            // TODO: which event source do we use?
-                            // OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+                            OpenTelemetrySdkEventSource.Log.MetricReaderException(nameof(this.Dispose), ex);
                         }
                     }
                 }

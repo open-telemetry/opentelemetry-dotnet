@@ -33,8 +33,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData("key1=value1;key2=value2", new string[] { "key1" }, new string[] { "value1;key2=value2" })] // semicolon is not treated as a delimeter (https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables)
         public void GetMetadataFromHeadersWorksCorrectFormat(string headers, string[] keys, string[] values)
         {
-            var options = new OtlpExporterOptions();
-            options.Headers = headers;
+            var options = new OtlpExporterOptions
+            {
+                Headers = headers,
+            };
             var metadata = options.GetMetadataFromHeaders();
 
             Assert.Equal(keys.Length, metadata.Count);
@@ -52,8 +54,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             try
             {
-                var options = new OtlpExporterOptions();
-                options.Headers = headers;
+                var options = new OtlpExporterOptions
+                {
+                    Headers = headers,
+                };
                 var metadata = options.GetMetadataFromHeaders();
             }
             catch (Exception ex)
