@@ -65,26 +65,24 @@ namespace Utils.Messaging
             // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/messaging.md#span-name
             var activityName = $"{ea.RoutingKey} receive";
 
-            using (var activity = ActivitySource.StartActivity(activityName, ActivityKind.Consumer, parentContext.ActivityContext))
+            using var activity = ActivitySource.StartActivity(activityName, ActivityKind.Consumer, parentContext.ActivityContext);
+            try
             {
-                try
-                {
-                    var message = Encoding.UTF8.GetString(ea.Body.Span.ToArray());
+                var message = Encoding.UTF8.GetString(ea.Body.Span.ToArray());
 
-                    this.logger.LogInformation($"Message received: [{message}]");
+                this.logger.LogInformation($"Message received: [{message}]");
 
-                    activity?.SetTag("message", message);
+                activity?.SetTag("message", message);
 
-                    // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
-                    RabbitMqHelper.AddMessagingTags(activity);
+                // The OpenTelemetry messaging specification defines a number of attributes. These attributes are added here.
+                RabbitMqHelper.AddMessagingTags(activity);
 
-                    // Simulate some work
-                    Thread.Sleep(1000);
-                }
-                catch (Exception ex)
-                {
-                    this.logger.LogError(ex, "Message processing failed.");
-                }
+                // Simulate some work
+                Thread.Sleep(1000);
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, "Message processing failed.");
             }
         }
 

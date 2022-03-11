@@ -35,14 +35,8 @@ public class Program
             .AddMyExporter()
             .Build();
 
-        using (var foo = DemoSource.StartActivity("Foo"))
-        {
-            using (var bar = DemoSource.StartActivity("Bar"))
-            {
-                using (var baz = DemoSource.StartActivity("Baz"))
-                {
-                }
-            }
-        }
+        using var foo = DemoSource.StartActivity("Foo");
+        using var bar = DemoSource.StartActivity("Bar");
+        using var baz = DemoSource.StartActivity("Baz");
     }
 }

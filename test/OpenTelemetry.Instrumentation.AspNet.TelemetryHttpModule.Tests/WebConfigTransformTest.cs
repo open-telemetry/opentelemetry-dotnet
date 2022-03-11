@@ -389,13 +389,11 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             {
                 stream = typeof(WebConfigTransformTest).Assembly.GetManifestResourceStream(transformationResourceName);
                 var document = new XmlTransformableDocument();
-                using (var transformation = new XmlTransformation(stream, null))
-                {
-                    stream = null;
-                    document.LoadXml(originalConfiguration);
-                    transformation.Apply(document);
-                    result = XDocument.Parse(document.OuterXml);
-                }
+                using var transformation = new XmlTransformation(stream, null);
+                stream = null;
+                document.LoadXml(originalConfiguration);
+                transformation.Apply(document);
+                result = XDocument.Parse(document.OuterXml);
             }
             finally
             {
