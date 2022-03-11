@@ -114,93 +114,71 @@ namespace Benchmarks.Trace
         [Benchmark]
         public void NoListener()
         {
-            using (var activity = this.sourceWithNoListener.StartActivity("Benchmark"))
-            {
-                // this activity won't be created as there is no listener
-            }
+            // this activity won't be created as there is no listener
+            using var activity = this.sourceWithNoListener.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void PropagationDataListner()
         {
-            using (var activity = this.sourceWithPropagationDataListner.StartActivity("Benchmark"))
-            {
-                // this activity will be created and feed into an ActivityListener that simply drops everything on the floor
-            }
+            // this activity will be created and feed into an ActivityListener that simply drops everything on the floor
+            using var activity = this.sourceWithPropagationDataListner.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void AllDataListner()
         {
-            using (var activity = this.sourceWithAllDataListner.StartActivity("Benchmark"))
-            {
-                // this activity will be created and feed into an ActivityListener that simply drops everything on the floor
-            }
+            // this activity will be created and feed into an ActivityListener that simply drops everything on the floor
+            using var activity = this.sourceWithAllDataListner.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void AllDataAndRecordedListner()
         {
-            using (var activity = this.sourceWithAllDataAndRecordedListner.StartActivity("Benchmark"))
-            {
-                // this activity will be created and feed into an ActivityListener that simply drops everything on the floor
-            }
+            // this activity will be created and feed into an ActivityListener that simply drops everything on the floor
+            using var activity = this.sourceWithAllDataAndRecordedListner.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void OneProcessor()
         {
-            using (var activity = this.sourceWithOneProcessor.StartActivity("Benchmark"))
-            {
-            }
+            using var activity = this.sourceWithOneProcessor.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void TwoProcessors()
         {
-            using (var activity = this.sourceWithTwoProcessors.StartActivity("Benchmark"))
-            {
-            }
+            using var activity = this.sourceWithTwoProcessors.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void ThreeProcessors()
         {
-            using (var activity = this.sourceWithThreeProcessors.StartActivity("Benchmark"))
-            {
-            }
+            using var activity = this.sourceWithThreeProcessors.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void OneInstrumentation()
         {
-            using (var activity = this.sourceWithOneLegacyActivityOperationNameSubscription.StartActivity("Benchmark"))
-            {
-            }
+            using var activity = this.sourceWithOneLegacyActivityOperationNameSubscription.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void TwoInstrumentations()
         {
-            using (var activity = this.sourceWithTwoLegacyActivityOperationNameSubscriptions.StartActivity("Benchmark"))
-            {
-            }
+            using var activity = this.sourceWithTwoLegacyActivityOperationNameSubscriptions.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void LegacyActivity_ExactMatchMode()
         {
-            using (var activity = new Activity("ExactMatch.OperationName1").Start())
-            {
-            }
+            using var activity = new Activity("ExactMatch.OperationName1").Start();
         }
 
         [Benchmark]
         public void LegacyActivity_WildcardMatchMode()
         {
-            using (var activity = new Activity("WildcardMatch.OperationName1").Start())
-            {
-            }
+            using var activity = new Activity("WildcardMatch.OperationName1").Start();
         }
 
         internal class DummyActivityProcessor : BaseProcessor<Activity>

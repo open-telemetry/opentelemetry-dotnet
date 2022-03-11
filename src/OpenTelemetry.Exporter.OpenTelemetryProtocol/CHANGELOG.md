@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* Fixed OTLP metric exporter to default to a periodic 60 second export cycle.
+  A bug was introduced in #2717 that caused the OTLP metric export to default
+  to a manual export cycle (i.e., requiring an explicit flush). A workaround
+  for this bug has been provided
+  [here](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2979#issuecomment-1061060541).
+  ([#2982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2982))
+
 ## 1.2.0-rc3
 
 Released 2022-Mar-04
