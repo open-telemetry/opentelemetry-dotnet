@@ -120,6 +120,9 @@ namespace OpenTelemetry.Metrics
 
                     if (this.instrumentIdentityToMetric.TryGetValue(instrumentIdentity, out var existingMetric))
                     {
+                        // The list of metrics may already contain a matching metric with the same
+                        // identity when a single instrument is selected by multiple views.
+                        // Each view selecting the instrument needs to result in a distinct metric stream.
                         if (!metrics.Contains(existingMetric))
                         {
                             metrics.Add(existingMetric);
