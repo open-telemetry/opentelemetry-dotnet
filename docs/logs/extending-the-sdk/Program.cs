@@ -18,6 +18,8 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 
+namespace ExtendingTheSdk;
+
 public class Program
 {
     public static void Main()
