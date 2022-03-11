@@ -24,7 +24,6 @@ public class Program
     {
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddConsole();
             builder.AddOpenTelemetry(options =>
             {
                 options.AddConsoleExporter();
