@@ -63,5 +63,5 @@ console.
 
 * If you want to build a custom exporter/processor/sampler, refer to [extending
   the SDK](../extending-the-sdk/README.md).
-* If you want to customize the Sdk, refer to [customizing
+* If you want to customize the SDK, refer to [customizing
   the SDK](../customizing-the-sdk/README.md).

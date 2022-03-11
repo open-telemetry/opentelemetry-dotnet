@@ -36,7 +36,5 @@ public class Program
         logger.LogInformation("Hello Information");
         logger.LogWarning("Hello Warning");
         logger.LogError("Hello Error");
-
-        loggerFactory.Dispose(); // flush
     }
 }
