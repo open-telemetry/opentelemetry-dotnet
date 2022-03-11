@@ -500,15 +500,18 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-            var items = exportedItems.ToArray();
-            Assert.Equal(2, items.Length);
-            Assert.Equal("name", items[0].Name);
-            Assert.Equal("name", items[1].Name);
-            Assert.Equal(20, GetLongSum(items.ToList()));
-            var firstItem = 0..1;
-            var secondItem = 1..;
-            CheckTagsForNthMetricPoint(items[firstItem].ToList(), tags[firstItem].ToList(), 1);
-            CheckTagsForNthMetricPoint(items[secondItem].ToList(), tags[secondItem].ToList(), 1);
+            var metric1 = new List<Metric>() { exportedItems[0] };
+            var metric2 = new List<Metric>() { exportedItems[1] };
+            var tag1 = new List<KeyValuePair<string, object>> { tags[0] };
+            var tag2 = new List<KeyValuePair<string, object>> { tags[1] };
+
+            Assert.Equal(2, exportedItems.Count);
+            Assert.Equal("name", exportedItems[0].Name);
+            Assert.Equal("name", exportedItems[1].Name);
+            Assert.Equal(10, GetLongSum(metric1));
+            Assert.Equal(10, GetLongSum(metric2));
+            CheckTagsForNthMetricPoint(metric1, tag1, 1);
+            CheckTagsForNthMetricPoint(metric2, tag2, 1);
         }
 
         [Fact]
