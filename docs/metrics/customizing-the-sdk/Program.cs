@@ -21,8 +21,8 @@ using OpenTelemetry.Metrics;
 
 public class Program
 {
-    private static readonly Meter Meter1 = new Meter("CompanyA.ProductA.Library1", "1.0");
-    private static readonly Meter Meter2 = new Meter("CompanyA.ProductB.Library2", "1.0");
+    private static readonly Meter Meter1 = new("CompanyA.ProductA.Library1", "1.0");
+    private static readonly Meter Meter2 = new("CompanyA.ProductB.Library2", "1.0");
 
     public static void Main(string[] args)
     {

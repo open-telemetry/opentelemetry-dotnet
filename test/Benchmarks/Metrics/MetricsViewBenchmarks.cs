@@ -43,7 +43,7 @@ namespace Benchmarks.Metrics
     [MemoryDiagnoser]
     public class MetricsViewBenchmarks
     {
-        private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());
+        private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
         private static readonly string[] DimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
         private static readonly int DimensionsValuesLength = DimensionValues.Length;
         private List<Metric> metrics;

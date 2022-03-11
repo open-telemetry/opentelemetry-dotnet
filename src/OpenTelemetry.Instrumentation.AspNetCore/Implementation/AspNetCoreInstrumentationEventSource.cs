@@ -26,7 +26,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     [EventSource(Name = "OpenTelemetry-Instrumentation-AspNetCore")]
     internal class AspNetCoreInstrumentationEventSource : EventSource
     {
-        public static AspNetCoreInstrumentationEventSource Log = new AspNetCoreInstrumentationEventSource();
+        public static AspNetCoreInstrumentationEventSource Log = new();
 
         [NonEvent]
         public void RequestFilterException(Exception ex)

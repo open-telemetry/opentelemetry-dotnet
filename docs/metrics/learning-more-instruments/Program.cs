@@ -23,7 +23,7 @@ using OpenTelemetry.Metrics;
 
 public class Program
 {
-    private static readonly Meter MyMeter = new Meter("MyCompany.MyProduct.MyLibrary", "1.0");
+    private static readonly Meter MyMeter = new("MyCompany.MyProduct.MyLibrary", "1.0");
     private static readonly Histogram<long> MyHistogram = MyMeter.CreateHistogram<long>("MyHistogram");
 
     static Program()

@@ -61,7 +61,7 @@ internal class MyExporter : BaseExporter<LogRecord>
             sb.Append(')');
         }
 
-        Console.WriteLine($"{this.name}.Export([{sb.ToString()}])");
+        Console.WriteLine($"{this.name}.Export([{sb}])");
         return ExportResult.Success;
     }
 

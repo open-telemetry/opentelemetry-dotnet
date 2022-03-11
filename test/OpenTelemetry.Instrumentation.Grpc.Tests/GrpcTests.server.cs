@@ -112,7 +112,11 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.StartsWith("grpc-dotnet", activity.GetTagValue(SemanticConventions.AttributeHttpUserAgent) as string);
         }
 
+#if NET6_0_OR_GREATER
+        [Theory(Skip = "Skipping for .NET 6 and higher due to bug #3023")]
+#else
         [Theory]
+#endif
         [InlineData(null)]
         [InlineData(true)]
         [InlineData(false)]
