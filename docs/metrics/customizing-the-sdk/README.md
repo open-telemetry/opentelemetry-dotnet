@@ -39,7 +39,7 @@ in `Application_Start`, and disposed in `Application_End` (both methods part of
 Global.asax.cs file) as shown [here](../../../examples/AspNet/Global.asax.cs). In
 a typical ASP.NET Core application, `MeterProvider` lifetime is managed by
 leveraging the built-in Dependency Injection container as shown
-[here](../../../examples/AspNetCore/Startup.cs).
+[here](../../../examples/AspNetCore/Program.cs).
 
 ## MeterProvider configuration
 
