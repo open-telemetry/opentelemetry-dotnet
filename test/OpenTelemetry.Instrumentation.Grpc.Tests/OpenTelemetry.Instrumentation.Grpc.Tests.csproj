@@ -1,8 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry Grpc for .NET instrumentation</Description>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>net5.0;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net6.0;net5.0;netcoreapp3.1</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
