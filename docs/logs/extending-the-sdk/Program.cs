@@ -39,9 +39,6 @@ public class Program
         // unstructured log
         logger.LogInformation("Hello, World!");
 
-        // unstructured log with string interpolation
-        logger.LogInformation($"Hello from potato {0.99}.");
-
         // structured log with template
         logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
 
