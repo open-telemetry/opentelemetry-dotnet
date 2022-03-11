@@ -2,15 +2,28 @@
 
 ## OpenTelemetryLoggerProvider
 
-TODO
-
-## Building the OpenTelemetryLoggerProvider
-
-TODO
+As shown in the [getting-started](../getting-started/README.md) doc,
+calling the extension method `ILoggerBuilder.AddOpenTelemetry` will register
+`OpenTelemetryLoggerProvider` as an `ILoggerProvider` using the default
+configuration. By itself, this is not particularly useful. The subsequent
+sections show how to build a more useful provider.
 
 ## OpenTelemetryLoggerProvider configuration
 
-TODO
+The following concepts can be viewed in the example app
+[Program.cs](Program.cs)
+
+`OpenTelemetryLoggerProvider` holds the logging configuration
+`OpenTelemetryLoggerOptions`, which includes the following:
+
+1. The list of
+   [Processors](https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/README.md),
+   including exporting processors which exports logs to
+   [Exporters](https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/README.md)
+2. The
+   [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
+   associated with the logs.
+3. Miscellaneous ILogger concepts.
 
 ### IncludeScopes
 
