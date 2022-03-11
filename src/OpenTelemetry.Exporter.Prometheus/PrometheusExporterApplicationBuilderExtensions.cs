@@ -45,6 +45,9 @@ namespace Microsoft.AspNetCore.Builder
         /// SDK provider will be resolved using application services.</param>
         /// <param name="predicate">Optional predicate for deciding if a given
         /// <see cref="HttpContext"/> should be branched.</param>
+        /// <param name="configure">Optional callback to configure the <see
+        /// cref="PrometheusExporterOptions"/> which will be used to branch the
+        /// pipeline.</param>
         /// <param name="configureBranchedPipeline">Optional callback to
         /// configure the branched pipeline. Called before registration of the
         /// Prometheus middleware.</param>
@@ -54,9 +57,12 @@ namespace Microsoft.AspNetCore.Builder
             this IApplicationBuilder app,
             MeterProvider meterProvider = null,
             Func<HttpContext, bool> predicate = null,
+            Action<PrometheusExporterOptions> configure = null,
             Action<IApplicationBuilder> configureBranchedPipeline = null)
         {
             var options = app.ApplicationServices.GetOptions<PrometheusExporterOptions>();
+
+            configure?.Invoke(options);
 
             string path = options.ScrapeEndpointPath ?? PrometheusExporterOptions.DefaultScrapeEndpointPath;
             if (!path.StartsWith("/"))
