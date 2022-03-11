@@ -49,7 +49,7 @@ namespace Examples.Console
                          *
                          *     dotnet run logs --useExporter otlp
                          *
-                         * The OpenTelemetry Collector will output all received metrics to the stdout of its terminal.
+                         * The OpenTelemetry Collector will output all received logs to the stdout of its terminal.
                          *
                          */
 

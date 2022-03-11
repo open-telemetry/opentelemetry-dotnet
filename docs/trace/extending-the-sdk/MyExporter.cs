@@ -45,7 +45,7 @@ internal class MyExporter : BaseExporter<Activity>
             sb.Append(activity.DisplayName);
         }
 
-        Console.WriteLine($"{this.name}.Export([{sb.ToString()}])");
+        Console.WriteLine($"{this.name}.Export([{sb}])");
         return ExportResult.Success;
     }
 
