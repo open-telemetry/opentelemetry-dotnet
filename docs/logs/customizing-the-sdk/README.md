@@ -78,4 +78,4 @@ ILoggingBuilder.AddFilter<OpenTelemetryLoggerProvider>("category name", LogLevel
 ## Learn more
 
 * See also the official guide for
-  [Logging in .NET](https://docs.microsoft.com/dotnet/core/extensions/logging). 
+  [Logging in .NET](https://docs.microsoft.com/dotnet/core/extensions/logging).
