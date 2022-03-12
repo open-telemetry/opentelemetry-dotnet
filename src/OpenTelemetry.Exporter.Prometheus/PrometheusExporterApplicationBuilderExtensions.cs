@@ -60,6 +60,12 @@ namespace Microsoft.AspNetCore.Builder
             Action<PrometheusExporterOptions> configure = null,
             Action<IApplicationBuilder> configureBranchedPipeline = null)
         {
+            // Note: Order is important here. MeterProvider is accessed before
+            // GetOptions<PrometheusExporterOptions> so that any changes made to
+            // PrometheusExporterOptions in deferred AddPrometheusExporter
+            // configure actions are reflected.
+            meterProvider ??= app.ApplicationServices.GetRequiredService<MeterProvider>();
+
             var options = app.ApplicationServices.GetOptions<PrometheusExporterOptions>();
 
             configure?.Invoke(options);
@@ -69,8 +75,6 @@ namespace Microsoft.AspNetCore.Builder
             {
                 path = $"/{path}";
             }
-
-            meterProvider ??= app.ApplicationServices.GetRequiredService<MeterProvider>();
 
             if (predicate != null)
             {
