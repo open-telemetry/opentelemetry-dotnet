@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.Prometheus;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
 namespace Microsoft.AspNetCore.Builder
@@ -60,7 +61,10 @@ namespace Microsoft.AspNetCore.Builder
         /// <returns>A reference to the original <see
         /// cref="IApplicationBuilder"/> for chaining calls.</returns>
         public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app, Action<IApplicationBuilder> configureBranchedPipeline)
-            => UseOpenTelemetryPrometheusScrapingEndpoint(app, configureBranchedPipeline: configureBranchedPipeline);
+        {
+            Guard.ThrowIfNull(configureBranchedPipeline);
+            return UseOpenTelemetryPrometheusScrapingEndpoint(app, configureBranchedPipeline: configureBranchedPipeline);
+        }
 
         /// <summary>
         /// Adds OpenTelemetry Prometheus scraping endpoint middleware to an
@@ -74,7 +78,10 @@ namespace Microsoft.AspNetCore.Builder
         /// <returns>A reference to the original <see
         /// cref="IApplicationBuilder"/> for chaining calls.</returns>
         public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app, string path)
-            => UseOpenTelemetryPrometheusScrapingEndpoint(app, path: path);
+        {
+            Guard.ThrowIfNull(path);
+            return UseOpenTelemetryPrometheusScrapingEndpoint(app, path: path);
+        }
 
         /// <summary>
         /// Adds OpenTelemetry Prometheus scraping endpoint middleware to an
@@ -91,7 +98,11 @@ namespace Microsoft.AspNetCore.Builder
         /// <returns>A reference to the original <see
         /// cref="IApplicationBuilder"/> for chaining calls.</returns>
         public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app, string path, Action<IApplicationBuilder> configureBranchedPipeline)
-            => UseOpenTelemetryPrometheusScrapingEndpoint(app, path: path, configureBranchedPipeline: configureBranchedPipeline);
+        {
+            Guard.ThrowIfNull(path);
+            Guard.ThrowIfNull(configureBranchedPipeline);
+            return UseOpenTelemetryPrometheusScrapingEndpoint(app, path: path, configureBranchedPipeline: configureBranchedPipeline);
+        }
 
         /// <summary>
         /// Adds OpenTelemetry Prometheus scraping endpoint middleware to an
@@ -106,7 +117,10 @@ namespace Microsoft.AspNetCore.Builder
         /// <returns>A reference to the original <see
         /// cref="IApplicationBuilder"/> for chaining calls.</returns>
         public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app, Func<HttpContext, bool> predicate)
-            => UseOpenTelemetryPrometheusScrapingEndpoint(app, predicate: predicate);
+        {
+            Guard.ThrowIfNull(predicate);
+            return UseOpenTelemetryPrometheusScrapingEndpoint(app, predicate: predicate);
+        }
 
         /// <summary>
         /// Adds OpenTelemetry Prometheus scraping endpoint middleware to an
@@ -124,7 +138,11 @@ namespace Microsoft.AspNetCore.Builder
         /// <returns>A reference to the original <see
         /// cref="IApplicationBuilder"/> for chaining calls.</returns>
         public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app, Func<HttpContext, bool> predicate, Action<IApplicationBuilder> configureBranchedPipeline)
-            => UseOpenTelemetryPrometheusScrapingEndpoint(app, predicate: predicate, configureBranchedPipeline: configureBranchedPipeline);
+        {
+            Guard.ThrowIfNull(predicate);
+            Guard.ThrowIfNull(configureBranchedPipeline);
+            return UseOpenTelemetryPrometheusScrapingEndpoint(app, predicate: predicate, configureBranchedPipeline: configureBranchedPipeline);
+        }
 
         /// <summary>
         /// Adds OpenTelemetry Prometheus scraping endpoint middleware to an
