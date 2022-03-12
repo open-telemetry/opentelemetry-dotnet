@@ -105,16 +105,11 @@ namespace OpenTelemetry.Metrics
 
             var metricExporter = new OtlpMetricExporter(exporterOptions);
 
-            var exportInterval =
-                metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds
-                ?? DefaultExportIntervalMilliseconds;
-
-            var exportTimeout =
-                metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds
-                ?? DefaultExportTimeoutMilliseconds;
-
-            var metricReader = new PeriodicExportingMetricReader(metricExporter, exportInterval, exportTimeout);
-            metricReader.Temporality = metricReaderOptions.Temporality;
+            var metricReader = PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
+                metricExporter,
+                metricReaderOptions,
+                DefaultExportIntervalMilliseconds,
+                DefaultExportTimeoutMilliseconds);
 
             return builder.AddReader(metricReader);
         }
