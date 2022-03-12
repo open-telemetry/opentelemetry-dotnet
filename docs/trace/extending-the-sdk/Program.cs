@@ -19,6 +19,8 @@ using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
+namespace ExtendingTheSdk;
+
 public class Program
 {
     private static readonly ActivitySource DemoSource = new("OTel.Demo");
