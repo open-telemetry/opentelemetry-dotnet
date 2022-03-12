@@ -25,18 +25,8 @@ internal class MyFilteringProcessor : BaseProcessor<Activity>
 
     public MyFilteringProcessor(BaseProcessor<Activity> processor, Func<Activity, bool> filter)
     {
-        if (filter == null)
-        {
-            throw new ArgumentNullException(nameof(filter));
-        }
-
-        if (processor == null)
-        {
-            throw new ArgumentNullException(nameof(processor));
-        }
-
-        this.filter = filter;
-        this.processor = processor;
+        this.filter = filter ?? throw new ArgumentNullException(nameof(filter));
+        this.processor = processor ?? throw new ArgumentNullException(nameof(processor));
     }
 
     public override void OnEnd(Activity activity)
