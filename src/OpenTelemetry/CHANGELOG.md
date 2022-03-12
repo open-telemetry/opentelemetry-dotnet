@@ -9,7 +9,7 @@
 
 * Added the `PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds`
   option.
-  ([#TBD](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TBD))
+  ([#3038](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3038))
 
 * Removed `MetricReaderType`. This enumeration was previously used when
   configuing a metric reader with an exporter to configure whether the export
@@ -18,7 +18,7 @@
   and InMemory. For these exporters, a manual export cycle can now be achieved
   by setting `PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds`
   to `-1`.
-  ([#TBD](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TBD))
+  ([#3038](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3038))
 
 ## 1.2.0-rc3
 
