@@ -26,6 +26,9 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public static class ConsoleExporterMetricsExtensions
     {
+        private const int DefaultExportIntervalMilliseconds = Timeout.Infinite;
+        private const int DefaultExportTimeoutMilliseconds = 30000;
+
         /// <summary>
         /// Adds <see cref="ConsoleMetricExporter"/> to the <see cref="MeterProviderBuilder"/> using default options.
         /// </summary>
@@ -100,9 +103,13 @@ namespace OpenTelemetry.Metrics
 
             var exportInterval =
                 metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds
-                ?? Timeout.Infinite;
+                ?? DefaultExportIntervalMilliseconds;
 
-            var metricReader = new PeriodicExportingMetricReader(metricExporter, exportInterval);
+            var exportTimeout =
+                metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds
+                ?? DefaultExportTimeoutMilliseconds;
+
+            var metricReader = new PeriodicExportingMetricReader(metricExporter, exportInterval, exportTimeout);
             metricReader.Temporality = metricReaderOptions.Temporality;
 
             return builder.AddReader(metricReader);

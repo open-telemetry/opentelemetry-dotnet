@@ -22,5 +22,10 @@ namespace OpenTelemetry.Metrics
         /// Gets or sets the metric export interval in milliseconds.
         /// </summary>
         public int? ExportIntervalMilliseconds { get; set; }
+
+        /// <summary>
+        /// Gets or sets the metric export timeout in milliseconds.
+        /// </summary>
+        public int? ExportTimeoutMilliseconds { get; set; }
     }
 }
