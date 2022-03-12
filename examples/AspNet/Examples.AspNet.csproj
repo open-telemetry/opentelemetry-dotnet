@@ -1,4 +1,4 @@
-﻿<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
@@ -110,9 +110,13 @@
       <Project>{7edae7fa-b44e-42ca-80fa-7df2faa2c5dd}</Project>
       <Name>OpenTelemetry.Exporter.Zipkin</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj">
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj">
       <Project>{a38ac295-2745-4b85-8b6b-dca864cedd5b}</Project>
       <Name>OpenTelemetry.Exporter.OpenTelemetryProtocol</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj">
+      <Project>{52158a12-e7ef-45a1-859f-06f9b17410cb}</Project>
+      <Name>OpenTelemetry.Exporter.Prometheus</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
