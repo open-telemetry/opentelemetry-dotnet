@@ -96,7 +96,7 @@ If you have trouble accessing the doc, please get in touch on
 
 * [Alan West](https://github.com/alanwest), New Relic
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
-* [Mikel Blanchard](https://github.com/CodeBlanch), CoStar Group
+* [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
 
 [Approvers](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver)
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
