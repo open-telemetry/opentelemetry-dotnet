@@ -26,7 +26,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
 {
     internal static class RedisProfilerEntryToActivityConverter
     {
-        private static readonly Lazy<Func<object, (string, string)>> MessageDataGetter = new Lazy<Func<object, (string, string)>>(() =>
+        private static readonly Lazy<Func<object, (string, string)>> MessageDataGetter = new(() =>
         {
             var redisAssembly = typeof(IProfiledCommand).Assembly;
             Type profiledCommandType = redisAssembly.GetType("StackExchange.Redis.Profiling.ProfiledCommand");

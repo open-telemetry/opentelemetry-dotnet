@@ -1,6 +1,6 @@
 # Getting Started with OpenTelemetry .NET Logs in 5 Minutes
 
-First, download and install the [.NET Core
+First, download and install the [.NET
 SDK](https://dotnet.microsoft.com/download) on your computer.
 
 Create a new console application and run it:
@@ -63,3 +63,5 @@ console.
 
 * If you want to build a custom exporter/processor/sampler, refer to [extending
   the SDK](../extending-the-sdk/README.md).
+* If you want to customize the SDK, refer to [customizing
+  the SDK](../customizing-the-sdk/README.md).

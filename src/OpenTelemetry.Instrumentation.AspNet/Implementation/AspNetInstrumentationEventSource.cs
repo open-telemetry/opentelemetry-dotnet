@@ -26,7 +26,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Implementation
     [EventSource(Name = "OpenTelemetry-Instrumentation-AspNet")]
     internal sealed class AspNetInstrumentationEventSource : EventSource
     {
-        public static AspNetInstrumentationEventSource Log = new AspNetInstrumentationEventSource();
+        public static AspNetInstrumentationEventSource Log = new();
 
         [NonEvent]
         public void RequestFilterException(string operationName, Exception ex)

@@ -58,7 +58,7 @@ namespace Benchmarks.Metrics
         private Counter<long> counter;
         private MeterProvider provider;
         private Meter meter;
-        private Random random = new Random();
+        private Random random = new();
         private string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
 
         [Params(AggregationTemporality.Cumulative, AggregationTemporality.Delta)]

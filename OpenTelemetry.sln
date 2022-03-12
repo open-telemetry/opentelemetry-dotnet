@@ -226,6 +226,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "source-generation", "docs\l
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-prometheus-grafana", "docs\metrics\getting-started-prometheus-grafana\getting-started-prometheus-grafana.csproj", "{41B784AA-3301-4126-AF9F-1D59BD04B0BF}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customizing-the-sdk", "docs\logs\customizing-the-sdk\customizing-the-sdk.csproj", "{6C7A1595-36D6-4229-BBB5-5A6B5791791D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -472,6 +474,10 @@ Global
 		{41B784AA-3301-4126-AF9F-1D59BD04B0BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{41B784AA-3301-4126-AF9F-1D59BD04B0BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{41B784AA-3301-4126-AF9F-1D59BD04B0BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -509,6 +515,7 @@ Global
 		{0076C657-564F-4787-9FFF-52D9D55166E8} = {77C7929A-2EED-4AA6-8705-B5C443C8AA0F}
 		{1F6CC903-04C9-4E7C-B388-C215C467BFB9} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 		{41B784AA-3301-4126-AF9F-1D59BD04B0BF} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
+		{6C7A1595-36D6-4229-BBB5-5A6B5791791D} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

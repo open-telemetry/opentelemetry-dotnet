@@ -46,8 +46,8 @@ namespace OpenTelemetry.Internal
         /// memoryMappedFileCache is a handle kept in thread-local storage as a cache to indicate whether the cached
         /// viewStream is created from the current m_memoryMappedFile.
         /// </summary>
-        private readonly ThreadLocal<MemoryMappedFile> memoryMappedFileCache = new ThreadLocal<MemoryMappedFile>(true);
-        private readonly ThreadLocal<MemoryMappedViewStream> viewStream = new ThreadLocal<MemoryMappedViewStream>(true);
+        private readonly ThreadLocal<MemoryMappedFile> memoryMappedFileCache = new(true);
+        private readonly ThreadLocal<MemoryMappedViewStream> viewStream = new(true);
         private bool disposedValue;
 
         // Once the configuration file is valid, an eventListener object will be created.

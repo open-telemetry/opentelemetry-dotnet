@@ -19,9 +19,11 @@ using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
+namespace ExtendingTheSdk;
+
 public class Program
 {
-    private static readonly ActivitySource DemoSource = new ActivitySource("OTel.Demo");
+    private static readonly ActivitySource DemoSource = new("OTel.Demo");
 
     public static void Main()
     {
@@ -35,14 +37,8 @@ public class Program
             .AddMyExporter()
             .Build();
 
-        using (var foo = DemoSource.StartActivity("Foo"))
-        {
-            using (var bar = DemoSource.StartActivity("Bar"))
-            {
-                using (var baz = DemoSource.StartActivity("Baz"))
-                {
-                }
-            }
-        }
+        using var foo = DemoSource.StartActivity("Foo");
+        using var bar = DemoSource.StartActivity("Bar");
+        using var baz = DemoSource.StartActivity("Baz");
     }
 }

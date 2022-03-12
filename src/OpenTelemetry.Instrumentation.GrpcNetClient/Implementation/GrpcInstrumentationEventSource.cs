@@ -26,7 +26,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
     [EventSource(Name = "OpenTelemetry-Instrumentation-Grpc")]
     internal class GrpcInstrumentationEventSource : EventSource
     {
-        public static GrpcInstrumentationEventSource Log = new GrpcInstrumentationEventSource();
+        public static GrpcInstrumentationEventSource Log = new();
 
         [Event(1, Message = "Payload is NULL in event '{1}' from handler '{0}', span will not be recorded.", Level = EventLevel.Warning)]
         public void NullPayload(string handlerName, string eventName)

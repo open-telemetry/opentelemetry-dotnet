@@ -29,10 +29,10 @@ public partial class Program
     // Note: Uncomment the below line if you want to run Histogram stress test
     // private const int MaxHistogramMeasurement = 1000;
 
-    private static readonly Meter TestMeter = new Meter(Utils.GetCurrentMethodName());
+    private static readonly Meter TestMeter = new(Utils.GetCurrentMethodName());
     private static readonly Counter<long> TestCounter = TestMeter.CreateCounter<long>("TestCounter");
     private static readonly string[] DimensionValues = new string[ArraySize];
-    private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());
+    private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
 
     // Note: Uncomment the below line if you want to run Histogram stress test
     // private static readonly Histogram<long> TestHistogram = TestMeter.CreateHistogram<long>("TestHistogram");

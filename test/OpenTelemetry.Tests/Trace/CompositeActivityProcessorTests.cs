@@ -67,11 +67,9 @@ namespace OpenTelemetry.Trace.Tests
 
             var activity = new Activity("test");
 
-            using (var processor = new CompositeProcessor<Activity>(new[] { p1 }))
-            {
-                Assert.Throws<Exception>(() => { processor.OnStart(activity); });
-                Assert.Throws<Exception>(() => { processor.OnEnd(activity); });
-            }
+            using var processor = new CompositeProcessor<Activity>(new[] { p1 });
+            Assert.Throws<Exception>(() => { processor.OnStart(activity); });
+            Assert.Throws<Exception>(() => { processor.OnEnd(activity); });
         }
 
         [Fact]
@@ -80,12 +78,10 @@ namespace OpenTelemetry.Trace.Tests
             using var p1 = new TestActivityProcessor(null, null);
             using var p2 = new TestActivityProcessor(null, null);
 
-            using (var processor = new CompositeProcessor<Activity>(new[] { p1, p2 }))
-            {
-                processor.Shutdown();
-                Assert.True(p1.ShutdownCalled);
-                Assert.True(p2.ShutdownCalled);
-            }
+            using var processor = new CompositeProcessor<Activity>(new[] { p1, p2 });
+            processor.Shutdown();
+            Assert.True(p1.ShutdownCalled);
+            Assert.True(p2.ShutdownCalled);
         }
 
         [Theory]
@@ -97,13 +93,11 @@ namespace OpenTelemetry.Trace.Tests
             using var p1 = new TestActivityProcessor(null, null);
             using var p2 = new TestActivityProcessor(null, null);
 
-            using (var processor = new CompositeProcessor<Activity>(new[] { p1, p2 }))
-            {
-                processor.ForceFlush(timeout);
+            using var processor = new CompositeProcessor<Activity>(new[] { p1, p2 });
+            processor.ForceFlush(timeout);
 
-                Assert.True(p1.ForceFlushCalled);
-                Assert.True(p2.ForceFlushCalled);
-            }
+            Assert.True(p1.ForceFlushCalled);
+            Assert.True(p2.ForceFlushCalled);
         }
     }
 }
