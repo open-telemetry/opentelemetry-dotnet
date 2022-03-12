@@ -104,13 +104,13 @@ namespace OpenTelemetry.Metrics
 
             var metricExporter = new OtlpMetricExporter(exporterOptions);
 
-            var metricReader = metricReaderOptions.MetricReaderType == MetricReaderType.Manual
-                ? new BaseExportingMetricReader(metricExporter)
-                : new PeriodicExportingMetricReader(
-                    metricExporter,
-                    metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds ?? DefaultExportIntervalMilliseconds);
+            var exportInterval =
+                metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds
+                ?? DefaultExportIntervalMilliseconds;
 
+            var metricReader = new PeriodicExportingMetricReader(metricExporter, exportInterval);
             metricReader.Temporality = metricReaderOptions.Temporality;
+
             return builder.AddReader(metricReader);
         }
     }

@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
@@ -81,13 +82,13 @@ namespace OpenTelemetry.Metrics
 
             var metricExporter = new InMemoryExporter<Metric>(exportedItems);
 
-            var metricReader = metricReaderOptions.MetricReaderType == MetricReaderType.Manual
-                ? new BaseExportingMetricReader(metricExporter)
-                : new PeriodicExportingMetricReader(
-                    metricExporter,
-                    metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds ?? -1);
+            var exportInterval =
+                metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds
+                ?? Timeout.Infinite;
 
+            var metricReader = new PeriodicExportingMetricReader(metricExporter, exportInterval);
             metricReader.Temporality = metricReaderOptions.Temporality;
+
             return builder.AddReader(metricReader);
         }
     }

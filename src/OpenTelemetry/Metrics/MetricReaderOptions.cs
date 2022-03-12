@@ -28,11 +28,6 @@ public class MetricReaderOptions
     public AggregationTemporality Temporality { get; set; } = AggregationTemporality.Cumulative;
 
     /// <summary>
-    /// Gets or sets the <see cref="MetricReaderType" /> to use. Defaults to <c>MetricReaderType.Periodic</c>.
-    /// </summary>
-    public MetricReaderType MetricReaderType { get; set; } = MetricReaderType.Periodic;
-
-    /// <summary>
     /// Gets or sets the <see cref="PeriodicExportingMetricReaderOptions" /> options. Ignored unless <c>MetricReaderType</c> is <c>Periodic</c>.
     /// </summary>
     public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions { get; set; } = new PeriodicExportingMetricReaderOptions();
