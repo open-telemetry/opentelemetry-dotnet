@@ -41,7 +41,6 @@ for logs that are sent to each registered provider,
 including the `OpenTelemetryLoggerProvider`.
 You can use the filtering either in configuration (i.e. appsettings.json) or in code.
 
-
 ### via appsettings.json
 
 The example below uses the `OpenTelemetry`
@@ -78,4 +77,5 @@ ILoggingBuilder.AddFilter<OpenTelemetryLoggerProvider>("category name", LogLevel
 
 ## Learn more
 
-* See also the official guide for [Logging in .NET](https://docs.microsoft.com/dotnet/core/extensions/logging)logs 
+* See also the official guide for
+  [Logging in .NET](https://docs.microsoft.com/dotnet/core/extensions/logging). 
