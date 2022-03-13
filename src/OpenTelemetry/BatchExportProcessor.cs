@@ -25,7 +25,7 @@ namespace OpenTelemetry
     /// Implements processor that batches telemetry objects before calling exporter.
     /// </summary>
     /// <typeparam name="T">The type of telemetry object to be exported.</typeparam>
-    public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
+    public class BatchExportProcessor<T> : BaseExportProcessor<T>
         where T : class
     {
         internal const int DefaultMaxQueueSize = 2048;
@@ -53,7 +53,7 @@ namespace OpenTelemetry
         /// <param name="scheduledDelayMilliseconds">The delay interval in milliseconds between two consecutive exports. The default value is 5000.</param>
         /// <param name="exporterTimeoutMilliseconds">How long the export can run before it is cancelled. The default value is 30000.</param>
         /// <param name="maxExportBatchSize">The maximum batch size of every export. It must be smaller or equal to maxQueueSize. The default value is 512.</param>
-        protected BatchExportProcessor(
+        public BatchExportProcessor(
             BaseExporter<T> exporter,
             int maxQueueSize = DefaultMaxQueueSize,
             int scheduledDelayMilliseconds = DefaultScheduledDelayMilliseconds,

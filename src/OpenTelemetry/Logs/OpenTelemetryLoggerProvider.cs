@@ -58,7 +58,18 @@ namespace OpenTelemetry.Logs
 
             foreach (var processor in options.Processors)
             {
-                this.AddProcessor(processor);
+                if (processor is BaseProcessor<LogRecord> legacyProcessor)
+                {
+                    this.AddProcessor(legacyProcessor);
+                }
+                else if (processor is IInlineLogProcessor inlineLogProcessor)
+                {
+                    this.AddProcessor(inlineLogProcessor);
+                }
+                else
+                {
+                    // TODO: Log event, invalid processor type.
+                }
             }
         }
 
@@ -103,18 +114,19 @@ namespace OpenTelemetry.Logs
         }
 
         internal OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
-            => this.AddProcessor(BuildLegacyLogRecord, processor);
-
-        internal OpenTelemetryLoggerProvider AddProcessor<T>(LogConverter<T> logConverter, BaseProcessor<T> processor)
-            where T : class
         {
-            Guard.ThrowIfNull(logConverter);
+            Guard.ThrowIfNull(processor);
+
+            return this.AddProcessor(new InlineLogProcessor<LogRecord>(BuildLegacyLogRecord, processor));
+        }
+
+        internal OpenTelemetryLoggerProvider AddProcessor(IInlineLogProcessor processor)
+        {
             Guard.ThrowIfNull(processor);
 
             processor.SetParentProvider(this);
 
-            var node = new LinkedListNode(
-                new InlineLogProcessor<T>(logConverter, processor));
+            var node = new LinkedListNode(processor);
             if (this.head == null)
             {
                 this.head = node;
@@ -147,9 +159,20 @@ namespace OpenTelemetry.Logs
             base.Dispose(disposing);
         }
 
-        private static LogRecord BuildLegacyLogRecord(string categoryName, DateTime timestamp, LogLevel logLevel, EventId eventId, object state, IReadOnlyList<KeyValuePair<string, object>> parsedState, IExternalScopeProvider scopeProvider, Exception exception, string formattedLogMessage)
+        private static LogRecord BuildLegacyLogRecord(
+            in ActivityContext activityContext,
+            string categoryName,
+            DateTime timestamp,
+            LogLevel logLevel,
+            EventId eventId,
+            object state,
+            IReadOnlyList<KeyValuePair<string, object>> parsedState,
+            IExternalScopeProvider scopeProvider,
+            Exception exception,
+            string formattedLogMessage)
         {
             return new LogRecord(
+                in activityContext,
                 scopeProvider,
                 timestamp,
                 categoryName,
@@ -209,78 +232,5 @@ namespace OpenTelemetry.Logs
 
             public LinkedListNode Next { get; set; }
         }
-    }
-
-    public delegate T LogConverter<T>(
-        string categoryName,
-        DateTime timestamp,
-        LogLevel logLevel,
-        EventId eventId,
-        object state,
-        IReadOnlyList<KeyValuePair<string, object>> parsedState,
-        IExternalScopeProvider scopeProvider,
-        Exception exception,
-        string formattedLogMessage);
-
-    internal sealed class InlineLogProcessor<T> : IInlineLogProcessor
-        where T : class
-    {
-        private readonly LogConverter<T> logConverter;
-        private readonly BaseProcessor<T> innerProcessor;
-
-        public InlineLogProcessor(
-            LogConverter<T> logConverter,
-            BaseProcessor<T> innerProcessor)
-        {
-            this.logConverter = logConverter;
-            this.innerProcessor = innerProcessor;
-        }
-
-        public void Log(
-            string categoryName,
-            DateTime timestamp,
-            LogLevel logLevel,
-            EventId eventId,
-            object state,
-            IReadOnlyList<KeyValuePair<string, object>> parsedState,
-            IExternalScopeProvider scopeProvider,
-            Exception exception,
-            string formattedLogMessage)
-        {
-            T record = this.logConverter(
-                categoryName,
-                timestamp,
-                logLevel,
-                eventId,
-                state,
-                parsedState,
-                scopeProvider,
-                exception,
-                formattedLogMessage);
-
-            this.innerProcessor.OnEnd(record);
-        }
-
-        public bool Shutdown(int timeoutMilliseconds = Timeout.Infinite)
-            => this.innerProcessor.Shutdown(timeoutMilliseconds);
-
-        public void Dispose()
-            => this.innerProcessor.Dispose();
-    }
-
-    internal interface IInlineLogProcessor : IDisposable
-    {
-        void Log(
-            string categoryName,
-            DateTime timestamp,
-            LogLevel logLevel,
-            EventId eventId,
-            object state,
-            IReadOnlyList<KeyValuePair<string, object>> parsedState,
-            IExternalScopeProvider scopeProvider,
-            Exception exception,
-            string formattedLogMessage);
-
-        bool Shutdown(int timeoutMilliseconds = Timeout.Infinite);
     }
 }

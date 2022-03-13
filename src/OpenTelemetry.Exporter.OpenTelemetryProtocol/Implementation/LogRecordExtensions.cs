@@ -15,9 +15,13 @@
 // </copyright>
 
 using System;
+using System.Buffers;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
@@ -48,6 +52,88 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             {
                 instrumentationLibraryLogs.Logs.Add(logRecord);
             }
+        }
+
+        internal static OtlpLogs.LogRecord ToOtlpLog(
+            in ActivityContext activityContext,
+            string categoryName,
+            DateTime timestamp,
+            LogLevel logLevel,
+            EventId eventId,
+            object state,
+            IReadOnlyList<KeyValuePair<string, object>> parsedState,
+            IExternalScopeProvider scopeProvider,
+            Exception exception,
+            string formattedLogMessage)
+        {
+            OtlpLogs.LogRecord otlpLogRecord = null;
+
+            try
+            {
+                otlpLogRecord = new OtlpLogs.LogRecord
+                {
+                    TimeUnixNano = (ulong)timestamp.ToUnixTimeNanoseconds(),
+                    Name = categoryName,
+
+                    // TODO: Devise mapping of LogLevel to SeverityNumber
+                    // See: https://github.com/open-telemetry/opentelemetry-proto/blob/bacfe08d84e21fb2a779e302d12e8dfeb67e7b86/opentelemetry/proto/logs/v1/logs.proto#L100-L102
+                    SeverityText = logLevel.ToString(),
+                };
+
+                if (formattedLogMessage != null)
+                {
+                    otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = formattedLogMessage };
+                }
+
+                if (parsedState != null)
+                {
+                    for (int i = 0; i < parsedState.Count; i++)
+                    {
+                        var stateValue = parsedState[i];
+                        var otlpAttribute = stateValue.ToOtlpAttribute();
+                        otlpLogRecord.Attributes.Add(otlpAttribute);
+                    }
+                }
+
+                if (eventId.Id != default)
+                {
+                    otlpLogRecord.Attributes.AddIntAttribute(nameof(EventId.Id), eventId.Id);
+                }
+
+                if (!string.IsNullOrEmpty(eventId.Name))
+                {
+                    otlpLogRecord.Attributes.AddStringAttribute(nameof(EventId.Name), eventId.Name);
+                }
+
+                if (exception != null)
+                {
+                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionType, exception.GetType().Name);
+                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionMessage, exception.Message);
+                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionStacktrace, exception.ToInvariantString());
+                }
+
+                if (activityContext.IsValid())
+                {
+                    byte[] traceIdBytes = new byte[16];
+                    byte[] spanIdBytes = new byte[8];
+
+                    activityContext.TraceId.CopyTo(traceIdBytes);
+                    activityContext.SpanId.CopyTo(spanIdBytes);
+
+                    otlpLogRecord.TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes);
+                    otlpLogRecord.SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes);
+                    otlpLogRecord.Flags = (uint)activityContext.TraceFlags;
+                }
+
+                // TODO: Add additional attributes from scope and state
+                // Might make sense to take an approach similar to https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/897b734aa5ea9992538f04f6ea6871fe211fa903/src/OpenTelemetry.Contrib.Preview/Internal/DefaultLogStateConverter.cs
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateLogRecord(ex.Message);
+            }
+
+            return otlpLogRecord;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

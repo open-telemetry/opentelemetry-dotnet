@@ -34,6 +34,7 @@ namespace OpenTelemetry.Logs
         private List<object> bufferedScopes;
 
         internal LogRecord(
+            in ActivityContext activityContext,
             IExternalScopeProvider scopeProvider,
             DateTime timestamp,
             string categoryName,
@@ -46,13 +47,12 @@ namespace OpenTelemetry.Logs
         {
             this.ScopeProvider = scopeProvider;
 
-            var activity = Activity.Current;
-            if (activity != null)
+            if (activityContext.IsValid())
             {
-                this.TraceId = activity.TraceId;
-                this.SpanId = activity.SpanId;
-                this.TraceState = activity.TraceStateString;
-                this.TraceFlags = activity.ActivityTraceFlags;
+                this.TraceId = activityContext.TraceId;
+                this.SpanId = activityContext.SpanId;
+                this.TraceState = activityContext.TraceState;
+                this.TraceFlags = activityContext.TraceFlags;
             }
 
             this.Timestamp = timestamp;

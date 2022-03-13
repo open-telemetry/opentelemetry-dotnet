@@ -16,7 +16,9 @@
 
 using System;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
+using OtlpLogs = Opentelemetry.Proto.Logs.V1;
 
 namespace OpenTelemetry.Logs
 {
@@ -45,17 +47,19 @@ namespace OpenTelemetry.Logs
 
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
-                return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(otlpExporter));
+                return loggerOptions.AddProcessor(
+                    LogRecordExtensions.ToOtlpLog,
+                    new SimpleExportProcessor<OtlpLogs.LogRecord>(otlpExporter));
             }
-            else
-            {
-                return loggerOptions.AddProcessor(new BatchLogRecordExportProcessor(
+
+            return loggerOptions.AddProcessor(
+                LogRecordExtensions.ToOtlpLog,
+                new BatchExportProcessor<OtlpLogs.LogRecord>(
                     otlpExporter,
                     exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
                     exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
                     exporterOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
                     exporterOptions.BatchExportProcessorOptions.MaxExportBatchSize));
-            }
         }
     }
 }

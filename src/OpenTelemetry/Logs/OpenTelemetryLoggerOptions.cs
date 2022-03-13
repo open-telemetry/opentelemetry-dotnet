@@ -22,7 +22,7 @@ namespace OpenTelemetry.Logs
 {
     public class OpenTelemetryLoggerOptions
     {
-        internal readonly List<BaseProcessor<LogRecord>> Processors = new List<BaseProcessor<LogRecord>>();
+        internal readonly List<object> Processors = new();
         internal ResourceBuilder ResourceBuilder = ResourceBuilder.CreateDefault();
 
         /// <summary>
@@ -61,6 +61,23 @@ namespace OpenTelemetry.Logs
             Guard.ThrowIfNull(processor);
 
             this.Processors.Add(processor);
+
+            return this;
+        }
+
+        /// <summary>
+        /// Adds processor to the options.
+        /// </summary>
+        /// <typeparam name="T">Log type.</typeparam>
+        /// <param name="logConverter">Log converter.</param>
+        /// <param name="processor">Log processor to add.</param>
+        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerOptions AddProcessor<T>(LogConverter<T> logConverter, BaseProcessor<T> processor)
+            where T : class
+        {
+            Guard.ThrowIfNull(processor);
+
+            this.Processors.Add(new InlineLogProcessor<T>(logConverter, processor));
 
             return this;
         }
