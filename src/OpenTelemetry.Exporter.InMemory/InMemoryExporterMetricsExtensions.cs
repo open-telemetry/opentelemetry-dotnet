@@ -28,7 +28,7 @@ namespace OpenTelemetry.Metrics
     public static class InMemoryExporterMetricsExtensions
     {
         private const int DefaultExportIntervalMilliseconds = Timeout.Infinite;
-        private const int DefaultExportTimeoutMilliseconds = 30000;
+        private const int DefaultExportTimeoutMilliseconds = Timeout.Infinite;
 
         /// <summary>
         /// Adds InMemory metric exporter to the <see cref="MeterProviderBuilder"/> using default options.
