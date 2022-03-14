@@ -63,7 +63,7 @@ service metadata:
 ```text
 LogRecord.TraceId:            00000000000000000000000000000000
 LogRecord.SpanId:             0000000000000000
-LogRecord.Timestamp:          0001-01-01T00:00:00.0000000Z
+LogRecord.Timestamp:          1970-01-01T00:00:01.0000000Z
 LogRecord.EventId:            0
 LogRecord.EventName:
 LogRecord.CategoryName:       Program
