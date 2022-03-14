@@ -26,6 +26,10 @@ public class Program
         {
             builder.AddOpenTelemetry(options =>
             {
+                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+                    serviceName: "MyService",
+                    serviceVersion: "1.0.0"
+                    ));
                 options.AddConsoleExporter();
             });
         });
