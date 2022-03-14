@@ -15,8 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
@@ -47,25 +45,7 @@ namespace OpenTelemetry.Logs
                 return;
             }
 
-            var processor = this.provider.Processor;
-            if (processor != null)
-            {
-                var options = this.provider.Options;
-
-                LogRecordStruct logRecordStruct = new(
-                    Activity.Current?.Context ?? default,
-                    DateTime.UtcNow,
-                    this.categoryName,
-                    logLevel,
-                    eventId,
-                    options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
-                    exception,
-                    options.IncludeScopes ? this.ScopeProvider : null,
-                    options.ParseStateValues ? null : state,
-                    options.ParseStateValues ? this.ParseState(state) : null);
-
-                processor.OnEnd(in logRecordStruct);
-            }
+            this.provider.Log(this.categoryName, logLevel, eventId, state, exception, formatter);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -75,24 +55,5 @@ namespace OpenTelemetry.Logs
         }
 
         public IDisposable BeginScope<TState>(TState state) => this.ScopeProvider?.Push(state) ?? null;
-
-        private IReadOnlyList<KeyValuePair<string, object>> ParseState<TState>(TState state)
-        {
-            if (state is IReadOnlyList<KeyValuePair<string, object>> stateList)
-            {
-                return stateList;
-            }
-            else if (state is IEnumerable<KeyValuePair<string, object>> stateValues)
-            {
-                return new List<KeyValuePair<string, object>>(stateValues);
-            }
-            else
-            {
-                return new List<KeyValuePair<string, object>>
-                {
-                    new KeyValuePair<string, object>(string.Empty, state),
-                };
-            }
-        }
     }
 }

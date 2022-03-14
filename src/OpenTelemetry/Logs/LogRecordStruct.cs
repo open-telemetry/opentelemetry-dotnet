@@ -28,7 +28,6 @@ namespace OpenTelemetry.Logs
         private readonly IReadOnlyList<KeyValuePair<string, object>> stateValues;
 
         internal LogRecordStruct(
-            in ActivityContext activityContext,
             DateTime timestamp,
             string categoryName,
             LogLevel logLevel,
@@ -39,7 +38,6 @@ namespace OpenTelemetry.Logs
             object state,
             IReadOnlyList<KeyValuePair<string, object>> stateValues)
         {
-            this.ActivityContext = activityContext;
             this.Timestamp = timestamp;
             this.CategoryName = categoryName;
             this.LogLevel = logLevel;
@@ -50,8 +48,6 @@ namespace OpenTelemetry.Logs
             this.state = state;
             this.stateValues = stateValues;
         }
-
-        public ActivityContext ActivityContext { get; }
 
         public DateTime Timestamp { get; }
 
@@ -92,8 +88,10 @@ namespace OpenTelemetry.Logs
 
         internal static LogRecord ToLogRecord(in LogRecordStruct logRecord)
         {
+            var activityContext = Activity.Current?.Context ?? default;
+
             return new LogRecord(
-                logRecord.ActivityContext,
+                in activityContext,
                 logRecord.scopeProvider,
                 logRecord.Timestamp,
                 logRecord.CategoryName,

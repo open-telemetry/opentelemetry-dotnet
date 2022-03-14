@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
@@ -33,7 +34,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
     internal static class LogRecordExtensions
     {
         private static readonly Action<KeyValuePair<string, object>, OtlpLogs.LogRecord> AddStateValueToLog =
-            (stateValue, logRecord) => logRecord.Attributes.Add(stateValue.ToOtlpAttribute());
+            (stateValue, logRecord) =>
+            {
+                var attribute = stateValue.ToOtlpAttribute();
+                if (attribute != null)
+                {
+                    logRecord.Attributes.Add(attribute);
+                }
+            };
 
         internal static void AddBatch(
             this OtlpCollector.ExportLogsServiceRequest request,
@@ -76,8 +84,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = logRecord.FormattedMessage };
                 }
 
-                logRecord.ForEachStateValue(AddStateValueToLog, otlpLogRecord);
-
                 if (logRecord.EventId.Id != default)
                 {
                     otlpLogRecord.Attributes.AddIntAttribute(nameof(EventId.Id), logRecord.EventId.Id);
@@ -95,20 +101,23 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString());
                 }
 
-                if (logRecord.ActivityContext.IsValid())
+                ActivityContext activityContext = Activity.Current?.Context ?? default;
+                if (activityContext.IsValid())
                 {
                     byte[] traceIdBytes = new byte[16];
                     byte[] spanIdBytes = new byte[8];
 
-                    logRecord.ActivityContext.TraceId.CopyTo(traceIdBytes);
-                    logRecord.ActivityContext.SpanId.CopyTo(spanIdBytes);
+                    activityContext.TraceId.CopyTo(traceIdBytes);
+                    activityContext.SpanId.CopyTo(spanIdBytes);
 
                     otlpLogRecord.TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes);
                     otlpLogRecord.SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes);
-                    otlpLogRecord.Flags = (uint)logRecord.ActivityContext.TraceFlags;
+                    otlpLogRecord.Flags = (uint)activityContext.TraceFlags;
                 }
 
-                // TODO: Add additional attributes from scope and state
+                logRecord.ForEachStateValue(AddStateValueToLog, otlpLogRecord);
+
+                // TODO: Add additional attributes from scope
                 // Might make sense to take an approach similar to https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/897b734aa5ea9992538f04f6ea6871fe211fa903/src/OpenTelemetry.Contrib.Preview/Internal/DefaultLogStateConverter.cs
             }
             catch (Exception ex)

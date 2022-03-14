@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Extensions.Logging;
@@ -71,8 +72,6 @@ namespace OpenTelemetry.Logs
                 }
             }
         }
-
-        internal ILogProcessor Processor => this.head?.Value;
 
         void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)
         {
@@ -140,6 +139,31 @@ namespace OpenTelemetry.Logs
             return this;
         }
 
+        internal void Log<TState>(string categoryName, LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        {
+            var cur = this.head;
+            if (cur != null)
+            {
+                var options = this.Options;
+
+                LogRecordStruct logRecordStruct = new(
+                    DateTime.UtcNow,
+                    categoryName,
+                    logLevel,
+                    eventId,
+                    options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
+                    exception,
+                    options.IncludeScopes ? this.scopeProvider : null,
+                    options.ParseStateValues ? null : state,
+                    options.ParseStateValues ? ParseState(state) : null);
+
+                for (; cur != null; cur = cur.Next)
+                {
+                    cur.Value.OnEnd(in logRecordStruct);
+                }
+            }
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (!this.disposed)
@@ -156,6 +180,24 @@ namespace OpenTelemetry.Logs
             }
 
             base.Dispose(disposing);
+        }
+
+        private static IReadOnlyList<KeyValuePair<string, object>> ParseState<TState>(TState state)
+        {
+            if (state is IReadOnlyList<KeyValuePair<string, object>> stateList)
+            {
+                return stateList;
+            }
+
+            if (state is IEnumerable<KeyValuePair<string, object>> stateValues)
+            {
+                return new List<KeyValuePair<string, object>>(stateValues);
+            }
+
+            return new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>(string.Empty, state),
+            };
         }
 
         private void ShutdownProcessors(int timeoutMilliseconds)
