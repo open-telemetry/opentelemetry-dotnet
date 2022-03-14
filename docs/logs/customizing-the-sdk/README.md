@@ -34,7 +34,8 @@ TODO
 
 ## Filtering LogLevels
 
-`ILogger` implementations have a built-in mechanism to apply log filtering.
+[`ILogger`](https://docs.microsoft.com/dotnet/core/extensions/logging)
+implementations have a built-in mechanism to apply log filtering.
 This filtering lets you define the minimum
 [`LogLevel`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.loglevel)
 for logs that are sent to each registered provider,
