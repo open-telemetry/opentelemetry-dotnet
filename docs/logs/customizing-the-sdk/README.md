@@ -35,7 +35,6 @@ A [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/
 is an immutable representation of the entity producing telemetry as
 [Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md#attributes).
 
-
 The snippet below demonstates creating a default `ResourceBuilder` and adding
 service metadata.
 
