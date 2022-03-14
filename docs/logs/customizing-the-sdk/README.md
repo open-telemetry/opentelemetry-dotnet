@@ -35,7 +35,7 @@ A [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/
 is an immutable representation of the entity producing telemetry as
 [Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md#attributes).
 
-The snippet below demonstates creating a default `ResourceBuilder` and adding
+The snippet below demonstrates creating a default `ResourceBuilder` and adding
 service metadata.
 
 ```csharp
@@ -60,7 +60,7 @@ logger.LogInformation("Hello Information");
 This example generates the following output which includes the customized
 service metadata:
 
-```
+```text
 LogRecord.TraceId:            00000000000000000000000000000000
 LogRecord.SpanId:             0000000000000000
 LogRecord.Timestamp:          0001-01-01T00:00:00.0000000Z
