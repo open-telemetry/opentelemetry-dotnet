@@ -68,7 +68,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             // In the case when both activity status and status tag were set,
             // activity status takes precedence over status tag.
-            else if (tagState.StatusCode != StatusCode.Unset)
+            else if (tagState.StatusCode.HasValue && tagState.StatusCode != StatusCode.Unset)
             {
                 PooledList<KeyValuePair<string, object>>.Add(
                     ref tagState.Tags,
