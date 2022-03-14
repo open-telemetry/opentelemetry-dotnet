@@ -14,22 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using Microsoft.Extensions.Logging;
-
 namespace OpenTelemetry.Logs
 {
-    public delegate T LogConverter<T>(
-        in ActivityContext activityContext,
-        string categoryName,
-        DateTime timestamp,
-        LogLevel logLevel,
-        EventId eventId,
-        object state,
-        IReadOnlyList<KeyValuePair<string, object>> parsedState,
-        IExternalScopeProvider scopeProvider,
-        Exception exception,
-        string formattedLogMessage);
+    public delegate T LogConverter<T>(LogRecordStruct log);
 }

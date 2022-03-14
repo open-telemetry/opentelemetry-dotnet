@@ -1,4 +1,4 @@
-// <copyright file="IInlineLogProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="ILogProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,26 +15,15 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Threading;
-using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Logs
 {
-    internal interface IInlineLogProcessor : IDisposable
+    internal interface ILogProcessor : IDisposable
     {
         void SetParentProvider(BaseProvider parentProvider);
 
-        void Log(
-            string categoryName,
-            DateTime timestamp,
-            LogLevel logLevel,
-            EventId eventId,
-            object state,
-            IReadOnlyList<KeyValuePair<string, object>> parsedState,
-            IExternalScopeProvider scopeProvider,
-            Exception exception,
-            string formattedLogMessage);
+        void OnEnd(LogRecordStruct log);
 
         bool Shutdown(int timeoutMilliseconds = Timeout.Infinite);
     }

@@ -34,7 +34,7 @@ namespace OpenTelemetry.Logs
         private List<object> bufferedScopes;
 
         internal LogRecord(
-            in ActivityContext activityContext,
+            ActivityContext activityContext,
             IExternalScopeProvider scopeProvider,
             DateTime timestamp,
             string categoryName,
@@ -151,7 +151,7 @@ namespace OpenTelemetry.Logs
             this.bufferedScopes = scopes;
         }
 
-        private readonly struct ScopeForEachState<TState>
+        internal readonly struct ScopeForEachState<TState>
         {
             public static readonly Action<object, ScopeForEachState<TState>> ForEachScope = (object scope, ScopeForEachState<TState> state) =>
             {

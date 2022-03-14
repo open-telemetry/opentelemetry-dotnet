@@ -24,8 +24,10 @@ using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter;
+using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OtlpCollector = OpenTelemetryProtocol::Opentelemetry.Proto.Collector.Logs.V1;
+using OtlpLogs = OpenTelemetryProtocol::Opentelemetry.Proto.Logs.V1;
 
 namespace Benchmarks.Exporter
 {
@@ -33,7 +35,7 @@ namespace Benchmarks.Exporter
     public class OtlpGrpcLogExporterBenchmarks
     {
         private readonly Func<CustomReadOnlyListState, Exception, string> messageFormatter = (s, e) => s.ToString();
-        private BatchLogRecordExportProcessor batchLogRecordExportProcessor;
+        private BatchExportProcessor<OtlpLogs.LogRecord> batchExportProcessor;
         private ILoggerFactory loggerFactory;
         private ILogger logger;
 
@@ -51,14 +53,14 @@ namespace Benchmarks.Exporter
                     builder.ParseStateValues = true;
                     builder.IncludeScopes = true;
 
-                    this.batchLogRecordExportProcessor = new BatchLogRecordExportProcessor(
+                    this.batchExportProcessor = new BatchExportProcessor<OtlpLogs.LogRecord>(
                         new OtlpLogExporter(options, new NoopExportClient()),
                         options.BatchExportProcessorOptions.MaxQueueSize,
                         options.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
                         options.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
                         options.BatchExportProcessorOptions.MaxExportBatchSize);
 
-                    builder.AddProcessor(this.batchLogRecordExportProcessor);
+                    builder.AddProcessor(LogRecordExtensions.ToOtlpLog, this.batchExportProcessor);
                 }));
 
             this.logger = this.loggerFactory.CreateLogger<OtlpGrpcLogExporterBenchmarks>();
@@ -97,7 +99,7 @@ namespace Benchmarks.Exporter
                 }
             }
 
-            this.batchLogRecordExportProcessor.ForceFlush();
+            this.batchExportProcessor.ForceFlush();
         }
 
         private readonly struct CustomReadOnlyListState : IReadOnlyList<KeyValuePair<string, object>>

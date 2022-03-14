@@ -15,9 +15,7 @@
 // </copyright>
 
 using System;
-using System.Buffers;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
@@ -34,6 +32,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class LogRecordExtensions
     {
+        private static readonly Action<KeyValuePair<string, object>, OtlpLogs.LogRecord> AddStateValueToLog =
+            (stateValue, logRecord) => logRecord.Attributes.Add(stateValue.ToOtlpAttribute());
+
         internal static void AddBatch(
             this OtlpCollector.ExportLogsServiceRequest request,
             OtlpResource.Resource processResource,
@@ -54,17 +55,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
         }
 
-        internal static OtlpLogs.LogRecord ToOtlpLog(
-            in ActivityContext activityContext,
-            string categoryName,
-            DateTime timestamp,
-            LogLevel logLevel,
-            EventId eventId,
-            object state,
-            IReadOnlyList<KeyValuePair<string, object>> parsedState,
-            IExternalScopeProvider scopeProvider,
-            Exception exception,
-            string formattedLogMessage)
+        internal static OtlpLogs.LogRecord ToOtlpLog(LogRecordStruct logRecord)
         {
             OtlpLogs.LogRecord otlpLogRecord = null;
 
@@ -72,57 +63,49 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             {
                 otlpLogRecord = new OtlpLogs.LogRecord
                 {
-                    TimeUnixNano = (ulong)timestamp.ToUnixTimeNanoseconds(),
-                    Name = categoryName,
+                    TimeUnixNano = (ulong)logRecord.Timestamp.ToUnixTimeNanoseconds(),
+                    Name = logRecord.CategoryName,
 
                     // TODO: Devise mapping of LogLevel to SeverityNumber
                     // See: https://github.com/open-telemetry/opentelemetry-proto/blob/bacfe08d84e21fb2a779e302d12e8dfeb67e7b86/opentelemetry/proto/logs/v1/logs.proto#L100-L102
-                    SeverityText = logLevel.ToString(),
+                    SeverityText = logRecord.LogLevel.ToString(),
                 };
 
-                if (formattedLogMessage != null)
+                if (logRecord.FormattedMessage != null)
                 {
-                    otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = formattedLogMessage };
+                    otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = logRecord.FormattedMessage };
                 }
 
-                if (parsedState != null)
+                logRecord.ForEachStateValue(AddStateValueToLog, otlpLogRecord);
+
+                if (logRecord.EventId.Id != default)
                 {
-                    for (int i = 0; i < parsedState.Count; i++)
-                    {
-                        var stateValue = parsedState[i];
-                        var otlpAttribute = stateValue.ToOtlpAttribute();
-                        otlpLogRecord.Attributes.Add(otlpAttribute);
-                    }
+                    otlpLogRecord.Attributes.AddIntAttribute(nameof(EventId.Id), logRecord.EventId.Id);
                 }
 
-                if (eventId.Id != default)
+                if (!string.IsNullOrEmpty(logRecord.EventId.Name))
                 {
-                    otlpLogRecord.Attributes.AddIntAttribute(nameof(EventId.Id), eventId.Id);
+                    otlpLogRecord.Attributes.AddStringAttribute(nameof(EventId.Name), logRecord.EventId.Name);
                 }
 
-                if (!string.IsNullOrEmpty(eventId.Name))
+                if (logRecord.Exception != null)
                 {
-                    otlpLogRecord.Attributes.AddStringAttribute(nameof(EventId.Name), eventId.Name);
+                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name);
+                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message);
+                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString());
                 }
 
-                if (exception != null)
-                {
-                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionType, exception.GetType().Name);
-                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionMessage, exception.Message);
-                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionStacktrace, exception.ToInvariantString());
-                }
-
-                if (activityContext.IsValid())
+                if (logRecord.ActivityContext.IsValid())
                 {
                     byte[] traceIdBytes = new byte[16];
                     byte[] spanIdBytes = new byte[8];
 
-                    activityContext.TraceId.CopyTo(traceIdBytes);
-                    activityContext.SpanId.CopyTo(spanIdBytes);
+                    logRecord.ActivityContext.TraceId.CopyTo(traceIdBytes);
+                    logRecord.ActivityContext.SpanId.CopyTo(spanIdBytes);
 
                     otlpLogRecord.TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes);
                     otlpLogRecord.SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes);
-                    otlpLogRecord.Flags = (uint)activityContext.TraceFlags;
+                    otlpLogRecord.Flags = (uint)logRecord.ActivityContext.TraceFlags;
                 }
 
                 // TODO: Add additional attributes from scope and state

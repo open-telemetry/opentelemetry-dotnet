@@ -1,4 +1,4 @@
-// <copyright file="InlineLogProcessor{T}.cs" company="OpenTelemetry Authors">
+// <copyright file="LogConvertingProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
-using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Logs
 {
-    internal sealed class InlineLogProcessor<T> : IInlineLogProcessor
+    internal sealed class LogConvertingProcessor<T> : ILogProcessor
         where T : class
     {
         private readonly LogConverter<T> logConverter;
         private readonly BaseProcessor<T> innerProcessor;
 
-        public InlineLogProcessor(
+        public LogConvertingProcessor(
             LogConverter<T> logConverter,
             BaseProcessor<T> innerProcessor)
         {
@@ -41,35 +37,14 @@ namespace OpenTelemetry.Logs
             this.innerProcessor.SetParentProvider(parentProvider);
         }
 
-        public void Log(
-            string categoryName,
-            DateTime timestamp,
-            LogLevel logLevel,
-            EventId eventId,
-            object state,
-            IReadOnlyList<KeyValuePair<string, object>> parsedState,
-            IExternalScopeProvider scopeProvider,
-            Exception exception,
-            string formattedLogMessage)
+        public void OnEnd(LogRecordStruct log)
         {
             T record;
             try
             {
-                ActivityContext activityContext = Activity.Current?.Context ?? default;
-
-                record = this.logConverter(
-                    in activityContext,
-                    categoryName,
-                    timestamp,
-                    logLevel,
-                    eventId,
-                    state,
-                    parsedState,
-                    scopeProvider,
-                    exception,
-                    formattedLogMessage);
+                record = this.logConverter(log);
             }
-            catch (Exception ex)
+            catch
             {
                 // TODO: Log event, exception thrown converting log.
                 return;

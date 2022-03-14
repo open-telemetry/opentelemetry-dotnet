@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
@@ -51,16 +52,19 @@ namespace OpenTelemetry.Logs
             {
                 var options = this.provider.Options;
 
-                processor.Log(
-                    this.categoryName,
+                LogRecordStruct logRecordStruct = new(
+                    Activity.Current?.Context ?? default,
                     DateTime.UtcNow,
+                    this.categoryName,
                     logLevel,
                     eventId,
-                    options.ParseStateValues ? null : state,
-                    options.ParseStateValues ? this.ParseState(state) : null,
-                    options.IncludeScopes ? this.ScopeProvider : null,
+                    options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
                     exception,
-                    options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null);
+                    options.IncludeScopes ? this.ScopeProvider : null,
+                    options.ParseStateValues ? null : state,
+                    options.ParseStateValues ? this.ParseState(state) : null);
+
+                processor.OnEnd(logRecordStruct);
             }
         }
 

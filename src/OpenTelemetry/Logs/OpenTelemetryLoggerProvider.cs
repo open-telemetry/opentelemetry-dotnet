@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Extensions.Logging;
@@ -62,9 +61,9 @@ namespace OpenTelemetry.Logs
                 {
                     this.AddProcessor(legacyProcessor);
                 }
-                else if (processor is IInlineLogProcessor inlineLogProcessor)
+                else if (processor is ILogProcessor logProcessor)
                 {
-                    this.AddProcessor(inlineLogProcessor);
+                    this.AddProcessor(logProcessor);
                 }
                 else
                 {
@@ -73,7 +72,7 @@ namespace OpenTelemetry.Logs
             }
         }
 
-        internal IInlineLogProcessor Processor => this.head?.Value;
+        internal ILogProcessor Processor => this.head?.Value;
 
         void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)
         {
@@ -117,10 +116,10 @@ namespace OpenTelemetry.Logs
         {
             Guard.ThrowIfNull(processor);
 
-            return this.AddProcessor(new InlineLogProcessor<LogRecord>(BuildLegacyLogRecord, processor));
+            return this.AddProcessor(new LogConvertingProcessor<LogRecord>(BuildLegacyLogRecord, processor));
         }
 
-        internal OpenTelemetryLoggerProvider AddProcessor(IInlineLogProcessor processor)
+        internal OpenTelemetryLoggerProvider AddProcessor(ILogProcessor processor)
         {
             Guard.ThrowIfNull(processor);
 
@@ -159,30 +158,8 @@ namespace OpenTelemetry.Logs
             base.Dispose(disposing);
         }
 
-        private static LogRecord BuildLegacyLogRecord(
-            in ActivityContext activityContext,
-            string categoryName,
-            DateTime timestamp,
-            LogLevel logLevel,
-            EventId eventId,
-            object state,
-            IReadOnlyList<KeyValuePair<string, object>> parsedState,
-            IExternalScopeProvider scopeProvider,
-            Exception exception,
-            string formattedLogMessage)
-        {
-            return new LogRecord(
-                in activityContext,
-                scopeProvider,
-                timestamp,
-                categoryName,
-                logLevel,
-                eventId,
-                formattedLogMessage,
-                state,
-                exception,
-                parsedState);
-        }
+        private static LogRecord BuildLegacyLogRecord(LogRecordStruct log)
+            => log.ToLogRecord();
 
         private void ShutdownProcessors(int timeoutMilliseconds)
         {
@@ -223,9 +200,9 @@ namespace OpenTelemetry.Logs
 
         private class LinkedListNode
         {
-            public readonly IInlineLogProcessor Value;
+            public readonly ILogProcessor Value;
 
-            public LinkedListNode(IInlineLogProcessor value)
+            public LinkedListNode(ILogProcessor value)
             {
                 this.Value = value;
             }

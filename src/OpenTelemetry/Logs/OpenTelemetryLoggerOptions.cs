@@ -77,7 +77,7 @@ namespace OpenTelemetry.Logs
         {
             Guard.ThrowIfNull(processor);
 
-            this.Processors.Add(new InlineLogProcessor<T>(logConverter, processor));
+            this.Processors.Add(new LogConvertingProcessor<T>(logConverter, processor));
 
             return this;
         }

@@ -26,7 +26,7 @@ namespace Benchmarks.Logs
     [MemoryDiagnoser]
     public class LogScopeBenchmarks
     {
-        private readonly LoggerExternalScopeProvider scopeProvider = new LoggerExternalScopeProvider();
+        private readonly LoggerExternalScopeProvider scopeProvider = new();
 
         private readonly Action<LogRecordScope, object> callback = (LogRecordScope scope, object state) =>
         {
@@ -58,6 +58,7 @@ namespace Benchmarks.Logs
                 }));
 
             this.logRecord = new LogRecord(
+                default,
                 this.scopeProvider,
                 DateTime.UtcNow,
                 "Benchmark",
