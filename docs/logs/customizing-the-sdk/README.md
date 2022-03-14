@@ -30,13 +30,22 @@ TODO
 
 ### SetResourceBuilder
 
-A `ResourceBuilder` provides a `Resource` to the `OpenTelemetryLoggerProvider`.
-A [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
-is an immutable representation of the entity producing telemetry as
-[Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md#attributes).
+[Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
+is the immutable representation of the entity producing the telemetry. If no
+`Resource` is explicitly configured, the default is to use a resource indicating
+this [Telemetry
+SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk).
+`SetResourceBuilder` method on `TracerProviderBuilder` can be used to set a
+`ResourceBuilder` on the provider. When the provider is built, it automatically
+builds the final `Resource` from the configured `ResourceBuilder`. As with
+samplers, there can only be a single `Resource` associated with a provider. If
+multiple `SetResourceBuilder` is called, the last one wins. Also, it is not
+possible to change the resource builder *after* the provider is built, by
+calling the `Build()` method on the `TracerProviderBuilder`. `ResourceBuilder`
+offers various methods to construct resource comprising of multiple attributes
+from various sources.
 
-The snippet below demonstrates creating a default `ResourceBuilder` and adding
-service metadata.
+The snippet below shows configuring a custom `ResourceBuilder` to the provider.
 
 ```csharp
 using var loggerFactory = LoggerFactory.Create(builder =>
@@ -57,8 +66,8 @@ var logger = loggerFactory.CreateLogger<Program>();
 logger.LogInformation("Hello Information");
 ```
 
-This example generates the following output which includes the Resource information
-service metadata:
+This example generates the following output which includes the Resource
+information:
 
 ```text
 LogRecord.TraceId:            00000000000000000000000000000000
@@ -77,6 +86,16 @@ Resource associated with LogRecord:
 ```
 
 See [Program.cs](Program.cs) for complete example.
+
+It is also possible to configure the `Resource` by using following
+environmental variables:
+
+<!-- markdownlint-disable MD013 -->
+| Environment variable       | Description                                        |
+| -------------------------- | -------------------------------------------------- |
+| `OTEL_RESOURCE_ATTRIBUTES` | Key-value pairs to be used as resource attributes. See the [Resource SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable) for more details. |
+| `OTEL_SERVICE_NAME`        | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |
+<!-- markdownlint-enable MD013 -->
 
 ## Filtering LogLevels
 
