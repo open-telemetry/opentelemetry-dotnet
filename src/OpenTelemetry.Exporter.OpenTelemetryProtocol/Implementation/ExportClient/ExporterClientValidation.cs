@@ -22,7 +22,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     {
         internal static void EnsureUnencryptedSupportIsEnabled(OtlpExporterOptions options)
         {
-            var version = System.Environment.Version;
+            var version = Environment.Version;
 
             // This verification is only required for .NET Core 3.x
             if (version.Major != 3)

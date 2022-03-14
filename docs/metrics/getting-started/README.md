@@ -1,6 +1,6 @@
 # Getting Started with OpenTelemetry .NET in 5 Minutes
 
-First, download and install the [.NET Core
+First, download and install the [.NET
 SDK](https://dotnet.microsoft.com/download) on your computer.
 
 Create a new console application and run it:
@@ -54,17 +54,44 @@ instance named "MyCompany.MyProduct.MyLibrary" and then creates a
 instrument from it. This counter is used to report several metric measurements.
 
 An OpenTelemetry
-[MeterProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meterprovider)
+[MeterProvider](#meterprovider)
 is configured to subscribe to instruments from the Meter
 `MyCompany.MyProduct.MyLibrary`, and aggregate the measurements in-memory. The
 pre-aggregated metrics are exported to a `ConsoleExporter`.
 
+```mermaid
+graph LR
+
+subgraph SDK
+  MeterProvider
+  MetricReader[BaseExportingMetricReader]
+  ConsoleExporter
+end
+
+subgraph API
+  Instrument["Meter(#quot;MyCompany.MyProduct.MyLibrary#quot;, #quot;1.0#quot;)<br/>Counter(#quot;MyFruitCounter#quot;)"]
+end
+
+Instrument --> | Measurements | MeterProvider
+
+MeterProvider --> | Metrics | MetricReader --> | Push | ConsoleExporter
+```
+
+## MeterProvider
+
+As shown in the above program, a valid `MeterProvider` must be configured and
+built to collect metrics with OpenTelemetry .NET SDK. `MeterProvider` holds all
+the configuration for metrics like `Meter` names, readers, etc. and is highly
+[customizable](../customizing-the-sdk/README.md#meterprovider-configuration).
+
 ## OpenTelemetry .NET special note
 
 Metrics in OpenTelemetry .NET is a somewhat unique implementation of the
-OpenTelemetry project, as most of the Metrics API are incorporated directly
-into the .NET runtime itself. From a high level, what this means is that you
-can instrument your application by simply depending on
+OpenTelemetry project, as most of the
+[Metrics API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md)
+is implemented by the [.NET
+runtime](https://github.com/dotnet/runtime) itself. From a high level, what this
+means is that you can instrument your application by simply depending on
 `System.Diagnostics.DiagnosticSource` package.
 
 ## Learn more

@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Threading;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -62,7 +61,7 @@ namespace Benchmarks.Metrics
     public class HistogramBenchmarks
     {
         private const int MaxValue = 1000;
-        private Random random = new Random();
+        private Random random = new();
         private Histogram<long> histogram;
         private MeterProvider provider;
         private Meter meter;

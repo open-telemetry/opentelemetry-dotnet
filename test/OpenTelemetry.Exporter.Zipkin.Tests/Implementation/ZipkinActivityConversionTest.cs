@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
     public class ZipkinActivityConversionTest
     {
         private const string ZipkinSpanName = "Name";
-        private static readonly ZipkinEndpoint DefaultZipkinEndpoint = new ZipkinEndpoint("TestService");
+        private static readonly ZipkinEndpoint DefaultZipkinEndpoint = new("TestService");
 
         [Fact]
         public void ToZipkinSpan_AllPropertiesSet()

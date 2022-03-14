@@ -34,8 +34,8 @@ namespace OpenTelemetry.Metrics
         private readonly int exportIntervalMilliseconds;
         private readonly int exportTimeoutMilliseconds;
         private readonly Thread exporterThread;
-        private readonly AutoResetEvent exportTrigger = new AutoResetEvent(false);
-        private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
+        private readonly AutoResetEvent exportTrigger = new(false);
+        private readonly ManualResetEvent shutdownTrigger = new(false);
         private bool disposed;
 
         /// <summary>
@@ -50,7 +50,8 @@ namespace OpenTelemetry.Metrics
             int exportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
             : base(exporter)
         {
-            Guard.ThrowIfOutOfRange(exportIntervalMilliseconds, min: 1);
+            Guard.ThrowIfInvalidTimeout(exportIntervalMilliseconds);
+            Guard.ThrowIfZero(exportIntervalMilliseconds);
             Guard.ThrowIfOutOfRange(exportTimeoutMilliseconds, min: 0);
 
             if ((this.SupportedExportModes & ExportModes.Push) != ExportModes.Push)
@@ -111,14 +112,14 @@ namespace OpenTelemetry.Metrics
 
         private void ExporterProc()
         {
-            var sw = Stopwatch.StartNew();
+            int index;
+            int timeout;
             var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
+            var sw = Stopwatch.StartNew();
 
             while (true)
             {
-                var timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
-
-                int index;
+                timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
 
                 try
                 {
@@ -132,12 +133,15 @@ namespace OpenTelemetry.Metrics
                 switch (index)
                 {
                     case 0: // export
+                        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because Export was triggered.");
                         this.Collect(this.exportTimeoutMilliseconds);
                         break;
                     case 1: // shutdown
+                        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because Shutdown was triggered.");
                         this.Collect(this.exportTimeoutMilliseconds); // TODO: do we want to use the shutdown timeout here?
                         return;
                     case WaitHandle.WaitTimeout: // timer
+                        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because the export interval has elapsed.");
                         this.Collect(this.exportTimeoutMilliseconds);
                         break;
                 }

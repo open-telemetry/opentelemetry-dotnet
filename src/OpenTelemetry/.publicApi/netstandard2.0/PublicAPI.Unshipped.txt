@@ -63,7 +63,8 @@ OpenTelemetry.Metrics.MeterProviderExtensions
 OpenTelemetry.Metrics.Metric
 OpenTelemetry.Metrics.Metric.Description.get -> string
 OpenTelemetry.Metrics.Metric.GetMetricPoints() -> OpenTelemetry.Metrics.MetricPointsAccessor
-OpenTelemetry.Metrics.Metric.Meter.get -> System.Diagnostics.Metrics.Meter
+OpenTelemetry.Metrics.Metric.MeterName.get -> string
+OpenTelemetry.Metrics.Metric.MeterVersion.get -> string
 OpenTelemetry.Metrics.Metric.MetricType.get -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.Metric.Name.get -> string
 OpenTelemetry.Metrics.Metric.Temporality.get -> OpenTelemetry.Metrics.AggregationTemporality
@@ -102,7 +103,7 @@ OpenTelemetry.Metrics.PeriodicExportingMetricReader
 OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric> exporter, int exportIntervalMilliseconds = 60000, int exportTimeoutMilliseconds = 30000) -> void
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.PeriodicExportingMetricReaderOptions() -> void
-OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds.get -> int
+OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds.get -> int?
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds.set -> void
 OpenTelemetry.ReadOnlyTagCollection
 OpenTelemetry.ReadOnlyTagCollection.Count.get -> int
