@@ -17,9 +17,9 @@ The following concepts can be viewed in the example app
 `OpenTelemetryLoggerOptions`, which includes the following:
 
 1. The list of
-   [Processors](https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor/README.md),
+   [Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/logging-library-sdk.md#logprocessor),
    including exporting processors which exports logs to
-   [Exporters](https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/README.md)
+   [Exporters](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/logging-library-sdk.md#logexporter)
 2. The
    [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
    associated with the logs.
