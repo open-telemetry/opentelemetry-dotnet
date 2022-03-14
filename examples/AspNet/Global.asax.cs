@@ -73,8 +73,7 @@ namespace Examples.AspNet
             // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2994
 
             var meterBuilder = Sdk.CreateMeterProviderBuilder()
-                 .AddAspNetInstrumentation()
-                 .AddHttpClientInstrumentation();
+                 .AddAspNetInstrumentation();
 
             switch (ConfigurationManager.AppSettings["UseMetricsExporter"].ToLowerInvariant())
             {
@@ -83,6 +82,9 @@ namespace Examples.AspNet
                     {
                         otlpOptions.Endpoint = new Uri(ConfigurationManager.AppSettings["OtlpEndpoint"]);
                     });
+                    break;
+                case "prometheus":
+                    meterBuilder.AddPrometheusExporter();
                     break;
                 default:
                     meterBuilder.AddConsoleExporter((exporterOptions, metricReaderOptions) =>
