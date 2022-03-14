@@ -57,7 +57,7 @@ var logger = loggerFactory.CreateLogger<Program>();
 logger.LogInformation("Hello Information");
 ```
 
-This example generates the following output which includes the customized
+This example generates the following output which includes the Resource information
 service metadata:
 
 ```text
