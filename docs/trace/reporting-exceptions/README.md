@@ -136,7 +136,7 @@ will depend on the presence of a debugger:
 * If a debugger is attached, the debugger will be notified that an unhandled
   exception happened.
 * In case a postmortem debugger is configured, the postmortem debugger will be
-  activited and normally it will collect a crash dump.
+  activated and normally it will collect a crash dump.
 
 It might be useful to automatically capture the unhandled exceptions, travel
 through the unfinished activities and export them for troubleshooting. Here goes
