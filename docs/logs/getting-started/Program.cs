@@ -17,6 +17,8 @@
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 
+namespace GettingStarted;
+
 public class Program
 {
     public static void Main()
