@@ -201,9 +201,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
             // Arrange.
             var activity = ZipkinExporterTests.CreateTestActivity();
 
-            const string description = "Description when ActivityStatusCode is Error.";
-            activity.SetStatus(ActivityStatusCode.Error, description);
-            activity.SetTag(SpanAttributeConstants.StatusCodeKey, "OK");
+            const string StatusDescriptionOnError = "Description when ActivityStatusCode is Error.";
+            const string TagDescriptionOnError = "Description when TagStatusCode is Error.";
+            activity.SetStatus(ActivityStatusCode.Error, StatusDescriptionOnError);
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, "ERROR");
+            activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, TagDescriptionOnError);
 
             // Enrich activity with additional tags.
             activity.SetTag("myCustomTag", "myCustomTagValue");
@@ -220,11 +222,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
             Assert.Contains(
                 zipkinSpan.Tags, t =>
                 t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName &&
-                (string)t.Value == description);
+                (string)t.Value == StatusDescriptionOnError);
             Assert.DoesNotContain(
                 zipkinSpan.Tags, t =>
                 t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName &&
-                (string)t.Value == "OK");
+                (string)t.Value == TagDescriptionOnError);
 
             // Ensure additional Activity tags were being converted.
             Assert.Contains(zipkinSpan.Tags, t => t.Key == "myCustomTag" && (string)t.Value == "myCustomTagValue");
