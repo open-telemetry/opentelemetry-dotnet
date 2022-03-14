@@ -16,5 +16,5 @@
 
 namespace OpenTelemetry.Logs
 {
-    public delegate T LogConverter<T>(LogRecordStruct log);
+    public delegate T LogConverter<T>(in LogRecordStruct log);
 }

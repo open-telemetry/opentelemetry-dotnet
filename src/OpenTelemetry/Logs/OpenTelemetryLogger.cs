@@ -64,7 +64,7 @@ namespace OpenTelemetry.Logs
                     options.ParseStateValues ? null : state,
                     options.ParseStateValues ? this.ParseState(state) : null);
 
-                processor.OnEnd(logRecordStruct);
+                processor.OnEnd(in logRecordStruct);
             }
         }
 

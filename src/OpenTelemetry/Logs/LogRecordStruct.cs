@@ -90,19 +90,19 @@ namespace OpenTelemetry.Logs
             }
         }
 
-        internal LogRecord ToLogRecord()
+        internal static LogRecord ToLogRecord(in LogRecordStruct logRecord)
         {
             return new LogRecord(
-                this.ActivityContext,
-                this.scopeProvider,
-                this.Timestamp,
-                this.CategoryName,
-                this.LogLevel,
-                this.EventId,
-                this.FormattedMessage,
-                this.state,
-                this.Exception,
-                this.stateValues);
+                logRecord.ActivityContext,
+                logRecord.scopeProvider,
+                logRecord.Timestamp,
+                logRecord.CategoryName,
+                logRecord.LogLevel,
+                logRecord.EventId,
+                logRecord.FormattedMessage,
+                logRecord.state,
+                logRecord.Exception,
+                logRecord.stateValues);
         }
     }
 }

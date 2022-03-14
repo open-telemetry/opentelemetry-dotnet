@@ -35,7 +35,6 @@ namespace Benchmarks.Exporter
     public class OtlpGrpcLogExporterBenchmarks
     {
         private readonly Func<CustomReadOnlyListState, Exception, string> messageFormatter = (s, e) => s.ToString();
-        private BatchExportProcessor<OtlpLogs.LogRecord> batchExportProcessor;
         private ILoggerFactory loggerFactory;
         private ILogger logger;
 
@@ -53,14 +52,9 @@ namespace Benchmarks.Exporter
                     builder.ParseStateValues = true;
                     builder.IncludeScopes = true;
 
-                    this.batchExportProcessor = new BatchExportProcessor<OtlpLogs.LogRecord>(
-                        new OtlpLogExporter(options, new NoopExportClient()),
-                        options.BatchExportProcessorOptions.MaxQueueSize,
-                        options.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
-                        options.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
-                        options.BatchExportProcessorOptions.MaxExportBatchSize);
-
-                    builder.AddProcessor(LogRecordExtensions.ToOtlpLog, this.batchExportProcessor);
+                    builder.AddProcessor(
+                        LogRecordExtensions.ToOtlpLog,
+                        new SimpleExportProcessor<OtlpLogs.LogRecord>(new OtlpLogExporter(options, new NoopExportClient())));
                 }));
 
             this.logger = this.loggerFactory.CreateLogger<OtlpGrpcLogExporterBenchmarks>();
@@ -98,8 +92,6 @@ namespace Benchmarks.Exporter
                     this.logger.LogInformation("Log message {Index}.", i);
                 }
             }
-
-            this.batchExportProcessor.ForceFlush();
         }
 
         private readonly struct CustomReadOnlyListState : IReadOnlyList<KeyValuePair<string, object>>

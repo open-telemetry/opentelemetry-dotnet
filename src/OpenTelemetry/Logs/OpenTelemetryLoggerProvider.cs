@@ -116,7 +116,7 @@ namespace OpenTelemetry.Logs
         {
             Guard.ThrowIfNull(processor);
 
-            return this.AddProcessor(new LogConvertingProcessor<LogRecord>(BuildLegacyLogRecord, processor));
+            return this.AddProcessor(new LogConvertingProcessor<LogRecord>(LogRecordStruct.ToLogRecord, processor));
         }
 
         internal OpenTelemetryLoggerProvider AddProcessor(ILogProcessor processor)
@@ -157,9 +157,6 @@ namespace OpenTelemetry.Logs
 
             base.Dispose(disposing);
         }
-
-        private static LogRecord BuildLegacyLogRecord(LogRecordStruct log)
-            => log.ToLogRecord();
 
         private void ShutdownProcessors(int timeoutMilliseconds)
         {

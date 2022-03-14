@@ -37,12 +37,12 @@ namespace OpenTelemetry.Logs
             this.innerProcessor.SetParentProvider(parentProvider);
         }
 
-        public void OnEnd(LogRecordStruct log)
+        public void OnEnd(in LogRecordStruct log)
         {
             T record;
             try
             {
-                record = this.logConverter(log);
+                record = this.logConverter(in log);
             }
             catch
             {
@@ -55,6 +55,9 @@ namespace OpenTelemetry.Logs
                 this.innerProcessor.OnEnd(record);
             }
         }
+
+        public bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
+            => this.innerProcessor.ForceFlush(timeoutMilliseconds);
 
         public bool Shutdown(int timeoutMilliseconds = Timeout.Infinite)
             => this.innerProcessor.Shutdown(timeoutMilliseconds);

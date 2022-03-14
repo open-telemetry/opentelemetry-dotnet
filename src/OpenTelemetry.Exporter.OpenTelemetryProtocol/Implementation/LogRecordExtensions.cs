@@ -55,7 +55,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
         }
 
-        internal static OtlpLogs.LogRecord ToOtlpLog(LogRecordStruct logRecord)
+        internal static OtlpLogs.LogRecord ToOtlpLog(in LogRecordStruct logRecord)
         {
             OtlpLogs.LogRecord otlpLogRecord = null;
 

@@ -34,7 +34,7 @@ namespace OpenTelemetry.Logs
         private List<object> bufferedScopes;
 
         internal LogRecord(
-            ActivityContext activityContext,
+            in ActivityContext activityContext,
             IExternalScopeProvider scopeProvider,
             DateTime timestamp,
             string categoryName,

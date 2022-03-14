@@ -23,7 +23,9 @@ namespace OpenTelemetry.Logs
     {
         void SetParentProvider(BaseProvider parentProvider);
 
-        void OnEnd(LogRecordStruct log);
+        void OnEnd(in LogRecordStruct log);
+
+        bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite);
 
         bool Shutdown(int timeoutMilliseconds = Timeout.Infinite);
     }
