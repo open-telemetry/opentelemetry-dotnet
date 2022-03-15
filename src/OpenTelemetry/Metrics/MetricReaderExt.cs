@@ -105,7 +105,8 @@ namespace OpenTelemetry.Metrics
                     var metricName = metricStreamConfig?.Name ?? instrument.Name;
                     var metricStreamName = $"{meterName}.{meterVersion}.{metricName}";
                     var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
-                    var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, metricDescription, instrument.GetType(), metricStreamConfig.TagKeys);
+                    var tagKeysInteresting = metricStreamConfig?.TagKeys;
+                    var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, metricDescription, instrument.GetType(), tagKeysInteresting);
 
                     if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricName))
                     {
@@ -125,8 +126,10 @@ namespace OpenTelemetry.Metrics
                         if (!metrics.Contains(existingMetric))
                         {
                             metrics.Add(existingMetric);
-                            continue;
+
                         }
+
+                        continue;
                     }
 
                     if (this.metricStreamNames.Contains(metricStreamName))
@@ -152,7 +155,6 @@ namespace OpenTelemetry.Metrics
                     else
                     {
                         Metric metric;
-                        string[] tagKeysInteresting = metricStreamConfig?.TagKeys;
                         double[] histogramBucketBounds = (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfig
                             && histogramConfig.Boundaries != null) ? histogramConfig.Boundaries : null;
                         metric = new Metric(instrumentIdentity, this.Temporality, this.maxMetricPointsPerMetricStream, histogramBucketBounds, tagKeysInteresting);
