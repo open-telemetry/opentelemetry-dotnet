@@ -91,9 +91,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString());
                 }
 
-                ActivityContext activityContext = Activity.Current?.Context ?? default;
-                if (activityContext.IsValid())
+                Activity activity = Activity.Current;
+                if (activity != null)
                 {
+                    ActivityContext activityContext = activity.Context;
+
                     byte[] traceIdBytes = new byte[16];
                     byte[] spanIdBytes = new byte[8];
 
