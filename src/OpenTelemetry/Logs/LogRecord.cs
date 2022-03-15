@@ -31,7 +31,9 @@ namespace OpenTelemetry.Logs
             state.Add(scope);
         };
 
+        private readonly IReadOnlyList<KeyValuePair<string, object>> stateValues;
         private List<object> bufferedScopes;
+        private IReadOnlyList<KeyValuePair<string, object>> bufferedStateValues;
 
         internal LogRecord(
             in ActivityContext activityContext,
@@ -61,7 +63,7 @@ namespace OpenTelemetry.Logs
             this.EventId = eventId;
             this.FormattedMessage = formattedMessage;
             this.State = state;
-            this.StateValues = stateValues;
+            this.stateValues = stateValues;
             this.Exception = exception;
         }
 
@@ -95,7 +97,7 @@ namespace OpenTelemetry.Logs
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled
         /// otherwise <see langword="null"/>.
         /// </summary>
-        public IReadOnlyList<KeyValuePair<string, object>> StateValues { get; }
+        public IReadOnlyList<KeyValuePair<string, object>> StateValues => this.bufferedStateValues ?? this.stateValues;
 
         public Exception Exception { get; }
 
@@ -106,13 +108,6 @@ namespace OpenTelemetry.Logs
         /// of creation. All callbacks are guaranteed to be called inline from
         /// this method.
         /// </summary>
-        /// <remarks>
-        /// Note: Scopes are only available during the lifecycle of the log
-        /// message being written. If you need to capture scopes to be used
-        /// later (for example in batching scenarios), call <see
-        /// cref="BufferLogScopes"/> to safely capture the values (incurs
-        /// allocation).
-        /// </remarks>
         /// <typeparam name="TState">State.</typeparam>
         /// <param name="callback">The callback to be executed for every scope object.</param>
         /// <param name="state">The state object to be passed into the callback.</param>
@@ -133,11 +128,38 @@ namespace OpenTelemetry.Logs
             }
         }
 
+        internal void Buffer()
+        {
+            this.BufferLogState();
+            this.BufferLogScopes();
+        }
+
+        /// <summary>
+        /// Buffers the state attached to the log into a list so that it can be
+        /// safely processed after the log message lifecycle has ended.
+        /// </summary>
+        private void BufferLogState()
+        {
+            if (this.bufferedStateValues != null)
+            {
+                return;
+            }
+
+            List<KeyValuePair<string, object>> bufferedStateValues = new(this.stateValues.Count);
+
+            for (int i = 0; i < this.stateValues.Count; i++)
+            {
+                bufferedStateValues[i] = this.stateValues[i];
+            }
+
+            this.bufferedStateValues = bufferedStateValues;
+        }
+
         /// <summary>
         /// Buffers the scopes attached to the log into a list so that they can
         /// be safely processed after the log message lifecycle has ended.
         /// </summary>
-        internal void BufferLogScopes()
+        private void BufferLogScopes()
         {
             if (this.ScopeProvider == null || this.bufferedScopes != null)
             {

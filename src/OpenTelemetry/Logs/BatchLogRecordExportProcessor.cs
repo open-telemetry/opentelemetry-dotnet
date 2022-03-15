@@ -14,12 +14,10 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using OpenTelemetry.Logs;
 
 namespace OpenTelemetry
 {
-    [Obsolete("LogRecord instances might contain data which is no longer valid at the time of export. Use LogConverter when batching is required to convert log messages into something safe to store in a batch.")]
     public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
     {
         public BatchLogRecordExportProcessor(
@@ -39,7 +37,7 @@ namespace OpenTelemetry
 
         public override void OnEnd(LogRecord data)
         {
-            data.BufferLogScopes();
+            data.Buffer();
 
             base.OnEnd(data);
         }

@@ -32,7 +32,7 @@ namespace OpenTelemetry.Logs.Tests
     public sealed class LogRecordTest : IDisposable
     {
         private readonly ILogger logger;
-        private readonly List<LogRecord> exportedItems = new List<LogRecord>();
+        private readonly List<LogRecord> exportedItems = new();
         private readonly ILoggerFactory loggerFactory;
         private readonly BaseExportProcessor<LogRecord> processor;
         private readonly BaseExporter<LogRecord> exporter;
@@ -676,7 +676,7 @@ namespace OpenTelemetry.Logs.Tests
 
             public override void OnEnd(LogRecord data)
             {
-                data.BufferLogScopes();
+                data.Buffer();
 
                 base.OnEnd(data);
             }
