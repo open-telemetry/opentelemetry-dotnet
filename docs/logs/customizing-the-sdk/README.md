@@ -85,12 +85,10 @@ See [Program.cs](Program.cs) for complete example.
 It is also possible to configure the `Resource` by using following
 environmental variables:
 
-<!-- markdownlint-disable MD013 -->
 | Environment variable       | Description                                        |
 | -------------------------- | -------------------------------------------------- |
 | `OTEL_RESOURCE_ATTRIBUTES` | Key-value pairs to be used as resource attributes. See the [Resource SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable) for more details. |
 | `OTEL_SERVICE_NAME`        | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |
-<!-- markdownlint-enable MD013 -->
 
 ## Filtering LogLevels
 
