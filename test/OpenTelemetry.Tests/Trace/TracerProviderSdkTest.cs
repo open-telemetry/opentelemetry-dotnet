@@ -998,7 +998,6 @@ namespace OpenTelemetry.Trace.Tests
         {
             var tracerProvider = Sdk.CreateTracerProviderBuilder().Build();
             var resource = tracerProvider.GetResource();
-            var attributes = resource.Attributes;
 
             Assert.NotNull(resource);
             Assert.NotEqual(Resource.Empty, resource);

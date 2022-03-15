@@ -36,10 +36,6 @@ namespace OpenTelemetry.Resources.Tests
         [Fact]
         public void OtelEnvResource_EnvVarKey()
         {
-            // Act
-            var resource = new OtelServiceNameEnvVarDetector().Detect();
-
-            // Assert
             Assert.Equal("OTEL_RESOURCE_ATTRIBUTES", OtelEnvResourceDetector.EnvVarKey);
         }
 
