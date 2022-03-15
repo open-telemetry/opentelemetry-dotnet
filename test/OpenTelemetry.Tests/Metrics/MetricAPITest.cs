@@ -744,17 +744,23 @@ namespace OpenTelemetry.Metrics.Tests
         public void ObservableCounterWithTagsAggregationTest(bool exportDelta)
         {
             var exportedItems = new List<Metric>();
-            var tags1 = new List<KeyValuePair<string, object>>();
-            tags1.Add(new("statusCode", 200));
-            tags1.Add(new("verb", "get"));
+            var tags1 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 200),
+                new("verb", "get"),
+            };
 
-            var tags2 = new List<KeyValuePair<string, object>>();
-            tags2.Add(new("statusCode", 200));
-            tags2.Add(new("verb", "post"));
+            var tags2 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 200),
+                new("verb", "post"),
+            };
 
-            var tags3 = new List<KeyValuePair<string, object>>();
-            tags3.Add(new("statusCode", 500));
-            tags3.Add(new("verb", "get"));
+            var tags3 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 500),
+                new("verb", "get"),
+            };
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
             var counterLong = meter.CreateObservableCounter(
@@ -835,17 +841,23 @@ namespace OpenTelemetry.Metrics.Tests
         public void ObservableCounterSpatialAggregationTest(bool exportDelta)
         {
             var exportedItems = new List<Metric>();
-            var tags1 = new List<KeyValuePair<string, object>>();
-            tags1.Add(new("statusCode", 200));
-            tags1.Add(new("verb", "get"));
+            var tags1 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 200),
+                new("verb", "get"),
+            };
 
-            var tags2 = new List<KeyValuePair<string, object>>();
-            tags2.Add(new("statusCode", 200));
-            tags2.Add(new("verb", "post"));
+            var tags2 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 200),
+                new("verb", "post"),
+            };
 
-            var tags3 = new List<KeyValuePair<string, object>>();
-            tags3.Add(new("statusCode", 500));
-            tags3.Add(new("verb", "get"));
+            var tags3 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 500),
+                new("verb", "get"),
+            };
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
             var counterLong = meter.CreateObservableCounter(

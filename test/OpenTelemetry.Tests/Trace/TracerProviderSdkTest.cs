@@ -199,8 +199,10 @@ namespace OpenTelemetry.Trace.Tests
             {
                 SamplingAction = (samplingParams) =>
                 {
-                    var attributes = new Dictionary<string, object>();
-                    attributes.Add("tagkeybysampler", "tagvalueaddedbysampler");
+                    var attributes = new Dictionary<string, object>
+                    {
+                        { "tagkeybysampler", "tagvalueaddedbysampler" },
+                    };
                     return new SamplingResult(sampling, attributes);
                 },
             };

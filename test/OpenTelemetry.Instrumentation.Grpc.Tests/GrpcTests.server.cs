@@ -150,11 +150,13 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
                 using var channel = GrpcChannel.ForAddress(uri);
                 var client = new Greeter.GreeterClient(channel);
-                var headers = new Metadata();
-                headers.Add("traceparent", "00-120dc44db5b736468afb112197b0dbd3-5dfbdf27ec544544-01");
-                headers.Add("x-b3-traceid", "120dc44db5b736468afb112197b0dbd3");
-                headers.Add("x-b3-spanid", "b0966f651b9e0126");
-                headers.Add("x-b3-sampled", "1");
+                var headers = new Metadata
+                {
+                    { "traceparent", "00-120dc44db5b736468afb112197b0dbd3-5dfbdf27ec544544-01" },
+                    { "x-b3-traceid", "120dc44db5b736468afb112197b0dbd3" },
+                    { "x-b3-spanid", "b0966f651b9e0126" },
+                    { "x-b3-sampled", "1" },
+                };
                 client.SayHello(new HelloRequest(), headers);
 
                 WaitForProcessorInvocations(processor, 4);
