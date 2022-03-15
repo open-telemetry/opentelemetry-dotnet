@@ -9,6 +9,10 @@
   [here](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2979#issuecomment-1061060541).
   ([#2982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2982))
 
+* Bumped minimum required gRPC version (2.23.0 to 2.44.0).
+  Fixes issues building on Apple Silicon (M1).
+  ([#2963](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2963))
+
 ## 1.2.0-rc3
 
 Released 2022-Mar-04
