@@ -18,6 +18,8 @@ using Microsoft.Extensions.Logging;
 
 using OpenTelemetry.Logs;
 
+namespace CustomizingTheSdk;
+
 public class Program
 {
     public static void Main()
