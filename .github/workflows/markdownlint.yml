@@ -2,7 +2,7 @@ name: markdownlint
 
 on:
   push:
-    branches: [ long-lines-linting ]
+    branches: [ main, metrics ]
     paths:
     - '**.md'
   pull_request:
