@@ -47,7 +47,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
             try
             {
-                this.metricsClient.Export(request, headers: this.Headers, deadline: deadline);
+                this.metricsClient.Export(request, headers: this.Headers, deadline: deadline, cancellationToken: cancellationToken);
             }
             catch (RpcException ex)
             {

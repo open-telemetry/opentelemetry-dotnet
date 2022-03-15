@@ -102,7 +102,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(4, jaegerLog.Fields.Count());
+            Assert.Equal(4, jaegerLog.Fields.Count);
             var eventFields = jaegerLog.Fields.ToArray();
             var eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
@@ -120,7 +120,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
 
             jaegerLog = logs[1];
-            Assert.Equal(2, jaegerLog.Fields.Count());
+            Assert.Equal(2, jaegerLog.Fields.Count);
             eventFields = jaegerLog.Fields.ToArray();
             eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
@@ -167,7 +167,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(4, jaegerLog.Fields.Count());
+            Assert.Equal(4, jaegerLog.Fields.Count);
             var eventFields = jaegerLog.Fields.ToArray();
             var eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
@@ -179,7 +179,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
 
             jaegerLog = logs[1];
-            Assert.Equal(2, jaegerLog.Fields.Count());
+            Assert.Equal(2, jaegerLog.Fields.Count);
             eventFields = jaegerLog.Fields.ToArray();
             eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
@@ -332,7 +332,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(4, jaegerLog.Fields.Count());
+            Assert.Equal(4, jaegerLog.Fields.Count);
             var eventFields = jaegerLog.Fields.ToArray();
             var eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
@@ -343,7 +343,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
 
             jaegerLog = logs[1];
-            Assert.Equal(2, jaegerLog.Fields.Count());
+            Assert.Equal(2, jaegerLog.Fields.Count);
             eventFields = jaegerLog.Fields.ToArray();
             eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
