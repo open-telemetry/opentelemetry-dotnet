@@ -291,8 +291,8 @@ namespace OpenTelemetry.Internal.Tests
         private static string ParseLogMessage(string logLine)
         {
             int timestampPrefixLength = "2020-08-14T20:33:24.4788109Z:".Length;
-            Assert.Matches(@"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{7}Z:", logLine.Substring(0, timestampPrefixLength));
-            return logLine.Substring(timestampPrefixLength);
+            Assert.Matches(@"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{7}Z:", logLine[..timestampPrefixLength]);
+            return logLine[timestampPrefixLength..];
         }
 
         private static void AssertBufferOutput(byte[] expected, byte[] buffer, int startPos, int endPos)

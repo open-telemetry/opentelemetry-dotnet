@@ -93,7 +93,7 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
 
             // The output ends with '\n', which should be ignored.
             var lastNewLineCharacterPos = output.LastIndexOf('\n', output.Length - 2);
-            return output.Substring(lastNewLineCharacterPos + 1);
+            return output[(lastNewLineCharacterPos + 1)..];
         }
     }
 }

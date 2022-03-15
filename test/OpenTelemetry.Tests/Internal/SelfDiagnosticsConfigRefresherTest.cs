@@ -78,7 +78,7 @@ namespace OpenTelemetry.Internal.Tests
                 Assert.StartsWith(MessageOnNewFileString, logText);
 
                 // The event was captured
-                string logLine = logText.Substring(MessageOnNewFileString.Length);
+                string logLine = logText[MessageOnNewFileString.Length..];
                 string logMessage = ParseLogMessage(logLine);
                 string expectedMessage = "Unknown error in SpanProcessor event '{0}': '{1}'.{Event string sample}{Exception string sample}";
                 Assert.StartsWith(expectedMessage, logMessage);
@@ -92,8 +92,8 @@ namespace OpenTelemetry.Internal.Tests
         private static string ParseLogMessage(string logLine)
         {
             int timestampPrefixLength = "2020-08-14T20:33:24.4788109Z:".Length;
-            Assert.Matches(@"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{7}Z:", logLine.Substring(0, timestampPrefixLength));
-            return logLine.Substring(timestampPrefixLength);
+            Assert.Matches(@"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{7}Z:", logLine[..timestampPrefixLength]);
+            return logLine[timestampPrefixLength..];
         }
 
         private static byte[] ReadFile(int byteCount)
