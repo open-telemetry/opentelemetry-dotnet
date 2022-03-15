@@ -90,14 +90,14 @@ namespace OpenTelemetry.Resources.Tests
         public void CreateResource_EmptyArray()
         {
             // Arrange
-            var attributes = new Dictionary<string, object> { { "EmptyArray", new string[0] } };
+            var attributes = new Dictionary<string, object> { { "EmptyArray", Array.Empty<string>() } };
 
             // does not throw
             var resource = new Resource(attributes);
 
             // Assert
             Assert.Single(resource.Attributes);
-            Assert.Equal(new string[0], resource.Attributes.Where(x => x.Key == "EmptyArray").FirstOrDefault().Value);
+            Assert.Equal(Array.Empty<string>(), resource.Attributes.Where(x => x.Key == "EmptyArray").FirstOrDefault().Value);
         }
 
         [Fact]

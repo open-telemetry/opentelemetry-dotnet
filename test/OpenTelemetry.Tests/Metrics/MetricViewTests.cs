@@ -447,7 +447,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddView("FruitCounter", new MetricStreamConfiguration()
                 { TagKeys = new string[] { "size" }, Name = "SizeOnly" })
                 .AddView("FruitCounter", new MetricStreamConfiguration()
-                { TagKeys = new string[] { }, Name = "NoTags" })
+                { TagKeys = Array.Empty<string>(), Name = "NoTags" })
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 

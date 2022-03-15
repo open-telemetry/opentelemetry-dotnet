@@ -878,7 +878,7 @@ namespace OpenTelemetry.Metrics.Tests
                 {
                     metricReaderOptions.Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                 })
-                .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = new string[] { } })
+                .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = Array.Empty<string>() })
                 .Build();
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
