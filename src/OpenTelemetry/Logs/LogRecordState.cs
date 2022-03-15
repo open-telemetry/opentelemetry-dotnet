@@ -1,4 +1,4 @@
-// <copyright file="LogRecordScope.cs" company="OpenTelemetry Authors">
+// <copyright file="LogRecordState.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,60 +14,52 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Logs
 {
     /// <summary>
-    /// Stores details about a scope attached to a log message.
+    /// Stores details about state attached to a log message.
     /// </summary>
-    public readonly ref struct LogRecordScope
+    public readonly ref struct LogRecordState
     {
-        internal LogRecordScope(object scope)
+        private readonly IReadOnlyList<KeyValuePair<string, object>> stateValues;
+
+        internal LogRecordState(object state, IReadOnlyList<KeyValuePair<string, object>> stateValues)
         {
-            this.Scope = scope;
+            this.State = state;
+            this.stateValues = stateValues;
         }
 
         /// <summary>
-        /// Gets the raw scope value.
+        /// Gets the raw state value.
         /// </summary>
-        public object Scope { get; }
+        public object State { get; }
 
         /// <summary>
-        /// Gets an <see cref="IEnumerator"/> for looping over the inner values
-        /// of the scope.
+        /// Gets an <see cref="Enumerator"/> for looping over the inner values
+        /// of the state. Only available when <see
+        /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is <see
+        /// langword="true"/>.
         /// </summary>
         /// <returns><see cref="Enumerator"/>.</returns>
-        public Enumerator GetEnumerator() => new(this.Scope);
+        public Enumerator GetEnumerator() => new(this.stateValues);
 
         /// <summary>
-        /// LogRecordScope enumerator.
+        /// LogRecordState enumerator.
         /// </summary>
         public struct Enumerator
         {
-            private readonly IReadOnlyList<KeyValuePair<string, object>> scope;
+            private static readonly IReadOnlyList<KeyValuePair<string, object>> Empty = Array.Empty<KeyValuePair<string, object>>();
+            private readonly IReadOnlyList<KeyValuePair<string, object>> stateValues;
             private int position;
 
-            internal Enumerator(object scope)
+            internal Enumerator(IReadOnlyList<KeyValuePair<string, object>> stateValues)
             {
-                if (scope is IReadOnlyList<KeyValuePair<string, object>> scopeList)
-                {
-                    this.scope = scopeList;
-                }
-                else if (scope is IEnumerable<KeyValuePair<string, object>> scopeEnumerable)
-                {
-                    this.scope = new List<KeyValuePair<string, object>>(scopeEnumerable);
-                }
-                else
-                {
-                    this.scope = new List<KeyValuePair<string, object>>
-                    {
-                        new KeyValuePair<string, object>(string.Empty, scope),
-                    };
-                }
-
                 this.position = 0;
+                this.stateValues = stateValues ?? Empty;
                 this.Current = default;
             }
 
@@ -77,9 +69,9 @@ namespace OpenTelemetry.Logs
             /// <inheritdoc cref="IEnumerator.MoveNext"/>
             public bool MoveNext()
             {
-                if (this.position < this.scope.Count)
+                if (this.position < this.stateValues.Count)
                 {
-                    this.Current = this.scope[this.position++];
+                    this.Current = this.stateValues[this.position++];
                     return true;
                 }
 

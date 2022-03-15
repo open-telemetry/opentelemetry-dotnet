@@ -33,16 +33,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class LogRecordExtensions
     {
-        private static readonly Action<KeyValuePair<string, object>, OtlpLogs.LogRecord> AddStateValueToLog =
-            (stateValue, logRecord) =>
-            {
-                var attribute = stateValue.ToOtlpAttribute();
-                if (attribute != null)
-                {
-                    logRecord.Attributes.Add(attribute);
-                }
-            };
-
         internal static void AddBatch(
             this OtlpCollector.ExportLogsServiceRequest request,
             OtlpResource.Resource processResource,
@@ -115,7 +105,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     otlpLogRecord.Flags = (uint)activityContext.TraceFlags;
                 }
 
-                logRecord.ForEachStateValue(AddStateValueToLog, otlpLogRecord);
+                foreach (KeyValuePair<string, object> stateValue in logRecord.State)
+                {
+                    var attribute = stateValue.ToOtlpAttribute();
+                    if (attribute != null)
+                    {
+                        otlpLogRecord.Attributes.Add(attribute);
+                    }
+                }
 
                 // TODO: Add additional attributes from scope
                 // Might make sense to take an approach similar to https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/897b734aa5ea9992538f04f6ea6871fe211fa903/src/OpenTelemetry.Contrib.Preview/Internal/DefaultLogStateConverter.cs

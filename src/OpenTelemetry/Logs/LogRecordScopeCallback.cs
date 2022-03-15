@@ -1,4 +1,4 @@
-// <copyright file="ILogProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="LogRecordScopeCallback.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,14 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using System.Threading;
-
 namespace OpenTelemetry.Logs
 {
-    // TODO: Investigate making this public so users can build simple
-    // allocation-free log exporters.
-    internal interface ILogProcessor : IDisposable
-    {
-        void SetParentProvider(BaseProvider parentProvider);
-
-        void OnEnd(in LogRecordStruct log);
-
-        bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite);
-
-        bool Shutdown(int timeoutMilliseconds = Timeout.Infinite);
-    }
+    /// <summary>
+    /// Represents a callback action to process <see cref="LogRecordScope"/>s
+    /// attached to a log message.
+    /// </summary>
+    /// <typeparam name="TState">Type of state passed to the callback.</typeparam>
+    /// <param name="scope">The <see cref="LogRecordScope"/> being processed.</param>
+    /// <param name="state">State value.</param>
+    public delegate void LogRecordScopeCallback<TState>(LogRecordScope scope, TState state);
 }

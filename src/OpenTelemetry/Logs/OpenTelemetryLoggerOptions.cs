@@ -52,7 +52,7 @@ namespace OpenTelemetry.Logs
         public bool ParseStateValues { get; set; }
 
         /// <summary>
-        /// Adds processor to the options.
+        /// Adds a <see cref="LogRecord"/> processor to the options.
         /// </summary>
         /// <param name="processor">Log processor to add.</param>
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
@@ -66,12 +66,22 @@ namespace OpenTelemetry.Logs
         }
 
         /// <summary>
-        /// Adds processor to the options.
+        /// Adds a converter and processor to the options.
         /// </summary>
+        /// <remarks>
+        /// Note: A converting processor chain can achieve better performance
+        /// than a <see cref="LogRecord"/> processor by cutting out an
+        /// intermediary type. Use a converting processor chain when you want to
+        /// process or export log records in a format other than <see
+        /// cref="LogRecord"/>.
+        /// </remarks>
         /// <typeparam name="T">Log type.</typeparam>
-        /// <param name="logConverter">Log converter.</param>
-        /// <param name="processor">Log processor to add.</param>
-        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        /// <param name="logConverter"><see cref="LogConverter{T}"/> to convert
+        /// logs into instance of <typeparamref name="T"/>.</param>
+        /// <param name="processor">Log processor which receives <typeparamref
+        /// name="T"/> log message.</param>
+        /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for
+        /// chaining.</returns>
         public OpenTelemetryLoggerOptions AddProcessor<T>(LogConverter<T> logConverter, BaseProcessor<T> processor)
             where T : class
         {

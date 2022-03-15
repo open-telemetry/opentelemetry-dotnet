@@ -18,6 +18,10 @@ using System.Threading;
 
 namespace OpenTelemetry.Logs
 {
+    // A special log processor which will call a conversion function and then
+    // pass the result to an inner processor. This is used to enable
+    // high-performance inline log processing without an intermediary storage
+    // class.
     internal sealed class LogConvertingProcessor<T> : ILogProcessor
         where T : class
     {

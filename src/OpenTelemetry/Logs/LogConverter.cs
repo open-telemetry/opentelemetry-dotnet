@@ -16,5 +16,15 @@
 
 namespace OpenTelemetry.Logs
 {
+    /// <summary>
+    /// Represents a method that converts a <see cref="LogRecordStruct"/> log
+    /// message into another type.
+    /// </summary>
+    /// <typeparam name="T">The type the <see cref="LogRecordStruct"/> log
+    /// message is converted to.</typeparam>
+    /// <param name="log">The <see cref="LogRecordStruct"/> log message to
+    /// convert.</param>
+    /// <returns>The <typeparamref name="T"/> which represents the log
+    /// message.</returns>
     public delegate T LogConverter<T>(in LogRecordStruct log);
 }

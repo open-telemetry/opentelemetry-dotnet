@@ -28,7 +28,7 @@ namespace Benchmarks.Logs
     {
         private readonly LoggerExternalScopeProvider scopeProvider = new();
 
-        private readonly Action<LogRecordScope, object> callback = (LogRecordScope scope, object state) =>
+        private readonly LogRecordScopeCallback<object> callback = (LogRecordScope scope, object state) =>
         {
             foreach (KeyValuePair<string, object> scopeItem in scope)
             {

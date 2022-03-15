@@ -21,6 +21,9 @@ using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Logs
 {
+    /// <summary>
+    /// Stores details about a log message.
+    /// </summary>
     public readonly ref struct LogRecordStruct
     {
         private readonly IExternalScopeProvider scopeProvider;
@@ -49,40 +52,60 @@ namespace OpenTelemetry.Logs
             this.stateValues = stateValues;
         }
 
+        /// <summary>
+        /// Gets the timestamp for the log message.
+        /// </summary>
         public DateTime Timestamp { get; }
 
+        /// <summary>
+        /// Gets the category name for the log message.
+        /// </summary>
         public string CategoryName { get; }
 
+        /// <summary>
+        /// Gets the <see cref="Microsoft.Extensions.Logging.LogLevel"/> for the log message.
+        /// </summary>
         public LogLevel LogLevel { get; }
 
+        /// <summary>
+        /// Gets the <see cref="Microsoft.Extensions.Logging.EventId"/> for the log message.
+        /// </summary>
         public EventId EventId { get; }
 
+        /// <summary>
+        /// Gets the formatted message for the log. Only available when <see
+        /// cref="OpenTelemetryLoggerOptions.IncludeFormattedMessage"/> is <see
+        /// langword="true"/>.
+        /// </summary>
         public string FormattedMessage { get; }
 
+        /// <summary>
+        /// Gets the <see cref="System.Exception"/> for the log message.
+        /// </summary>
         public Exception Exception { get; }
 
-        public void ForEachScope<TState>(Action<LogRecordScope, TState> callback, TState state)
+        /// <summary>
+        /// Gets the state for the log message.
+        /// </summary>
+        public LogRecordState State => new LogRecordState(this.state, this.stateValues);
+
+        /// <summary>
+        /// Executes callback for each currently active scope objects in order
+        /// of creation. All callbacks are guaranteed to be called inline from
+        /// this method. Only available when <see
+        /// cref="OpenTelemetryLoggerOptions.IncludeScopes"/> is <see
+        /// langword="true"/>.
+        /// </summary>
+        /// <typeparam name="TState">State.</typeparam>
+        /// <param name="callback">The callback to be executed for every scope object.</param>
+        /// <param name="state">The state object to be passed into the callback.</param>
+        public void ForEachScope<TState>(LogRecordScopeCallback<TState> callback, TState state)
         {
             if (this.scopeProvider != null)
             {
                 var forEachScopeState = new LogRecord.ScopeForEachState<TState>(callback, state);
 
                 this.scopeProvider.ForEachScope(LogRecord.ScopeForEachState<TState>.ForEachScope, forEachScopeState);
-            }
-        }
-
-        public void ForEachStateValue<TState>(Action<KeyValuePair<string, object>, TState> callback, TState state)
-        {
-            if (this.stateValues != null)
-            {
-                for (int i = 0; i < this.stateValues.Count; i++)
-                {
-                    callback(this.stateValues[i], state);
-                }
-            }
-            else if (this.state != null)
-            {
-                callback(new KeyValuePair<string, object>(string.Empty, this.state), state);
             }
         }
 
