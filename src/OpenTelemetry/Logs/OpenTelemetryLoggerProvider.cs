@@ -48,7 +48,7 @@ namespace OpenTelemetry.Logs
         {
             Guard.ThrowIfNull(options);
 
-            this.Options = options;
+            this.Options = options.DeepCopy();
             this.Resource = options.ResourceBuilder.Build();
 
             foreach (var processor in options.Processors)
