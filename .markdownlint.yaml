@@ -1,0 +1,7 @@
+# Default state for all rules
+default: true
+
+# allow long lines for tables and code blocks
+MD013:
+  code_blocks: false
+  tables: false

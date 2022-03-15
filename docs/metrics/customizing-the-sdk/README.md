@@ -241,7 +241,6 @@ are then aggregated using the custom boundaries provided instead of the the
 default boundaries. This requires the use of
 `ExplicitBucketHistogramConfiguration`.
 
-<!-- markdownlint-disable MD013 -->
 ```csharp
     // Change Histogram boundaries to count measurements under the following buckets:
     // (-inf, 10]
@@ -258,7 +257,6 @@ default boundaries. This requires the use of
         instrumentName: "MyHistogram",
         new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { } })
 ```
-<!-- markdownlint-enable MD013 -->
 
 ```csharp
     // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
@@ -343,7 +341,6 @@ There are two total `MetricStream`s created one for each of these instruments.
 SDK will limit the maximum number of distinct key/value combinations for each of
 these `MetricStream`s to `3`.
 
-<!-- markdownlint-disable MD013 -->
 ```csharp
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
@@ -397,7 +394,6 @@ AnotherFruitCounter.Add(2, new("name", "banana"), new("color", "green")); // Not
 AnotherFruitCounter.Add(5, new("name", "banana"), new("color", "yellow")); // Exported
 AnotherFruitCounter.Add(4, new("name", "mango"), new("color", "yellow")); // Not exported
 ```
-<!-- markdownlint-enable MD013 -->
 
 **NOTE:** The above limit is *per* metric stream, and applies to all the metric
 streams. There is no ability to apply different limits for each instrument at

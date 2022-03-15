@@ -35,10 +35,10 @@ is the immutable representation of the entity producing the telemetry.
 If no `Resource` is explicitly configured, the default is to use a resource
 indicating this [Telemetry
 SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk).
-The `SetResourceBuilder` method can be used to set a single `ResourceBuilder`.
+The `SetResourceBuilder` method on `OpenTelemetryLoggerOptions` can be used to set a single `ResourceBuilder`.
 If `SetResourceBuilder` is called multiple times, only the last is kept..
 It is not possible to change the resource builder *after* creating the
-LoggerFactory.
+`LoggerFactory`.
 
 The snippet below shows configuring a custom `ResourceBuilder` to the provider.
 
@@ -94,16 +94,25 @@ environmental variables:
 
 ## Filtering LogLevels
 
-TODO
+[`ILogger`](https://docs.microsoft.com/dotnet/core/extensions/logging)
+implementations have a built-in mechanism to apply [log
+filtering](https://docs.microsoft.com/dotnet/core/extensions/logging?tabs=command-line#how-filtering-rules-are-applied).
+This filtering lets you control the logs that are sent to each registered
+provider, including the `OpenTelemetryLoggerProvider`. "OpenTelemetry" is the
+[alias](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.provideraliasattribute)
+for `OpenTelemetryLoggerProvider`, that may be used in configuring filtering
+rules.
 
-### via appsettings.json
+The example below defines "Error" as the default `LogLevel`
+and also defines "Warning" as the minimum `LogLevel` for a user defined category.
 
-TODO
-
-### via code
-
-TODO
+```csharp
+ILoggingBuilder.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Error);
+ILoggingBuilder.AddFilter<OpenTelemetryLoggerProvider>("category name", LogLevel.Warning);
+```
 
 ## Learn more
 
-* TODO
+* See also the official guide for
+  [Logging in .NET](https://docs.microsoft.com/dotnet/core/extensions/logging).
+* [`LogLevel`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.loglevel)
