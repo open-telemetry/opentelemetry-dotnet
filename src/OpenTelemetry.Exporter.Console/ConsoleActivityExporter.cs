@@ -55,9 +55,7 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine("Activity.Tags:");
                     foreach (var tag in activity.TagObjects)
                     {
-                        var array = tag.Value as Array;
-
-                        if (array == null)
+                        if (tag.Value is not Array array)
                         {
                             this.WriteLine($"    {tag.Key}: {tag.Value}");
                             continue;
