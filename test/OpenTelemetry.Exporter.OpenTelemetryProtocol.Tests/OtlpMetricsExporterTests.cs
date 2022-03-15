@@ -30,8 +30,40 @@ using OtlpMetrics = Opentelemetry.Proto.Metrics.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
-    public class OtlpMetricsExporterTests
+    public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
     {
+        [Fact]
+        public void TestAddOtlpExporter_SetsCorrectMetricReaderDefaults()
+        {
+            if (Environment.Version.Major == 3)
+            {
+                // Adding the OtlpExporter creates a GrpcChannel.
+                // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
+                // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
+                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            }
+
+            var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddOtlpExporter()
+                .Build();
+
+            var bindingFlags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+
+            var metricReader = typeof(MetricReader)
+                .Assembly
+                .GetType("OpenTelemetry.Metrics.MeterProviderSdk")
+                .GetField("reader", bindingFlags)
+                .GetValue(meterProvider) as PeriodicExportingMetricReader;
+
+            Assert.NotNull(metricReader);
+
+            var exportIntervalMilliseconds = (int)typeof(PeriodicExportingMetricReader)
+                .GetField("exportIntervalMilliseconds", bindingFlags)
+                .GetValue(metricReader);
+
+            Assert.Equal(60000, exportIntervalMilliseconds);
+        }
+
         [Fact]
         public void UserHttpFactoryCalled()
         {

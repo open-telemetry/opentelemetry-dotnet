@@ -18,6 +18,8 @@ using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
+namespace CustomizingTheSdk;
+
 public class Program
 {
     private static readonly ActivitySource MyLibraryActivitySource = new(

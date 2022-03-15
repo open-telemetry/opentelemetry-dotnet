@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* The `PeriodicExportingMetricReader` now accepts an
+  `ExportIntervalMilliseconds` of `-1` indicating an infinite export interval
+  period.
+  ([#2982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2982))
+
 * Fix bug where multiple views selecting a single instrument can result in
   duplicate updates to a single metric point.
   ([#3006](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3006))
