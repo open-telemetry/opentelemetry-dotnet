@@ -145,7 +145,6 @@ one possible way of doing this:
 **WARNING:** Use `AppDomain.UnhandledException` with caution. A throw in the
 handler puts the process into an unrecoverable state.
 
-<!-- markdownlint-disable MD013 -->
 ```csharp
 using System;
 using System.Diagnostics;
@@ -191,4 +190,3 @@ public class Program
     }
 }
 ```
-<!-- markdownlint-enable MD013 -->
