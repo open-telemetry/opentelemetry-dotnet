@@ -71,7 +71,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(activity.StartTimeUtc.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal(this.TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
+            Assert.Equal(TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
 
             var tags = jaegerSpan.Tags.ToArray();
             var tag = tags[0];
@@ -159,7 +159,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(activity.StartTimeUtc.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal(this.TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
+            Assert.Equal(TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
 
             // 2 tags: span.kind & library.name.
             Assert.Equal(2, jaegerSpan.Tags.Count);
@@ -218,7 +218,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(activity.StartTimeUtc.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal(this.TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
+            Assert.Equal(TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
 
             var tags = jaegerSpan.Tags.ToArray();
             var tag = tags[0];
@@ -269,7 +269,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(activity.StartTimeUtc.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal(this.TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
+            Assert.Equal(TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
 
             var tags = jaegerSpan.Tags.ToArray();
             var tag = tags[0];
@@ -574,7 +574,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             return activity;
         }
 
-        private long TimeSpanToMicroseconds(TimeSpan timeSpan)
+        private static long TimeSpanToMicroseconds(TimeSpan timeSpan)
         {
             return timeSpan.Ticks / (TimeSpan.TicksPerMillisecond / 1000);
         }

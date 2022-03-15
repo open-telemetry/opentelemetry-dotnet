@@ -105,7 +105,7 @@ namespace OpenTelemetry.Resources.Tests
         {
             // Arrange
             var attributeCount = 0;
-            var attributes = this.CreateAttributes(attributeCount);
+            var attributes = CreateAttributes(attributeCount);
 
             // Act
             var resource = new Resource(attributes);
@@ -119,7 +119,7 @@ namespace OpenTelemetry.Resources.Tests
         {
             // Arrange
             var attributeCount = 1;
-            var attributes = this.CreateAttributes(attributeCount);
+            var attributes = CreateAttributes(attributeCount);
 
             // Act
             var resource = new Resource(attributes);
@@ -133,7 +133,7 @@ namespace OpenTelemetry.Resources.Tests
         {
             // Arrange
             var attributeCount = 5;
-            var attributes = this.CreateAttributes(attributeCount);
+            var attributes = CreateAttributes(attributeCount);
 
             // Act
             var resource = new Resource(attributes);
@@ -229,11 +229,11 @@ namespace OpenTelemetry.Resources.Tests
         {
             // Arrange
             var sourceAttributeCount = 0;
-            var sourceAttributes = this.CreateAttributes(sourceAttributeCount);
+            var sourceAttributes = CreateAttributes(sourceAttributeCount);
             var sourceResource = new Resource(sourceAttributes);
 
             var otherAttributeCount = 3;
-            var otherAttributes = this.CreateAttributes(otherAttributeCount);
+            var otherAttributes = CreateAttributes(otherAttributeCount);
             var otherResource = new Resource(otherAttributes);
 
             // Act
@@ -251,11 +251,11 @@ namespace OpenTelemetry.Resources.Tests
         {
             // Arrange
             var sourceAttributeCount = 3;
-            var sourceAttributes = this.CreateAttributes(sourceAttributeCount);
+            var sourceAttributes = CreateAttributes(sourceAttributeCount);
             var sourceResource = new Resource(sourceAttributes);
 
             var otherAttributeCount = 0;
-            var otherAttributes = this.CreateAttributes(otherAttributeCount);
+            var otherAttributes = CreateAttributes(otherAttributeCount);
             var otherResource = new Resource(otherAttributes);
 
             // Act
@@ -272,11 +272,11 @@ namespace OpenTelemetry.Resources.Tests
         {
             // Arrange
             var sourceAttributeCount = 3;
-            var sourceAttributes = this.CreateAttributes(sourceAttributeCount);
+            var sourceAttributes = CreateAttributes(sourceAttributeCount);
             var sourceResource = new Resource(sourceAttributes);
 
             var otherAttributeCount = 3;
-            var otherAttributes = this.CreateAttributes(otherAttributeCount, sourceAttributeCount);
+            var otherAttributes = CreateAttributes(otherAttributeCount, sourceAttributeCount);
             var otherResource = new Resource(otherAttributes);
 
             // Act
@@ -293,11 +293,11 @@ namespace OpenTelemetry.Resources.Tests
         {
             // Arrange
             var sourceAttributeCount = 3;
-            var sourceAttributes = this.CreateAttributes(sourceAttributeCount);
+            var sourceAttributes = CreateAttributes(sourceAttributeCount);
             var sourceResource = new Resource(sourceAttributes);
 
             var otherAttributeCount = 3;
-            var otherAttributes = this.CreateAttributes(otherAttributeCount, sourceAttributeCount - 1);
+            var otherAttributes = CreateAttributes(otherAttributeCount, sourceAttributeCount - 1);
             var otherResource = new Resource(otherAttributes);
 
             // Act
@@ -320,11 +320,11 @@ namespace OpenTelemetry.Resources.Tests
         {
             // Arrange
             var sourceAttributeCount = 3;
-            var sourceAttributes = this.CreateAttributes(sourceAttributeCount);
+            var sourceAttributes = CreateAttributes(sourceAttributeCount);
             var sourceResource = new Resource(sourceAttributes);
 
             var otherAttributeCount = 3;
-            var otherAttributes = this.CreateAttributes(otherAttributeCount);
+            var otherAttributes = CreateAttributes(otherAttributeCount);
             var otherResource = new Resource(otherAttributes);
 
             // Act
@@ -416,7 +416,7 @@ namespace OpenTelemetry.Resources.Tests
         public void GetResourceWithDefaultAttributes_ResourceWithAttrs()
         {
             // Arrange
-            var resource = ResourceBuilder.CreateDefault().AddAttributes(this.CreateAttributes(2)).Build();
+            var resource = ResourceBuilder.CreateDefault().AddAttributes(CreateAttributes(2)).Build();
 
             // Assert
             var attributes = resource.Attributes;
@@ -430,7 +430,7 @@ namespace OpenTelemetry.Resources.Tests
         {
             // Arrange
             Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, "EVKey1=EVVal1,EVKey2=EVVal2");
-            var resource = ResourceBuilder.CreateDefault().AddAttributes(this.CreateAttributes(2)).Build();
+            var resource = ResourceBuilder.CreateDefault().AddAttributes(CreateAttributes(2)).Build();
 
             // Assert
             var attributes = resource.Attributes;
@@ -460,7 +460,7 @@ namespace OpenTelemetry.Resources.Tests
         {
             // Arrange
             Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, "some-service");
-            var resource = ResourceBuilder.CreateDefault().AddAttributes(this.CreateAttributes(2)).Build();
+            var resource = ResourceBuilder.CreateDefault().AddAttributes(CreateAttributes(2)).Build();
 
             // Assert
             var attributes = resource.Attributes;
@@ -475,7 +475,7 @@ namespace OpenTelemetry.Resources.Tests
             // Arrange
             Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, "service.name=from-resource-attr");
             Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, "from-service-name");
-            var resource = ResourceBuilder.CreateDefault().AddAttributes(this.CreateAttributes(2)).Build();
+            var resource = ResourceBuilder.CreateDefault().AddAttributes(CreateAttributes(2)).Build();
 
             // Assert
             var attributes = resource.Attributes;
@@ -490,7 +490,7 @@ namespace OpenTelemetry.Resources.Tests
             // Arrange
             Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, "service.name=from-resource-attr");
             Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, "from-service-name");
-            var resource = ResourceBuilder.CreateDefault().AddService("from-code").AddAttributes(this.CreateAttributes(2)).Build();
+            var resource = ResourceBuilder.CreateDefault().AddService("from-code").AddAttributes(CreateAttributes(2)).Build();
 
             // Assert
             var attributes = resource.Attributes;
@@ -546,7 +546,7 @@ namespace OpenTelemetry.Resources.Tests
             Assert.Contains("unknown_service", serviceName.FirstOrDefault().Value as string);
         }
 
-        private Dictionary<string, object> CreateAttributes(int attributeCount, int startIndex = 0)
+        private static Dictionary<string, object> CreateAttributes(int attributeCount, int startIndex = 0)
         {
             var attributes = new Dictionary<string, object>();
             AddAttributes(attributes, attributeCount, startIndex);

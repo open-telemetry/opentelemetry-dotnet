@@ -23,12 +23,12 @@ namespace OpenTelemetry.Trace.Tests
     {
         public BatchExportActivityProcessorOptionsTest()
         {
-            this.ClearEnvVars();
+            ClearEnvVars();
         }
 
         public void Dispose()
         {
-            this.ClearEnvVars();
+            ClearEnvVars();
             GC.SuppressFinalize(this);
         }
 
@@ -89,7 +89,7 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Equal("OTEL_BSP_SCHEDULE_DELAY", BatchExportActivityProcessorOptions.ScheduledDelayEnvVarKey);
         }
 
-        private void ClearEnvVars()
+        private static void ClearEnvVars()
         {
             Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.ExporterTimeoutEnvVarKey, null);
             Environment.SetEnvironmentVariable(BatchExportActivityProcessorOptions.MaxExportBatchSizeEnvVarKey, null);
