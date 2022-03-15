@@ -70,7 +70,6 @@ namespace Examples.Console
                     {
                         exporterOptions.Protocol = options.UseGrpc ? OtlpExportProtocol.Grpc : OtlpExportProtocol.HttpProtobuf;
 
-                        metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
                         metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
                         metricReaderOptions.Temporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                     });
@@ -82,7 +81,6 @@ namespace Examples.Console
                     {
                         exporterOptions.Targets = ConsoleExporterOutputTargets.Console;
 
-                        metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
                         metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = options.DefaultCollectionPeriodMilliseconds;
                         metricReaderOptions.Temporality = options.IsDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                     });
