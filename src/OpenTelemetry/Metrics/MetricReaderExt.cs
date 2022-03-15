@@ -126,7 +126,6 @@ namespace OpenTelemetry.Metrics
                         if (!metrics.Contains(existingMetric))
                         {
                             metrics.Add(existingMetric);
-
                         }
 
                         continue;
