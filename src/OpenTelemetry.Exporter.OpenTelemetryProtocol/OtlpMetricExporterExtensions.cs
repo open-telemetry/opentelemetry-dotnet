@@ -26,6 +26,7 @@ namespace OpenTelemetry.Metrics
     public static class OtlpMetricExporterExtensions
     {
         private const int DefaultExportIntervalMilliseconds = 60000;
+        private const int DefaultExportTimeoutMilliseconds = 30000;
 
         /// <summary>
         /// Adds <see cref="OtlpMetricExporter"/> to the <see cref="MeterProviderBuilder"/> using default options.
@@ -104,13 +105,12 @@ namespace OpenTelemetry.Metrics
 
             var metricExporter = new OtlpMetricExporter(exporterOptions);
 
-            var metricReader = metricReaderOptions.MetricReaderType == MetricReaderType.Manual
-                ? new BaseExportingMetricReader(metricExporter)
-                : new PeriodicExportingMetricReader(
-                    metricExporter,
-                    metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds ?? DefaultExportIntervalMilliseconds);
+            var metricReader = PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
+                metricExporter,
+                metricReaderOptions,
+                DefaultExportIntervalMilliseconds,
+                DefaultExportTimeoutMilliseconds);
 
-            metricReader.Temporality = metricReaderOptions.Temporality;
             return builder.AddReader(metricReader);
         }
     }
