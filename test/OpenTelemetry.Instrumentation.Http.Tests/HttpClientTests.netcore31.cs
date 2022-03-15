@@ -68,7 +68,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                                {
                                    opt.SetHttpFlavor = tc.SetHttpFlavor;
                                    opt.Enrich = ActivityEnrichment;
-                                   opt.RecordException = tc.RecordException.HasValue ? tc.RecordException.Value : false;
+                                   opt.RecordException = tc.RecordException ?? false;
                                })
                                .AddProcessor(processor.Object)
                                .Build())
