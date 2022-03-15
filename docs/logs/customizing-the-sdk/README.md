@@ -45,8 +45,6 @@ You can use the filtering either in configuration (i.e. appsettings.json) or in 
 "OpenTelemetry" is the [alias](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.provideraliasattribute)
 for `OpenTelemetryLoggingProvider`, that may be used in configuring filtering rules.
 
-### via code
-
 The example below defines "Error" as the default `LogLevel`
 and also defines "Warning" as the minimum `LogLevel` for a user defined category.
 
