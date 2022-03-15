@@ -30,6 +30,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         public void Dispose()
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", this.initialFlagStatus);
+            GC.SuppressFinalize(this);
         }
 
         private bool DetermineInitialFlagStatus()

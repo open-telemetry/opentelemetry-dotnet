@@ -391,6 +391,7 @@ namespace OpenTelemetry.Internal
                 }
 
                 base.Dispose();
+                GC.SuppressFinalize(this);
             }
 
             protected override void OnEventSourceCreated(EventSource eventSource)

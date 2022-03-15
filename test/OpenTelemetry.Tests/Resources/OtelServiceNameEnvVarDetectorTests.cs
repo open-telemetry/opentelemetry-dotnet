@@ -30,6 +30,7 @@ namespace OpenTelemetry.Resources.Tests
         public void Dispose()
         {
             Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, null);
+            GC.SuppressFinalize(this);
         }
 
         [Fact]

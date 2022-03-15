@@ -29,6 +29,7 @@ namespace OpenTelemetry.Trace.Tests
         public void Dispose()
         {
             this.ClearEnvVars();
+            GC.SuppressFinalize(this);
         }
 
         [Fact]

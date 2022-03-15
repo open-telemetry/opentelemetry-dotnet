@@ -34,6 +34,7 @@ namespace OpenTelemetry.Resources.Tests
         public void Dispose()
         {
             ClearEnvVars();
+            GC.SuppressFinalize(this);
         }
 
         [Fact]

@@ -204,6 +204,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         public void Dispose()
         {
             this.server.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         private static void WaitForProcessorInvocations(Mock<BaseProcessor<Activity>> spanProcessor, int invocationCount)
