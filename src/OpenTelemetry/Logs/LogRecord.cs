@@ -140,7 +140,7 @@ namespace OpenTelemetry.Logs
         /// </summary>
         private void BufferLogState()
         {
-            if (this.bufferedStateValues != null)
+            if (this.bufferedStateValues != null || this.stateValues == null)
             {
                 return;
             }
@@ -149,7 +149,7 @@ namespace OpenTelemetry.Logs
 
             for (int i = 0; i < this.stateValues.Count; i++)
             {
-                bufferedStateValues[i] = this.stateValues[i];
+                bufferedStateValues.Add(this.stateValues[i]);
             }
 
             this.bufferedStateValues = bufferedStateValues;

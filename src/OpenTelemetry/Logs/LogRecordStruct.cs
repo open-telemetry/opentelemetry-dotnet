@@ -87,7 +87,7 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Gets the state for the log message.
         /// </summary>
-        public LogRecordState State => new LogRecordState(this.state, this.stateValues);
+        public LogRecordState State => new(this.state, this.stateValues);
 
         /// <summary>
         /// Executes callback for each currently active scope objects in order
