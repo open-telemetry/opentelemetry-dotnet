@@ -38,7 +38,7 @@ SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/main/spe
 The `SetResourceBuilder` method can be used to set a single `ResourceBuilder`.
 If `SetResourceBuilder` is called multiple times, only the last is kept..
 It is not possible to change the resource builder *after* creating the
-LoggerFactory.
+`LoggerFactory`.
 
 The snippet below shows configuring a custom `ResourceBuilder` to the provider.
 
