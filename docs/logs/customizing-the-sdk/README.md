@@ -35,7 +35,7 @@ is the immutable representation of the entity producing the telemetry.
 If no `Resource` is explicitly configured, the default is to use a resource
 indicating this [Telemetry
 SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk).
-The `SetResourceBuilder` method can be used to set a single `ResourceBuilder`.
+The `SetResourceBuilder` method on `OpenTelemetryLoggerOptions` can be used to set a single `ResourceBuilder`.
 If `SetResourceBuilder` is called multiple times, only the last is kept..
 It is not possible to change the resource builder *after* creating the
 `LoggerFactory`.
