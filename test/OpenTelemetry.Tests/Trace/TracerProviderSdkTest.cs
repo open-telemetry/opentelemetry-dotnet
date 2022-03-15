@@ -186,7 +186,7 @@ namespace OpenTelemetry.Trace.Tests
 
             // OpenTelemetry ActivityContext does not support non W3C Ids.
             Assert.Null(fromInvalidW3CIdParent.ParentId);
-            Assert.Equal(default(ActivitySpanId), fromInvalidW3CIdParent.ParentSpanId);
+            Assert.Equal(default, fromInvalidW3CIdParent.ParentSpanId);
         }
 
         [Theory]
