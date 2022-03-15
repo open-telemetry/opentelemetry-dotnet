@@ -16,9 +16,6 @@
 
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
@@ -30,10 +27,9 @@ namespace OpenTelemetry.Logs
     public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISupportExternalScope
     {
         internal readonly OpenTelemetryLoggerOptions Options;
+        internal ILogProcessor Processor;
         internal Resource Resource;
         private readonly Hashtable loggers = new(StringComparer.OrdinalIgnoreCase);
-        private LinkedListNode head;
-        private LinkedListNode tail;
         private bool disposed;
         private IExternalScopeProvider scopeProvider;
 
@@ -124,44 +120,20 @@ namespace OpenTelemetry.Logs
 
             processor.SetParentProvider(this);
 
-            var node = new LinkedListNode(processor);
-            if (this.head == null)
+            if (this.Processor == null)
             {
-                this.head = node;
-                this.tail = node;
+                this.Processor = processor;
+            }
+            else if (this.Processor is CompositeLogProcessor compositeProcessor)
+            {
+                compositeProcessor.AddProcessor(processor);
             }
             else
             {
-                this.tail.Next = node;
-                this.tail = node;
+                this.Processor = new CompositeLogProcessor(new[] { this.Processor, processor });
             }
 
             return this;
-        }
-
-        internal void Log<TState>(string categoryName, LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
-        {
-            var cur = this.head;
-            if (cur != null)
-            {
-                var options = this.Options;
-
-                LogRecordStruct logRecordStruct = new(
-                    DateTime.UtcNow,
-                    categoryName,
-                    logLevel,
-                    eventId,
-                    options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
-                    exception,
-                    options.IncludeScopes ? this.scopeProvider : null,
-                    options.ParseStateValues ? null : state,
-                    options.ParseStateValues ? ParseState(state) : null);
-
-                for (; cur != null; cur = cur.Next)
-                {
-                    cur.Value.OnEnd(in logRecordStruct);
-                }
-            }
         }
 
         protected override void Dispose(bool disposing)
@@ -171,8 +143,8 @@ namespace OpenTelemetry.Logs
                 if (disposing)
                 {
                     // Wait for up to 5 seconds grace period
-                    this.ShutdownProcessors(5000);
-                    this.DisposeProcessors();
+                    this.Processor?.Shutdown(5000);
+                    this.Processor?.Dispose();
                 }
 
                 this.disposed = true;
@@ -180,73 +152,6 @@ namespace OpenTelemetry.Logs
             }
 
             base.Dispose(disposing);
-        }
-
-        private static IReadOnlyList<KeyValuePair<string, object>> ParseState<TState>(TState state)
-        {
-            if (state is IReadOnlyList<KeyValuePair<string, object>> stateList)
-            {
-                return stateList;
-            }
-
-            if (state is IEnumerable<KeyValuePair<string, object>> stateValues)
-            {
-                return new List<KeyValuePair<string, object>>(stateValues);
-            }
-
-            return new List<KeyValuePair<string, object>>
-            {
-                new KeyValuePair<string, object>(string.Empty, state),
-            };
-        }
-
-        private void ShutdownProcessors(int timeoutMilliseconds)
-        {
-            var sw = timeoutMilliseconds == Timeout.Infinite
-                ? null
-                : Stopwatch.StartNew();
-
-            for (var cur = this.head; cur != null; cur = cur.Next)
-            {
-                if (sw == null)
-                {
-                    cur.Value.Shutdown(Timeout.Infinite);
-                }
-                else
-                {
-                    var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-
-                    // notify all the processors, even if we run overtime
-                    cur.Value.Shutdown((int)Math.Max(timeout, 0));
-                }
-            }
-        }
-
-        private void DisposeProcessors()
-        {
-            for (var cur = this.head; cur != null; cur = cur.Next)
-            {
-                try
-                {
-                    cur.Value?.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
-                }
-            }
-        }
-
-        private class LinkedListNode
-        {
-            public readonly ILogProcessor Value;
-
-            public LinkedListNode(ILogProcessor value)
-            {
-                this.Value = value;
-            }
-
-            public LinkedListNode Next { get; set; }
         }
     }
 }

@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
@@ -23,6 +24,7 @@ namespace OpenTelemetry.Logs
 {
     internal class OpenTelemetryLogger : ILogger
     {
+        internal IExternalScopeProvider ScopeProvider;
         private readonly string categoryName;
         private readonly OpenTelemetryLoggerProvider provider;
 
@@ -35,8 +37,6 @@ namespace OpenTelemetry.Logs
             this.provider = provider;
         }
 
-        internal IExternalScopeProvider ScopeProvider { get; set; }
-
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
             if (!this.IsEnabled(logLevel)
@@ -45,7 +45,24 @@ namespace OpenTelemetry.Logs
                 return;
             }
 
-            this.provider.Log(this.categoryName, logLevel, eventId, state, exception, formatter);
+            var processor = this.provider.Processor;
+            if (processor != null)
+            {
+                var options = this.provider.Options;
+
+                LogRecordStruct logRecordStruct = new(
+                    DateTime.UtcNow,
+                    this.categoryName,
+                    logLevel,
+                    eventId,
+                    options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
+                    exception,
+                    options.IncludeScopes ? this.ScopeProvider : null,
+                    options.ParseStateValues ? null : state,
+                    options.ParseStateValues ? ParseState(state) : null);
+
+                processor.OnEnd(in logRecordStruct);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -55,5 +72,24 @@ namespace OpenTelemetry.Logs
         }
 
         public IDisposable BeginScope<TState>(TState state) => this.ScopeProvider?.Push(state) ?? null;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static IReadOnlyList<KeyValuePair<string, object>> ParseState<TState>(TState state)
+        {
+            if (state is IReadOnlyList<KeyValuePair<string, object>> stateList)
+            {
+                return stateList;
+            }
+
+            if (state is IEnumerable<KeyValuePair<string, object>> stateValues)
+            {
+                return new List<KeyValuePair<string, object>>(stateValues);
+            }
+
+            return new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>(string.Empty, state),
+            };
+        }
     }
 }
