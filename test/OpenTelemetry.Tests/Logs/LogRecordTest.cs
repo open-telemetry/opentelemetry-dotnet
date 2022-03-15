@@ -18,6 +18,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using Microsoft.Extensions.Logging;
@@ -74,9 +75,7 @@ namespace OpenTelemetry.Logs.Tests
         [InlineData(LogLevel.Critical)]
         public void CheckLogLevel(LogLevel logLevel)
         {
-            var message = $"Log {logLevel}";
-            this.logger.Log(logLevel, message);
-
+            this.logger.Log(logLevel, "Log {logLevel}", logLevel);
             var logLevelRecorded = this.exportedItems[0].LogLevel;
             Assert.Equal(logLevel, logLevelRecorded);
         }
@@ -84,17 +83,18 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckStateForUnstructuredLog()
         {
-            var message = "Hello, World!";
+            const string message = "Hello, World!";
             this.logger.LogInformation(message);
             var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
             // state only has {OriginalFormat}
             Assert.Equal(1, state.Count);
 
-            Assert.Equal(message.ToString(), state.ToString());
+            Assert.Equal(message, state.ToString());
         }
 
         [Fact]
+        [SuppressMessage("CA2254", "CA2254", Justification = "While you shouldn't use interpolation in a log message, this test verifies things work with it anyway.")]
         public void CheckStateForUnstructuredLogWithStringInterpolation()
         {
             var message = $"Hello from potato {0.99}.";
@@ -104,13 +104,13 @@ namespace OpenTelemetry.Logs.Tests
             // state only has {OriginalFormat}
             Assert.Equal(1, state.Count);
 
-            Assert.Equal(message.ToString(), state.ToString());
+            Assert.Equal(message, state.ToString());
         }
 
         [Fact]
         public void CheckStateForStructuredLogWithTemplate()
         {
-            var message = "Hello from {name} {price}.";
+            const string message = "Hello from {name} {price}.";
             this.logger.LogInformation(message, "tomato", 2.99);
             var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
@@ -221,7 +221,7 @@ namespace OpenTelemetry.Logs.Tests
         {
             var exceptionMessage = "Exception Message";
             var exception = new Exception(exceptionMessage);
-            var message = "Exception Occurred";
+            const string message = "Exception Occurred";
             this.logger.LogInformation(exception, message);
 
             var state = this.exportedItems[0].State;
@@ -234,7 +234,7 @@ namespace OpenTelemetry.Logs.Tests
             Assert.NotNull(loggedException);
             Assert.Equal(exceptionMessage, loggedException.Message);
 
-            Assert.Equal(message.ToString(), state.ToString());
+            Assert.Equal(message, state.ToString());
         }
 
         [Fact]
