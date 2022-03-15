@@ -31,7 +31,6 @@ Run the application again (using `dotnet run`) and you should see the metric
 output from the console (metrics will be seen once the program ends),
 similar to shown below:
 
-<!-- markdownlint-disable MD013 -->
 ```text
 Export MyFruitCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
 (2021-09-23T22:00:08.4399776Z, 2021-09-23T22:00:08.4510115Z] color:red name:apple LongSum
@@ -41,7 +40,6 @@ Value: 7
 (2021-09-23T22:00:08.4399776Z, 2021-09-23T22:00:08.4510115Z] color:green name:apple LongSum
 Value: 2
 ```
-<!-- markdownlint-enable MD013 -->
 
 Congratulations! You are now collecting metrics using OpenTelemetry.
 
