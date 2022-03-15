@@ -31,18 +31,14 @@ TODO
 ### SetResourceBuilder
 
 [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
-is the immutable representation of the entity producing the telemetry. If no
-`Resource` is explicitly configured, the default is to use a resource indicating
-this [Telemetry
+is the immutable representation of the entity producing the telemetry.
+If no `Resource` is explicitly configured, the default is to use a resource
+indicating this [Telemetry
 SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk).
-`SetResourceBuilder` method can be used to set a
-`ResourceBuilder` on the provider. When the provider is built, it automatically
-builds the final `Resource` from the configured `ResourceBuilder`. As with
-samplers, there can only be a single `Resource` associated with a provider. If
-multiple `SetResourceBuilder` is called, the last one wins. Also, it is not
-possible to change the resource builder *after* the provider is built.
-`ResourceBuilder` offers various methods to construct resource comprising of
-multiple attributes from various sources.
+The `SetResourceBuilder` method can be used to set a single `ResourceBuilder`.
+If `SetResourceBuilder` is called multiple times, only the last is kept..
+It is not possible to change the resource builder *after* creating the
+LoggerFactory.
 
 The snippet below shows configuring a custom `ResourceBuilder` to the provider.
 
