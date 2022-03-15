@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+Added StatusCode, StatusDescription support to
+`ConsoleActivityExporter`.
+
 ## 1.2.0-rc3
 
 Released 2022-Mar-04
