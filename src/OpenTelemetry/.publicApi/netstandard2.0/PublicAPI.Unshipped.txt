@@ -1,6 +1,28 @@
 OpenTelemetry.BaseExporter<T>.ForceFlush(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Batch<T>.Batch(T[] items, int count) -> void
 OpenTelemetry.Batch<T>.Count.get -> long
+OpenTelemetry.Logs.LogConverter<T>
+OpenTelemetry.Logs.LogRecord.ForEachScope<TState>(OpenTelemetry.Logs.LogRecordScopeCallback<TState> callback, TState state) -> void
+OpenTelemetry.Logs.LogRecordScopeCallback<TState>
+OpenTelemetry.Logs.LogRecordState
+OpenTelemetry.Logs.LogRecordState.Enumerator
+OpenTelemetry.Logs.LogRecordState.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string, object>
+OpenTelemetry.Logs.LogRecordState.Enumerator.Enumerator() -> void
+OpenTelemetry.Logs.LogRecordState.Enumerator.MoveNext() -> bool
+OpenTelemetry.Logs.LogRecordState.GetEnumerator() -> OpenTelemetry.Logs.LogRecordState.Enumerator
+OpenTelemetry.Logs.LogRecordState.LogRecordState() -> void
+OpenTelemetry.Logs.LogRecordState.State.get -> object
+OpenTelemetry.Logs.LogRecordStruct
+OpenTelemetry.Logs.LogRecordStruct.CategoryName.get -> string
+OpenTelemetry.Logs.LogRecordStruct.EventId.get -> Microsoft.Extensions.Logging.EventId
+OpenTelemetry.Logs.LogRecordStruct.Exception.get -> System.Exception
+OpenTelemetry.Logs.LogRecordStruct.ForEachScope<TState>(OpenTelemetry.Logs.LogRecordScopeCallback<TState> callback, TState state) -> void
+OpenTelemetry.Logs.LogRecordStruct.FormattedMessage.get -> string
+OpenTelemetry.Logs.LogRecordStruct.LogLevel.get -> Microsoft.Extensions.Logging.LogLevel
+OpenTelemetry.Logs.LogRecordStruct.LogRecordStruct() -> void
+OpenTelemetry.Logs.LogRecordStruct.State.get -> OpenTelemetry.Logs.LogRecordState
+OpenTelemetry.Logs.LogRecordStruct.Timestamp.get -> System.DateTime
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.AddProcessor<T>(OpenTelemetry.Logs.LogConverter<T> logConverter, OpenTelemetry.BaseProcessor<T> processor) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions
 OpenTelemetry.Metrics.MetricReaderOptions
 OpenTelemetry.Metrics.MetricReaderOptions.MetricReaderOptions() -> void
 OpenTelemetry.Metrics.MetricReaderOptions.MetricReaderType.get -> OpenTelemetry.Metrics.MetricReaderType
@@ -150,3 +172,7 @@ virtual OpenTelemetry.BaseExporter<T>.OnForceFlush(int timeoutMilliseconds) -> b
 virtual OpenTelemetry.Metrics.MetricReader.Dispose(bool disposing) -> void
 virtual OpenTelemetry.Metrics.MetricReader.OnCollect(int timeoutMilliseconds) -> bool
 virtual OpenTelemetry.Metrics.MetricReader.OnShutdown(int timeoutMilliseconds) -> bool
+*REMOVED*OpenTelemetry.Logs.LogRecord.ForEachScope<TState>(System.Action<OpenTelemetry.Logs.LogRecordScope, TState> callback, TState state) -> void
+*REMOVED*OpenTelemetry.Logs.LogRecordScope.Enumerator.Dispose() -> void
+*REMOVED*OpenTelemetry.Logs.LogRecordScope.Enumerator.Reset() -> void
+*REMOVED*OpenTelemetry.Logs.LogRecordScope.Enumerator.Enumerator(object scope) -> void
