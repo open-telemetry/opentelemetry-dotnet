@@ -21,9 +21,10 @@ namespace OpenTelemetry.Metrics
 {
     internal readonly struct InstrumentIdentity : IEquatable<InstrumentIdentity>
     {
+        private static readonly StringArrayEqualityComparer StringArrayComparer = new StringArrayEqualityComparer();
         private readonly int hashCode;
 
-        public InstrumentIdentity(Meter meter, string instrumentName, string unit, string description, Type instrumentType)
+        public InstrumentIdentity(Meter meter, string instrumentName, string unit, string description, Type instrumentType, string[] tagKeys)
         {
             this.MeterName = meter.Name;
             this.MeterVersion = meter.Version ?? string.Empty;
@@ -31,6 +32,7 @@ namespace OpenTelemetry.Metrics
             this.Unit = unit ?? string.Empty;
             this.Description = description ?? string.Empty;
             this.InstrumentType = instrumentType;
+            this.TagKeys = tagKeys == null || tagKeys.Length == 0 ? null : tagKeys;
 
             unchecked
             {
@@ -41,6 +43,7 @@ namespace OpenTelemetry.Metrics
                 hash = (hash * 31) + this.InstrumentName.GetHashCode();
                 hash = this.Unit == null ? hash : (hash * 31) + this.Unit.GetHashCode();
                 hash = this.Description == null ? hash : (hash * 31) + this.Description.GetHashCode();
+                hash = this.TagKeys == null ? hash : StringArrayComparer.GetHashCode(this.TagKeys);
                 this.hashCode = hash;
             }
         }
@@ -56,6 +59,8 @@ namespace OpenTelemetry.Metrics
         public readonly string Description { get; }
 
         public readonly Type InstrumentType { get; }
+
+        public readonly string[] TagKeys { get; }
 
         public static bool operator ==(InstrumentIdentity metricIdentity1, InstrumentIdentity metricIdentity2) => metricIdentity1.Equals(metricIdentity2);
 
@@ -73,7 +78,8 @@ namespace OpenTelemetry.Metrics
                 && this.MeterVersion == other.MeterVersion
                 && this.InstrumentName == other.InstrumentName
                 && this.Unit == other.Unit
-                && this.Description == other.Description;
+                && this.Description == other.Description
+                && StringArrayComparer.Equals(this.TagKeys, other.TagKeys);
         }
 
         public readonly override int GetHashCode() => this.hashCode;

@@ -42,7 +42,7 @@ namespace OpenTelemetry.Metrics
             var meterVersion = instrument.Meter.Version;
             var metricName = instrument.Name;
             var metricStreamName = $"{meterName}.{meterVersion}.{metricName}";
-            var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, instrument.Description, instrument.GetType());
+            var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, instrument.Description, instrument.GetType(), null);
             lock (this.instrumentCreationLock)
             {
                 if (this.instrumentIdentityToMetric.TryGetValue(instrumentIdentity, out var existingMetric))
@@ -105,7 +105,7 @@ namespace OpenTelemetry.Metrics
                     var metricName = metricStreamConfig?.Name ?? instrument.Name;
                     var metricStreamName = $"{meterName}.{meterVersion}.{metricName}";
                     var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
-                    var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, metricDescription, instrument.GetType());
+                    var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, metricDescription, instrument.GetType(), metricStreamConfig.TagKeys);
 
                     if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricName))
                     {
@@ -122,7 +122,6 @@ namespace OpenTelemetry.Metrics
                     {
                         // The list of metrics may already contain a matching metric with the same
                         // identity when a single instrument is selected by multiple views.
-                        // Each view selecting the instrument needs to result in a distinct metric stream.
                         if (!metrics.Contains(existingMetric))
                         {
                             metrics.Add(existingMetric);

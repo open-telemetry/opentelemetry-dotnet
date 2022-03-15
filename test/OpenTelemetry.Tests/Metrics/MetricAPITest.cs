@@ -468,7 +468,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
-        public void DuplicateInstrumentRegistration_WithViews_OneInstrument_MultipleViews_OneStream()
+        public void DuplicateInstrumentRegistration_WithViews_TwoIdenticalInstruments_TwoViews_DifferentTags()
         {
             var exportedItems = new List<Metric>();
 
@@ -488,6 +488,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meterProvider = meterProviderBuilder.Build();
 
             var instrument1 = meter.CreateCounter<long>("name");
+            var instrument2 = meter.CreateCounter<long>("name");
 
             var tags = new KeyValuePair<string, object>[]
             {
@@ -496,6 +497,7 @@ namespace OpenTelemetry.Metrics.Tests
             };
 
             instrument1.Add(10, tags);
+            instrument2.Add(10, tags);
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
@@ -507,8 +509,8 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(2, exportedItems.Count);
             Assert.Equal("name", exportedItems[0].Name);
             Assert.Equal("name", exportedItems[1].Name);
-            Assert.Equal(10, GetLongSum(metric1));
-            Assert.Equal(10, GetLongSum(metric2));
+            Assert.Equal(20, GetLongSum(metric1));
+            Assert.Equal(20, GetLongSum(metric2));
             CheckTagsForNthMetricPoint(metric1, tag1, 1);
             CheckTagsForNthMetricPoint(metric2, tag2, 1);
         }
