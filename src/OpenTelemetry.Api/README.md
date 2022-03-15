@@ -460,13 +460,11 @@ for versions lower than `.NET Framework 4.6.1`.
 1. Install the `System.Diagnostics.DiagnosticSource` package version
    `6.0.0` or above to your application or library.
 
-    <!-- markdownlint-disable MD013 -->
     ```xml
     <ItemGroup>
       <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.0" />
     </ItemGroup>
     ```
-    <!-- markdownlint-enable MD013 -->
 
 2. Create a `Meter`, providing the name and version of the library/application
    doing the instrumentation. The `Meter` instance is typically created once and
