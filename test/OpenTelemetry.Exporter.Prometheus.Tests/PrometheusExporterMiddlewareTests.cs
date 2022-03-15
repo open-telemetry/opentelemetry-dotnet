@@ -80,7 +80,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             var index = content.LastIndexOf(' ');
 
-            Assert.Equal('\n', content[content.Length - 1]);
+            Assert.Equal('\n', content[^1]);
 
             var timestamp = long.Parse(content.Substring(index, content.Length - index - 1));
 
