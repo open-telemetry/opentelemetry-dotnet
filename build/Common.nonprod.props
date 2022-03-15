@@ -17,7 +17,13 @@
     </Content>
     <!--Temp workaround to allow using daily dotnet 6 builds-->
     <!--<PackageReference Include="System.Runtime.CompilerServices.Unsafe" PrivateAssets="All" NoWarn="NU1605" Version="6.0.0-preview.4.21253.7" />-->
-</ItemGroup>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- Running unit tests from VSCode does not work with .NET SDK 6.0.200 without ProduceReferenceAssemblyInOutDir -->
+    <!-- Related breaking change: https://docs.microsoft.com/en-us/dotnet/core/compatibility/sdk/6.0/write-reference-assemblies-to-obj -->
+    <ProduceReferenceAssemblyInOutDir>true</ProduceReferenceAssemblyInOutDir>
+  </PropertyGroup>
 
   <PropertyGroup Label="Package versions used by test and example projects">
     <!--

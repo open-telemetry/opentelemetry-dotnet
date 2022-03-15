@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 
@@ -26,6 +27,9 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public static class InMemoryExporterMetricsExtensions
     {
+        private const int DefaultExportIntervalMilliseconds = Timeout.Infinite;
+        private const int DefaultExportTimeoutMilliseconds = Timeout.Infinite;
+
         /// <summary>
         /// Adds InMemory metric exporter to the <see cref="MeterProviderBuilder"/> using default options.
         /// </summary>
@@ -81,16 +85,12 @@ namespace OpenTelemetry.Metrics
 
             var metricExporter = new InMemoryExporter<Metric>(exportedItems);
 
-            if (metricReaderOptions.MetricReaderType == (MetricReaderType)(-1))
-            {
-                metricReaderOptions.MetricReaderType = MetricReaderType.Manual;
-            }
+            var metricReader = PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
+                metricExporter,
+                metricReaderOptions,
+                DefaultExportIntervalMilliseconds,
+                DefaultExportTimeoutMilliseconds);
 
-            var metricReader = metricReaderOptions.MetricReaderType == MetricReaderType.Manual
-                ? new BaseExportingMetricReader(metricExporter)
-                : new PeriodicExportingMetricReader(metricExporter, metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
-
-            metricReader.Temporality = metricReaderOptions.Temporality;
             return builder.AddReader(metricReader);
         }
     }
