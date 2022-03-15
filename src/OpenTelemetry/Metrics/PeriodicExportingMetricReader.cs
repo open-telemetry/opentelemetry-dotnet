@@ -52,7 +52,7 @@ namespace OpenTelemetry.Metrics
         {
             Guard.ThrowIfInvalidTimeout(exportIntervalMilliseconds);
             Guard.ThrowIfZero(exportIntervalMilliseconds);
-            Guard.ThrowIfOutOfRange(exportTimeoutMilliseconds, min: 0);
+            Guard.ThrowIfInvalidTimeout(exportTimeoutMilliseconds);
 
             if ((this.SupportedExportModes & ExportModes.Push) != ExportModes.Push)
             {
