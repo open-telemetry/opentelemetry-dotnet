@@ -32,7 +32,16 @@ namespace OpenTelemetry.Metrics
             this.Unit = unit ?? string.Empty;
             this.Description = description ?? string.Empty;
             this.InstrumentType = instrumentType;
-            this.TagKeys = tagKeys == null || tagKeys.Length == 0 ? null : tagKeys;
+
+            if (tagKeys != null && tagKeys.Length > 0)
+            {
+                this.TagKeys = new string[tagKeys.Length];
+                tagKeys.CopyTo(this.TagKeys, 0);
+            }
+            else
+            {
+                this.TagKeys = null;
+            }
 
             unchecked
             {
