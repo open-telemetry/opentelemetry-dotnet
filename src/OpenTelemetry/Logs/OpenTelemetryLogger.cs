@@ -49,18 +49,16 @@ namespace OpenTelemetry.Logs
             var processor = this.provider.Processor;
             if (processor != null)
             {
-                var options = this.provider.Options;
-
                 var record = new LogRecord(
-                    options.IncludeScopes ? this.ScopeProvider : null,
+                    this.provider.IncludeScopes ? this.ScopeProvider : null,
                     DateTime.UtcNow,
                     this.categoryName,
                     logLevel,
                     eventId,
-                    options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
-                    options.ParseStateValues ? null : state,
+                    this.provider.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
+                    this.provider.ParseStateValues ? null : state,
                     exception,
-                    options.ParseStateValues ? this.ParseState(state) : null);
+                    this.provider.ParseStateValues ? this.ParseState(state) : null);
 
                 processor.OnEnd(record);
 
