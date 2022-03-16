@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -71,9 +72,7 @@ namespace OpenTelemetry.Exporter
                             continue;
                         }
 
-                        var array = tag.Value as Array;
-
-                        if (array == null)
+                        if (tag.Value is not Array array)
                         {
                             this.WriteLine($"    {tag.Key}: {tag.Value}");
                             continue;
@@ -81,15 +80,22 @@ namespace OpenTelemetry.Exporter
 
                         this.WriteLine($"    {tag.Key}: [{string.Join(", ", array.Cast<object>())}]");
                     }
+                }
 
-                    if (!string.IsNullOrEmpty(statusCode))
+                if (activity.Status != ActivityStatusCode.Unset)
+                {
+                    this.WriteLine($"   StatusCode : {StatusHelper.GetTagValueForActivityStatusCode(activity.Status)}");
+                    if (activity.Status == ActivityStatusCode.Error)
                     {
-                        this.WriteLine($"   StatusCode : {statusCode}");
+                        this.WriteLine($"   error : {activity.StatusDescription ?? string.Empty}");
                     }
-
+                }
+                else if (!string.IsNullOrEmpty(statusCode))
+                {
+                    this.WriteLine($"   StatusCode : {statusCode}");
                     if (!string.IsNullOrEmpty(statusDesc))
                     {
-                        this.WriteLine($"   StatusDescription : {statusDesc}");
+                        this.WriteLine($"   error : {statusDesc}");
                     }
                 }
 
