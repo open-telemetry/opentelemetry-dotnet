@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+* The `PeriodicExportingMetricReader` now accepts an
+  `ExportIntervalMilliseconds` of `-1` indicating an infinite export interval
+  period.
+  ([#2982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2982))
+
+* Added the `PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds`
+  option.
+  ([#3038](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3038))
+
+* Removed `MetricReaderType`. This enumeration was previously used when
+  configuing a metric reader with an exporter to configure whether the export
+  cycle would be periodic or manual (i.e., requiring a explicit call to flush
+  metrics). This change affects the push-based metric exporters: OTLP, Console,
+  and InMemory. For these exporters, a manual export cycle can now be achieved
+  by setting `PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds`
+  to `-1`.
+  ([#3038](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3038))
+
 ## 1.2.0-rc3
 
 Released 2022-Mar-04

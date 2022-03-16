@@ -50,8 +50,9 @@ namespace OpenTelemetry.Metrics
             int exportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
             : base(exporter)
         {
-            Guard.ThrowIfOutOfRange(exportIntervalMilliseconds, min: 1);
-            Guard.ThrowIfOutOfRange(exportTimeoutMilliseconds, min: 0);
+            Guard.ThrowIfInvalidTimeout(exportIntervalMilliseconds);
+            Guard.ThrowIfZero(exportIntervalMilliseconds);
+            Guard.ThrowIfInvalidTimeout(exportTimeoutMilliseconds);
 
             if ((this.SupportedExportModes & ExportModes.Push) != ExportModes.Push)
             {

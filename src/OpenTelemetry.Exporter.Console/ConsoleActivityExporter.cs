@@ -18,6 +18,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter
 {
@@ -50,11 +51,26 @@ namespace OpenTelemetry.Exporter
                 this.WriteLine($"Activity.Kind:        {activity.Kind}");
                 this.WriteLine($"Activity.StartTime:   {activity.StartTimeUtc:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
                 this.WriteLine($"Activity.Duration:    {activity.Duration}");
+                var statusCode = string.Empty;
+                var statusDesc = string.Empty;
+
                 if (activity.TagObjects.Any())
                 {
                     this.WriteLine("Activity.Tags:");
                     foreach (var tag in activity.TagObjects)
                     {
+                        if (tag.Key == SpanAttributeConstants.StatusCodeKey)
+                        {
+                            statusCode = tag.Value as string;
+                            continue;
+                        }
+
+                        if (tag.Key == SpanAttributeConstants.StatusDescriptionKey)
+                        {
+                            statusDesc = tag.Value as string;
+                            continue;
+                        }
+
                         var array = tag.Value as Array;
 
                         if (array == null)
@@ -64,6 +80,16 @@ namespace OpenTelemetry.Exporter
                         }
 
                         this.WriteLine($"    {tag.Key}: [{string.Join(", ", array.Cast<object>())}]");
+                    }
+
+                    if (!string.IsNullOrEmpty(statusCode))
+                    {
+                        this.WriteLine($"   StatusCode : {statusCode}");
+                    }
+
+                    if (!string.IsNullOrEmpty(statusDesc))
+                    {
+                        this.WriteLine($"   StatusDescription : {statusDesc}");
                     }
                 }
 
