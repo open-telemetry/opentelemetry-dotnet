@@ -30,7 +30,6 @@ Use the `ENTER` key to print the latest performance statistics.
 
 Use the `ESC` key to exit the stress test.
 
-<!-- markdownlint-disable MD013 -->
 ```text
 Running (concurrency = 1), press <Esc> to stop...
 2021-09-28T18:47:17.6807622Z Loops: 17,549,732,467, Loops/Second: 738,682,519, CPU Cycles/Loop: 3
@@ -40,7 +39,6 @@ Running (concurrency = 1), press <Esc> to stop...
 2021-09-28T18:47:18.5052989Z Loops: 18,150,598,194, Loops/Second: 733,026,161, CPU Cycles/Loop: 3
 2021-09-28T18:47:18.7116733Z Loops: 18,299,461,007, Loops/Second: 724,950,210, CPU Cycles/Loop: 3
 ```
-<!-- markdownlint-enable MD013 -->
 
 The stress test metrics are exposed via
 [PrometheusExporter](../../src/OpenTelemetry.Exporter.Prometheus/README.md),
