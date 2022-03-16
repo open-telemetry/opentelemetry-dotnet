@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Added Activity StatusCode, StatusDescription support to
+* Added StatusCode, StatusDescription support to
   `ConsoleActivityExporter`.
   ([#2929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2929)
    [#3061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3061))
