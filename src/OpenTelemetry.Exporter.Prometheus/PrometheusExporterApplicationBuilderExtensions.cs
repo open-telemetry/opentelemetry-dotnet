@@ -44,27 +44,7 @@ namespace Microsoft.AspNetCore.Builder
         /// <returns>A reference to the original <see
         /// cref="IApplicationBuilder"/> for chaining calls.</returns>
         public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app)
-            => UseOpenTelemetryPrometheusScrapingEndpoint(app, meterProvider: null);
-
-        /// <summary>
-        /// Adds OpenTelemetry Prometheus scraping endpoint middleware to an
-        /// <see cref="IApplicationBuilder"/> instance.
-        /// </summary>
-        /// <remarks>Note: A branched pipeline is created for the route
-        /// specified by <see
-        /// cref="PrometheusExporterOptions.ScrapeEndpointPath"/>.</remarks>
-        /// <param name="app">The <see cref="IApplicationBuilder"/> to add
-        /// middleware to.</param>
-        /// <param name="configureBranchedPipeline">Optional callback to
-        /// configure the branched pipeline. Called before registration of the
-        /// Prometheus middleware.</param>
-        /// <returns>A reference to the original <see
-        /// cref="IApplicationBuilder"/> for chaining calls.</returns>
-        public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app, Action<IApplicationBuilder> configureBranchedPipeline)
-        {
-            Guard.ThrowIfNull(configureBranchedPipeline);
-            return UseOpenTelemetryPrometheusScrapingEndpoint(app, configureBranchedPipeline: configureBranchedPipeline);
-        }
+            => UseOpenTelemetryPrometheusScrapingEndpoint(app, meterProvider: null, predicate: null, path: null, configureBranchedPipeline: null);
 
         /// <summary>
         /// Adds OpenTelemetry Prometheus scraping endpoint middleware to an
@@ -80,28 +60,7 @@ namespace Microsoft.AspNetCore.Builder
         public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app, string path)
         {
             Guard.ThrowIfNull(path);
-            return UseOpenTelemetryPrometheusScrapingEndpoint(app, path: path);
-        }
-
-        /// <summary>
-        /// Adds OpenTelemetry Prometheus scraping endpoint middleware to an
-        /// <see cref="IApplicationBuilder"/> instance.
-        /// </summary>
-        /// <remarks>Note: A branched pipeline is created for the supplied
-        /// <paramref name="path"/>.</remarks>
-        /// <param name="app">The <see cref="IApplicationBuilder"/> to add
-        /// middleware to.</param>
-        /// <param name="path">Path to use for the branched pipeline.</param>
-        /// <param name="configureBranchedPipeline">Optional callback to
-        /// configure the branched pipeline. Called before registration of the
-        /// Prometheus middleware.</param>
-        /// <returns>A reference to the original <see
-        /// cref="IApplicationBuilder"/> for chaining calls.</returns>
-        public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app, string path, Action<IApplicationBuilder> configureBranchedPipeline)
-        {
-            Guard.ThrowIfNull(path);
-            Guard.ThrowIfNull(configureBranchedPipeline);
-            return UseOpenTelemetryPrometheusScrapingEndpoint(app, path: path, configureBranchedPipeline: configureBranchedPipeline);
+            return UseOpenTelemetryPrometheusScrapingEndpoint(app, meterProvider: null, predicate: null, path: path, configureBranchedPipeline: null);
         }
 
         /// <summary>
@@ -119,29 +78,7 @@ namespace Microsoft.AspNetCore.Builder
         public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app, Func<HttpContext, bool> predicate)
         {
             Guard.ThrowIfNull(predicate);
-            return UseOpenTelemetryPrometheusScrapingEndpoint(app, predicate: predicate);
-        }
-
-        /// <summary>
-        /// Adds OpenTelemetry Prometheus scraping endpoint middleware to an
-        /// <see cref="IApplicationBuilder"/> instance.
-        /// </summary>
-        /// <remarks>Note: A branched pipeline is created for the supplied
-        /// <paramref name="predicate"/>.</remarks>
-        /// <param name="app">The <see cref="IApplicationBuilder"/> to add
-        /// middleware to.</param>
-        /// <param name="predicate">Predicate for deciding if a given
-        /// <see cref="HttpContext"/> should be branched.</param>
-        /// <param name="configureBranchedPipeline">Optional callback to
-        /// configure the branched pipeline. Called before registration of the
-        /// Prometheus middleware.</param>
-        /// <returns>A reference to the original <see
-        /// cref="IApplicationBuilder"/> for chaining calls.</returns>
-        public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(this IApplicationBuilder app, Func<HttpContext, bool> predicate, Action<IApplicationBuilder> configureBranchedPipeline)
-        {
-            Guard.ThrowIfNull(predicate);
-            Guard.ThrowIfNull(configureBranchedPipeline);
-            return UseOpenTelemetryPrometheusScrapingEndpoint(app, predicate: predicate, configureBranchedPipeline: configureBranchedPipeline);
+            return UseOpenTelemetryPrometheusScrapingEndpoint(app, meterProvider: null, predicate: predicate, path: null, configureBranchedPipeline: null);
         }
 
         /// <summary>
@@ -170,10 +107,10 @@ namespace Microsoft.AspNetCore.Builder
         /// cref="IApplicationBuilder"/> for chaining calls.</returns>
         public static IApplicationBuilder UseOpenTelemetryPrometheusScrapingEndpoint(
             this IApplicationBuilder app,
-            MeterProvider meterProvider = null,
-            Func<HttpContext, bool> predicate = null,
-            string path = null,
-            Action<IApplicationBuilder> configureBranchedPipeline = null)
+            MeterProvider meterProvider,
+            Func<HttpContext, bool> predicate,
+            string path,
+            Action<IApplicationBuilder> configureBranchedPipeline)
         {
             // Note: Order is important here. MeterProvider is accessed before
             // GetOptions<PrometheusExporterOptions> so that any changes made to
