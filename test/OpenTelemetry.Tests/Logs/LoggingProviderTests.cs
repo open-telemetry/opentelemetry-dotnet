@@ -36,10 +36,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void VerifyResourceBuilderAddService()
         {
-            var options = new OpenTelemetryLoggerOptions
-            {
-                ResourceBuilder = ResourceBuilder.CreateDefault().AddService(serviceName: "MyService", serviceVersion: "1.2.3"),
-            };
+            var options = new OpenTelemetryLoggerOptions();
+            options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: "MyService", serviceVersion: "1.2.3"));
             var provider = new OpenTelemetryLoggerProvider(options);
 
             Assert.Contains(provider.Resource.Attributes, (kvp) => kvp.Key == "service.name" && kvp.Value.ToString() == "MyService");
