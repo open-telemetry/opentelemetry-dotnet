@@ -43,41 +43,16 @@ times, only the last is kept. It is not possible to change the resource builder
 The snippet below shows configuring a custom `ResourceBuilder` to the provider.
 
 ```csharp
-using var loggerFactory = LoggerFactory.Create(builder =>
+var loggerFactory = LoggerFactory.Create(builder =>
 {
-    builder
-        .AddOpenTelemetry(options =>
-        {
-            options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
-                serviceName: "MyService",
-                serviceVersion: "1.0.0"
-                ));
-            options.AddConsoleExporter();
-        });
+    builder.AddOpenTelemetry(options =>
+    {
+        options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+            serviceName: "MyService",
+            serviceVersion: "1.0.0"
+            ));
+    });
 });
-
-var logger = loggerFactory.CreateLogger<Program>();
-
-logger.LogInformation("Hello Information");
-```
-
-This example generates the following output which includes the Resource
-information:
-
-```text
-LogRecord.TraceId:            00000000000000000000000000000000
-LogRecord.SpanId:             0000000000000000
-LogRecord.Timestamp:          1970-01-01T00:00:01.0000000Z
-LogRecord.EventId:            0
-LogRecord.EventName:
-LogRecord.CategoryName:       Program
-LogRecord.LogLevel:           Information
-LogRecord.TraceFlags:         None
-LogRecord.State:              Hello Information
-Resource associated with LogRecord:
-    service.name: MyService
-    service.version: 1.0.0
-    service.instance.id: 00000000-0000-0000-0000-000000000000
 ```
 
 See [Program.cs](Program.cs) for complete example.
