@@ -111,7 +111,7 @@ namespace OpenTelemetry.Logs
         {
             Guard.ThrowIfNull(processor);
 
-            return this.AddProcessor(new LogConvertingProcessor<LogRecord>(LogRecordStruct.ToLogRecord, processor));
+            return this.AddProcessor(new LogRecordProcessor(processor));
         }
 
         internal OpenTelemetryLoggerProvider AddProcessor(ILogProcessor processor)
