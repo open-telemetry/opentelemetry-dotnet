@@ -78,7 +78,5 @@ namespace OpenTelemetry.Logs
             this.ResourceBuilder = resourceBuilder;
             return this;
         }
-
-        internal OpenTelemetryLoggerOptions DeepCopy() => (OpenTelemetryLoggerOptions)this.MemberwiseClone();
     }
 }
