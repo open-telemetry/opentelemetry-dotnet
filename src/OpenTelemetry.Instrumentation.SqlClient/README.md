@@ -60,6 +60,40 @@ For an ASP.NET application, adding instrumentation is typically done in the
 This instrumentation can be configured to change the default behavior by using
 `SqlClientInstrumentationOptions`.
 
+### Filter
+This instrumentation by default collects all the sql executions. Filter option allows filtering of executions. This defines the condition for allowable requests.
+
+#### .NET Core - Filter
+
+When using .NET Core Filter receives the payload object containing { (Guid) OperationId, (Microsoft.Data.SqlClient.SqlCommand) Command, Timestamp}
+The following code snippet shows how to use Filter with .NET Core
+```csharp
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSqlClientInstrumentation(opt => opt.Filter
+        = (payload) =>
+    {
+        var command = (SqlCommand)payload.GetType().GetProperty("Command").GetValue(payload, null);
+        if (command.Connection.DataSource.Contains("master")) return false;
+        return true;
+    })
+    .Build();
+```
+
+#### .NET Framework - Filter
+For .NET Framework Filter receives the payload object containing { (string)DataSource, (string)DatabaseName, (string)CommandText}
+The following code snippet shows how to use Filter with .NET Framework
+```csharp
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSqlClientInstrumentation(opt => opt.Filter
+        = (payload) =>
+    {
+        var dataSource = (string)payload.GetType().GetProperty("DataSource").GetValue(payload, null);
+        if (dataSource.Contains("master")) return false;
+        return true;
+    })
+    .Build();
+```
+
 ### Capturing 'db.statement'
 
 The `SqlClientInstrumentationOptions` class exposes several properties that can be

@@ -72,6 +72,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [InlineData(CommandType.Text, "select 1/0", false, false, true, true, false)]
         [InlineData(CommandType.StoredProcedure, "sp_who", false)]
         [InlineData(CommandType.StoredProcedure, "sp_who", true)]
+        [InlineData(CommandType.Text, "select 2/0", false, false, true, true, false, true, 1)]
+        [InlineData(CommandType.StoredProcedure, "sp_who", true, false, false, false, true, true)]
+        [InlineData(CommandType.StoredProcedure, "sp_who", true, false, true, false, true, true, 1)]
         public void SuccessfulCommandTest(
             CommandType commandType,
             string commandText,
@@ -79,7 +82,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             bool captureTextCommandContent = false,
             bool isFailure = false,
             bool recordException = false,
-            bool shouldEnrich = true)
+            bool shouldEnrich = true,
+            bool shouldFilter = false,
+            int expectedActivityProcessorInvocationCount = 3)
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             activityProcessor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
@@ -99,6 +104,24 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     if (shouldEnrich)
                     {
                         options.Enrich = ActivityEnrichment;
+                    }
+                    if (shouldFilter)
+                    {
+                        options.Filter = (payload) =>
+                        {
+                            if (payload == null || payload.GetType().GetProperty("Command") == null)
+                            {
+                                return true;
+                            }
+                            if (isFailure)
+                            {
+                                throw new Exception("From InstrumentationFilter");
+                            }
+                            var command = (SqlCommand)payload.GetType().GetProperty("Command").GetValue(payload, null);
+                            if (command.CommandText == "select 2/0") return false;
+
+                            return true;
+                        };
                     }
                 })
                 .Build();
@@ -129,12 +152,16 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             {
             }
 
-            Assert.Equal(3, activityProcessor.Invocations.Count);
+            Assert.Equal(expectedActivityProcessorInvocationCount, activityProcessor.Invocations.Count);
 
-            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+            // This is when OnStartActivity/OnEndActivity is expected to be invoked
+            if (expectedActivityProcessorInvocationCount > 1)
+            {
+                var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
-            VerifyActivityData(commandType, commandText, captureStoredProcedureCommandName, captureTextCommandContent, isFailure, recordException, shouldEnrich, dataSource, activity);
-            VerifySamplingParameters(sampler.LatestSamplingParameters);
+                VerifyActivityData(commandType, commandText, captureStoredProcedureCommandName, captureTextCommandContent, isFailure, recordException, shouldEnrich, dataSource, activity);
+                VerifySamplingParameters(sampler.LatestSamplingParameters);
+            }
         }
 
         // DiagnosticListener-based instrumentation is only available on .NET Core
@@ -148,6 +175,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftAfterExecuteCommand, CommandType.StoredProcedure, "SP_GetOrders", false, true, false)]
         [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftAfterExecuteCommand, CommandType.Text, "select * from sys.databases", false, true)]
         [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftAfterExecuteCommand, CommandType.Text, "select * from sys.databases", false, true, false)]
+        [InlineData(SqlClientDiagnosticListener.SqlMicrosoftBeforeExecuteCommand, SqlClientDiagnosticListener.SqlMicrosoftAfterExecuteCommand, CommandType.Text, "select * from sys.databases", false, true, false, true, 3)]
         public void SqlClientCallsAreCollectedSuccessfully(
             string beforeCommand,
             string afterCommand,
@@ -155,7 +183,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             string commandText,
             bool captureStoredProcedureCommandName,
             bool captureTextCommandContent,
-            bool shouldEnrich = true)
+            bool shouldEnrich = true,
+            bool shouldFilter = false, int expectedActivityProcessorInvocationCount = 5)
         {
             using var sqlConnection = new SqlConnection(TestConnectionString);
             using var sqlCommand = sqlConnection.CreateCommand();
@@ -171,6 +200,20 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                             if (shouldEnrich)
                             {
                                 opt.Enrich = ActivityEnrichment;
+                            }
+                            if (shouldFilter)
+                            {
+                                opt.Filter = (payload) =>
+                                {
+                                    if (payload == null || payload.GetType().GetProperty("Command") == null)
+                                    {
+                                        return true;
+                                    }
+
+                                    var command = (SqlCommand)payload.GetType().GetProperty("Command").GetValue(payload, null);
+                                    if (command.CommandText.Contains("sys.databases", StringComparison.OrdinalIgnoreCase)) return false;
+                                    return true;
+                                };
                             }
                         })
                     .AddProcessor(processor.Object)
@@ -202,19 +245,19 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     afterCommand,
                     afterExecuteEventData);
             }
+            Assert.Equal(expectedActivityProcessorInvocationCount, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called when request is filtered, when request is not filtered only SetParentProvider/OnShutdown/Dispose are called
 
-            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
-
-            VerifyActivityData(
-                sqlCommand.CommandType,
-                sqlCommand.CommandText,
-                captureStoredProcedureCommandName,
-                captureTextCommandContent,
-                false,
-                false,
-                shouldEnrich,
-                sqlConnection.DataSource,
-                (Activity)processor.Invocations[2].Arguments[0]);
+            if (processor.Invocations.Count > 3)
+                VerifyActivityData(
+                    sqlCommand.CommandType,
+                    sqlCommand.CommandText,
+                    captureStoredProcedureCommandName,
+                    captureTextCommandContent,
+                    false,
+                    false,
+                    shouldEnrich,
+                    sqlConnection.DataSource,
+                    (Activity)processor.Invocations[2].Arguments[0]);
         }
 
         [Theory]

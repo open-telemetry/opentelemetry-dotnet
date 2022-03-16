@@ -125,6 +125,18 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 return;
             }
 
+            var payload = new
+            {
+                DataSource = (string)eventData.Payload[1],
+                DatabaseName = (string)eventData.Payload[2],
+                CommandText = (string)eventData.Payload[3],
+
+            };
+            if (this.options?.EventFilter(payload) == false)
+            {
+                return;
+            }
+
             var activity = SqlActivitySourceHelper.ActivitySource.StartActivity(
                 SqlActivitySourceHelper.ActivityName,
                 ActivityKind.Client,
@@ -137,20 +149,17 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 return;
             }
 
-            string databaseName = (string)eventData.Payload[2];
-
-            activity.DisplayName = databaseName;
+            activity.DisplayName = payload.DatabaseName;
 
             if (activity.IsAllDataRequested)
             {
-                activity.SetTag(SemanticConventions.AttributeDbName, databaseName);
+                activity.SetTag(SemanticConventions.AttributeDbName, payload.DatabaseName);
 
-                this.options.AddConnectionLevelDetailsToActivity((string)eventData.Payload[1], activity);
+                this.options.AddConnectionLevelDetailsToActivity(payload.DataSource, activity);
 
-                string commandText = (string)eventData.Payload[3];
-                if (!string.IsNullOrEmpty(commandText) && this.options.SetDbStatement)
+                if (!string.IsNullOrEmpty(payload.CommandText) && this.options.SetDbStatement)
                 {
-                    activity.SetTag(SemanticConventions.AttributeDbStatement, commandText);
+                    activity.SetTag(SemanticConventions.AttributeDbStatement, payload.CommandText);
                 }
             }
         }

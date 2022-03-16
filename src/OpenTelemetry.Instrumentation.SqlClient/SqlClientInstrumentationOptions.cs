@@ -19,6 +19,7 @@ using System.Collections.Concurrent;
 using System.Data;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.SqlClient
@@ -129,6 +130,16 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// </example>
         public Action<Activity, string, object> Enrich { get; set; }
 
+        /// <summary>
+        /// Gets or sets a Filter function that determines whether or not to collect telemetry of SQL execution per execution basis.
+        /// The Filter gets the SQL Payload, and should return a boolean.
+        /// If Filter returns true, the request is collected.
+        /// If Filter returns false or throw exception, the request is filtered out.
+        /// </summary>
+
+        public Func<object, bool> Filter { get; set; }
+
+
 #if !NETFRAMEWORK
         /// <summary>
         /// Gets or sets a value indicating whether the exception will be recorded as ActivityEvent or not. Default value: False.
@@ -138,6 +149,19 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// </remarks>
         public bool RecordException { get; set; }
 #endif
+        internal bool EventFilter(object payload)
+        {
+            try
+            {
+                return
+                    this.Filter == null || this.Filter(payload);
+            }
+            catch (Exception ex)
+            {
+                SqlClientInstrumentationEventSource.Log.RequestFilterException(ex);
+                return false;
+            }
+        }
 
         internal static SqlConnectionDetails ParseDataSource(string dataSource)
         {

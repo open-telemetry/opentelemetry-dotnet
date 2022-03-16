@@ -48,7 +48,11 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [InlineData(CommandType.Text, "select 1/0", false, true)]
         [InlineData(CommandType.StoredProcedure, "sp_who", false)]
         [InlineData(CommandType.StoredProcedure, "sp_who", true)]
-        public async Task SuccessfulCommandTest(CommandType commandType, string commandText, bool captureText, bool isFailure = false)
+        [InlineData(CommandType.StoredProcedure, "sp_who", true, false, true, 1)]
+        [InlineData(CommandType.Text, "select 1/1", false, false, true)]
+        [InlineData(CommandType.Text, "select 1/0", false, true, true)]
+        public async Task SuccessfulCommandTest(CommandType commandType, string commandText, bool captureText, bool isFailure = false, bool shouldFilter = false,
+            int expectedActivityProcessorInvocationCount = 3)
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
@@ -56,6 +60,21 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 .AddSqlClientInstrumentation(options =>
                 {
                     options.SetDbStatement = captureText;
+                    if (shouldFilter)
+                    {
+                        options.Filter = (payload) =>
+                        {
+                            if (payload == null || payload.GetType().GetProperty("CommandText") == null)
+                            {
+                                return true;
+                            }
+
+                            var commandText = (string)payload.GetType().GetProperty("CommandText").GetValue(payload, null);
+                            if (commandText.Contains("sp_who")) return false;
+
+                            return true;
+                        };
+                    }
                 })
                 .Build();
 
@@ -80,11 +99,14 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             {
             }
 
-            Assert.Equal(3, activityProcessor.Invocations.Count);
+            Assert.Equal(expectedActivityProcessorInvocationCount, activityProcessor.Invocations.Count);
+            if (activityProcessor.Invocations.Count > 1)
+            {
 
-            var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
+                var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
 
-            VerifyActivityData(commandText, captureText, isFailure, dataSource, activity);
+                VerifyActivityData(commandText, captureText, isFailure, dataSource, activity);
+            }
         }
 
         [Theory]
@@ -96,6 +118,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.Text, "select 1/0", false, true)]
         [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.StoredProcedure, "sp_who", false)]
         [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.StoredProcedure, "sp_who", true, false, 0, true)]
+        [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.StoredProcedure, "sp_who", true, false, 0, true, true, 3)]
+        [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.Text, "select 1/1", false, true, 0, true, true)]
+        [InlineData(typeof(FakeBehavingMdsSqlEventSource), CommandType.Text, "select 1/0", false, false, 0, true, true)]
         public void EventSourceFakeTests(
             Type eventSourceType,
             CommandType commandType,
@@ -103,7 +128,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             bool captureText,
             bool isFailure = false,
             int sqlExceptionNumber = 0,
-            bool enableConnectionLevelAttributes = false)
+            bool enableConnectionLevelAttributes = false,
+            bool shouldFilter = false,
+            int expectedActivityProcessorInvocationCount = 5)
         {
             using IFakeBehavingSqlEventSource fakeSqlEventSource = (IFakeBehavingSqlEventSource)Activator.CreateInstance(eventSourceType);
 
@@ -114,6 +141,21 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 {
                     options.SetDbStatement = captureText;
                     options.EnableConnectionLevelAttributes = enableConnectionLevelAttributes;
+                    if (shouldFilter)
+                    {
+                        options.Filter = (payload) =>
+                        {
+                            if (payload == null || payload.GetType().GetProperty("CommandText") == null)
+                            {
+                                return true;
+                            }
+
+                            var commandText = (string)payload.GetType().GetProperty("CommandText").GetValue(payload, null);
+                            if (commandText.Contains("sp_who")) return false;
+
+                            return true;
+                        };
+                    }
                 })
                 .Build();
 
@@ -134,11 +176,13 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             fakeSqlEventSource.WriteEndExecuteEvent(objectId, compositeState, sqlExceptionNumber);
             shutdownSignal.Dispose();
-            Assert.Equal(5, activityProcessor.Invocations.Count); // SetTracerProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            Assert.Equal(expectedActivityProcessorInvocationCount, activityProcessor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called when request is filtered, when request is not filtered only SetParentProvider/OnShutdown/Dispose are called
+            if (activityProcessor.Invocations.Count > 3)
+            {
+                var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
 
-            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
-
-            VerifyActivityData(commandText, captureText, isFailure, "127.0.0.1", activity, enableConnectionLevelAttributes);
+                VerifyActivityData(commandText, captureText, isFailure, "127.0.0.1", activity, enableConnectionLevelAttributes);
+            }
         }
 
         [Theory]
