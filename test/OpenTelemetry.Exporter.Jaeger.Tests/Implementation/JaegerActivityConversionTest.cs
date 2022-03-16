@@ -318,13 +318,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal("a", tag.VStr);
 
             // The second to last tag should be span.kind in this case
-            tag = tags[^2];
+            tag = tags[tags.Length - 2];
             Assert.Equal(JaegerTagType.STRING, tag.VType);
             Assert.Equal("span.kind", tag.Key);
             Assert.Equal("client", tag.VStr);
 
             // The last tag should be library.name in this case
-            tag = tags[^1];
+            tag = tags[tags.Length - 1];
             Assert.Equal(JaegerTagType.STRING, tag.VType);
             Assert.Equal("otel.library.name", tag.Key);
             Assert.Equal(nameof(CreateTestActivity), tag.VStr);
