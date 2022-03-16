@@ -64,6 +64,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
+        public Task PrometheusExporterMiddlewareIntegration_OptionsViaAddPrometheusExporter()
+        {
+            return RunPrometheusExporterMiddlewareIntegrationTest(
+                "/metrics_from_AddPrometheusExporter",
+                app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+                configureOptions: o => o.ScrapeEndpointPath = "/metrics_from_AddPrometheusExporter");
+        }
+
+        [Fact]
         public Task PrometheusExporterMiddlewareIntegration_PathOverride()
         {
             return RunPrometheusExporterMiddlewareIntegrationTest(
@@ -154,7 +163,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             Action<IApplicationBuilder> configure,
             Action<IServiceCollection> configureServices = null,
             Action<HttpResponseMessage> validateResponse = null,
-            bool registerMeterProvider = true)
+            bool registerMeterProvider = true,
+            Action<PrometheusExporterOptions> configureOptions = null)
         {
             using var host = await new HostBuilder()
                .ConfigureWebHost(webBuilder => webBuilder
@@ -167,6 +177,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                                 .AddMeter(MeterName)
                                 .AddPrometheusExporter(o =>
                                 {
+                                    configureOptions?.Invoke(o);
                                     if (o.StartHttpListener)
                                     {
                                         throw new InvalidOperationException("StartHttpListener should be false on .NET Core 3.1+.");
