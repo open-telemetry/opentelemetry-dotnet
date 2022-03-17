@@ -1,3 +1,7 @@
+OpenTelemetry.Exporter.InMemoryMetricExporter
+OpenTelemetry.Exporter.InMemoryMetricExporter.InMemoryMetricExporter(System.Collections.Generic.ICollection<OpenTelemetry.Metrics.Metric> exportedItems) -> void
 OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions
+override OpenTelemetry.Exporter.InMemoryMetricExporter.Export(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric> batch) -> OpenTelemetry.ExportResult
+readonly OpenTelemetry.Exporter.InMemoryExporter<T>.exportedItems -> System.Collections.Generic.ICollection<T>
 static OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions.AddInMemoryExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Collections.Generic.ICollection<OpenTelemetry.Metrics.Metric> exportedItems) -> OpenTelemetry.Metrics.MeterProviderBuilder
 static OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions.AddInMemoryExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Collections.Generic.ICollection<OpenTelemetry.Metrics.Metric> exportedItems, System.Action<OpenTelemetry.Metrics.MetricReaderOptions> configureMetricReader) -> OpenTelemetry.Metrics.MeterProviderBuilder

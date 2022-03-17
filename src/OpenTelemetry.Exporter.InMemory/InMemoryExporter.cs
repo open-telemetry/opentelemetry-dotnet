@@ -16,36 +16,24 @@
 
 using System.Collections.Generic;
 
+using OpenTelemetry.Internal;
+
 namespace OpenTelemetry.Exporter
 {
     public class InMemoryExporter<T> : BaseExporter<T>
         where T : class
     {
-        private readonly ICollection<T> exportedItems;
-        private readonly bool isMetric;
+        protected readonly ICollection<T> exportedItems;
 
         public InMemoryExporter(ICollection<T> exportedItems)
         {
+            Guard.ThrowIfNull(exportedItems);
+
             this.exportedItems = exportedItems;
-            this.isMetric = typeof(T) == typeof(Metrics.Metric);
         }
 
         public override ExportResult Export(in Batch<T> batch)
         {
-            if (this.exportedItems == null)
-            {
-                return ExportResult.Failure;
-            }
-
-            if (this.isMetric)
-            {
-                // By design, The MetricApi reuses Metrics (MetricReader.metricsCurrentBatch).
-                // This means that exported Metrics will always reflect the latest values.
-                // Here, we clear the exported collection to prevent populating
-                // this with duplicate instances of the same Metric.
-                this.exportedItems.Clear();
-            }
-
             foreach (var data in batch)
             {
                 this.exportedItems.Add(data);

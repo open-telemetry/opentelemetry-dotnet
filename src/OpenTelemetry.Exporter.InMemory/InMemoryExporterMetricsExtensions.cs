@@ -79,7 +79,7 @@ namespace OpenTelemetry.Metrics
         {
             configureMetricReader?.Invoke(metricReaderOptions);
 
-            var metricExporter = new InMemoryExporter<Metric>(exportedItems);
+            var metricExporter = new InMemoryMetricExporter(exportedItems);
 
             if (metricReaderOptions.MetricReaderType == (MetricReaderType)(-1))
             {

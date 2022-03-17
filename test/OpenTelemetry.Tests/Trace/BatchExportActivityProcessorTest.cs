@@ -180,7 +180,7 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckExportDrainsBatchOnFailure()
         {
-            using var exporter = new InMemoryExporter<Activity>(null);
+            using var exporter = new InMemoryExporter<Activity>(new List<Activity>());
             using var processor = new BatchActivityExportProcessor(
                 exporter,
                 maxQueueSize: 3,
