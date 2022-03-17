@@ -47,6 +47,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             activity.EnumerateTags(ref tagState);
 
+            // When status is set on Activity using the native Status field in activity,
+            // which was first introduced in System.Diagnostic.DiagnosticSource 6.0.0.
             if (activity.Status != ActivityStatusCode.Unset)
             {
                 PooledList<KeyValuePair<string, object>>.Add(
