@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Support Activity `Status` and `StatusDescription` in Zipkin Exporter.
+ ([#3003](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3003))
+
 ## 1.2.0-rc3
 
 Released 2022-Mar-04
