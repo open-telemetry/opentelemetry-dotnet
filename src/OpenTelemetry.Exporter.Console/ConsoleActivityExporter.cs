@@ -84,10 +84,10 @@ namespace OpenTelemetry.Exporter
 
                 if (activity.Status != ActivityStatusCode.Unset)
                 {
-                    this.WriteLine($"Activity statusCode : {StatusHelper.GetTagValueForActivityStatusCode(activity.Status)}");
+                    this.WriteLine($"Activity StatusCode : {StatusHelper.GetTagValueForActivityStatusCode(activity.Status)}");
                     if (activity.Status == ActivityStatusCode.Error)
                     {
-                        this.WriteLine($"error : {activity.StatusDescription ?? string.Empty}");
+                        this.WriteLine($"Error : {activity.StatusDescription ?? string.Empty}");
                     }
                 }
                 else if (!string.IsNullOrEmpty(statusCode))
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"   StatusCode : {statusCode}");
                     if (!string.IsNullOrEmpty(statusDesc))
                     {
-                        this.WriteLine($"   error : {statusDesc}");
+                        this.WriteLine($"   Error : {statusDesc}");
                     }
                 }
 
