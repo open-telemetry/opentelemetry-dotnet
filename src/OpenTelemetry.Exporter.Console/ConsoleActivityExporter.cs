@@ -17,7 +17,6 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using OpenTelemetry.Console.Internal;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -84,10 +83,10 @@ namespace OpenTelemetry.Exporter
 
                 if (activity.Status != ActivityStatusCode.Unset)
                 {
-                    this.WriteLine($"Activity StatusCode : {StatusHelper.GetTagValueForActivityStatusCode(activity.Status)}");
-                    if (activity.Status == ActivityStatusCode.Error)
+                    this.WriteLine($"StatusCode : {activity.Status}");
+                    if (!string.IsNullOrEmpty(activity.StatusDescription))
                     {
-                        this.WriteLine($"Error : {activity.StatusDescription ?? string.Empty}");
+                        this.WriteLine($"Error : {activity.StatusDescription}");
                     }
                 }
                 else if (!string.IsNullOrEmpty(statusCode))
