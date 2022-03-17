@@ -26,7 +26,6 @@ public class Program
         {
             builder.AddOpenTelemetry(options =>
             {
-                options.IncludeScopes = true;
                 options.AddConsoleExporter();
             });
         });
@@ -36,12 +35,5 @@ public class Program
         logger.LogInformation("Hello Information");
         logger.LogWarning("Hello Warning");
         logger.LogError("Hello Error");
-
-        // TESTING options.IncludeScopes
-        using (logger.BeginScope("My Scope 1"))
-        using (logger.BeginScope("My Scope 2"))
-        {
-            logger.LogInformation("Hello Information within scope");
-        }
     }
 }
