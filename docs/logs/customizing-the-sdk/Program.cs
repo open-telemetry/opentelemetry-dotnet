@@ -17,6 +17,7 @@
 using Microsoft.Extensions.Logging;
 
 using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
 
 public class Program
 {
@@ -26,6 +27,9 @@ public class Program
         {
             builder.AddOpenTelemetry(options =>
             {
+                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+                    serviceName: "MyService",
+                    serviceVersion: "1.0.0"));
                 options.AddConsoleExporter();
             });
         });
