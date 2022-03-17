@@ -1,4 +1,4 @@
-// <copyright file="LoggingProviderTests.cs" company="OpenTelemetry Authors">
+// <copyright file="LoggerProviderTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ using Xunit;
 
 namespace OpenTelemetry.Logs.Tests
 {
-    public sealed class LoggingProviderTests
+    public sealed class LoggerProviderTests
     {
         [Fact]
         public void VerifyDefaultBehavior()
