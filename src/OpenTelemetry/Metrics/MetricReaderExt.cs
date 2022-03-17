@@ -28,7 +28,7 @@ namespace OpenTelemetry.Metrics
     public abstract partial class MetricReader
     {
         private readonly HashSet<string> metricStreamNames = new(StringComparer.OrdinalIgnoreCase);
-        private readonly ConcurrentDictionary<InstrumentIdentity, Metric> instrumentIdentityToMetric = new();
+        private readonly ConcurrentDictionary<MetricStreamIdentity, Metric> instrumentIdentityToMetric = new();
         private readonly object instrumentCreationLock = new();
         private int maxMetricStreams;
         private int maxMetricPointsPerMetricStream;
@@ -42,7 +42,7 @@ namespace OpenTelemetry.Metrics
             var meterVersion = instrument.Meter.Version;
             var metricName = instrument.Name;
             var metricStreamName = $"{meterName}.{meterVersion}.{metricName}";
-            var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, instrument.Description, instrument.GetType(), null, null);
+            var instrumentIdentity = new MetricStreamIdentity(instrument.Meter, metricName, instrument.Unit, instrument.Description, instrument.GetType(), null, null);
             lock (this.instrumentCreationLock)
             {
                 if (this.instrumentIdentityToMetric.TryGetValue(instrumentIdentity, out var existingMetric))
@@ -108,7 +108,7 @@ namespace OpenTelemetry.Metrics
                     var tagKeysInteresting = metricStreamConfig?.TagKeys;
                     var histogramBucketBounds = (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfig
                             && histogramConfig.Boundaries != null) ? histogramConfig.Boundaries : null;
-                    var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, metricDescription, instrument.GetType(), tagKeysInteresting, histogramBucketBounds);
+                    var instrumentIdentity = new MetricStreamIdentity(instrument.Meter, metricName, instrument.Unit, metricDescription, instrument.GetType(), tagKeysInteresting, histogramBucketBounds);
 
                     if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricName))
                     {

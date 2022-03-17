@@ -1,4 +1,4 @@
-// <copyright file="InstrumentIdentity.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricStreamIdentity.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,12 +19,12 @@ using System.Diagnostics.Metrics;
 
 namespace OpenTelemetry.Metrics
 {
-    internal readonly struct InstrumentIdentity : IEquatable<InstrumentIdentity>
+    internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
     {
         private static readonly StringArrayEqualityComparer StringArrayComparer = new StringArrayEqualityComparer();
         private readonly int hashCode;
 
-        public InstrumentIdentity(Meter meter, string instrumentName, string unit, string description, Type instrumentType, string[] tagKeys, double[] histogramBucketBounds)
+        public MetricStreamIdentity(Meter meter, string instrumentName, string unit, string description, Type instrumentType, string[] tagKeys, double[] histogramBucketBounds)
         {
             this.MeterName = meter.Name;
             this.MeterVersion = meter.Version ?? string.Empty;
@@ -71,6 +71,7 @@ namespace OpenTelemetry.Metrics
                         hash = (hash * 31) + this.HistogramBucketBounds[i].GetHashCode();
                     }
                 }
+
                 this.hashCode = hash;
             }
         }
@@ -91,16 +92,16 @@ namespace OpenTelemetry.Metrics
 
         public readonly double[] HistogramBucketBounds { get; }
 
-        public static bool operator ==(InstrumentIdentity metricIdentity1, InstrumentIdentity metricIdentity2) => metricIdentity1.Equals(metricIdentity2);
+        public static bool operator ==(MetricStreamIdentity metricIdentity1, MetricStreamIdentity metricIdentity2) => metricIdentity1.Equals(metricIdentity2);
 
-        public static bool operator !=(InstrumentIdentity metricIdentity1, InstrumentIdentity metricIdentity2) => !metricIdentity1.Equals(metricIdentity2);
+        public static bool operator !=(MetricStreamIdentity metricIdentity1, MetricStreamIdentity metricIdentity2) => !metricIdentity1.Equals(metricIdentity2);
 
         public readonly override bool Equals(object obj)
         {
-            return obj is InstrumentIdentity other && this.Equals(other);
+            return obj is MetricStreamIdentity other && this.Equals(other);
         }
 
-        public bool Equals(InstrumentIdentity other)
+        public bool Equals(MetricStreamIdentity other)
         {
             return this.InstrumentType == other.InstrumentType
                 && this.MeterName == other.MeterName
