@@ -18,9 +18,11 @@ using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
+namespace GettingStarted;
+
 public class Program
 {
-    private static readonly ActivitySource MyActivitySource = new ActivitySource(
+    private static readonly ActivitySource MyActivitySource = new(
         "MyCompany.MyProduct.MyLibrary");
 
     public static void Main()
@@ -31,11 +33,9 @@ public class Program
             .AddConsoleExporter()
             .Build();
 
-        using (var activity = MyActivitySource.StartActivity("SayHello"))
-        {
-            activity?.SetTag("foo", 1);
-            activity?.SetTag("bar", "Hello, World!");
-            activity?.SetTag("baz", new int[] { 1, 2, 3 });
-        }
+        using var activity = MyActivitySource.StartActivity("SayHello");
+        activity?.SetTag("foo", 1);
+        activity?.SetTag("bar", "Hello, World!");
+        activity?.SetTag("baz", new int[] { 1, 2, 3 });
     }
 }

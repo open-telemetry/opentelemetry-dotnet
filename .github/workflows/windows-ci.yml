@@ -13,9 +13,6 @@ on:
 jobs:
   build-test:
     runs-on: windows-latest
-    # https://github.com/actions/setup-dotnet/issues/122
-    env:
-      DOTNET_MULTILEVEL_LOOKUP: 1
 
     strategy:
       matrix:
@@ -23,11 +20,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-
-    - uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '6.0.x'
-        include-prerelease: true
 
     - name: Install dependencies
       run: dotnet restore

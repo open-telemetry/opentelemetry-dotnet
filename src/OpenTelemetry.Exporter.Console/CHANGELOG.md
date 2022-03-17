@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+Added StatusCode, StatusDescription support to
+`ConsoleActivityExporter`.
+
+## 1.2.0-rc3
+
+Released 2022-Mar-04
+
 * Removes metric related configuration options from `ConsoleExporterOptions`.
   `MetricReaderType`, `PeriodicExporterMetricReaderOptions`, and `Temporality`
   are now configurable via the `MetricReaderOptions`.

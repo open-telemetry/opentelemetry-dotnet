@@ -23,8 +23,8 @@ namespace OpenTelemetry.Trace.Tests
 {
     public class ParentBasedSamplerTests
     {
-        private readonly ParentBasedSampler parentBasedOnSampler = new ParentBasedSampler(new AlwaysOnSampler());
-        private readonly ParentBasedSampler parentBasedOffSampler = new ParentBasedSampler(new AlwaysOffSampler());
+        private readonly ParentBasedSampler parentBasedOnSampler = new(new AlwaysOnSampler());
+        private readonly ParentBasedSampler parentBasedOffSampler = new(new AlwaysOffSampler());
 
         [Fact]
         public void SampledParent()

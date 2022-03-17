@@ -53,8 +53,10 @@ namespace OpenTelemetry.Trace.Tests
                 maxExportBatchSize: 1,
                 scheduledDelayMilliseconds: 100_000);
 
-            var activity = new Activity("start");
-            activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            var activity = new Activity("start")
+            {
+                ActivityTraceFlags = ActivityTraceFlags.Recorded,
+            };
 
             processor.OnEnd(activity);
 
@@ -93,11 +95,15 @@ namespace OpenTelemetry.Trace.Tests
                 maxExportBatchSize: 3,
                 exporterTimeoutMilliseconds: 30000);
 
-            var activity1 = new Activity("start1");
-            activity1.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            var activity1 = new Activity("start1")
+            {
+                ActivityTraceFlags = ActivityTraceFlags.Recorded,
+            };
 
-            var activity2 = new Activity("start2");
-            activity2.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            var activity2 = new Activity("start2")
+            {
+                ActivityTraceFlags = ActivityTraceFlags.Recorded,
+            };
 
             processor.OnEnd(activity1);
             processor.OnEnd(activity2);
@@ -138,8 +144,10 @@ namespace OpenTelemetry.Trace.Tests
                 maxExportBatchSize: 3,
                 exporterTimeoutMilliseconds: 30000);
 
-            var activity = new Activity("start");
-            activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            var activity = new Activity("start")
+            {
+                ActivityTraceFlags = ActivityTraceFlags.Recorded,
+            };
 
             processor.OnEnd(activity);
             processor.Shutdown(timeout);
@@ -167,8 +175,10 @@ namespace OpenTelemetry.Trace.Tests
                 maxQueueSize: 1,
                 maxExportBatchSize: 1);
 
-            var activity = new Activity("start");
-            activity.ActivityTraceFlags = ActivityTraceFlags.None;
+            var activity = new Activity("start")
+            {
+                ActivityTraceFlags = ActivityTraceFlags.None,
+            };
 
             processor.OnEnd(activity);
             processor.Shutdown();
@@ -186,8 +196,10 @@ namespace OpenTelemetry.Trace.Tests
                 maxQueueSize: 3,
                 maxExportBatchSize: 3);
 
-            var activity = new Activity("start");
-            activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            var activity = new Activity("start")
+            {
+                ActivityTraceFlags = ActivityTraceFlags.Recorded,
+            };
 
             processor.OnEnd(activity);
             processor.OnEnd(activity);
