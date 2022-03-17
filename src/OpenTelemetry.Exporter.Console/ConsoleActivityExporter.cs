@@ -86,7 +86,7 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"StatusCode : {activity.Status}");
                     if (!string.IsNullOrEmpty(activity.StatusDescription))
                     {
-                        this.WriteLine($"Error : {activity.StatusDescription}");
+                        this.WriteLine($"Status Description : {activity.StatusDescription}");
                     }
                 }
                 else if (!string.IsNullOrEmpty(statusCode))
@@ -94,7 +94,7 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"   StatusCode : {statusCode}");
                     if (!string.IsNullOrEmpty(statusDesc))
                     {
-                        this.WriteLine($"   Error : {statusDesc}");
+                        this.WriteLine($"   Status Description : {statusDesc}");
                     }
                 }
 
