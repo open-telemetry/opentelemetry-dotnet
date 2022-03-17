@@ -501,18 +501,61 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
+            Assert.Equal(2, exportedItems.Count);
             var metric1 = new List<Metric>() { exportedItems[0] };
             var metric2 = new List<Metric>() { exportedItems[1] };
             var tag1 = new List<KeyValuePair<string, object>> { tags[0] };
             var tag2 = new List<KeyValuePair<string, object>> { tags[1] };
 
-            Assert.Equal(2, exportedItems.Count);
             Assert.Equal("name", exportedItems[0].Name);
             Assert.Equal("name", exportedItems[1].Name);
             Assert.Equal(20, GetLongSum(metric1));
             Assert.Equal(20, GetLongSum(metric2));
             CheckTagsForNthMetricPoint(metric1, tag1, 1);
             CheckTagsForNthMetricPoint(metric2, tag2, 1);
+        }
+
+        [Fact]
+        public void DuplicateInstrumentRegistration_WithViews_TwoIdenticalInstruments_TwoViews_SameTags()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView((instrument) =>
+                {
+                    return new MetricStreamConfiguration { TagKeys = new[] { "key1" } };
+                })
+                .AddView((instrument) =>
+                {
+                    return new MetricStreamConfiguration { TagKeys = new[] { "key1" } };
+                })
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var instrument1 = meter.CreateCounter<long>("name");
+            var instrument2 = meter.CreateCounter<long>("name");
+
+            var tags = new KeyValuePair<string, object>[]
+            {
+                new("key1", "value"),
+                new("key2", "value"),
+            };
+
+            instrument1.Add(10, tags);
+            instrument2.Add(10, tags);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.Single(exportedItems);
+            var metric1 = new List<Metric>() { exportedItems[0] };
+            var tag1 = new List<KeyValuePair<string, object>> { tags[0] };
+
+            Assert.Equal("name", exportedItems[0].Name);
+            Assert.Equal(20, GetLongSum(metric1));
+            CheckTagsForNthMetricPoint(metric1, tag1, 1);
         }
 
         [Fact]
