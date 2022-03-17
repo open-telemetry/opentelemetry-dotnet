@@ -27,7 +27,7 @@ TODO
 ### AddProcessor
 
 [Processors](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/logging-library-sdk.md#logprocessor)
-must be added using `OpenTelemetryLoggerOptions.AddProcessor()`. 
+must be added using `OpenTelemetryLoggerOptions.AddProcessor()`.
 It is not supported to add Processors after building the `LoggerFactory`.
 
 ```csharp
