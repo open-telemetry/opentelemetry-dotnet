@@ -34,8 +34,8 @@ namespace OpenTelemetry.Metrics
         private readonly int exportIntervalMilliseconds;
         private readonly int exportTimeoutMilliseconds;
         private readonly Thread exporterThread;
-        private readonly AutoResetEvent exportTrigger = new AutoResetEvent(false);
-        private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
+        private readonly AutoResetEvent exportTrigger = new(false);
+        private readonly ManualResetEvent shutdownTrigger = new(false);
         private bool disposed;
 
         /// <summary>
@@ -50,8 +50,9 @@ namespace OpenTelemetry.Metrics
             int exportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
             : base(exporter)
         {
-            Guard.ThrowIfOutOfRange(exportIntervalMilliseconds, min: 1);
-            Guard.ThrowIfOutOfRange(exportTimeoutMilliseconds, min: 0);
+            Guard.ThrowIfInvalidTimeout(exportIntervalMilliseconds);
+            Guard.ThrowIfZero(exportIntervalMilliseconds);
+            Guard.ThrowIfInvalidTimeout(exportTimeoutMilliseconds);
 
             if ((this.SupportedExportModes & ExportModes.Push) != ExportModes.Push)
             {

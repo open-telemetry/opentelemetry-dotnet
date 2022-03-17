@@ -44,7 +44,7 @@ You can contribute to this project from a Windows, macOS or Linux machine.
 On all platforms, the minimum requirements are:
 
 * Git client and command line tools.
-* .NET Core 6.0+
+* .NET 6.0+
 
 ### Linux or MacOS
 
@@ -76,14 +76,12 @@ helper methods.
    in each framework that you target.
 * Add the following lines to your csproj:
 
-<!-- markdownlint-disable MD013 -->
 ```xml
 <ItemGroup>
   <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Shipped.txt" />
   <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Unshipped.txt" />
 </ItemGroup>
 ```
-<!-- markdownlint-enable MD013 -->
 
 * Use
    [IntelliSense](https://docs.microsoft.com/visualstudio/ide/using-intellisense)

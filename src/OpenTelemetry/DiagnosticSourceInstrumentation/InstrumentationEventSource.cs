@@ -26,7 +26,7 @@ namespace OpenTelemetry.Instrumentation
     [EventSource(Name = "OpenTelemetry-Instrumentation")]
     internal class InstrumentationEventSource : EventSource
     {
-        public static InstrumentationEventSource Log = new InstrumentationEventSource();
+        public static InstrumentationEventSource Log = new();
 
         [Event(1, Message = "Current Activity is NULL in the '{0}' callback. Activity will not be recorded.", Level = EventLevel.Warning)]
         public void NullActivity(string eventName)

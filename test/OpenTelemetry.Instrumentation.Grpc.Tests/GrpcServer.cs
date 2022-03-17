@@ -26,7 +26,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
     public class GrpcServer<TService> : IDisposable
         where TService : class
     {
-        private static readonly Random GlobalRandom = new Random();
+        private static readonly Random GlobalRandom = new();
 
         private readonly IHost host;
 

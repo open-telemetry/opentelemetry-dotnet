@@ -3,10 +3,7 @@ OpenTelemetry.Batch<T>.Batch(T[] items, int count) -> void
 OpenTelemetry.Batch<T>.Count.get -> long
 OpenTelemetry.Metrics.MetricReaderOptions
 OpenTelemetry.Metrics.MetricReaderOptions.MetricReaderOptions() -> void
-OpenTelemetry.Metrics.MetricReaderOptions.MetricReaderType.get -> OpenTelemetry.Metrics.MetricReaderType
-OpenTelemetry.Metrics.MetricReaderOptions.MetricReaderType.set -> void
 OpenTelemetry.Metrics.MetricReaderOptions.PeriodicExportingMetricReaderOptions.get -> OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
-OpenTelemetry.Metrics.MetricReaderOptions.PeriodicExportingMetricReaderOptions.set -> void
 OpenTelemetry.Metrics.MetricReaderOptions.Temporality.get -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.MetricReaderOptions.Temporality.set -> void
 OpenTelemetry.Metrics.AggregationTemporality
@@ -81,9 +78,6 @@ OpenTelemetry.Metrics.MetricReader.MetricReader() -> void
 OpenTelemetry.Metrics.MetricReader.Shutdown(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Metrics.MetricReader.Temporality.get -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.MetricReader.Temporality.set -> void
-OpenTelemetry.Metrics.MetricReaderType
-OpenTelemetry.Metrics.MetricReaderType.Manual = 0 -> OpenTelemetry.Metrics.MetricReaderType
-OpenTelemetry.Metrics.MetricReaderType.Periodic = 1 -> OpenTelemetry.Metrics.MetricReaderType
 OpenTelemetry.Metrics.MetricStreamConfiguration
 OpenTelemetry.Metrics.MetricStreamConfiguration.Description.get -> string
 OpenTelemetry.Metrics.MetricStreamConfiguration.Description.set -> void
@@ -103,8 +97,10 @@ OpenTelemetry.Metrics.PeriodicExportingMetricReader
 OpenTelemetry.Metrics.PeriodicExportingMetricReader.PeriodicExportingMetricReader(OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric> exporter, int exportIntervalMilliseconds = 60000, int exportTimeoutMilliseconds = 30000) -> void
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.PeriodicExportingMetricReaderOptions() -> void
-OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds.get -> int
+OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds.get -> int?
 OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds.set -> void
+OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds.get -> int?
+OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds.set -> void
 OpenTelemetry.ReadOnlyTagCollection
 OpenTelemetry.ReadOnlyTagCollection.Count.get -> int
 OpenTelemetry.ReadOnlyTagCollection.Enumerator

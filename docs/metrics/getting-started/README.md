@@ -1,6 +1,6 @@
 # Getting Started with OpenTelemetry .NET in 5 Minutes
 
-First, download and install the [.NET Core
+First, download and install the [.NET
 SDK](https://dotnet.microsoft.com/download) on your computer.
 
 Create a new console application and run it:
@@ -31,7 +31,6 @@ Run the application again (using `dotnet run`) and you should see the metric
 output from the console (metrics will be seen once the program ends),
 similar to shown below:
 
-<!-- markdownlint-disable MD013 -->
 ```text
 Export MyFruitCounter, Meter: MyCompany.MyProduct.MyLibrary/1.0
 (2021-09-23T22:00:08.4399776Z, 2021-09-23T22:00:08.4510115Z] color:red name:apple LongSum
@@ -41,7 +40,6 @@ Value: 7
 (2021-09-23T22:00:08.4399776Z, 2021-09-23T22:00:08.4510115Z] color:green name:apple LongSum
 Value: 2
 ```
-<!-- markdownlint-enable MD013 -->
 
 Congratulations! You are now collecting metrics using OpenTelemetry.
 
@@ -87,9 +85,11 @@ the configuration for metrics like `Meter` names, readers, etc. and is highly
 ## OpenTelemetry .NET special note
 
 Metrics in OpenTelemetry .NET is a somewhat unique implementation of the
-OpenTelemetry project, as most of the Metrics API are incorporated directly
-into the .NET runtime itself. From a high level, what this means is that you
-can instrument your application by simply depending on
+OpenTelemetry project, as most of the
+[Metrics API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md)
+is implemented by the [.NET
+runtime](https://github.com/dotnet/runtime) itself. From a high level, what this
+means is that you can instrument your application by simply depending on
 `System.Diagnostics.DiagnosticSource` package.
 
 ## Learn more

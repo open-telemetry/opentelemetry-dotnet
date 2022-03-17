@@ -49,9 +49,9 @@ namespace OpenTelemetry.Context.Propagation
         // "Debug" sampled value.
         internal const string FlagsValue = "1";
 
-        private static readonly HashSet<string> AllFields = new HashSet<string>() { XB3TraceId, XB3SpanId, XB3ParentSpanId, XB3Sampled, XB3Flags };
+        private static readonly HashSet<string> AllFields = new() { XB3TraceId, XB3SpanId, XB3ParentSpanId, XB3Sampled, XB3Flags };
 
-        private static readonly HashSet<string> SampledValues = new HashSet<string>(StringComparer.Ordinal) { SampledValue, LegacySampledValue };
+        private static readonly HashSet<string> SampledValues = new(StringComparer.Ordinal) { SampledValue, LegacySampledValue };
 
         private readonly bool singleHeader;
 

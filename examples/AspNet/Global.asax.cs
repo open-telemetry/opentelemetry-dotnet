@@ -22,6 +22,7 @@ using System.Web.Mvc;
 using System.Web.Routing;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 namespace Examples.AspNet
@@ -31,6 +32,7 @@ namespace Examples.AspNet
 #pragma warning restore SA1649 // File name should match first type name
     {
         private IDisposable tracerProvider;
+        private IDisposable meterProvider;
 
         protected void Application_Start()
         {
@@ -66,6 +68,38 @@ namespace Examples.AspNet
 
             this.tracerProvider = builder.Build();
 
+            // Metrics
+            // Note: Tracerprovider is needed for metrics to work
+            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2994
+
+            var meterBuilder = Sdk.CreateMeterProviderBuilder()
+                 .AddAspNetInstrumentation();
+
+            switch (ConfigurationManager.AppSettings["UseMetricsExporter"].ToLowerInvariant())
+            {
+                case "otlp":
+                    meterBuilder.AddOtlpExporter(otlpOptions =>
+                    {
+                        otlpOptions.Endpoint = new Uri(ConfigurationManager.AppSettings["OtlpEndpoint"]);
+                    });
+                    break;
+                case "prometheus":
+                    meterBuilder.AddPrometheusExporter();
+                    break;
+                default:
+                    meterBuilder.AddConsoleExporter((exporterOptions, metricReaderOptions) =>
+                    {
+                        exporterOptions.Targets = ConsoleExporterOutputTargets.Debug;
+
+                        // The ConsoleMetricExporter defaults to a manual collect cycle.
+                        // This configuration causes metrics to be exported to stdout on a 10s interval.
+                        metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10000;
+                    });
+                    break;
+            }
+
+            this.meterProvider = meterBuilder.Build();
+
             GlobalConfiguration.Configure(WebApiConfig.Register);
 
             AreaRegistration.RegisterAllAreas();
@@ -75,6 +109,7 @@ namespace Examples.AspNet
         protected void Application_End()
         {
             this.tracerProvider?.Dispose();
+            this.meterProvider?.Dispose();
         }
     }
 }
