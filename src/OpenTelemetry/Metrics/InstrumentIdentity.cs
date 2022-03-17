@@ -24,7 +24,7 @@ namespace OpenTelemetry.Metrics
         private static readonly StringArrayEqualityComparer StringArrayComparer = new StringArrayEqualityComparer();
         private readonly int hashCode;
 
-        public InstrumentIdentity(Meter meter, string instrumentName, string unit, string description, Type instrumentType, string[] tagKeys)
+        public InstrumentIdentity(Meter meter, string instrumentName, string unit, string description, Type instrumentType, string[] tagKeys, double[] histogramBucketBounds)
         {
             this.MeterName = meter.Name;
             this.MeterVersion = meter.Version ?? string.Empty;
@@ -43,6 +43,16 @@ namespace OpenTelemetry.Metrics
                 this.TagKeys = null;
             }
 
+            if (histogramBucketBounds != null && histogramBucketBounds.Length > 0)
+            {
+                this.HistogramBucketBounds = new double[histogramBucketBounds.Length];
+                histogramBucketBounds.CopyTo(this.HistogramBucketBounds, 0);
+            }
+            else
+            {
+                this.HistogramBucketBounds = null;
+            }
+
             unchecked
             {
                 var hash = 17;
@@ -53,6 +63,14 @@ namespace OpenTelemetry.Metrics
                 hash = this.Unit == null ? hash : (hash * 31) + this.Unit.GetHashCode();
                 hash = this.Description == null ? hash : (hash * 31) + this.Description.GetHashCode();
                 hash = this.TagKeys == null ? hash : StringArrayComparer.GetHashCode(this.TagKeys);
+                if (this.HistogramBucketBounds != null)
+                {
+                    var len = this.HistogramBucketBounds.Length;
+                    for (var i = 0; i < len; ++i)
+                    {
+                        hash = (hash * 31) + this.HistogramBucketBounds[i].GetHashCode();
+                    }
+                }
                 this.hashCode = hash;
             }
         }
@@ -71,6 +89,8 @@ namespace OpenTelemetry.Metrics
 
         public readonly string[] TagKeys { get; }
 
+        public readonly double[] HistogramBucketBounds { get; }
+
         public static bool operator ==(InstrumentIdentity metricIdentity1, InstrumentIdentity metricIdentity2) => metricIdentity1.Equals(metricIdentity2);
 
         public static bool operator !=(InstrumentIdentity metricIdentity1, InstrumentIdentity metricIdentity2) => !metricIdentity1.Equals(metricIdentity2);
@@ -88,9 +108,40 @@ namespace OpenTelemetry.Metrics
                 && this.InstrumentName == other.InstrumentName
                 && this.Unit == other.Unit
                 && this.Description == other.Description
-                && StringArrayComparer.Equals(this.TagKeys, other.TagKeys);
+                && StringArrayComparer.Equals(this.TagKeys, other.TagKeys)
+                && HistogramBoundsEqual(this.HistogramBucketBounds, other.HistogramBucketBounds);
         }
 
         public readonly override int GetHashCode() => this.hashCode;
+
+        private static bool HistogramBoundsEqual(double[] bounds1, double[] bounds2)
+        {
+            if (ReferenceEquals(bounds1, bounds2))
+            {
+                return true;
+            }
+
+            if (ReferenceEquals(bounds1, null) || ReferenceEquals(bounds2, null))
+            {
+                return false;
+            }
+
+            var len1 = bounds1.Length;
+
+            if (len1 != bounds2.Length)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < len1; i++)
+            {
+                if (!bounds1[i].Equals(bounds2[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 }

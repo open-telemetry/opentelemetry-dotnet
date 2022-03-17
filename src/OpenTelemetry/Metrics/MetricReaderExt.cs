@@ -42,7 +42,7 @@ namespace OpenTelemetry.Metrics
             var meterVersion = instrument.Meter.Version;
             var metricName = instrument.Name;
             var metricStreamName = $"{meterName}.{meterVersion}.{metricName}";
-            var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, instrument.Description, instrument.GetType(), null);
+            var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, instrument.Description, instrument.GetType(), null, null);
             lock (this.instrumentCreationLock)
             {
                 if (this.instrumentIdentityToMetric.TryGetValue(instrumentIdentity, out var existingMetric))
@@ -106,7 +106,9 @@ namespace OpenTelemetry.Metrics
                     var metricStreamName = $"{meterName}.{meterVersion}.{metricName}";
                     var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
                     var tagKeysInteresting = metricStreamConfig?.TagKeys;
-                    var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, metricDescription, instrument.GetType(), tagKeysInteresting);
+                    var histogramBucketBounds = (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfig
+                            && histogramConfig.Boundaries != null) ? histogramConfig.Boundaries : null;
+                    var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, metricDescription, instrument.GetType(), tagKeysInteresting, histogramBucketBounds);
 
                     if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricName))
                     {
@@ -154,8 +156,6 @@ namespace OpenTelemetry.Metrics
                     else
                     {
                         Metric metric;
-                        double[] histogramBucketBounds = (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfig
-                            && histogramConfig.Boundaries != null) ? histogramConfig.Boundaries : null;
                         metric = new Metric(instrumentIdentity, this.Temporality, this.maxMetricPointsPerMetricStream, histogramBucketBounds, tagKeysInteresting);
 
                         this.instrumentIdentityToMetric[instrumentIdentity] = metric;
