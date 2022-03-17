@@ -231,5 +231,42 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
             // Ensure additional Activity tags were being converted.
             Assert.Contains(zipkinSpan.Tags, t => t.Key == "myCustomTag" && (string)t.Value == "myCustomTagValue");
         }
+
+        [Fact]
+        public void ActivityStatus_Takes_precedence_Over_Status_Tags_ActivityStatusCodeIsError_SettingTagFirst()
+        {
+            // Arrange.
+            var activity = ZipkinExporterTests.CreateTestActivity();
+
+            const string StatusDescriptionOnError = "Description when ActivityStatusCode is Error.";
+            const string TagDescriptionOnError = "Description when TagStatusCode is Error.";
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, "ERROR");
+            activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, TagDescriptionOnError);
+            activity.SetStatus(ActivityStatusCode.Error, StatusDescriptionOnError);
+
+            // Enrich activity with additional tags.
+            activity.SetTag("myCustomTag", "myCustomTagValue");
+
+            // Act.
+            var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
+
+            // Assert.
+            Assert.Equal(
+                StatusHelper.GetTagValueForActivityStatusCode(ActivityStatusCode.Error),
+                zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+
+            // ActivityStatusDescription takes higher precedence.
+            Assert.Contains(
+                zipkinSpan.Tags, t =>
+                t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName &&
+                (string)t.Value == StatusDescriptionOnError);
+            Assert.DoesNotContain(
+                zipkinSpan.Tags, t =>
+                t.Key == ZipkinActivityConversionExtensions.ZipkinErrorFlagTagName &&
+                (string)t.Value == TagDescriptionOnError);
+
+            // Ensure additional Activity tags were being converted.
+            Assert.Contains(zipkinSpan.Tags, t => t.Key == "myCustomTag" && (string)t.Value == "myCustomTagValue");
+        }
     }
 }
