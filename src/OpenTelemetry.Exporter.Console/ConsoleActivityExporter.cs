@@ -71,9 +71,7 @@ namespace OpenTelemetry.Exporter
                             continue;
                         }
 
-                        var array = tag.Value as Array;
-
-                        if (array == null)
+                        if (tag.Value is not Array array)
                         {
                             this.WriteLine($"    {tag.Key}: {tag.Value}");
                             continue;
@@ -81,15 +79,22 @@ namespace OpenTelemetry.Exporter
 
                         this.WriteLine($"    {tag.Key}: [{string.Join(", ", array.Cast<object>())}]");
                     }
+                }
 
-                    if (!string.IsNullOrEmpty(statusCode))
+                if (activity.Status != ActivityStatusCode.Unset)
+                {
+                    this.WriteLine($"StatusCode : {activity.Status}");
+                    if (!string.IsNullOrEmpty(activity.StatusDescription))
                     {
-                        this.WriteLine($"   StatusCode : {statusCode}");
+                        this.WriteLine($"Error : {activity.StatusDescription}");
                     }
-
+                }
+                else if (!string.IsNullOrEmpty(statusCode))
+                {
+                    this.WriteLine($"   StatusCode : {statusCode}");
                     if (!string.IsNullOrEmpty(statusDesc))
                     {
-                        this.WriteLine($"   StatusDescription : {statusDesc}");
+                        this.WriteLine($"   Error : {statusDesc}");
                     }
                 }
 
