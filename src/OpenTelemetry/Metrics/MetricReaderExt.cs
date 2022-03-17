@@ -42,10 +42,10 @@ namespace OpenTelemetry.Metrics
             var meterVersion = instrument.Meter.Version;
             var metricName = instrument.Name;
             var metricStreamName = $"{meterName}.{meterVersion}.{metricName}";
-            var instrumentIdentity = new MetricStreamIdentity(instrument.Meter, metricName, instrument.Unit, instrument.Description, instrument.GetType(), null, null);
+            var metricStreamIdentity = new MetricStreamIdentity(instrument.Meter, metricName, instrument.Unit, instrument.Description, instrument.GetType(), null, null);
             lock (this.instrumentCreationLock)
             {
-                if (this.instrumentIdentityToMetric.TryGetValue(instrumentIdentity, out var existingMetric))
+                if (this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out var existingMetric))
                 {
                     return existingMetric;
                 }
@@ -67,8 +67,8 @@ namespace OpenTelemetry.Metrics
                 }
                 else
                 {
-                    var metric = new Metric(instrumentIdentity, this.Temporality, this.maxMetricPointsPerMetricStream);
-                    this.instrumentIdentityToMetric[instrumentIdentity] = metric;
+                    var metric = new Metric(metricStreamIdentity, this.Temporality, this.maxMetricPointsPerMetricStream);
+                    this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                     this.metrics[index] = metric;
                     this.metricStreamNames.Add(metricStreamName);
                     return metric;
@@ -108,7 +108,7 @@ namespace OpenTelemetry.Metrics
                     var tagKeysInteresting = metricStreamConfig?.TagKeys;
                     var histogramBucketBounds = (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfig
                             && histogramConfig.Boundaries != null) ? histogramConfig.Boundaries : null;
-                    var instrumentIdentity = new MetricStreamIdentity(instrument.Meter, metricName, instrument.Unit, metricDescription, instrument.GetType(), tagKeysInteresting, histogramBucketBounds);
+                    var metricStreamIdentity = new MetricStreamIdentity(instrument.Meter, metricName, instrument.Unit, metricDescription, instrument.GetType(), tagKeysInteresting, histogramBucketBounds);
 
                     if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricName))
                     {
@@ -121,7 +121,7 @@ namespace OpenTelemetry.Metrics
                         continue;
                     }
 
-                    if (this.instrumentIdentityToMetric.TryGetValue(instrumentIdentity, out var existingMetric))
+                    if (this.instrumentIdentityToMetric.TryGetValue(metricStreamIdentity, out var existingMetric))
                     {
                         // The list of metrics may already contain a matching metric with the same
                         // identity when a single instrument is selected by multiple views.
@@ -156,9 +156,9 @@ namespace OpenTelemetry.Metrics
                     else
                     {
                         Metric metric;
-                        metric = new Metric(instrumentIdentity, this.Temporality, this.maxMetricPointsPerMetricStream, histogramBucketBounds, tagKeysInteresting);
+                        metric = new Metric(metricStreamIdentity, this.Temporality, this.maxMetricPointsPerMetricStream, histogramBucketBounds, tagKeysInteresting);
 
-                        this.instrumentIdentityToMetric[instrumentIdentity] = metric;
+                        this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                         this.metrics[index] = metric;
                         metrics.Add(metric);
                         this.metricStreamNames.Add(metricStreamName);
