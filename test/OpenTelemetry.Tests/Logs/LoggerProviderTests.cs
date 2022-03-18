@@ -15,6 +15,11 @@
 // </copyright>
 #if !NET461
 using System;
+using System.Collections.Generic;
+
+using Microsoft.Extensions.Logging;
+
+using OpenTelemetry.Exporter;
 
 using OpenTelemetry.Resources;
 
@@ -27,8 +32,7 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void VerifyDefaultBehavior()
         {
-            var options = new OpenTelemetryLoggerOptions();
-            var provider = new OpenTelemetryLoggerProvider(options);
+            InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider);
 
             Assert.Contains(provider.Resource.Attributes, (kvp) => kvp.Key == "service.name" && kvp.Value.ToString() == "unknown_service:testhost");
         }
@@ -36,9 +40,7 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void VerifyResourceBuilderAddService()
         {
-            var options = new OpenTelemetryLoggerOptions();
-            options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: "MyService", serviceVersion: "1.2.3"));
-            var provider = new OpenTelemetryLoggerProvider(options);
+            InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider, configure: options => options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: "MyService", serviceVersion: "1.2.3")));
 
             Assert.Contains(provider.Resource.Attributes, (kvp) => kvp.Key == "service.name" && kvp.Value.ToString() == "MyService");
             Assert.Contains(provider.Resource.Attributes, (kvp) => kvp.Key == "service.version" && kvp.Value.ToString() == "1.2.3");
@@ -51,8 +53,7 @@ namespace OpenTelemetry.Logs.Tests
             {
                 Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, "MyService");
 
-                var options = new OpenTelemetryLoggerOptions();
-                var provider = new OpenTelemetryLoggerProvider(options);
+                InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider);
 
                 Assert.Contains(provider.Resource.Attributes, (kvp) => kvp.Key == "service.name" && kvp.Value.ToString() == "MyService");
             }
@@ -69,8 +70,7 @@ namespace OpenTelemetry.Logs.Tests
             {
                 Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, "Key1=Val1,Key2=Val2");
 
-                var options = new OpenTelemetryLoggerOptions();
-                var provider = new OpenTelemetryLoggerProvider(options);
+                InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider);
 
                 Assert.Contains(provider.Resource.Attributes, (kvp) => kvp.Key == "Key1" && kvp.Value.ToString() == "Val1");
                 Assert.Contains(provider.Resource.Attributes, (kvp) => kvp.Key == "Key2" && kvp.Value.ToString() == "Val2");
@@ -78,6 +78,38 @@ namespace OpenTelemetry.Logs.Tests
             finally
             {
                 Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, null);
+            }
+        }
+
+        private static void InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider, Action<OpenTelemetryLoggerOptions> configure = null)
+        {
+            var exporter = new InMemoryExporter<LogRecord>(new List<LogRecord>());
+            var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    configure?.Invoke(options);
+                    options.AddProcessor(new TestLogRecordProcessor(exporter));
+                });
+                builder.AddFilter(typeof(LoggerProviderTests).FullName, LogLevel.Trace);
+            });
+            var logger = loggerFactory.CreateLogger<LoggerProviderTests>();
+
+            provider = exporter.ParentProvider as OpenTelemetryLoggerProvider;
+        }
+
+        private class TestLogRecordProcessor : SimpleExportProcessor<LogRecord>
+        {
+            public TestLogRecordProcessor(BaseExporter<LogRecord> exporter)
+                : base(exporter)
+            {
+            }
+
+            public override void OnEnd(LogRecord data)
+            {
+                data.BufferLogScopes();
+
+                base.OnEnd(data);
             }
         }
     }
