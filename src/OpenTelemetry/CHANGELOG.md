@@ -20,8 +20,8 @@
   to `-1`.
   ([#3038](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3038))
 
-* `OpenTelemetryLoggerProvider` now copies values from `OpenTelemetryLoggerOptions`
-  to prevent options from being changed after the Provider is initialized.
+* `OpenTelemetryLoggerProvider` now copies values from `OpenTelemetryLoggerOptions`.
+  This prevents changes to the Provider after being initialized.
   ([#3055](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3055))
 
 ## 1.2.0-rc3
