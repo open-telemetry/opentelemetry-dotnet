@@ -43,7 +43,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         /// <inheritdoc/>
         public override bool SendExportRequest(OtlpCollector.ExportMetricsServiceRequest request, CancellationToken cancellationToken = default)
         {
-            var deadline = DateTime.UtcNow.AddMilliseconds(this.Options.TimeoutMilliseconds);
+            var deadline = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
 
             try
             {
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             }
             catch (RpcException ex)
             {
-                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Options.Endpoint, ex);
+                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
                 return false;
             }
