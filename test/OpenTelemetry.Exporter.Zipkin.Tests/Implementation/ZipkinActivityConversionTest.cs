@@ -146,11 +146,15 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
             {
                 Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == SpanAttributeConstants.StatusCodeKey);
             }
+            else if (expectedStatusCode == ActivityStatusCode.Ok)
+            {
+                Assert.Equal("OK", zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            }
+
+            // expectedStatusCode is Error
             else
             {
-                Assert.Equal(
-                    StatusHelper.GetTagValueForActivityStatusCode(expectedStatusCode),
-                    zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+                Assert.Equal("ERROR", zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
             }
 
             if (expectedStatusCode == ActivityStatusCode.Error)
@@ -183,9 +187,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
 
             // Assert.
-            Assert.Equal(
-                StatusHelper.GetTagValueForActivityStatusCode(ActivityStatusCode.Ok),
-                zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            Assert.Equal("OK", zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
 
             Assert.Contains(zipkinSpan.Tags, t => t.Key == "otel.status_code" && (string)t.Value == "OK");
             Assert.DoesNotContain(zipkinSpan.Tags, t => t.Key == "otel.status_code" && (string)t.Value == "ERROR");
@@ -214,9 +216,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
 
             // Assert.
-            Assert.Equal(
-                StatusHelper.GetTagValueForActivityStatusCode(ActivityStatusCode.Error),
-                zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            Assert.Equal("ERROR", zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
 
             // ActivityStatusDescription takes higher precedence.
             Assert.Contains(
@@ -251,9 +251,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
             var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
 
             // Assert.
-            Assert.Equal(
-                StatusHelper.GetTagValueForActivityStatusCode(ActivityStatusCode.Error),
-                zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
+            Assert.Equal("ERROR", zipkinSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).Value);
 
             // ActivityStatusDescription takes higher precedence.
             Assert.Contains(

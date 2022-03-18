@@ -51,15 +51,25 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             // which was first introduced in System.Diagnostic.DiagnosticSource 6.0.0.
             if (activity.Status != ActivityStatusCode.Unset)
             {
-                PooledList<KeyValuePair<string, object>>.Add(
+                if (activity.Status == ActivityStatusCode.Ok)
+                {
+                    PooledList<KeyValuePair<string, object>>.Add(
                     ref tagState.Tags,
                     new KeyValuePair<string, object>(
                         SpanAttributeConstants.StatusCodeKey,
-                        StatusHelper.GetTagValueForActivityStatusCode(activity.Status)));
+                        "OK"));
+                }
 
-                // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
-                if (activity.Status == ActivityStatusCode.Error)
+                // activity.Status is Error
+                else
                 {
+                    PooledList<KeyValuePair<string, object>>.Add(
+                        ref tagState.Tags,
+                        new KeyValuePair<string, object>(
+                            SpanAttributeConstants.StatusCodeKey,
+                            "ERROR"));
+
+                    // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
                     PooledList<KeyValuePair<string, object>>.Add(
                         ref tagState.Tags,
                         new KeyValuePair<string, object>(
