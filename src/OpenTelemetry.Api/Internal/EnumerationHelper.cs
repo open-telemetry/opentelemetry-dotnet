@@ -18,6 +18,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -81,16 +82,6 @@ namespace OpenTelemetry.Internal
         {
             var itemCallbackType = typeof(ForEachDelegate);
 
-            var getEnumeratorMethod = ResolveGetEnumeratorMethodForType(enumerableType);
-            if (getEnumeratorMethod == null)
-            {
-                // Fallback to allocation mode and use IEnumerable<TItem>.GetEnumerator.
-                // Primarily for Array.Empty and Enumerable.Empty case, but also for user types.
-                getEnumeratorMethod = GenericGetEnumeratorMethod;
-            }
-
-            var enumeratorType = getEnumeratorMethod.ReturnType;
-
             var dynamicMethod = new DynamicMethod(
                 nameof(AllocationFreeForEachDelegate),
                 null,
@@ -100,67 +91,158 @@ namespace OpenTelemetry.Internal
 
             var generator = dynamicMethod.GetILGenerator();
 
-            generator.DeclareLocal(enumeratorType);
-
             var beginLoopLabel = generator.DefineLabel();
             var processCurrentLabel = generator.DefineLabel();
             var returnLabel = generator.DefineLabel();
-            var breakLoopLabel = generator.DefineLabel();
 
             generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Callvirt, getEnumeratorMethod);
+            var enumeratorType = EmitGetEnumerator(generator, enumerableType);
             generator.Emit(OpCodes.Stloc_0);
 
-            // try
-            generator.BeginExceptionBlock();
+            generator.DeclareLocal(enumeratorType);
+            bool isDisposable = typeof(IDisposable).IsAssignableFrom(enumeratorType);
+
+            if (isDisposable)
             {
-                generator.Emit(OpCodes.Br_S, beginLoopLabel);
-
-                generator.MarkLabel(processCurrentLabel);
-
-                generator.Emit(OpCodes.Ldarg_2);
-                generator.Emit(OpCodes.Ldarg_1);
-                generator.Emit(OpCodes.Ldloca_S, 0);
-                generator.Emit(OpCodes.Constrained, enumeratorType);
-                generator.Emit(OpCodes.Callvirt, GeneircCurrentGetMethod);
-
-                generator.Emit(OpCodes.Callvirt, itemCallbackType.GetMethod("Invoke"));
-
-                generator.Emit(OpCodes.Brtrue_S, beginLoopLabel);
-
-                generator.Emit(OpCodes.Leave_S, returnLabel);
-
-                generator.MarkLabel(beginLoopLabel);
-
-                generator.Emit(OpCodes.Ldloca_S, 0);
-                generator.Emit(OpCodes.Constrained, enumeratorType);
-                generator.Emit(OpCodes.Callvirt, MoveNextMethod);
-
-                generator.Emit(OpCodes.Brtrue_S, processCurrentLabel);
-
-                generator.MarkLabel(breakLoopLabel);
-
-                generator.Emit(OpCodes.Leave_S, returnLabel);
+                // try
+                generator.BeginExceptionBlock();
             }
 
-            // finally
-            generator.BeginFinallyBlock();
-            {
-                if (typeof(IDisposable).IsAssignableFrom(enumeratorType))
-                {
-                    generator.Emit(OpCodes.Ldloca_S, 0);
-                    generator.Emit(OpCodes.Constrained, enumeratorType);
-                    generator.Emit(OpCodes.Callvirt, DisposeMethod);
-                }
-            }
+            generator.Emit(OpCodes.Br_S, beginLoopLabel);
 
-            generator.EndExceptionBlock();
+            generator.MarkLabel(processCurrentLabel);
+
+            generator.Emit(OpCodes.Ldarg_2);
+            generator.Emit(OpCodes.Ldarg_1);
+            generator.Emit(OpCodes.Ldloca_S, 0);
+            EmitGetCurrent(generator, enumeratorType);
+
+            generator.Emit(OpCodes.Call, itemCallbackType.GetMethod("Invoke"));
+
+            generator.Emit(OpCodes.Brtrue_S, beginLoopLabel);
+
+            generator.Emit(OpCodes.Leave_S, returnLabel);
+
+            generator.MarkLabel(beginLoopLabel);
+
+            generator.Emit(OpCodes.Ldloca_S, 0);
+            EmitMoveNext(generator, enumeratorType);
+
+            generator.Emit(OpCodes.Brtrue_S, processCurrentLabel);
+
+            if (isDisposable)
+            {
+                generator.Emit(OpCodes.Leave_S, returnLabel);
+
+                // finally
+                generator.BeginFinallyBlock();
+
+                generator.Emit(OpCodes.Ldloca_S, 0);
+                EmitDispose(generator, enumeratorType);
+
+                generator.EndExceptionBlock();
+            }
 
             generator.MarkLabel(returnLabel);
 
             generator.Emit(OpCodes.Ret);
 
             return (AllocationFreeForEachDelegate)dynamicMethod.CreateDelegate(typeof(AllocationFreeForEachDelegate));
+        }
+
+        private static Type EmitGetEnumerator(ILGenerator generator, Type enumerableType)
+        {
+            var getEnumeratorMethod = ResolveGetEnumeratorMethodForType(enumerableType);
+            if (getEnumeratorMethod != null)
+            {
+                if (getEnumeratorMethod.IsVirtual && !getEnumeratorMethod.IsFinal)
+                {
+                    Debug.Fail("Performance regression virtual invocation.");
+                    generator.Emit(OpCodes.Callvirt, getEnumeratorMethod);
+                }
+                else
+                {
+                    generator.Emit(OpCodes.Call, getEnumeratorMethod);
+                }
+                return getEnumeratorMethod.ReturnType;
+            }
+
+            // Fallback to allocation mode and use IEnumerable<TItem>.GetEnumerator.
+            // Primarily for Array.Empty and Enumerable.Empty case, but also for user types.
+            Debug.Fail("Performance regression virtual invocation.");
+            generator.Emit(OpCodes.Constrained, typeof(IEnumerable<TItem>));
+            generator.Emit(OpCodes.Callvirt, GenericGetEnumeratorMethod);
+
+            return GenericGetEnumeratorMethod.ReturnType;
+        }
+
+        private static void EmitGetCurrent(ILGenerator generator, Type enumeratorType)
+        {
+            var getCurrentMethod = ResolveCurrentPropertyGetMethodForType(enumeratorType, typeof(TItem));
+            if (getCurrentMethod != null)
+            {
+                if (getCurrentMethod.IsVirtual && !getCurrentMethod.IsFinal)
+                {
+                    Debug.Fail("Performance regression virtual invocation.");
+                    generator.Emit(OpCodes.Callvirt, getCurrentMethod);
+                }
+                else
+                {
+                    generator.Emit(OpCodes.Call, getCurrentMethod);
+                }
+                return;
+            }
+
+            // Fallback to IEnumerator<TItem>.Current.
+            Debug.Fail("Performance regression virtual invocation.");
+            generator.Emit(OpCodes.Constrained, typeof(IEnumerator<TItem>));
+            generator.Emit(OpCodes.Callvirt, GeneircCurrentGetMethod);
+        }
+
+        private static void EmitMoveNext(ILGenerator generator, Type enumeratorType)
+        {
+            var moveNextMethod = ResolveMoveNextMethodForType(enumeratorType);
+            if (moveNextMethod != null)
+            {
+                if (moveNextMethod.IsVirtual && !moveNextMethod.IsFinal)
+                {
+                    Debug.Fail("Performance regression virtual invocation.");
+                    generator.Emit(OpCodes.Callvirt, moveNextMethod);
+                }
+                else
+                {
+                    generator.Emit(OpCodes.Call, moveNextMethod);
+                }
+                return;
+            }
+
+            // Fallback to IEnumerator.MoveNext.
+            Debug.Fail("Performance regression virtual invocation.");
+            generator.Emit(OpCodes.Constrained, typeof(IEnumerator));
+            generator.Emit(OpCodes.Callvirt, MoveNextMethod);
+        }
+
+        private static void EmitDispose(ILGenerator generator, Type enumeratorType)
+        {
+            var disposeMethod = ResolveDisposeMethodForType(enumeratorType);
+            if (disposeMethod != null)
+            {
+                if (disposeMethod.IsVirtual && !disposeMethod.IsFinal)
+                {
+                    Debug.Fail("Performance regression virtual invocation.");
+                    generator.Emit(OpCodes.Callvirt, disposeMethod);
+                }
+                else
+                {
+                    generator.Emit(OpCodes.Call, disposeMethod);
+                }
+                return;
+            }
+
+            // Fallback to IDisposable.Dispose.
+            Debug.Fail("Performance regression virtual invocation.");
+            generator.Emit(OpCodes.Constrained, typeof(IDisposable));
+            generator.Emit(OpCodes.Callvirt, DisposeMethod);
         }
 
         private static MethodInfo ResolveGetEnumeratorMethodForType(Type type)
@@ -170,6 +252,53 @@ namespace OpenTelemetry.Internal
             foreach (var method in methods)
             {
                 if (method.Name == "GetEnumerator" && !method.ReturnType.IsInterface)
+                {
+                    return method;
+                }
+            }
+
+            return null;
+        }
+
+        private static MethodInfo ResolveCurrentPropertyGetMethodForType(Type enumeratorType, Type itemType)
+        {
+            PropertyInfo[] properties = enumeratorType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+            foreach (PropertyInfo property in properties)
+            {
+                if (property.Name == "Current"
+                    && property.CanRead
+                    && property.PropertyType == itemType)
+                {
+                    return property.GetMethod;
+                }
+            }
+
+            return null;
+        }
+
+        private static MethodInfo ResolveMoveNextMethodForType(Type type)
+        {
+            var methods = type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+            foreach (var method in methods)
+            {
+                if (method.Name == "MoveNext")
+                {
+                    return method;
+                }
+            }
+
+            return null;
+        }
+
+        private static MethodInfo ResolveDisposeMethodForType(Type type)
+        {
+            var methods = type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+            foreach (var method in methods)
+            {
+                if (method.Name == "Dispose")
                 {
                     return method;
                 }
