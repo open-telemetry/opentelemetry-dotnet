@@ -9,7 +9,8 @@ Released 2022-Mar-04
 * Adds the ability to configure `MetricReaderOptions` via the
   `AddInMemoryExporter` extension method.
   ([#2931](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2931))
-* Changes `InMemoryExporter` to clear the exported collection before exporting `Metric`s.
+* Add `InMemoryMetricExporter` which inherits `InMemoryExporter`.
+  This new class will clear the exported collection before exporting `Metric`s.
   This prevents the same `Metric` from being repeated in the exported collection.
   ([#2937](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2937))
 
