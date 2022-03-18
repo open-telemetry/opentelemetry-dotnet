@@ -20,7 +20,7 @@ using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter
 {
-    public class InMemoryMetricExporter : InMemoryExporter<Metric>
+    internal class InMemoryMetricExporter : InMemoryExporter<Metric>
     {
         public InMemoryMetricExporter(ICollection<Metric> exportedItems)
             : base(exportedItems)
@@ -33,7 +33,7 @@ namespace OpenTelemetry.Exporter
             // This means that exported Metrics will always reflect the latest values.
             // Here, we clear the exported collection to prevent populating
             // this with duplicate instances of the same Metric.
-            this.exportedItems.Clear();
+            this.ExportedItems.Clear();
 
             return base.Export(batch);
         }
