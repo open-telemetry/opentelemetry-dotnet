@@ -20,6 +20,10 @@
   to `-1`.
   ([#3038](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3038))
 
+* Marked members of the `MetricPoint` `struct` which do not mutate state as
+  `readonly`
+  ([#3065](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3065))
+
 * `OpenTelemetryLoggerProvider` now copies values from `OpenTelemetryLoggerOptions`.
   This prevents changes to the Provider after being initialized.
   ([#3055](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3055))
