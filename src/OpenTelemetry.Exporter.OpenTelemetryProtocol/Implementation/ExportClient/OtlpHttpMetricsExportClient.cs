@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         public OtlpHttpMetricsExportClient(OtlpExporterOptions options, HttpClient httpClient)
             : base(options, httpClient)
         {
-            this.exportMetricsUri = this.Options.Endpoint;
+            this.exportMetricsUri = this.Endpoint;
         }
 
         protected override HttpRequestMessage CreateHttpRequest(OtlpCollector.ExportMetricsServiceRequest exportRequest)
