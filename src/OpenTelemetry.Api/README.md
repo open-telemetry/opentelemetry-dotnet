@@ -79,6 +79,11 @@ propagated out of proc using
 [Propagators](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/context/api-propagators.md).
 OpenTelemetry SDK ships a BaggagePropagator and enables it by default.
 
+It is important to note that `Baggage` is not automatically attached to any
+telemetry. User *can* explicitly read `Baggage` and use it to enrich metrics,
+logs and traces. An example of doing this for traces is shown
+[here](../../docs/trace/extending-the-sdk/README.md#processor).
+
 ```csharp
 // Use GetBaggage to get all the key/value pairs present in Baggage
 foreach (var item in Baggage.GetBaggage())
@@ -455,13 +460,11 @@ for versions lower than `.NET Framework 4.6.1`.
 1. Install the `System.Diagnostics.DiagnosticSource` package version
    `6.0.0` or above to your application or library.
 
-    <!-- markdownlint-disable MD013 -->
     ```xml
     <ItemGroup>
       <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.0" />
     </ItemGroup>
     ```
-    <!-- markdownlint-enable MD013 -->
 
 2. Create a `Meter`, providing the name and version of the library/application
    doing the instrumentation. The `Meter` instance is typically created once and

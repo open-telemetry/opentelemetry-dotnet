@@ -30,7 +30,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         /// <summary>
         /// Instance of the PlatformEventSource class.
         /// </summary>
-        public static readonly AspNetTelemetryEventSource Log = new AspNetTelemetryEventSource();
+        public static readonly AspNetTelemetryEventSource Log = new();
 
         [NonEvent]
         public void ActivityStarted(Activity activity)

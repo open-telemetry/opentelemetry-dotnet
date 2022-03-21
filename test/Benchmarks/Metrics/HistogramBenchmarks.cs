@@ -61,7 +61,7 @@ namespace Benchmarks.Metrics
     public class HistogramBenchmarks
     {
         private const int MaxValue = 1000;
-        private Random random = new Random();
+        private Random random = new();
         private Histogram<long> histogram;
         private MeterProvider provider;
         private Meter meter;
@@ -90,7 +90,6 @@ namespace Benchmarks.Metrics
                 .AddMeter(this.meter.Name)
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
                     metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
                 })
                 .AddView(this.histogram.Name, new ExplicitBucketHistogramConfiguration() { Boundaries = this.bounds })

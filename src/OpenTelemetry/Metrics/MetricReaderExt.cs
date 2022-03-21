@@ -27,9 +27,9 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public abstract partial class MetricReader
     {
-        private readonly HashSet<string> metricStreamNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        private readonly ConcurrentDictionary<InstrumentIdentity, Metric> instrumentIdentityToMetric = new ConcurrentDictionary<InstrumentIdentity, Metric>();
-        private readonly object instrumentCreationLock = new object();
+        private readonly HashSet<string> metricStreamNames = new(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<InstrumentIdentity, Metric> instrumentIdentityToMetric = new();
+        private readonly object instrumentCreationLock = new();
         private int maxMetricStreams;
         private int maxMetricPointsPerMetricStream;
         private Metric[] metrics;

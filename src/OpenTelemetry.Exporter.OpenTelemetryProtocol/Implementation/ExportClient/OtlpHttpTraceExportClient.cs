@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         public OtlpHttpTraceExportClient(OtlpExporterOptions options, HttpClient httpClient)
             : base(options, httpClient)
         {
-            this.exportTracesUri = this.Options.Endpoint;
+            this.exportTracesUri = this.Endpoint;
         }
 
         protected override HttpRequestMessage CreateHttpRequest(OtlpCollector.ExportTraceServiceRequest exportRequest)
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
         internal sealed class ExportRequestContent : HttpContent
         {
-            private static readonly MediaTypeHeaderValue ProtobufMediaTypeHeader = new MediaTypeHeaderValue(MediaContentType);
+            private static readonly MediaTypeHeaderValue ProtobufMediaTypeHeader = new(MediaContentType);
 
             private readonly OtlpCollector.ExportTraceServiceRequest exportRequest;
 
