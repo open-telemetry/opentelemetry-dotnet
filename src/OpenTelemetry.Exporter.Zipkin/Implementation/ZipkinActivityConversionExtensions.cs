@@ -116,7 +116,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                         ZipkinErrorFlagTagName,
                         activity.StatusDescription ?? string.Empty));
             }
-            else if (tagState.StatusCode.HasValue && tagState.StatusCode == StatusCode.Error)
+            else if (activity.Status == ActivityStatusCode.Unset && tagState.StatusCode.HasValue && tagState.StatusCode == StatusCode.Error)
             {
                 // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/
                 PooledList<KeyValuePair<string, object>>.Add(
