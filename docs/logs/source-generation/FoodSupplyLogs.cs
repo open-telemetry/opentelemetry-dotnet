@@ -16,6 +16,8 @@
 
 using Microsoft.Extensions.Logging;
 
+namespace SourceGeneration;
+
 public static partial class FoodSupplyLogs
 {
     [LoggerMessage(

@@ -22,7 +22,6 @@ using System.Reflection;
 #if !NETSTANDARD2_0
 using System.Runtime.CompilerServices;
 #endif
-using System.Text;
 using Microsoft.AspNetCore.Http;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
@@ -39,22 +38,22 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
-        internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+        internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
         private const string DiagnosticSourceName = "Microsoft.AspNetCore";
         private const string UnknownHostName = "UNKNOWN-HOST";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
-        private readonly PropertyFetcher<HttpContext> startContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
-        private readonly PropertyFetcher<HttpContext> stopContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
-        private readonly PropertyFetcher<Exception> stopExceptionFetcher = new PropertyFetcher<Exception>("Exception");
-        private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new PropertyFetcher<object>("actionDescriptor");
-        private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new PropertyFetcher<object>("AttributeRouteInfo");
-        private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new PropertyFetcher<string>("Template");
+        private readonly PropertyFetcher<HttpContext> startContextFetcher = new("HttpContext");
+        private readonly PropertyFetcher<HttpContext> stopContextFetcher = new("HttpContext");
+        private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
+        private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new("actionDescriptor");
+        private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new("AttributeRouteInfo");
+        private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new("Template");
         private readonly AspNetCoreInstrumentationOptions options;
 
         public HttpInListener(AspNetCoreInstrumentationOptions options)
             : base(DiagnosticSourceName)
         {
-            Guard.ThrowIfNull(options, nameof(options));
+            Guard.ThrowIfNull(options);
 
             this.options = options;
         }
@@ -87,7 +86,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // Ensure context extraction irrespective of sampling decision
             var request = context.Request;
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
-            if (!(textMapPropagator is TraceContextPropagator))
+            if (textMapPropagator is not TraceContextPropagator)
             {
                 var ctx = textMapPropagator.Extract(default, request, HttpRequestHeaderValuesGetter);
 
@@ -144,7 +143,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/http.md
 
-                if (request.Host.Port == null || request.Host.Port == 80 || request.Host.Port == 443)
+                if (request.Host.Port is null or 80 or 443)
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpHost, request.Host.Host);
                 }
@@ -196,12 +195,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
                 else if (activity.GetStatus().StatusCode == StatusCode.Unset)
                 {
-                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
                 }
 #else
                 if (activity.GetStatus().StatusCode == StatusCode.Unset)
                 {
-                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(response.StatusCode));
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
                 }
 #endif
 
@@ -235,7 +234,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
 
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
-            if (!(textMapPropagator is TraceContextPropagator))
+            if (textMapPropagator is not TraceContextPropagator)
             {
                 Baggage.Current = default;
             }
@@ -300,37 +299,46 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         private static string GetUri(HttpRequest request)
         {
-            var builder = new StringBuilder();
+            // this follows the suggestions from https://github.com/dotnet/aspnetcore/issues/28906
+            var scheme = request.Scheme ?? string.Empty;
 
-            builder.Append(request.Scheme).Append("://");
-
-            if (request.Host.HasValue)
+            // HTTP 1.0 request with NO host header would result in empty Host.
+            // Use placeholder to avoid incorrect URL like "http:///"
+            var host = request.Host.Value ?? UnknownHostName;
+            var pathBase = request.PathBase.Value ?? string.Empty;
+            var path = request.Path.Value ?? string.Empty;
+            var queryString = request.QueryString.Value ?? string.Empty;
+            var length = scheme.Length + Uri.SchemeDelimiter.Length + host.Length + pathBase.Length
+                         + path.Length + queryString.Length;
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
+            return string.Create(length, (scheme, host, pathBase, path, queryString), (span, parts) =>
             {
-                builder.Append(request.Host.Value);
-            }
-            else
-            {
-                // HTTP 1.0 request with NO host header would result in empty Host.
-                // Use placeholder to avoid incorrect URL like "http:///"
-                builder.Append(UnknownHostName);
-            }
+                CopyTo(ref span, parts.scheme);
+                CopyTo(ref span, Uri.SchemeDelimiter);
+                CopyTo(ref span, parts.host);
+                CopyTo(ref span, parts.pathBase);
+                CopyTo(ref span, parts.path);
+                CopyTo(ref span, parts.queryString);
 
-            if (request.PathBase.HasValue)
-            {
-                builder.Append(request.PathBase.Value);
-            }
-
-            if (request.Path.HasValue)
-            {
-                builder.Append(request.Path.Value);
-            }
-
-            if (request.QueryString.HasValue)
-            {
-                builder.Append(request.QueryString);
-            }
-
-            return builder.ToString();
+                static void CopyTo(ref Span<char> buffer, ReadOnlySpan<char> text)
+                {
+                    if (!text.IsEmpty)
+                    {
+                        text.CopyTo(buffer);
+                        buffer = buffer.Slice(text.Length);
+                    }
+                }
+            });
+#else
+            return new System.Text.StringBuilder(length)
+                .Append(scheme)
+                .Append(Uri.SchemeDelimiter)
+                .Append(host)
+                .Append(pathBase)
+                .Append(path)
+                .Append(queryString)
+                .ToString();
+#endif
         }
 
 #if !NETSTANDARD2_0

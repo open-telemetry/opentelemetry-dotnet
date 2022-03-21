@@ -30,8 +30,8 @@ namespace OpenTelemetry.Exporter.ZPages
     /// </summary>
     public class ZPagesExporterStatsHttpServer : IDisposable
     {
-        private readonly HttpListener httpListener = new HttpListener();
-        private readonly object syncObject = new object();
+        private readonly HttpListener httpListener = new();
+        private readonly object syncObject = new();
 
         private CancellationTokenSource tokenSource;
         private Task workerThread;
@@ -42,7 +42,7 @@ namespace OpenTelemetry.Exporter.ZPages
         /// <param name="exporter">The <see cref="ZPagesExporterStatsHttpServer"/> instance.</param>
         public ZPagesExporterStatsHttpServer(ZPagesExporter exporter)
         {
-            Guard.ThrowIfNull(exporter?.Options?.Url, $"{nameof(exporter)}?.{nameof(exporter.Options)}?.{nameof(exporter.Options.Url)}");
+            Guard.ThrowIfNull(exporter?.Options?.Url);
 
             this.httpListener.Prefixes.Add(exporter.Options.Url);
         }

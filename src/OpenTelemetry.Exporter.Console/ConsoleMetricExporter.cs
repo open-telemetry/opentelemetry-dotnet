@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Globalization;
 using System.Text;
 using OpenTelemetry.Metrics;
@@ -42,7 +41,7 @@ namespace OpenTelemetry.Exporter
                     {
                         if (resourceAttribute.Key.Equals("service.name"))
                         {
-                            Console.WriteLine("Service.Name" + resourceAttribute.Value);
+                            this.WriteLine("Service.Name=" + resourceAttribute.Value);
                         }
                     }
                 }
@@ -52,28 +51,28 @@ namespace OpenTelemetry.Exporter
             {
                 var msg = new StringBuilder($"\nExport ");
                 msg.Append(metric.Name);
-                if (!string.IsNullOrEmpty(metric.Description))
+                if (metric.Description != string.Empty)
                 {
                     msg.Append(", ");
                     msg.Append(metric.Description);
                 }
 
-                if (!string.IsNullOrEmpty(metric.Unit))
+                if (metric.Unit != string.Empty)
                 {
                     msg.Append($", Unit: {metric.Unit}");
                 }
 
-                if (!string.IsNullOrEmpty(metric.Meter.Name))
+                if (!string.IsNullOrEmpty(metric.MeterName))
                 {
-                    msg.Append($", Meter: {metric.Meter.Name}");
+                    msg.Append($", Meter: {metric.MeterName}");
 
-                    if (!string.IsNullOrEmpty(metric.Meter.Version))
+                    if (!string.IsNullOrEmpty(metric.MeterVersion))
                     {
-                        msg.Append($"/{metric.Meter.Version}");
+                        msg.Append($"/{metric.MeterVersion}");
                     }
                 }
 
-                Console.WriteLine(msg.ToString());
+                this.WriteLine(msg.ToString());
 
                 foreach (ref readonly var metricPoint in metric.GetMetricPoints())
                 {
@@ -174,7 +173,7 @@ namespace OpenTelemetry.Exporter
                     msg.Append(metric.MetricType);
                     msg.AppendLine();
                     msg.Append($"Value: {valueDisplay}");
-                    Console.WriteLine(msg);
+                    this.WriteLine(msg.ToString());
                 }
             }
 

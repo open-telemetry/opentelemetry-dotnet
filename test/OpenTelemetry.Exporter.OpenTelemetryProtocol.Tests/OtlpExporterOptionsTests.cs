@@ -43,6 +43,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
+        public void OtlpExporterOptions_DefaultsForHttpProtobuf()
+        {
+            var options = new OtlpExporterOptions
+            {
+                Protocol = OtlpExportProtocol.HttpProtobuf,
+            };
+            Assert.Equal(new Uri("http://localhost:4318"), options.Endpoint);
+            Assert.Null(options.Headers);
+            Assert.Equal(10000, options.TimeoutMilliseconds);
+            Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
+        }
+
+        [Fact]
         public void OtlpExporterOptions_EnvironmentVariableOverride()
         {
             Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
@@ -102,6 +115,26 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal("C=3", options.Headers);
             Assert.Equal(40000, options.TimeoutMilliseconds);
             Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
+        }
+
+        [Fact]
+        public void OtlpExporterOptions_ProtocolSetterDoesNotOverrideCustomEndpointFromEnvVariables()
+        {
+            Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
+
+            var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.Grpc };
+
+            Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
+            Assert.Equal(OtlpExportProtocol.Grpc, options.Protocol);
+        }
+
+        [Fact]
+        public void OtlpExporterOptions_ProtocolSetterDoesNotOverrideCustomEndpointFromSetter()
+        {
+            var options = new OtlpExporterOptions { Endpoint = new Uri("http://test:8888"), Protocol = OtlpExportProtocol.Grpc };
+
+            Assert.Equal(new Uri("http://test:8888"), options.Endpoint);
+            Assert.Equal(OtlpExportProtocol.Grpc, options.Protocol);
         }
 
         [Fact]

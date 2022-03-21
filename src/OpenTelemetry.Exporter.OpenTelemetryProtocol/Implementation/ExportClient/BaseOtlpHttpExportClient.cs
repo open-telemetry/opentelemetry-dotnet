@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
@@ -27,18 +28,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     {
         protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient)
         {
-            Guard.ThrowIfNull(options, nameof(options));
-            Guard.ThrowIfNull(httpClient, nameof(httpClient));
-            Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds, $"{nameof(options)}.{nameof(options.TimeoutMilliseconds)}");
+            Guard.ThrowIfNull(options);
+            Guard.ThrowIfNull(httpClient);
+            Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds);
 
-            this.Options = options;
+            this.Endpoint = new UriBuilder(options.Endpoint).Uri;
             this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
             this.HttpClient = httpClient;
         }
 
-        internal OtlpExporterOptions Options { get; }
-
         internal HttpClient HttpClient { get; }
+
+        internal Uri Endpoint { get; set; }
 
         internal IReadOnlyDictionary<string, string> Headers { get; }
 
@@ -55,7 +56,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             }
             catch (HttpRequestException ex)
             {
-                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Options.Endpoint, ex);
+                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
                 return false;
             }

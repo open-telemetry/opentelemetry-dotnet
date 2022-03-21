@@ -38,14 +38,18 @@ namespace OpenTelemetry.Trace.Tests
             using var exporter = new InMemoryExporter<Activity>(exportedItems);
             using var processor = new SimpleActivityExportProcessor(exporter);
 
-            var activity1 = new Activity("start1");
-            activity1.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            var activity1 = new Activity("start1")
+            {
+                ActivityTraceFlags = ActivityTraceFlags.Recorded,
+            };
 
             processor.OnEnd(activity1);
             Assert.Single(exportedItems);
 
-            var activity2 = new Activity("start2");
-            activity2.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            var activity2 = new Activity("start2")
+            {
+                ActivityTraceFlags = ActivityTraceFlags.Recorded,
+            };
 
             processor.OnEnd(activity2);
             Assert.Equal(2, exportedItems.Count);
@@ -61,11 +65,15 @@ namespace OpenTelemetry.Trace.Tests
             using var exporter = new InMemoryExporter<Activity>(exportedItems);
             using var processor = new SimpleActivityExportProcessor(exporter);
 
-            var activity1 = new Activity("start1");
-            activity1.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            var activity1 = new Activity("start1")
+            {
+                ActivityTraceFlags = ActivityTraceFlags.Recorded,
+            };
 
-            var activity2 = new Activity("start2");
-            activity2.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            var activity2 = new Activity("start2")
+            {
+                ActivityTraceFlags = ActivityTraceFlags.Recorded,
+            };
 
             processor.OnEnd(activity1);
             processor.OnEnd(activity2);
@@ -88,8 +96,10 @@ namespace OpenTelemetry.Trace.Tests
             using var exporter = new InMemoryExporter<Activity>(exportedItems);
             using var processor = new SimpleActivityExportProcessor(exporter);
 
-            var activity = new Activity("start");
-            activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+            var activity = new Activity("start")
+            {
+                ActivityTraceFlags = ActivityTraceFlags.Recorded,
+            };
 
             processor.OnEnd(activity);
 
@@ -107,8 +117,10 @@ namespace OpenTelemetry.Trace.Tests
             using var exporter = new InMemoryExporter<Activity>(exportedItems);
             using var processor = new SimpleActivityExportProcessor(exporter);
 
-            var activity = new Activity("start");
-            activity.ActivityTraceFlags = ActivityTraceFlags.None;
+            var activity = new Activity("start")
+            {
+                ActivityTraceFlags = ActivityTraceFlags.None,
+            };
 
             processor.OnEnd(activity);
             Assert.Empty(exportedItems);

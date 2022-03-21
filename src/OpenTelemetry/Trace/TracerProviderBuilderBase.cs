@@ -27,10 +27,10 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public abstract class TracerProviderBuilderBase : TracerProviderBuilder
     {
-        private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
-        private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
-        private readonly List<string> sources = new List<string>();
-        private readonly HashSet<string> legacyActivityOperationNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly List<InstrumentationFactory> instrumentationFactories = new();
+        private readonly List<BaseProcessor<Activity>> processors = new();
+        private readonly List<string> sources = new();
+        private readonly HashSet<string> legacyActivityOperationNames = new(StringComparer.OrdinalIgnoreCase);
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
 
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Trace
             Func<TInstrumentation> instrumentationFactory)
             where TInstrumentation : class
         {
-            Guard.ThrowIfNull(instrumentationFactory, nameof(instrumentationFactory));
+            Guard.ThrowIfNull(instrumentationFactory);
 
             this.instrumentationFactories.Add(
                 new InstrumentationFactory(
@@ -57,11 +57,11 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public override TracerProviderBuilder AddSource(params string[] names)
         {
-            Guard.ThrowIfNull(names, nameof(names));
+            Guard.ThrowIfNull(names);
 
             foreach (var name in names)
             {
-                Guard.ThrowIfNullOrWhitespace(name, nameof(name));
+                Guard.ThrowIfNullOrWhitespace(name);
 
                 // TODO: We need to fix the listening model.
                 // Today it ignores version.
@@ -74,7 +74,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc />
         public override TracerProviderBuilder AddLegacySource(string operationName)
         {
-            Guard.ThrowIfNullOrWhitespace(operationName, nameof(operationName));
+            Guard.ThrowIfNullOrWhitespace(operationName);
 
             this.legacyActivityOperationNames.Add(operationName);
 
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetSampler(Sampler sampler)
         {
-            Guard.ThrowIfNull(sampler, nameof(sampler));
+            Guard.ThrowIfNull(sampler);
 
             this.sampler = sampler;
             return this;
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
-            Guard.ThrowIfNull(resourceBuilder, nameof(resourceBuilder));
+            Guard.ThrowIfNull(resourceBuilder);
 
             this.resourceBuilder = resourceBuilder;
             return this;
@@ -156,7 +156,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder AddProcessor(BaseProcessor<Activity> processor)
         {
-            Guard.ThrowIfNull(processor, nameof(processor));
+            Guard.ThrowIfNull(processor);
 
             this.processors.Add(processor);
 

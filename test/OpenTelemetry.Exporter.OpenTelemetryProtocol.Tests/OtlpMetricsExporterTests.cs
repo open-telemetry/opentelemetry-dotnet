@@ -30,8 +30,40 @@ using OtlpMetrics = Opentelemetry.Proto.Metrics.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
-    public class OtlpMetricsExporterTests
+    public class OtlpMetricsExporterTests : Http2UnencryptedSupportTests
     {
+        [Fact]
+        public void TestAddOtlpExporter_SetsCorrectMetricReaderDefaults()
+        {
+            if (Environment.Version.Major == 3)
+            {
+                // Adding the OtlpExporter creates a GrpcChannel.
+                // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
+                // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
+                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            }
+
+            var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddOtlpExporter()
+                .Build();
+
+            var bindingFlags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+
+            var metricReader = typeof(MetricReader)
+                .Assembly
+                .GetType("OpenTelemetry.Metrics.MeterProviderSdk")
+                .GetField("reader", bindingFlags)
+                .GetValue(meterProvider) as PeriodicExportingMetricReader;
+
+            Assert.NotNull(metricReader);
+
+            var exportIntervalMilliseconds = (int)typeof(PeriodicExportingMetricReader)
+                .GetField("exportIntervalMilliseconds", bindingFlags)
+                .GetValue(metricReader);
+
+            Assert.Equal(60000, exportIntervalMilliseconds);
+        }
+
         [Fact]
         public void UserHttpFactoryCalled()
         {
@@ -240,11 +272,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(
-                    new BaseExportingMetricReader(new InMemoryExporter<Metric>(metrics))
-                    {
-                        Temporality = aggregationTemporality,
-                    })
+                .AddInMemoryExporter(metrics, metricReaderOptions =>
+                {
+                    metricReaderOptions.Temporality = aggregationTemporality;
+                })
                 .Build();
 
             var attributes = ToAttributes(keysValues).ToArray();
@@ -334,13 +365,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             var metrics = new List<Metric>();
 
-            var metricReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(metrics));
-            metricReader.Temporality = aggregationTemporality;
-
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(metricReader)
+                .AddInMemoryExporter(metrics, metricReaderOptions =>
+                {
+                    metricReaderOptions.Temporality = aggregationTemporality;
+                })
                 .Build();
 
             var attributes = ToAttributes(keysValues).ToArray();

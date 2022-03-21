@@ -30,7 +30,7 @@ namespace OpenTelemetry.Exporter.ZPages.Tests
 {
     public class ZPagesExporterTests
     {
-        private static readonly HttpClient HttpClient = new HttpClient();
+        private static readonly HttpClient HttpClient = new();
 
         static ZPagesExporterTests()
         {
