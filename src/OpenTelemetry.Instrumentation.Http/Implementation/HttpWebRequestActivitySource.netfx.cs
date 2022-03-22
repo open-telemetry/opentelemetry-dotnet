@@ -213,40 +213,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            if (RequestProperties.Instance == null)
-            {
-                RequestProperties.Instance = new Dictionary<string, object>();
-            }
-
-            Activity activity;
-            var context = Propagators.DefaultTextMapPropagator.Extract(default, request, HttpWebRequestHeaderValuesGetter);
-            if (context != default && RequestProperties.Instance.TryGetValue(SpanAttributeConstants.PreviousTryContextKey, out var previousContext))
-            {
-                // This request was instrumented by previous
-                // ProcessRequest, such is the case with retries or redirect responses where the same request is sent again.
-
-                var retryCount = 1;
-                if (RequestProperties.Instance.TryGetValue(SpanAttributeConstants.RetryCountKey, out var previousRetryCount))
-                {
-                    retryCount = (int)previousRetryCount + 1;
-                }
-
-                activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client, context.ActivityContext, links: new[] { new ActivityLink((ActivityContext)previousContext) });
-
-                activity?.SetTag(SpanAttributeConstants.RetryCountKey, retryCount);
-                RequestProperties.Instance[SpanAttributeConstants.RetryCountKey] = retryCount;
-            }
-            else
-            {
-                activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
-            }
-
+            var activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
             var activityContext = Activity.Current?.Context ?? default;
-            if (activityContext != default)
-            {
-                // Store activity context for the next possible try.
-                RequestProperties.Instance[SpanAttributeConstants.PreviousTryContextKey] = activityContext;
-            }
 
             // Propagation must still be done in all cases, to allow
             // downstream services to continue from parent context, if any.
@@ -656,17 +624,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             generator.Emit(OpCodes.Ret);
 
             return (Func<object[], T>)setterMethod.CreateDelegate(typeof(Func<object[], T>));
-        }
-
-        private static class RequestProperties
-        {
-            private static readonly AsyncLocal<Dictionary<string, object>> Properties = new AsyncLocal<Dictionary<string, object>>();
-
-            public static Dictionary<string, object> Instance
-            {
-                get => Properties.Value;
-                set => Properties.Value = value;
-            }
         }
 
         private class HashtableWrapper : Hashtable, IEnumerable

@@ -303,55 +303,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.NotEqual(parentSpanId, activity.ParentSpanId.ToString());
         }
 
-        /// <summary>
-        /// Test request connection retry: reflection hook does not throw.
-        /// </summary>
-        [Theory]
-        [InlineData("GET")]
-        [InlineData("POST")]
-        public async Task TestSecureTransportRetryFailureRequest(string method)
-        {
-            var processor = new Mock<BaseProcessor<Activity>>();
-
-            var uriBuilder = new UriBuilder(this.url) { Scheme = "https" };
-
-            using (Sdk.CreateTracerProviderBuilder()
-                       .AddHttpClientInstrumentation()
-                       .AddProcessor(processor.Object)
-                       .Build())
-            {
-                using (var client = new HttpClient(new SimpleRetryHandler(new HttpClientHandler(), maxRetryCount: 1)))
-                {
-                    var ex = await Assert.ThrowsAnyAsync<Exception>(() =>
-                    {
-                        return method == "GET"
-                            ? client.GetAsync(uriBuilder.Uri)
-                            : client.PostAsync(uriBuilder.Uri, new StringContent("hello world"));
-                    });
-                    Assert.True(ex is InvalidOperationException);
-                }
-            }
-
-            Assert.Equal(8, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnStart/OnStart/OnEnd/OnShutdown/Dispose called.
-            var firstTry = (Activity)processor.Invocations[2].Arguments[0];
-            var secondTry = (Activity)processor.Invocations[5].Arguments[0];
-
-            Assert.Equal(ActivityKind.Client, firstTry.Kind);
-            Assert.NotEqual(default, firstTry.Context.SpanId);
-
-            Assert.Equal(ActivityKind.Client, secondTry.Kind);
-            Assert.NotEqual(default, secondTry.Context.SpanId);
-
-            ActivityLink activityLink = secondTry.Links.FirstOrDefault();
-            Assert.NotEqual(default, activityLink);
-            Assert.Equal(firstTry.Context.TraceId, activityLink.Context.TraceId);
-            Assert.Equal(firstTry.Context.SpanId, activityLink.Context.SpanId);
-
-            var retryCount = secondTry.GetTagItem("http.retry_count");
-            Assert.NotNull(retryCount);
-            Assert.Equal(1, (int)retryCount);
-        }
-
         [Fact]
         public async void RequestNotCollectedWhenInstrumentationFilterApplied()
         {
@@ -489,39 +440,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 default:
                     break;
-            }
-        }
-
-        private sealed class SimpleRetryHandler : DelegatingHandler
-        {
-            private readonly int maxRetryCount;
-
-            public SimpleRetryHandler(HttpMessageHandler innerHandler, int maxRetryCount = 3)
-                : base(innerHandler)
-            {
-                this.maxRetryCount = maxRetryCount;
-            }
-
-            protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            {
-                HttpResponseMessage response = null;
-                for (int i = 0; i < this.maxRetryCount + 1; i++)
-                {
-                    try
-                    {
-                        response = await base.SendAsync(request, cancellationToken);
-                        if (response.IsSuccessStatusCode)
-                        {
-                            return response;
-                        }
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
-                }
-
-                return response;
             }
         }
     }
