@@ -24,7 +24,8 @@ MetricApi reuses Metrics (see also: `MetricReader.metricsCurrentBatch`).
 This means that after multiple exports, the `InMemoryExporter` will
 repeatedly export the same instance(s) of `Metric`.
 
-It is recommended to clear the exported collection before repeated flushes to avoid working with duplicates.
+It is recommended to clear the exported collection before repeated flushes to
+avoid working with duplicates.
 
 ```csharp
 var exportedItems = new List<Metric>();
