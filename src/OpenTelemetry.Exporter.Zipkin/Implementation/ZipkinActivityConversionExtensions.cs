@@ -68,6 +68,13 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                         new KeyValuePair<string, object>(
                             SpanAttributeConstants.StatusCodeKey,
                             "ERROR"));
+
+                    // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
+                    PooledList<KeyValuePair<string, object>>.Add(
+                        ref tagState.Tags,
+                        new KeyValuePair<string, object>(
+                            ZipkinErrorFlagTagName,
+                            activity.StatusDescription ?? string.Empty));
                 }
             }
 
@@ -107,16 +114,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 }
             }
 
-            if (activity.Status == ActivityStatusCode.Error)
-            {
-                // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
-                PooledList<KeyValuePair<string, object>>.Add(
-                    ref tagState.Tags,
-                    new KeyValuePair<string, object>(
-                        ZipkinErrorFlagTagName,
-                        activity.StatusDescription ?? string.Empty));
-            }
-            else if (activity.Status == ActivityStatusCode.Unset && tagState.StatusCode.HasValue && tagState.StatusCode == StatusCode.Error)
+            if (activity.Status == ActivityStatusCode.Unset && tagState.StatusCode.HasValue && tagState.StatusCode == StatusCode.Error)
             {
                 // Error flag rule from https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/
                 PooledList<KeyValuePair<string, object>>.Add(
