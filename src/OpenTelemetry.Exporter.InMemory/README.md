@@ -27,24 +27,6 @@ repeatedly export the same instance(s) of `Metric`.
 It is recommended to clear the exported collection before repeated flushes to
 avoid working with duplicates.
 
-```csharp
-var exportedItems = new List<Metric>();
-using var meter = new Meter(Utils.GetCurrentMethodName());
-using var meterProvider = Sdk.CreateMeterProviderBuilder()
-    .AddMeter(meter.Name)
-    .AddInMemoryExporter(exportedItems)
-    .Build();
-
-// ...
-
-meterProvider.ForceFlush(); // first flush, exportedItems is empty.
-
-// ...
-
-exportedItems.Clear();
-meterProvider.ForceFlush();
-```
-
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
