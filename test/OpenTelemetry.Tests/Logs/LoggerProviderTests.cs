@@ -34,7 +34,7 @@ namespace OpenTelemetry.Logs.Tests
         {
             InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider);
 
-            Assert.Contains(provider.Resource.Attributes, (kvp) => kvp.Key == "service.name" && kvp.Value.ToString() == "unknown_service:testhost");
+            Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == "service.name" && kvp.Value.ToString() == "unknown_service:testhost");
         }
 
         [Fact]
@@ -42,8 +42,8 @@ namespace OpenTelemetry.Logs.Tests
         {
             InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider, configure: options => options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: "MyService", serviceVersion: "1.2.3")));
 
-            Assert.Contains(provider.Resource.Attributes, (kvp) => kvp.Key == "service.name" && kvp.Value.ToString() == "MyService");
-            Assert.Contains(provider.Resource.Attributes, (kvp) => kvp.Key == "service.version" && kvp.Value.ToString() == "1.2.3");
+            Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == "service.name" && kvp.Value.ToString() == "MyService");
+            Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == "service.version" && kvp.Value.ToString() == "1.2.3");
         }
 
         [Fact]
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Logs.Tests
 
                 InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider);
 
-                Assert.Contains(provider.Resource.Attributes, (kvp) => kvp.Key == "service.name" && kvp.Value.ToString() == "MyService");
+                Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == "service.name" && kvp.Value.ToString() == "MyService");
             }
             finally
             {
@@ -72,8 +72,8 @@ namespace OpenTelemetry.Logs.Tests
 
                 InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider);
 
-                Assert.Contains(provider.Resource.Attributes, (kvp) => kvp.Key == "Key1" && kvp.Value.ToString() == "Val1");
-                Assert.Contains(provider.Resource.Attributes, (kvp) => kvp.Key == "Key2" && kvp.Value.ToString() == "Val2");
+                Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == "Key1" && kvp.Value.ToString() == "Val1");
+                Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == "Key2" && kvp.Value.ToString() == "Val2");
             }
             finally
             {
