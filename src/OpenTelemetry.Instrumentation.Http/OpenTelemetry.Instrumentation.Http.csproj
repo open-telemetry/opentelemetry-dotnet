@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\ServiceProviderExtensions.cs" Link="Includes\ServiceProviderExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
   </ItemGroup>
 
