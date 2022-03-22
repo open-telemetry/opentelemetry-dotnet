@@ -135,7 +135,6 @@ builder.Services.AddOpenTelemetryMetrics(options =>
             {
                 // The ConsoleMetricExporter defaults to a manual collect cycle.
                 // This configuration causes metrics to be exported to stdout on a 10s interval.
-                metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
                 metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10000;
             });
             break;
