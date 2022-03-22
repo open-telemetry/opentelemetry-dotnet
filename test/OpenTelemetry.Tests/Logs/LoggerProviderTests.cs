@@ -28,19 +28,19 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void VerifyDefaultBehavior()
         {
-            InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider);
+            var resource = CreateLoggerFactoryAndGetResource();
 
-            // Note: actual value may vary. Visual Studio: "unknown_service:testhost". Dotnet CLI: "unknown_service:dotnet"
-            Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service"));
+            // Note: actual value may vary depending on test runner. Visual Studio: "unknown_service:testhost". Dotnet CLI: "unknown_service:dotnet"
+            Assert.Contains(resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service"));
         }
 
         [Fact]
         public void VerifyResourceBuilderAddService()
         {
-            InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider, configure: options => options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: "MyService", serviceVersion: "1.2.3")));
+            var resource = CreateLoggerFactoryAndGetResource(options => options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: "MyService", serviceVersion: "1.2.3")));
 
-            Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString() == "MyService");
-            Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceVersion && kvp.Value.ToString() == "1.2.3");
+            Assert.Contains(resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString() == "MyService");
+            Assert.Contains(resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceVersion && kvp.Value.ToString() == "1.2.3");
         }
 
         [Fact]
@@ -50,9 +50,9 @@ namespace OpenTelemetry.Logs.Tests
             {
                 Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, "MyService");
 
-                InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider);
+                var resource = CreateLoggerFactoryAndGetResource();
 
-                Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString() == "MyService");
+                Assert.Contains(resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString() == "MyService");
             }
             finally
             {
@@ -67,10 +67,10 @@ namespace OpenTelemetry.Logs.Tests
             {
                 Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, "Key1=Val1,Key2=Val2");
 
-                InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider);
+                var resource = CreateLoggerFactoryAndGetResource();
 
-                Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == "Key1" && kvp.Value.ToString() == "Val1");
-                Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == "Key2" && kvp.Value.ToString() == "Val2");
+                Assert.Contains(resource.Attributes, (kvp) => kvp.Key == "Key1" && kvp.Value.ToString() == "Val1");
+                Assert.Contains(resource.Attributes, (kvp) => kvp.Key == "Key2" && kvp.Value.ToString() == "Val2");
             }
             finally
             {
@@ -78,9 +78,9 @@ namespace OpenTelemetry.Logs.Tests
             }
         }
 
-        private static void InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider, Action<OpenTelemetryLoggerOptions> configure = null)
+        private static Resource CreateLoggerFactoryAndGetResource(Action<OpenTelemetryLoggerOptions> configure = null)
         {
-            var exporter = new InMemoryExporter<LogRecord>(new List<LogRecord>());
+            using var exporter = new InMemoryExporter<LogRecord>(new List<LogRecord>());
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
@@ -92,7 +92,8 @@ namespace OpenTelemetry.Logs.Tests
             });
             var logger = loggerFactory.CreateLogger<LoggerProviderTests>();
 
-            provider = exporter.ParentProvider as OpenTelemetryLoggerProvider;
+            using var provider = exporter.ParentProvider as OpenTelemetryLoggerProvider;
+            return provider.GetResource();
         }
 
         private class TestLogRecordProcessor : SimpleExportProcessor<LogRecord>
