@@ -16,13 +16,9 @@
 #if !NET461
 using System;
 using System.Collections.Generic;
-
 using Microsoft.Extensions.Logging;
-
 using OpenTelemetry.Exporter;
-
 using OpenTelemetry.Resources;
-
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests
@@ -34,17 +30,8 @@ namespace OpenTelemetry.Logs.Tests
         {
             InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider);
 
-            foreach (var a in provider.GetResource().Attributes)
-            {
-                if (a.Key == "service.name")
-                {
-                    // NOTE: THIS TEST IS FAILING IN LINUX BUILDS ON GITHUB.
-                    // I CHANGED THE TEST TO SEE WHAT THE ACTUAL VALUE IS AT RUNTIME
-                    Assert.Equal("unknown_service:testhost", a.Value);
-                }
-            }
-
-            Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == "service.name" && kvp.Value.ToString().Contains("unknown_service"));
+            // Note: actual value may vary. Visual Studio: "unknown_service:testhost". Dotnet CLI: "unknown_service:dotnet"
+            Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service"));
         }
 
         [Fact]
@@ -52,8 +39,8 @@ namespace OpenTelemetry.Logs.Tests
         {
             InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider, configure: options => options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName: "MyService", serviceVersion: "1.2.3")));
 
-            Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == "service.name" && kvp.Value.ToString() == "MyService");
-            Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == "service.version" && kvp.Value.ToString() == "1.2.3");
+            Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString() == "MyService");
+            Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceVersion && kvp.Value.ToString() == "1.2.3");
         }
 
         [Fact]
@@ -65,7 +52,7 @@ namespace OpenTelemetry.Logs.Tests
 
                 InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider);
 
-                Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == "service.name" && kvp.Value.ToString() == "MyService");
+                Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString() == "MyService");
             }
             finally
             {
