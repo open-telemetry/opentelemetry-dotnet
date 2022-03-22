@@ -34,7 +34,17 @@ namespace OpenTelemetry.Logs.Tests
         {
             InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider);
 
-            Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == "service.name" && kvp.Value.ToString() == "unknown_service:testhost");
+            foreach (var a in provider.GetResource().Attributes)
+            {
+                if (a.Key == "service.name")
+                {
+                    // NOTE: THIS TEST IS FAILING IN LINUX BUILDS ON GITHUB.
+                    // I CHANGED THE TEST TO SEE WHAT THE ACTUAL VALUE IS AT RUNTIME
+                    Assert.Equal("unknown_service:testhost", a.Value);
+                }
+            }
+
+            Assert.Contains(provider.GetResource().Attributes, (kvp) => kvp.Key == "service.name" && kvp.Value.ToString().Contains("unknown_service"));
         }
 
         [Fact]
@@ -84,7 +94,7 @@ namespace OpenTelemetry.Logs.Tests
         private static void InitializeLoggerFactory(out OpenTelemetryLoggerProvider provider, Action<OpenTelemetryLoggerOptions> configure = null)
         {
             var exporter = new InMemoryExporter<LogRecord>(new List<LogRecord>());
-            var loggerFactory = LoggerFactory.Create(builder =>
+            using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
                 {
