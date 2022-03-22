@@ -661,15 +661,24 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.True(ex is HttpRequestException);
             }
 
-            // We should have one Start event and one Stop event with an exception.
-            Assert.Equal(2, eventRecords.Records.Count());
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
-            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
+            // We should have two Start events and twos Stop events, both with exceptions.
+            Assert.Equal(4, eventRecords.Records.Count);
+            Assert.Equal(2, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(2, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             Activity activity = AssertFirstEventWasStart(eventRecords);
             VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
 
+            activity = AssertFirstEventWasStart(eventRecords);
+            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
+
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
+            Assert.Equal("Stop", exceptionEvent.Key);
+
+            Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
+            Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
+
+            Assert.True(eventRecords.Records.TryDequeue(out exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
 
             Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
