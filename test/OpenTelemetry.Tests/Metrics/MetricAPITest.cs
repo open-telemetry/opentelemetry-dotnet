@@ -489,15 +489,13 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-            Assert.Equal(2, exportedItems.Count);
+            // The second view results in a name conflict, so it is ignored
+            Assert.Equal(1, exportedItems.Count);
             var metric1 = new List<Metric>() { exportedItems[0] };
-            var metric2 = new List<Metric>() { exportedItems[1] };
-
             Assert.Equal("newname", exportedItems[0].Name);
-            Assert.Equal("newname", exportedItems[1].Name);
 
+            // Both instruments record
             Assert.Equal(20, GetLongSum(metric1));
-            Assert.Equal(20, GetLongSum(metric2));
         }
 
         [Fact]
@@ -534,18 +532,18 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-            Assert.Equal(2, exportedItems.Count);
+            // The second view results in a name conflict, so it is ignored
+            Assert.Equal(1, exportedItems.Count);
             var metric1 = new List<Metric>() { exportedItems[0] };
-            var metric2 = new List<Metric>() { exportedItems[1] };
             var tag1 = new List<KeyValuePair<string, object>> { tags[0] };
-            var tag2 = new List<KeyValuePair<string, object>> { tags[1] };
 
             Assert.Equal("name", exportedItems[0].Name);
-            Assert.Equal("name", exportedItems[1].Name);
+
+            // Both instruments record
             Assert.Equal(20, GetLongSum(metric1));
-            Assert.Equal(20, GetLongSum(metric2));
+
+            // Only key1 is kept not key2
             CheckTagsForNthMetricPoint(metric1, tag1, 1);
-            CheckTagsForNthMetricPoint(metric2, tag2, 1);
         }
 
         [Fact]
@@ -582,20 +580,17 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-            Assert.Equal(2, exportedItems.Count);
+            // The second view results in a name conflict, so it is ignored
+            Assert.Equal(1, exportedItems.Count);
             var metric1 = new List<Metric>() { exportedItems[0] };
-            var metric2 = new List<Metric>() { exportedItems[1] };
 
             var tag1 = new List<KeyValuePair<string, object>> { tags[0] };
 
             Assert.Equal("name", exportedItems[0].Name);
-            Assert.Equal("name", exportedItems[1].Name);
 
+            // Both instruments record
             Assert.Equal(20, GetLongSum(metric1));
-            Assert.Equal(20, GetLongSum(metric2));
-
             CheckTagsForNthMetricPoint(metric1, tag1, 1);
-            CheckTagsForNthMetricPoint(metric2, tag1, 1);
         }
 
         [Fact]
@@ -626,12 +621,11 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-            Assert.Equal(2, exportedItems.Count);
+            // The second view results in a name conflict, so it is ignored
+            Assert.Equal(1, exportedItems.Count);
             var metric1 = exportedItems[0];
-            var metric2 = exportedItems[1];
 
             Assert.Equal("name", exportedItems[0].Name);
-            Assert.Equal("name", exportedItems[1].Name);
 
             var metricPoints = new List<MetricPoint>();
             foreach (ref readonly var mp in metric1.GetMetricPoints())
@@ -641,33 +635,14 @@ namespace OpenTelemetry.Metrics.Tests
 
             Assert.Single(metricPoints);
             var metricPoint = metricPoints[0];
+
+            // Both instruments record
             Assert.Equal(2, metricPoint.GetHistogramCount());
             Assert.Equal(30, metricPoint.GetHistogramSum());
 
             var index = 0;
             var actualCount = 0;
             var expectedBucketCounts = new long[] { 0, 0, 2 };
-            foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
-            {
-                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
-                index++;
-                actualCount++;
-            }
-
-            metricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric2.GetMetricPoints())
-            {
-                metricPoints.Add(mp);
-            }
-
-            Assert.Single(metricPoints);
-            metricPoint = metricPoints[0];
-            Assert.Equal(2, metricPoint.GetHistogramCount());
-            Assert.Equal(30, metricPoint.GetHistogramSum());
-
-            index = 0;
-            actualCount = 0;
-            expectedBucketCounts = new long[] { 0, 2, 0 };
             foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
             {
                 Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
