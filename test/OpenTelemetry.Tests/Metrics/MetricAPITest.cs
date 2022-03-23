@@ -490,7 +490,7 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
             // The second view results in a name conflict, so it is ignored
-            Assert.Equal(1, exportedItems.Count);
+            Assert.Single(exportedItems);
             var metric1 = new List<Metric>() { exportedItems[0] };
             Assert.Equal("newname", exportedItems[0].Name);
 
@@ -533,7 +533,7 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
             // The second view results in a name conflict, so it is ignored
-            Assert.Equal(1, exportedItems.Count);
+            Assert.Single(exportedItems);
             var metric1 = new List<Metric>() { exportedItems[0] };
             var tag1 = new List<KeyValuePair<string, object>> { tags[0] };
 
@@ -581,7 +581,7 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
             // The second view results in a name conflict, so it is ignored
-            Assert.Equal(1, exportedItems.Count);
+            Assert.Single(exportedItems);
             var metric1 = new List<Metric>() { exportedItems[0] };
 
             var tag1 = new List<KeyValuePair<string, object>> { tags[0] };
@@ -622,7 +622,7 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
             // The second view results in a name conflict, so it is ignored
-            Assert.Equal(1, exportedItems.Count);
+            Assert.Single(exportedItems);
             var metric1 = exportedItems[0];
 
             Assert.Equal("name", exportedItems[0].Name);
@@ -690,7 +690,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             // The view only matches one instrument but renames it to the name
             // of the other instrument, so only one stream is produced
-            Assert.Equal(1, exportedItems.Count);
+            Assert.Single(exportedItems);
             var metric1 = new List<Metric>() { exportedItems[0] };
 
             var tag1 = new List<KeyValuePair<string, object>> { tags[0] };
