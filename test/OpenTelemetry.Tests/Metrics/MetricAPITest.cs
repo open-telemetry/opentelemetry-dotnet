@@ -697,9 +697,9 @@ namespace OpenTelemetry.Metrics.Tests
 
             Assert.Equal("name", exportedItems[0].Name);
 
-            // Both instruments record, tags get filtered even though second instrument
-            // did not match view
-            Assert.Equal(20, GetLongSum(metric1));
+            // Only the first instrument records. The second instrument registration
+            // is ignored as the view definition causes a conflict with it.
+            Assert.Equal(10, GetLongSum(metric1));
             CheckTagsForNthMetricPoint(metric1, tag1, 1);
         }
 
