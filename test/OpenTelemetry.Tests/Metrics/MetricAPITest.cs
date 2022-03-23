@@ -489,11 +489,15 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-            Assert.Single(exportedItems);
+            Assert.Equal(2, exportedItems.Count);
             var metric1 = new List<Metric>() { exportedItems[0] };
+            var metric2 = new List<Metric>() { exportedItems[1] };
 
             Assert.Equal("newname", exportedItems[0].Name);
+            Assert.Equal("newname", exportedItems[1].Name);
+
             Assert.Equal(20, GetLongSum(metric1));
+            Assert.Equal(20, GetLongSum(metric2));
         }
 
         [Fact]
@@ -578,13 +582,20 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-            Assert.Single(exportedItems);
+            Assert.Equal(2, exportedItems.Count);
             var metric1 = new List<Metric>() { exportedItems[0] };
+            var metric2 = new List<Metric>() { exportedItems[1] };
+
             var tag1 = new List<KeyValuePair<string, object>> { tags[0] };
 
             Assert.Equal("name", exportedItems[0].Name);
+            Assert.Equal("name", exportedItems[1].Name);
+
             Assert.Equal(20, GetLongSum(metric1));
+            Assert.Equal(20, GetLongSum(metric2));
+
             CheckTagsForNthMetricPoint(metric1, tag1, 1);
+            CheckTagsForNthMetricPoint(metric2, tag1, 1);
         }
 
         [Fact]
