@@ -74,9 +74,18 @@ namespace OpenTelemetry.Metrics
                     this.reader = new CompositeMetricReader(new[] { this.reader, reader });
                 }
 
-                if (reader is BaseExportingMetricReader baseExportingMetricReader)
+                if (reader is PeriodicExportingMetricReader periodicExportingMetricReader)
+                {
+                    exportersAdded.Append(((PeriodicExportingMetricReader)reader).Exporter);
+                    exportersAdded.Append(" (Paired with PeriodicExportingMetricReader exporting at ");
+                    exportersAdded.Append(((PeriodicExportingMetricReader)reader).ExportIntervalMilliseconds);
+                    exportersAdded.Append(" milliseconds intervals.)");
+                    exportersAdded.Append(';');
+                }
+                else if (reader is BaseExportingMetricReader baseExportingMetricReader)
                 {
                     exportersAdded.Append(((BaseExportingMetricReader)reader).Exporter);
+                    exportersAdded.Append(" (Paired with a MetricReader requiring manual trigger to export.)");
                     exportersAdded.Append(';');
                 }
             }
