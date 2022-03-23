@@ -76,21 +76,21 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        public readonly string MeterName { get; }
+        public string MeterName { get; }
 
-        public readonly string MeterVersion { get; }
+        public string MeterVersion { get; }
 
-        public readonly string InstrumentName { get; }
+        public string InstrumentName { get; }
 
-        public readonly string Unit { get; }
+        public string Unit { get; }
 
-        public readonly string Description { get; }
+        public string Description { get; }
 
-        public readonly Type InstrumentType { get; }
+        public Type InstrumentType { get; }
 
-        public readonly string[] TagKeys { get; }
+        public string[] TagKeys { get; }
 
-        public readonly double[] HistogramBucketBounds { get; }
+        public double[] HistogramBucketBounds { get; }
 
         public static bool operator ==(MetricStreamIdentity metricIdentity1, MetricStreamIdentity metricIdentity2) => metricIdentity1.Equals(metricIdentity2);
 
