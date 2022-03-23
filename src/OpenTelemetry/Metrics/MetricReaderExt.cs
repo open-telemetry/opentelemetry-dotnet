@@ -120,19 +120,21 @@ namespace OpenTelemetry.Metrics
 
                     if (this.instrumentIdentityToMetric.TryGetValue(instrumentIdentity, out var existingMetric))
                     {
-                        metrics.Add(existingMetric);
-                        continue;
-                    }
-
-                    if (this.metricStreamNames.Contains(metricStreamName))
-                    {
                         OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
                             metricName,
                             meterName,
                             "Metric instrument has the same name as an existing one but differs by description, unit, or instrument type. Measurements from this instrument will still be exported but may result in conflicts.",
                             "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
+
+                        if (metrics.Count == 0)
+                        {
+                            metrics.Add(existingMetric);
+                        }
+
+                        continue;
                     }
 
+                    // TODO: I think this check needs to be moved up...
                     if (metricStreamConfig?.Aggregation == Aggregation.Drop)
                     {
                         OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "View configuration asks to drop this instrument.", "Modify view configuration to allow this instrument, if desired.");
