@@ -434,15 +434,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         }
 
         [Theory]
-        [InlineData(StatusCode.Unset, "unset")]
-        [InlineData(StatusCode.Ok, "Ok")]
-        [InlineData(StatusCode.Error, "ERROR")]
-        [InlineData(StatusCode.Unset, "iNvAlId")]
-        public void JaegerActivityConverterTest_Status_ErrorFlagTest(StatusCode expectedStatusCode, string statusCodeTagValue)
+        [InlineData(StatusCode.Unset, "unset", "")]
+        [InlineData(StatusCode.Ok, "Ok", "")]
+        [InlineData(StatusCode.Error, "ERROR", "error description")]
+        [InlineData(StatusCode.Unset, "iNvAlId", "")]
+        public void JaegerActivityConverterTest_Status_ErrorFlagTest(StatusCode expectedStatusCode, string statusCodeTagValue, string statusDescription)
         {
             // Arrange
             var activity = CreateTestActivity();
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
+            activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, statusDescription);
 
             // Act
             var jaegerSpan = activity.ToJaegerSpan();
@@ -465,6 +466,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             if (expectedStatusCode == StatusCode.Error)
             {
                 Assert.Contains(jaegerSpan.Tags, t => t.Key == JaegerActivityExtensions.JaegerErrorFlagTagName && t.VType == JaegerTagType.BOOL && (t.VBool ?? false));
+                Assert.Contains(jaegerSpan.Tags, t => t.Key == SpanAttributeConstants.StatusDescriptionKey && t.VType == JaegerTagType.STRING && t.VStr.Equals(statusDescription));
             }
             else
             {

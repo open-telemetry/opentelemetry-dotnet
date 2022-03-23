@@ -71,6 +71,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     PooledList<JaegerTag>.Add(
                         ref jaegerTags.Tags,
                         new JaegerTag(JaegerErrorFlagTagName, JaegerTagType.BOOL, vBool: true));
+
+                    PooledList<JaegerTag>.Add(
+                        ref jaegerTags.Tags,
+                        new JaegerTag(SpanAttributeConstants.StatusDescriptionKey, JaegerTagType.STRING, vStr: activity.StatusDescription ?? string.Empty));
                 }
             }
             else if (jaegerTags.StatusCode.HasValue && jaegerTags.StatusCode != StatusCode.Unset)
@@ -87,6 +91,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                     PooledList<JaegerTag>.Add(
                         ref jaegerTags.Tags,
                         new JaegerTag(JaegerErrorFlagTagName, JaegerTagType.BOOL, vBool: true));
+
+                    PooledList<JaegerTag>.Add(
+                        ref jaegerTags.Tags,
+                        new JaegerTag(SpanAttributeConstants.StatusDescriptionKey, JaegerTagType.STRING, vStr: jaegerTags.StatusDescription ?? string.Empty));
                 }
             }
 
@@ -304,6 +312,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             public StatusCode? StatusCode { get; set; }
 
+            public string StatusDescription { get; set; }
+
             public bool ForEach(KeyValuePair<string, object> activityTag)
             {
                 if (activityTag.Value is Array)
@@ -321,7 +331,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                         if (key == SpanAttributeConstants.StatusCodeKey)
                         {
                             StatusCode? statusCode = StatusHelper.GetStatusCodeForTagValue(jaegerTag.VStr);
-
                             if (statusCode == Trace.StatusCode.Error)
                             {
                                 // Error flag: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/jaeger.md#error-flag
@@ -340,6 +349,11 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                         else if (key == JaegerErrorFlagTagName)
                         {
                             // Ignore `error` tag if it exists, it will be added based on StatusCode + StatusDescription.
+                            return true;
+                        }
+                        else if (key == SpanAttributeConstants.StatusDescriptionKey)
+                        {
+                            this.StatusDescription = jaegerTag.VStr;
                             return true;
                         }
                     }
