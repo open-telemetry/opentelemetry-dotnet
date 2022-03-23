@@ -486,7 +486,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             var jaegerSpan = activity.ToJaegerSpan();
 
             // Assert
-
             if (expectedStatusCode == ActivityStatusCode.Unset)
             {
                 Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == SpanAttributeConstants.StatusCodeKey);
