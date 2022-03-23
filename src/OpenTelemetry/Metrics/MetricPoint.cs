@@ -26,6 +26,8 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public struct MetricPoint
     {
+        internal readonly AggregatorStore AggregatorStore;
+
         private readonly AggregationType aggType;
 
         private readonly HistogramBuckets histogramBuckets;
@@ -39,19 +41,18 @@ namespace OpenTelemetry.Metrics
         private MetricPointValueStorage deltaLastValue;
 
         internal MetricPoint(
+            AggregatorStore aggregatorStore,
             AggregationType aggType,
-            DateTimeOffset startTime,
             string[] keys,
             object[] values,
             double[] histogramExplicitBounds)
         {
+            Debug.Assert(aggregatorStore != null, "AggregatorStore was null.");
             Debug.Assert((keys?.Length ?? 0) == (values?.Length ?? 0), "Key and value array lengths did not match.");
             Debug.Assert(histogramExplicitBounds != null, "Histogram explicit Bounds was null.");
 
             this.aggType = aggType;
-            this.StartTime = startTime;
             this.Tags = new ReadOnlyTagCollection(keys, values);
-            this.EndTime = default;
             this.runningValue = default;
             this.snapshotValue = default;
             this.deltaLastValue = default;
@@ -69,6 +70,9 @@ namespace OpenTelemetry.Metrics
             {
                 this.histogramBuckets = null;
             }
+
+            // Note: Intentionally set last because this is used to detect valid MetricPoints.
+            this.AggregatorStore = aggregatorStore;
         }
 
         /// <summary>
@@ -83,26 +87,12 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Gets the start time associated with the metric point.
         /// </summary>
-        public DateTimeOffset StartTime
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            readonly get;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal set;
-        }
+        public readonly DateTimeOffset StartTime => this.AggregatorStore.StartTimeExclusive;
 
         /// <summary>
         /// Gets the end time associated with the metric point.
         /// </summary>
-        public DateTimeOffset EndTime
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            readonly get;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal set;
-        }
+        public readonly DateTimeOffset EndTime => this.AggregatorStore.EndTimeInclusive;
 
         internal MetricPointStatus MetricPointStatus
         {
