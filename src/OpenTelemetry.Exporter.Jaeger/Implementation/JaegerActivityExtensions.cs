@@ -331,24 +331,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                         if (key == SpanAttributeConstants.StatusCodeKey)
                         {
                             StatusCode? statusCode = StatusHelper.GetStatusCodeForTagValue(jaegerTag.VStr);
-                            if (statusCode == Trace.StatusCode.Error)
-                            {
-                                // Error flag: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/jaeger.md#error-flag
-                                this.StatusCode = statusCode;
-                                return true;
-                            }
-                            else if (!statusCode.HasValue || statusCode == Trace.StatusCode.Unset)
-                            {
-                                // Unset Status is not sent: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/jaeger.md#status
-                                return true;
-                            }
-
                             this.StatusCode = statusCode;
-                            return true;
-                        }
-                        else if (key == JaegerErrorFlagTagName)
-                        {
-                            // Ignore `error` tag if it exists, it will be added based on StatusCode + StatusDescription.
                             return true;
                         }
                         else if (key == SpanAttributeConstants.StatusDescriptionKey)
