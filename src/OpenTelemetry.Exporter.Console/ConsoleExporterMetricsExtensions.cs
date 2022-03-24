@@ -26,7 +26,7 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public static class ConsoleExporterMetricsExtensions
     {
-        private const int DefaultExportIntervalMilliseconds = Timeout.Infinite;
+        private const int DefaultExportIntervalMilliseconds = 10000;
         private const int DefaultExportTimeoutMilliseconds = Timeout.Infinite;
 
         /// <summary>
