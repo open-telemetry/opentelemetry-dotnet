@@ -676,7 +676,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.True(metricPoint.Value.EndTime != default);
             if (exportDelta)
             {
-                Assert.True(metricPoint.Value.StartTime > firstRunStartTime);
+                Assert.True(metricPoint.Value.StartTime == firstRunEndTime);
             }
             else
             {
