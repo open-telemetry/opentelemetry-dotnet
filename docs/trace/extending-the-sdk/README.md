@@ -64,7 +64,7 @@ Apart from the exporter itself, you should also provide extension methods as
 shown [here](./MyExporterExtensions.cs). This allows users to add the Exporter
 to the `TracerProvider` as shown in the example [here](./Program.cs).
 
-### Exporting Status
+### Exporting Activity Status
 
 [DiagnosticSource](https://www.nuget.org/packages/system.diagnostics.diagnosticsource)
 package did not originally have a dedicated field for storing
