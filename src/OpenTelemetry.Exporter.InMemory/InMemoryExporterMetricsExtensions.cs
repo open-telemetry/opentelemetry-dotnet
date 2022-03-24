@@ -36,8 +36,6 @@ namespace OpenTelemetry.Metrics
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
         /// <param name="exportedItems">Collection which will be populated with the exported MetricItem.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
-        /// <remarks>Note that when working with <see cref="Metric"/> it is recommended to clear the
-        /// exported collection before repeated flushes to avoid working with duplicates.</remarks>
         public static MeterProviderBuilder AddInMemoryExporter(this MeterProviderBuilder builder, ICollection<Metric> exportedItems)
         {
             Guard.ThrowIfNull(builder);
@@ -61,8 +59,6 @@ namespace OpenTelemetry.Metrics
         /// <param name="exportedItems">Collection which will be populated with the exported MetricItem.</param>
         /// <param name="configureMetricReader"><see cref="MetricReader"/> configuration options.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
-        /// <remarks>Note that when working with <see cref="Metric"/> it is recommended to clear the
-        /// exported collection before repeated flushes to avoid working with duplicates.</remarks>
         public static MeterProviderBuilder AddInMemoryExporter(this MeterProviderBuilder builder, ICollection<Metric> exportedItems, Action<MetricReaderOptions> configureMetricReader)
         {
             Guard.ThrowIfNull(builder);

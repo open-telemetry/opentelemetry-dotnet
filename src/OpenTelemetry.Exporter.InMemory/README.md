@@ -17,16 +17,6 @@ See the
 [`TestInMemoryExporter.cs`](../../examples/Console/TestInMemoryExporter.cs) for
 an example of how to use the exporter for exporting traces to a collection.
 
-## Remarks
-
-When working with `Metric` it's important to note that by design the
-MetricApi reuses Metrics (see also: `MetricReader.metricsCurrentBatch`).
-This means that after multiple exports, the `InMemoryExporter` will
-repeatedly export the same instance(s) of `Metric`.
-
-It is recommended to clear the exported collection before repeated flushes to
-avoid working with duplicates.
-
 ## References
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
