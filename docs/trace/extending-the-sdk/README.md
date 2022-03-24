@@ -64,6 +64,21 @@ Apart from the exporter itself, you should also provide extension methods as
 shown [here](./MyExporterExtensions.cs). This allows users to add the Exporter
 to the `TracerProvider` as shown in the example [here](./Program.cs).
 
+### Exporting Activity Status
+
+[DiagnosticSource](https://www.nuget.org/packages/system.diagnostics.diagnosticsource)
+package did not originally have a dedicated field for storing
+[Status](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status),
+and hence, users were encouraged to follow the convention of storing status
+using tags "otel.status_code" and "otel.status_description".
+[DiagnosticSource](https://www.nuget.org/packages/system.diagnostics.diagnosticsource)
+version 6.0.0 added `Status` and `StatusDescription` to `Activity` class.
+Exporters which support reading status from `Activity` directly should fall back
+to retrieving status from the tags described above, to maintain backward
+compatibility.
+[ConsoleActivityExporter](../../../src/OpenTelemetry.Exporter.Console/ConsoleActivityExporter.cs)
+may be used as a reference.
+
 ## Instrumentation Library
 
 The [inspiration of the OpenTelemetry
