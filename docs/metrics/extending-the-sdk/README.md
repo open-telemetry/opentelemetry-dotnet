@@ -32,7 +32,7 @@ not covered by the built-in exporters:
   The exporter should perform all actions (e.g. serializing etc.) with
   the `Metric`s and `MetricsPoint`s in the batch before returning control from
   `Export`, once the control is returned, the exporter can no longer make any
-  assumptions about the state of the Batch or anything inside it.
+  assumptions about the state of the batch or anything inside it.
 * Exporters should use `Activity.TagObjects` collection instead of
   `Activity.Tags` to obtain the full set of attributes (tags).
 * Exporters should use `ParentProvider.GetResource()` to get the `Resource`
