@@ -54,6 +54,50 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             activity.EnumerateTags(ref jaegerTags);
 
+            if (activity.Status != ActivityStatusCode.Unset)
+            {
+                if (activity.Status == ActivityStatusCode.Ok)
+                {
+                    PooledList<JaegerTag>.Add(
+                        ref jaegerTags.Tags,
+                        new JaegerTag(SpanAttributeConstants.StatusCodeKey, JaegerTagType.STRING, vStr: "OK"));
+                }
+                else
+                {
+                    PooledList<JaegerTag>.Add(
+                        ref jaegerTags.Tags,
+                        new JaegerTag(SpanAttributeConstants.StatusCodeKey, JaegerTagType.STRING, vStr: "ERROR"));
+
+                    PooledList<JaegerTag>.Add(
+                        ref jaegerTags.Tags,
+                        new JaegerTag(JaegerErrorFlagTagName, JaegerTagType.BOOL, vBool: true));
+
+                    PooledList<JaegerTag>.Add(
+                        ref jaegerTags.Tags,
+                        new JaegerTag(SpanAttributeConstants.StatusDescriptionKey, JaegerTagType.STRING, vStr: activity.StatusDescription ?? string.Empty));
+                }
+            }
+            else if (jaegerTags.StatusCode.HasValue && jaegerTags.StatusCode != StatusCode.Unset)
+            {
+                PooledList<JaegerTag>.Add(
+                        ref jaegerTags.Tags,
+                        new JaegerTag(
+                            SpanAttributeConstants.StatusCodeKey,
+                            JaegerTagType.STRING,
+                            vStr: StatusHelper.GetTagValueForStatusCode(jaegerTags.StatusCode.Value)));
+
+                if (jaegerTags.StatusCode == StatusCode.Error)
+                {
+                    PooledList<JaegerTag>.Add(
+                        ref jaegerTags.Tags,
+                        new JaegerTag(JaegerErrorFlagTagName, JaegerTagType.BOOL, vBool: true));
+
+                    PooledList<JaegerTag>.Add(
+                        ref jaegerTags.Tags,
+                        new JaegerTag(SpanAttributeConstants.StatusDescriptionKey, JaegerTagType.STRING, vStr: jaegerTags.StatusDescription ?? string.Empty));
+                }
+            }
+
             string peerServiceName = null;
             if (activity.Kind == ActivityKind.Client || activity.Kind == ActivityKind.Producer)
             {
@@ -252,44 +296,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void ProcessJaegerTag(ref TagEnumerationState state, string key, JaegerTag jaegerTag)
-        {
-            if (jaegerTag.VStr != null)
-            {
-                PeerServiceResolver.InspectTag(ref state, key, jaegerTag.VStr);
-
-                if (key == SpanAttributeConstants.StatusCodeKey)
-                {
-                    StatusCode? statusCode = StatusHelper.GetStatusCodeForTagValue(jaegerTag.VStr);
-                    if (statusCode == StatusCode.Error)
-                    {
-                        // Error flag: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/jaeger.md#error-flag
-                        PooledList<JaegerTag>.Add(ref state.Tags, new JaegerTag(JaegerErrorFlagTagName, JaegerTagType.BOOL, vBool: true));
-                    }
-                    else if (!statusCode.HasValue || statusCode == StatusCode.Unset)
-                    {
-                        // Unset Status is not sent: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/jaeger.md#status
-                        return;
-                    }
-
-                    // Normalize status since it is user-driven.
-                    jaegerTag = new JaegerTag(key, JaegerTagType.STRING, vStr: StatusHelper.GetTagValueForStatusCode(statusCode.Value));
-                }
-                else if (key == JaegerErrorFlagTagName)
-                {
-                    // Ignore `error` tag if it exists, it will be added based on StatusCode + StatusDescription.
-                    return;
-                }
-            }
-            else if (jaegerTag.VLong.HasValue)
-            {
-                PeerServiceResolver.InspectTag(ref state, key, jaegerTag.VLong.Value);
-            }
-
-            PooledList<JaegerTag>.Add(ref state.Tags, jaegerTag);
-        }
-
         private struct TagEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>, PeerServiceResolver.IPeerServiceState
         {
             public PooledList<JaegerTag> Tags;
@@ -304,6 +310,10 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             public long Port { get; set; }
 
+            public StatusCode? StatusCode { get; set; }
+
+            public string StatusDescription { get; set; }
+
             public bool ForEach(KeyValuePair<string, object> activityTag)
             {
                 if (activityTag.Value is Array)
@@ -312,7 +322,30 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 }
                 else if (activityTag.Value != null)
                 {
-                    ProcessJaegerTag(ref this, activityTag.Key, activityTag.ToJaegerTag());
+                    var key = activityTag.Key;
+                    var jaegerTag = activityTag.ToJaegerTag();
+                    if (jaegerTag.VStr != null)
+                    {
+                        PeerServiceResolver.InspectTag(ref this, key, jaegerTag.VStr);
+
+                        if (key == SpanAttributeConstants.StatusCodeKey)
+                        {
+                            StatusCode? statusCode = StatusHelper.GetStatusCodeForTagValue(jaegerTag.VStr);
+                            this.StatusCode = statusCode;
+                            return true;
+                        }
+                        else if (key == SpanAttributeConstants.StatusDescriptionKey)
+                        {
+                            this.StatusDescription = jaegerTag.VStr;
+                            return true;
+                        }
+                    }
+                    else if (jaegerTag.VLong.HasValue)
+                    {
+                        PeerServiceResolver.InspectTag(ref this, key, jaegerTag.VLong.Value);
+                    }
+
+                    PooledList<JaegerTag>.Add(ref this.Tags, jaegerTag);
                 }
 
                 return true;
