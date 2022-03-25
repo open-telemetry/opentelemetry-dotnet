@@ -101,7 +101,11 @@ namespace OpenTelemetry.Metrics
         /// <param name="boundaries">Optional histogram boundaries. See <see cref="MetricStreamHistogramConfiguration.Boundaries"/> for details.</param>
         /// <returns><see cref="MetricStreamHistogramConfiguration"/>.</returns>
         public static MetricStreamHistogramConfiguration CreateHistogramConfiguration(double[] boundaries)
-            => CreateHistogramConfiguration(boundaries: boundaries);
+            => CreateHistogramConfiguration(
+                name: null,
+                description: null,
+                tagKeys: null,
+                boundaries: boundaries);
 
         /// <summary>
         /// Creates a histogram metric stream configuration.
