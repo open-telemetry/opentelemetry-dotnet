@@ -19,19 +19,12 @@ using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Tests
 {
     public class MetricViewTests
     {
         private const int MaxTimeToAllowForFlush = 10000;
-        private readonly ITestOutputHelper output;
-
-        public MetricViewTests(ITestOutputHelper output)
-        {
-            this.output = output;
-        }
 
         [Fact]
         public void ViewToRenameMetric()
@@ -71,7 +64,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter1.Name)
-                .AddView("name1", new MetricStreamConfiguration { Name = viewNewName })
+                .AddView("name1", new MetricStreamConfiguration(name: viewNewName))
                 .AddInMemoryExporter(exportedItems)
                 .Build());
 
@@ -115,7 +108,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
                .AddMeter(meter1.Name)
-               .AddView("instrumenta.*", new MetricStreamConfiguration() { Name = "newname" })
+               .AddView("instrumenta.*", new MetricStreamConfiguration(name: "newname"))
                .AddInMemoryExporter(exportedItems)
                .Build());
         }
@@ -125,7 +118,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void AddViewWithInvalidHistogramBoundsThrowsArgumentException(double[] boundaries)
         {
             var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
-                .AddView("name1", new ExplicitBucketHistogramConfiguration { Boundaries = boundaries }));
+                .AddView("name1", MetricStreamConfiguration.CreateHistogramConfiguration(boundaries)));
 
             Assert.Contains("Histogram boundaries must be in ascending order with distinct values", ex.Message);
         }
@@ -169,7 +162,7 @@ namespace OpenTelemetry.Metrics.Tests
                     if (instrument.Meter.Name.Equals(meter2.Name, StringComparison.OrdinalIgnoreCase)
                         && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
                     {
-                        return new MetricStreamConfiguration() { Name = "name1_Renamed", Description = "new description" };
+                        return new MetricStreamConfiguration(name: "name1_Renamed", description: "new description");
                     }
                     else
                     {
@@ -212,7 +205,7 @@ namespace OpenTelemetry.Metrics.Tests
                         && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
                     {
                         // invalid instrument name as per the spec
-                        return new MetricStreamConfiguration() { Name = viewNewName, Description = "new description" };
+                        return new MetricStreamConfiguration(name: viewNewName, description: "new description");
                     }
                     else
                     {
@@ -246,7 +239,7 @@ namespace OpenTelemetry.Metrics.Tests
                         && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
                     {
                         // invalid instrument name as per the spec
-                        return new MetricStreamConfiguration() { Name = viewNewName, Description = "new description" };
+                        return new MetricStreamConfiguration(name: viewNewName, description: "new description");
                     }
                     else
                     {
@@ -359,8 +352,8 @@ namespace OpenTelemetry.Metrics.Tests
             var boundaries = new double[] { 10, 20 };
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("MyHistogram", new ExplicitBucketHistogramConfiguration() { Name = "MyHistogramDefaultBound" })
-                .AddView("MyHistogram", new ExplicitBucketHistogramConfiguration() { Boundaries = boundaries })
+                .AddView("MyHistogram", new MetricStreamHistogramConfiguration(name: "MyHistogramDefaultBound"))
+                .AddView("MyHistogram", new MetricStreamHistogramConfiguration(boundaries: boundaries))
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
@@ -442,12 +435,15 @@ namespace OpenTelemetry.Metrics.Tests
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("FruitCounter", new MetricStreamConfiguration()
-                { TagKeys = new string[] { "name" }, Name = "NameOnly" })
-                .AddView("FruitCounter", new MetricStreamConfiguration()
-                { TagKeys = new string[] { "size" }, Name = "SizeOnly" })
-                .AddView("FruitCounter", new MetricStreamConfiguration()
-                { TagKeys = new string[] { }, Name = "NoTags" })
+                .AddView("FruitCounter", new MetricStreamConfiguration(
+                    tagKeys: new string[] { "name" },
+                    name: "NameOnly"))
+                .AddView("FruitCounter", new MetricStreamConfiguration(
+                    tagKeys: new string[] { "size" },
+                    name: "SizeOnly"))
+                .AddView("FruitCounter", new MetricStreamConfiguration(
+                    tagKeys: Array.Empty<string>(),
+                    name: "NoTags"))
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
@@ -504,7 +500,7 @@ namespace OpenTelemetry.Metrics.Tests
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("counterNotInteresting", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+                .AddView("counterNotInteresting", MetricStreamConfiguration.Drop)
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
@@ -527,7 +523,7 @@ namespace OpenTelemetry.Metrics.Tests
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("observableCounterNotInteresting", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+                .AddView("observableCounterNotInteresting", MetricStreamConfiguration.Drop)
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
@@ -548,7 +544,7 @@ namespace OpenTelemetry.Metrics.Tests
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("observableGaugeNotInteresting", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+                .AddView("observableGaugeNotInteresting", MetricStreamConfiguration.Drop)
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
@@ -569,7 +565,7 @@ namespace OpenTelemetry.Metrics.Tests
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("server*", new MetricStreamConfiguration() { Aggregation = Aggregation.Drop })
+                .AddView("server*", MetricStreamConfiguration.Drop)
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
@@ -611,13 +607,6 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Single(exportedItems);
             Assert.Equal("server.request_renamed", exportedItems[0].Name);
-        }
-
-        [Fact]
-        public void MetricStreamConfigurationForDropMustNotAllowOverriding()
-        {
-            MetricStreamConfiguration.Drop.Aggregation = Aggregation.Histogram;
-            Assert.Equal(Aggregation.Drop, MetricStreamConfiguration.Drop.Aggregation);
         }
     }
 }

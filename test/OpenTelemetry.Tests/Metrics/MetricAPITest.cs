@@ -371,8 +371,8 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("instrumentName", new MetricStreamConfiguration { Description = "newDescription1" })
-                .AddView("instrumentName", new MetricStreamConfiguration { Description = "newDescription2" })
+                .AddView("instrumentName", new MetricStreamConfiguration(description: "newDescription1"))
+                .AddView("instrumentName", new MetricStreamConfiguration(description: "newDescription2"))
                 .AddInMemoryExporter(exportedItems);
 
             using var meterProvider = meterProviderBuilder.Build();
@@ -420,13 +420,13 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddMeter(meter.Name)
                 .AddView((instrument) =>
                 {
-                    return new MetricStreamConfiguration { Name = "MetricStreamA", Description = "description" };
+                    return new MetricStreamConfiguration(name: "MetricStreamA", description: "description");
                 })
                 .AddView((instrument) =>
                 {
                     return instrument.Description == "description1"
-                        ? new MetricStreamConfiguration { Name = "MetricStreamB" }
-                        : new MetricStreamConfiguration { Name = "MetricStreamC" };
+                        ? new MetricStreamConfiguration(name: "MetricStreamB")
+                        : new MetricStreamConfiguration(name: "MetricStreamC");
                 })
                 .AddInMemoryExporter(exportedItems);
 
@@ -517,7 +517,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             if (hasView)
             {
-                meterProviderBuilder.AddView("name1", new MetricStreamConfiguration() { Description = "description" });
+                meterProviderBuilder.AddView("name1", new MetricStreamConfiguration(description: "description"));
             }
 
             using var meterProvider = meterProviderBuilder.Build();
@@ -866,7 +866,7 @@ namespace OpenTelemetry.Metrics.Tests
                 {
                     metricReaderOptions.Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
                 })
-                .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = new string[] { } })
+                .AddView("requestCount", new MetricStreamConfiguration(tagKeys: Array.Empty<string>()))
                 .Build();
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);

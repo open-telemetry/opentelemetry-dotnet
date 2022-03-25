@@ -90,11 +90,6 @@ namespace OpenTelemetry.Metrics
                 throw new ArgumentNullException($"Metric stream configuration cannot be null.", nameof(metricStreamConfiguration));
             }
 
-            if (!MeterProviderBuilderSdk.IsValidViewName(metricStreamConfiguration.Name))
-            {
-                throw new ArgumentException($"Custom view name {metricStreamConfiguration.Name} is invalid.", nameof(metricStreamConfiguration.Name));
-            }
-
             if (metricStreamConfiguration.Name != null && instrumentName.IndexOf('*') != -1)
             {
                 throw new ArgumentException(
@@ -102,15 +97,6 @@ namespace OpenTelemetry.Metrics
                     $"contains a wildcard character. This is not allowed when using a view to " +
                     $"rename a metric stream as it would lead to conflicting metric stream names.",
                     nameof(instrumentName));
-            }
-
-            if (metricStreamConfiguration is ExplicitBucketHistogramConfiguration histogramConfiguration)
-            {
-                // Validate histogram boundaries
-                if (histogramConfiguration.Boundaries != null && !IsSortedAndDistinct(histogramConfiguration.Boundaries))
-                {
-                    throw new ArgumentException($"Histogram boundaries must be in ascending order with distinct values", nameof(histogramConfiguration.Boundaries));
-                }
             }
 
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
@@ -221,19 +207,6 @@ namespace OpenTelemetry.Metrics
             }
 
             return null;
-        }
-
-        private static bool IsSortedAndDistinct(double[] values)
-        {
-            for (int i = 1; i < values.Length; i++)
-            {
-                if (values[i] <= values[i - 1])
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
     }
 }

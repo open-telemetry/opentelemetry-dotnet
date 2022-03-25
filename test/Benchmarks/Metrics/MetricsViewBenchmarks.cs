@@ -95,7 +95,7 @@ namespace Benchmarks.Metrics
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(this.meter.Name)
-                    .AddView("nomatch", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
+                    .AddView("nomatch", new MetricStreamConfiguration(tagKeys: new string[] { "DimName1", "DimName2", "DimName3" }))
                     .AddInMemoryExporter(this.metrics)
                     .Build();
             }
@@ -103,7 +103,7 @@ namespace Benchmarks.Metrics
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(this.meter.Name)
-                    .AddView(this.counter.Name, new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
+                    .AddView(this.counter.Name, new MetricStreamConfiguration(tagKeys: new string[] { "DimName1", "DimName2", "DimName3" }))
                     .AddInMemoryExporter(this.metrics)
                     .Build();
             }
