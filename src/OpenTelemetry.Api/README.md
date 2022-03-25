@@ -319,10 +319,10 @@ chose not to sample this activity.
    Refer to the
    [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md#attribute-and-label-naming)
    for best practices on naming tags. It is also possible to provide an initial
-   set of tags during activity creation, as shown below. Tags provided at
-   activity creation are accessible for
-   [Samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler),
-   whereas any tags added using `SetTag` are not available for samplers.
+   set of tags during activity creation, as shown below. It is recommended to
+   provide all available `Tags` during activity creation itself, as
+   [Samplers](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler)
+   can only consider information present during activity creation time.
 
     ```csharp
     var initialTags = new ActivityTagsCollection();
