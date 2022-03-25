@@ -429,6 +429,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 .AddOtlpExporter(
                     o =>
                     {
+                        o.Protocol = OtlpExportProtocol.HttpProtobuf;
                         o.ExportProcessorType = ExportProcessorType.Batch;
                         o.BatchExportProcessorOptions = null;
                     });
