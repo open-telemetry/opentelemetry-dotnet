@@ -13,6 +13,10 @@
   Fixes issues building on Apple Silicon (M1).
   ([#2963](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2963))
 
+* Fixed issue where the configuration of an OTLP exporter could be changed
+  after instantiation by altering the original `OtlpExporterOptions` provided.
+  ([#3066](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3066))
+
 ## 1.2.0-rc3
 
 Released 2022-Mar-04
