@@ -31,6 +31,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
     public sealed class IntegrationTests : IDisposable
     {
         private const string CollectorHostnameEnvVarName = "OTEL_COLLECTOR_HOSTNAME";
+        private const int ExportIntervalMilliseconds = 10000;
         private static readonly string CollectorHostname = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(CollectorHostnameEnvVarName);
         private readonly OpenTelemetryEventListener openTelemetryEventListener;
 
@@ -69,7 +70,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Protocol = protocol,
                 BatchExportProcessorOptions = new()
                 {
-                    ScheduledDelayMilliseconds = 10000,
+                    ScheduledDelayMilliseconds = ExportIntervalMilliseconds,
                 },
             };
 
@@ -105,7 +106,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
             else if (exporterOptions.ExportProcessorType == ExportProcessorType.Batch)
             {
-                handle.WaitOne(10000 * 2);
+                handle.WaitOne(ExportIntervalMilliseconds * 2);
             }
 
             Assert.Single(delegatingExporter.ExportResults);
@@ -145,7 +146,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 .AddMeter(meterName);
 
             var readerOptions = new MetricReaderOptions();
-            readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10000;
+            readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = ExportIntervalMilliseconds;
 
             OtlpMetricExporterExtensions.AddOtlpExporter(
                 builder,
@@ -176,7 +177,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
             else
             {
-                handle.WaitOne(10000 * 2);
+                handle.WaitOne(ExportIntervalMilliseconds * 2);
             }
 
             Assert.Single(delegatingExporter.ExportResults);
