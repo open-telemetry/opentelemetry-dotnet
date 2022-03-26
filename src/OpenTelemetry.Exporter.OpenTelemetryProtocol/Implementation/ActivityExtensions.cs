@@ -178,7 +178,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 otlpTags.Tags.Return();
             }
 
-            otlpSpan.Status = ToOtlpStatus(ref otlpTags);
+            otlpSpan.Status = ToOtlpStatus(ref otlpTags, ref activity);
 
             EventEnumerationState otlpEvents = default;
             activity.EnumerateEvents(ref otlpEvents);
@@ -237,21 +237,35 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static OtlpTrace.Status ToOtlpStatus(ref TagEnumerationState otlpTags)
+        private static OtlpTrace.Status ToOtlpStatus(ref TagEnumerationState otlpTags, ref Activity activity)
         {
-            var status = StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode);
-
-            if (!status.HasValue)
+            if (activity.Status == ActivityStatusCode.Unset && StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode) == null)
             {
                 return null;
             }
 
-            var otlpStatus = new OtlpTrace.Status
+            OtlpTrace.Status.Types.StatusCode otlpActivityStatusCode;
+            string otlpStatusDescription = null;
+            if (activity.Status != ActivityStatusCode.Unset)
             {
                 // The numerical values of the two enumerations match, a simple cast is enough.
-                Code = (OtlpTrace.Status.Types.StatusCode)(int)status,
-            };
+                otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)activity.Status;
+                if (!string.IsNullOrEmpty(activity.StatusDescription))
+                {
+                    otlpStatusDescription = activity.StatusDescription;
+                }
+            }
+            else
+            {
+                // The numerical values of the two enumerations match, a simple cast is enough.
+                otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode);
+                if (!string.IsNullOrEmpty(otlpTags.StatusDescription))
+                {
+                    otlpStatusDescription = otlpTags.StatusDescription;
+                }
+            }
 
+            var otlpStatus = new OtlpTrace.Status { Code = otlpActivityStatusCode };
             if (otlpStatus.Code != OtlpTrace.Status.Types.StatusCode.Error)
             {
 #pragma warning disable CS0612 // Type or member is obsolete
@@ -265,9 +279,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 #pragma warning restore CS0612 // Type or member is obsolete
             }
 
-            if (!string.IsNullOrEmpty(otlpTags.StatusDescription))
+            if (!string.IsNullOrEmpty(otlpStatusDescription))
             {
-                otlpStatus.Message = otlpTags.StatusDescription;
+                otlpStatus.Message = otlpStatusDescription;
             }
 
             return otlpStatus;

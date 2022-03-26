@@ -349,6 +349,25 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
+        public void MyTest()
+        {
+            using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
+
+            var attributes = new Dictionary<string, object>
+            {
+                { "stringKey", "value" },
+            };
+
+            var tags = attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value));
+            using var activity = activitySource.StartActivity("Name", ActivityKind.Client);
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, "OK");
+
+            var otlpSpan = activity.ToOtlpSpan();
+
+            Assert.NotNull(otlpSpan);
+        }
+
+        [Fact]
         public void ToOtlpSpanPeerServiceTest()
         {
             using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
