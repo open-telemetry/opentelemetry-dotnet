@@ -178,7 +178,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 otlpTags.Tags.Return();
             }
 
-            otlpSpan.Status = ToOtlpStatus(ref otlpTags, ref activity);
+            otlpSpan.Status = activity.ToOtlpStatus(ref otlpTags);
 
             EventEnumerationState otlpEvents = default;
             activity.EnumerateEvents(ref otlpEvents);
@@ -237,7 +237,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static OtlpTrace.Status ToOtlpStatus(ref TagEnumerationState otlpTags, ref Activity activity)
+        private static OtlpTrace.Status ToOtlpStatus(this Activity activity, ref TagEnumerationState otlpTags)
         {
             if (activity.Status == ActivityStatusCode.Unset && StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode) == null)
             {
