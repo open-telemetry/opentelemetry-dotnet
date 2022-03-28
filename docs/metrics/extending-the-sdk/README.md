@@ -29,8 +29,6 @@ not covered by the built-in exporters:
   done via `OpenTelemetry.SuppressInstrumentationScope`.
 * Exporters receives a batch of `Metric`, and each `Metric`
   can contain 1 or more `MetricPoint`s.
-* Exporters should use `Activity.TagObjects` collection instead of
-  `Activity.Tags` to obtain the full set of attributes (tags).
 * Exporters should use `ParentProvider.GetResource()` to get the `Resource`
   associated with the provider.
 
