@@ -365,6 +365,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var otlpSpan = activity.ToOtlpSpan();
 
             Assert.NotNull(otlpSpan);
+            Assert.NotNull(otlpSpan.Status);
+
+            Assert.Equal("OK", otlpSpan.Status.Code.ToString());
         }
 
         [Fact]
