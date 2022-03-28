@@ -4,8 +4,12 @@
 
 * Added support for Activity Status and StatusDescription which were
   added to Activity from `System.Diagnostics.DiagnosticSource` version 6.0.
-  To maintain backward compatibility, the exporter falls back to check
-  status inside the tag "otel.status_code".
+  Prior to version 6.0, setting the status of an Activity was provided by the
+  .NET OpenTelemetry API via the `Activity.SetStatus` extension method in the
+  `OpenTelemetry.Trace` namespace. Internally, this extension method added the
+  status as tags on the Activity: `otel.status_code` and `otel.status_description`.
+  Therefore, to maintain backward compatibility, the exporter falls back to using
+  these tags to infer status.
  ([#3100](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3100))
 
 * Fixed OTLP metric exporter to default to a periodic 60 second export cycle.
