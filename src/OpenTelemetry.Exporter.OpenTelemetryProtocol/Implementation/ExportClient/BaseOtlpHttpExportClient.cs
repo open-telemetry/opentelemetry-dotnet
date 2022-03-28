@@ -46,17 +46,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         /// <inheritdoc/>
         public bool SendExportRequest(TRequest request, CancellationToken cancellationToken = default)
         {
+            using var httpRequest = this.CreateHttpRequest(request);
+
             try
             {
-                using var httpRequest = this.CreateHttpRequest(request);
-
                 using var httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
 
                 httpResponse?.EnsureSuccessStatusCode();
             }
             catch (HttpRequestException ex)
             {
-                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
+                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(httpRequest.RequestUri, ex);
 
                 return false;
             }

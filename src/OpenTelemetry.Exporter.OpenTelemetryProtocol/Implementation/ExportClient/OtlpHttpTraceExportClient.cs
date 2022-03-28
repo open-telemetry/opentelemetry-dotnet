@@ -38,7 +38,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         public OtlpHttpTraceExportClient(OtlpExporterOptions options, HttpClient httpClient)
             : base(options, httpClient)
         {
-            this.exportTracesUri = this.Endpoint;
+            this.exportTracesUri = options.Protocol == OtlpExportProtocol.HttpProtobuf
+                ? this.Endpoint.AppendPathIfNotPresent(OtlpExporterOptions.TracesExportPath)
+                : this.Endpoint;
         }
 
         protected override HttpRequestMessage CreateHttpRequest(OtlpCollector.ExportTraceServiceRequest exportRequest)
