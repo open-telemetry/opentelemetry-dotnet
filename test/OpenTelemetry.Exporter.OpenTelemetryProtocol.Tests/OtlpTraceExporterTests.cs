@@ -348,26 +348,95 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Null(stringArray[2].Value);
         }
 
-        [Fact]
-        public void MyTest()
+        [Theory]
+        [InlineData(ActivityStatusCode.Unset, "")]
+        [InlineData(ActivityStatusCode.Ok, "")]
+        [InlineData(ActivityStatusCode.Error, "error description")]
+        public void ToOtlpSpanNativeActivityStatusTest(ActivityStatusCode expectedStatusCode, string statusDescription)
         {
             using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
+            using var activity = activitySource.StartActivity("Name");
+            activity.SetStatus(expectedStatusCode, statusDescription);
 
-            var attributes = new Dictionary<string, object>
+            var otlpSpan = activity.ToOtlpSpan();
+
+            if (expectedStatusCode == ActivityStatusCode.Unset)
             {
-                { "stringKey", "value" },
-            };
+                Assert.Null(otlpSpan.Status);
+            }
+            else
+            {
+                Assert.NotNull(otlpSpan.Status);
+                Assert.Equal((int)expectedStatusCode, (int)otlpSpan.Status.Code);
+                if (expectedStatusCode == ActivityStatusCode.Error)
+                {
+                    Assert.Equal(statusDescription, otlpSpan.Status.Message);
+                }
 
-            var tags = attributes.Select(kvp => new KeyValuePair<string, object>(kvp.Key, kvp.Value));
-            using var activity = activitySource.StartActivity("Name", ActivityKind.Client);
+                if (expectedStatusCode == ActivityStatusCode.Ok)
+                {
+                    Assert.Empty(otlpSpan.Status.Message);
+                }
+            }
+        }
+
+        [Theory]
+        [InlineData(StatusCode.Unset, "unset", "")]
+        [InlineData(StatusCode.Ok, "Ok", "")]
+        [InlineData(StatusCode.Error, "ERROR", "error description")]
+        public void ToOtlpSpanStatusTagTest(StatusCode expectedStatusCode, string statusCodeTagValue, string statusDescription)
+        {
+            using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
+            using var activity = activitySource.StartActivity("Name");
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
+            activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, statusDescription);
+
+            var otlpSpan = activity.ToOtlpSpan();
+
+            Assert.NotNull(otlpSpan.Status);
+            Assert.Equal((int)expectedStatusCode, (int)otlpSpan.Status.Code);
+
+            if (expectedStatusCode == StatusCode.Error)
+            {
+                Assert.Equal(statusDescription, otlpSpan.Status.Message);
+            }
+            else
+            {
+                Assert.Empty(otlpSpan.Status.Message);
+            }
+        }
+
+        [Fact]
+        public void ToOtlpSpanActivityStatusTakesPrecedenceOverStatusTagsWhenActivityStatusCodeIsOk()
+        {
+            using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
+            using var activity = activitySource.StartActivity("Name");
+            const string TagDescriptionOnError = "Description when TagStatusCode is Error.";
+            activity.SetStatus(ActivityStatusCode.Ok);
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, "ERROR");
+            activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, TagDescriptionOnError);
+
+            var otlpSpan = activity.ToOtlpSpan();
+
+            Assert.NotNull(otlpSpan.Status);
+            Assert.Equal((int)ActivityStatusCode.Ok, (int)otlpSpan.Status.Code);
+            Assert.Empty(otlpSpan.Status.Message);
+        }
+
+        [Fact]
+        public void ToOtlpSpanActivityStatusTakesPrecedenceOverStatusTagsWhenActivityStatusCodeIsError()
+        {
+            using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
+            using var activity = activitySource.StartActivity("Name");
+            const string StatusDescriptionOnError = "Description when ActivityStatusCode is Error.";
+            activity.SetStatus(ActivityStatusCode.Error, StatusDescriptionOnError);
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, "OK");
 
             var otlpSpan = activity.ToOtlpSpan();
 
-            Assert.NotNull(otlpSpan);
             Assert.NotNull(otlpSpan.Status);
-
-            Assert.Equal("OK", otlpSpan.Status.Code.ToString());
+            Assert.Equal((int)ActivityStatusCode.Error, (int)otlpSpan.Status.Code);
+            Assert.Equal(StatusDescriptionOnError, otlpSpan.Status.Message);
         }
 
         [Fact]

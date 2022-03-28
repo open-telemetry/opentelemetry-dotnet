@@ -244,7 +244,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 return null;
             }
 
-            OtlpTrace.Status.Types.StatusCode otlpActivityStatusCode;
+            OtlpTrace.Status.Types.StatusCode otlpActivityStatusCode = OtlpTrace.Status.Types.StatusCode.Unset;
             string otlpStatusDescription = null;
             if (activity.Status != ActivityStatusCode.Unset)
             {
@@ -257,11 +257,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
             else
             {
-                // The numerical values of the two enumerations match, a simple cast is enough.
-                otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode);
-                if (!string.IsNullOrEmpty(otlpTags.StatusDescription))
+                var statusCode = StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode);
+                if (statusCode != StatusCode.Unset)
                 {
-                    otlpStatusDescription = otlpTags.StatusDescription;
+                    // The numerical values of the two enumerations match, a simple cast is enough.
+                    otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)statusCode;
+                    if (!string.IsNullOrEmpty(otlpTags.StatusDescription))
+                    {
+                        otlpStatusDescription = otlpTags.StatusDescription;
+                    }
                 }
             }
 
