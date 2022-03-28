@@ -118,7 +118,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void AddViewWithInvalidHistogramBoundsThrowsArgumentException(double[] boundaries)
         {
             var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
-                .AddView("name1", MetricStreamConfiguration.CreateHistogramConfiguration(boundaries)));
+                .AddView("name1", MetricStreamConfiguration.CreateExplicitBucketHistogramConfiguration(boundaries)));
 
             Assert.Contains("Histogram boundaries must be in ascending order with distinct values", ex.Message);
         }
@@ -352,8 +352,8 @@ namespace OpenTelemetry.Metrics.Tests
             var boundaries = new double[] { 10, 20 };
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("MyHistogram", new MetricStreamHistogramConfiguration(name: "MyHistogramDefaultBound"))
-                .AddView("MyHistogram", new MetricStreamHistogramConfiguration(boundaries: boundaries))
+                .AddView("MyHistogram", new MetricStreamExplicitBucketHistogramConfiguration(name: "MyHistogramDefaultBound"))
+                .AddView("MyHistogram", new MetricStreamExplicitBucketHistogramConfiguration(boundaries: boundaries))
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 

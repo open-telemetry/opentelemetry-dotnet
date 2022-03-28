@@ -148,7 +148,7 @@ namespace OpenTelemetry.Metrics
                     {
                         Metric metric;
                         string[] tagKeysInteresting = metricStreamConfig?.RawTagKeys;
-                        double[] histogramBucketBounds = (metricStreamConfig is MetricStreamHistogramConfiguration histogramConfig
+                        double[] histogramBucketBounds = (metricStreamConfig is MetricStreamExplicitBucketHistogramConfiguration histogramConfig
                             && histogramConfig.Boundaries != null) ? histogramConfig.RawBoundaries : null;
                         metric = new Metric(instrumentIdentity, this.Temporality, this.maxMetricPointsPerMetricStream, histogramBucketBounds, tagKeysInteresting);
 

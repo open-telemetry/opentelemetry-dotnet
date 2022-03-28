@@ -96,32 +96,32 @@ namespace OpenTelemetry.Metrics
         // in the future.
 
         /// <summary>
-        /// Creates a histogram metric stream configuration.
+        /// Creates a histogram metric stream configuration with explicit bucket boundaries.
         /// </summary>
-        /// <param name="boundaries">Optional histogram boundaries. See <see cref="MetricStreamHistogramConfiguration.Boundaries"/> for details.</param>
-        /// <returns><see cref="MetricStreamHistogramConfiguration"/>.</returns>
-        public static MetricStreamHistogramConfiguration CreateHistogramConfiguration(double[] boundaries)
-            => CreateHistogramConfiguration(
+        /// <param name="boundaries">Optional histogram bucket boundaries. See <see cref="MetricStreamExplicitBucketHistogramConfiguration.Boundaries"/> for details.</param>
+        /// <returns><see cref="MetricStreamExplicitBucketHistogramConfiguration"/>.</returns>
+        public static MetricStreamExplicitBucketHistogramConfiguration CreateExplicitBucketHistogramConfiguration(double[] boundaries)
+            => CreateExplicitBucketHistogramConfiguration(
                 name: null,
                 description: null,
                 tagKeys: null,
                 boundaries: boundaries);
 
         /// <summary>
-        /// Creates a histogram metric stream configuration.
+        /// Creates a histogram metric stream configuration with explicit bucket boundaries.
         /// </summary>
         /// <param name="name">Optional view name. See <see cref="Name"/> for more details.</param>
         /// <param name="description">Optional view description. See <see cref="Description"/> for more details.</param>
         /// <param name="tagKeys">Optional tag keys. See <see cref="TagKeys"/> for more details.</param>
-        /// <param name="boundaries">Optional histogram boundaries. See <see cref="MetricStreamHistogramConfiguration.Boundaries"/> for details.</param>
-        /// <returns><see cref="MetricStreamHistogramConfiguration"/>.</returns>
-        public static MetricStreamHistogramConfiguration CreateHistogramConfiguration(
+        /// <param name="boundaries">Optional histogram bucket boundaries. See <see cref="MetricStreamExplicitBucketHistogramConfiguration.Boundaries"/> for details.</param>
+        /// <returns><see cref="MetricStreamExplicitBucketHistogramConfiguration"/>.</returns>
+        public static MetricStreamExplicitBucketHistogramConfiguration CreateExplicitBucketHistogramConfiguration(
             string name = null,
             string description = null,
             string[] tagKeys = null,
             double[] boundaries = null)
         {
-            return new MetricStreamHistogramConfiguration(
+            return new MetricStreamExplicitBucketHistogramConfiguration(
                 name,
                 description,
                 tagKeys,
