@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Added support for Activity Status and StatusDescription which were
+  added to Activity from version 6.0. To maintain backward
+  compatibility, the exporter falls back to checking status inside
+  the tag "otel.status_code".
+ ([#3100](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3100))
+
 * Fixed OTLP metric exporter to default to a periodic 60 second export cycle.
   A bug was introduced in #2717 that caused the OTLP metric export to default
   to a manual export cycle (i.e., requiring an explicit flush). A workaround
