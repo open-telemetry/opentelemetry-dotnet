@@ -74,7 +74,7 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Gets the tags associated with the metric point.
         /// </summary>
-        public ReadOnlyTagCollection Tags
+        public readonly ReadOnlyTagCollection Tags
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get;
@@ -86,7 +86,7 @@ namespace OpenTelemetry.Metrics
         public DateTimeOffset StartTime
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get;
+            readonly get;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal set;
@@ -98,7 +98,7 @@ namespace OpenTelemetry.Metrics
         public DateTimeOffset EndTime
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get;
+            readonly get;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal set;
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Metrics
         internal MetricPointStatus MetricPointStatus
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get;
+            readonly get;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private set;
@@ -121,7 +121,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         /// <returns>Long sum value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public long GetSumLong()
+        public readonly long GetSumLong()
         {
             if (this.aggType != AggregationType.LongSumIncomingDelta && this.aggType != AggregationType.LongSumIncomingCumulative)
             {
@@ -139,7 +139,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         /// <returns>Double sum value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public double GetSumDouble()
+        public readonly double GetSumDouble()
         {
             if (this.aggType != AggregationType.DoubleSumIncomingDelta && this.aggType != AggregationType.DoubleSumIncomingCumulative)
             {
@@ -157,7 +157,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         /// <returns>Long gauge value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public long GetGaugeLastValueLong()
+        public readonly long GetGaugeLastValueLong()
         {
             if (this.aggType != AggregationType.LongGauge)
             {
@@ -175,7 +175,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         /// <returns>Double gauge value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public double GetGaugeLastValueDouble()
+        public readonly double GetGaugeLastValueDouble()
         {
             if (this.aggType != AggregationType.DoubleGauge)
             {
@@ -193,7 +193,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         /// <returns>Count value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public long GetHistogramCount()
+        public readonly long GetHistogramCount()
         {
             if (this.aggType != AggregationType.Histogram && this.aggType != AggregationType.HistogramSumCount)
             {
@@ -211,7 +211,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         /// <returns>Sum value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public double GetHistogramSum()
+        public readonly double GetHistogramSum()
         {
             if (this.aggType != AggregationType.Histogram && this.aggType != AggregationType.HistogramSumCount)
             {
@@ -229,7 +229,7 @@ namespace OpenTelemetry.Metrics
         /// </remarks>
         /// <returns><see cref="HistogramBuckets"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public HistogramBuckets GetHistogramBuckets()
+        public readonly HistogramBuckets GetHistogramBuckets()
         {
             if (this.aggType != AggregationType.Histogram && this.aggType != AggregationType.HistogramSumCount)
             {
@@ -542,7 +542,7 @@ namespace OpenTelemetry.Metrics
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private void ThrowNotSupportedMetricTypeException(string methodName)
+        private readonly void ThrowNotSupportedMetricTypeException(string methodName)
         {
             throw new NotSupportedException($"{methodName} is not supported for this metric type.");
         }
