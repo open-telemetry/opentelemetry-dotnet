@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Added support for Activity Status and StatusDescription which were
-  added to Activity from version 6.0. To maintain backward
+  added to Activity from `System.Diagnostics.DiagnosticSource` version 6.0. To maintain backward
   compatibility, the exporter falls back to checking status inside
   the tag "otel.status_code".
  ([#3100](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3100))
