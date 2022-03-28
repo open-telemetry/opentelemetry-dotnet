@@ -165,7 +165,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             var uri = new Uri(inputUri, UriKind.Absolute);
 
-            var resultUri = uri.AppendPathIfNotPresent(OtlpExporterOptions.TracesExportPath);
+            var resultUri = uri.AppendPathIfNotPresent("v1/traces");
 
             Assert.Equal(expectedUri, resultUri.AbsoluteUri);
         }
