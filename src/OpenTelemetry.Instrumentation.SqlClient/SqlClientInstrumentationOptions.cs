@@ -136,9 +136,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// If Filter returns true, the request is collected.
         /// If Filter returns false or throw exception, the request is filtered out.
         /// </summary>
-
         public Func<object, bool> Filter { get; set; }
-
 
 #if !NETFRAMEWORK
         /// <summary>
@@ -149,19 +147,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// </remarks>
         public bool RecordException { get; set; }
 #endif
-        internal bool EventFilter(object payload)
-        {
-            try
-            {
-                return
-                    this.Filter == null || this.Filter(payload);
-            }
-            catch (Exception ex)
-            {
-                SqlClientInstrumentationEventSource.Log.RequestFilterException(ex);
-                return false;
-            }
-        }
 
         internal static SqlConnectionDetails ParseDataSource(string dataSource)
         {
@@ -279,6 +264,20 @@ namespace OpenTelemetry.Instrumentation.SqlClient
                 {
                     sqlActivity.SetTag(SemanticConventions.AttributeNetPeerPort, connectionDetails.Port);
                 }
+            }
+        }
+
+        internal bool EventFilter(object payload)
+        {
+            try
+            {
+                return
+                    this.Filter == null || this.Filter(payload);
+            }
+            catch (Exception ex)
+            {
+                SqlClientInstrumentationEventSource.Log.RequestFilterException(ex);
+                return false;
             }
         }
 

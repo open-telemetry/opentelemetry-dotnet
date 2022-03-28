@@ -60,6 +60,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                         {
                             return;
                         }
+
                         // SqlClient does not create an Activity. So the activity coming in here will be null or the root span.
                         activity = SqlActivitySourceHelper.ActivitySource.StartActivity(
                             SqlActivitySourceHelper.ActivityName,

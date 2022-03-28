@@ -130,8 +130,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 DataSource = (string)eventData.Payload[1],
                 DatabaseName = (string)eventData.Payload[2],
                 CommandText = (string)eventData.Payload[3],
-
             };
+
             if (this.options?.EventFilter(payload) == false)
             {
                 return;
