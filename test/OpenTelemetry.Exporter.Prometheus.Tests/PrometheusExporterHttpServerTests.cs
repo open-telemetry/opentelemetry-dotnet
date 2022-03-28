@@ -48,7 +48,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                         .AddMeter(meter.Name)
                         .AddPrometheusExporter(o =>
                         {
-#if NET461
+#if NETFRAMEWORK
                             bool expectedDefaultState = true;
 #else
                             bool expectedDefaultState = false;
@@ -142,7 +142,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 if (ex is not ArgumentNullException)
                 {
                     Assert.Equal("System.ArgumentException", ex.GetType().ToString());
-#if NET461
+#if NETFRAMEWORK
                     Assert.Equal("Prometheus server path should be a valid URI with http/https scheme.\r\nParameter name: httpListenerPrefixes", ex.Message);
 #else
                     Assert.Equal("Prometheus server path should be a valid URI with http/https scheme. (Parameter 'httpListenerPrefixes')", ex.Message);
