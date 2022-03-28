@@ -250,7 +250,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             {
                 // The numerical values of the two enumerations match, a simple cast is enough.
                 otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)activity.Status;
-                if (!string.IsNullOrEmpty(activity.StatusDescription))
+                if (activity.Status == ActivityStatusCode.Error && !string.IsNullOrEmpty(activity.StatusDescription))
                 {
                     otlpStatusDescription = activity.StatusDescription;
                 }
@@ -262,7 +262,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 {
                     // The numerical values of the two enumerations match, a simple cast is enough.
                     otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)statusCode;
-                    if (!string.IsNullOrEmpty(otlpTags.StatusDescription))
+                    if (statusCode == StatusCode.Error && !string.IsNullOrEmpty(otlpTags.StatusDescription))
                     {
                         otlpStatusDescription = otlpTags.StatusDescription;
                     }
