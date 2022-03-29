@@ -252,19 +252,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 Code = (OtlpTrace.Status.Types.StatusCode)(int)status,
             };
 
-            if (otlpStatus.Code != OtlpTrace.Status.Types.StatusCode.Error)
-            {
-#pragma warning disable CS0612 // Type or member is obsolete
-                otlpStatus.DeprecatedCode = OtlpTrace.Status.Types.DeprecatedStatusCode.Ok;
-#pragma warning restore CS0612 // Type or member is obsolete
-            }
-            else
-            {
-#pragma warning disable CS0612 // Type or member is obsolete
-                otlpStatus.DeprecatedCode = OtlpTrace.Status.Types.DeprecatedStatusCode.UnknownError;
-#pragma warning restore CS0612 // Type or member is obsolete
-            }
-
             if (!string.IsNullOrEmpty(otlpTags.StatusDescription))
             {
                 otlpStatus.Message = otlpTags.StatusDescription;
