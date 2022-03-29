@@ -239,7 +239,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static OtlpTrace.Status ToOtlpStatus(this Activity activity, ref TagEnumerationState otlpTags)
         {
-            if (activity.Status == ActivityStatusCode.Unset && StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode) == null)
+            var statusCodeForTagValue = StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode);
+            if (activity.Status == ActivityStatusCode.Unset && statusCodeForTagValue == null)
             {
                 return null;
             }
@@ -257,12 +258,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
             else
             {
-                var statusCode = StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode);
-                if (statusCode != StatusCode.Unset)
+                if (statusCodeForTagValue != StatusCode.Unset)
                 {
                     // The numerical values of the two enumerations match, a simple cast is enough.
-                    otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)statusCode;
-                    if (statusCode == StatusCode.Error && !string.IsNullOrEmpty(otlpTags.StatusDescription))
+                    otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)statusCodeForTagValue;
+                    if (statusCodeForTagValue == StatusCode.Error && !string.IsNullOrEmpty(otlpTags.StatusDescription))
                     {
                         otlpStatusDescription = otlpTags.StatusDescription;
                     }
