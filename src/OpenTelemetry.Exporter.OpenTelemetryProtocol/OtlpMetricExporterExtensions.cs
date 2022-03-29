@@ -82,13 +82,14 @@ namespace OpenTelemetry.Metrics
             return AddOtlpExporter(builder, new OtlpExporterOptions(), new MetricReaderOptions(), null, configureExporterAndMetricReader, serviceProvider: null);
         }
 
-        private static MeterProviderBuilder AddOtlpExporter(
+        internal static MeterProviderBuilder AddOtlpExporter(
             MeterProviderBuilder builder,
             OtlpExporterOptions exporterOptions,
             MetricReaderOptions metricReaderOptions,
             Action<OtlpExporterOptions> configureExporter,
             Action<OtlpExporterOptions, MetricReaderOptions> configureExporterAndMetricReader,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            Func<BaseExporter<Metric>, BaseExporter<Metric>> configureExporterInstance = null)
         {
             if (configureExporterAndMetricReader != null)
             {
@@ -103,7 +104,12 @@ namespace OpenTelemetry.Metrics
 
             exporterOptions.AppendExportPath(OtlpExporterOptions.MetricsExportPath);
 
-            var metricExporter = new OtlpMetricExporter(exporterOptions);
+            BaseExporter<Metric> metricExporter = new OtlpMetricExporter(exporterOptions);
+
+            if (configureExporterInstance != null)
+            {
+                metricExporter = configureExporterInstance(metricExporter);
+            }
 
             var metricReader = PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
                 metricExporter,

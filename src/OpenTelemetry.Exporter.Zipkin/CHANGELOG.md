@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Added support for Activity Status and StatusDescription which were
+  added to Activity from version 6.0. To maintain backward
+  compatibility, the exporter falls back to checking status inside
+  the special tags "otel.status_code", "otel.status_description".
+ ([#3003](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3003))
+
 ## 1.2.0-rc3
 
 Released 2022-Mar-04

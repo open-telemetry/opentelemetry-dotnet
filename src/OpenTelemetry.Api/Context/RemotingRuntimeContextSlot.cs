@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#if NET461
+#if NETFRAMEWORK
 using System.Collections;
 using System.Reflection;
 using System.Runtime.CompilerServices;
