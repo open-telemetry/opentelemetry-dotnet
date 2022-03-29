@@ -26,7 +26,7 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public struct MetricPoint
     {
-        internal readonly AggregatorStore AggregatorStore;
+        private readonly AggregatorStore aggregatorStore;
 
         private readonly AggregationType aggType;
 
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Metrics
             }
 
             // Note: Intentionally set last because this is used to detect valid MetricPoints.
-            this.AggregatorStore = aggregatorStore;
+            this.aggregatorStore = aggregatorStore;
         }
 
         /// <summary>
@@ -87,12 +87,12 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Gets the start time associated with the metric point.
         /// </summary>
-        public readonly DateTimeOffset StartTime => this.AggregatorStore.StartTimeExclusive;
+        public readonly DateTimeOffset StartTime => this.aggregatorStore.StartTimeExclusive;
 
         /// <summary>
         /// Gets the end time associated with the metric point.
         /// </summary>
-        public readonly DateTimeOffset EndTime => this.AggregatorStore.EndTimeInclusive;
+        public readonly DateTimeOffset EndTime => this.aggregatorStore.EndTimeInclusive;
 
         internal MetricPointStatus MetricPointStatus
         {
@@ -102,6 +102,8 @@ namespace OpenTelemetry.Metrics
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private set;
         }
+
+        internal readonly bool IsInitialized => this.aggregatorStore != null;
 
         /// <summary>
         /// Gets the sum long value associated with the metric point.

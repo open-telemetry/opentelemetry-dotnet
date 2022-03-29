@@ -141,7 +141,7 @@ namespace OpenTelemetry.Metrics
             for (int i = 0; i <= indexSnapshot; i++)
             {
                 ref var metricPoint = ref this.metricPoints[i];
-                if (metricPoint.AggregatorStore == null)
+                if (!metricPoint.IsInitialized)
                 {
                     continue;
                 }
