@@ -35,7 +35,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckCateogryNameForLog()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             logger.LogInformation("Log");
             var categoryName = exportedItems[0].CategoryName;
@@ -52,7 +53,8 @@ namespace OpenTelemetry.Logs.Tests
         [InlineData(LogLevel.Critical)]
         public void CheckLogLevel(LogLevel logLevel)
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var message = $"Log {logLevel}";
             logger.Log(logLevel, message);
@@ -64,7 +66,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckStateForUnstructuredLog()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var message = "Hello, World!";
             logger.LogInformation(message);
@@ -79,7 +82,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckStateForUnstructuredLogWithStringInterpolation()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var message = $"Hello from potato {0.99}.";
             logger.LogInformation(message);
@@ -94,7 +98,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckStateForStructuredLogWithTemplate()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var message = "Hello from {name} {price}.";
             logger.LogInformation(message, "tomato", 2.99);
@@ -121,7 +126,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckStateForStructuredLogWithStrongType()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var food = new Food { Name = "artichoke", Price = 3.99 };
             logger.LogInformation("{food}", food);
@@ -147,7 +153,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckStateForStructuredLogWithAnonymousType()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var anonymousType = new { Name = "pumpkin", Price = 5.99 };
             logger.LogInformation("{food}", anonymousType);
@@ -173,7 +180,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckStateForStrucutredLogWithGeneralType()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var food = new Dictionary<string, object>
             {
@@ -211,7 +219,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckStateForExceptionLogged()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var exceptionMessage = "Exception Message";
             var exception = new Exception(exceptionMessage);
@@ -234,7 +243,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckTraceIdForLogWithinDroppedActivity()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             logger.LogInformation("Log within a dropped activity");
             var logRecord = exportedItems[0];
@@ -248,7 +258,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckTraceIdForLogWithinActivityMarkedAsRecordOnly()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var sampler = new RecordOnlySampler();
             var exportedActivityList = new List<Activity>();
@@ -275,7 +286,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckTraceIdForLogWithinActivityMarkedAsRecordAndSample()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: null);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             var sampler = new AlwaysOnSampler();
             var exportedActivityList = new List<Activity>();
@@ -302,7 +314,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void VerifyIncludeFormattedMessage_False()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = false);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = false);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             logger.LogInformation("OpenTelemetry!");
             var logRecord = exportedItems[0];
@@ -312,7 +325,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void VerifyIncludeFormattedMessage_True()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = true);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             logger.LogInformation("OpenTelemetry!");
             var logRecord = exportedItems[0];
@@ -326,7 +340,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void IncludeFormattedMessageTestWhenFormatterNull()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = true);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             logger.Log(LogLevel.Information, default, "Hello World!", null, null);
             var logRecord = exportedItems[0];
@@ -346,7 +361,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void VerifyIncludeScopes_False()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: options => options.IncludeScopes = false);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeScopes = false);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             using var scope = logger.BeginScope("string_scope");
 
@@ -361,7 +377,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void VerifyIncludeScopes_True()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: options => options.IncludeScopes = true);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeScopes = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             using var scope = logger.BeginScope("string_scope");
 
@@ -457,7 +474,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void VerifyParseStateValues_False_UsingStandardExtensions()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = false);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = false);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             // Tests state parsing with standard extensions.
 
@@ -471,7 +489,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void VerifyParseStateValues_True_UsingStandardExtensions()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             // Tests state parsing with standard extensions.
 
@@ -505,7 +524,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void ParseStateValuesUsingStructTest()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             // Tests struct IReadOnlyList<KeyValuePair<string, object>> parse path.
 
@@ -526,7 +546,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void ParseStateValuesUsingListTest()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             // Tests ref IReadOnlyList<KeyValuePair<string, object>> parse path.
 
@@ -547,7 +568,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void ParseStateValuesUsingIEnumerableTest()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             // Tests IEnumerable<KeyValuePair<string, object>> parse path.
 
@@ -568,7 +590,8 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void ParseStateValuesUsingCustomTest()
         {
-            using var loggerFactory = InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
             // Tests unknown state parse path.
 
@@ -595,12 +618,12 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Same(state, actualState.Value);
         }
 
-        private static ILoggerFactory InitializeLoggerFactory(out ILogger logger, out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions> configure = null)
+        private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions> configure = null)
         {
             exportedItems = new List<LogRecord>();
             var exporter = new InMemoryExporter<LogRecord>(exportedItems);
             var processor = new TestLogRecordProcessor(exporter);
-            var loggerFactory = LoggerFactory.Create(builder =>
+            return LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
                 {
@@ -609,9 +632,6 @@ namespace OpenTelemetry.Logs.Tests
                 });
                 builder.AddFilter(typeof(LogRecordTest).FullName, LogLevel.Trace);
             });
-
-            logger = loggerFactory.CreateLogger<LogRecordTest>();
-            return loggerFactory;
         }
 
         internal struct Food
