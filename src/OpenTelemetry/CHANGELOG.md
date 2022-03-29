@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Add setters for `State`, `StateValues`, and `FormattedMessage` for LogRecord.
+  ([2864](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2864))
+
 * The `PeriodicExportingMetricReader` now accepts an
   `ExportIntervalMilliseconds` of `-1` indicating an infinite export interval
   period.
