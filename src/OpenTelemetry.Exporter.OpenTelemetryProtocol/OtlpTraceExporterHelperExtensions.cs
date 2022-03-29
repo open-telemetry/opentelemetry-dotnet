@@ -73,12 +73,14 @@ namespace OpenTelemetry.Trace
             }
             else
             {
+                var batchOptions = exporterOptions.BatchExportProcessorOptions ?? new();
+
                 return builder.AddProcessor(new BatchActivityExportProcessor(
                     otlpExporter,
-                    exporterOptions.BatchExportProcessorOptions.MaxQueueSize,
-                    exporterOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
-                    exporterOptions.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
-                    exporterOptions.BatchExportProcessorOptions.MaxExportBatchSize));
+                    batchOptions.MaxQueueSize,
+                    batchOptions.ScheduledDelayMilliseconds,
+                    batchOptions.ExporterTimeoutMilliseconds,
+                    batchOptions.MaxExportBatchSize));
             }
         }
     }
