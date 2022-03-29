@@ -32,12 +32,12 @@ namespace OpenTelemetry.Logs.Tests
                 IncludeScopes = initialValue,
                 ParseStateValues = initialValue,
             };
-            var processor = new OpenTelemetryLoggerProvider(options);
+            var provider = new OpenTelemetryLoggerProvider(options);
 
             // Verify initial set
-            Assert.Equal(initialValue, processor.IncludeFormattedMessage);
-            Assert.Equal(initialValue, processor.IncludeScopes);
-            Assert.Equal(initialValue, processor.ParseStateValues);
+            Assert.Equal(initialValue, provider.IncludeFormattedMessage);
+            Assert.Equal(initialValue, provider.IncludeScopes);
+            Assert.Equal(initialValue, provider.ParseStateValues);
 
             // Attempt to change value
             options.IncludeFormattedMessage = !initialValue;
@@ -45,9 +45,9 @@ namespace OpenTelemetry.Logs.Tests
             options.ParseStateValues = !initialValue;
 
             // Verify processor is unchanged
-            Assert.Equal(initialValue, processor.IncludeFormattedMessage);
-            Assert.Equal(initialValue, processor.IncludeScopes);
-            Assert.Equal(initialValue, processor.ParseStateValues);
+            Assert.Equal(initialValue, provider.IncludeFormattedMessage);
+            Assert.Equal(initialValue, provider.IncludeScopes);
+            Assert.Equal(initialValue, provider.ParseStateValues);
         }
     }
 }
