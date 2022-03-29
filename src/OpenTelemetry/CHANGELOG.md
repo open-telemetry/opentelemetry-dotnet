@@ -24,8 +24,8 @@
   `readonly`
   ([#3065](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3065))
 
-* `OpenTelemetryLoggerProvider` now copies values from `OpenTelemetryLoggerOptions`.
-  Provider will not respect changes made after the LoggerFactory is built.
+* [Bug fix] OpenTelemetryLoggerProvider is now unaffected by changes to
+  OpenTelemetryLoggerOptions after the LoggerFactory is built.
   ([#3055](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3055))
 
 ## 1.2.0-rc3
