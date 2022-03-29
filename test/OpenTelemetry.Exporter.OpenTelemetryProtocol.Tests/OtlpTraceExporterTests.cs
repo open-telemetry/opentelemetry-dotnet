@@ -421,5 +421,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             exportClientMock.Verify(m => m.Shutdown(It.IsAny<int>()), Times.Once());
         }
+
+        [Fact]
+        public void Null_BatchExportProcessorOptions_SupportedTest()
+        {
+            Sdk.CreateTracerProviderBuilder()
+                .AddOtlpExporter(
+                    o =>
+                    {
+                        o.Protocol = OtlpExportProtocol.HttpProtobuf;
+                        o.ExportProcessorType = ExportProcessorType.Batch;
+                        o.BatchExportProcessorOptions = null;
+                    });
+        }
     }
 }
