@@ -108,24 +108,35 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 if (forceFlush)
                 {
                     Assert.True(tracerProvider.ForceFlush());
+                    Assert.Single(delegatingExporter.ExportResults);
+                    Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
                 }
                 else if (exporterOptions.ExportProcessorType == ExportProcessorType.Batch)
                 {
-                    handle.WaitOne(ExportIntervalMilliseconds * 2);
+                    Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
+                    Assert.Single(delegatingExporter.ExportResults);
+                    Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
                 }
             }
 
-            Assert.Single(delegatingExporter.ExportResults);
-            Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+            if (!forceFlush && exportProcessorType == ExportProcessorType.Simple)
+            {
+                Assert.Single(delegatingExporter.ExportResults);
+                Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+            }
         }
 
-        [InlineData(OtlpExportProtocol.Grpc, ":4317", false)]
-        [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/metrics", false)]
-        [InlineData(OtlpExportProtocol.Grpc, ":4317", true)]
-        [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/metrics", true)]
+        [InlineData(OtlpExportProtocol.Grpc, ":4317", false, false)]
+        [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/metrics", false, false)]
+        [InlineData(OtlpExportProtocol.Grpc, ":4317", false, true)]
+        [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/metrics", false, true)]
+        [InlineData(OtlpExportProtocol.Grpc, ":4317", true, false)]
+        [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/metrics", true, false)]
+        [InlineData(OtlpExportProtocol.Grpc, ":4317", true, true)]
+        [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/metrics", true, true)]
         [Trait("CategoryName", "CollectorIntegrationTests")]
         [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
-        public void MetricExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint, bool forceFlush)
+        public void MetricExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint, bool useManualExport, bool forceFlush)
         {
 #if NETCOREAPP3_1
             // Adding the OtlpExporter creates a GrpcChannel.
@@ -152,7 +163,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 .AddMeter(meterName);
 
             var readerOptions = new MetricReaderOptions();
-            readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = ExportIntervalMilliseconds;
+            readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = useManualExport ? Timeout.Infinite : ExportIntervalMilliseconds;
 
             OtlpMetricExporterExtensions.AddOtlpExporter(
                 builder,
@@ -167,27 +178,35 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     return delegatingExporter;
                 });
 
-            using var meterProvider = builder.Build();
-
-            using var meter = new Meter(meterName);
-
-            var counter = meter.CreateCounter<int>("test_counter");
-
-            counter.Add(18);
-
-            Assert.NotNull(delegatingExporter);
-
-            if (forceFlush)
+            using (var meterProvider = builder.Build())
             {
-                Assert.True(meterProvider.ForceFlush());
-            }
-            else
-            {
-                handle.WaitOne(ExportIntervalMilliseconds * 2);
+                using var meter = new Meter(meterName);
+
+                var counter = meter.CreateCounter<int>("test_counter");
+
+                counter.Add(18);
+
+                Assert.NotNull(delegatingExporter);
+
+                if (forceFlush)
+                {
+                    Assert.True(meterProvider.ForceFlush());
+                    Assert.Single(delegatingExporter.ExportResults);
+                    Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+                }
+                else if (!useManualExport)
+                {
+                    Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
+                    Assert.Single(delegatingExporter.ExportResults);
+                    Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+                }
             }
 
-            Assert.Single(delegatingExporter.ExportResults);
-            Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+            if (!forceFlush && useManualExport)
+            {
+                Assert.Single(delegatingExporter.ExportResults);
+                Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+            }
         }
 
         [Trait("CategoryName", "CollectorIntegrationTests")]
