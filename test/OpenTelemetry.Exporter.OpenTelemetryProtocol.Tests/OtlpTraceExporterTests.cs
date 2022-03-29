@@ -349,9 +349,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Theory]
-        [InlineData(ActivityStatusCode.Unset, "")]
-        [InlineData(ActivityStatusCode.Ok, "")]
-        [InlineData(ActivityStatusCode.Error, "error description")]
+        [InlineData(ActivityStatusCode.Unset, "Description will be ingored if status is Unset.")]
+        [InlineData(ActivityStatusCode.Ok, "Description will be ingored if status is Okay.")]
+        [InlineData(ActivityStatusCode.Error, "Description will be kept if status is Error.")]
         public void ToOtlpSpanNativeActivityStatusTest(ActivityStatusCode expectedStatusCode, string statusDescription)
         {
             using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
@@ -381,9 +381,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Theory]
-        [InlineData(StatusCode.Unset, "unset", "")]
+        [InlineData(StatusCode.Unset, "Unset", "Description will be ingored if status is Unset.")]
         [InlineData(StatusCode.Ok, "Ok", "Description must only be used with the Error StatusCode.")]
-        [InlineData(StatusCode.Error, "ERROR", "Error description.")]
+        [InlineData(StatusCode.Error, "Error", "Error description.")]
         public void ToOtlpSpanStatusTagTest(StatusCode expectedStatusCode, string statusCodeTagValue, string statusDescription)
         {
             using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
@@ -404,6 +404,22 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 Assert.Empty(otlpSpan.Status.Message);
             }
+        }
+
+        [Theory]
+        [InlineData(StatusCode.Unset, "uNsET")]
+        [InlineData(StatusCode.Ok, "oK")]
+        [InlineData(StatusCode.Error, "ERROR")]
+        public void ToOtlpSpanStatusTagIsCaseInsensitiveTest(StatusCode expectedStatusCode, string statusCodeTagValue)
+        {
+            using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
+            using var activity = activitySource.StartActivity("Name");
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
+
+            var otlpSpan = activity.ToOtlpSpan();
+
+            Assert.NotNull(otlpSpan.Status);
+            Assert.Equal((int)expectedStatusCode, (int)otlpSpan.Status.Code);
         }
 
         [Fact]
