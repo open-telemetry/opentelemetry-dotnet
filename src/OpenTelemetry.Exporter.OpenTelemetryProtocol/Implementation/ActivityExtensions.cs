@@ -269,7 +269,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 }
             }
 
-            if (!string.IsNullOrEmpty(otlpTags.StatusDescription))
+            var otlpStatus = new OtlpTrace.Status { Code = otlpActivityStatusCode };
+            if (!string.IsNullOrEmpty(otlpStatusDescription))
             {
                 otlpStatus.Message = otlpStatusDescription;
             }
