@@ -252,7 +252,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 Code = (OtlpTrace.Status.Types.StatusCode)(int)status,
             };
 
-
             if (!string.IsNullOrEmpty(otlpTags.StatusDescription))
             {
                 otlpStatus.Message = otlpTags.StatusDescription;
