@@ -17,7 +17,7 @@
   after instantiation by altering the original `OtlpExporterOptions` provided.
   ([#3066](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3066))
 
-* TraceExporter to stop populate DeprecatedCode in OTLP Status.
+* TraceExporter to stop populating `DeprecatedCode` in OTLP Status.
 
 ## 1.2.0-rc3
 
