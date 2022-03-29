@@ -31,7 +31,7 @@ namespace OpenTelemetry.Metrics
         internal const int DefaultExportIntervalMilliseconds = 60000;
         internal const int DefaultExportTimeoutMilliseconds = 30000;
 
-        private readonly int exportIntervalMilliseconds;
+        internal readonly int ExportIntervalMilliseconds;
         private readonly int exportTimeoutMilliseconds;
         private readonly Thread exporterThread;
         private readonly AutoResetEvent exportTrigger = new(false);
@@ -59,7 +59,7 @@ namespace OpenTelemetry.Metrics
                 throw new InvalidOperationException($"The '{nameof(exporter)}' does not support '{nameof(ExportModes)}.{nameof(ExportModes.Push)}'");
             }
 
-            this.exportIntervalMilliseconds = exportIntervalMilliseconds;
+            this.ExportIntervalMilliseconds = exportIntervalMilliseconds;
             this.exportTimeoutMilliseconds = exportTimeoutMilliseconds;
 
             this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
@@ -119,7 +119,7 @@ namespace OpenTelemetry.Metrics
 
             while (true)
             {
-                timeout = (int)(this.exportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.exportIntervalMilliseconds));
+                timeout = (int)(this.ExportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.ExportIntervalMilliseconds));
 
                 try
                 {
