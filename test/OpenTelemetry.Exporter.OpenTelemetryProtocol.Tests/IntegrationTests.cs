@@ -45,13 +45,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             this.openTelemetryEventListener.Dispose();
         }
 
-        [InlineData(OtlpExportProtocol.Grpc, ":4317", false)]
-        [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/traces", false)]
-        [InlineData(OtlpExportProtocol.Grpc, ":4317", true)]
-        [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/traces", true)]
+        [InlineData(OtlpExportProtocol.Grpc, ":4317", ExportProcessorType.Batch, false)]
+        [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/traces", ExportProcessorType.Batch, false)]
+        [InlineData(OtlpExportProtocol.Grpc, ":4317", ExportProcessorType.Batch, true)]
+        [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/traces", ExportProcessorType.Batch, true)]
+        [InlineData(OtlpExportProtocol.Grpc, ":4317", ExportProcessorType.Simple, false)]
+        [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/traces", ExportProcessorType.Simple, false)]
+        [InlineData(OtlpExportProtocol.Grpc, ":4317", ExportProcessorType.Simple, true)]
+        [InlineData(OtlpExportProtocol.HttpProtobuf, ":4318/v1/traces", ExportProcessorType.Simple, true)]
         [Trait("CategoryName", "CollectorIntegrationTests")]
         [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
-        public void TraceExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint, bool forceFlush)
+        public void TraceExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint, ExportProcessorType exportProcessorType, bool forceFlush)
         {
 #if NETCOREAPP3_1
             // Adding the OtlpExporter creates a GrpcChannel.
@@ -68,6 +72,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 Endpoint = new Uri($"http://{CollectorHostname}{endpoint}"),
                 Protocol = protocol,
+                ExportProcessorType = exportProcessorType,
                 BatchExportProcessorOptions = new()
                 {
                     ScheduledDelayMilliseconds = ExportIntervalMilliseconds,
@@ -92,21 +97,22 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     return delegatingExporter;
                 });
 
-            using var tracerProvider = builder.Build();
-
-            using var source = new ActivitySource(activitySourceName);
-            var activity = source.StartActivity($"{protocol} Test Activity");
-            activity?.Stop();
-
-            Assert.NotNull(delegatingExporter);
-
-            if (forceFlush)
+            using (var tracerProvider = builder.Build())
             {
-                Assert.True(tracerProvider.ForceFlush());
-            }
-            else if (exporterOptions.ExportProcessorType == ExportProcessorType.Batch)
-            {
-                handle.WaitOne(ExportIntervalMilliseconds * 2);
+                using var source = new ActivitySource(activitySourceName);
+                var activity = source.StartActivity($"{protocol} Test Activity");
+                activity?.Stop();
+
+                Assert.NotNull(delegatingExporter);
+
+                if (forceFlush)
+                {
+                    Assert.True(tracerProvider.ForceFlush());
+                }
+                else if (exporterOptions.ExportProcessorType == ExportProcessorType.Batch)
+                {
+                    handle.WaitOne(ExportIntervalMilliseconds * 2);
+                }
             }
 
             Assert.Single(delegatingExporter.ExportResults);
