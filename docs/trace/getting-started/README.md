@@ -62,11 +62,11 @@ Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/sp
 
 ```csharp
 using (var activity = MyActivitySource.StartActivity("SayHello"))
-        {
-            activity?.SetTag("foo", 1);
-            activity?.SetTag("bar", "Hello, World!");
-            activity?.SetTag("baz", new int[] { 1, 2, 3 });
-        }
+      {
+          activity?.SetTag("foo", 1);
+          activity?.SetTag("bar", "Hello, World!");
+          activity?.SetTag("baz", new int[] { 1, 2, 3 });
+      }
 ```
 
 An OpenTelemetry
@@ -77,14 +77,11 @@ is configured to subscribe to the activities from the source
 
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .SetSampler(new AlwaysOnSampler())
-            .AddSource("MyCompany.MyProduct.MyLibrary")
-            .AddConsoleExporter()
-            .Build();
+        .SetSampler(new AlwaysOnSampler())
+        .AddSource("MyCompany.MyProduct.MyLibrary")
+        .AddConsoleExporter()
+        .Build();
 ```
-
-> [!NOTE]
-> If the user doesn't specify a sampler then a default samper is used. The above example explicitly sets the sampler to the `AlwaysOnSampler`.
 
 ## OpenTelemetry .NET and relation with .NET Activity API
 
