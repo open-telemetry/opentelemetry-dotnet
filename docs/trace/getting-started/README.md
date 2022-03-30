@@ -31,12 +31,15 @@ Run the application again (using `dotnet run`) and you should see the trace
 output from the console.
 
 ```text
-Activity.Id:          00-8389584945550f40820b96ce1ceb9299-745239d26e408342-01
+Activity.TraceId:          d4a7d499698d62f0e2317a67abc559b6
+Activity.SpanId:           a091d18fbe45bdf6
+Activity.TraceFlags:           Recorded
+Activity.ActivitySourceName: MyCompany.MyProduct.MyLibrary
 Activity.DisplayName: SayHello
 Activity.Kind:        Internal
-Activity.StartTime:   2020-08-12T15:59:10.4461835Z
-Activity.Duration:    00:00:00.0066039
-Activity.TagObjects:
+Activity.StartTime:   2022-03-30T19:42:33.5178011Z
+Activity.Duration:    00:00:00.0097620
+Activity.Tags:
     foo: 1
     bar: Hello, World!
     baz: [1, 2, 3]
@@ -59,7 +62,9 @@ private static readonly ActivitySource MyActivitySource = new ActivitySource(
 The `ActivitySource` instance is used to start an `Activity` which represents an
 [OpenTelemetry
 Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span)
-and sets several `Tags` on it.
+and set several `Tags`, which represents
+[Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-attributes)
+on it.
 
 ```csharp
 using (var activity = MyActivitySource.StartActivity("SayHello"))
@@ -74,12 +79,10 @@ An OpenTelemetry
 [TracerProvider](#tracerprovider)
 is configured to subscribe to the activities from the source
 `MyCompany.MyProduct.MyLibrary`, and export it to `ConsoleExporter`.
-`ConsoleExporter` simply displays it on the console. The `AlwaysOnSampler` is
-used by default which does not sample any traces.
+`ConsoleExporter` simply displays it on the console.
 
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .SetSampler(new AlwaysOnSampler())
     .AddSource("MyCompany.MyProduct.MyLibrary")
     .AddConsoleExporter()
     .Build();
