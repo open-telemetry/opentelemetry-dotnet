@@ -48,12 +48,12 @@ using (var activity = MyActivitySource.StartActivity("Foo"))
     }
     catch (SomeException ex)
     {
-        activity?.SetStatus(Status.Error);
+        activity?.SetStatus(ActivityStatusCode.Error);
         DoSomething();
     }
     catch (Exception ex)
     {
-        activity?.SetStatus(Status.Error);
+        activity?.SetStatus(ActivityStatusCode.Error);
         throw;
     }
 }
@@ -95,7 +95,7 @@ using (var activity = MyActivitySource.StartActivity("Foo"))
     }
     catch (SomeException ex)
     {
-        activity?.SetStatus(Status.Error.WithDescription(ex.message));
+        activity?.SetStatus(ActivityStatusCode.Error, ex.message);
     }
 }
 ```
@@ -119,7 +119,7 @@ using (var activity = MyActivitySource.StartActivity("Foo"))
     }
     catch (SomeException ex)
     {
-        activity?.SetStatus(Status.Error.WithDescription(ex.message));
+        activity?.SetStatus(ActivityStatusCode.Error, ex.message);
         activity?.RecordException(ex);
     }
 }

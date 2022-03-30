@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
 * The `PeriodicExportingMetricReader` now accepts an
   `ExportIntervalMilliseconds` of `-1` indicating an infinite export interval
   period.
@@ -23,6 +27,10 @@
 * Marked members of the `MetricPoint` `struct` which do not mutate state as
   `readonly`
   ([#3065](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3065))
+
+* [Bug fix] OpenTelemetryLoggerProvider is now unaffected by changes to
+  OpenTelemetryLoggerOptions after the LoggerFactory is built.
+  ([#3055](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3055))
 
 ## 1.2.0-rc3
 
