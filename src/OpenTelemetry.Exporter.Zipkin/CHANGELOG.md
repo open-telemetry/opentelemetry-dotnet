@@ -3,9 +3,13 @@
 ## Unreleased
 
 * Added support for Activity Status and StatusDescription which were
-  added to Activity from version 6.0. To maintain backward
-  compatibility, the exporter falls back to checking status inside
-  the special tags "otel.status_code", "otel.status_description".
+  added to Activity from `System.Diagnostics.DiagnosticSource` version 6.0.
+  Prior to version 6.0, setting the status of an Activity was provided by the
+  .NET OpenTelemetry API via the `Activity.SetStatus` extension method in the
+  `OpenTelemetry.Trace` namespace. Internally, this extension method added the
+  status as tags on the Activity: `otel.status_code` and `otel.status_description`.
+  Therefore, to maintain backward compatibility, the exporter falls back to using
+  these tags to infer status.
  ([#3003](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3003))
 
 ## 1.2.0-rc3
