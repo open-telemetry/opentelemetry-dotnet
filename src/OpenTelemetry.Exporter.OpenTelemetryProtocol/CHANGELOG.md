@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
 * Added support for Activity Status and StatusDescription which were
   added to Activity from `System.Diagnostics.DiagnosticSource` version 6.0.
   Prior to version 6.0, setting the status of an Activity was provided by the
