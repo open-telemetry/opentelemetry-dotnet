@@ -36,5 +36,6 @@ public class Program
         activity?.SetTag("foo", 1);
         activity?.SetTag("bar", "Hello, World!");
         activity?.SetTag("baz", new int[] { 1, 2, 3 });
+        activity?.SetStatus(ActivityStatusCode.Ok);
     }
 }
