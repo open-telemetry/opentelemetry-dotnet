@@ -93,7 +93,7 @@ namespace OpenTelemetry.Logs.Tests
             });
             var logger = loggerFactory.CreateLogger<LoggerProviderTests>();
 
-            using var provider = exporter.ParentProvider as OpenTelemetryLoggerProvider;
+            var provider = exporter.ParentProvider as OpenTelemetryLoggerProvider;
             return provider.GetResource();
         }
 
