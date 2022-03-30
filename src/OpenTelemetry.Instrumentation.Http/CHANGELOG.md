@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.1
+
+Released 2022-Mar-30
+
 * Updated `TracerProviderBuilderExtensions.AddHttpClientInstrumentation` to support
   `IDeferredTracerProviderBuilder` and `IOptions<HttpClientInstrumentationOptions>`
   ([#3051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3051))

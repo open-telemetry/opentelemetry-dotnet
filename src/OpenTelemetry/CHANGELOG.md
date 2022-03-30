@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
 * The `PeriodicExportingMetricReader` now accepts an
   `ExportIntervalMilliseconds` of `-1` indicating an infinite export interval
   period.
