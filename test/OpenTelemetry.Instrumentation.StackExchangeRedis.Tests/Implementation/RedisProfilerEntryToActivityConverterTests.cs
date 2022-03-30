@@ -160,7 +160,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             Assert.Equal(dnsEndPoint.Port, result.GetTagValue(SemanticConventions.AttributeNetPeerPort));
         }
 
-#if !NET461
+#if !NETFRAMEWORK
         [Fact]
         public void ProfilerCommandToActivity_UsesOtherEndPointAsEndPoint()
         {
