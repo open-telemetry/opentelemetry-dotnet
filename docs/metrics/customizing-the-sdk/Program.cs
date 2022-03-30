@@ -36,10 +36,10 @@ public class Program
             .AddView(instrumentName: "MyCounter", name: "MyCounterRenamed")
 
             // Change Histogram boundaries
-            .AddView(instrumentName: "MyHistogram", MetricStreamConfiguration.CreateExplicitBucketHistogramConfiguration(new double[] { 10, 20 }))
+            .AddView(instrumentName: "MyHistogram", new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 } })
 
             // For the instrument "MyCounterCustomTags", aggregate with only the keys "tag1", "tag2".
-            .AddView(instrumentName: "MyCounterCustomTags", new MetricStreamConfiguration(tagKeys: new string[] { "tag1", "tag2" }))
+            .AddView(instrumentName: "MyCounterCustomTags", new MetricStreamConfiguration() { TagKeys = new string[] { "tag1", "tag2" } })
 
             // Drop the instrument "MyCounterDrop".
             .AddView(instrumentName: "MyCounterDrop", MetricStreamConfiguration.Drop)
@@ -50,7 +50,7 @@ public class Program
                 if (instrument.Meter.Name.Equals("CompanyA.ProductB.Library2") &&
                     instrument.GetType().Name.Contains("Histogram"))
                 {
-                    return MetricStreamConfiguration.CreateExplicitBucketHistogramConfiguration(new double[] { 10, 20 });
+                    return new ExplicitBucketHistogramConfiguration() { Boundaries = new double[] { 10, 20 } };
                 }
 
                 return null;

@@ -1,4 +1,4 @@
-// <copyright file="MetricStreamExplicitBucketHistogramConfiguration.cs" company="OpenTelemetry Authors">
+// <copyright file="ExplicitBucketHistogramConfiguration.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,37 +15,16 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
     /// Stores configuration for a histogram metric stream with explicit bucket boundaries.
     /// </summary>
-    public sealed class MetricStreamExplicitBucketHistogramConfiguration : MetricStreamConfiguration
+    public class ExplicitBucketHistogramConfiguration : MetricStreamConfiguration
     {
-        internal MetricStreamExplicitBucketHistogramConfiguration(
-            string name = null,
-            string description = null,
-            string[] tagKeys = null,
-            double[] boundaries = null)
-            : base(name, description, tagKeys)
-        {
-            if (boundaries != null)
-            {
-                if (!IsSortedAndDistinct(boundaries))
-                {
-                    throw new ArgumentException("Histogram boundaries must be in ascending order with distinct values.", nameof(boundaries));
-                }
-
-                double[] copy = new double[boundaries.Length];
-                boundaries.AsSpan().CopyTo(copy);
-                this.RawBoundaries = copy;
-            }
-        }
-
         /// <summary>
-        /// Gets the optional boundaries of the histogram metric stream.
+        /// Gets or sets the optional boundaries of the histogram metric stream.
         /// </summary>
         /// <remarks>
         /// <list type="bullet">
@@ -54,9 +33,24 @@ namespace OpenTelemetry.Metrics
         /// <item>A null value would result in default bucket boundaries being used.</item>
         /// </list>
         /// </remarks>
-        public IReadOnlyList<double> Boundaries => this.RawBoundaries;
+        public double[] Boundaries { get; set; }
 
-        internal double[] RawBoundaries { get; }
+        internal double[] CopiedBoundaries { get; private set; }
+
+        internal override void OnValidateAndClose()
+        {
+            if (this.Boundaries != null)
+            {
+                if (!IsSortedAndDistinct(this.Boundaries))
+                {
+                    throw new InvalidOperationException($"Histogram boundaries for custom view name {this.Name} are invalid. Histogram boundaries must be in ascending order with distinct values.");
+                }
+
+                double[] copy = new double[this.Boundaries.Length];
+                this.Boundaries.AsSpan().CopyTo(copy);
+                this.CopiedBoundaries = copy;
+            }
+        }
 
         private static bool IsSortedAndDistinct(double[] values)
         {

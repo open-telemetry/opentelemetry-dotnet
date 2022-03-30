@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics.Metrics;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Metrics
@@ -85,10 +86,7 @@ namespace OpenTelemetry.Metrics
         /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
         public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
         {
-            if (metricStreamConfiguration == null)
-            {
-                throw new ArgumentNullException($"Metric stream configuration cannot be null.", nameof(metricStreamConfiguration));
-            }
+            Guard.ThrowIfNull(metricStreamConfiguration);
 
             if (metricStreamConfiguration.Name != null && instrumentName.IndexOf('*') != -1)
             {
@@ -117,6 +115,8 @@ namespace OpenTelemetry.Metrics
         /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
         public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, MetricStreamConfiguration> viewConfig)
         {
+            Guard.ThrowIfNull(viewConfig);
+
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
                 return meterProviderBuilderBase.AddView(viewConfig);

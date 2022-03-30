@@ -64,7 +64,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter1.Name)
-                .AddView("name1", new MetricStreamConfiguration(name: viewNewName))
+                .AddView("name1", new MetricStreamConfiguration() { Name = viewNewName })
                 .AddInMemoryExporter(exportedItems)
                 .Build());
 
@@ -108,19 +108,37 @@ namespace OpenTelemetry.Metrics.Tests
 
             Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
                .AddMeter(meter1.Name)
-               .AddView("instrumenta.*", new MetricStreamConfiguration(name: "newname"))
+               .AddView("instrumenta.*", new MetricStreamConfiguration() { Name = "newname" })
                .AddInMemoryExporter(exportedItems)
                .Build());
         }
 
         [Theory]
         [MemberData(nameof(MetricTestData.InvalidHistogramBoundaries), MemberType = typeof(MetricTestData))]
-        public void AddViewWithInvalidHistogramBoundsThrowsArgumentException(double[] boundaries)
+        public void AddViewWithInvalidHistogramBoundsIgnored(double[] boundaries)
         {
-            var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
-                .AddView("name1", MetricStreamConfiguration.CreateExplicitBucketHistogramConfiguration(boundaries)));
+            var exportedItems = new List<Metric>();
 
-            Assert.Contains("Histogram boundaries must be in ascending order with distinct values", ex.Message);
+            using var meter1 = new Meter("AddViewWithInvalidHistogramBoundsIgnored");
+
+            var counter1 = meter1.CreateCounter<long>("counter1");
+
+            using (var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter1.Name)
+                .AddView((instrument) =>
+                {
+                    return instrument.Name == counter1.Name
+                        ? new ExplicitBucketHistogramConfiguration() { Boundaries = boundaries }
+                        : null;
+                })
+                .AddInMemoryExporter(exportedItems)
+                .Build())
+            {
+                counter1.Add(1);
+            }
+
+            // Counter is ignored due to invalid histogram bounds.
+            Assert.Empty(exportedItems);
         }
 
         [Theory]
@@ -162,7 +180,7 @@ namespace OpenTelemetry.Metrics.Tests
                     if (instrument.Meter.Name.Equals(meter2.Name, StringComparison.OrdinalIgnoreCase)
                         && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
                     {
-                        return new MetricStreamConfiguration(name: "name1_Renamed", description: "new description");
+                        return new MetricStreamConfiguration() { Name = "name1_Renamed", Description = "new description" };
                     }
                     else
                     {
@@ -205,7 +223,7 @@ namespace OpenTelemetry.Metrics.Tests
                         && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
                     {
                         // invalid instrument name as per the spec
-                        return new MetricStreamConfiguration(name: viewNewName, description: "new description");
+                        return new MetricStreamConfiguration() { Name = viewNewName, Description = "new description" };
                     }
                     else
                     {
@@ -239,7 +257,7 @@ namespace OpenTelemetry.Metrics.Tests
                         && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
                     {
                         // invalid instrument name as per the spec
-                        return new MetricStreamConfiguration(name: viewNewName, description: "new description");
+                        return new MetricStreamConfiguration() { Name = viewNewName, Description = "new description" };
                     }
                     else
                     {
@@ -352,8 +370,8 @@ namespace OpenTelemetry.Metrics.Tests
             var boundaries = new double[] { 10, 20 };
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("MyHistogram", new MetricStreamExplicitBucketHistogramConfiguration(name: "MyHistogramDefaultBound"))
-                .AddView("MyHistogram", new MetricStreamExplicitBucketHistogramConfiguration(boundaries: boundaries))
+                .AddView("MyHistogram", new ExplicitBucketHistogramConfiguration() { Name = "MyHistogramDefaultBound" })
+                .AddView("MyHistogram", new ExplicitBucketHistogramConfiguration() { Boundaries = boundaries })
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
@@ -435,15 +453,21 @@ namespace OpenTelemetry.Metrics.Tests
             var exportedItems = new List<Metric>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("FruitCounter", new MetricStreamConfiguration(
-                    tagKeys: new string[] { "name" },
-                    name: "NameOnly"))
-                .AddView("FruitCounter", new MetricStreamConfiguration(
-                    tagKeys: new string[] { "size" },
-                    name: "SizeOnly"))
-                .AddView("FruitCounter", new MetricStreamConfiguration(
-                    tagKeys: Array.Empty<string>(),
-                    name: "NoTags"))
+                .AddView("FruitCounter", new MetricStreamConfiguration()
+                {
+                    TagKeys = new string[] { "name" },
+                    Name = "NameOnly",
+                })
+                .AddView("FruitCounter", new MetricStreamConfiguration()
+                {
+                    TagKeys = new string[] { "size" },
+                    Name = "SizeOnly",
+                })
+                .AddView("FruitCounter", new MetricStreamConfiguration()
+                {
+                    TagKeys = Array.Empty<string>(),
+                    Name = "NoTags",
+                })
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 

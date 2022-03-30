@@ -92,7 +92,7 @@ namespace Benchmarks.Metrics
                 {
                     metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
                 })
-                .AddView(this.histogram.Name, MetricStreamConfiguration.CreateExplicitBucketHistogramConfiguration(this.bounds))
+                .AddView(this.histogram.Name, new ExplicitBucketHistogramConfiguration() { Boundaries = this.bounds })
                 .Build();
         }
 
