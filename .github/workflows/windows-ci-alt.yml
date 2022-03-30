@@ -1,0 +1,23 @@
+# Syntax: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
+
+# Description:
+# When working on documentation-only (*.md) PRs, the paths-ignore will prevent builds from triggering.
+# If these builds are required, the PR is effectively blocked.
+# GitHub recommends a generic workflow, with the same name that will return true.
+# See also: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/troubleshooting-required-status-checks#handling-skipped-but-required-checks
+
+# IMPORTANT: This workflow MUST use the same 'name' as the non -alt workflow.
+
+name: Windows
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+    - '!**.md'
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "No build required"'
