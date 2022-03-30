@@ -25,7 +25,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
 {
     internal static class TaskExtensions
     {
-#if NET472
+#if NETFRAMEWORK
         // Allow AsTask in tests where the Task/ValueTask is already a task.
         public static Task<T> AsTask<T>(this Task<T> task)
         {
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
             ? $"The operation timed out after reaching the limit of {timeout.TotalMilliseconds}ms."
             : $"The operation at {filePath}:{lineNumber} timed out after reaching the limit of {timeout.TotalMilliseconds}ms.";
 
-#if !NET472
+#if !NETFRAMEWORK
         public static IAsyncEnumerable<T> DefaultTimeout<T>(this IAsyncEnumerable<T> enumerable,
             [CallerFilePath] string? filePath = null,
             [CallerLineNumber] int lineNumber = default)

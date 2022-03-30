@@ -23,7 +23,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
     {
         public static HttpHeaders TrailingHeaders(this HttpResponseMessage responseMessage)
         {
-#if !NETSTANDARD2_0
+#if !NETFRAMEWORK
             return responseMessage.TrailingHeaders;
 #else
             if (responseMessage.RequestMessage.Properties.TryGetValue(ResponseTrailersKey, out var headers) &&
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
 #endif
         }
 
-#if NETSTANDARD2_0
+#if NETFRAMEWORK
         public static void EnsureTrailingHeaders(this HttpResponseMessage responseMessage)
         {
             if (!responseMessage.RequestMessage.Properties.ContainsKey(ResponseTrailersKey))

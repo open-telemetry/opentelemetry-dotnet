@@ -60,7 +60,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
             };
 
             message.RequestMessage = new HttpRequestMessage();
-#if NET472
+#if NETFRAMEWORK
             message.RequestMessage.Properties[TrailingHeadersHelpers.ResponseTrailersKey] = new ResponseTrailers();
 #endif
             message.Headers.Add(MessageEncodingHeader, grpcEncoding ?? IdentityGrpcEncoding);
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
             };
 
             message.RequestMessage = new HttpRequestMessage();
-#if NET472
+#if NETFRAMEWORK
             message.RequestMessage.Properties[TrailingHeadersHelpers.ResponseTrailersKey] = new ResponseTrailers();
 #endif
             message.Headers.Add(MessageEncodingHeader, grpcEncoding ?? IdentityGrpcEncoding);
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
             return message;
         }
 
-#if NET472
+#if NETFRAMEWORK
         private class ResponseTrailers : HttpHeaders
         {
         }
