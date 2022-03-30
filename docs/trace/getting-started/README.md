@@ -39,6 +39,7 @@ Activity.DisplayName: SayHello
 Activity.Kind:        Internal
 Activity.StartTime:   2022-03-30T19:42:33.5178011Z
 Activity.Duration:    00:00:00.0097620
+StatusCode : Ok
 Activity.Tags:
     foo: 1
     bar: Hello, World!
@@ -64,7 +65,8 @@ The `ActivitySource` instance is used to start an `Activity` which represents an
 Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span)
 and set several `Tags`, which represents
 [Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-attributes)
-on it.
+on it. It also sets the [Status](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status)
+to be `Ok`.
 
 ```csharp
 using (var activity = MyActivitySource.StartActivity("SayHello"))
@@ -72,6 +74,7 @@ using (var activity = MyActivitySource.StartActivity("SayHello"))
     activity?.SetTag("foo", 1);
     activity?.SetTag("bar", "Hello, World!");
     activity?.SetTag("baz", new int[] { 1, 2, 3 });
+    activity?.SetStatus(ActivityStatusCode.Ok);
 }
 ```
 
