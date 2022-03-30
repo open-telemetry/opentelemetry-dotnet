@@ -160,7 +160,6 @@ namespace OpenTelemetry.Metrics
                             var metricStreamConfig = viewConfig(instrument);
                             if (metricStreamConfig != null)
                             {
-                                metricStreamConfig.ValidateAndClose();
                                 metricStreamConfigs.Add(metricStreamConfig);
                             }
                         }

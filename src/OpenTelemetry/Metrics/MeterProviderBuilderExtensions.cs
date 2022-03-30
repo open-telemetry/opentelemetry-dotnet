@@ -112,7 +112,15 @@ namespace OpenTelemetry.Metrics
         /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
         /// <param name="viewConfig">Function to configure aggregation based on the instrument.</param>
         /// <returns><see cref="MeterProvider"/>.</returns>
-        /// <remarks>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</remarks>
+        /// <remarks>
+        /// <list type="bullet">
+        /// <item>Note: An invalid <see cref="MetricStreamConfiguration"/>
+        /// returned from <paramref name="viewConfig"/> will cause a dropping
+        /// behavior for the instrument being configured, no error will be
+        /// thrown at runtime.</item>
+        /// <item>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</item>
+        /// </list>
+        /// </remarks>
         public static MeterProviderBuilder AddView(this MeterProviderBuilder meterProviderBuilder, Func<Instrument, MetricStreamConfiguration> viewConfig)
         {
             Guard.ThrowIfNull(viewConfig);

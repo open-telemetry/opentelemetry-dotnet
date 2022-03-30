@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public class MetricStreamConfiguration
     {
-        private bool isClosed;
+        private string name;
 
         /// <summary>
         /// Gets the drop configuration.
@@ -40,7 +40,19 @@ namespace OpenTelemetry.Metrics
         /// <remarks>
         /// Note: If not provided the instrument name will be used.
         /// </remarks>
-        public string Name { get; set; }
+        public string Name
+        {
+            get => this.name;
+            set
+            {
+                if (value != null && !MeterProviderBuilderSdk.IsValidViewName(value))
+                {
+                    throw new ArgumentException($"Custom view name {value} is invalid.", nameof(value));
+                }
+
+                this.name = value;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the optional description of the metric stream.
@@ -54,44 +66,47 @@ namespace OpenTelemetry.Metrics
         /// Gets or sets the optional tag keys to include in the metric stream.
         /// </summary>
         /// <remarks>
-        /// Note: If provided any metrics for the instrument which do not match
-        /// all the tag keys will be dropped (not collected).
+        /// Notes:
+        /// <list type="bullet">
+        /// <item>If provided any metrics for the instrument which do not match
+        /// all the tag keys will be dropped (not collected).</item>
+        /// <item>A copy is made of the provided array. TagKeys cannot be
+        /// modified after being set.</item>
+        /// </list>
         /// </remarks>
-        public string[] TagKeys { get; set; }
+        public string[] TagKeys
+        {
+            get
+            {
+                if (this.CopiedTagKeys != null)
+                {
+                    string[] copy = new string[this.CopiedTagKeys.Length];
+                    this.CopiedTagKeys.AsSpan().CopyTo(copy);
+                    return copy;
+                }
+
+                return null;
+            }
+
+            set
+            {
+                if (value != null)
+                {
+                    string[] copy = new string[value.Length];
+                    value.AsSpan().CopyTo(copy);
+                    this.CopiedTagKeys = copy;
+                }
+                else
+                {
+                    this.CopiedTagKeys = null;
+                }
+            }
+        }
 
         internal string[] CopiedTagKeys { get; private set; }
 
         // TODO: MetricPoints caps can be configured here on
         // a per stream basis, when we add such a capability
         // in the future.
-
-        internal void ValidateAndClose()
-        {
-            if (!this.isClosed)
-            {
-                this.isClosed = true;
-
-                if (this.Name != null)
-                {
-                    if (!MeterProviderBuilderSdk.IsValidViewName(this.Name))
-                    {
-                        throw new ArgumentException($"Custom view name {this.Name} is invalid.", nameof(this.Name));
-                    }
-                }
-
-                if (this.TagKeys != null)
-                {
-                    string[] copy = new string[this.TagKeys.Length];
-                    this.TagKeys.AsSpan().CopyTo(copy);
-                    this.CopiedTagKeys = copy;
-                }
-
-                this.OnValidateAndClose();
-            }
-        }
-
-        internal virtual void OnValidateAndClose()
-        {
-        }
     }
 }

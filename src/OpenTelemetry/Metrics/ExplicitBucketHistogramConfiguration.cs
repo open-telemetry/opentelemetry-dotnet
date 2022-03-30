@@ -27,30 +27,53 @@ namespace OpenTelemetry.Metrics
         /// Gets or sets the optional boundaries of the histogram metric stream.
         /// </summary>
         /// <remarks>
+        /// Requirements:
         /// <list type="bullet">
-        /// <item>The array must be in ascending order with distinct values.</item>
-        /// <item>An empty array would result in no histogram buckets being calculated.</item>
-        /// <item>A null value would result in default bucket boundaries being used.</item>
+        /// <item>The array must be in ascending order with distinct
+        /// values.</item>
+        /// <item>An empty array would result in no histogram buckets being
+        /// calculated.</item>
+        /// <item>A null value would result in default bucket boundaries being
+        /// used.</item>
         /// </list>
+        /// Note: A copy is made of the provided array. Boundaries cannot be
+        /// modified after being set.
         /// </remarks>
-        public double[] Boundaries { get; set; }
-
-        internal double[] CopiedBoundaries { get; private set; }
-
-        internal override void OnValidateAndClose()
+        public double[] Boundaries
         {
-            if (this.Boundaries != null)
+            get
             {
-                if (!IsSortedAndDistinct(this.Boundaries))
+                if (this.CopiedBoundaries != null)
                 {
-                    throw new InvalidOperationException($"Histogram boundaries for custom view name {this.Name} are invalid. Histogram boundaries must be in ascending order with distinct values.");
+                    double[] copy = new double[this.CopiedBoundaries.Length];
+                    this.CopiedBoundaries.AsSpan().CopyTo(copy);
+                    return copy;
                 }
 
-                double[] copy = new double[this.Boundaries.Length];
-                this.Boundaries.AsSpan().CopyTo(copy);
-                this.CopiedBoundaries = copy;
+                return null;
+            }
+
+            set
+            {
+                if (value != null)
+                {
+                    if (!IsSortedAndDistinct(value))
+                    {
+                        throw new ArgumentException($"Histogram boundaries are invalid. Histogram boundaries must be in ascending order with distinct values.", nameof(value));
+                    }
+
+                    double[] copy = new double[value.Length];
+                    value.AsSpan().CopyTo(copy);
+                    this.CopiedBoundaries = copy;
+                }
+                else
+                {
+                    this.CopiedBoundaries = null;
+                }
             }
         }
+
+        internal double[] CopiedBoundaries { get; private set; }
 
         private static bool IsSortedAndDistinct(double[] values)
         {

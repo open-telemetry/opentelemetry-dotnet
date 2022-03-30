@@ -115,6 +115,16 @@ namespace OpenTelemetry.Metrics.Tests
 
         [Theory]
         [MemberData(nameof(MetricTestData.InvalidHistogramBoundaries), MemberType = typeof(MetricTestData))]
+        public void AddViewWithInvalidHistogramBoundsThrowsArgumentException(double[] boundaries)
+        {
+            var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
+                .AddView("name1", new ExplicitBucketHistogramConfiguration { Boundaries = boundaries }));
+
+            Assert.Contains("Histogram boundaries must be in ascending order with distinct values", ex.Message);
+        }
+
+        [Theory]
+        [MemberData(nameof(MetricTestData.InvalidHistogramBoundaries), MemberType = typeof(MetricTestData))]
         public void AddViewWithInvalidHistogramBoundsIgnored(double[] boundaries)
         {
             var exportedItems = new List<Metric>();
