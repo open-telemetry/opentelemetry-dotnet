@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
+* Added support for Activity Status and StatusDescription which were
+  added to Activity from `System.Diagnostics.DiagnosticSource` version 6.0.
+  Prior to version 6.0, setting the status of an Activity was provided by the
+  .NET OpenTelemetry API via the `Activity.SetStatus` extension method in the
+  `OpenTelemetry.Trace` namespace. Internally, this extension method added the
+  status as tags on the Activity: `otel.status_code` and `otel.status_description`.
+  Therefore, to maintain backward compatibility, the exporter falls back to using
+  these tags to infer status.
+ ([#3073](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3073))
+
+## 1.2.0-rc3
+
+Released 2022-Mar-04
+
 * Change supported values for `OTEL_EXPORTER_JAEGER_PROTOCOL`
   Supported values: `udp/thrift.compact` and `http/thrift.binary` defined
   in the [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/9a0a3300c6269c2837a1d7c9c5232ec816f63222/specification/sdk-environment-variables.md?plain=1#L129).

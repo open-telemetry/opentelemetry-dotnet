@@ -26,7 +26,7 @@ namespace OpenTelemetry.Extensions.Hosting.Implementation
     [EventSource(Name = "OpenTelemetry-Extensions-Hosting")]
     internal class HostingExtensionsEventSource : EventSource
     {
-        public static HostingExtensionsEventSource Log = new HostingExtensionsEventSource();
+        public static HostingExtensionsEventSource Log = new();
 
         [NonEvent]
         public void FailedInitialize(Exception ex)

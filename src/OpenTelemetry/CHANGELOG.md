@@ -2,14 +2,63 @@
 
 ## Unreleased
 
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
+* The `PeriodicExportingMetricReader` now accepts an
+  `ExportIntervalMilliseconds` of `-1` indicating an infinite export interval
+  period.
+  ([#2982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2982))
+
+* Added the `PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds`
+  option.
+  ([#3038](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3038))
+
+* Removed `MetricReaderType`. This enumeration was previously used when
+  configuing a metric reader with an exporter to configure whether the export
+  cycle would be periodic or manual (i.e., requiring a explicit call to flush
+  metrics). This change affects the push-based metric exporters: OTLP, Console,
+  and InMemory. For these exporters, a manual export cycle can now be achieved
+  by setting `PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds`
+  to `-1`.
+  ([#3038](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3038))
+
+* Marked members of the `MetricPoint` `struct` which do not mutate state as
+  `readonly`
+  ([#3065](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3065))
+
+* [Bug fix] OpenTelemetryLoggerProvider is now unaffected by changes to
+  OpenTelemetryLoggerOptions after the LoggerFactory is built.
+  ([#3055](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3055))
+
+## 1.2.0-rc3
+
+Released 2022-Mar-04
+
+* Instantiating multiple metric instruments with the same name and also
+  identical in all other respects - same type, description, and unit - result
+  in a single metric stream aggregating measurements from all the identical
+  instruments.
+
+  Instantiating multiple metric instruments with the same name but differ in
+  some respect - different type, description, or unit - will result in a
+  separate metric stream for each distinct instrument.
+
+  ([#2916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2916))
+
+* The `Meter` property on `OpenTelemetry.Metrics.Metric` has been removed.
+  It now has `MeterName` and `MeterVersion` properties.
+  ([#2916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2916))
+
 * Added support for implementing custom `ResourceDetector`.
   ([#2949](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2949/)
   [#2897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2897))
 
 * Perf improvement for Histogram and HistogramSumCount by implementing lock-free
   updates.
-  ([2951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2951))
-  ([2961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2961))
+  ([#2951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2951)
+  [#2961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2961))
 
 ## 1.2.0-rc2
 
@@ -27,7 +76,7 @@ Released 2022-Feb-02
 
 * Performance improvement: when emitting metrics, users are strongly advised to
   provide tags with same Key order, to achieve maximum performance.
-  ([#2805](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2805/files))
+  ([#2805](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2805))
 
 ## 1.2.0-rc1
 

@@ -23,7 +23,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
 {
     public class ZipkinActivityExporterRemoteEndpointTests
     {
-        private static readonly ZipkinEndpoint DefaultZipkinEndpoint = new ZipkinEndpoint("TestService");
+        private static readonly ZipkinEndpoint DefaultZipkinEndpoint = new("TestService");
 
         [Fact]
         public void GenerateActivity_RemoteEndpointOmittedByDefault()

@@ -1,6 +1,6 @@
 # Getting Started with OpenTelemetry .NET in 5 Minutes
 
-First, download and install the [.NET Core
+First, download and install the [.NET
 SDK](https://dotnet.microsoft.com/download) on your computer.
 
 Create a new console application and run it:
@@ -71,7 +71,7 @@ using (var activity = MyActivitySource.StartActivity("SayHello"))
 ```
 
 An OpenTelemetry
-[TracerProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#tracerprovider)
+[TracerProvider](#tracerprovider)
 is configured to subscribe to the activities from the source
 `MyCompany.MyProduct.MyLibrary`, and export it to `ConsoleExporter`.
 `ConsoleExporter` simply displays it on the console. The `AlwaysOnSampler` is
@@ -85,15 +85,26 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
+## TracerProvider
+
+As shown in the above program, a valid `TracerProvider` must be configured and
+built to collect traces with OpenTelemetry .NET SDK. `TracerProvider` holds all
+the configuration for tracing like samplers, processors, etc. and is highly
+[customizable](../../../src/OpenTelemetry/README.md#tracing-configuration).
+
 ## OpenTelemetry .NET and relation with .NET Activity API
 
 If you tried the above program, you may have already noticed that the terms
 `ActivitySource` and `Activity` were used instead of `Tracer` and `Span` from
-OpenTelemetry specification. This results from the fact that, OpenTelemetry .NET
-is a somewhat unique implementation of the OpenTelemetry project, as parts of
-the tracing API are incorporated directly into the .NET runtime itself. From a
-high level, what this means is that the `Activity` and `ActivitySource` classes
-from .NET runtime represent the OpenTelemetry concepts of
+OpenTelemetry specification. This results from the fact that, Traces in
+OpenTelemetry .NET is a somewhat unique implementation of the OpenTelemetry
+project, as most of the [Trace
+API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md)
+is implemented by the [.NET runtime](https://github.com/dotnet/runtime) itself.
+From a high level, what this means is that you can instrument your application
+by simply depending on `System.Diagnostics.DiagnosticSource` package, which
+provides `Activity` and `ActivitySource` classes representing the OpenTelemetry
+concepts of
 [Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span)
 and
 [Tracer](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#tracer)

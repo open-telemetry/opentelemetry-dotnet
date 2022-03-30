@@ -25,6 +25,9 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public static class OtlpMetricExporterExtensions
     {
+        private const int DefaultExportIntervalMilliseconds = 60000;
+        private const int DefaultExportTimeoutMilliseconds = 30000;
+
         /// <summary>
         /// Adds <see cref="OtlpMetricExporter"/> to the <see cref="MeterProviderBuilder"/> using default options.
         /// </summary>
@@ -79,13 +82,14 @@ namespace OpenTelemetry.Metrics
             return AddOtlpExporter(builder, new OtlpExporterOptions(), new MetricReaderOptions(), null, configureExporterAndMetricReader, serviceProvider: null);
         }
 
-        private static MeterProviderBuilder AddOtlpExporter(
+        internal static MeterProviderBuilder AddOtlpExporter(
             MeterProviderBuilder builder,
             OtlpExporterOptions exporterOptions,
             MetricReaderOptions metricReaderOptions,
             Action<OtlpExporterOptions> configureExporter,
             Action<OtlpExporterOptions, MetricReaderOptions> configureExporterAndMetricReader,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            Func<BaseExporter<Metric>, BaseExporter<Metric>> configureExporterInstance = null)
         {
             if (configureExporterAndMetricReader != null)
             {
@@ -100,18 +104,19 @@ namespace OpenTelemetry.Metrics
 
             exporterOptions.AppendExportPath(OtlpExporterOptions.MetricsExportPath);
 
-            var metricExporter = new OtlpMetricExporter(exporterOptions);
+            BaseExporter<Metric> metricExporter = new OtlpMetricExporter(exporterOptions);
 
-            if (metricReaderOptions.MetricReaderType == (MetricReaderType)(-1))
+            if (configureExporterInstance != null)
             {
-                metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
+                metricExporter = configureExporterInstance(metricExporter);
             }
 
-            var metricReader = metricReaderOptions.MetricReaderType == MetricReaderType.Manual
-                ? new BaseExportingMetricReader(metricExporter)
-                : new PeriodicExportingMetricReader(metricExporter, metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
+            var metricReader = PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
+                metricExporter,
+                metricReaderOptions,
+                DefaultExportIntervalMilliseconds,
+                DefaultExportTimeoutMilliseconds);
 
-            metricReader.Temporality = metricReaderOptions.Temporality;
             return builder.AddReader(metricReader);
         }
     }

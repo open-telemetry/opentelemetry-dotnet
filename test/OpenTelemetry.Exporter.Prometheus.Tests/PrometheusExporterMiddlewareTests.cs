@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#if !NET461
+#if !NETFRAMEWORK
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;

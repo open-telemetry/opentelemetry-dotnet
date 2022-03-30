@@ -26,7 +26,7 @@ namespace OpenTelemetry.Exporter.Prometheus
     [EventSource(Name = "OpenTelemetry-Exporter-Prometheus")]
     internal sealed class PrometheusExporterEventSource : EventSource
     {
-        public static PrometheusExporterEventSource Log = new PrometheusExporterEventSource();
+        public static PrometheusExporterEventSource Log = new();
 
         [NonEvent]
         public void FailedExport(Exception ex)

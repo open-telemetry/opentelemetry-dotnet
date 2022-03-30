@@ -120,7 +120,7 @@ provider to start collecting traces from them.
 
 `AddSource` method on `TracerProviderBuilder` can be used to add a
 `ActivitySource` to the provider. Multiple `AddSource` can be called to add more
-than one source. It also supports wild-card subscription model as well.
+than one source. It also supports wildcard subscription model as well.
 
 Similar to `Sampler` and `Resource`, it is not possible to add sources *after*
 the provider is built, by calling the `Build()` method on the
@@ -206,14 +206,12 @@ purposes, the SDK provides the following built-in processors:
   The following environment variables can be used to override the default
   values of the `BatchExportActivityProcessorOptions`.
 
-  <!-- markdownlint-disable MD013 -->
   | Environment variable             | `BatchExportActivityProcessorOptions` property |
   | -------------------------------- | ---------------------------------------------- |
   | `OTEL_BSP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                   |
   | `OTEL_BSP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`                  |
   | `OTEL_BSP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                                 |
   | `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSizeEnvVarKey`                  |
-  <!-- markdownlint-enable MD013 -->
 
   `FormatException` is thrown in case of an invalid value for any of the
   supported environment variables.
@@ -265,12 +263,10 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 It is also possible to configure the `Resource` by using following
 environmental variables:
 
-<!-- markdownlint-disable MD013 -->
 | Environment variable       | Description                                        |
 | -------------------------- | -------------------------------------------------- |
 | `OTEL_RESOURCE_ATTRIBUTES` | Key-value pairs to be used as resource attributes. See the [Resource SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable) for more details. |
 | `OTEL_SERVICE_NAME`        | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |
-<!-- markdownlint-enable MD013 -->
 
 ### Sampler
 

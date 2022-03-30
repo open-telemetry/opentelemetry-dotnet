@@ -42,7 +42,7 @@ in `Application_Start`, and disposed in `Application_End` (both methods part of
 Global.asax.cs file) as shown [here](../../../examples/AspNet/Global.asax.cs). In
 a typical ASP.NET Core application, `TracerProvider` lifetime is managed by
 leveraging the built-in Dependency Injection container as shown
-[here](../../../examples/AspNetCore/Startup.cs).
+[here](../../../examples/AspNetCore/Program.cs).
 
 ## TracerProvider configuration
 
@@ -74,7 +74,7 @@ provider to start collecting traces from them.
 `AddSource` method on `TracerProviderBuilder` can be used to add a
 `ActivitySource` to the provider. The name of the `ActivitySource`
 (case-insensitive) must be the argument to this method. Multiple `AddSource` can
-be called to add more than one source. It also supports wild-card subscription
+be called to add more than one source. It also supports wildcard subscription
 model as well.
 
 It is not possible to add sources *after* the provider is built, by calling the

@@ -2,6 +2,41 @@
 
 ## Unreleased
 
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
+* Added support for Activity Status and StatusDescription which were
+  added to Activity from `System.Diagnostics.DiagnosticSource` version 6.0.
+  Prior to version 6.0, setting the status of an Activity was provided by the
+  .NET OpenTelemetry API via the `Activity.SetStatus` extension method in the
+  `OpenTelemetry.Trace` namespace. Internally, this extension method added the
+  status as tags on the Activity: `otel.status_code` and `otel.status_description`.
+  Therefore, to maintain backward compatibility, the exporter falls back to using
+  these tags to infer status.
+ ([#3100](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3100))
+
+* Fixed OTLP metric exporter to default to a periodic 60 second export cycle.
+  A bug was introduced in #2717 that caused the OTLP metric export to default
+  to a manual export cycle (i.e., requiring an explicit flush). A workaround
+  for this bug has been provided
+  [here](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2979#issuecomment-1061060541).
+  ([#2982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2982))
+
+* Bumped minimum required gRPC version (2.23.0 to 2.44.0).
+  Fixes issues building on Apple Silicon (M1).
+  ([#2963](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2963))
+
+* Fixed issue where the configuration of an OTLP exporter could be changed
+  after instantiation by altering the original `OtlpExporterOptions` provided.
+  ([#3066](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3066))
+
+* TraceExporter to stop populating `DeprecatedCode` in OTLP Status.
+
+## 1.2.0-rc3
+
+Released 2022-Mar-04
+
 * LogExporter bug fix to handle null EventName.
   ([#2871](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2871))
 

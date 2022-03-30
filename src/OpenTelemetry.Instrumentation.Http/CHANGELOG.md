@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.1
+
+Released 2022-Mar-30
+
+* Updated `TracerProviderBuilderExtensions.AddHttpClientInstrumentation` to support
+  `IDeferredTracerProviderBuilder` and `IOptions<HttpClientInstrumentationOptions>`
+  ([#3051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3051))
+
+## 1.0.0-rc10 (broken. use 1.0.0-rc9.1 and newer)
+
+Released 2022-Mar-04
+
 ## 1.0.0-rc9
 
 Released 2022-Feb-02
@@ -88,7 +100,7 @@ Released 2020-Nov-5
   `HttpWebRequest` in Activity.CustomProperty. To enrich activity, use the
   Enrich action on the instrumentation.
   ([#1407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1407))
-* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor to
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropagator to
   CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator and
   changed from interface to abstract class.
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))

@@ -64,6 +64,21 @@ Apart from the exporter itself, you should also provide extension methods as
 shown [here](./MyExporterExtensions.cs). This allows users to add the Exporter
 to the `TracerProvider` as shown in the example [here](./Program.cs).
 
+### Exporting Activity Status
+
+[DiagnosticSource](https://www.nuget.org/packages/system.diagnostics.diagnosticsource)
+package did not originally have a dedicated field for storing
+[Status](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status),
+and hence, users were encouraged to follow the convention of storing status
+using tags "otel.status_code" and "otel.status_description".
+[DiagnosticSource](https://www.nuget.org/packages/system.diagnostics.diagnosticsource)
+version 6.0.0 added `Status` and `StatusDescription` to `Activity` class.
+Exporters which support reading status from `Activity` directly should fall back
+to retrieving status from the tags described above, to maintain backward
+compatibility.
+[ConsoleActivityExporter](../../../src/OpenTelemetry.Exporter.Console/ConsoleActivityExporter.cs)
+may be used as a reference.
+
 ## Instrumentation Library
 
 The [inspiration of the OpenTelemetry
@@ -197,7 +212,7 @@ client .NET Core](../../../src/OpenTelemetry.Instrumentation.Http/README.md) .
 Instrumentation libraries for these are already provided in this repo. The
 [OpenTelemetry .NET
 Contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib)
-repostory also has instrumentations for libraries like
+repository also has instrumentations for libraries like
 [ElasticSearchClient](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Contrib.Instrumentation.ElasticsearchClient)
 etc. which fall in this category.
 
@@ -241,11 +256,26 @@ class MyProcessor : BaseProcessor<Activity>
 
 A demo processor is shown [here](./MyProcessor.cs).
 
+### Enriching Processor
+
+A common use case of writing custom processor is to enrich activities with
+additional tags. An example of such an "EnrichingProcessor" is shown
+[here](./MyEnrichingProcessor.cs). Such processors must be added *before* the
+exporters.
+
+This processor also shows how to enrich `Activity` with additional tags from the
+`Baggage`.
+
+Many [instrumentation libraries](#instrumentation-library) shipped from this
+repo provides a built-in `Enrich` option, which may also be used to enrich
+activities. Instrumentation library provided approach may offer additional
+capabilities such as offering easy access to more context (library specific).
+
 ### Filtering Processor
 
-A common use case of writing custom processor is to filter Activities from being
-exported. Such a "FilteringProcessor" can be written as a wrapper around an
-underlying processor. An example "FilteringProcessor" is shown
+Another common use case of writing custom processor is to filter Activities from
+being exported. Such a "FilteringProcessor" can be written as a wrapper around
+an underlying processor. An example "FilteringProcessor" is shown
 [here](./MyFilteringProcessor.cs).
 
 When using such a filtering processor, instead of using extension method to

@@ -58,7 +58,7 @@ namespace Benchmarks.Metrics
         private Counter<long> counter;
         private MeterProvider provider;
         private Meter meter;
-        private Random random = new Random();
+        private Random random = new();
         private string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
 
         [Params(AggregationTemporality.Cumulative, AggregationTemporality.Delta)]
@@ -74,7 +74,6 @@ namespace Benchmarks.Metrics
                 .AddMeter(this.meter.Name) // All instruments from this meter are enabled.
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
                     metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
                     metricReaderOptions.Temporality = this.AggregationTemporality;
                 })
