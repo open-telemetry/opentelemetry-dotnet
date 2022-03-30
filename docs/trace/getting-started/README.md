@@ -58,7 +58,8 @@ private static readonly ActivitySource MyActivitySource = new ActivitySource(
 
 The `ActivitySource` instance is used to start an `Activity` which represents an
 [OpenTelemetry
-Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span).
+Span](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#span)
+and sets several `Tags` on it.
 
 ```csharp
 using (var activity = MyActivitySource.StartActivity("SayHello"))
@@ -73,7 +74,8 @@ An OpenTelemetry
 [TracerProvider](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#tracerprovider)
 is configured to subscribe to the activities from the source
 `MyCompany.MyProduct.MyLibrary`, and export it to `ConsoleExporter`.
-`ConsoleExporter` simply displays it on the console.
+`ConsoleExporter` simply displays it on the console. The `AlwaysOnSampler` is
+used by default which does not sample any traces.
 
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
