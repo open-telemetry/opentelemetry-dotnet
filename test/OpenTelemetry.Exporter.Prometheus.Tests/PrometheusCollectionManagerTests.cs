@@ -16,7 +16,7 @@
 
 using System;
 using System.Diagnostics.Metrics;
-#if NET461
+#if NETFRAMEWORK
 using System.Linq;
 #endif
 using System.Threading;

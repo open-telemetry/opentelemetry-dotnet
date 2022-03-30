@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#if NETSTANDARD2_0 || NET461
+#if NETSTANDARD2_0 || NETFRAMEWORK
 using System;
 #endif
 using Thrift.Protocol;

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
 ## 1.2.0-rc3
 
 Released 2022-Mar-04
