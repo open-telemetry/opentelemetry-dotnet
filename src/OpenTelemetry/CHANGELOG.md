@@ -24,6 +24,10 @@
   `readonly`
   ([#3065](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3065))
 
+* Add Copy method to both `MetricPoint` and `HistogramBuckets`.
+  ([#TODO](todo))
+
+
 ## 1.2.0-rc3
 
 Released 2022-Mar-04
