@@ -1,6 +1,10 @@
 OpenTelemetry.BaseExporter<T>.ForceFlush(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Batch<T>.Batch(T[] items, int count) -> void
 OpenTelemetry.Batch<T>.Count.get -> long
+OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration
+OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.Boundaries.get -> double[]
+OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.Boundaries.set -> void
+OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.ExplicitBucketHistogramConfiguration() -> void
 OpenTelemetry.Metrics.MetricReaderOptions
 OpenTelemetry.Metrics.MetricReaderOptions.MetricReaderOptions() -> void
 OpenTelemetry.Metrics.MetricReaderOptions.PeriodicExportingMetricReaderOptions.get -> OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
@@ -76,11 +80,12 @@ OpenTelemetry.Metrics.MetricReader.Temporality.get -> OpenTelemetry.Metrics.Aggr
 OpenTelemetry.Metrics.MetricReader.Temporality.set -> void
 OpenTelemetry.Metrics.MetricStreamConfiguration
 OpenTelemetry.Metrics.MetricStreamConfiguration.Description.get -> string
-OpenTelemetry.Metrics.MetricStreamConfiguration.MetricStreamConfiguration(string name = null, string description = null, string[] tagKeys = null) -> void
+OpenTelemetry.Metrics.MetricStreamConfiguration.Description.set -> void
+OpenTelemetry.Metrics.MetricStreamConfiguration.MetricStreamConfiguration() -> void
 OpenTelemetry.Metrics.MetricStreamConfiguration.Name.get -> string
-OpenTelemetry.Metrics.MetricStreamConfiguration.TagKeys.get -> System.Collections.Generic.IReadOnlyList<string>
-OpenTelemetry.Metrics.MetricStreamExplicitBucketHistogramConfiguration
-OpenTelemetry.Metrics.MetricStreamExplicitBucketHistogramConfiguration.Boundaries.get -> System.Collections.Generic.IReadOnlyList<double>
+OpenTelemetry.Metrics.MetricStreamConfiguration.Name.set -> void
+OpenTelemetry.Metrics.MetricStreamConfiguration.TagKeys.get -> string[]
+OpenTelemetry.Metrics.MetricStreamConfiguration.TagKeys.set -> void
 OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.DoubleGauge = 45 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.DoubleSum = 29 -> OpenTelemetry.Metrics.MetricType
@@ -131,8 +136,6 @@ static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetResourceBuilder(t
 static OpenTelemetry.Metrics.MeterProviderExtensions.ForceFlush(this OpenTelemetry.Metrics.MeterProvider provider, int timeoutMilliseconds = -1) -> bool
 static OpenTelemetry.Metrics.MeterProviderExtensions.Shutdown(this OpenTelemetry.Metrics.MeterProvider provider, int timeoutMilliseconds = -1) -> bool
 static OpenTelemetry.Metrics.MeterProviderExtensions.TryFindExporter<T>(this OpenTelemetry.Metrics.MeterProvider provider, out T exporter) -> bool
-static OpenTelemetry.Metrics.MetricStreamConfiguration.CreateExplicitBucketHistogramConfiguration(double[] boundaries) -> OpenTelemetry.Metrics.MetricStreamExplicitBucketHistogramConfiguration
-static OpenTelemetry.Metrics.MetricStreamConfiguration.CreateExplicitBucketHistogramConfiguration(string name = null, string description = null, string[] tagKeys = null, double[] boundaries = null) -> OpenTelemetry.Metrics.MetricStreamExplicitBucketHistogramConfiguration
 static OpenTelemetry.Metrics.MetricStreamConfiguration.Drop.get -> OpenTelemetry.Metrics.MetricStreamConfiguration
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsDouble(this OpenTelemetry.Metrics.MetricType self) -> bool
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsGauge(this OpenTelemetry.Metrics.MetricType self) -> bool
