@@ -30,38 +30,16 @@ using Xunit;
 
 namespace OpenTelemetry.Logs.Tests
 {
-    public sealed class LogRecordTest : IDisposable
+    public sealed class LogRecordTest
     {
-        private readonly ILogger logger;
-        private readonly List<LogRecord> exportedItems = new();
-        private readonly ILoggerFactory loggerFactory;
-        private readonly BaseExportProcessor<LogRecord> processor;
-        private readonly BaseExporter<LogRecord> exporter;
-        private OpenTelemetryLoggerOptions options;
-
-        public LogRecordTest()
-        {
-            this.exporter = new InMemoryExporter<LogRecord>(this.exportedItems);
-            this.processor = new TestLogRecordProcessor(this.exporter);
-            this.loggerFactory = LoggerFactory.Create(builder =>
-            {
-                builder.AddOpenTelemetry(options =>
-                {
-                    this.options = options;
-                    options
-                        .AddProcessor(this.processor);
-                });
-                builder.AddFilter(typeof(LogRecordTest).FullName, LogLevel.Trace);
-            });
-
-            this.logger = this.loggerFactory.CreateLogger<LogRecordTest>();
-        }
-
         [Fact]
         public void CheckCateogryNameForLog()
         {
-            this.logger.LogInformation("Log");
-            var categoryName = this.exportedItems[0].CategoryName;
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
+            logger.LogInformation("Log");
+            var categoryName = exportedItems[0].CategoryName;
 
             Assert.Equal(typeof(LogRecordTest).FullName, categoryName);
         }
@@ -75,19 +53,25 @@ namespace OpenTelemetry.Logs.Tests
         [InlineData(LogLevel.Critical)]
         public void CheckLogLevel(LogLevel logLevel)
         {
-            var message = $"Log {logLevel}";
-            this.logger.Log(logLevel, message);
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
-            var logLevelRecorded = this.exportedItems[0].LogLevel;
+            var message = $"Log {logLevel}";
+            logger.Log(logLevel, message);
+
+            var logLevelRecorded = exportedItems[0].LogLevel;
             Assert.Equal(logLevel, logLevelRecorded);
         }
 
         [Fact]
         public void CheckStateForUnstructuredLog()
         {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
             var message = "Hello, World!";
-            this.logger.LogInformation(message);
-            var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+            logger.LogInformation(message);
+            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
             // state only has {OriginalFormat}
             Assert.Equal(1, state.Count);
@@ -98,9 +82,12 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckStateForUnstructuredLogWithStringInterpolation()
         {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
             var message = $"Hello from potato {0.99}.";
-            this.logger.LogInformation(message);
-            var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+            logger.LogInformation(message);
+            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
             // state only has {OriginalFormat}
             Assert.Equal(1, state.Count);
@@ -111,9 +98,12 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckStateForStructuredLogWithTemplate()
         {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
             var message = "Hello from {name} {price}.";
-            this.logger.LogInformation(message, "tomato", 2.99);
-            var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+            logger.LogInformation(message, "tomato", 2.99);
+            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
             // state has name, price and {OriginalFormat}
             Assert.Equal(3, state.Count);
@@ -136,9 +126,12 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckStateForStructuredLogWithStrongType()
         {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
             var food = new Food { Name = "artichoke", Price = 3.99 };
-            this.logger.LogInformation("{food}", food);
-            var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+            logger.LogInformation("{food}", food);
+            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
             // state has food and {OriginalFormat}
             Assert.Equal(2, state.Count);
@@ -160,9 +153,12 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckStateForStructuredLogWithAnonymousType()
         {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
             var anonymousType = new { Name = "pumpkin", Price = 5.99 };
-            this.logger.LogInformation("{food}", anonymousType);
-            var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+            logger.LogInformation("{food}", anonymousType);
+            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
             // state has food and {OriginalFormat}
             Assert.Equal(2, state.Count);
@@ -184,13 +180,16 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckStateForStrucutredLogWithGeneralType()
         {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
             var food = new Dictionary<string, object>
             {
                 ["Name"] = "truffle",
                 ["Price"] = 299.99,
             };
-            this.logger.LogInformation("{food}", food);
-            var state = this.exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+            logger.LogInformation("{food}", food);
+            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
             // state only has food and {OriginalFormat}
             Assert.Equal(2, state.Count);
@@ -220,18 +219,21 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckStateForExceptionLogged()
         {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
             var exceptionMessage = "Exception Message";
             var exception = new Exception(exceptionMessage);
             var message = "Exception Occurred";
-            this.logger.LogInformation(exception, message);
+            logger.LogInformation(exception, message);
 
-            var state = this.exportedItems[0].State;
+            var state = exportedItems[0].State;
             var itemCount = state.GetType().GetProperty("Count").GetValue(state);
 
             // state only has {OriginalFormat}
             Assert.Equal(1, itemCount);
 
-            var loggedException = this.exportedItems[0].Exception;
+            var loggedException = exportedItems[0].Exception;
             Assert.NotNull(loggedException);
             Assert.Equal(exceptionMessage, loggedException.Message);
 
@@ -241,8 +243,11 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckTraceIdForLogWithinDroppedActivity()
         {
-            this.logger.LogInformation("Log within a dropped activity");
-            var logRecord = this.exportedItems[0];
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
+            logger.LogInformation("Log within a dropped activity");
+            var logRecord = exportedItems[0];
 
             Assert.Null(Activity.Current);
             Assert.Equal(default, logRecord.TraceId);
@@ -253,6 +258,9 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckTraceIdForLogWithinActivityMarkedAsRecordOnly()
         {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
             var sampler = new RecordOnlySampler();
             var exportedActivityList = new List<Activity>();
             var activitySourceName = "LogRecordTest";
@@ -265,8 +273,8 @@ namespace OpenTelemetry.Logs.Tests
 
             using var activity = activitySource.StartActivity("Activity");
 
-            this.logger.LogInformation("Log within activity marked as RecordOnly");
-            var logRecord = this.exportedItems[0];
+            logger.LogInformation("Log within activity marked as RecordOnly");
+            var logRecord = exportedItems[0];
 
             var currentActivity = Activity.Current;
             Assert.NotNull(Activity.Current);
@@ -278,6 +286,9 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void CheckTraceIdForLogWithinActivityMarkedAsRecordAndSample()
         {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
             var sampler = new AlwaysOnSampler();
             var exportedActivityList = new List<Activity>();
             var activitySourceName = "LogRecordTest";
@@ -290,8 +301,8 @@ namespace OpenTelemetry.Logs.Tests
 
             using var activity = activitySource.StartActivity("Activity");
 
-            this.logger.LogInformation("Log within activity marked as RecordAndSample");
-            var logRecord = this.exportedItems[0];
+            logger.LogInformation("Log within activity marked as RecordAndSample");
+            var logRecord = exportedItems[0];
 
             var currentActivity = Activity.Current;
             Assert.NotNull(Activity.Current);
@@ -301,315 +312,326 @@ namespace OpenTelemetry.Logs.Tests
         }
 
         [Fact]
-        public void IncludeFormattedMessageTest()
+        public void VerifyIncludeFormattedMessage_False()
         {
-            this.logger.LogInformation("OpenTelemetry!");
-            var logRecord = this.exportedItems[0];
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = false);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
+            logger.LogInformation("OpenTelemetry!");
+            var logRecord = exportedItems[0];
             Assert.Null(logRecord.FormattedMessage);
+        }
 
-            this.options.IncludeFormattedMessage = true;
-            try
-            {
-                this.logger.LogInformation("OpenTelemetry!");
-                logRecord = this.exportedItems[1];
-                Assert.Equal("OpenTelemetry!", logRecord.FormattedMessage);
+        [Fact]
+        public void VerifyIncludeFormattedMessage_True()
+        {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
-                this.logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
-                logRecord = this.exportedItems[2];
-                Assert.Equal("OpenTelemetry Hello World!", logRecord.FormattedMessage);
-            }
-            finally
-            {
-                this.options.IncludeFormattedMessage = false;
-            }
+            logger.LogInformation("OpenTelemetry!");
+            var logRecord = exportedItems[0];
+            Assert.Equal("OpenTelemetry!", logRecord.FormattedMessage);
+
+            logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
+            logRecord = exportedItems[1];
+            Assert.Equal("OpenTelemetry Hello World!", logRecord.FormattedMessage);
         }
 
         [Fact]
         public void IncludeFormattedMessageTestWhenFormatterNull()
         {
-            this.logger.Log(LogLevel.Information, default, "Hello World!", null, null);
-            var logRecord = this.exportedItems[0];
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
+            logger.Log(LogLevel.Information, default, "Hello World!", null, null);
+            var logRecord = exportedItems[0];
             Assert.Null(logRecord.FormattedMessage);
 
-            this.options.IncludeFormattedMessage = true;
-            try
-            {
-                // Pass null as formatter function
-                this.logger.Log(LogLevel.Information, default, "Hello World!", null, null);
-                logRecord = this.exportedItems[1];
-                Assert.Null(logRecord.FormattedMessage);
+            // Pass null as formatter function
+            logger.Log(LogLevel.Information, default, "Hello World!", null, null);
+            logRecord = exportedItems[1];
+            Assert.Null(logRecord.FormattedMessage);
 
-                var expectedFormattedMessage = "formatted message";
-                this.logger.Log(LogLevel.Information, default, "Hello World!", null, (state, ex) => expectedFormattedMessage);
-                logRecord = this.exportedItems[2];
-                Assert.Equal(expectedFormattedMessage, logRecord.FormattedMessage);
-            }
-            finally
-            {
-                this.options.IncludeFormattedMessage = false;
-            }
+            var expectedFormattedMessage = "formatted message";
+            logger.Log(LogLevel.Information, default, "Hello World!", null, (state, ex) => expectedFormattedMessage);
+            logRecord = exportedItems[2];
+            Assert.Equal(expectedFormattedMessage, logRecord.FormattedMessage);
         }
 
         [Fact]
-        public void IncludeScopesTest()
+        public void VerifyIncludeScopes_False()
         {
-            using var scope = this.logger.BeginScope("string_scope");
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeScopes = false);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
-            this.logger.LogInformation("OpenTelemetry!");
-            var logRecord = this.exportedItems[0];
+            using var scope = logger.BeginScope("string_scope");
+
+            logger.LogInformation("OpenTelemetry!");
+            var logRecord = exportedItems[0];
 
             List<object> scopes = new List<object>();
             logRecord.ForEachScope<object>((scope, state) => scopes.Add(scope.Scope), null);
             Assert.Empty(scopes);
-
-            this.options.IncludeScopes = true;
-            try
-            {
-                this.logger.LogInformation("OpenTelemetry!");
-                logRecord = this.exportedItems[1];
-
-                int reachedDepth = -1;
-                logRecord.ForEachScope<object>(
-                    (scope, state) =>
-                    {
-                        reachedDepth++;
-                        scopes.Add(scope.Scope);
-                        foreach (KeyValuePair<string, object> item in scope)
-                        {
-                            Assert.Equal(string.Empty, item.Key);
-                            Assert.Equal("string_scope", item.Value);
-                        }
-                    },
-                    null);
-                Assert.Single(scopes);
-                Assert.Equal(0, reachedDepth);
-                Assert.Equal("string_scope", scopes[0]);
-
-                scopes.Clear();
-
-                List<KeyValuePair<string, object>> expectedScope2 = new List<KeyValuePair<string, object>>
-                {
-                    new KeyValuePair<string, object>("item1", "value1"),
-                    new KeyValuePair<string, object>("item2", "value2"),
-                };
-                using var scope2 = this.logger.BeginScope(expectedScope2);
-
-                this.logger.LogInformation("OpenTelemetry!");
-                logRecord = this.exportedItems[2];
-
-                reachedDepth = -1;
-                logRecord.ForEachScope<object>(
-                    (scope, state) =>
-                    {
-                        scopes.Add(scope.Scope);
-                        if (reachedDepth++ == 1)
-                        {
-                            foreach (KeyValuePair<string, object> item in scope)
-                            {
-                                Assert.Contains(item, expectedScope2);
-                            }
-                        }
-                    },
-                    null);
-                Assert.Equal(2, scopes.Count);
-                Assert.Equal(1, reachedDepth);
-                Assert.Equal("string_scope", scopes[0]);
-                Assert.Same(expectedScope2, scopes[1]);
-
-                scopes.Clear();
-
-                KeyValuePair<string, object>[] expectedScope3 = new KeyValuePair<string, object>[]
-                {
-                    new KeyValuePair<string, object>("item3", "value3"),
-                    new KeyValuePair<string, object>("item4", "value4"),
-                };
-                using var scope3 = this.logger.BeginScope(expectedScope3);
-
-                this.logger.LogInformation("OpenTelemetry!");
-                logRecord = this.exportedItems[3];
-
-                reachedDepth = -1;
-                logRecord.ForEachScope<object>(
-                    (scope, state) =>
-                    {
-                        scopes.Add(scope.Scope);
-                        if (reachedDepth++ == 2)
-                        {
-                            foreach (KeyValuePair<string, object> item in scope)
-                            {
-                                Assert.Contains(item, expectedScope3);
-                            }
-                        }
-                    },
-                    null);
-                Assert.Equal(3, scopes.Count);
-                Assert.Equal(2, reachedDepth);
-                Assert.Equal("string_scope", scopes[0]);
-                Assert.Same(expectedScope2, scopes[1]);
-                Assert.Same(expectedScope3, scopes[2]);
-            }
-            finally
-            {
-                this.options.IncludeScopes = false;
-            }
         }
 
         [Fact]
-        public void ParseStateValuesUsingStandardExtensionsTest()
+        public void VerifyIncludeScopes_True()
         {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeScopes = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
+            using var scope = logger.BeginScope("string_scope");
+
+            logger.LogInformation("OpenTelemetry!");
+            var logRecord = exportedItems[0];
+
+            List<object> scopes = new List<object>();
+
+            logger.LogInformation("OpenTelemetry!");
+            logRecord = exportedItems[1];
+
+            int reachedDepth = -1;
+            logRecord.ForEachScope<object>(
+                (scope, state) =>
+                {
+                    reachedDepth++;
+                    scopes.Add(scope.Scope);
+                    foreach (KeyValuePair<string, object> item in scope)
+                    {
+                        Assert.Equal(string.Empty, item.Key);
+                        Assert.Equal("string_scope", item.Value);
+                    }
+                },
+                null);
+            Assert.Single(scopes);
+            Assert.Equal(0, reachedDepth);
+            Assert.Equal("string_scope", scopes[0]);
+
+            scopes.Clear();
+
+            List<KeyValuePair<string, object>> expectedScope2 = new List<KeyValuePair<string, object>>
+            {
+                new KeyValuePair<string, object>("item1", "value1"),
+                new KeyValuePair<string, object>("item2", "value2"),
+            };
+            using var scope2 = logger.BeginScope(expectedScope2);
+
+            logger.LogInformation("OpenTelemetry!");
+            logRecord = exportedItems[2];
+
+            reachedDepth = -1;
+            logRecord.ForEachScope<object>(
+                (scope, state) =>
+                {
+                    scopes.Add(scope.Scope);
+                    if (reachedDepth++ == 1)
+                    {
+                        foreach (KeyValuePair<string, object> item in scope)
+                        {
+                            Assert.Contains(item, expectedScope2);
+                        }
+                    }
+                },
+                null);
+            Assert.Equal(2, scopes.Count);
+            Assert.Equal(1, reachedDepth);
+            Assert.Equal("string_scope", scopes[0]);
+            Assert.Same(expectedScope2, scopes[1]);
+
+            scopes.Clear();
+
+            KeyValuePair<string, object>[] expectedScope3 = new KeyValuePair<string, object>[]
+            {
+                new KeyValuePair<string, object>("item3", "value3"),
+                new KeyValuePair<string, object>("item4", "value4"),
+            };
+            using var scope3 = logger.BeginScope(expectedScope3);
+
+            logger.LogInformation("OpenTelemetry!");
+            logRecord = exportedItems[3];
+
+            reachedDepth = -1;
+            logRecord.ForEachScope<object>(
+                (scope, state) =>
+                {
+                    scopes.Add(scope.Scope);
+                    if (reachedDepth++ == 2)
+                    {
+                        foreach (KeyValuePair<string, object> item in scope)
+                        {
+                            Assert.Contains(item, expectedScope3);
+                        }
+                    }
+                },
+                null);
+            Assert.Equal(3, scopes.Count);
+            Assert.Equal(2, reachedDepth);
+            Assert.Equal("string_scope", scopes[0]);
+            Assert.Same(expectedScope2, scopes[1]);
+            Assert.Same(expectedScope3, scopes[2]);
+        }
+
+        [Fact]
+        public void VerifyParseStateValues_False_UsingStandardExtensions()
+        {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = false);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
             // Tests state parsing with standard extensions.
 
-            this.logger.LogInformation("{Product} {Year}!", "OpenTelemetry", 2021);
-            var logRecord = this.exportedItems[0];
+            logger.LogInformation("{Product} {Year}!", "OpenTelemetry", 2021);
+            var logRecord = exportedItems[0];
 
             Assert.NotNull(logRecord.State);
             Assert.Null(logRecord.StateValues);
+        }
 
-            this.options.ParseStateValues = true;
-            try
-            {
-                var complex = new { Property = "Value" };
+        [Fact]
+        public void VerifyParseStateValues_True_UsingStandardExtensions()
+        {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
-                this.logger.LogInformation("{Product} {Year} {Complex}!", "OpenTelemetry", 2021, complex);
-                logRecord = this.exportedItems[1];
+            // Tests state parsing with standard extensions.
 
-                Assert.Null(logRecord.State);
-                Assert.NotNull(logRecord.StateValues);
-                Assert.Equal(4, logRecord.StateValues.Count);
-                Assert.Equal(new KeyValuePair<string, object>("Product", "OpenTelemetry"), logRecord.StateValues[0]);
-                Assert.Equal(new KeyValuePair<string, object>("Year", 2021), logRecord.StateValues[1]);
-                Assert.Equal(new KeyValuePair<string, object>("{OriginalFormat}", "{Product} {Year} {Complex}!"), logRecord.StateValues[3]);
+            logger.LogInformation("{Product} {Year}!", "OpenTelemetry", 2021);
+            var logRecord = exportedItems[0];
 
-                KeyValuePair<string, object> actualComplex = logRecord.StateValues[2];
-                Assert.Equal("Complex", actualComplex.Key);
-                Assert.Same(complex, actualComplex.Value);
-            }
-            finally
-            {
-                this.options.ParseStateValues = false;
-            }
+            Assert.Null(logRecord.State);
+            Assert.NotNull(logRecord.StateValues);
+            Assert.Equal(3, logRecord.StateValues.Count);
+            Assert.Equal(new KeyValuePair<string, object>("Product", "OpenTelemetry"), logRecord.StateValues[0]);
+            Assert.Equal(new KeyValuePair<string, object>("Year", 2021), logRecord.StateValues[1]);
+            Assert.Equal(new KeyValuePair<string, object>("{OriginalFormat}", "{Product} {Year}!"), logRecord.StateValues[2]);
+
+            var complex = new { Property = "Value" };
+
+            logger.LogInformation("{Product} {Year} {Complex}!", "OpenTelemetry", 2021, complex);
+            logRecord = exportedItems[1];
+
+            Assert.Null(logRecord.State);
+            Assert.NotNull(logRecord.StateValues);
+            Assert.Equal(4, logRecord.StateValues.Count);
+            Assert.Equal(new KeyValuePair<string, object>("Product", "OpenTelemetry"), logRecord.StateValues[0]);
+            Assert.Equal(new KeyValuePair<string, object>("Year", 2021), logRecord.StateValues[1]);
+            Assert.Equal(new KeyValuePair<string, object>("{OriginalFormat}", "{Product} {Year} {Complex}!"), logRecord.StateValues[3]);
+
+            KeyValuePair<string, object> actualComplex = logRecord.StateValues[2];
+            Assert.Equal("Complex", actualComplex.Key);
+            Assert.Same(complex, actualComplex.Value);
         }
 
         [Fact]
         public void ParseStateValuesUsingStructTest()
         {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
             // Tests struct IReadOnlyList<KeyValuePair<string, object>> parse path.
 
-            this.options.ParseStateValues = true;
-            try
-            {
-                this.logger.Log(
-                    LogLevel.Information,
-                    0,
-                    new StructState(new KeyValuePair<string, object>("Key1", "Value1")),
-                    null,
-                    (s, e) => "OpenTelemetry!");
-                var logRecord = this.exportedItems[0];
+            logger.Log(
+                LogLevel.Information,
+                0,
+                new StructState(new KeyValuePair<string, object>("Key1", "Value1")),
+                null,
+                (s, e) => "OpenTelemetry!");
+            var logRecord = exportedItems[0];
 
-                Assert.Null(logRecord.State);
-                Assert.NotNull(logRecord.StateValues);
-                Assert.Equal(1, logRecord.StateValues.Count);
-                Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
-            }
-            finally
-            {
-                this.options.ParseStateValues = false;
-            }
+            Assert.Null(logRecord.State);
+            Assert.NotNull(logRecord.StateValues);
+            Assert.Equal(1, logRecord.StateValues.Count);
+            Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
         }
 
         [Fact]
         public void ParseStateValuesUsingListTest()
         {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
             // Tests ref IReadOnlyList<KeyValuePair<string, object>> parse path.
 
-            this.options.ParseStateValues = true;
-            try
-            {
-                this.logger.Log(
-                    LogLevel.Information,
-                    0,
-                    new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("Key1", "Value1") },
-                    null,
-                    (s, e) => "OpenTelemetry!");
-                var logRecord = this.exportedItems[0];
+            logger.Log(
+                LogLevel.Information,
+                0,
+                new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("Key1", "Value1") },
+                null,
+                (s, e) => "OpenTelemetry!");
+            var logRecord = exportedItems[0];
 
-                Assert.Null(logRecord.State);
-                Assert.NotNull(logRecord.StateValues);
-                Assert.Equal(1, logRecord.StateValues.Count);
-                Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
-            }
-            finally
-            {
-                this.options.ParseStateValues = false;
-            }
+            Assert.Null(logRecord.State);
+            Assert.NotNull(logRecord.StateValues);
+            Assert.Equal(1, logRecord.StateValues.Count);
+            Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
         }
 
         [Fact]
         public void ParseStateValuesUsingIEnumerableTest()
         {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
             // Tests IEnumerable<KeyValuePair<string, object>> parse path.
 
-            this.options.ParseStateValues = true;
-            try
-            {
-                this.logger.Log(
-                    LogLevel.Information,
-                    0,
-                    new ListState(new KeyValuePair<string, object>("Key1", "Value1")),
-                    null,
-                    (s, e) => "OpenTelemetry!");
-                var logRecord = this.exportedItems[0];
+            logger.Log(
+                LogLevel.Information,
+                0,
+                new ListState(new KeyValuePair<string, object>("Key1", "Value1")),
+                null,
+                (s, e) => "OpenTelemetry!");
+            var logRecord = exportedItems[0];
 
-                Assert.Null(logRecord.State);
-                Assert.NotNull(logRecord.StateValues);
-                Assert.Equal(1, logRecord.StateValues.Count);
-                Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
-            }
-            finally
-            {
-                this.options.ParseStateValues = false;
-            }
+            Assert.Null(logRecord.State);
+            Assert.NotNull(logRecord.StateValues);
+            Assert.Equal(1, logRecord.StateValues.Count);
+            Assert.Equal(new KeyValuePair<string, object>("Key1", "Value1"), logRecord.StateValues[0]);
         }
 
         [Fact]
         public void ParseStateValuesUsingCustomTest()
         {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
             // Tests unknown state parse path.
 
-            this.options.ParseStateValues = true;
-            try
+            CustomState state = new CustomState
             {
-                CustomState state = new CustomState
-                {
-                    Property = "Value",
-                };
+                Property = "Value",
+            };
 
-                this.logger.Log(
-                    LogLevel.Information,
-                    0,
-                    state,
-                    null,
-                    (s, e) => "OpenTelemetry!");
-                var logRecord = this.exportedItems[0];
+            logger.Log(
+                LogLevel.Information,
+                0,
+                state,
+                null,
+                (s, e) => "OpenTelemetry!");
+            var logRecord = exportedItems[0];
 
-                Assert.Null(logRecord.State);
-                Assert.NotNull(logRecord.StateValues);
-                Assert.Equal(1, logRecord.StateValues.Count);
+            Assert.Null(logRecord.State);
+            Assert.NotNull(logRecord.StateValues);
+            Assert.Equal(1, logRecord.StateValues.Count);
 
-                KeyValuePair<string, object> actualState = logRecord.StateValues[0];
+            KeyValuePair<string, object> actualState = logRecord.StateValues[0];
 
-                Assert.Equal(string.Empty, actualState.Key);
-                Assert.Same(state, actualState.Value);
-            }
-            finally
-            {
-                this.options.ParseStateValues = false;
-            }
+            Assert.Equal(string.Empty, actualState.Key);
+            Assert.Same(state, actualState.Value);
         }
 
-        public void Dispose()
+        private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions> configure = null)
         {
-            this.loggerFactory?.Dispose();
+            exportedItems = new List<LogRecord>();
+            var exporter = new InMemoryExporter<LogRecord>(exportedItems);
+            var processor = new TestLogRecordProcessor(exporter);
+            return LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    configure?.Invoke(options);
+                    options.AddProcessor(processor);
+                });
+                builder.AddFilter(typeof(LogRecordTest).FullName, LogLevel.Trace);
+            });
         }
 
         internal struct Food
