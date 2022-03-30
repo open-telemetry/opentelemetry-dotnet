@@ -45,6 +45,8 @@ namespace OpenTelemetry.Metrics
 
         public Enumerator GetEnumerator() => new(this);
 
+        internal HistogramBuckets Copy() => (HistogramBuckets)this.MemberwiseClone();
+
         /// <summary>
         /// Enumerates the elements of a <see cref="HistogramBuckets"/>.
         /// </summary>
