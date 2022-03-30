@@ -32,9 +32,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     internal sealed class OtlpHttpMetricsExportClient : BaseOtlpHttpExportClient<OtlpCollector.ExportMetricsServiceRequest>
     {
         internal const string MediaContentType = "application/x-protobuf";
+        private const string MetricsExportPath = "v1/metrics";
 
         public OtlpHttpMetricsExportClient(OtlpExporterOptions options, HttpClient httpClient)
-            : base(options, httpClient, "v1/metrics")
+            : base(options, httpClient, MetricsExportPath)
         {
         }
 
