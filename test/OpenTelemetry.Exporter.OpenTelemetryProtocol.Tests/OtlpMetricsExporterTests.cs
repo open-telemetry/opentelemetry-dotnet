@@ -58,7 +58,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.NotNull(metricReader);
 
             var exportIntervalMilliseconds = (int)typeof(PeriodicExportingMetricReader)
-                .GetField("exportIntervalMilliseconds", bindingFlags)
+                .GetField("ExportIntervalMilliseconds", bindingFlags)
                 .GetValue(metricReader);
 
             Assert.Equal(60000, exportIntervalMilliseconds);
