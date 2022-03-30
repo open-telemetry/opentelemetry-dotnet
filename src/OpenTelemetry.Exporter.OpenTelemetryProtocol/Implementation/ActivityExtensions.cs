@@ -178,7 +178,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 otlpTags.Tags.Return();
             }
 
-            otlpSpan.Status = ToOtlpStatus(ref otlpTags);
+            otlpSpan.Status = activity.ToOtlpStatus(ref otlpTags);
 
             EventEnumerationState otlpEvents = default;
             activity.EnumerateEvents(ref otlpEvents);
@@ -237,24 +237,42 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static OtlpTrace.Status ToOtlpStatus(ref TagEnumerationState otlpTags)
+        private static OtlpTrace.Status ToOtlpStatus(this Activity activity, ref TagEnumerationState otlpTags)
         {
-            var status = StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode);
-
-            if (!status.HasValue)
+            var statusCodeForTagValue = StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode);
+            if (activity.Status == ActivityStatusCode.Unset && statusCodeForTagValue == null)
             {
                 return null;
             }
 
-            var otlpStatus = new OtlpTrace.Status
+            OtlpTrace.Status.Types.StatusCode otlpActivityStatusCode = OtlpTrace.Status.Types.StatusCode.Unset;
+            string otlpStatusDescription = null;
+            if (activity.Status != ActivityStatusCode.Unset)
             {
                 // The numerical values of the two enumerations match, a simple cast is enough.
-                Code = (OtlpTrace.Status.Types.StatusCode)(int)status,
-            };
-
-            if (!string.IsNullOrEmpty(otlpTags.StatusDescription))
+                otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)activity.Status;
+                if (activity.Status == ActivityStatusCode.Error && !string.IsNullOrEmpty(activity.StatusDescription))
+                {
+                    otlpStatusDescription = activity.StatusDescription;
+                }
+            }
+            else
             {
-                otlpStatus.Message = otlpTags.StatusDescription;
+                if (statusCodeForTagValue != StatusCode.Unset)
+                {
+                    // The numerical values of the two enumerations match, a simple cast is enough.
+                    otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)statusCodeForTagValue;
+                    if (statusCodeForTagValue == StatusCode.Error && !string.IsNullOrEmpty(otlpTags.StatusDescription))
+                    {
+                        otlpStatusDescription = otlpTags.StatusDescription;
+                    }
+                }
+            }
+
+            var otlpStatus = new OtlpTrace.Status { Code = otlpActivityStatusCode };
+            if (!string.IsNullOrEmpty(otlpStatusDescription))
+            {
+                otlpStatus.Message = otlpStatusDescription;
             }
 
             return otlpStatus;
