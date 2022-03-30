@@ -55,7 +55,7 @@ The program creates a
 [`LoggerFactory`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.iloggerfactory)
 with OpenTelemetry added as a
 [LoggerProvider](https://docs.microsoft.com/dotnet/core/extensions/logging-providers).
-This `LoggerFactory` is used to create a
+This `LoggerFactory` is used to create an
 [`ILogger`](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger)
 instance, which is then used to do the logging. The log is sent to the
 `OpenTelemetryLoggerProvider`, which is configured to export logs to
