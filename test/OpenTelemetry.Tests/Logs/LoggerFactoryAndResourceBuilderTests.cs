@@ -26,50 +26,56 @@ namespace OpenTelemetry.Logs.Tests
 {
     public sealed class LoggerFactoryAndResourceBuilderTests
     {
-        [Theory]
-        [InlineData(null, null)]
-        [InlineData(OtelServiceNameEnvVarDetector.EnvVarKey, "MyService")]
-        public void VerifyResourceBuilderReadsEnvironmentVariable(string name, string value)
+        [Fact]
+        public void VerifyResourceBuilder_DefaultCase()
         {
-            bool defaultCase = name == null && value == null;
+            VerifyResourceBuilder(
+                assert: (Resource resource) =>
+                {
+                    Assert.Contains(resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service"));
+                });
+        }
 
+        [Fact]
+        public void VerifyResourceBuilder_WithServiceNameEnVar()
+        {
             try
             {
-                // Pre-Setup
-                if (!defaultCase)
-                {
-                    Environment.SetEnvironmentVariable(name, value);
-                }
+                Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, "MyService");
 
-                // Setup
-                using var exporter = new InMemoryExporter<LogRecord>(new List<LogRecord>());
-                using var loggerFactory = LoggerFactory.Create(builder =>
-                {
-                    builder.AddOpenTelemetry(options =>
+                VerifyResourceBuilder(
+                    assert: (Resource resource) =>
                     {
-                        options.AddProcessor(new SimpleLogRecordExportProcessor(exporter));
+                        Assert.Contains(resource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.Equals("MyService"));
                     });
-                });
-                var logger = loggerFactory.CreateLogger<LoggerFactoryAndResourceBuilderTests>();
-
-                var provider = exporter.ParentProvider as OpenTelemetryLoggerProvider;
-                Assert.NotNull(provider);
-                var resource = provider.GetResource();
-                Assert.NotNull(resource);
-
-                // Verify
-                Assert.Contains(resource.Attributes, (kvp) =>
-                    kvp.Key == ResourceSemanticConventions.AttributeServiceName
-                    && defaultCase ? kvp.Value.ToString().Contains("unknown_service") : kvp.Value.Equals(value));
             }
             finally
             {
-                // Cleanup
-                if (!defaultCase)
-                {
-                    Environment.SetEnvironmentVariable(name, null);
-                }
+                Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, null);
             }
+        }
+
+        private static void VerifyResourceBuilder(
+            Action<Resource> assert)
+        {
+            // Setup
+            using var exporter = new InMemoryExporter<LogRecord>(new List<LogRecord>());
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.AddProcessor(new SimpleLogRecordExportProcessor(exporter));
+                });
+            });
+            var logger = loggerFactory.CreateLogger<LoggerFactoryAndResourceBuilderTests>();
+
+            var provider = exporter.ParentProvider as OpenTelemetryLoggerProvider;
+            Assert.NotNull(provider);
+            var resource = provider.GetResource();
+            Assert.NotNull(resource);
+
+            // Verify
+            assert.Invoke(resource);
         }
     }
 }
