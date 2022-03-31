@@ -3,7 +3,9 @@
 ## Unreleased
 
 * Fix issue where `ExplicitBucketHistogramConfiguration` could be used to
-  configure metric streams for instruments that are not histograms.
+  configure metric streams for instruments that are not histograms. Currently,
+  it is not possible to change the aggregation of an instrument with views. This
+  may be possible in the future.
   ([#3126](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3126))
 
 ## 1.2.0-rc4
