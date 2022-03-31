@@ -17,6 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using System.Linq;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -113,6 +115,88 @@ namespace OpenTelemetry.Metrics.Tests
                .Build());
         }
 
+        [Fact]
+        public void AddViewWithExceptionInUserCallbackAppliedDefault()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter1 = new Meter("AddViewWithExceptionInUserCallback");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+               .AddMeter(meter1.Name)
+               .AddView((instrument) => { throw new Exception("bad"); })
+               .AddInMemoryExporter(exportedItems)
+               .Build();
+
+            using (var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log))
+            {
+                var counter1 = meter1.CreateCounter<long>("counter1");
+                counter1.Add(1);
+                Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 41));
+            }
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            // Counter is still reported with default config
+            // even if View is ignored due to View exception.
+            Assert.Single(exportedItems);
+        }
+
+        [Fact]
+        public void AddViewWithExceptionInUserCallbackNoDefault()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter1 = new Meter("AddViewWithExceptionInUserCallback");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+               .AddMeter(meter1.Name)
+               .AddView((instrument) => { throw new Exception("bad"); })
+               .AddView("*", MetricStreamConfiguration.Drop)
+               .AddInMemoryExporter(exportedItems)
+               .Build();
+
+            using (var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log))
+            {
+                var counter1 = meter1.CreateCounter<long>("counter1");
+                counter1.Add(1);
+                Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 41));
+            }
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            // Counter is not reported.
+            // as the View is ignored due to View exception.
+            // and Default is suppressed with * -> Drop
+            Assert.Empty(exportedItems);
+        }
+
+        [Fact]
+        public void AddViewsWithAndWithoutExceptionInUserCallback()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter1 = new Meter("AddViewWithExceptionInUserCallback");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+               .AddMeter(meter1.Name)
+               .AddView((instrument) => { throw new Exception("bad"); })
+               .AddView((instrument) => { return new MetricStreamConfiguration() { Name = "newname" }; })
+               .AddInMemoryExporter(exportedItems)
+               .Build();
+
+            using (var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log))
+            {
+                var counter1 = meter1.CreateCounter<long>("counter1");
+                counter1.Add(1);
+                Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 41));
+            }
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            // Counter is still reported with 2nd View
+            // even if 1st View is ignored due to View exception.
+            Assert.Single(exportedItems);
+            Assert.Equal("newname", exportedItems[0].Name);
+        }
+
         [Theory]
         [MemberData(nameof(MetricTestData.InvalidHistogramBoundaries), MemberType = typeof(MetricTestData))]
         public void AddViewWithInvalidHistogramBoundsThrowsArgumentException(double[] boundaries)
@@ -147,8 +231,9 @@ namespace OpenTelemetry.Metrics.Tests
                 counter1.Add(1);
             }
 
-            // Counter is ignored due to invalid histogram bounds.
-            Assert.Empty(exportedItems);
+            // Counter is aggregated with default configuration
+            // as the View config is ignored due to invalid histogram bounds.
+            Assert.Single(exportedItems);
         }
 
         [Theory]
@@ -243,14 +328,14 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
-            // We should expect 1 metric here,
-            // but because the MetricStreamName passed is invalid, the instrument is ignored
+            // Because the MetricStreamName passed is invalid, the view is ignored,
+            // and default aggregation is used.
             var counter1 = meter1.CreateCounter<long>("name1", "unit", "original_description");
             counter1.Add(10);
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-            Assert.Empty(exportedItems);
+            Assert.Single(exportedItems);
         }
 
         [Theory]
