@@ -166,7 +166,11 @@ namespace OpenTelemetry.Metrics
                                 if (metricStreamConfig is ExplicitBucketHistogramConfiguration
                                     && instrument.GetType().GetGenericTypeDefinition() != typeof(Histogram<>))
                                 {
-                                    metricStreamConfig = null;
+                                    OpenTelemetrySdkEventSource.Log.MetricViewIgnored(
+                                        instrument.Name,
+                                        instrument.Meter.Name,
+                                        "Histogram metric stream configuration can not be used for instruments that are not histograms.",
+                                        "Fix the view configuration.");
                                 }
                             }
                             catch (Exception ex)
