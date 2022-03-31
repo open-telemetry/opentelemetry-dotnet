@@ -58,7 +58,7 @@ namespace OpenTelemetry.Metrics
         /// Gets or sets the optional description of the metric stream.
         /// </summary>
         /// <remarks>
-        /// Note: If note provided the instrument description will be used.
+        /// Note: If not provided the instrument description will be used.
         /// </remarks>
         public string Description { get; set; }
 
