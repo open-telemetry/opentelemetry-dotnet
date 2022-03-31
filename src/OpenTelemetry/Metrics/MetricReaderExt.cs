@@ -67,7 +67,21 @@ namespace OpenTelemetry.Metrics
                 }
                 else
                 {
-                    var metric = new Metric(metricStreamIdentity, this.Temporality, this.maxMetricPointsPerMetricStream);
+                    Metric metric = null;
+                    try
+                    {
+                        metric = new Metric(metricStreamIdentity, this.Temporality, this.maxMetricPointsPerMetricStream);
+                    }
+                    catch (NotSupportedException nse)
+                    {
+                        // TODO: This allocates string even if none listening.
+                        // Could be improved with separate Event.
+                        // Also the message could call out what Instruments
+                        // and types (eg: int, long etc) are supported.
+                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Unsupported instrument. Details: " + nse.Message, "Switch to a supported instrument type.");
+                        return null;
+                    }
+
                     this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                     this.metrics[index] = metric;
                     this.metricStreamNames.Add(metricStreamName);
@@ -105,9 +119,9 @@ namespace OpenTelemetry.Metrics
                     var metricName = metricStreamConfig?.Name ?? instrument.Name;
                     var metricStreamName = $"{meterName}.{meterVersion}.{metricName}";
                     var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
-                    var tagKeysInteresting = metricStreamConfig?.TagKeys;
+                    var tagKeysInteresting = metricStreamConfig?.CopiedTagKeys;
                     var histogramBucketBounds = (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfig
-                            && histogramConfig.Boundaries != null) ? histogramConfig.Boundaries : null;
+                        && histogramConfig.CopiedBoundaries != null) ? histogramConfig.CopiedBoundaries : null;
                     var metricStreamIdentity = new MetricStreamIdentity(instrument.Meter, metricName, instrument.Unit, metricDescription, instrument.GetType(), tagKeysInteresting, histogramBucketBounds);
 
                     if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricName))
@@ -142,7 +156,7 @@ namespace OpenTelemetry.Metrics
                             "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
                     }
 
-                    if (metricStreamConfig?.Aggregation == Aggregation.Drop)
+                    if (metricStreamConfig == MetricStreamConfiguration.Drop)
                     {
                         OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "View configuration asks to drop this instrument.", "Modify view configuration to allow this instrument, if desired.");
                         continue;
