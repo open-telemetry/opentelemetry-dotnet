@@ -625,6 +625,8 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(false)]
         public void CounterAggregationTest(bool exportDelta)
         {
+            DateTime testStartTime = DateTime.UtcNow;
+
             var exportedItems = new List<Metric>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
@@ -643,7 +645,20 @@ namespace OpenTelemetry.Metrics.Tests
             long sumReceived = GetLongSum(exportedItems);
             Assert.Equal(20, sumReceived);
 
+            var metricPoint = GetFirstMetricPoint(exportedItems);
+            Assert.NotNull(metricPoint);
+            Assert.True(metricPoint.Value.StartTime >= testStartTime);
+            Assert.True(metricPoint.Value.EndTime != default);
+
+            DateTimeOffset firstRunStartTime = metricPoint.Value.StartTime;
+            DateTimeOffset firstRunEndTime = metricPoint.Value.EndTime;
+
             exportedItems.Clear();
+
+#if NETFRAMEWORK
+            Thread.Sleep(5000); // Compensates for low resolution timing in netfx.
+#endif
+
             counterLong.Add(10);
             counterLong.Add(10);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
@@ -656,6 +671,21 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 Assert.Equal(40, sumReceived);
             }
+
+            metricPoint = GetFirstMetricPoint(exportedItems);
+            Assert.NotNull(metricPoint);
+            Assert.True(metricPoint.Value.StartTime >= testStartTime);
+            Assert.True(metricPoint.Value.EndTime != default);
+            if (exportDelta)
+            {
+                Assert.True(metricPoint.Value.StartTime == firstRunEndTime);
+            }
+            else
+            {
+                Assert.Equal(firstRunStartTime, metricPoint.Value.StartTime);
+            }
+
+            Assert.True(metricPoint.Value.EndTime > firstRunEndTime);
 
             exportedItems.Clear();
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
@@ -1399,6 +1429,19 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             return count;
+        }
+
+        private static MetricPoint? GetFirstMetricPoint(List<Metric> metrics)
+        {
+            foreach (var metric in metrics)
+            {
+                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                {
+                    return metricPoint;
+                }
+            }
+
+            return null;
         }
 
         // Provide tags input sorted by Key
