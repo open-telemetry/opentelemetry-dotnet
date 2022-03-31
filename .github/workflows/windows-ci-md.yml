@@ -10,8 +10,8 @@ name: Windows
 on:
   pull_request:
     branches: [ main ]
-    paths-ignore:
-    - '!**.md'
+    paths:
+    - '**.md'
 
 jobs:
   build-test:
