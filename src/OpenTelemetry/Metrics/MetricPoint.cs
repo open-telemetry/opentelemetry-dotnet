@@ -239,7 +239,7 @@ namespace OpenTelemetry.Metrics
             return this.histogramBuckets;
         }
 
-        internal MetricPoint Copy()
+        internal readonly MetricPoint Copy()
         {
             MetricPoint copy = this;
             copy.histogramBuckets = this.histogramBuckets?.Copy();

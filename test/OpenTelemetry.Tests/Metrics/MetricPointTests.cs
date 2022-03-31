@@ -92,9 +92,11 @@ namespace OpenTelemetry.Metrics.Tests
             var copy = histogramBuckets.Copy();
 
             // Verify these are unique instances.
+            Assert.False(ReferenceEquals(copy, histogramBuckets));
             Assert.NotSame(copy, histogramBuckets);
 
             // Verify fields are copied
+            Assert.NotSame(copy.SnapshotBucketCounts, histogramBuckets.SnapshotBucketCounts);
             Assert.Equal(copy.SnapshotBucketCounts, histogramBuckets.SnapshotBucketCounts);
             Assert.Equal(copy.SnapshotSum, histogramBuckets.SnapshotSum);
         }

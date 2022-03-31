@@ -16,6 +16,8 @@
 
 namespace OpenTelemetry.Metrics
 {
+    using System;
+
     /// <summary>
     /// A collection of <see cref="HistogramBucket"/>s associated with a histogram metric type.
     /// </summary>
@@ -45,7 +47,15 @@ namespace OpenTelemetry.Metrics
 
         public Enumerator GetEnumerator() => new(this);
 
-        internal HistogramBuckets Copy() => (HistogramBuckets)this.MemberwiseClone();
+        internal HistogramBuckets Copy()
+        {
+            HistogramBuckets copy = new HistogramBuckets(this.ExplicitBounds);
+
+            Array.Copy(this.SnapshotBucketCounts, copy.SnapshotBucketCounts, this.SnapshotBucketCounts.Length);
+            copy.SnapshotSum = this.SnapshotSum;
+
+            return copy;
+        }
 
         /// <summary>
         /// Enumerates the elements of a <see cref="HistogramBuckets"/>.
