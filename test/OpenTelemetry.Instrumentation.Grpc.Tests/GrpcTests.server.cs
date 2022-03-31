@@ -126,7 +126,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             {
                 // B3Propagator along with the headers passed to the client.SayHello ensure that the instrumentation creates a sibling activity
                 Sdk.SetDefaultTextMapPropagator(new B3Propagator());
-                var processor = new Mock<BaseProcessor<Activity>>();
+                var exportedItems = new List<Activity>();
                 var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder();
 
                 if (enableGrpcAspNetCoreSupport.HasValue)
@@ -142,7 +142,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 }
 
                 using var tracerProvider = tracerProviderBuilder
-                    .AddProcessor(processor.Object)
+                    .AddInMemoryExporter(exportedItems)
                     .Build();
 
                 var clientLoopbackAddresses = new[] { IPAddress.Loopback.ToString(), IPAddress.IPv6Loopback.ToString() };
@@ -157,10 +157,9 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 headers.Add("x-b3-sampled", "1");
                 client.SayHello(new HelloRequest(), headers);
 
-                WaitForProcessorInvocations(processor, 4);
-
-                Assert.Equal(4, processor.Invocations.Count); // SetParentProvider, OnStart (framework activity), OnStart (instrumentation activity), OnStop (instrumentation activity)
-                var activity = GetActivityFromProcessorInvocation(processor, nameof(processor.Object.OnEnd), OperationNameHttpRequestIn);
+                WaitForExporterToReceiveItems(exportedItems, 1);
+                Assert.Single(exportedItems);
+                var activity = exportedItems[0];
 
                 Assert.Equal(ActivityKind.Server, activity.Kind);
 
