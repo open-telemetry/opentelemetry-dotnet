@@ -29,6 +29,10 @@ not covered by the built-in exporters:
   done via `OpenTelemetry.SuppressInstrumentationScope`.
 * Exporters receives a batch of `Metric`, and each `Metric`
   can contain 1 or more `MetricPoint`s.
+  The exporter should perform all actions (e.g. serializing etc.) with
+  the `Metric`s and `MetricsPoint`s in the batch before returning control from
+  `Export`, once the control is returned, the exporter can no longer make any
+  assumptions about the state of the batch or anything inside it.
 * Exporters should use `ParentProvider.GetResource()` to get the `Resource`
   associated with the provider.
 
@@ -54,8 +58,8 @@ class MyExporter : BaseExporter<Metric>
 }
 ```
 
-A demo exporter which simply writes metric name and metric point start time
-, tags to the console is shown [here](./MyExporter.cs).
+A demo exporter which simply writes metric name, metric point start time
+and tags to the console is shown [here](./MyExporter.cs).
 
 Apart from the exporter itself, you should also provide extension methods as
 shown [here](./MyExporterExtensions.cs). This allows users to add the Exporter
