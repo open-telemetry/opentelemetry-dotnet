@@ -162,6 +162,12 @@ namespace OpenTelemetry.Metrics
                             try
                             {
                                 metricStreamConfig = viewConfig(instrument);
+
+                                if (metricStreamConfig is ExplicitBucketHistogramConfiguration
+                                    && instrument.GetType().GetGenericTypeDefinition() != typeof(Histogram<>))
+                                {
+                                    metricStreamConfig = null;
+                                }
                             }
                             catch (Exception ex)
                             {
