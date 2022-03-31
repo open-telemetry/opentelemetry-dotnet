@@ -67,7 +67,21 @@ namespace OpenTelemetry.Metrics
                 }
                 else
                 {
-                    var metric = new Metric(instrumentIdentity, this.Temporality, this.maxMetricPointsPerMetricStream);
+                    Metric metric = null;
+                    try
+                    {
+                        metric = new Metric(instrumentIdentity, this.Temporality, this.maxMetricPointsPerMetricStream);
+                    }
+                    catch (NotSupportedException nse)
+                    {
+                        // TODO: This allocates string even if none listening.
+                        // Could be improved with separate Event.
+                        // Also the message could call out what Instruments
+                        // and types (eg: int, long etc) are supported.
+                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "Unsupported instrument. Details: " + nse.Message, "Switch to a supported instrument type.");
+                        return null;
+                    }
+
                     this.instrumentIdentityToMetric[instrumentIdentity] = metric;
                     this.metrics[index] = metric;
                     this.metricStreamNames.Add(metricStreamName);
