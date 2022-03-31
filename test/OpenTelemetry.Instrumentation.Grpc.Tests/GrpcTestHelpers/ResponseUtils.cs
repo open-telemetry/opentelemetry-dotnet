@@ -35,12 +35,6 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
         internal const string IdentityGrpcEncoding = "identity";
         internal const string StatusTrailer = "grpc-status";
 
-        public static HttpResponseMessage CreateResponse(HttpStatusCode statusCode) =>
-            CreateResponse(statusCode, string.Empty);
-
-        public static HttpResponseMessage CreateResponse(HttpStatusCode statusCode, string payload) =>
-            CreateResponse(statusCode, new StringContent(payload));
-
         public static HttpResponseMessage CreateResponse(
             HttpStatusCode statusCode,
             HttpContent payload,
@@ -89,42 +83,6 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
                     message.TrailingHeaders().Add(customTrailer.Key, customTrailer.Value);
                 }
             }
-
-            return message;
-        }
-
-        public static HttpResponseMessage CreateHeadersOnlyResponse(
-            HttpStatusCode statusCode,
-            global::Grpc.Core.StatusCode grpcStatusCode,
-            string? grpcEncoding = null,
-            Version? version = null,
-            string? retryPushbackHeader = null,
-            IDictionary<string, string>? customHeaders = null)
-        {
-            var message = new HttpResponseMessage(statusCode)
-            {
-                Version = version ?? ProtocolVersion
-            };
-
-            message.RequestMessage = new HttpRequestMessage();
-#if NETFRAMEWORK
-            message.RequestMessage.Properties[TrailingHeadersHelpers.ResponseTrailersKey] = new ResponseTrailers();
-#endif
-            message.Headers.Add(MessageEncodingHeader, grpcEncoding ?? IdentityGrpcEncoding);
-            if (retryPushbackHeader != null)
-            {
-                message.Headers.Add("grpc-retry-pushback-ms", retryPushbackHeader);
-            }
-
-            if (customHeaders != null)
-            {
-                foreach (var customHeader in customHeaders)
-                {
-                    message.Headers.Add(customHeader.Key, customHeader.Value);
-                }
-            }
-
-            message.Headers.Add(StatusTrailer, grpcStatusCode.ToString("D"));
 
             return message;
         }

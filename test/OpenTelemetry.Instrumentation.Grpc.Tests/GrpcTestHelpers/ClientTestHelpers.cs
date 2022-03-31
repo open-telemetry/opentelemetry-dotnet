@@ -16,54 +16,18 @@
 
 using System;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf;
-using Greet;
-using Grpc.Core;
 using Grpc.Net.Compression;
 
 namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
 {
     internal static class ClientTestHelpers
     {
-        public static readonly Marshaller<HelloRequest> HelloRequestMarshaller = Marshallers.Create<HelloRequest>(r => r.ToByteArray(), data => HelloRequest.Parser.ParseFrom(data));
-        public static readonly Marshaller<HelloReply> HelloReplyMarshaller = Marshallers.Create<HelloReply>(r => r.ToByteArray(), data => HelloReply.Parser.ParseFrom(data));
-
-        public static readonly Method<HelloRequest, HelloReply> ServiceMethod = GetServiceMethod(MethodType.Unary);
-
-        public static Method<HelloRequest, HelloReply> GetServiceMethod(MethodType? methodType = null, Marshaller<HelloRequest>? requestMarshaller = null)
-        {
-            return new Method<HelloRequest, HelloReply>(methodType ?? MethodType.Unary, "ServiceName", "MethodName", requestMarshaller ?? HelloRequestMarshaller, HelloReplyMarshaller);
-        }
-
-        public static Method<TRequest, TResponse> GetServiceMethod<TRequest, TResponse>(MethodType methodType, Marshaller<TRequest> requestMarshaller, Marshaller<TResponse> responseMarshaller)
-        {
-            return new Method<TRequest, TResponse>(methodType, "ServiceName", "MethodName", requestMarshaller, responseMarshaller);
-        }
-
-        public static TestHttpMessageHandler CreateTestMessageHandler(HelloReply reply)
-        {
-            return TestHttpMessageHandler.Create(async r =>
-            {
-                var streamContent = await ClientTestHelpers.CreateResponseContent(reply).DefaultTimeout();
-                return ResponseUtils.CreateResponse(HttpStatusCode.OK, streamContent);
-            });
-        }
-
         public static HttpClient CreateTestClient(Func<HttpRequestMessage, Task<HttpResponseMessage>> sendAsync, Uri? baseAddress = null)
-        {
-            var handler = TestHttpMessageHandler.Create(sendAsync);
-            var httpClient = new HttpClient(handler);
-            httpClient.BaseAddress = baseAddress ?? new Uri("https://localhost");
-
-            return httpClient;
-        }
-
-        public static HttpClient CreateTestClient(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> sendAsync, Uri? baseAddress = null)
         {
             var handler = TestHttpMessageHandler.Create(sendAsync);
             var httpClient = new HttpClient(handler);
@@ -75,11 +39,6 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
         public static Task<StreamContent> CreateResponseContent<TResponse>(TResponse response, ICompressionProvider? compressionProvider = null) where TResponse : IMessage<TResponse>
         {
             return CreateResponseContentCore(new[] { response }, compressionProvider);
-        }
-
-        public static Task<StreamContent> CreateResponsesContent<TResponse>(params TResponse[] responses) where TResponse : IMessage<TResponse>
-        {
-            return CreateResponseContentCore(responses, compressionProvider: null);
         }
 
         private static async Task<StreamContent> CreateResponseContentCore<TResponse>(TResponse[] responses, ICompressionProvider? compressionProvider) where TResponse : IMessage<TResponse>
@@ -124,13 +83,6 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
 #else
             await ms.WriteAsync(data, 0, data.Length);
 #endif
-        }
-
-        public static async Task<byte[]> GetResponseDataAsync<TResponse>(TResponse response) where TResponse : IMessage<TResponse>
-        {
-            var ms = new MemoryStream();
-            await WriteResponseAsync(ms, response, compressionProvider: null);
-            return ms.ToArray();
         }
     }
 }
