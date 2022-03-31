@@ -28,7 +28,7 @@ dotnet add package OpenTelemetry.Exporter.Console
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs):
 
 Run the application again (using `dotnet run`) and you should see the trace
-output from the console.
+output from the console, similar to the one below:
 
 ```text
 Activity.TraceId:          d4a7d499698d62f0e2317a67abc559b6
