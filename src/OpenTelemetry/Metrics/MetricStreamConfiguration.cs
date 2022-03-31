@@ -14,46 +14,99 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Metrics
 {
-    // TODO: can be optimized like MetricType
-    internal enum Aggregation
-    {
-#pragma warning disable SA1602 // Enumeration items should be documented
-        Default,
-        Drop,
-        Sum,
-        LastValue,
-        Histogram,
-#pragma warning restore SA1602 // Enumeration items should be documented
-    }
-
     /// <summary>
-    /// Holds the configuration for a MetricStream.
+    /// Stores configuration for a MetricStream.
     /// </summary>
     public class MetricStreamConfiguration
     {
-        public static readonly MetricStreamConfiguration Drop = new DropConfiguration();
+        private string name;
 
-        public string Name { get; set; }
+        /// <summary>
+        /// Gets the drop configuration.
+        /// </summary>
+        /// <remarks>
+        /// Note: All metrics for the given instrument will be dropped (not
+        /// collected).
+        /// </remarks>
+        public static MetricStreamConfiguration Drop { get; } = new MetricStreamConfiguration();
 
+        /// <summary>
+        /// Gets or sets the optional name of the metric stream.
+        /// </summary>
+        /// <remarks>
+        /// Note: If not provided the instrument name will be used.
+        /// </remarks>
+        public string Name
+        {
+            get => this.name;
+            set
+            {
+                if (value != null && !MeterProviderBuilderSdk.IsValidViewName(value))
+                {
+                    throw new ArgumentException($"Custom view name {value} is invalid.", nameof(value));
+                }
+
+                this.name = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the optional description of the metric stream.
+        /// </summary>
+        /// <remarks>
+        /// Note: If not provided the instrument description will be used.
+        /// </remarks>
         public string Description { get; set; }
 
-        public string[] TagKeys { get; set; }
+        /// <summary>
+        /// Gets or sets the optional tag keys to include in the metric stream.
+        /// </summary>
+        /// <remarks>
+        /// Notes:
+        /// <list type="bullet">
+        /// <item>If provided any metrics for the instrument which do not match
+        /// all the tag keys will be dropped (not collected).</item>
+        /// <item>A copy is made of the provided array. TagKeys cannot be
+        /// modified after being set.</item>
+        /// </list>
+        /// </remarks>
+        public string[] TagKeys
+        {
+            get
+            {
+                if (this.CopiedTagKeys != null)
+                {
+                    string[] copy = new string[this.CopiedTagKeys.Length];
+                    this.CopiedTagKeys.AsSpan().CopyTo(copy);
+                    return copy;
+                }
 
-        internal virtual Aggregation Aggregation { get; set; }
+                return null;
+            }
+
+            set
+            {
+                if (value != null)
+                {
+                    string[] copy = new string[value.Length];
+                    value.AsSpan().CopyTo(copy);
+                    this.CopiedTagKeys = copy;
+                }
+                else
+                {
+                    this.CopiedTagKeys = null;
+                }
+            }
+        }
+
+        internal string[] CopiedTagKeys { get; private set; }
 
         // TODO: MetricPoints caps can be configured here on
         // a per stream basis, when we add such a capability
         // in the future.
-
-        private sealed class DropConfiguration : MetricStreamConfiguration
-        {
-            internal override Aggregation Aggregation
-            {
-                get => Aggregation.Drop;
-                set { }
-            }
-        }
     }
 }
