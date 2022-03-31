@@ -157,7 +157,17 @@ namespace OpenTelemetry.Metrics
                         var metricStreamConfigs = new List<MetricStreamConfiguration>(viewConfigCount);
                         foreach (var viewConfig in this.viewConfigs)
                         {
-                            var metricStreamConfig = viewConfig(instrument);
+                            MetricStreamConfiguration metricStreamConfig = null;
+
+                            try
+                            {
+                                metricStreamConfig = viewConfig(instrument);
+                            }
+                            catch (Exception ex)
+                            {
+                                OpenTelemetrySdkEventSource.Log.MetricViewIgnored(instrument.Name, instrument.Meter.Name, ex.Message, "Fix the view configuration.");
+                            }
+
                             if (metricStreamConfig != null)
                             {
                                 metricStreamConfigs.Add(metricStreamConfig);
@@ -194,7 +204,7 @@ namespace OpenTelemetry.Metrics
                             }
                         }
 
-                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Succeeded publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Completed publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
                     }
                     catch (Exception)
                     {
@@ -259,7 +269,7 @@ namespace OpenTelemetry.Metrics
                             }
                         }
 
-                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Succeeded publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Completed publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
                     }
                     catch (Exception)
                     {
