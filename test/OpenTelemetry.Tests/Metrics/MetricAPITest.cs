@@ -18,7 +18,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Linq;
 using System.Threading;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -1304,6 +1306,30 @@ namespace OpenTelemetry.Metrics.Tests
             var counter = meter.CreateCounter<long>("counter");
 
             counter.Add(10, new KeyValuePair<string, object>("key", "value"));
+        }
+
+        [Fact]
+        public void UnsupportedMetricInstrument()
+        {
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+            using (var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log))
+            {
+                var counter = meter.CreateCounter<decimal>("counter");
+                counter.Add(1);
+
+                // This validates that we log InstrumentIgnored event
+                // and not something else.
+                Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 33));
+            }
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Empty(exportedItems);
         }
 
         private static void ValidateMetricPointTags(List<KeyValuePair<string, object>> expectedTags, ReadOnlyTagCollection actualTags)

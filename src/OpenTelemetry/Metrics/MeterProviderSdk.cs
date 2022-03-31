@@ -204,7 +204,7 @@ namespace OpenTelemetry.Metrics
                             }
                         }
 
-                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Succeeded publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Completed publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
                     }
                     catch (Exception)
                     {
@@ -269,7 +269,7 @@ namespace OpenTelemetry.Metrics
                             }
                         }
 
-                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Succeeded publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Completed publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
                     }
                     catch (Exception)
                     {
