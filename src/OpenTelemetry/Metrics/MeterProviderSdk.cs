@@ -169,7 +169,7 @@ namespace OpenTelemetry.Metrics
                                     OpenTelemetrySdkEventSource.Log.MetricViewIgnored(
                                         instrument.Name,
                                         instrument.Meter.Name,
-                                        "Histogram metric stream configuration can not be used for instruments that are not histograms.",
+                                        "The current SDK does not allow aggregating non-Histogram instruments as Histograms.",
                                         "Fix the view configuration.");
                                 }
                             }
