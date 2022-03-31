@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics
 
         private readonly AggregationType aggType;
 
-        private readonly HistogramBuckets histogramBuckets;
+        private HistogramBuckets histogramBuckets;
 
         // Represents temporality adjusted "value" for double/long metric types or "count" when histogram
         private MetricPointValueStorage runningValue;
@@ -229,6 +229,13 @@ namespace OpenTelemetry.Metrics
             }
 
             return this.histogramBuckets;
+        }
+
+        internal readonly MetricPoint Copy()
+        {
+            MetricPoint copy = this;
+            copy.histogramBuckets = this.histogramBuckets?.Copy();
+            return copy;
         }
 
         internal void Update(long number)

@@ -29,6 +29,10 @@ not covered by the built-in exporters:
   done via `OpenTelemetry.SuppressInstrumentationScope`.
 * Exporters receives a batch of `Metric`, and each `Metric`
   can contain 1 or more `MetricPoint`s.
+  The exporter should perform all actions (e.g. serializing etc.) with
+  the `Metric`s and `MetricsPoint`s in the batch before returning control from
+  `Export`, once the control is returned, the exporter can no longer make any
+  assumptions about the state of the batch or anything inside it.
 * Exporters should use `ParentProvider.GetResource()` to get the `Resource`
   associated with the provider.
 
