@@ -163,8 +163,10 @@ namespace OpenTelemetry.Metrics
                             {
                                 metricStreamConfig = viewConfig(instrument);
                             }
-                            catch (ArgumentException ex)
+                            catch (Exception ex)
                             {
+                                // TODO: This allocates the string even if none listening,
+                                // could be improved with a separate dedicated method.
                                 OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(instrument.Name, instrument.Meter.Name, "Applying View Configuration failed with error:" + ex.Message, "Fix the view configuration.");
                                 return;
                             }
