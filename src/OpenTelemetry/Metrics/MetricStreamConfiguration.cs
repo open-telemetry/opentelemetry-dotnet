@@ -68,10 +68,12 @@ namespace OpenTelemetry.Metrics
         /// <remarks>
         /// Notes:
         /// <list type="bullet">
-        /// <item>If provided any metrics for the instrument which do not match
-        /// all the tag keys will be dropped (not collected).</item>
-        /// <item>A copy is made of the provided array. TagKeys cannot be
-        /// modified after being set.</item>
+        /// <item>If not provided, all the tags provided by the instrument
+        /// while reporting measurements will be used for aggregation.
+        /// If provided, only those tags in this list will be used
+        /// for aggregation.
+        /// </item>
+        /// <item>A copy is made of the provided array.</item>
         /// </list>
         /// </remarks>
         public string[] TagKeys

@@ -36,8 +36,7 @@ namespace OpenTelemetry.Metrics
         /// <item>A null value would result in default bucket boundaries being
         /// used.</item>
         /// </list>
-        /// Note: A copy is made of the provided array. Boundaries cannot be
-        /// modified after being set.
+        /// Note: A copy is made of the provided array.
         /// </remarks>
         public double[] Boundaries
         {

@@ -157,7 +157,18 @@ namespace OpenTelemetry.Metrics
                         var metricStreamConfigs = new List<MetricStreamConfiguration>(viewConfigCount);
                         foreach (var viewConfig in this.viewConfigs)
                         {
-                            var metricStreamConfig = viewConfig(instrument);
+                            MetricStreamConfiguration metricStreamConfig = null;
+
+                            try
+                            {
+                                metricStreamConfig = viewConfig(instrument);
+                            }
+                            catch (ArgumentException ex)
+                            {
+                                OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(instrument.Name, instrument.Meter.Name, "Applying View Configuration failed with error:" + ex.Message, "Fix the view configuration.");
+                                return;
+                            }
+
                             if (metricStreamConfig != null)
                             {
                                 metricStreamConfigs.Add(metricStreamConfig);
