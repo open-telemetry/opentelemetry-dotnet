@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Fix issue where `ExplicitBucketHistogramConfiguration` could be used to
+  configure metric streams for instruments that are not histograms.
+  ([#3126](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3126))
+
 ## 1.2.0-rc4
 
 Released 2022-Mar-30
