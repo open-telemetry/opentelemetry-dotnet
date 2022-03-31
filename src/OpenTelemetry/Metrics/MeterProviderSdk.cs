@@ -165,10 +165,7 @@ namespace OpenTelemetry.Metrics
                             }
                             catch (Exception ex)
                             {
-                                // TODO: This allocates the string even if none listening,
-                                // could be improved with a separate dedicated method.
-                                OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(instrument.Name, instrument.Meter.Name, "Applying View Configuration failed with error:" + ex.Message, "Fix the view configuration.");
-                                return;
+                                OpenTelemetrySdkEventSource.Log.MetricViewIgnored(instrument.Name, instrument.Meter.Name, ex.Message, "Fix the view configuration.");
                             }
 
                             if (metricStreamConfig != null)
@@ -207,7 +204,7 @@ namespace OpenTelemetry.Metrics
                             }
                         }
 
-                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Succeeded publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Completed publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
                     }
                     catch (Exception)
                     {
@@ -272,7 +269,7 @@ namespace OpenTelemetry.Metrics
                             }
                         }
 
-                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Succeeded publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Completed publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
                     }
                     catch (Exception)
                     {

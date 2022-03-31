@@ -378,6 +378,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(40, message);
         }
 
+        [Event(41, Message = "View Configuration ignored for Instrument '{0}', Meter '{1}'. Reason: '{2}'. Measurements from the instrument will use default configuration for Aggregation. Suggested action: '{3}'", Level = EventLevel.Warning)]
+        public void MetricViewIgnored(string instrumentName, string meterName, string reason, string fix)
+        {
+            this.WriteEvent(41, instrumentName, meterName, reason, fix);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {
