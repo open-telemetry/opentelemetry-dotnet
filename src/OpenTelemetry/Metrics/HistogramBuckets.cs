@@ -14,10 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Metrics
 {
-    using System;
-
     /// <summary>
     /// A collection of <see cref="HistogramBucket"/>s associated with a histogram metric type.
     /// </summary>
