@@ -32,9 +32,6 @@ Released 2022-Mar-30
   OpenTelemetryLoggerOptions after the LoggerFactory is built.
   ([#3055](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3055))
 
-* Add Copy method to both `MetricPoint` and `HistogramBuckets`.
-  ([#3113](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3113))
-
 ## 1.2.0-rc3
 
 Released 2022-Mar-04
