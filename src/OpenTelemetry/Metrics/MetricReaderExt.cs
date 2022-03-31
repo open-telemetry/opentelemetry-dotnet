@@ -133,7 +133,7 @@ namespace OpenTelemetry.Metrics
                             "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
                     }
 
-                    if (metricStreamConfig?.Aggregation == Aggregation.Drop)
+                    if (metricStreamConfig == MetricStreamConfiguration.Drop)
                     {
                         OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "View configuration asks to drop this instrument.", "Modify view configuration to allow this instrument, if desired.");
                         continue;
@@ -147,9 +147,9 @@ namespace OpenTelemetry.Metrics
                     else
                     {
                         Metric metric;
-                        string[] tagKeysInteresting = metricStreamConfig?.TagKeys;
+                        string[] tagKeysInteresting = metricStreamConfig?.CopiedTagKeys;
                         double[] histogramBucketBounds = (metricStreamConfig is ExplicitBucketHistogramConfiguration histogramConfig
-                            && histogramConfig.Boundaries != null) ? histogramConfig.Boundaries : null;
+                            && histogramConfig.CopiedBoundaries != null) ? histogramConfig.CopiedBoundaries : null;
                         metric = new Metric(instrumentIdentity, this.Temporality, this.maxMetricPointsPerMetricStream, histogramBucketBounds, tagKeysInteresting);
 
                         this.instrumentIdentityToMetric[instrumentIdentity] = metric;
