@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
@@ -51,8 +52,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         [InlineData(false)]
         public void GrpcAspNetCoreInstrumentationAddsCorrectAttributes(bool? enableGrpcAspNetCoreSupport)
         {
-            var processor = new Mock<BaseProcessor<Activity>>();
-
+            var exportedItems = new List<Activity>();
             var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder();
 
             if (enableGrpcAspNetCoreSupport.HasValue)
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             }
 
             using var tracerProvider = tracerProviderBuilder
-                .AddProcessor(processor.Object)
+                .AddInMemoryExporter(exportedItems)
                 .Build();
 
             var clientLoopbackAddresses = new[] { IPAddress.Loopback.ToString(), IPAddress.IPv6Loopback.ToString() };
@@ -76,12 +76,12 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
             using var channel = GrpcChannel.ForAddress(uri);
             var client = new Greeter.GreeterClient(channel);
-            client.SayHello(new HelloRequest());
+            var returnMsg = client.SayHello(new HelloRequest()).Message;
+            Assert.False(string.IsNullOrEmpty(returnMsg));
 
-            WaitForProcessorInvocations(processor, 2);
-
-            Assert.InRange(processor.Invocations.Count, 2, 6); // begin and end was called
-            var activity = GetActivityFromProcessorInvocation(processor, nameof(processor.Object.OnEnd), OperationNameHttpRequestIn);
+            WaitForExporterToReceiveItems(exportedItems, 1);
+            Assert.Single(exportedItems);
+            var activity = exportedItems[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
 
@@ -204,6 +204,20 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         public void Dispose()
         {
             this.server.Dispose();
+        }
+
+        private static void WaitForExporterToReceiveItems(List<Activity> itemsReceived, int itemCount)
+        {
+            // We need to let End callback execute as it is executed AFTER response was returned.
+            // In unit tests environment there may be a lot of parallel unit tests executed, so
+            // giving some breezing room for the End callback to complete
+            Assert.True(SpinWait.SpinUntil(
+                () =>
+                {
+                    Thread.Sleep(10);
+                    return itemsReceived.Count >= itemCount;
+                },
+                TimeSpan.FromSeconds(1)));
         }
 
         private static void WaitForProcessorInvocations(Mock<BaseProcessor<Activity>> spanProcessor, int invocationCount)
