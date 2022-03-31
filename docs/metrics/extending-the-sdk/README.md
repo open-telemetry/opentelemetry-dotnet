@@ -54,8 +54,8 @@ class MyExporter : BaseExporter<Metric>
 }
 ```
 
-A demo exporter which simply writes metric name and metric point start time
-, tags to the console is shown [here](./MyExporter.cs).
+A demo exporter which simply writes metric name, metric point start time
+and tags to the console is shown [here](./MyExporter.cs).
 
 Apart from the exporter itself, you should also provide extension methods as
 shown [here](./MyExporterExtensions.cs). This allows users to add the Exporter
