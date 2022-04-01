@@ -95,7 +95,7 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 #### .NET Framework - Filter
 
-For .NET Framework Filter receives the payload object containing  ReadOnlyDictionary<string,object>.
+For .NET Framework Filter receives the payload object containing ReadOnlyDictionary<string,object>.
 The Dictionary contains string values for DataSource, DatabaseName, CommandText.
 The following code snippet shows how to use Filter with .NET Framework
 
