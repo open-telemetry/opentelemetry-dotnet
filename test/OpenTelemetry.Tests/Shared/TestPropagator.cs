@@ -44,7 +44,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
             }
 
             IEnumerable<string> id = getter(carrier, this.idHeaderName);
-            if (id.Count() <= 0)
+            if (!id.Any())
             {
                 return context;
             }

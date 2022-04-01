@@ -19,6 +19,8 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
+namespace CustomizingTheSdk;
+
 public class Program
 {
     public static void Main()

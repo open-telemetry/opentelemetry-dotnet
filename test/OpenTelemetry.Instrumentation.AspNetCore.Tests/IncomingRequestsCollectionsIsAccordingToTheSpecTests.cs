@@ -145,13 +145,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 Assert.Equal("exception", activity.Events.First().Name);
             }
 
-            this.ValidateTagValue(activity, SemanticConventions.AttributeHttpUserAgent, userAgent);
+            ValidateTagValue(activity, SemanticConventions.AttributeHttpUserAgent, userAgent);
 
             activity.Dispose();
             processor.Object.Dispose();
         }
 
-        private void ValidateTagValue(Activity activity, string attribute, string expectedValue)
+        private static void ValidateTagValue(Activity activity, string attribute, string expectedValue)
         {
             if (string.IsNullOrEmpty(expectedValue))
             {
