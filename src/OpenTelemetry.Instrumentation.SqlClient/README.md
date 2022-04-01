@@ -62,11 +62,14 @@ This instrumentation can be configured to change the default behavior by using
 
 ### Filter
 
-This instrumentation by default collects all the sql executions. Filter option allows filtering of executions. This defines the condition for allowable requests.
+SQL instrumentation by default collects all the sql executions.
+Filter option allows filtering of executions.
+This defines the condition for allowable requests.
 
 #### .NET Core - Filter
 
-When using .NET Core Filter receives the payload object containing { (Guid) OperationId, (Microsoft.Data.SqlClient.SqlCommand) Command, Timestamp}
+When using .NET Core Filter receives the payload object containing
+{ (Guid) OperationId, (Microsoft.Data.SqlClient.SqlCommand) Command, Timestamp}
 The following code snippet shows how to use Filter with .NET Core
 
 ```csharp
@@ -83,7 +86,8 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 #### .NET Framework - Filter
 
-For .NET Framework Filter receives the payload object containing { (string)DataSource, (string)DatabaseName, (string)CommandText}
+For .NET Framework Filter receives the payload object containing
+    { (string)DataSource, (string)DatabaseName, (string)CommandText}
 The following code snippet shows how to use Filter with .NET Framework
 
 ```csharp

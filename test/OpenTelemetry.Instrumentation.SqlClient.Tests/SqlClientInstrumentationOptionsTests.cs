@@ -112,7 +112,11 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         {
             Func<object, bool> filter = (object payload) =>
             {
-                if (hasException) throw new Exception("From Filter");
+                if (hasException)
+                {
+                    throw new Exception("From Filter");
+                }
+
                 return filterValue;
             };
             object payload = new { };
@@ -121,12 +125,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 Filter = hasFilter ? filter : null,
             };
             Assert.Equal(options.EventFilter(payload), expected);
-
         }
-
-        private static Func<object, bool> filter_success_false = (object payload) =>
-        {
-            return false;
-        };
     }
 }

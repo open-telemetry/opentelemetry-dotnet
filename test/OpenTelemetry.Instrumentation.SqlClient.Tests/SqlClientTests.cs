@@ -105,6 +105,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     {
                         options.Enrich = ActivityEnrichment;
                     }
+
                     if (shouldFilter)
                     {
                         options.Filter = (payload) =>
@@ -113,12 +114,17 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                             {
                                 return true;
                             }
+
                             if (isFailure)
                             {
                                 throw new Exception("From InstrumentationFilter");
                             }
+
                             var command = (SqlCommand)payload.GetType().GetProperty("Command").GetValue(payload, null);
-                            if (command.CommandText == "select 2/0") return false;
+                            if (command.CommandText == "select 2/0")
+                            {
+                                return false;
+                            }
 
                             return true;
                         };
@@ -184,7 +190,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             bool captureStoredProcedureCommandName,
             bool captureTextCommandContent,
             bool shouldEnrich = true,
-            bool shouldFilter = false, int expectedActivityProcessorInvocationCount = 5)
+            bool shouldFilter = false,
+            int expectedActivityProcessorInvocationCount = 5)
         {
             using var sqlConnection = new SqlConnection(TestConnectionString);
             using var sqlCommand = sqlConnection.CreateCommand();
@@ -201,6 +208,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                             {
                                 opt.Enrich = ActivityEnrichment;
                             }
+
                             if (shouldFilter)
                             {
                                 opt.Filter = (payload) =>
@@ -211,7 +219,11 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                                     }
 
                                     var command = (SqlCommand)payload.GetType().GetProperty("Command").GetValue(payload, null);
-                                    if (command.CommandText.Contains("sys.databases", StringComparison.OrdinalIgnoreCase)) return false;
+                                    if (command.CommandText.Contains("sys.databases", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        return false;
+                                    }
+
                                     return true;
                                 };
                             }
@@ -245,9 +257,11 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     afterCommand,
                     afterExecuteEventData);
             }
+
             Assert.Equal(expectedActivityProcessorInvocationCount, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called when request is filtered, when request is not filtered only SetParentProvider/OnShutdown/Dispose are called
 
             if (processor.Invocations.Count > 3)
+            {
                 VerifyActivityData(
                     sqlCommand.CommandType,
                     sqlCommand.CommandText,
@@ -258,6 +272,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     shouldEnrich,
                     sqlConnection.DataSource,
                     (Activity)processor.Invocations[2].Arguments[0]);
+            }
         }
 
         [Theory]
