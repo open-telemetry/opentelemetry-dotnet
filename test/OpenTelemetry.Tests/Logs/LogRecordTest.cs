@@ -19,6 +19,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using Microsoft.Extensions.Logging;
@@ -33,7 +34,7 @@ namespace OpenTelemetry.Logs.Tests
     public sealed class LogRecordTest
     {
         [Fact]
-        public void CheckCateogryNameForLog()
+        public void CheckCategoryNameForLog()
         {
             using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
@@ -56,8 +57,8 @@ namespace OpenTelemetry.Logs.Tests
             using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
-            var message = $"Log {logLevel}";
-            logger.Log(logLevel, message);
+            const string message = "Log {logLevel}";
+            logger.Log(logLevel, message, logLevel);
 
             var logLevelRecorded = exportedItems[0].LogLevel;
             Assert.Equal(logLevel, logLevelRecorded);
@@ -69,17 +70,18 @@ namespace OpenTelemetry.Logs.Tests
             using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
-            var message = "Hello, World!";
+            const string message = "Hello, World!";
             logger.LogInformation(message);
             var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
             // state only has {OriginalFormat}
             Assert.Equal(1, state.Count);
 
-            Assert.Equal(message.ToString(), state.ToString());
+            Assert.Equal(message, state.ToString());
         }
 
         [Fact]
+        [SuppressMessage("CA2254", "CA2254", Justification = "While you shouldn't use interpolation in a log message, this test verifies things work with it anyway.")]
         public void CheckStateForUnstructuredLogWithStringInterpolation()
         {
             using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
@@ -92,7 +94,7 @@ namespace OpenTelemetry.Logs.Tests
             // state only has {OriginalFormat}
             Assert.Equal(1, state.Count);
 
-            Assert.Equal(message.ToString(), state.ToString());
+            Assert.Equal(message, state.ToString());
         }
 
         [Fact]
@@ -101,7 +103,7 @@ namespace OpenTelemetry.Logs.Tests
             using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
-            var message = "Hello from {name} {price}.";
+            const string message = "Hello from {name} {price}.";
             logger.LogInformation(message, "tomato", 2.99);
             var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
@@ -178,7 +180,7 @@ namespace OpenTelemetry.Logs.Tests
         }
 
         [Fact]
-        public void CheckStateForStrucutredLogWithGeneralType()
+        public void CheckStateForStructuredLogWithGeneralType()
         {
             using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
@@ -224,7 +226,8 @@ namespace OpenTelemetry.Logs.Tests
 
             var exceptionMessage = "Exception Message";
             var exception = new Exception(exceptionMessage);
-            var message = "Exception Occurred";
+
+            const string message = "Exception Occurred";
             logger.LogInformation(exception, message);
 
             var state = exportedItems[0].State;
@@ -237,7 +240,7 @@ namespace OpenTelemetry.Logs.Tests
             Assert.NotNull(loggedException);
             Assert.Equal(exceptionMessage, loggedException.Message);
 
-            Assert.Equal(message.ToString(), state.ToString());
+            Assert.Equal(message, state.ToString());
         }
 
         [Fact]

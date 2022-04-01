@@ -31,6 +31,7 @@ namespace OpenTelemetry.Internal.Tests
         public void Dispose()
         {
             Environment.SetEnvironmentVariable(EnvVar, null);
+            GC.SuppressFinalize(this);
         }
 
         [Fact]

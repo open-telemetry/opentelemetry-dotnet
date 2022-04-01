@@ -91,7 +91,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override bool Equals(object obj)
         {
-            if (!(obj is Status))
+            if (obj is not Status)
             {
                 return false;
             }

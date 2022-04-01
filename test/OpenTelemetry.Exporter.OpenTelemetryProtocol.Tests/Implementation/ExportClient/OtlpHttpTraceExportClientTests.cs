@@ -109,7 +109,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     httpRequest = r;
 
                     // We have to capture content as it can't be accessed after request is disposed inside of SendExportRequest method
-                    httpRequestContent = r.Content.ReadAsByteArrayAsync()?.Result;
+                    httpRequestContent = r.Content.ReadAsByteArrayAsync(ct)?.Result;
                 })
 #else
                 .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())

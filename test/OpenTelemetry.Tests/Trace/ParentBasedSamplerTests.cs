@@ -119,7 +119,7 @@ namespace OpenTelemetry.Trace.Tests
                 localParentSampled.Object,
                 localParentNotSampled.Object);
 
-            var samplingParams = this.MakeTestParameters(parentIsRemote, parentIsSampled);
+            var samplingParams = MakeTestParameters(parentIsRemote, parentIsSampled);
 
             Mock<Sampler> invokedSampler;
             if (parentIsRemote && parentIsSampled)
@@ -155,7 +155,7 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Throws<ArgumentNullException>(() => new ParentBasedSampler(null));
         }
 
-        private SamplingParameters MakeTestParameters(bool parentIsRemote, bool parentIsSampled)
+        private static SamplingParameters MakeTestParameters(bool parentIsRemote, bool parentIsSampled)
         {
             return new SamplingParameters(
                 parentContext: new ActivityContext(
