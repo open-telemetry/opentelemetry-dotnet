@@ -276,7 +276,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
             }
             catch (Exception ex)
             {
-                SqlClientInstrumentationEventSource.Log.RequestFilterException(ex);
+                SqlClientInstrumentationEventSource.Log.EventFilterException(ex);
                 return false;
             }
         }

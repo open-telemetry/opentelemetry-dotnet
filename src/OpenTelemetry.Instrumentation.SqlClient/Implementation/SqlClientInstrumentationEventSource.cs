@@ -77,16 +77,16 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         }
 
         [Event(6, Message = "Filter threw exception. Request will not be collected. Exception {0}.", Level = EventLevel.Error)]
-        public void RequestFilterException(Exception exception)
+        public void EventFilterException(Exception exception)
         {
             if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                this.RequestFilterException(exception.ToInvariantString());
+                this.EventFilterException(exception.ToInvariantString());
             }
         }
 
-        [Event(6, Message = "Filter threw exception. Activity will not be collected. Exception {0}.", Level = EventLevel.Error)]
-        public void RequestFilterException(string exception)
+        [NonEvent]
+        public void EventFilterException(string exception)
         {
             this.WriteEvent(6, exception);
         }
