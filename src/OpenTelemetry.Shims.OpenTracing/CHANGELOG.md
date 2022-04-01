@@ -53,7 +53,7 @@ Released 2020-Nov-17
 
 Released 2020-Nov-5
 
-* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropagator
   to CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator
   and changed from interface to abstract class.
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
