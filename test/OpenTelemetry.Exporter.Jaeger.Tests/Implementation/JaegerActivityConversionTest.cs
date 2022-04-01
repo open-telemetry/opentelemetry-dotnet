@@ -71,7 +71,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(activity.StartTimeUtc.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal(this.TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
+            Assert.Equal(TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
 
             var tags = jaegerSpan.Tags.ToArray();
             var tag = tags[0];
@@ -102,7 +102,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(4, jaegerLog.Fields.Count());
+            Assert.Equal(4, jaegerLog.Fields.Count);
             var eventFields = jaegerLog.Fields.ToArray();
             var eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
@@ -120,7 +120,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
 
             jaegerLog = logs[1];
-            Assert.Equal(2, jaegerLog.Fields.Count());
+            Assert.Equal(2, jaegerLog.Fields.Count);
             eventFields = jaegerLog.Fields.ToArray();
             eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
@@ -159,7 +159,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(activity.StartTimeUtc.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal(this.TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
+            Assert.Equal(TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
 
             // 2 tags: span.kind & library.name.
             Assert.Equal(2, jaegerSpan.Tags.Count);
@@ -167,7 +167,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(4, jaegerLog.Fields.Count());
+            Assert.Equal(4, jaegerLog.Fields.Count);
             var eventFields = jaegerLog.Fields.ToArray();
             var eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
@@ -179,7 +179,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
 
             jaegerLog = logs[1];
-            Assert.Equal(2, jaegerLog.Fields.Count());
+            Assert.Equal(2, jaegerLog.Fields.Count);
             eventFields = jaegerLog.Fields.ToArray();
             eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
@@ -218,7 +218,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(activity.StartTimeUtc.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal(this.TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
+            Assert.Equal(TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
 
             var tags = jaegerSpan.Tags.ToArray();
             var tag = tags[0];
@@ -269,7 +269,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(0x1, jaegerSpan.Flags);
 
             Assert.Equal(activity.StartTimeUtc.ToEpochMicroseconds(), jaegerSpan.StartTime);
-            Assert.Equal(this.TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
+            Assert.Equal(TimeSpanToMicroseconds(activity.Duration), jaegerSpan.Duration);
 
             var tags = jaegerSpan.Tags.ToArray();
             var tag = tags[0];
@@ -332,7 +332,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(4, jaegerLog.Fields.Count());
+            Assert.Equal(4, jaegerLog.Fields.Count);
             var eventFields = jaegerLog.Fields.ToArray();
             var eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
@@ -343,7 +343,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
 
             jaegerLog = logs[1];
-            Assert.Equal(2, jaegerLog.Fields.Count());
+            Assert.Equal(2, jaegerLog.Fields.Count);
             eventFields = jaegerLog.Fields.ToArray();
             eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
@@ -434,15 +434,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
         }
 
         [Theory]
-        [InlineData(StatusCode.Unset, "unset")]
-        [InlineData(StatusCode.Ok, "Ok")]
-        [InlineData(StatusCode.Error, "ERROR")]
-        [InlineData(StatusCode.Unset, "iNvAlId")]
-        public void JaegerActivityConverterTest_Status_ErrorFlagTest(StatusCode expectedStatusCode, string statusCodeTagValue)
+        [InlineData(StatusCode.Unset, "unset", "")]
+        [InlineData(StatusCode.Ok, "Ok", "")]
+        [InlineData(StatusCode.Error, "ERROR", "error description")]
+        [InlineData(StatusCode.Unset, "iNvAlId", "")]
+        public void JaegerActivityConverterTest_Status_ErrorFlagTest(StatusCode expectedStatusCode, string statusCodeTagValue, string statusDescription)
         {
             // Arrange
             var activity = CreateTestActivity();
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, statusCodeTagValue);
+            activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, statusDescription);
 
             // Act
             var jaegerSpan = activity.ToJaegerSpan();
@@ -464,12 +465,154 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
 
             if (expectedStatusCode == StatusCode.Error)
             {
-                Assert.Contains(jaegerSpan.Tags, t => t.Key == JaegerActivityExtensions.JaegerErrorFlagTagName && t.VType == JaegerTagType.BOOL && (t.VBool ?? false));
+                Assert.Contains(
+                    jaegerSpan.Tags, t =>
+                    t.Key == JaegerActivityExtensions.JaegerErrorFlagTagName &&
+                    t.VType == JaegerTagType.BOOL && (t.VBool ?? false));
+                Assert.Contains(
+                    jaegerSpan.Tags, t =>
+                    t.Key == SpanAttributeConstants.StatusDescriptionKey &&
+                    t.VType == JaegerTagType.STRING && t.VStr.Equals(statusDescription));
             }
             else
             {
                 Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == JaegerActivityExtensions.JaegerErrorFlagTagName);
             }
+        }
+
+        [Theory]
+        [InlineData(ActivityStatusCode.Unset)]
+        [InlineData(ActivityStatusCode.Ok)]
+        [InlineData(ActivityStatusCode.Error)]
+        public void ToJaegerSpan_Activity_Status_And_StatusDescription_is_Set(ActivityStatusCode expectedStatusCode)
+        {
+            // Arrange
+            var activity = CreateTestActivity();
+            activity.SetStatus(expectedStatusCode);
+
+            // Act
+            var jaegerSpan = activity.ToJaegerSpan();
+
+            // Assert
+            if (expectedStatusCode == ActivityStatusCode.Unset)
+            {
+                Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == SpanAttributeConstants.StatusCodeKey);
+            }
+            else if (expectedStatusCode == ActivityStatusCode.Ok)
+            {
+                Assert.Equal("OK", jaegerSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).VStr);
+            }
+
+            // expectedStatusCode is Error
+            else
+            {
+                Assert.Equal("ERROR", jaegerSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).VStr);
+            }
+
+            if (expectedStatusCode == ActivityStatusCode.Error)
+            {
+                Assert.Contains(
+                    jaegerSpan.Tags, t =>
+                    t.Key == JaegerActivityExtensions.JaegerErrorFlagTagName &&
+                    t.VType == JaegerTagType.BOOL && (t.VBool ?? false));
+            }
+            else
+            {
+                Assert.DoesNotContain(
+                    jaegerSpan.Tags, t =>
+                    t.Key == JaegerActivityExtensions.JaegerErrorFlagTagName);
+            }
+        }
+
+        [Fact]
+        public void ActivityStatus_Takes_precedence_Over_Status_Tags_ActivityStatusCodeIsOk()
+        {
+            // Arrange.
+            var activity = CreateTestActivity();
+            const string TagDescriptionOnError = "Description when TagStatusCode is Error.";
+            activity.SetStatus(ActivityStatusCode.Ok);
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, "ERROR");
+            activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, TagDescriptionOnError);
+
+            // Enrich activity with additional tags.
+            activity.SetTag("myCustomTag", "myCustomTagValue");
+
+            // Act.
+            var jaegerSpan = activity.ToJaegerSpan();
+
+            // Assert.
+            Assert.Equal("OK", jaegerSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).VStr);
+
+            Assert.Contains(jaegerSpan.Tags, t => t.Key == "otel.status_code" && t.VStr == "OK");
+            Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == "otel.status_code" && t.VStr == "ERROR");
+            Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == JaegerActivityExtensions.JaegerErrorFlagTagName);
+            Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == SpanAttributeConstants.StatusDescriptionKey &&
+                                    t.VType == JaegerTagType.STRING && t.VStr.Equals(TagDescriptionOnError));
+
+            // Ensure additional Activity tags were being converted.
+            Assert.Contains(jaegerSpan.Tags, t => t.Key == "myCustomTag" && t.VStr == "myCustomTagValue");
+        }
+
+        [Fact]
+        public void ActivityStatus_Takes_precedence_Over_Status_Tags_ActivityStatusCodeIsError()
+        {
+            // Arrange.
+            var activity = CreateTestActivity();
+            const string StatusDescriptionOnError = "Description when ActivityStatusCode is Error.";
+            activity.SetStatus(ActivityStatusCode.Error, StatusDescriptionOnError);
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, "OK");
+
+            // Enrich activity with additional tags.
+            activity.SetTag("myCustomTag", "myCustomTagValue");
+
+            // Act.
+            var jaegerSpan = activity.ToJaegerSpan();
+
+            // Assert.
+            Assert.Contains(jaegerSpan.Tags, t => t.Key == "otel.status_code" && t.VStr == "ERROR");
+            Assert.Contains(jaegerSpan.Tags, t => t.Key == JaegerActivityExtensions.JaegerErrorFlagTagName);
+            Assert.Contains(jaegerSpan.Tags, t => t.Key == SpanAttributeConstants.StatusDescriptionKey &&
+                        t.VType == JaegerTagType.STRING && t.VStr.Equals(StatusDescriptionOnError));
+
+            Assert.DoesNotContain(jaegerSpan.Tags, t => t.Key == "otel.status_code" && t.VStr == "OK");
+
+            // Ensure additional Activity tags were being converted.
+            Assert.Contains(jaegerSpan.Tags, t => t.Key == "myCustomTag" && t.VStr == "myCustomTagValue");
+        }
+
+        [Fact]
+        public void ActivityDescription_Takes_precedence_Over_Status_Tags_When_ActivityStatusCodeIsError()
+        {
+            // Arrange.
+            var activity = CreateTestActivity();
+
+            const string StatusDescriptionOnError = "Description when ActivityStatusCode is Error.";
+            const string TagDescriptionOnError = "Description when TagStatusCode is Error.";
+            activity.SetStatus(ActivityStatusCode.Error, StatusDescriptionOnError);
+            activity.SetTag(SpanAttributeConstants.StatusCodeKey, "ERROR");
+            activity.SetTag(SpanAttributeConstants.StatusDescriptionKey, TagDescriptionOnError);
+
+            // Enrich activity with additional tags.
+            activity.SetTag("myCustomTag", "myCustomTagValue");
+
+            // Act.
+            var jaegerSpan = activity.ToJaegerSpan();
+
+            // Assert.
+            Assert.Equal("ERROR", jaegerSpan.Tags.FirstOrDefault(t => t.Key == SpanAttributeConstants.StatusCodeKey).VStr);
+
+            Assert.Contains(
+                jaegerSpan.Tags, t =>
+                t.Key == JaegerActivityExtensions.JaegerErrorFlagTagName &&
+                t.VType == JaegerTagType.BOOL && (t.VBool ?? false));
+
+            Assert.Contains(
+                jaegerSpan.Tags, t =>
+                t.Key == SpanAttributeConstants.StatusDescriptionKey &&
+                t.VType == JaegerTagType.STRING && t.VStr.Equals(StatusDescriptionOnError));
+
+            // Ensure additional Activity tags were being converted.
+            Assert.Contains(jaegerSpan.Tags, t => t.Key == "myCustomTag" && t.VStr == "myCustomTagValue");
         }
 
         internal static Activity CreateTestActivity(
@@ -574,7 +717,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             return activity;
         }
 
-        private long TimeSpanToMicroseconds(TimeSpan timeSpan)
+        private static long TimeSpanToMicroseconds(TimeSpan timeSpan)
         {
             return timeSpan.Ticks / (TimeSpan.TicksPerMillisecond / 1000);
         }

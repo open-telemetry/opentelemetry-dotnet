@@ -1,6 +1,10 @@
 OpenTelemetry.BaseExporter<T>.ForceFlush(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Batch<T>.Batch(T[] items, int count) -> void
 OpenTelemetry.Batch<T>.Count.get -> long
+OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration
+OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.Boundaries.get -> double[]
+OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.Boundaries.set -> void
+OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.ExplicitBucketHistogramConfiguration() -> void
 OpenTelemetry.Metrics.MetricReaderOptions
 OpenTelemetry.Metrics.MetricReaderOptions.MetricReaderOptions() -> void
 OpenTelemetry.Metrics.MetricReaderOptions.PeriodicExportingMetricReaderOptions.get -> OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
@@ -45,10 +49,6 @@ OpenTelemetry.Metrics.ExportModes.Push = 1 -> OpenTelemetry.Metrics.ExportModes
 OpenTelemetry.Metrics.ExportModesAttribute
 OpenTelemetry.Metrics.ExportModesAttribute.ExportModesAttribute(OpenTelemetry.Metrics.ExportModes supported) -> void
 OpenTelemetry.Metrics.ExportModesAttribute.Supported.get -> OpenTelemetry.Metrics.ExportModes
-OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration
-OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.Boundaries.get -> double[]
-OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.Boundaries.set -> void
-OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.ExplicitBucketHistogramConfiguration() -> void
 OpenTelemetry.Metrics.IPullMetricExporter
 OpenTelemetry.Metrics.IPullMetricExporter.Collect.get -> System.Func<int, bool>
 OpenTelemetry.Metrics.IPullMetricExporter.Collect.set -> void
@@ -136,13 +136,13 @@ static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetResourceBuilder(t
 static OpenTelemetry.Metrics.MeterProviderExtensions.ForceFlush(this OpenTelemetry.Metrics.MeterProvider provider, int timeoutMilliseconds = -1) -> bool
 static OpenTelemetry.Metrics.MeterProviderExtensions.Shutdown(this OpenTelemetry.Metrics.MeterProvider provider, int timeoutMilliseconds = -1) -> bool
 static OpenTelemetry.Metrics.MeterProviderExtensions.TryFindExporter<T>(this OpenTelemetry.Metrics.MeterProvider provider, out T exporter) -> bool
+static OpenTelemetry.Metrics.MetricStreamConfiguration.Drop.get -> OpenTelemetry.Metrics.MetricStreamConfiguration
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsDouble(this OpenTelemetry.Metrics.MetricType self) -> bool
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsGauge(this OpenTelemetry.Metrics.MetricType self) -> bool
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsHistogram(this OpenTelemetry.Metrics.MetricType self) -> bool
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsLong(this OpenTelemetry.Metrics.MetricType self) -> bool
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsSum(this OpenTelemetry.Metrics.MetricType self) -> bool
 static OpenTelemetry.Sdk.CreateMeterProviderBuilder() -> OpenTelemetry.Metrics.MeterProviderBuilder
-static readonly OpenTelemetry.Metrics.MetricStreamConfiguration.Drop -> OpenTelemetry.Metrics.MetricStreamConfiguration
 virtual OpenTelemetry.BaseExporter<T>.OnForceFlush(int timeoutMilliseconds) -> bool
 virtual OpenTelemetry.Metrics.MetricReader.Dispose(bool disposing) -> void
 virtual OpenTelemetry.Metrics.MetricReader.OnCollect(int timeoutMilliseconds) -> bool

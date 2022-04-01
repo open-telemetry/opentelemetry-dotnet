@@ -72,7 +72,7 @@ namespace OpenTelemetry.Resources
             {
                 foreach (var attribute in other.Attributes)
                 {
-                    if (!newAttributes.TryGetValue(attribute.Key, out var value))
+                    if (!newAttributes.TryGetValue(attribute.Key, out _))
                     {
                         newAttributes[attribute.Key] = attribute.Value;
                     }
@@ -81,7 +81,7 @@ namespace OpenTelemetry.Resources
 
             foreach (var attribute in this.Attributes)
             {
-                if (!newAttributes.TryGetValue(attribute.Key, out var value))
+                if (!newAttributes.TryGetValue(attribute.Key, out _))
                 {
                     newAttributes[attribute.Key] = attribute.Value;
                 }

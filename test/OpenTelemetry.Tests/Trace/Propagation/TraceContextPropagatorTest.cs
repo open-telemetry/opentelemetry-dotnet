@@ -27,7 +27,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
         private const string TraceId = "0af7651916cd43dd8448eb211c80319c";
         private const string SpanId = "b9c7c989f97918e1";
 
-        private static readonly string[] Empty = new string[0];
+        private static readonly string[] Empty = Array.Empty<string>();
         private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter = (headers, name) =>
         {
             if (headers.TryGetValue(name, out var value))
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
                 return value;
             }
 
-            return new string[] { };
+            return Array.Empty<string>();
         };
 
         private static readonly Action<IDictionary<string, string>, string, string> Setter = (carrier, name, value) =>
