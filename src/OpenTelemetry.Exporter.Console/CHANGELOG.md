@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
 * Added StatusCode, StatusDescription support to
   `ConsoleActivityExporter`.
   ([#2929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2929)
