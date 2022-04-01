@@ -52,6 +52,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         public void Dispose()
         {
             this.fakeSqlClientDiagnosticSource.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         [Fact]

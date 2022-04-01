@@ -80,7 +80,7 @@ namespace OpenTelemetry.Logs
 
         public ILogger CreateLogger(string categoryName)
         {
-            if (!(this.loggers[categoryName] is OpenTelemetryLogger logger))
+            if (this.loggers[categoryName] is not OpenTelemetryLogger logger)
             {
                 lock (this.loggers)
                 {

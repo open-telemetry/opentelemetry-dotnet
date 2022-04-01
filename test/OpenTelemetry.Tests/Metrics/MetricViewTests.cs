@@ -458,7 +458,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
-        public void ViewWithHistogramConfiguraionIgnoredWhenAppliedToNonHistogram()
+        public void ViewWithHistogramConfigurationIgnoredWhenAppliedToNonHistogram()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
             var exportedItems = new List<Metric>();

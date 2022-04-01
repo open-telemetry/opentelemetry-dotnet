@@ -131,6 +131,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         public void Dispose()
         {
             this.meterProvider?.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }
