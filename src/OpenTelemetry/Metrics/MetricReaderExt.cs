@@ -42,7 +42,7 @@ namespace OpenTelemetry.Metrics
             var meterVersion = instrument.Meter.Version;
             var metricName = instrument.Name;
             var metricStreamName = $"{meterName}.{meterVersion}.{metricName}";
-            var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, instrument.Description, instrument.GetType());
+            var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, instrument.Description, instrument.GetType(), false);
             lock (this.instrumentCreationLock)
             {
                 if (this.instrumentIdentityToMetric.TryGetValue(instrumentIdentity, out var existingMetric))
@@ -105,7 +105,7 @@ namespace OpenTelemetry.Metrics
                     var metricName = metricStreamConfig?.Name ?? instrument.Name;
                     var metricStreamName = $"{meterName}.{meterVersion}.{metricName}";
                     var metricDescription = metricStreamConfig?.Description ?? instrument.Description;
-                    var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, metricDescription, instrument.GetType());
+                    var instrumentIdentity = new InstrumentIdentity(instrument.Meter, metricName, instrument.Unit, metricDescription, instrument.GetType(), metricStreamConfig != null);
 
                     if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricName))
                     {

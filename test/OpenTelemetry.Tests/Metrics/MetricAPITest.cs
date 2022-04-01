@@ -688,19 +688,21 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-            // The view only matches one instrument but renames it to the name
-            // of the other instrument, so only one stream is produced
-            Assert.Single(exportedItems);
+            Assert.Equal(2, exportedItems.Count);
             var metric1 = new List<Metric>() { exportedItems[0] };
+            var metric2 = new List<Metric>() { exportedItems[1] };
 
-            var tag1 = new List<KeyValuePair<string, object>> { tags[0] };
+            var tags1 = new List<KeyValuePair<string, object>> { tags[0] };
+            var tags2 = new List<KeyValuePair<string, object>> { tags[0], tags[1] };
 
-            Assert.Equal("name", exportedItems[0].Name);
+            Assert.Equal("othername", exportedItems[0].Name);
+            Assert.Equal("othername", exportedItems[1].Name);
 
-            // Only the first instrument records. The second instrument registration
-            // is ignored as the view definition causes a conflict with it.
             Assert.Equal(10, GetLongSum(metric1));
-            CheckTagsForNthMetricPoint(metric1, tag1, 1);
+            Assert.Equal(10, GetLongSum(metric2));
+
+            CheckTagsForNthMetricPoint(metric1, tags1, 1);
+            CheckTagsForNthMetricPoint(metric2, tags2, 1);
         }
 
         [Fact]
