@@ -477,8 +477,8 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddView("name", "newname")
-                .AddView("name", "newname")
+                .AddView((instrument) => new MetricStreamConfiguration { Name = "newname" })
+                .AddView((instrument) => new MetricStreamConfiguration { Name = "newname" })
                 .AddInMemoryExporter(exportedItems);
 
             using var meterProvider = meterProviderBuilder.Build();
