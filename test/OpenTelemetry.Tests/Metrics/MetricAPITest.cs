@@ -18,7 +18,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Linq;
 using System.Threading;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -623,6 +625,8 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(false)]
         public void CounterAggregationTest(bool exportDelta)
         {
+            DateTime testStartTime = DateTime.UtcNow;
+
             var exportedItems = new List<Metric>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
@@ -641,7 +645,20 @@ namespace OpenTelemetry.Metrics.Tests
             long sumReceived = GetLongSum(exportedItems);
             Assert.Equal(20, sumReceived);
 
+            var metricPoint = GetFirstMetricPoint(exportedItems);
+            Assert.NotNull(metricPoint);
+            Assert.True(metricPoint.Value.StartTime >= testStartTime);
+            Assert.True(metricPoint.Value.EndTime != default);
+
+            DateTimeOffset firstRunStartTime = metricPoint.Value.StartTime;
+            DateTimeOffset firstRunEndTime = metricPoint.Value.EndTime;
+
             exportedItems.Clear();
+
+#if NETFRAMEWORK
+            Thread.Sleep(5000); // Compensates for low resolution timing in netfx.
+#endif
+
             counterLong.Add(10);
             counterLong.Add(10);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
@@ -654,6 +671,21 @@ namespace OpenTelemetry.Metrics.Tests
             {
                 Assert.Equal(40, sumReceived);
             }
+
+            metricPoint = GetFirstMetricPoint(exportedItems);
+            Assert.NotNull(metricPoint);
+            Assert.True(metricPoint.Value.StartTime >= testStartTime);
+            Assert.True(metricPoint.Value.EndTime != default);
+            if (exportDelta)
+            {
+                Assert.True(metricPoint.Value.StartTime == firstRunEndTime);
+            }
+            else
+            {
+                Assert.Equal(firstRunStartTime, metricPoint.Value.StartTime);
+            }
+
+            Assert.True(metricPoint.Value.EndTime > firstRunEndTime);
 
             exportedItems.Clear();
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
@@ -1306,6 +1338,30 @@ namespace OpenTelemetry.Metrics.Tests
             counter.Add(10, new KeyValuePair<string, object>("key", "value"));
         }
 
+        [Fact]
+        public void UnsupportedMetricInstrument()
+        {
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+            using (var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log))
+            {
+                var counter = meter.CreateCounter<decimal>("counter");
+                counter.Add(1);
+
+                // This validates that we log InstrumentIgnored event
+                // and not something else.
+                Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 33));
+            }
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Empty(exportedItems);
+        }
+
         private static void ValidateMetricPointTags(List<KeyValuePair<string, object>> expectedTags, ReadOnlyTagCollection actualTags)
         {
             int tagIndex = 0;
@@ -1373,6 +1429,19 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             return count;
+        }
+
+        private static MetricPoint? GetFirstMetricPoint(List<Metric> metrics)
+        {
+            foreach (var metric in metrics)
+            {
+                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                {
+                    return metricPoint;
+                }
+            }
+
+            return null;
         }
 
         // Provide tags input sorted by Key

@@ -115,8 +115,8 @@ namespace OpenTelemetry.Metrics
         /// <remarks>
         /// <list type="bullet">
         /// <item>Note: An invalid <see cref="MetricStreamConfiguration"/>
-        /// returned from <paramref name="viewConfig"/> will cause a dropping
-        /// behavior for the instrument being configured, no error will be
+        /// returned from <paramref name="viewConfig"/> will cause the
+        /// view to be ignored, no error will be
         /// thrown at runtime.</item>
         /// <item>See View specification here : https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view.</item>
         /// </list>
