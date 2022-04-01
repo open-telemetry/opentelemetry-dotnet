@@ -458,6 +458,37 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
+        public void ViewWithHistogramConfiguraionIgnoredWhenAppliedToNonHistogram()
+        {
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView("NotAHistogram", new ExplicitBucketHistogramConfiguration() { Name = "ImAHistogram" })
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var counter = meter.CreateCounter<long>("NotAHistogram");
+            counter.Add(10);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+
+            Assert.Equal("NotAHistogram", metric.Name);
+
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            var metricPoint = metricPoints[0];
+            Assert.Equal(10, metricPoint.GetSumLong());
+        }
+
+        [Fact]
         public void ViewToProduceCustomHistogramBound()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
