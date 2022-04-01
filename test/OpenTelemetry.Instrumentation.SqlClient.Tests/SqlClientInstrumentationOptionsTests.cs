@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -101,6 +102,29 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             Assert.Equal(expectedServerIpAddress, activity.GetTagValue(SemanticConventions.AttributeNetPeerIp));
             Assert.Equal(expectedInstanceName, activity.GetTagValue(SemanticConventions.AttributeDbMsSqlInstanceName));
             Assert.Equal(expectedPort, activity.GetTagValue(SemanticConventions.AttributeNetPeerPort));
+        }
+
+        [Theory]
+        [InlineData(true, false, false, false)]
+        [InlineData(true, true, true, false)]
+        [InlineData(false, false, false, true)]
+        public void SqlClientInstrumentationOptions_EventFilter(bool hasFilter = true, bool filterValue = true, bool hasException = false, bool expected = false)
+        {
+            Func<object, bool> filter = (object payload) =>
+            {
+                if (hasException)
+                {
+                    throw new Exception("From Filter");
+                }
+
+                return filterValue;
+            };
+            object payload = new { };
+            var options = new SqlClientInstrumentationOptions
+            {
+                Filter = hasFilter ? filter : null,
+            };
+            Assert.Equal(options.EventFilter(payload), expected);
         }
     }
 }

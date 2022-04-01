@@ -56,6 +56,13 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 case SqlDataBeforeExecuteCommand:
                 case SqlMicrosoftBeforeExecuteCommand:
                     {
+                        _ = this.commandFetcher.TryFetch(payload, out var command);
+
+                        if (this.options?.EventFilter(command) == false)
+                        {
+                            return;
+                        }
+
                         // SqlClient does not create an Activity. So the activity coming in here will be null or the root span.
                         activity = SqlActivitySourceHelper.ActivitySource.StartActivity(
                             SqlActivitySourceHelper.ActivityName,
@@ -69,7 +76,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             return;
                         }
 
-                        _ = this.commandFetcher.TryFetch(payload, out var command);
                         if (command == null)
                         {
                             SqlClientInstrumentationEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener), name);
