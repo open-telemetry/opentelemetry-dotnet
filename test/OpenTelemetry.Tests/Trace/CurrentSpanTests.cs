@@ -48,6 +48,7 @@ namespace OpenTelemetry.Trace.Tests
         public void Dispose()
         {
             Activity.Current = null;
+            GC.SuppressFinalize(this);
         }
     }
 }

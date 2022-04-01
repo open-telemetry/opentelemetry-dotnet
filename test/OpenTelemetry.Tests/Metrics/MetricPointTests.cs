@@ -16,24 +16,20 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Threading;
 using OpenTelemetry.Tests;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Tests
 {
-    public class MetricPointTests : IDisposable
+    public sealed class MetricPointTests : IDisposable
     {
-        private Meter meter;
-        private MeterProvider provider;
-        private Metric metric;
+        private readonly Meter meter;
+        private readonly MeterProvider provider;
+        private readonly Metric metric;
+        private readonly Histogram<long> histogram;
+        private readonly double[] bounds;
         private MetricPoint metricPoint;
-
-        private Histogram<long> histogram;
-        private double[] bounds;
 
         public MetricPointTests()
         {
