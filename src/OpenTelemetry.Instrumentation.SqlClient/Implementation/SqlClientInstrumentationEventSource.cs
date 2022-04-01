@@ -88,7 +88,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         [Event(6, Message = "Filter threw exception. Request will not be collected. Exception {0}.", Level = EventLevel.Error)]
         public void RequestFilterException(string exception)
         {
-            this.WriteEvent(4, exception);
+            this.WriteEvent(6, exception);
         }
     }
 }
