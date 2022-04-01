@@ -16,7 +16,6 @@
 
 using System;
 using System.Buffers.Binary;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -38,50 +37,25 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
         public static HttpResponseMessage CreateResponse(
             HttpStatusCode statusCode,
             HttpContent payload,
-            global::Grpc.Core.StatusCode? grpcStatusCode = global::Grpc.Core.StatusCode.OK,
-            string? grpcEncoding = null,
-            Version? version = null,
-            string? retryPushbackHeader = null,
-            IDictionary<string, string>? customHeaders = null,
-            IDictionary<string, string>? customTrailers = null)
+            global::Grpc.Core.StatusCode? grpcStatusCode = global::Grpc.Core.StatusCode.OK)
         {
             payload.Headers.ContentType = GrpcContentTypeHeaderValue;
 
             var message = new HttpResponseMessage(statusCode)
             {
                 Content = payload,
-                Version = version ?? ProtocolVersion
+                Version = ProtocolVersion,
             };
 
             message.RequestMessage = new HttpRequestMessage();
 #if NETFRAMEWORK
             message.RequestMessage.Properties[TrailingHeadersHelpers.ResponseTrailersKey] = new ResponseTrailers();
 #endif
-            message.Headers.Add(MessageEncodingHeader, grpcEncoding ?? IdentityGrpcEncoding);
-            if (retryPushbackHeader != null)
-            {
-                message.Headers.Add("grpc-retry-pushback-ms", retryPushbackHeader);
-            }
-
-            if (customHeaders != null)
-            {
-                foreach (var customHeader in customHeaders)
-                {
-                    message.Headers.Add(customHeader.Key, customHeader.Value);
-                }
-            }
+            message.Headers.Add(MessageEncodingHeader, IdentityGrpcEncoding);
 
             if (grpcStatusCode != null)
             {
                 message.TrailingHeaders().Add(StatusTrailer, grpcStatusCode.Value.ToString("D"));
-            }
-
-            if (customTrailers != null)
-            {
-                foreach (var customTrailer in customTrailers)
-                {
-                    message.TrailingHeaders().Add(customTrailer.Key, customTrailer.Value);
-                }
             }
 
             return message;
