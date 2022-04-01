@@ -1,0 +1,25 @@
+# Syntax: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
+# See also: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/troubleshooting-required-status-checks#handling-skipped-but-required-checks
+
+# Description: This workflow exists to unblock documentation-only PRs.
+
+# IMPORTANT: This workflow MUST use the same 'name' as the non -md workflow.
+
+name: Windows
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+    - '**.md'
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        version: [net461,netcoreapp3.1,net5.0,net6.0]
+
+    steps:
+      - run: 'echo "No build required"'
