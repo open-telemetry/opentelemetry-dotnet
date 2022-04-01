@@ -27,7 +27,7 @@ namespace OpenTelemetry.Logs.Tests
     public sealed class LoggerFactoryAndResourceBuilderTests
     {
         [Fact]
-        public void VerifyResourceBuilder_DefaultCase()
+        public void TestLogExporterCanAccessResource()
         {
             VerifyResourceBuilder(
                 assert: (Resource resource) =>
