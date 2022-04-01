@@ -136,12 +136,6 @@ namespace OpenTelemetry.Metrics
                     {
                         if (metrics.Count == 0)
                         {
-                            OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
-                                metricName,
-                                meterName,
-                                "Metric instrument has the same name as an existing one but differs by description, unit, or instrument type. Measurements from this instrument will still be exported but may result in conflicts.",
-                                "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
-
                             metrics.Add(existingMetric);
                         }
                         else
