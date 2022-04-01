@@ -30,10 +30,10 @@ namespace OpenTelemetry.Metrics.Tests
     public class MetricApiTest
     {
         private const int MaxTimeToAllowForFlush = 10000;
-        private static int numberOfThreads = Environment.ProcessorCount;
-        private static long deltaLongValueUpdatedByEachCall = 10;
-        private static double deltaDoubleValueUpdatedByEachCall = 11.987;
-        private static int numberOfMetricUpdateByEachThread = 100000;
+        private static readonly int NumberOfThreads = Environment.ProcessorCount;
+        private static readonly long DeltaLongValueUpdatedByEachCall = 10;
+        private static readonly double DeltaDoubleValueUpdatedByEachCall = 11.987;
+        private static readonly int NumberOfMetricUpdateByEachThread = 100000;
         private readonly ITestOutputHelper output;
 
         public MetricApiTest(ITestOutputHelper output)
@@ -776,17 +776,23 @@ namespace OpenTelemetry.Metrics.Tests
         public void ObservableCounterWithTagsAggregationTest(bool exportDelta)
         {
             var exportedItems = new List<Metric>();
-            var tags1 = new List<KeyValuePair<string, object>>();
-            tags1.Add(new("statusCode", 200));
-            tags1.Add(new("verb", "get"));
+            var tags1 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 200),
+                new("verb", "get"),
+            };
 
-            var tags2 = new List<KeyValuePair<string, object>>();
-            tags2.Add(new("statusCode", 200));
-            tags2.Add(new("verb", "post"));
+            var tags2 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 200),
+                new("verb", "post"),
+            };
 
-            var tags3 = new List<KeyValuePair<string, object>>();
-            tags3.Add(new("statusCode", 500));
-            tags3.Add(new("verb", "get"));
+            var tags3 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 500),
+                new("verb", "get"),
+            };
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
             var counterLong = meter.CreateObservableCounter(
@@ -867,17 +873,23 @@ namespace OpenTelemetry.Metrics.Tests
         public void ObservableCounterSpatialAggregationTest(bool exportDelta)
         {
             var exportedItems = new List<Metric>();
-            var tags1 = new List<KeyValuePair<string, object>>();
-            tags1.Add(new("statusCode", 200));
-            tags1.Add(new("verb", "get"));
+            var tags1 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 200),
+                new("verb", "get"),
+            };
 
-            var tags2 = new List<KeyValuePair<string, object>>();
-            tags2.Add(new("statusCode", 200));
-            tags2.Add(new("verb", "post"));
+            var tags2 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 200),
+                new("verb", "post"),
+            };
 
-            var tags3 = new List<KeyValuePair<string, object>>();
-            tags3.Add(new("statusCode", 500));
-            tags3.Add(new("verb", "get"));
+            var tags3 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 500),
+                new("verb", "get"),
+            };
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
             var counterLong = meter.CreateObservableCounter(
@@ -1232,13 +1244,13 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void MultithreadedLongCounterTest()
         {
-            this.MultithreadedCounterTest(deltaLongValueUpdatedByEachCall);
+            this.MultithreadedCounterTest(DeltaLongValueUpdatedByEachCall);
         }
 
         [Fact]
         public void MultithreadedDoubleCounterTest()
         {
-            this.MultithreadedCounterTest(deltaDoubleValueUpdatedByEachCall);
+            this.MultithreadedCounterTest(DeltaDoubleValueUpdatedByEachCall);
         }
 
         [Fact]
@@ -1247,7 +1259,7 @@ namespace OpenTelemetry.Metrics.Tests
             var expected = new long[11];
             for (var i = 0; i < expected.Length; i++)
             {
-                expected[i] = numberOfThreads * numberOfMetricUpdateByEachThread;
+                expected[i] = NumberOfThreads * NumberOfMetricUpdateByEachThread;
             }
 
             // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000
@@ -1262,7 +1274,7 @@ namespace OpenTelemetry.Metrics.Tests
             var expected = new long[11];
             for (var i = 0; i < expected.Length; i++)
             {
-                expected[i] = numberOfThreads * numberOfMetricUpdateByEachThread;
+                expected[i] = NumberOfThreads * NumberOfMetricUpdateByEachThread;
             }
 
             // Metric.DefaultHistogramBounds: 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000
@@ -1477,7 +1489,7 @@ namespace OpenTelemetry.Metrics.Tests
             var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
             var counter = arguments.Instrument as Counter<T>;
             var valueToUpdate = arguments.ValuesToRecord[0];
-            if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == numberOfThreads)
+            if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == NumberOfThreads)
             {
                 mreToEnsureAllThreadsStart.Set();
             }
@@ -1485,7 +1497,7 @@ namespace OpenTelemetry.Metrics.Tests
             // Wait until signalled to start calling update on aggregator
             mre.WaitOne();
 
-            for (int i = 0; i < numberOfMetricUpdateByEachThread; i++)
+            for (int i = 0; i < NumberOfMetricUpdateByEachThread; i++)
             {
                 counter.Add(valueToUpdate, new KeyValuePair<string, object>("verb", "GET"));
             }
@@ -1503,7 +1515,7 @@ namespace OpenTelemetry.Metrics.Tests
             var mreToEnsureAllThreadsStart = arguments.MreToEnsureAllThreadsStart;
             var histogram = arguments.Instrument as Histogram<T>;
 
-            if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == numberOfThreads)
+            if (Interlocked.Increment(ref arguments.ThreadsStartedCount) == NumberOfThreads)
             {
                 mreToEnsureAllThreadsStart.Set();
             }
@@ -1511,7 +1523,7 @@ namespace OpenTelemetry.Metrics.Tests
             // Wait until signalled to start calling update on aggregator
             mre.WaitOne();
 
-            for (int i = 0; i < numberOfMetricUpdateByEachThread; i++)
+            for (int i = 0; i < NumberOfMetricUpdateByEachThread; i++)
             {
                 for (int j = 0; j < arguments.ValuesToRecord.Length; j++)
                 {
@@ -1539,8 +1551,8 @@ namespace OpenTelemetry.Metrics.Tests
                 MreToEnsureAllThreadsStart = new ManualResetEvent(false),
             };
 
-            Thread[] t = new Thread[numberOfThreads];
-            for (int i = 0; i < numberOfThreads; i++)
+            Thread[] t = new Thread[NumberOfThreads];
+            for (int i = 0; i < NumberOfThreads; i++)
             {
                 t[i] = new Thread(CounterUpdateThread<T>);
                 t[i].Start(argToThread);
@@ -1550,25 +1562,25 @@ namespace OpenTelemetry.Metrics.Tests
             Stopwatch sw = Stopwatch.StartNew();
             argToThread.MreToBlockUpdateThread.Set();
 
-            for (int i = 0; i < numberOfThreads; i++)
+            for (int i = 0; i < NumberOfThreads; i++)
             {
                 t[i].Join();
             }
 
-            this.output.WriteLine($"Took {sw.ElapsedMilliseconds} msecs. Total threads: {numberOfThreads}, each thread doing {numberOfMetricUpdateByEachThread} recordings.");
+            this.output.WriteLine($"Took {sw.ElapsedMilliseconds} msecs. Total threads: {NumberOfThreads}, each thread doing {NumberOfMetricUpdateByEachThread} recordings.");
 
             meterProvider.ForceFlush();
 
             if (typeof(T) == typeof(long))
             {
                 var sumReceived = GetLongSum(metricItems);
-                var expectedSum = deltaLongValueUpdatedByEachCall * numberOfMetricUpdateByEachThread * numberOfThreads;
+                var expectedSum = DeltaLongValueUpdatedByEachCall * NumberOfMetricUpdateByEachThread * NumberOfThreads;
                 Assert.Equal(expectedSum, sumReceived);
             }
             else if (typeof(T) == typeof(double))
             {
                 var sumReceived = GetDoubleSum(metricItems);
-                var expectedSum = deltaDoubleValueUpdatedByEachCall * numberOfMetricUpdateByEachThread * numberOfThreads;
+                var expectedSum = DeltaDoubleValueUpdatedByEachCall * NumberOfMetricUpdateByEachThread * NumberOfThreads;
                 Assert.Equal(expectedSum, sumReceived, 2);
             }
         }
@@ -1602,8 +1614,8 @@ namespace OpenTelemetry.Metrics.Tests
                 ValuesToRecord = values,
             };
 
-            Thread[] t = new Thread[numberOfThreads];
-            for (int i = 0; i < numberOfThreads; i++)
+            Thread[] t = new Thread[NumberOfThreads];
+            for (int i = 0; i < NumberOfThreads; i++)
             {
                 t[i] = new Thread(HistogramUpdateThread<T>);
                 t[i].Start(argsToThread);
@@ -1613,12 +1625,12 @@ namespace OpenTelemetry.Metrics.Tests
             Stopwatch sw = Stopwatch.StartNew();
             argsToThread.MreToBlockUpdateThread.Set();
 
-            for (int i = 0; i < numberOfThreads; i++)
+            for (int i = 0; i < NumberOfThreads; i++)
             {
                 t[i].Join();
             }
 
-            this.output.WriteLine($"Took {sw.ElapsedMilliseconds} msecs. Total threads: {numberOfThreads}, each thread doing {numberOfMetricUpdateByEachThread * values.Length} recordings.");
+            this.output.WriteLine($"Took {sw.ElapsedMilliseconds} msecs. Total threads: {NumberOfThreads}, each thread doing {NumberOfMetricUpdateByEachThread * values.Length} recordings.");
 
             metricReader.Collect();
 

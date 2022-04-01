@@ -81,6 +81,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         public void Dispose()
         {
             this.testServer.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         [Fact]

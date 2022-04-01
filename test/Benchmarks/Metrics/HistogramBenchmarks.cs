@@ -61,12 +61,12 @@ namespace Benchmarks.Metrics
     public class HistogramBenchmarks
     {
         private const int MaxValue = 1000;
-        private Random random = new();
+        private readonly Random random = new();
+        private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
         private Histogram<long> histogram;
         private MeterProvider provider;
         private Meter meter;
         private double[] bounds;
-        private string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
 
         [Params(10, 20, 50, 100)]
         public int BoundCount { get; set; }
