@@ -55,11 +55,11 @@ namespace Benchmarks.Metrics
     [MemoryDiagnoser]
     public class MetricsBenchmarks
     {
+        private readonly Random random = new();
+        private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
         private Counter<long> counter;
         private MeterProvider provider;
         private Meter meter;
-        private Random random = new();
-        private string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
 
         [Params(AggregationTemporality.Cumulative, AggregationTemporality.Delta)]
         public AggregationTemporality AggregationTemporality { get; set; }

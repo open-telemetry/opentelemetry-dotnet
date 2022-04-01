@@ -219,7 +219,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             ClearEndpointEnvVar();
 
             var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
-            var originalEndpoint = options.Endpoint;
             options.Endpoint = new Uri(endpoint);
 
             options.AppendExportPath("test/path");

@@ -47,8 +47,6 @@ namespace OpenTelemetry.Metrics
         private int batchSize = 0;
         private int metricCapHitMessageLogged;
         private bool zeroTagMetricPointInitialized;
-        private DateTimeOffset startTimeExclusive;
-        private DateTimeOffset endTimeInclusive;
 
         internal AggregatorStore(
             string name,
@@ -66,7 +64,7 @@ namespace OpenTelemetry.Metrics
             this.aggType = aggType;
             this.outputDelta = temporality == AggregationTemporality.Delta;
             this.histogramBounds = histogramBounds;
-            this.startTimeExclusive = DateTimeOffset.UtcNow;
+            this.StartTimeExclusive = DateTimeOffset.UtcNow;
             if (tagKeysInteresting == null)
             {
                 this.updateLongCallback = this.UpdateLong;
@@ -85,6 +83,10 @@ namespace OpenTelemetry.Metrics
         private delegate void UpdateLongDelegate(long value, ReadOnlySpan<KeyValuePair<string, object>> tags);
 
         private delegate void UpdateDoubleDelegate(double value, ReadOnlySpan<KeyValuePair<string, object>> tags);
+
+        internal DateTimeOffset StartTimeExclusive { get; private set; }
+
+        internal DateTimeOffset EndTimeInclusive { get; private set; }
 
         internal void Update(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
@@ -109,7 +111,7 @@ namespace OpenTelemetry.Metrics
                 this.SnapshotCumulative(indexSnapshot);
             }
 
-            this.endTimeInclusive = DateTimeOffset.UtcNow;
+            this.EndTimeInclusive = DateTimeOffset.UtcNow;
             return this.batchSize;
         }
 
@@ -128,9 +130,9 @@ namespace OpenTelemetry.Metrics
                 this.batchSize++;
             }
 
-            if (this.endTimeInclusive != default)
+            if (this.EndTimeInclusive != default)
             {
-                this.startTimeExclusive = this.endTimeInclusive;
+                this.StartTimeExclusive = this.EndTimeInclusive;
             }
         }
 
@@ -139,7 +141,7 @@ namespace OpenTelemetry.Metrics
             for (int i = 0; i <= indexSnapshot; i++)
             {
                 ref var metricPoint = ref this.metricPoints[i];
-                if (metricPoint.StartTime == default)
+                if (!metricPoint.IsInitialized)
                 {
                     continue;
                 }
@@ -151,9 +153,7 @@ namespace OpenTelemetry.Metrics
         }
 
         internal MetricPointsAccessor GetMetricPoints()
-        {
-            return new MetricPointsAccessor(this.metricPoints, this.currentMetricPointBatch, this.batchSize, this.startTimeExclusive, this.endTimeInclusive);
-        }
+            => new(this.metricPoints, this.currentMetricPointBatch, this.batchSize);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void InitializeZeroTagPointIfNotInitialized()
@@ -164,8 +164,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (!this.zeroTagMetricPointInitialized)
                     {
-                        var dt = DateTimeOffset.UtcNow;
-                        this.metricPoints[0] = new MetricPoint(this.aggType, dt, null, null, this.histogramBounds);
+                        this.metricPoints[0] = new MetricPoint(this, this.aggType, null, null, this.histogramBounds);
                         this.zeroTagMetricPointInitialized = true;
                     }
                 }
@@ -231,8 +230,7 @@ namespace OpenTelemetry.Metrics
                                 }
 
                                 ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                                var dt = DateTimeOffset.UtcNow;
-                                metricPoint = new MetricPoint(this.aggType, dt, sortedTags.Keys, sortedTags.Values, this.histogramBounds);
+                                metricPoint = new MetricPoint(this, this.aggType, sortedTags.Keys, sortedTags.Values, this.histogramBounds);
 
                                 // Add to dictionary *after* initializing MetricPoint
                                 // as other threads can start writing to the
@@ -282,8 +280,7 @@ namespace OpenTelemetry.Metrics
                             }
 
                             ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                            var dt = DateTimeOffset.UtcNow;
-                            metricPoint = new MetricPoint(this.aggType, dt, givenTags.Keys, givenTags.Values, this.histogramBounds);
+                            metricPoint = new MetricPoint(this, this.aggType, givenTags.Keys, givenTags.Values, this.histogramBounds);
 
                             // Add to dictionary *after* initializing MetricPoint
                             // as other threads can start writing to the

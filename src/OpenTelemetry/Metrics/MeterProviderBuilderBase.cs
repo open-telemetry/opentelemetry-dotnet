@@ -81,7 +81,12 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilder AddView(string instrumentName, string name)
         {
-            return this.AddView(instrumentName, new MetricStreamConfiguration() { Name = name });
+            return this.AddView(
+                instrumentName,
+                new MetricStreamConfiguration
+                {
+                    Name = name,
+                });
         }
 
         internal MeterProviderBuilder AddView(string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
