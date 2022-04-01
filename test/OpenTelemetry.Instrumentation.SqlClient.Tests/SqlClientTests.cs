@@ -110,7 +110,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     {
                         options.Filter = (payload) =>
                         {
-                            if (payload == null || payload.GetType().GetProperty("Command") == null)
+                            if (payload == null || payload is not SqlCommand)
                             {
                                 return true;
                             }
@@ -120,7 +120,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                                 throw new Exception("From InstrumentationFilter");
                             }
 
-                            var command = (SqlCommand)payload.GetType().GetProperty("Command").GetValue(payload, null);
+                            var command = (SqlCommand)payload;
                             if (command.CommandText == "select 2/0")
                             {
                                 return false;
@@ -213,12 +213,12 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                             {
                                 opt.Filter = (payload) =>
                                 {
-                                    if (payload == null || payload.GetType().GetProperty("Command") == null)
+                                    if (payload == null || payload is not SqlCommand)
                                     {
                                         return true;
                                     }
 
-                                    var command = (SqlCommand)payload.GetType().GetProperty("Command").GetValue(payload, null);
+                                    var command = (SqlCommand)payload;
                                     if (command.CommandText.Contains("sys.databases", StringComparison.OrdinalIgnoreCase))
                                     {
                                         return false;

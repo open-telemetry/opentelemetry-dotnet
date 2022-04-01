@@ -69,7 +69,7 @@ This defines the condition for allowable requests.
 #### .NET Core - Filter
 
 When using .NET Core Filter receives the payload object containing
-{ (Guid) OperationId, (Microsoft.Data.SqlClient.SqlCommand) Command, Timestamp}
+Command of type Microsoft.Data.SqlClient.SqlCommand.
 The following code snippet shows how to use Filter with .NET Core
 
 ```csharp
@@ -77,8 +77,17 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSqlClientInstrumentation(opt => opt.Filter
         = (payload) =>
     {
-        var command = (SqlCommand)payload.GetType().GetProperty("Command").GetValue(payload, null);
-        if (command.Connection.DataSource.Contains("master")) return false;
+        if (payload == null || payload is not SqlCommand)
+        {
+            return true;
+        }
+
+        var command = (SqlCommand)payload;
+        if (command.Connection.DataSource.Contains("master"))
+        {
+            return false;
+        }
+
         return true;
     })
     .Build();
@@ -86,8 +95,8 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 #### .NET Framework - Filter
 
-For .NET Framework Filter receives the payload object containing
-    { (string)DataSource, (string)DatabaseName, (string)CommandText}
+For .NET Framework Filter receives the payload object containing  ReadOnlyDictionary<string,object>.
+The Dictionary contains string values for DataSource, DatabaseName, CommandText.
 The following code snippet shows how to use Filter with .NET Framework
 
 ```csharp
@@ -95,8 +104,18 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSqlClientInstrumentation(opt => opt.Filter
         = (payload) =>
     {
-        var dataSource = (string)payload.GetType().GetProperty("DataSource").GetValue(payload, null);
-        if (dataSource.Contains("master")) return false;
+        if (payload == null || payload is not ReadOnlyDictionary<string, object>)
+        {
+            return true;
+        }
+
+        var dictionary = payload as ReadOnlyDictionary<string, object>;
+         _ = dictionary.TryGetValue("DataSource", out var dataSource);
+        if (dataSource.ToString().Contains("master"))
+        {
+            return false;
+        }
+
         return true;
     })
     .Build();

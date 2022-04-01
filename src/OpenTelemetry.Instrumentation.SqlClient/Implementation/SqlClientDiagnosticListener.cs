@@ -56,7 +56,9 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 case SqlDataBeforeExecuteCommand:
                 case SqlMicrosoftBeforeExecuteCommand:
                     {
-                        if (this.options?.EventFilter(payload) == false)
+                        _ = this.commandFetcher.TryFetch(payload, out var command);
+
+                        if (this.options?.EventFilter(command) == false)
                         {
                             return;
                         }
@@ -74,7 +76,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                             return;
                         }
 
-                        _ = this.commandFetcher.TryFetch(payload, out var command);
                         if (command == null)
                         {
                             SqlClientInstrumentationEventSource.Log.NullPayload(nameof(SqlClientDiagnosticListener), name);

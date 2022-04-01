@@ -15,11 +15,11 @@
 // </copyright>
 #if NETFRAMEWORK
 using System;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
-using System.Linq;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
@@ -51,8 +51,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [InlineData(CommandType.StoredProcedure, "sp_who", true, false, true, 1)]
         [InlineData(CommandType.Text, "select 1/1", false, false, true)]
         [InlineData(CommandType.Text, "select 1/0", false, true, true)]
-        public async Task SuccessfulCommandTest(CommandType commandType, string commandText, bool captureText, bool isFailure = false, bool shouldFilter = false,
-            int expectedActivityProcessorInvocationCount = 3)
+        public async Task SuccessfulCommandTest(CommandType commandType, string commandText, bool captureText, bool isFailure = false, bool shouldFilter = false, int expectedActivityProcessorInvocationCount = 3)
         {
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var shutdownSignal = Sdk.CreateTracerProviderBuilder()
@@ -64,13 +63,17 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     {
                         options.Filter = (payload) =>
                         {
-                            if (payload == null || payload.GetType().GetProperty("CommandText") == null)
+                            if (payload == null || payload is not ReadOnlyDictionary<string, object>)
                             {
                                 return true;
                             }
 
-                            var commandText = (string)payload.GetType().GetProperty("CommandText").GetValue(payload, null);
-                            if (commandText.Contains("sp_who")) return false;
+                            var dictionaryPayload = payload as ReadOnlyDictionary<string, object>;
+                            _ = dictionaryPayload.TryGetValue("CommandText", out var commandText);
+                            if (commandText.ToString().Contains("sp_who"))
+                            {
+                                return false;
+                            }
 
                             return true;
                         };
@@ -102,9 +105,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             Assert.Equal(expectedActivityProcessorInvocationCount, activityProcessor.Invocations.Count);
             if (activityProcessor.Invocations.Count > 1)
             {
-
                 var activity = (Activity)activityProcessor.Invocations[1].Arguments[0];
-
                 VerifyActivityData(commandText, captureText, isFailure, dataSource, activity);
             }
         }
@@ -145,13 +146,17 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     {
                         options.Filter = (payload) =>
                         {
-                            if (payload == null || payload.GetType().GetProperty("CommandText") == null)
+                            if (payload == null || payload is not ReadOnlyDictionary<string, object>)
                             {
                                 return true;
                             }
 
-                            var commandText = (string)payload.GetType().GetProperty("CommandText").GetValue(payload, null);
-                            if (commandText.Contains("sp_who")) return false;
+                            var dictionary = payload as ReadOnlyDictionary<string, object>;
+                            _ = dictionary.TryGetValue("CommandText", out var commandText);
+                            if (commandText.ToString().Contains("sp_who"))
+                            {
+                                return false;
+                            }
 
                             return true;
                         };
