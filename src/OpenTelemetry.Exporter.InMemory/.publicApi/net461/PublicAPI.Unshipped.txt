@@ -1,3 +1,14 @@
+OpenTelemetry.Exporter.InMemoryMetricExporter
+OpenTelemetry.Exporter.InMemoryMetricExporter.InMemoryMetricExporter(System.Collections.Generic.ICollection<OpenTelemetry.Metrics.ExportedMetric> exportedItems) -> void
+OpenTelemetry.Metrics.ExportedMetric
+OpenTelemetry.Metrics.ExportedMetric.Description.get -> string
+OpenTelemetry.Metrics.ExportedMetric.MeterName.get -> string
+OpenTelemetry.Metrics.ExportedMetric.MeterVersion.get -> string
+OpenTelemetry.Metrics.ExportedMetric.MetricPoints.get -> System.Collections.Generic.IReadOnlyList<OpenTelemetry.Metrics.MetricPoint>
+OpenTelemetry.Metrics.ExportedMetric.MetricType.get -> OpenTelemetry.Metrics.MetricType
+OpenTelemetry.Metrics.ExportedMetric.Name.get -> string
+OpenTelemetry.Metrics.ExportedMetric.Unit.get -> string
 OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions
+override OpenTelemetry.Exporter.InMemoryMetricExporter.Export(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric> batch) -> OpenTelemetry.ExportResult
 static OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions.AddInMemoryExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Collections.Generic.ICollection<OpenTelemetry.Metrics.Metric> exportedItems) -> OpenTelemetry.Metrics.MeterProviderBuilder
 static OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions.AddInMemoryExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Collections.Generic.ICollection<OpenTelemetry.Metrics.Metric> exportedItems, System.Action<OpenTelemetry.Metrics.MetricReaderOptions> configureMetricReader) -> OpenTelemetry.Metrics.MeterProviderBuilder
