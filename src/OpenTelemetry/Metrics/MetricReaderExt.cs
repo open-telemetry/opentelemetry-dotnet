@@ -134,15 +134,23 @@ namespace OpenTelemetry.Metrics
 
                     if (this.instrumentIdentityToMetric.TryGetValue(instrumentIdentity, out var existingMetric))
                     {
-                        OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
-                            metricName,
-                            meterName,
-                            "Metric instrument has the same name as an existing one but differs by description, unit, or instrument type. Measurements from this instrument will still be exported but may result in conflicts.",
-                            "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
-
                         if (metrics.Count == 0)
                         {
+                            OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
+                                metricName,
+                                meterName,
+                                "Metric instrument has the same name as an existing one but differs by description, unit, or instrument type. Measurements from this instrument will still be exported but may result in conflicts.",
+                                "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
+
                             metrics.Add(existingMetric);
+                        }
+                        else
+                        {
+                            OpenTelemetrySdkEventSource.Log.MetricViewIgnored(
+                                metricName,
+                                meterName,
+                                "A view applied to this instrument would result in a conflicting metric stream. The view will be ignored.",
+                                "Use MeterProviderBuilder.AddView to resolve the conflict.");
                         }
 
                         continue;
