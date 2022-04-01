@@ -132,6 +132,12 @@ namespace OpenTelemetry.Metrics
                         continue;
                     }
 
+                    if (metricStreamConfig == MetricStreamConfiguration.Drop)
+                    {
+                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "View configuration asks to drop this instrument.", "Modify view configuration to allow this instrument, if desired.");
+                        continue;
+                    }
+
                     if (this.instrumentIdentityToMetric.TryGetValue(instrumentIdentity, out var existingMetric))
                     {
                         if (metrics.Count == 0)
@@ -147,13 +153,6 @@ namespace OpenTelemetry.Metrics
                                 "Use MeterProviderBuilder.AddView to resolve the conflict.");
                         }
 
-                        continue;
-                    }
-
-                    // TODO: I think this check needs to be moved up...
-                    if (metricStreamConfig == MetricStreamConfiguration.Drop)
-                    {
-                        OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricName, instrument.Meter.Name, "View configuration asks to drop this instrument.", "Modify view configuration to allow this instrument, if desired.");
                         continue;
                     }
 

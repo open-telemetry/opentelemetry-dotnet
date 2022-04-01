@@ -708,6 +708,44 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
+        public void DuplicateInstrumentRegistration_WithViews_TwoInstruments_WouldResultInConflictButSecondInstrumentIsDropped()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView((instrument) =>
+                {
+                    if (instrument.Name == "name")
+                    {
+                        return new MetricStreamConfiguration { Name = "othername" };
+                    }
+                    else
+                    {
+                        return MetricStreamConfiguration.Drop;
+                    }
+                })
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var instrument1 = meter.CreateCounter<long>("name");
+            var instrument2 = meter.CreateCounter<long>("othername");
+
+            instrument1.Add(10);
+            instrument2.Add(20);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.Single(exportedItems);
+            var metric1 = new List<Metric>() { exportedItems[0] };
+
+            Assert.Equal("othername", exportedItems[0].Name);
+            Assert.Equal(10, GetLongSum(metric1));
+        }
+
+        [Fact]
         public void DuplicateInstrumentNamesFromDifferentMetersWithSameNameDifferentVersion()
         {
             var exportedItems = new List<Metric>();
