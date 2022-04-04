@@ -133,7 +133,9 @@ namespace OpenTelemetry.Context.Propagation
             // from https://www.jaegertracing.io/docs/next-release/client-libraries/#propagation-format
             // parent id is optional and deprecated. will not attempt to store it.
             // 128 bit uber-trace-id=e0ad975be108cd107990683f59cda9e6:e422f3fe664f6342:0:1
+            // 128 bit with encoded delimiter uber-trace-id=e0ad975be108cd107990683f59cda9e6%3Ae422f3fe664f6342%3A0%3A1
             //  64 bit uber-trace-id=7990683f59cda9e6:e422f3fe664f6342:0:1
+            //  64 bit with encoded delimiter uber-trace-id=7990683f59cda9e6%3Ae422f3fe664f6342%3A0%3A1
 
             traceId = default;
             spanId = default;
