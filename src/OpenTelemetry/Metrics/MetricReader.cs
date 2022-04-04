@@ -107,7 +107,7 @@ namespace OpenTelemetry.Metrics
 
             if (!shouldRunCollect)
             {
-                return Task.WaitAny(tcs.Task, this.shutdownTcs.Task, Task.Delay(timeoutMilliseconds)) == 0 ? tcs.Task.Result : false;
+                return Task.WaitAny(tcs.Task, this.shutdownTcs.Task, Task.Delay(timeoutMilliseconds)) == 0 && tcs.Task.Result;
             }
 
             var result = false;

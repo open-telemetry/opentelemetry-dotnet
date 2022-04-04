@@ -44,6 +44,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
         public void Dispose()
         {
             Propagators.Reset();
+            GC.SuppressFinalize(this);
         }
     }
 }

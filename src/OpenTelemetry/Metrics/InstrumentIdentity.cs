@@ -61,7 +61,7 @@ namespace OpenTelemetry.Metrics
 
         public static bool operator !=(InstrumentIdentity metricIdentity1, InstrumentIdentity metricIdentity2) => !metricIdentity1.Equals(metricIdentity2);
 
-        public readonly override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
             return obj is InstrumentIdentity other && this.Equals(other);
         }
@@ -76,6 +76,6 @@ namespace OpenTelemetry.Metrics
                 && this.Description == other.Description;
         }
 
-        public readonly override int GetHashCode() => this.hashCode;
+        public override readonly int GetHashCode() => this.hashCode;
     }
 }

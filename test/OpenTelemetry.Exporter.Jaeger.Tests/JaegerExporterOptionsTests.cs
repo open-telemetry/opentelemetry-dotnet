@@ -29,6 +29,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         public void Dispose()
         {
             ClearEnvVars();
+            GC.SuppressFinalize(this);
         }
 
         [Fact]

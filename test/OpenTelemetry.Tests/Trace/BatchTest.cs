@@ -87,13 +87,13 @@ namespace OpenTelemetry.Trace.Tests
             var value = "a";
             var batch = new Batch<string>(value);
             var enumerator = batch.GetEnumerator();
-            this.ValidateEnumerator(enumerator, value);
+            ValidateEnumerator(enumerator, value);
 
             var circularBuffer = new CircularBuffer<string>(1);
             circularBuffer.Add(value);
             batch = new Batch<string>(circularBuffer, 1);
             enumerator = batch.GetEnumerator();
-            this.ValidateEnumerator(enumerator, value);
+            ValidateEnumerator(enumerator, value);
         }
 
         [Fact]
@@ -157,10 +157,10 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.Equal(1, batch.Count);
 
-            this.ValidateEnumerator(batch.GetEnumerator(), "b");
+            ValidateEnumerator(batch.GetEnumerator(), "b");
         }
 
-        private void ValidateEnumerator(Batch<string>.Enumerator enumerator, string expected)
+        private static void ValidateEnumerator(Batch<string>.Enumerator enumerator, string expected)
         {
             if (enumerator.Current != null)
             {

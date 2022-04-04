@@ -186,7 +186,7 @@ namespace OpenTelemetry.Trace.Tests
 
             // OpenTelemetry ActivityContext does not support non W3C Ids.
             Assert.Null(fromInvalidW3CIdParent.ParentId);
-            Assert.Equal(default(ActivitySpanId), fromInvalidW3CIdParent.ParentSpanId);
+            Assert.Equal(default, fromInvalidW3CIdParent.ParentSpanId);
         }
 
         [Theory]
@@ -199,8 +199,10 @@ namespace OpenTelemetry.Trace.Tests
             {
                 SamplingAction = (samplingParams) =>
                 {
-                    var attributes = new Dictionary<string, object>();
-                    attributes.Add("tagkeybysampler", "tagvalueaddedbysampler");
+                    var attributes = new Dictionary<string, object>
+                    {
+                        { "tagkeybysampler", "tagvalueaddedbysampler" },
+                    };
                     return new SamplingResult(sampling, attributes);
                 },
             };
@@ -996,7 +998,6 @@ namespace OpenTelemetry.Trace.Tests
         {
             var tracerProvider = Sdk.CreateTracerProviderBuilder().Build();
             var resource = tracerProvider.GetResource();
-            var attributes = resource.Attributes;
 
             Assert.NotNull(resource);
             Assert.NotEqual(Resource.Empty, resource);

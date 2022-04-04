@@ -74,9 +74,18 @@ namespace OpenTelemetry.Metrics
                     this.reader = new CompositeMetricReader(new[] { this.reader, reader });
                 }
 
-                if (reader is BaseExportingMetricReader baseExportingMetricReader)
+                if (reader is PeriodicExportingMetricReader periodicExportingMetricReader)
                 {
-                    exportersAdded.Append(((BaseExportingMetricReader)reader).Exporter);
+                    exportersAdded.Append(periodicExportingMetricReader.Exporter);
+                    exportersAdded.Append(" (Paired with PeriodicExportingMetricReader exporting at ");
+                    exportersAdded.Append(periodicExportingMetricReader.ExportIntervalMilliseconds);
+                    exportersAdded.Append(" milliseconds intervals.)");
+                    exportersAdded.Append(';');
+                }
+                else if (reader is BaseExportingMetricReader baseExportingMetricReader)
+                {
+                    exportersAdded.Append(baseExportingMetricReader.Exporter);
+                    exportersAdded.Append(" (Paired with a MetricReader requiring manual trigger to export.)");
                     exportersAdded.Append(';');
                 }
             }
@@ -148,7 +157,29 @@ namespace OpenTelemetry.Metrics
                         var metricStreamConfigs = new List<MetricStreamConfiguration>(viewConfigCount);
                         foreach (var viewConfig in this.viewConfigs)
                         {
-                            var metricStreamConfig = viewConfig(instrument);
+                            MetricStreamConfiguration metricStreamConfig = null;
+
+                            try
+                            {
+                                metricStreamConfig = viewConfig(instrument);
+
+                                if (metricStreamConfig is ExplicitBucketHistogramConfiguration
+                                    && instrument.GetType().GetGenericTypeDefinition() != typeof(Histogram<>))
+                                {
+                                    metricStreamConfig = null;
+
+                                    OpenTelemetrySdkEventSource.Log.MetricViewIgnored(
+                                        instrument.Name,
+                                        instrument.Meter.Name,
+                                        "The current SDK does not allow aggregating non-Histogram instruments as Histograms.",
+                                        "Fix the view configuration.");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                OpenTelemetrySdkEventSource.Log.MetricViewIgnored(instrument.Name, instrument.Meter.Name, ex.Message, "Fix the view configuration.");
+                            }
+
                             if (metricStreamConfig != null)
                             {
                                 metricStreamConfigs.Add(metricStreamConfig);
@@ -185,7 +216,7 @@ namespace OpenTelemetry.Metrics
                             }
                         }
 
-                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Succeeded publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Completed publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
                     }
                     catch (Exception)
                     {
@@ -250,7 +281,7 @@ namespace OpenTelemetry.Metrics
                             }
                         }
 
-                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Succeeded publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Completed publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
                     }
                     catch (Exception)
                     {

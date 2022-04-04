@@ -31,7 +31,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Services.Tests
 
         public override Task<HelloReply> SayHello(HelloRequest request, ServerCallContext context)
         {
-            this.logger.LogInformation($"Sending hello to {request.Name}");
+            this.logger.LogInformation("Sending hello to {Name}", request.Name);
             return Task.FromResult(new HelloReply { Message = "Hello " + request.Name });
         }
 
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Services.Tests
             while (!context.CancellationToken.IsCancellationRequested)
             {
                 var message = $"How are you {request.Name}? {++i}";
-                this.logger.LogInformation($"Sending greeting {message}.");
+                this.logger.LogInformation("Sending greeting {Message}.", message);
 
                 await responseStream.WriteAsync(new HelloReply { Message = message });
 

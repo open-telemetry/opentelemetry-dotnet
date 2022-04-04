@@ -4,6 +4,10 @@
 
 * Added JaegerPropagator ([Issue 1881](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1881))
 
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
 ## 1.2.0-rc3
 
 Released 2022-Mar-04
