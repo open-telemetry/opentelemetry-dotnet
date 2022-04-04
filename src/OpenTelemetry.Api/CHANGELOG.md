@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Added JaegerPropagator
+* Added JaegerPropagator ([Issue 1881](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1881))
 
 ## 1.2.0-rc3
 

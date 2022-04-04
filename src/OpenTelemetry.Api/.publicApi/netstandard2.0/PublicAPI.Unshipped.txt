@@ -5,6 +5,8 @@ OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Value.set -> void
 OpenTelemetry.Context.IRuntimeContextSlotValueAccessor
 OpenTelemetry.Context.IRuntimeContextSlotValueAccessor.Value.get -> object
 OpenTelemetry.Context.IRuntimeContextSlotValueAccessor.Value.set -> void
+OpenTelemetry.Context.Propagation.JaegerPropagator
+OpenTelemetry.Context.Propagation.JaegerPropagator.JaegerPropagator() -> void
 OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Value.get -> object
 OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Value.set -> void
 OpenTelemetry.Metrics.IDeferredMeterProviderBuilder
@@ -13,6 +15,9 @@ OpenTelemetry.Metrics.MeterProvider
 OpenTelemetry.Metrics.MeterProvider.MeterProvider() -> void
 OpenTelemetry.Metrics.MeterProviderBuilder
 OpenTelemetry.Metrics.MeterProviderBuilder.MeterProviderBuilder() -> void
+override OpenTelemetry.Context.Propagation.JaegerPropagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> OpenTelemetry.Context.Propagation.PropagationContext
+override OpenTelemetry.Context.Propagation.JaegerPropagator.Fields.get -> System.Collections.Generic.ISet<string>
+override OpenTelemetry.Context.Propagation.JaegerPropagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
 static OpenTelemetry.Context.RuntimeContext.GetValue(string slotName) -> object
 static OpenTelemetry.Context.RuntimeContext.GetValue<T>(string slotName) -> T
 static OpenTelemetry.Context.RuntimeContext.SetValue(string slotName, object value) -> void
