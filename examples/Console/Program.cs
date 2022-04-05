@@ -42,6 +42,7 @@ namespace Examples.Console
         ///
         /// The above must be run from the project root folder
         /// (eg: C:\repos\opentelemetry-dotnet\examples\Console\).
+        /// </summary>
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {

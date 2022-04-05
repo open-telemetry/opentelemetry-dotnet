@@ -81,6 +81,8 @@ namespace Examples.Console
                         }
 
                         opt.Protocol = otlpExportProtocol.Value;
+
+                        System.Console.WriteLine($"OTLP Exporter is using {opt.Protocol} protocol and endpoint {opt.Endpoint}");
                     })
                     .Build();
 
