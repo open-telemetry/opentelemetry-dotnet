@@ -162,6 +162,18 @@ namespace OpenTelemetry.Metrics
                             try
                             {
                                 metricStreamConfig = viewConfig(instrument);
+
+                                if (metricStreamConfig is ExplicitBucketHistogramConfiguration
+                                    && instrument.GetType().GetGenericTypeDefinition() != typeof(Histogram<>))
+                                {
+                                    metricStreamConfig = null;
+
+                                    OpenTelemetrySdkEventSource.Log.MetricViewIgnored(
+                                        instrument.Name,
+                                        instrument.Meter.Name,
+                                        "The current SDK does not allow aggregating non-Histogram instruments as Histograms.",
+                                        "Fix the view configuration.");
+                                }
                             }
                             catch (Exception ex)
                             {

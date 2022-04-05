@@ -51,6 +51,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
         {
             this.tracerProvider.Dispose();
             this.connection.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         [Fact]

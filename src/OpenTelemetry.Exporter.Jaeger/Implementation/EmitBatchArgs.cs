@@ -26,9 +26,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     {
         public EmitBatchArgs(TProtocol protocol)
         {
-            this.EmitBatchArgsBeginMessage = this.GenerateBeginMessage(protocol, out int seqIdPosition);
+            this.EmitBatchArgsBeginMessage = GenerateBeginMessage(protocol, out int seqIdPosition);
             this.SeqIdPosition = seqIdPosition;
-            this.EmitBatchArgsEndMessage = this.GenerateEndMessage(protocol);
+            this.EmitBatchArgsEndMessage = GenerateEndMessage(protocol);
         }
 
         public byte[] EmitBatchArgsBeginMessage { get; }
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         public int MinimumMessageSize => this.EmitBatchArgsBeginMessage.Length
             + this.EmitBatchArgsEndMessage.Length;
 
-        private byte[] GenerateBeginMessage(TProtocol oprot, out int seqIdPosition)
+        private static byte[] GenerateBeginMessage(TProtocol oprot, out int seqIdPosition)
         {
             oprot.WriteMessageBegin(new TMessage("emitBatch", TMessageType.Oneway, 0), out seqIdPosition);
 
@@ -61,7 +61,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return beginMessage;
         }
 
-        private byte[] GenerateEndMessage(TProtocol oprot)
+        private static byte[] GenerateEndMessage(TProtocol oprot)
         {
             oprot.WriteFieldEnd();
             oprot.WriteFieldStop();

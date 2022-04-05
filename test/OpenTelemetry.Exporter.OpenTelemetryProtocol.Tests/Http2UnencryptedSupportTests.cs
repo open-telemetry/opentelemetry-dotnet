@@ -24,15 +24,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
         public Http2UnencryptedSupportTests()
         {
-            this.initialFlagStatus = this.DetermineInitialFlagStatus();
+            this.initialFlagStatus = DetermineInitialFlagStatus();
         }
 
         public void Dispose()
         {
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", this.initialFlagStatus);
+            GC.SuppressFinalize(this);
         }
 
-        private bool DetermineInitialFlagStatus()
+        private static bool DetermineInitialFlagStatus()
         {
             if (AppContext.TryGetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", out var flag))
             {
