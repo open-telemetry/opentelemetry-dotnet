@@ -61,11 +61,15 @@ instance, which is then used to do the logging. The log is sent to the
 `OpenTelemetryLoggerProvider`, which is configured to export logs to
 `ConsoleExporter`. `ConsoleExporter` simply displays it on the console.
 
-If you are using ASP.NET Core applications, then adding logging providers
-(including `OpenTelemetryLoggerProvider`), and obtaining `ILogger` instances are
-done differently. Check the [Logging in ASP.NET
+Adding logging providers, obtaining `ILogger` instance, etc. might be done
+differently based on the type of the application. Check the respective
+documentations to learn about the idiomatic way of doing logs for each
+application type.
+
+* [Logging in ASP.NET
 Core](https://docs.microsoft.com/aspnet/core/fundamentals/logging#logging-providers)
-docs to learn more.
+([Example](../../../examples/AspNetCore/Program.cs))
+
 
 ## Learn more
 
