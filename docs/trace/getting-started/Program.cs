@@ -32,10 +32,12 @@ public class Program
             .AddConsoleExporter()
             .Build();
 
-        using var activity = MyActivitySource.StartActivity("SayHello");
-        activity?.SetTag("foo", 1);
-        activity?.SetTag("bar", "Hello, World!");
-        activity?.SetTag("baz", new int[] { 1, 2, 3 });
-        activity?.SetStatus(ActivityStatusCode.Ok);
+        using (var activity = MyActivitySource.StartActivity("SayHello"))
+        {
+            activity?.SetTag("foo", 1);
+            activity?.SetTag("bar", "Hello, World!");
+            activity?.SetTag("baz", new int[] { 1, 2, 3 });
+            activity?.SetStatus(ActivityStatusCode.Ok);
+        }
     }
 }
