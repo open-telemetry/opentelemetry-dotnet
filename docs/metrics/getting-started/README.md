@@ -47,15 +47,40 @@ What does the above program do?
 
 The program creates a
 [Meter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meter)
-instance named "MyCompany.MyProduct.MyLibrary" and then creates a
+instance named "MyCompany.MyProduct.MyLibrary".
+
+```csharp
+private static readonly Meter MyMeter = new("MyCompany.MyProduct.MyLibrary", "1.0");
+```
+
+Then it creates a
 [Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#counter)
-instrument from it. This counter is used to report several metric measurements.
+instrument from it.
+
+```csharp
+private static readonly Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
+```
+
+This counter is used to report several metric measurements.
+
+```csharp
+MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
+MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
+MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow"));
+```
 
 An OpenTelemetry
 [MeterProvider](#meterprovider)
 is configured to subscribe to instruments from the Meter
 `MyCompany.MyProduct.MyLibrary`, and aggregate the measurements in-memory. The
 pre-aggregated metrics are exported to a `ConsoleExporter`.
+
+```csharp
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter("MyCompany.MyProduct.MyLibrary")
+    .AddConsoleExporter()
+    .Build();
+```
 
 ```mermaid
 graph LR
