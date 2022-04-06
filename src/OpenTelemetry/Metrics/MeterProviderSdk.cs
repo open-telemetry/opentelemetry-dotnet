@@ -155,13 +155,15 @@ namespace OpenTelemetry.Metrics
                         // There may be excess space wasted, but it'll eligible for
                         // GC right after this method.
                         var metricStreamConfigs = new List<MetricStreamConfiguration>(viewConfigCount);
-                        foreach (var viewConfig in this.viewConfigs)
+                        for (var i = 0; i < viewConfigCount; ++i)
                         {
+                            var viewConfig = this.viewConfigs[i];
                             MetricStreamConfiguration metricStreamConfig = null;
 
                             try
                             {
                                 metricStreamConfig = viewConfig(instrument);
+                                metricStreamConfig.ViewId = i;
 
                                 if (metricStreamConfig is ExplicitBucketHistogramConfiguration
                                     && instrument.GetType().GetGenericTypeDefinition() != typeof(Histogram<>))

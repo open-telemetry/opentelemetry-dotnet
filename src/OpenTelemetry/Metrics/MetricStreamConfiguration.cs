@@ -107,6 +107,8 @@ namespace OpenTelemetry.Metrics
 
         internal string[] CopiedTagKeys { get; private set; }
 
+        internal int ViewId { get; set; }
+
         // TODO: MetricPoints caps can be configured here on
         // a per stream basis, when we add such a capability
         // in the future.
