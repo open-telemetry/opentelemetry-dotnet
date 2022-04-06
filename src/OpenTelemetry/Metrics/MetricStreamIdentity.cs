@@ -24,15 +24,17 @@ namespace OpenTelemetry.Metrics
         private static readonly StringArrayEqualityComparer StringArrayComparer = new StringArrayEqualityComparer();
         private readonly int hashCode;
 
-        public MetricStreamIdentity(Meter meter, string instrumentName, string unit, string description, Type instrumentType, string[] tagKeys, double[] histogramBucketBounds)
+        public MetricStreamIdentity(Instrument instrument, MetricStreamConfiguration metricStreamConfiguration)
         {
-            this.MeterName = meter.Name;
-            this.MeterVersion = meter.Version ?? string.Empty;
-            this.InstrumentName = instrumentName;
-            this.Unit = unit ?? string.Empty;
-            this.Description = description ?? string.Empty;
-            this.InstrumentType = instrumentType;
+            this.MeterName = instrument.Meter.Name;
+            this.MeterVersion = instrument.Meter.Version ?? string.Empty;
+            this.InstrumentName = metricStreamConfiguration?.Name ?? instrument.Name;
+            this.Unit = instrument.Unit ?? string.Empty;
+            this.Description = metricStreamConfiguration?.Description ?? instrument.Description ?? string.Empty;
+            this.InstrumentType = instrument.GetType();
+            this.MetricStreamName = $"{this.MeterName}.{this.MeterVersion}.{this.InstrumentName}";
 
+            var tagKeys = metricStreamConfiguration?.CopiedTagKeys;
             if (tagKeys != null && tagKeys.Length > 0)
             {
                 this.TagKeys = new string[tagKeys.Length];
@@ -43,6 +45,7 @@ namespace OpenTelemetry.Metrics
                 this.TagKeys = null;
             }
 
+            var histogramBucketBounds = (metricStreamConfiguration as ExplicitBucketHistogramConfiguration)?.CopiedBoundaries;
             if (histogramBucketBounds != null && histogramBucketBounds.Length > 0)
             {
                 this.HistogramBucketBounds = new double[histogramBucketBounds.Length];
@@ -87,6 +90,8 @@ namespace OpenTelemetry.Metrics
         public string Description { get; }
 
         public Type InstrumentType { get; }
+
+        public string MetricStreamName { get; }
 
         public string[] TagKeys { get; }
 
