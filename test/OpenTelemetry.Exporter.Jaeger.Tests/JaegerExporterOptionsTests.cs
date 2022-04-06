@@ -48,14 +48,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         [Fact]
         public void JaegerExporterOptions_EnvironmentVariableOverride()
         {
-            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentHostEnvVarKey, "jeager-host");
+            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentHostEnvVarKey, "jaeger-host");
             Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentPortEnvVarKey, "123");
             Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelProtocolEnvVarKey, "http/thrift.binary");
             Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelEndpointEnvVarKey, "http://custom-endpoint:12345");
 
             var options = new JaegerExporterOptions();
 
-            Assert.Equal("jeager-host", options.AgentHost);
+            Assert.Equal("jaeger-host", options.AgentHost);
             Assert.Equal(123, options.AgentPort);
             Assert.Equal(JaegerExportProtocol.HttpBinaryThrift, options.Protocol);
             Assert.Equal(new Uri("http://custom-endpoint:12345"), options.Endpoint);

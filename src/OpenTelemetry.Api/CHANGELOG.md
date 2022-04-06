@@ -170,7 +170,7 @@ Released 2020-Nov-5
   ([#1413](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1413))
 * Moving grpc status and helper to grpc project
   ([#1422](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1422))
-* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor to
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropagator to
   CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator and
   changed from interface to abstract class.
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))

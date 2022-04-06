@@ -30,10 +30,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             foreach (KeyValuePair<string, object> attribute in resource.Attributes)
             {
-                var oltpAttribute = attribute.ToOtlpAttribute();
-                if (oltpAttribute != null)
+                var otlpAttribute = attribute.ToOtlpAttribute();
+                if (otlpAttribute != null)
                 {
-                    processResource.Attributes.Add(oltpAttribute);
+                    processResource.Attributes.Add(otlpAttribute);
                 }
             }
 

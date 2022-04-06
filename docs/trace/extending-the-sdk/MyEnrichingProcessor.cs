@@ -22,7 +22,7 @@ internal class MyEnrichingProcessor : BaseProcessor<Activity>
     public override void OnEnd(Activity activity)
     {
         // Enrich activity with additional tags.
-        activity.SetTag("mycustomTag", "myCustomTagValue");
+        activity.SetTag("myCustomTag", "myCustomTagValue");
 
         // Enriching from Baggage.
         // The below snippet adds every Baggage item.

@@ -111,7 +111,7 @@ property should be used to control whether this instrumentation should set the
 attribute to the text of the `SqlCommand` being executed. This could either be
 a name of a stored procedure or a full text of a `CommandType.Text` query.
 
-On .NET Framwork, unlike .NET Core, the instrumentation capabilities for both
+On .NET Framework, unlike .NET Core, the instrumentation capabilities for both
 [`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/)
 and `System.Data.SqlClient` are limited:
 
