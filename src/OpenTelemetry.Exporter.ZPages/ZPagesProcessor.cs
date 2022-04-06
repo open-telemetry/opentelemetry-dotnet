@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter.ZPages
         /// <summary>
         /// Initializes a new instance of the <see cref="ZPagesProcessor"/> class.
         /// </summary>
-        /// <param name="exporter">Zpage Span processor instance.</param>
+        /// <param name="exporter">Zpages Span processor instance.</param>
         public ZPagesProcessor(ZPagesExporter exporter)
         {
             this.exporter = exporter;

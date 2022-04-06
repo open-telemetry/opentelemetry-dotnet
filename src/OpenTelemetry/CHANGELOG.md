@@ -22,7 +22,7 @@ Released 2022-Mar-30
   ([#3038](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3038))
 
 * Removed `MetricReaderType`. This enumeration was previously used when
-  configuing a metric reader with an exporter to configure whether the export
+  configuring a metric reader with an exporter to configure whether the export
   cycle would be periodic or manual (i.e., requiring a explicit call to flush
   metrics). This change affects the push-based metric exporters: OTLP, Console,
   and InMemory. For these exporters, a manual export cycle can now be achieved
@@ -165,7 +165,7 @@ Released 2021-Oct-08
 * Exception from Observable instrument callbacks does not result in entire
   metrics being lost.
 
-* SDK is allocation-free on recording of measurements with upto 8 tags.
+* SDK is allocation-free on recording of measurements with up to 8 tags.
 
 * TracerProviderBuilder.AddLegacySource now supports wildcard activity names.
   ([#2183](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2183))
@@ -196,7 +196,7 @@ Released 2021-Sep-13
 
 * Add `BatchExportActivityProcessorOptions` which supports field value
   overriding using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
-  `OTEL_BSP_MAX_QUEUE_SIZE`, `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` envionmental
+  `OTEL_BSP_MAX_QUEUE_SIZE`, `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` environmental
   variables as defined in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/sdk-environment-variables.md#batch-span-processor).
   ([#2219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2219))
@@ -364,7 +364,7 @@ Released 2021-Jan-29
   for Activity.Recorded in SimpleActivityExportProcessor and
   BatchActivityExportProcessor
   ([#1622](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1622))
-* Added check in `ActivitySourceAdapter` class for root activity if traceid is
+* Added check in `ActivitySourceAdapter` class for root activity if trace ID is
   overridden by calling `SetParentId`
   ([#1355](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1355))
 * Resource Attributes now accept int, short, and float as values, converting
@@ -378,7 +378,7 @@ Released 2021-Jan-29
 * `BatchExportProcessor` will now flush any remaining spans left in a `Batch`
   after the export operation has completed.
   ([#1726](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1726))
-* Fixed a bug to allow the Self Diagnostics log file to be opened simutaneously
+* Fixed a bug to allow the Self Diagnostics log file to be opened simultaneously
   by another process in read-only mode for .NET Framework.
   ([#1693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1693))
 * Metrics removed as it is not part 1.0.0 release. See issue
