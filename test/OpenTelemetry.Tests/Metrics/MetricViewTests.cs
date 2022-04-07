@@ -24,7 +24,7 @@ using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests
 {
-    public class MetricViewTests
+    public class MetricViewTests : MetricTestsBase
     {
         private const int MaxTimeToAllowForFlush = 10000;
 
