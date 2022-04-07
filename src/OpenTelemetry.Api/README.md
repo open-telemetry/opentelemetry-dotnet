@@ -404,7 +404,7 @@ activity?.SetStatus(ActivityStatusCode.Error, "Error Description");
 
 All the official
 [Exporters](../../docs/trace/extending-the-sdk/README.md#exporter) shipped from
-this repo supports the above shown mechanism of setting status.
+this repo support the above shown mechanism of setting status.
 
 #### Setting Status - DiagnosticSource version older than 6.0
 
