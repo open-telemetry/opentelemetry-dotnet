@@ -807,7 +807,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
-        public void ViewConflict_TwoInstruments_ThreeStreams()
+        public void ViewConflict_TwoDistinctInstruments_ThreeStreams()
         {
             var exportedItems = new List<Metric>();
 
@@ -864,7 +864,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
-        public void DuplicateInstrumentRegistration_WithViews_TwoIdenticalInstruments_TwoViews_DifferentTags()
+        public void ViewConflict_TwoIdenticalInstruments_TwoViews_DifferentTags()
         {
             var exportedItems = new List<Metric>();
 
@@ -912,7 +912,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
-        public void DuplicateInstrumentRegistration_WithViews_TwoIdenticalInstruments_TwoViews_SameTags()
+        public void ViewConflict_TwoIdenticalInstruments_TwoViews_SameTags()
         {
             var exportedItems = new List<Metric>();
 
@@ -961,7 +961,7 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
-        public void DuplicateInstrumentRegistration_WithViews_TwoIdenticalInstruments_TwoViews_DifferentHistogramBounds()
+        public void ViewConflict_TwoIdenticalInstruments_TwoViews_DifferentHistogramBounds()
         {
             var exportedItems = new List<Metric>();
 
