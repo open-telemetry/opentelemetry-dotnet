@@ -394,7 +394,7 @@ OpenTelemetry defines a concept called
 [Status](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status)
 to be associated with `Activity`. Starting with [DiagnosticSource
 6.0](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/6.0.0),
-`SetStatus` API on `Activity` may be used to set status and status description
+`SetStatus` API on `Activity` can be used to set the status and description
 as shown below:
 
 ```csharp
