@@ -163,7 +163,14 @@ namespace OpenTelemetry.Metrics
                             try
                             {
                                 metricStreamConfig = viewConfig(instrument);
-                                metricStreamConfig.ViewId = i;
+
+                                // The SDK provides some static MetricStreamConfigurations.
+                                // For example, the Drop configuration. The static ViewId
+                                // should not be changed for these configurations.
+                                if (!metricStreamConfig.ViewId.HasValue)
+                                {
+                                    metricStreamConfig.ViewId = i;
+                                }
 
                                 if (metricStreamConfig is ExplicitBucketHistogramConfiguration
                                     && instrument.GetType().GetGenericTypeDefinition() != typeof(Histogram<>))
