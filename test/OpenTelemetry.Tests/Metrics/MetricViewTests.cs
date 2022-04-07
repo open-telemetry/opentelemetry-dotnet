@@ -1037,5 +1037,97 @@ namespace OpenTelemetry.Metrics.Tests
                 actualCount++;
             }
         }
+
+        [Fact]
+        public void ViewConflict_TwoInstruments_OneMatchesView()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView((instrument) =>
+                {
+                    if (instrument.Name == "name")
+                    {
+                        return new MetricStreamConfiguration { Name = "othername", TagKeys = new[] { "key1" } };
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                })
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var instrument1 = meter.CreateCounter<long>("name");
+            var instrument2 = meter.CreateCounter<long>("othername");
+
+            var tags = new KeyValuePair<string, object>[]
+            {
+                new("key1", "value"),
+                new("key2", "value"),
+            };
+
+            instrument1.Add(10, tags);
+            instrument2.Add(10, tags);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.Equal(2, exportedItems.Count);
+            var metric1 = new List<Metric>() { exportedItems[0] };
+            var metric2 = new List<Metric>() { exportedItems[1] };
+
+            var tags1 = new List<KeyValuePair<string, object>> { tags[0] };
+            var tags2 = new List<KeyValuePair<string, object>> { tags[0], tags[1] };
+
+            Assert.Equal("othername", exportedItems[0].Name);
+            Assert.Equal("othername", exportedItems[1].Name);
+
+            Assert.Equal(10, GetLongSum(metric1));
+            Assert.Equal(10, GetLongSum(metric2));
+
+            CheckTagsForNthMetricPoint(metric1, tags1, 1);
+            CheckTagsForNthMetricPoint(metric2, tags2, 1);
+        }
+
+        [Fact]
+        public void ViewConflict_TwoInstruments_ConflictAvoidedBecauseSecondInstrumentIsDropped()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView((instrument) =>
+                {
+                    if (instrument.Name == "name")
+                    {
+                        return new MetricStreamConfiguration { Name = "othername" };
+                    }
+                    else
+                    {
+                        return MetricStreamConfiguration.Drop;
+                    }
+                })
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var instrument1 = meter.CreateCounter<long>("name");
+            var instrument2 = meter.CreateCounter<long>("othername");
+
+            instrument1.Add(10);
+            instrument2.Add(20);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.Single(exportedItems);
+            var metric1 = new List<Metric>() { exportedItems[0] };
+
+            Assert.Equal("othername", exportedItems[0].Name);
+            Assert.Equal(10, GetLongSum(metric1));
+        }
     }
 }
