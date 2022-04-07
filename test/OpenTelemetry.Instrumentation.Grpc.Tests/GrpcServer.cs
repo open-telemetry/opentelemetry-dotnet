@@ -62,6 +62,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         {
             this.host.StopAsync(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
             this.host.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         private IHost CreateServer()

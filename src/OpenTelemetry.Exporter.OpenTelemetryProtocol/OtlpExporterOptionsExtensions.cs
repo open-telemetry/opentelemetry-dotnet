@@ -19,7 +19,6 @@ using System.Net.Http;
 using System.Reflection;
 using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
-using OpenTelemetry.Internal;
 #if NETSTANDARD2_1 || NET5_0_OR_GREATER
 using Grpc.Net.Client;
 #endif
@@ -152,25 +151,6 @@ namespace OpenTelemetry.Exporter
 
                     return options.DefaultHttpClientFactory();
                 };
-            }
-        }
-
-        internal static void AppendExportPath(this OtlpExporterOptions options, string exportRelativePath)
-        {
-            // The exportRelativePath is only appended when the options.Endpoint property wasn't set by the user,
-            // the protocol is HttpProtobuf and the OTEL_EXPORTER_OTLP_ENDPOINT environment variable
-            // is present. If the user provides a custom value for options.Endpoint that value is taken as is.
-            if (!options.ProgrammaticallyModifiedEndpoint)
-            {
-                if (options.Protocol == OtlpExportProtocol.HttpProtobuf)
-                {
-                    if (EnvironmentVariableHelper.LoadUri(OtlpExporterOptions.EndpointEnvVarName, out Uri endpoint))
-                    {
-                        // At this point we can conclude that endpoint was initialized from OTEL_EXPORTER_OTLP_ENDPOINT
-                        // and has to be appended by export relative path (traces/metrics).
-                        options.Endpoint = endpoint.AppendPathIfNotPresent(exportRelativePath);
-                    }
-                }
             }
         }
 

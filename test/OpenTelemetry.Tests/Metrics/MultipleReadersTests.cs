@@ -98,22 +98,22 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             // Check value exported for Counter
-            this.AssertLongSumValueForMetric(exportedItems1[0], 10);
-            this.AssertLongSumValueForMetric(exportedItems2[0], 10);
+            AssertLongSumValueForMetric(exportedItems1[0], 10);
+            AssertLongSumValueForMetric(exportedItems2[0], 10);
 
             // Check value exported for Gauge
-            this.AssertLongSumValueForMetric(exportedItems1[1], 100);
-            this.AssertLongSumValueForMetric(exportedItems2[1], 200);
+            AssertLongSumValueForMetric(exportedItems1[1], 100);
+            AssertLongSumValueForMetric(exportedItems2[1], 200);
 
             // Check value exported for ObservableCounter
-            this.AssertLongSumValueForMetric(exportedItems1[2], 1000);
+            AssertLongSumValueForMetric(exportedItems1[2], 1000);
             if (aggregationTemporality == AggregationTemporality.Delta)
             {
-                this.AssertLongSumValueForMetric(exportedItems2[2], 1200);
+                AssertLongSumValueForMetric(exportedItems2[2], 1200);
             }
             else
             {
-                this.AssertLongSumValueForMetric(exportedItems2[2], 1200);
+                AssertLongSumValueForMetric(exportedItems2[2], 1200);
             }
 
             exportedItems1.Clear();
@@ -127,29 +127,29 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(3, exportedItems2.Count);
 
             // Check value exported for Counter
-            this.AssertLongSumValueForMetric(exportedItems1[0], 15);
+            AssertLongSumValueForMetric(exportedItems1[0], 15);
             if (aggregationTemporality == AggregationTemporality.Delta)
             {
-                this.AssertLongSumValueForMetric(exportedItems2[0], 15);
+                AssertLongSumValueForMetric(exportedItems2[0], 15);
             }
             else
             {
-                this.AssertLongSumValueForMetric(exportedItems2[0], 25);
+                AssertLongSumValueForMetric(exportedItems2[0], 25);
             }
 
             // Check value exported for Gauge
-            this.AssertLongSumValueForMetric(exportedItems1[1], 300);
-            this.AssertLongSumValueForMetric(exportedItems2[1], 400);
+            AssertLongSumValueForMetric(exportedItems1[1], 300);
+            AssertLongSumValueForMetric(exportedItems2[1], 400);
 
             // Check value exported for ObservableCounter
-            this.AssertLongSumValueForMetric(exportedItems1[2], 300);
+            AssertLongSumValueForMetric(exportedItems1[2], 300);
             if (aggregationTemporality == AggregationTemporality.Delta)
             {
-                this.AssertLongSumValueForMetric(exportedItems2[2], 200);
+                AssertLongSumValueForMetric(exportedItems2[2], 200);
             }
             else
             {
-                this.AssertLongSumValueForMetric(exportedItems2[2], 1400);
+                AssertLongSumValueForMetric(exportedItems2[2], 1400);
             }
         }
 
@@ -198,7 +198,7 @@ namespace OpenTelemetry.Metrics.Tests
             }
         }
 
-        private void AssertLongSumValueForMetric(Metric metric, long value)
+        private static void AssertLongSumValueForMetric(Metric metric, long value)
         {
             var metricPoints = metric.GetMetricPoints();
             var metricPointsEnumerator = metricPoints.GetEnumerator();

@@ -211,6 +211,6 @@ This project includes a [`.editorconfig`](./.editorconfig) file which is
 supported by all the IDEs/editor mentioned above. It works with the IDE/editor
 only and does not affect the actual build of the project.
 
-This repository also includes stylecop ruleset files under the `./build` folder.
+This repository also includes StyleCop ruleset files under the `./build` folder.
 These files are used to configure the _StyleCop.Analyzers_ which runs during
 build. Breaking the rules will result in a build failure.

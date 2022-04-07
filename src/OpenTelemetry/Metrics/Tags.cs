@@ -34,7 +34,7 @@ namespace OpenTelemetry.Metrics
 
         public static bool operator !=(Tags tag1, Tags tag2) => !tag1.Equals(tag2);
 
-        public readonly override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
             return obj is Tags other && this.Equals(other);
         }
@@ -78,7 +78,7 @@ namespace OpenTelemetry.Metrics
             return true;
         }
 
-        public readonly override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             int hash = 17;
 

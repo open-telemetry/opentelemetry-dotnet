@@ -2,10 +2,18 @@
 
 ## Unreleased
 
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
 * Added support for Activity Status and StatusDescription which were
-  added to Activity from version 6.0. To maintain backward
-  compatibility, the exporter falls back to checking status inside
-  the tag "otel.status_code".
+  added to Activity from `System.Diagnostics.DiagnosticSource` version 6.0.
+  Prior to version 6.0, setting the status of an Activity was provided by the
+  .NET OpenTelemetry API via the `Activity.SetStatus` extension method in the
+  `OpenTelemetry.Trace` namespace. Internally, this extension method added the
+  status as tags on the Activity: `otel.status_code` and `otel.status_description`.
+  Therefore, to maintain backward compatibility, the exporter falls back to using
+  these tags to infer status.
  ([#3073](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3073))
 
 ## 1.2.0-rc3
@@ -64,7 +72,7 @@ Released 2021-Sep-13
   `BatchExportActivityProcessorOptions` which supports field value overriding
   using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
   `OTEL_BSP_MAX_QUEUE_SIZE`, `OTEL_BSP_MAX_EXPORT_BATCH_SIZE`
-  envionmental variables as defined in the
+  environmental variables as defined in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/sdk-environment-variables.md#batch-span-processor).
   ([#2219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2219))
 
@@ -81,7 +89,7 @@ Released 2021-Jul-23
 
 * The `JaegerExporterOptions` defaults can be overridden using
   `OTEL_EXPORTER_JAEGER_AGENT_HOST` and `OTEL_EXPORTER_JAEGER_AGENT_PORT`
-  envionmental variables as defined in the
+  environmental variables as defined in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#jaeger-exporter).
   ([#2123](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2123))
 

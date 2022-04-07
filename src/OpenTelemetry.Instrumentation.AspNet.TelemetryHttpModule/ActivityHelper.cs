@@ -82,7 +82,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
 
             if (activity != null)
             {
-                if (!(textMapPropagator is TraceContextPropagator))
+                if (textMapPropagator is not TraceContextPropagator)
                 {
                     Baggage.Current = propagationContext.Baggage;
 
@@ -152,7 +152,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
 
             AspNetTelemetryEventSource.Log.ActivityStopped(currentActivity);
 
-            if (!(textMapPropagator is TraceContextPropagator))
+            if (textMapPropagator is not TraceContextPropagator)
             {
                 Baggage.Current = default;
             }
