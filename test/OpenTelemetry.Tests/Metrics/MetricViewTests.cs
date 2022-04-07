@@ -445,16 +445,16 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
-            // Expecting two metric stream.
-            // the .AddView("name1", "renamedStream2")
-            // won't produce new Metric as the name
-            // conflicts.
+            // Expecting three metric stream.
+            // the second .AddView("name1", "renamedStream2")
+            // produces a conflicting metric stream.
             var counterLong = meter.CreateCounter<long>("name1");
             counterLong.Add(10);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-            Assert.Equal(2, exportedItems.Count);
+            Assert.Equal(3, exportedItems.Count);
             Assert.Equal("renamedStream1", exportedItems[0].Name);
             Assert.Equal("renamedStream2", exportedItems[1].Name);
+            Assert.Equal("renamedStream2", exportedItems[2].Name);
         }
 
         [Fact]
