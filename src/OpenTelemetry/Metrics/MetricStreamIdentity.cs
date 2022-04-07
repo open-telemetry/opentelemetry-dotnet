@@ -36,7 +36,7 @@ namespace OpenTelemetry.Metrics
             this.MetricStreamName = $"{this.MeterName}.{this.MeterVersion}.{this.InstrumentName}";
 
             var tagKeys = metricStreamConfiguration?.CopiedTagKeys;
-            if (tagKeys != null && tagKeys.Length > 0)
+            if (tagKeys != null)
             {
                 this.TagKeys = new string[tagKeys.Length];
                 tagKeys.CopyTo(this.TagKeys, 0);
