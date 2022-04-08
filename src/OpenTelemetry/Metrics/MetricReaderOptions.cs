@@ -17,15 +17,32 @@
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
+/// Defines the behavior of a <see cref="MetricReader" />
+/// with respect to <see cref="AggregationTemporality" />.
+/// </summary>
+public enum MetricReaderTemporalityPreference
+{
+    /// <summary>
+    /// All aggregations are performed using cumulative temporatlity.
+    /// </summary>
+    Cumulative,
+
+    /// <summary>
+    /// All measurements that are monotnic in nature are aggregated using delta temporality.
+    /// Aggregations of non-monotonic measurements use cumulative temporality.
+    /// </summary>
+    MonotonicDelta,
+}
+
+/// <summary>
 /// Options for configuring either a <see cref="BaseExportingMetricReader"/> or <see cref="PeriodicExportingMetricReader"/> .
 /// </summary>
 public class MetricReaderOptions
 {
     /// <summary>
-    /// Gets or sets the AggregationTemporality used for Histogram
-    /// and Sum metrics.
+    /// Gets or sets the <see cref="MetricReaderTemporalityPreference" />.
     /// </summary>
-    public AggregationTemporality Temporality { get; set; } = AggregationTemporality.Cumulative;
+    public MetricReaderTemporalityPreference TemporalityPreference { get; set; } = MetricReaderTemporalityPreference.Cumulative;
 
     /// <summary>
     /// Gets the <see cref="PeriodicExportingMetricReaderOptions" /> options.

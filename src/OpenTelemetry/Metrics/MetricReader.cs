@@ -36,6 +36,8 @@ namespace OpenTelemetry.Metrics
         private TaskCompletionSource<bool> collectionTcs;
         private BaseProvider parentProvider;
 
+        public MetricReaderTemporalityPreference TemporalityPreference { get; set; }
+
         public AggregationTemporality Temporality
         {
             get
