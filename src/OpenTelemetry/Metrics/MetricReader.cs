@@ -28,7 +28,6 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public abstract partial class MetricReader : IDisposable
     {
-        private const AggregationTemporality AggregationTemporalityUnspecified = (AggregationTemporality)0;
         private const MetricReaderTemporalityPreference MetricReaderTemporalityPreferenceUnspecified = (MetricReaderTemporalityPreference)0;
 
         private static Func<Type, AggregationTemporality> cumulativeTemporatlityPreferenceFunc =
@@ -61,7 +60,6 @@ namespace OpenTelemetry.Metrics
         private readonly object newTaskLock = new();
         private readonly object onCollectLock = new();
         private readonly TaskCompletionSource<bool> shutdownTcs = new();
-        private AggregationTemporality temporality = AggregationTemporalityUnspecified;
         private MetricReaderTemporalityPreference temporalityPreference = MetricReaderTemporalityPreferenceUnspecified;
         private Func<Type, AggregationTemporality> temporatlityFunc = cumulativeTemporatlityPreferenceFunc;
         private int shutdownCount;
@@ -98,29 +96,6 @@ namespace OpenTelemetry.Metrics
                         this.temporatlityFunc = cumulativeTemporatlityPreferenceFunc;
                         break;
                 }
-            }
-        }
-
-        public AggregationTemporality Temporality
-        {
-            get
-            {
-                if (this.temporality == AggregationTemporalityUnspecified)
-                {
-                    this.temporality = AggregationTemporality.Cumulative;
-                }
-
-                return this.temporality;
-            }
-
-            set
-            {
-                if (this.temporality != AggregationTemporalityUnspecified)
-                {
-                    throw new NotSupportedException($"The temporality cannot be modified (the current value is {this.temporality}).");
-                }
-
-                this.temporality = value;
             }
         }
 
