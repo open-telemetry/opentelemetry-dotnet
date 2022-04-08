@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Internal;
@@ -28,15 +29,62 @@ namespace OpenTelemetry.Metrics
     public abstract partial class MetricReader : IDisposable
     {
         private const AggregationTemporality AggregationTemporalityUnspecified = (AggregationTemporality)0;
+
+        private static Func<Type, AggregationTemporality> cumulativeTemporatlityPreferenceFunc =
+            (instrumentType) => AggregationTemporality.Cumulative;
+
+        private static Func<Type, AggregationTemporality> monotonicDeltaTemporatlityPreferenceFunc = (instrumentType) =>
+        {
+            return instrumentType.GetGenericTypeDefinition() switch
+            {
+                var type when type == typeof(Counter<>) => AggregationTemporality.Delta,
+                var type when type == typeof(ObservableCounter<>) => AggregationTemporality.Delta,
+                var type when type == typeof(Histogram<>) => AggregationTemporality.Delta,
+
+                // Temporatlity is not defined for gauges, so this does not really affect anything.
+                var type when type == typeof(ObservableGauge<>) => AggregationTemporality.Delta,
+
+                // With .NET 7 the OpenTelemetry .NET SDK will support UpDownCounters.
+                // These will be aggregated using Cumulative temporatlity.
+                // See:
+                //    https://docs.microsoft.com/dotnet/api/system.diagnostics.metrics.updowncounter-1
+                //    https://docs.microsoft.com/dotnet/api/system.diagnostics.metrics.observableupdowncounter-1
+                // var type when type == typeof(UpDownCounter<>) => AggregationTemporality.Cumulative,
+                // var type when type == typeof(ObservableUpDownCounter<>) => AggregationTemporality.Cumulative,
+
+                // TODO: Consider logging here because we should not fall through to this case.
+                _ => AggregationTemporality.Delta,
+            };
+        };
+
         private readonly object newTaskLock = new();
         private readonly object onCollectLock = new();
         private readonly TaskCompletionSource<bool> shutdownTcs = new();
         private AggregationTemporality temporality = AggregationTemporalityUnspecified;
+        private MetricReaderTemporalityPreference temporalityPreference = MetricReaderTemporalityPreference.Cumulative;
+        private Func<Type, AggregationTemporality> temporatlityFunc = cumulativeTemporatlityPreferenceFunc;
         private int shutdownCount;
         private TaskCompletionSource<bool> collectionTcs;
         private BaseProvider parentProvider;
 
-        public MetricReaderTemporalityPreference TemporalityPreference { get; set; }
+        public MetricReaderTemporalityPreference TemporalityPreference
+        {
+            get => this.temporalityPreference;
+            set
+            {
+                this.temporalityPreference = value;
+                switch (value)
+                {
+                    case MetricReaderTemporalityPreference.MonotonicDelta:
+                        this.temporatlityFunc = monotonicDeltaTemporatlityPreferenceFunc;
+                        break;
+                    case MetricReaderTemporalityPreference.Cumulative:
+                    default:
+                        this.temporatlityFunc = cumulativeTemporatlityPreferenceFunc;
+                        break;
+                }
+            }
+        }
 
         public AggregationTemporality Temporality
         {
