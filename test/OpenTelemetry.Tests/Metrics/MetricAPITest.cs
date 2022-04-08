@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Threading;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using Xunit;
@@ -1758,16 +1759,9 @@ namespace OpenTelemetry.Metrics.Tests
             where T : struct, IComparable
         {
             var bucketCounts = new long[11];
-            var metricReader = new BaseExportingMetricReader(new TestExporter<Metric>(batch =>
-            {
-                foreach (var metric in batch)
-                {
-                    foreach (var metricPoint in metric.GetMetricPoints())
-                    {
-                        bucketCounts = metricPoint.GetHistogramBuckets().RunningBucketCounts;
-                    }
-                }
-            }));
+
+            var metrics = new List<Metric>();
+            var metricReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(metrics));
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{typeof(T).Name}");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -1802,6 +1796,14 @@ namespace OpenTelemetry.Metrics.Tests
             this.output.WriteLine($"Took {sw.ElapsedMilliseconds} msecs. Total threads: {NumberOfThreads}, each thread doing {NumberOfMetricUpdateByEachThread * values.Length} recordings.");
 
             metricReader.Collect();
+
+            foreach (var metric in metrics)
+            {
+                foreach (var metricPoint in metric.GetMetricPoints())
+                {
+                    bucketCounts = metricPoint.GetHistogramBuckets().RunningBucketCounts;
+                }
+            }
 
             Assert.Equal(expected, bucketCounts);
         }
