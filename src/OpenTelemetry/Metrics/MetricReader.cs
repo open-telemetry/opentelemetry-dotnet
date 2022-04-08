@@ -29,6 +29,7 @@ namespace OpenTelemetry.Metrics
     public abstract partial class MetricReader : IDisposable
     {
         private const AggregationTemporality AggregationTemporalityUnspecified = (AggregationTemporality)0;
+        private const MetricReaderTemporalityPreference MetricReaderTemporalityPreferenceUnspecified = (MetricReaderTemporalityPreference)0;
 
         private static Func<Type, AggregationTemporality> cumulativeTemporatlityPreferenceFunc =
             (instrumentType) => AggregationTemporality.Cumulative;
@@ -61,7 +62,7 @@ namespace OpenTelemetry.Metrics
         private readonly object onCollectLock = new();
         private readonly TaskCompletionSource<bool> shutdownTcs = new();
         private AggregationTemporality temporality = AggregationTemporalityUnspecified;
-        private MetricReaderTemporalityPreference temporalityPreference = MetricReaderTemporalityPreference.Cumulative;
+        private MetricReaderTemporalityPreference temporalityPreference = MetricReaderTemporalityPreferenceUnspecified;
         private Func<Type, AggregationTemporality> temporatlityFunc = cumulativeTemporatlityPreferenceFunc;
         private int shutdownCount;
         private TaskCompletionSource<bool> collectionTcs;
@@ -69,9 +70,23 @@ namespace OpenTelemetry.Metrics
 
         public MetricReaderTemporalityPreference TemporalityPreference
         {
-            get => this.temporalityPreference;
+            get
+            {
+                if (this.temporalityPreference == MetricReaderTemporalityPreferenceUnspecified)
+                {
+                    this.temporalityPreference = MetricReaderTemporalityPreference.Cumulative;
+                }
+
+                return this.temporalityPreference;
+            }
+
             set
             {
+                if (this.temporalityPreference != MetricReaderTemporalityPreferenceUnspecified)
+                {
+                    throw new NotSupportedException($"The temporality preference cannot be modified (the current value is {this.temporalityPreference}).");
+                }
+
                 this.temporalityPreference = value;
                 switch (value)
                 {

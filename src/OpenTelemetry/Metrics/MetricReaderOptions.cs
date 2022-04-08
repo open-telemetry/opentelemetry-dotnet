@@ -25,13 +25,13 @@ public enum MetricReaderTemporalityPreference
     /// <summary>
     /// All aggregations are performed using cumulative temporatlity.
     /// </summary>
-    Cumulative,
+    Cumulative = 1,
 
     /// <summary>
     /// All measurements that are monotnic in nature are aggregated using delta temporality.
     /// Aggregations of non-monotonic measurements use cumulative temporality.
     /// </summary>
-    MonotonicDelta,
+    MonotonicDelta = 2,
 }
 
 /// <summary>
