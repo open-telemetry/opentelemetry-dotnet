@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Threading;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using Xunit;
@@ -466,6 +467,175 @@ namespace OpenTelemetry.Metrics.Tests
 
                 Assert.Single(metricPoints);
                 return metricPoints[0].GetSumLong();
+            }
+        }
+
+        [Fact]
+        public void DuplicateInstrumentRegistration_WithViews_TwoIdenticalInstruments_TwoViews_DifferentTags()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView((instrument) =>
+                {
+                    return new MetricStreamConfiguration { TagKeys = new[] { "key1" } };
+                })
+                .AddView((instrument) =>
+                {
+                    return new MetricStreamConfiguration { TagKeys = new[] { "key2" } };
+                })
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var instrument1 = meter.CreateCounter<long>("name");
+            var instrument2 = meter.CreateCounter<long>("name");
+
+            var tags = new KeyValuePair<string, object>[]
+            {
+                new("key1", "value"),
+                new("key2", "value"),
+            };
+
+            instrument1.Add(10, tags);
+            instrument2.Add(10, tags);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.Equal(2, exportedItems.Count);
+            var metric1 = new List<Metric>() { exportedItems[0] };
+            var metric2 = new List<Metric>() { exportedItems[1] };
+            var tag1 = new List<KeyValuePair<string, object>> { tags[0] };
+            var tag2 = new List<KeyValuePair<string, object>> { tags[1] };
+
+            Assert.Equal("name", exportedItems[0].Name);
+            Assert.Equal("name", exportedItems[1].Name);
+            Assert.Equal(20, GetLongSum(metric1));
+            Assert.Equal(20, GetLongSum(metric2));
+            CheckTagsForNthMetricPoint(metric1, tag1, 1);
+            CheckTagsForNthMetricPoint(metric2, tag2, 1);
+        }
+
+        [Fact]
+        public void DuplicateInstrumentRegistration_WithViews_TwoIdenticalInstruments_TwoViews_SameTags()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView((instrument) =>
+                {
+                    return new MetricStreamConfiguration { TagKeys = new[] { "key1" } };
+                })
+                .AddView((instrument) =>
+                {
+                    return new MetricStreamConfiguration { TagKeys = new[] { "key1" } };
+                })
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var instrument1 = meter.CreateCounter<long>("name");
+            var instrument2 = meter.CreateCounter<long>("name");
+
+            var tags = new KeyValuePair<string, object>[]
+            {
+                new("key1", "value"),
+                new("key2", "value"),
+            };
+
+            instrument1.Add(10, tags);
+            instrument2.Add(10, tags);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.Single(exportedItems);
+            var metric1 = new List<Metric>() { exportedItems[0] };
+            var tag1 = new List<KeyValuePair<string, object>> { tags[0] };
+
+            Assert.Equal("name", exportedItems[0].Name);
+            Assert.Equal(20, GetLongSum(metric1));
+            CheckTagsForNthMetricPoint(metric1, tag1, 1);
+        }
+
+        [Fact]
+        public void DuplicateInstrumentRegistration_WithViews_TwoIdenticalInstruments_TwoViews_DifferentHistogramBounds()
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddView((instrument) =>
+                {
+                    return new ExplicitBucketHistogramConfiguration { Boundaries = new[] { 5.0, 10.0 } };
+                })
+                .AddView((instrument) =>
+                {
+                    return new ExplicitBucketHistogramConfiguration { Boundaries = new[] { 10.0, 20.0 } };
+                })
+                .AddInMemoryExporter(exportedItems);
+
+            using var meterProvider = meterProviderBuilder.Build();
+
+            var instrument1 = meter.CreateHistogram<long>("name");
+            var instrument2 = meter.CreateHistogram<long>("name");
+
+            instrument1.Record(15);
+            instrument2.Record(15);
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+            Assert.Equal(2, exportedItems.Count);
+            var metric1 = exportedItems[0];
+            var metric2 = exportedItems[1];
+
+            Assert.Equal("name", exportedItems[0].Name);
+            Assert.Equal("name", exportedItems[1].Name);
+
+            var metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric1.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            var metricPoint = metricPoints[0];
+            Assert.Equal(2, metricPoint.GetHistogramCount());
+            Assert.Equal(30, metricPoint.GetHistogramSum());
+
+            var index = 0;
+            var actualCount = 0;
+            var expectedBucketCounts = new long[] { 0, 0, 2 };
+            foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
+            {
+                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+                index++;
+                actualCount++;
+            }
+
+            metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric2.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            metricPoint = metricPoints[0];
+            Assert.Equal(2, metricPoint.GetHistogramCount());
+            Assert.Equal(30, metricPoint.GetHistogramSum());
+
+            index = 0;
+            actualCount = 0;
+            expectedBucketCounts = new long[] { 0, 2, 0 };
+            foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
+            {
+                Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
+                index++;
+                actualCount++;
             }
         }
 
@@ -1589,16 +1759,9 @@ namespace OpenTelemetry.Metrics.Tests
             where T : struct, IComparable
         {
             var bucketCounts = new long[11];
-            var metricReader = new BaseExportingMetricReader(new TestExporter<Metric>(batch =>
-            {
-                foreach (var metric in batch)
-                {
-                    foreach (var metricPoint in metric.GetMetricPoints())
-                    {
-                        bucketCounts = metricPoint.GetHistogramBuckets().RunningBucketCounts;
-                    }
-                }
-            }));
+
+            var metrics = new List<Metric>();
+            var metricReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(metrics));
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{typeof(T).Name}");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -1633,6 +1796,14 @@ namespace OpenTelemetry.Metrics.Tests
             this.output.WriteLine($"Took {sw.ElapsedMilliseconds} msecs. Total threads: {NumberOfThreads}, each thread doing {NumberOfMetricUpdateByEachThread * values.Length} recordings.");
 
             metricReader.Collect();
+
+            foreach (var metric in metrics)
+            {
+                foreach (var metricPoint in metric.GetMetricPoints())
+                {
+                    bucketCounts = metricPoint.GetHistogramBuckets().RunningBucketCounts;
+                }
+            }
 
             Assert.Equal(expected, bucketCounts);
         }

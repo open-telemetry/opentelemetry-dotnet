@@ -102,7 +102,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
         }
 
         [Event(5, Message = "Failed to invoke OnExecuteRequestStep, Error='{0}'", Level = EventLevel.Error)]
-        public void OnExecuteRequestStepInvokationError(string error)
+        public void OnExecuteRequestStepInvocationError(string error)
         {
             this.WriteEvent(5, error);
         }

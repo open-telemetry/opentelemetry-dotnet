@@ -34,10 +34,10 @@ namespace Examples.Console
              * launch the OpenTelemetry Collector with an OTLP receiver, by running:
              *
              *  - On Unix based systems use:
-             *     docker run --rm -it -p 4317:4317 -v $(pwd):/cfg otel/opentelemetry-collector:0.33.0 --config=/cfg/otlp-collector-example/config.yaml
+             *     docker run --rm -it -p 4317:4317 -p 4318:4318 -v $(pwd):/cfg otel/opentelemetry-collector:0.48.0 --config=/cfg/otlp-collector-example/config.yaml
              *
              *  - On Windows use:
-             *     docker run --rm -it -p 4317:4317 -v "%cd%":/cfg otel/opentelemetry-collector:0.33.0 --config=/cfg/otlp-collector-example/config.yaml
+             *     docker run --rm -it -p 4317:4317 -p 4318:4318 -v "%cd%":/cfg otel/opentelemetry-collector:0.48.0 --config=/cfg/otlp-collector-example/config.yaml
              *
              * Open another terminal window at the examples/Console/ directory and
              * launch the OTLP example by running:
@@ -74,8 +74,15 @@ namespace Examples.Console
                     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("otlp-test"))
                     .AddOtlpExporter(opt =>
                     {
-                        opt.Endpoint = new Uri(endpoint);
+                        // If endpoint was not specified, the proper one will be selected according to the protocol.
+                        if (!string.IsNullOrEmpty(endpoint))
+                        {
+                            opt.Endpoint = new Uri(endpoint);
+                        }
+
                         opt.Protocol = otlpExportProtocol.Value;
+
+                        System.Console.WriteLine($"OTLP Exporter is using {opt.Protocol} protocol and endpoint {opt.Endpoint}");
                     })
                     .Build();
 
