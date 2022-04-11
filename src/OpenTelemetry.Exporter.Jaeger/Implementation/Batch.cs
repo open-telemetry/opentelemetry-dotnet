@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#if NETSTANDARD2_0 || NET461
+#if NETSTANDARD2_0 || NETFRAMEWORK
 using System;
 #endif
 using Thrift.Protocol;
@@ -26,9 +26,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
     {
         public Batch(Process process, TProtocol protocol)
         {
-            this.BatchBeginMessage = this.GenerateBeginMessage(process, protocol, out int spanCountPosition);
+            this.BatchBeginMessage = GenerateBeginMessage(process, protocol, out int spanCountPosition);
             this.SpanCountPosition = spanCountPosition;
-            this.BatchEndMessage = this.GenerateEndMessage(protocol);
+            this.BatchEndMessage = GenerateEndMessage(protocol);
         }
 
         public byte[] BatchBeginMessage { get; }
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         public int MinimumMessageSize => this.BatchBeginMessage.Length
             + this.BatchEndMessage.Length;
 
-        private byte[] GenerateBeginMessage(Process process, TProtocol oprot, out int spanCountPosition)
+        private static byte[] GenerateBeginMessage(Process process, TProtocol oprot, out int spanCountPosition)
         {
             var struc = new TStruct("Batch");
 
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return beginMessage;
         }
 
-        private byte[] GenerateEndMessage(TProtocol oprot)
+        private static byte[] GenerateEndMessage(TProtocol oprot)
         {
             oprot.WriteListEnd();
 

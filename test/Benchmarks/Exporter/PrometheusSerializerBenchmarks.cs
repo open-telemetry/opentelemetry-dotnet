@@ -28,10 +28,10 @@ namespace Benchmarks.Exporter
 {
     public class PrometheusSerializerBenchmarks
     {
+        private readonly List<Metric> metrics = new();
+        private readonly byte[] buffer = new byte[85000];
         private Meter meter;
         private MeterProvider meterProvider;
-        private List<Metric> metrics = new();
-        private byte[] buffer = new byte[85000];
 
         [Params(1, 1000, 10000)]
         public int NumberOfSerializeCalls { get; set; }

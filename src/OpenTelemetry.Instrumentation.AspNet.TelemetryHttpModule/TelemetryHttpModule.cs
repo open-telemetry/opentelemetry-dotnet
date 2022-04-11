@@ -70,7 +70,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
                 }
                 catch (Exception e)
                 {
-                    AspNetTelemetryEventSource.Log.OnExecuteRequestStepInvokationError(e.Message);
+                    AspNetTelemetryEventSource.Log.OnExecuteRequestStepInvocationError(e.Message);
                 }
             }
         }
@@ -108,7 +108,7 @@ namespace OpenTelemetry.Instrumentation.AspNet
                 // When the child request completes, the parent request executes the end request notifications and completes itself.
                 // Do not create activity for parent request. Parent request has IIS_UrlRewriteModule ServerVariable with success response code.
                 // Child request contains an additional ServerVariable named - IIS_WasUrlRewritten.
-                // Track failed response activity: Different modules in the pipleline has ability to end the response. For example, authentication module could set HTTP 401 in OnBeginRequest and end the response.
+                // Track failed response activity: Different modules in the pipeline has ability to end the response. For example, authentication module could set HTTP 401 in OnBeginRequest and end the response.
                 if (context.Request.ServerVariables != null && context.Request.ServerVariables[URLRewriteRewrittenRequest] == null && context.Request.ServerVariables[URLRewriteModuleVersion] != null && context.Response.StatusCode == 200)
                 {
                     trackActivity = false;

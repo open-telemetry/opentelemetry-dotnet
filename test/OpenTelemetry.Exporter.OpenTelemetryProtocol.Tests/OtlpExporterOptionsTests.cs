@@ -29,6 +29,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         public void Dispose()
         {
             ClearEnvVars();
+            GC.SuppressFinalize(this);
         }
 
         [Fact]
