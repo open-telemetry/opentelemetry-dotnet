@@ -43,7 +43,7 @@ public class Program
         logger.LogWarning("Hello Warning");
         logger.LogError("Hello Error");
 
-        // TESTING IncludeScopes
+        // DEMO of IncludeScopes
         using (logger.BeginScope("My Scope 1"))
         using (logger.BeginScope("My Scope 2"))
         {
