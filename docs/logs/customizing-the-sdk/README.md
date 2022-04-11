@@ -14,7 +14,13 @@ TODO
 
 ### IncludeScopes
 
-TODO
+A "scope" is an ILogger concept that can group a set of logical operations and
+attach data to each log created as part of a set.
+
+`IncludeScopes` is off by default. Setting this to `true` will include all
+scopes with the exported `LogRecord`.
+
+See [Program.cs](Program.cs) for an example.
 
 ### IncludeFormattedMessage
 
