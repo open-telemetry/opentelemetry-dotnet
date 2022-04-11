@@ -43,11 +43,11 @@ public class Program
         logger.LogWarning("Hello Warning");
         logger.LogError("Hello Error");
 
-        // DEMO of IncludeScopes
-        using (logger.BeginScope("My Scope 1"))
-        using (logger.BeginScope("My Scope 2"))
+        // log with scopes
+        using (logger.BeginScope("[operation]"))
+        using (logger.BeginScope("[hardware]"))
         {
-            logger.LogInformation("Hello Information within scope");
+            logger.LogError("{name} is broken.", "refrigerator");
         }
     }
 }
