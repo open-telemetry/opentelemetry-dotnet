@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
 using Microsoft.Extensions.Logging;
 
 using OpenTelemetry.Logs;
@@ -32,7 +30,6 @@ public class Program
             builder.AddOpenTelemetry(options =>
             {
                 options.IncludeScopes = true;
-                options.IncludeFormattedMessage = true;
                 options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
                     serviceName: "MyService",
                     serviceVersion: "1.0.0"));
