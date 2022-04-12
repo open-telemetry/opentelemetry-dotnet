@@ -10,3 +10,4 @@ dotnet run -c Release -f net6.0 -- -m
 
 - `-m` enables MemoryDiagnoser and prints memory statistics
 - `-f` allows you to filter the benchmarks by their full name using glob patterns
+  - `dotnet run -c Release -f net6.0 -- -f *TraceBenchmarks*`
