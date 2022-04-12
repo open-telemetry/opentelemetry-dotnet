@@ -61,8 +61,8 @@ namespace Benchmarks.Metrics
         private MeterProvider provider;
         private Meter meter;
 
-        [Params(AggregationTemporality.Cumulative, AggregationTemporality.Delta)]
-        public AggregationTemporality AggregationTemporality { get; set; }
+        [Params(MetricReaderTemporalityPreference.Cumulative, MetricReaderTemporalityPreference.Delta)]
+        public MetricReaderTemporalityPreference AggregationTemporality { get; set; }
 
         [GlobalSetup]
         public void Setup()
@@ -75,7 +75,7 @@ namespace Benchmarks.Metrics
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
                     metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
-                    metricReaderOptions.Temporality = this.AggregationTemporality;
+                    metricReaderOptions.TemporalityPreference = this.AggregationTemporality;
                 })
                 .Build();
 

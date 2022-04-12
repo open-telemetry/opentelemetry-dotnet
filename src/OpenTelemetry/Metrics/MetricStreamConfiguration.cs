@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics
         /// Note: All metrics for the given instrument will be dropped (not
         /// collected).
         /// </remarks>
-        public static MetricStreamConfiguration Drop { get; } = new MetricStreamConfiguration();
+        public static MetricStreamConfiguration Drop { get; } = new MetricStreamConfiguration { ViewId = -1 };
 
         /// <summary>
         /// Gets or sets the optional name of the metric stream.
@@ -106,6 +106,8 @@ namespace OpenTelemetry.Metrics
         }
 
         internal string[] CopiedTagKeys { get; private set; }
+
+        internal int? ViewId { get; set; }
 
         // TODO: MetricPoints caps can be configured here on
         // a per stream basis, when we add such a capability
