@@ -58,8 +58,6 @@ namespace OpenTelemetry.Trace
 
             exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
-            exporterOptions.AppendExportPath(OtlpExporterOptions.TracesExportPath);
-
             BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions);
 
             if (configureExporterInstance != null)

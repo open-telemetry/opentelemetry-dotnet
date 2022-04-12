@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics
         private readonly AggregatorStore aggStore;
 
         internal Metric(
-            InstrumentIdentity instrumentIdentity,
+            MetricStreamIdentity instrumentIdentity,
             AggregationTemporality temporality,
             int maxMetricPointsPerMetricStream,
             double[] histogramBounds = null,
@@ -124,7 +124,7 @@ namespace OpenTelemetry.Metrics
 
         public string MeterVersion => this.InstrumentIdentity.MeterVersion;
 
-        internal InstrumentIdentity InstrumentIdentity { get; private set; }
+        internal MetricStreamIdentity InstrumentIdentity { get; private set; }
 
         internal bool InstrumentDisposed { get; set; }
 

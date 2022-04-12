@@ -166,16 +166,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.Single(request.ResourceMetrics);
             var resourceMetric = request.ResourceMetrics.First();
-            var oltpResource = resourceMetric.Resource;
+            var otlpResource = resourceMetric.Resource;
 
             if (includeServiceNameInResource)
             {
-                Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service-name");
-                Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceNamespace && kvp.Value.StringValue == "ns1");
+                Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service-name");
+                Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceNamespace && kvp.Value.StringValue == "ns1");
             }
             else
             {
-                Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
+                Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
             }
 
             Assert.Single(resourceMetric.InstrumentationLibraryMetrics);
@@ -265,7 +265,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData("test_counter", null, null, 123, null, AggregationTemporality.Delta, true)]
         [InlineData("test_counter", "description", "unit", 123, null, AggregationTemporality.Cumulative, true)]
         [InlineData("test_counter", null, null, 123, null, AggregationTemporality.Delta, true, "key1", "value1", "key2", 123)]
-        public void TestCounterToOltpMetric(string name, string description, string unit, long? longValue, double? doubleValue, AggregationTemporality aggregationTemporality, bool isMonotonic, params object[] keysValues)
+        public void TestCounterToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, AggregationTemporality aggregationTemporality, bool isMonotonic, params object[] keysValues)
         {
             var metrics = new List<Metric>();
 
@@ -361,7 +361,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData("test_histogram", null, null, 123, null, AggregationTemporality.Delta)]
         [InlineData("test_histogram", "description", "unit", 123, null, AggregationTemporality.Cumulative)]
         [InlineData("test_histogram", null, null, 123, null, AggregationTemporality.Delta, "key1", "value1", "key2", 123)]
-        public void TestHistogramToOltpMetric(string name, string description, string unit, long? longValue, double? doubleValue, AggregationTemporality aggregationTemporality, params object[] keysValues)
+        public void TestHistogramToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, AggregationTemporality aggregationTemporality, params object[] keysValues)
         {
             var metrics = new List<Metric>();
 

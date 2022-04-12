@@ -26,13 +26,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     /// <typeparam name="TRequest">Type of export request.</typeparam>
     internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequest>
     {
-        protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient)
+        protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
         {
             Guard.ThrowIfNull(options);
             Guard.ThrowIfNull(httpClient);
+            Guard.ThrowIfNull(signalPath);
             Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds);
 
-            this.Endpoint = new UriBuilder(options.Endpoint).Uri;
+            Uri exporterEndpoint = !options.ProgrammaticallyModifiedEndpoint
+                ? options.Endpoint.AppendPathIfNotPresent(signalPath)
+                : options.Endpoint;
+            this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
             this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
             this.HttpClient = httpClient;
         }
@@ -71,7 +75,20 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             return true;
         }
 
-        protected abstract HttpRequestMessage CreateHttpRequest(TRequest request);
+        protected abstract HttpContent CreateHttpContent(TRequest exportRequest);
+
+        protected HttpRequestMessage CreateHttpRequest(TRequest exportRequest)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, this.Endpoint);
+            foreach (var header in this.Headers)
+            {
+                request.Headers.Add(header.Key, header.Value);
+            }
+
+            request.Content = this.CreateHttpContent(exportRequest);
+
+            return request;
+        }
 
         protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
         {
