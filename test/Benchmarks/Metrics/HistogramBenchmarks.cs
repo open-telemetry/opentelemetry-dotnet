@@ -57,7 +57,6 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
 
 namespace Benchmarks.Metrics
 {
-    [MemoryDiagnoser]
     public class HistogramBenchmarks
     {
         private const int MaxValue = 1000;
