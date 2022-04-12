@@ -20,7 +20,7 @@ namespace OpenTelemetry.Metrics
 {
     public class ExportedMetric
     {
-        private readonly InstrumentIdentity instrumentIdentity;
+        private readonly MetricStreamIdentity instrumentIdentity;
 
         internal ExportedMetric(Metric metric)
         {
