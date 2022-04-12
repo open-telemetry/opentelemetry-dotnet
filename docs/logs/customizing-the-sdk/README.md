@@ -26,7 +26,13 @@ See [Program.cs](Program.cs) for an example.
 
 ### IncludeFormattedMessage
 
-TODO
+`ILogger` supports [message templates](https://docs.microsoft.com/dotnet/core/extensions/logging#log-message-template)
+which can contain placeholders for arguments provided as parameters. This
+approach allows logging providers to implement structured logging and to
+store the parameter values as fields.
+
+`IncludeFormattedMessage` determines if the fully formatted message is included with
+the exported `LogRecord`.
 
 ### ParseStateValues
 

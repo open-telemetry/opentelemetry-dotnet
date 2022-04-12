@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System.Collections.Generic;
+
 using Microsoft.Extensions.Logging;
 
 using OpenTelemetry.Logs;
@@ -30,6 +32,7 @@ public class Program
             builder.AddOpenTelemetry(options =>
             {
                 options.IncludeScopes = true;
+                options.IncludeFormattedMessage = true;
                 options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
                     serviceName: "MyService",
                     serviceVersion: "1.0.0"));
@@ -39,9 +42,13 @@ public class Program
 
         var logger = loggerFactory.CreateLogger<Program>();
 
+        // unstructured log
         logger.LogInformation("Hello Information");
         logger.LogWarning("Hello Warning");
         logger.LogError("Hello Error");
+
+        // structured log with template
+        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
 
         // log with scopes
         using (logger.BeginScope("operation"))
