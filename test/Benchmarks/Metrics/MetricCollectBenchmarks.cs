@@ -40,7 +40,6 @@ Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical c
 
 namespace Benchmarks.Metrics
 {
-    [MemoryDiagnoser]
     public class MetricCollectBenchmarks
     {
         private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };

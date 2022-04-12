@@ -23,7 +23,6 @@ using Benchmarks.Helper;
 namespace Benchmarks.Instrumentation
 {
     [InProcess]
-    [MemoryDiagnoser]
     public class InstrumentedAspNetCoreBenchmark
     {
         private const string LocalhostUrl = "http://localhost:5050";
