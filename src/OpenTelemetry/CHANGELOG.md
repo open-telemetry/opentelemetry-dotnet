@@ -8,6 +8,12 @@
   may be possible in the future.
   ([#3126](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3126))
 
+* Conformed to the specification to ensure that each view that an instrument
+  matches results in a new metric stream. With this change it is possible for
+  views to introduce conflicting metric streams. Any conflicts encountered will
+  result in a diagnostic log.
+  ([#3148](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3148))
+
 ## 1.2.0-rc4
 
 Released 2022-Mar-30
