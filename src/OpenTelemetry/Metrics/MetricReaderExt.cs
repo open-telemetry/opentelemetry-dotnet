@@ -36,6 +36,11 @@ namespace OpenTelemetry.Metrics
         private Metric[] metricsCurrentBatch;
         private int metricIndex = -1;
 
+        internal AggregationTemporality GetAggregationTemporality(Type instrumentType)
+        {
+            return this.temporatlityFunc(instrumentType);
+        }
+
         internal Metric AddMetricWithNoViews(Instrument instrument)
         {
             var metricStreamIdentity = new MetricStreamIdentity(instrument, metricStreamConfiguration: null);
@@ -66,7 +71,7 @@ namespace OpenTelemetry.Metrics
                     Metric metric = null;
                     try
                     {
-                        metric = new Metric(metricStreamIdentity, this.Temporality, this.maxMetricPointsPerMetricStream);
+                        metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream);
                     }
                     catch (NotSupportedException nse)
                     {
@@ -152,7 +157,7 @@ namespace OpenTelemetry.Metrics
                     else
                     {
                         Metric metric;
-                        metric = new Metric(metricStreamIdentity, this.Temporality, this.maxMetricPointsPerMetricStream, metricStreamIdentity.HistogramBucketBounds, metricStreamIdentity.TagKeys);
+                        metric = new Metric(metricStreamIdentity, this.GetAggregationTemporality(metricStreamIdentity.InstrumentType), this.maxMetricPointsPerMetricStream, metricStreamIdentity.HistogramBucketBounds, metricStreamIdentity.TagKeys);
 
                         this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                         this.metrics[index] = metric;

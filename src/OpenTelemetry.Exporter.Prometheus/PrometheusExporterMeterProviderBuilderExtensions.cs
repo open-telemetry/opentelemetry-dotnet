@@ -49,6 +49,7 @@ namespace OpenTelemetry.Metrics
 
             var exporter = new PrometheusExporter(options);
             var reader = new BaseExportingMetricReader(exporter);
+            reader.TemporalityPreference = MetricReaderTemporalityPreference.Cumulative;
 
             return builder.AddReader(reader);
         }

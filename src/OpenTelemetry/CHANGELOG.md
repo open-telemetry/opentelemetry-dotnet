@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+* Removed the `Temporality` setting on `MetricReader` and replaced it with
+  `TemporalityPreference`. This is a breaking change.
+  `TemporalityPreference` is used to determine the `AggregationTemporality`
+  used on a per-instrument kind basis. Currently, there are two preferences:
+  * `Cumulative`: Measurements from all instrument kinds are aggregated using
+    `AggregationTemporality.Cumulative`.
+  * `Delta`: Measurements from `Counter`, `ObservableCounter`, and `Histogram`
+    instruments are aggregated using `AggregationTemporality.Delta`. When
+    UpDownCounters are supported with
+    [DiagnosticSource version 7.0 onwards](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/7.0.0-preview.2.22152.2),
+    they will be aggregated using `AggregationTemporality.Cumulative`.
+  ([#3153](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3153))
+
 * Fix issue where `ExplicitBucketHistogramConfiguration` could be used to
   configure metric streams for instruments that are not histograms. Currently,
   it is not possible to change the aggregation of an instrument with views. This

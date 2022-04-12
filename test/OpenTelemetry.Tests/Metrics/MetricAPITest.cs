@@ -396,11 +396,11 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [InlineData(AggregationTemporality.Cumulative, true)]
-        [InlineData(AggregationTemporality.Cumulative, false)]
-        [InlineData(AggregationTemporality.Delta, true)]
-        [InlineData(AggregationTemporality.Delta, false)]
-        public void DuplicateInstrumentNamesFromDifferentMetersAreAllowed(AggregationTemporality temporality, bool hasView)
+        [InlineData(MetricReaderTemporalityPreference.Cumulative, true)]
+        [InlineData(MetricReaderTemporalityPreference.Cumulative, false)]
+        [InlineData(MetricReaderTemporalityPreference.Delta, true)]
+        [InlineData(MetricReaderTemporalityPreference.Delta, false)]
+        public void DuplicateInstrumentNamesFromDifferentMetersAreAllowed(MetricReaderTemporalityPreference temporality, bool hasView)
         {
             var exportedItems = new List<Metric>();
 
@@ -411,7 +411,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddMeter(meter2.Name)
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    metricReaderOptions.Temporality = temporality;
+                    metricReaderOptions.TemporalityPreference = temporality;
                 });
 
             if (hasView)
@@ -532,7 +532,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    metricReaderOptions.Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
+                    metricReaderOptions.TemporalityPreference = exportDelta ? MetricReaderTemporalityPreference.Delta : MetricReaderTemporalityPreference.Cumulative;
                 })
                 .Build();
 
@@ -634,7 +634,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    metricReaderOptions.Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
+                    metricReaderOptions.TemporalityPreference = exportDelta ? MetricReaderTemporalityPreference.Delta : MetricReaderTemporalityPreference.Cumulative;
                 })
                 .Build();
 
@@ -708,7 +708,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    metricReaderOptions.Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
+                    metricReaderOptions.TemporalityPreference = exportDelta ? MetricReaderTemporalityPreference.Delta : MetricReaderTemporalityPreference.Cumulative;
                 })
                 .Build();
 
@@ -805,7 +805,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    metricReaderOptions.Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
+                    metricReaderOptions.TemporalityPreference = exportDelta ? MetricReaderTemporalityPreference.Delta : MetricReaderTemporalityPreference.Cumulative;
                 })
                 .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = Array.Empty<string>() })
                 .Build();
@@ -844,7 +844,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    metricReaderOptions.Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
+                    metricReaderOptions.TemporalityPreference = exportDelta ? MetricReaderTemporalityPreference.Delta : MetricReaderTemporalityPreference.Cumulative;
                 })
                 .Build();
 
@@ -935,7 +935,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    metricReaderOptions.Temporality = exportDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
+                    metricReaderOptions.TemporalityPreference = exportDelta ? MetricReaderTemporalityPreference.Delta : MetricReaderTemporalityPreference.Cumulative;
                 })
                 .Build();
 
@@ -1014,9 +1014,9 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [InlineData(AggregationTemporality.Cumulative)]
-        [InlineData(AggregationTemporality.Delta)]
-        public void TestInstrumentDisposal(AggregationTemporality temporality)
+        [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData(MetricReaderTemporalityPreference.Delta)]
+        public void TestInstrumentDisposal(MetricReaderTemporalityPreference temporality)
         {
             var exportedItems = new List<Metric>();
 
@@ -1029,7 +1029,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddMeter(meter2.Name)
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    metricReaderOptions.Temporality = temporality;
+                    metricReaderOptions.TemporalityPreference = temporality;
                 })
                 .Build();
 
@@ -1069,9 +1069,9 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Theory]
-        [InlineData(AggregationTemporality.Cumulative)]
-        [InlineData(AggregationTemporality.Delta)]
-        public void TestMetricPointCap(AggregationTemporality temporality)
+        [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData(MetricReaderTemporalityPreference.Delta)]
+        public void TestMetricPointCap(MetricReaderTemporalityPreference temporality)
         {
             var exportedItems = new List<Metric>();
 
@@ -1096,7 +1096,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    metricReaderOptions.Temporality = temporality;
+                    metricReaderOptions.TemporalityPreference = temporality;
                 })
                 .Build();
 
