@@ -30,8 +30,6 @@ See [Program.cs](Program.cs) for an example.
 `Func<TState, Exception, string>` to set the value of `LogRecord.FormattedMessage`.
 The default message formatter will only return the value of the `object TState`.
 
-See [Program.cs](Program.cs) for an example of providing a custom formatter.
-
 ### ParseStateValues
 
 TODO
