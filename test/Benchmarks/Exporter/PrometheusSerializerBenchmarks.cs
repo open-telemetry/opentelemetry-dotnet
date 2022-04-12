@@ -26,7 +26,6 @@ using Prometheus::OpenTelemetry.Exporter.Prometheus;
 
 namespace Benchmarks.Exporter
 {
-    [MemoryDiagnoser]
     public class PrometheusSerializerBenchmarks
     {
         private readonly List<Metric> metrics = new();
