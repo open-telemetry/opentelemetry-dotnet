@@ -24,9 +24,9 @@ namespace OpenTelemetry.Metrics.Tests
     public class MemoryEfficiencyTests
     {
         [Theory]
-        [InlineData(AggregationTemporality.Cumulative)]
-        [InlineData(AggregationTemporality.Delta)]
-        public void ExportOnlyWhenPointChanged(AggregationTemporality temporality)
+        [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData(MetricReaderTemporalityPreference.Delta)]
+        public void ExportOnlyWhenPointChanged(MetricReaderTemporalityPreference temporality)
         {
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
 
@@ -36,7 +36,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    metricReaderOptions.Temporality = temporality;
+                    metricReaderOptions.TemporalityPreference = temporality;
                 })
                 .Build();
 
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             exportedItems.Clear();
             meterProvider.ForceFlush();
-            if (temporality == AggregationTemporality.Cumulative)
+            if (temporality == MetricReaderTemporalityPreference.Cumulative)
             {
                 Assert.Single(exportedItems);
             }
