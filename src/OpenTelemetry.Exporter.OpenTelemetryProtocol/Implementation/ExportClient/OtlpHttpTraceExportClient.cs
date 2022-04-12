@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -33,25 +32,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     internal sealed class OtlpHttpTraceExportClient : BaseOtlpHttpExportClient<OtlpCollector.ExportTraceServiceRequest>
     {
         internal const string MediaContentType = "application/x-protobuf";
-        private readonly Uri exportTracesUri;
+        private const string TracesExportPath = "v1/traces";
 
         public OtlpHttpTraceExportClient(OtlpExporterOptions options, HttpClient httpClient)
-            : base(options, httpClient)
+            : base(options, httpClient, TracesExportPath)
         {
-            this.exportTracesUri = this.Endpoint;
         }
 
-        protected override HttpRequestMessage CreateHttpRequest(OtlpCollector.ExportTraceServiceRequest exportRequest)
+        protected override HttpContent CreateHttpContent(OtlpCollector.ExportTraceServiceRequest exportRequest)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, this.exportTracesUri);
-            foreach (var header in this.Headers)
-            {
-                request.Headers.Add(header.Key, header.Value);
-            }
-
-            request.Content = new ExportRequestContent(exportRequest);
-
-            return request;
+            return new ExportRequestContent(exportRequest);
         }
 
         internal sealed class ExportRequestContent : HttpContent

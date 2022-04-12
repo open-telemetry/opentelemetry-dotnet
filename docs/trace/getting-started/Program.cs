@@ -28,14 +28,16 @@ public class Program
     public static void Main()
     {
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .SetSampler(new AlwaysOnSampler())
             .AddSource("MyCompany.MyProduct.MyLibrary")
             .AddConsoleExporter()
             .Build();
 
-        using var activity = MyActivitySource.StartActivity("SayHello");
-        activity?.SetTag("foo", 1);
-        activity?.SetTag("bar", "Hello, World!");
-        activity?.SetTag("baz", new int[] { 1, 2, 3 });
+        using (var activity = MyActivitySource.StartActivity("SayHello"))
+        {
+            activity?.SetTag("foo", 1);
+            activity?.SetTag("bar", "Hello, World!");
+            activity?.SetTag("baz", new int[] { 1, 2, 3 });
+            activity?.SetStatus(ActivityStatusCode.Ok);
+        }
     }
 }

@@ -121,7 +121,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
         public void Start_ActivityOperationRootSpanChecks()
         {
             // Create an activity
-            var activity = new Activity("foo")
+            _ = new Activity("foo")
                 .SetIdFormat(ActivityIdFormat.W3C)
                 .Start();
 
@@ -185,7 +185,7 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             // Add a parent
             var spanContext = SpanContextShimTests.GetSpanContextShim();
-            var test = shim.AsChildOf(spanContext);
+            _ = shim.AsChildOf(spanContext);
 
             // build
             var spanShim = (SpanShim)shim.Start();
@@ -211,7 +211,6 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             // build
             var spanShim = (SpanShim)shim.Start();
-            var linkContext = spanShim.Span.Activity.Links.First().Context;
 
             Assert.Equal("foo", spanShim.Span.Activity.OperationName);
             Assert.Contains(spanContext1.TraceId, spanShim.Span.Activity.ParentId);

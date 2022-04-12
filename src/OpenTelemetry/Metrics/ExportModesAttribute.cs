@@ -21,7 +21,7 @@ namespace OpenTelemetry.Metrics
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
     public sealed class ExportModesAttribute : Attribute
     {
-        private ExportModes supportedExportModes;
+        private readonly ExportModes supportedExportModes;
 
         public ExportModesAttribute(ExportModes supported)
         {
