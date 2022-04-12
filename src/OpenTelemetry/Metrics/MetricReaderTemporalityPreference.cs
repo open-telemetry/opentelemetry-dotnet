@@ -1,4 +1,4 @@
-// <copyright file="MetricReaderOptions.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricReaderTemporalityPreference.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,17 +17,19 @@
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
-/// Options for configuring either a <see cref="BaseExportingMetricReader"/> or <see cref="PeriodicExportingMetricReader"/> .
+/// Defines the behavior of a <see cref="MetricReader" />
+/// with respect to <see cref="AggregationTemporality" />.
 /// </summary>
-public class MetricReaderOptions
+public enum MetricReaderTemporalityPreference
 {
     /// <summary>
-    /// Gets or sets the <see cref="MetricReaderTemporalityPreference" />.
+    /// All aggregations are performed using cumulative temporatlity.
     /// </summary>
-    public MetricReaderTemporalityPreference TemporalityPreference { get; set; } = MetricReaderTemporalityPreference.Cumulative;
+    Cumulative = 1,
 
     /// <summary>
-    /// Gets the <see cref="PeriodicExportingMetricReaderOptions" /> options.
+    /// All measurements that are monotnic in nature are aggregated using delta temporality.
+    /// Aggregations of non-monotonic measurements use cumulative temporality.
     /// </summary>
-    public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions { get; private set; } = new PeriodicExportingMetricReaderOptions();
+    Delta = 2,
 }
