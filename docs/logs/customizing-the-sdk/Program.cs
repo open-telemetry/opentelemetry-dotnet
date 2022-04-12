@@ -44,8 +44,8 @@ public class Program
         logger.LogError("Hello Error");
 
         // log with scopes
-        using (logger.BeginScope("[operation]"))
-        using (logger.BeginScope("[hardware]"))
+        using (logger.BeginScope("operation"))
+        using (logger.BeginScope("hardware"))
         {
             logger.LogError("{name} is broken.", "refrigerator");
         }
