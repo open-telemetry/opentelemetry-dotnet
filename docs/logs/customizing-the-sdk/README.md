@@ -14,7 +14,15 @@ TODO
 
 ### IncludeScopes
 
-TODO
+A "[scope](https://docs.microsoft.com/dotnet/core/extensions/logging#log-scopes)"
+is an `ILogger` concept that can group a set of logical operations and attach
+data to each log created as part of a set.
+
+`IncludeScopes` is off by default. Setting this to `true` will include all
+scopes with the exported `LogRecord`. Consult the individual `Exporter`
+docs to learn more about how scopes will be processed.
+
+See [Program.cs](Program.cs) for an example.
 
 ### IncludeFormattedMessage
 
