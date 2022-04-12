@@ -8,9 +8,9 @@
   used on a per-instrument kind basis. Currently, there are two preferences:
   * `Cumulative`: Measurements from all instrument kinds are aggregated using
     `AggregationTemporality.Cumulative`.
-  * `Delta`: Measurements from `Counter`, `AsyncCounter`, and `Histogram`
+  * `Delta`: Measurements from `Counter`, `ObservableCounter`, and `Histogram`
     instruments are aggregated using `AggregationTemporality.Delta`. When
-    UpDownCounters are supported with .NET 7, they will be aggregated using
+    UpDownCounters are supported with [DiagnosticSource version 7.0 onwards](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/7.0.0-preview.2.22152.2), they will be aggregated using
     `AggregationTemporality.Cumulative`.
   ([#3153](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3153))
 

@@ -77,7 +77,7 @@ OpenTelemetry.Metrics.MetricReaderOptions.TemporalityPreference.get -> OpenTelem
 OpenTelemetry.Metrics.MetricReaderOptions.TemporalityPreference.set -> void
 OpenTelemetry.Metrics.MetricReaderTemporalityPreference
 OpenTelemetry.Metrics.MetricReaderTemporalityPreference.Cumulative = 1 -> OpenTelemetry.Metrics.MetricReaderTemporalityPreference
-OpenTelemetry.Metrics.MetricReaderTemporalityPreference.MonotonicDelta = 2 -> OpenTelemetry.Metrics.MetricReaderTemporalityPreference
+OpenTelemetry.Metrics.MetricReaderTemporalityPreference.Delta = 2 -> OpenTelemetry.Metrics.MetricReaderTemporalityPreference
 OpenTelemetry.Metrics.MetricStreamConfiguration
 OpenTelemetry.Metrics.MetricStreamConfiguration.Description.get -> string
 OpenTelemetry.Metrics.MetricStreamConfiguration.Description.set -> void
