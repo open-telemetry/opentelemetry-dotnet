@@ -34,28 +34,8 @@ namespace OpenTelemetry.Metrics
             this.InstrumentType = instrument.GetType();
             this.ViewId = metricStreamConfiguration?.ViewId;
             this.MetricStreamName = $"{this.MeterName}.{this.MeterVersion}.{this.InstrumentName}";
-
-            var tagKeys = metricStreamConfiguration?.CopiedTagKeys;
-            if (tagKeys != null)
-            {
-                this.TagKeys = new string[tagKeys.Length];
-                tagKeys.CopyTo(this.TagKeys, 0);
-            }
-            else
-            {
-                this.TagKeys = null;
-            }
-
-            var histogramBucketBounds = (metricStreamConfiguration as ExplicitBucketHistogramConfiguration)?.CopiedBoundaries;
-            if (histogramBucketBounds != null && histogramBucketBounds.Length > 0)
-            {
-                this.HistogramBucketBounds = new double[histogramBucketBounds.Length];
-                histogramBucketBounds.CopyTo(this.HistogramBucketBounds, 0);
-            }
-            else
-            {
-                this.HistogramBucketBounds = null;
-            }
+            this.TagKeys = metricStreamConfiguration?.CopiedTagKeys;
+            this.HistogramBucketBounds = (metricStreamConfiguration as ExplicitBucketHistogramConfiguration)?.CopiedBoundaries;
 
             unchecked
             {
