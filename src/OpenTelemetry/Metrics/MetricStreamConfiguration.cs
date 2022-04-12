@@ -72,7 +72,7 @@ namespace OpenTelemetry.Metrics
         /// while reporting measurements will be used for aggregation.
         /// If provided, only those tags in this list will be used
         /// for aggregation. Providing an empty array will result
-        /// in aggregation without any tags.
+        /// in a metric stream without any tags.
         /// </item>
         /// <item>A copy is made of the provided array.</item>
         /// </list>
