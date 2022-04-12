@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
+using System;
 
 using Microsoft.Extensions.Logging;
 
@@ -42,13 +42,9 @@ public class Program
 
         var logger = loggerFactory.CreateLogger<Program>();
 
-        // unstructured log
         logger.LogInformation("Hello Information");
         logger.LogWarning("Hello Warning");
         logger.LogError("Hello Error");
-
-        // structured log with template
-        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
 
         // log with scopes
         using (logger.BeginScope("operation"))
@@ -56,5 +52,14 @@ public class Program
         {
             logger.LogError("{name} is broken.", "refrigerator");
         }
+
+        // log with exception and custom formatter
+        var ex = new Exception("Some Exception");
+        logger.Log(
+            logLevel: LogLevel.Error,
+            eventId: new EventId(0),
+            state: "An exception occurred",
+            exception: ex,
+            formatter: (x, y) => $"{x} {y}");
     }
 }
