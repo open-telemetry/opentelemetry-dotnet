@@ -88,7 +88,7 @@ namespace OpenTelemetry.Metrics
                 this.temporalityPreference = value;
                 switch (value)
                 {
-                    case MetricReaderTemporalityPreference.MonotonicDelta:
+                    case MetricReaderTemporalityPreference.Delta:
                         this.temporatlityFunc = monotonicDeltaTemporatlityPreferenceFunc;
                         break;
                     case MetricReaderTemporalityPreference.Cumulative:

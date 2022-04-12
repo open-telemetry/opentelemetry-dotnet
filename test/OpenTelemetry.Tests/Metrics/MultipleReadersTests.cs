@@ -24,8 +24,8 @@ namespace OpenTelemetry.Metrics.Tests
     public class MultipleReadersTests
     {
         [Theory]
-        [InlineData(MetricReaderTemporalityPreference.MonotonicDelta, false)]
-        [InlineData(MetricReaderTemporalityPreference.MonotonicDelta, true)]
+        [InlineData(MetricReaderTemporalityPreference.Delta, false)]
+        [InlineData(MetricReaderTemporalityPreference.Delta, true)]
         [InlineData(MetricReaderTemporalityPreference.Cumulative, false)]
         [InlineData(MetricReaderTemporalityPreference.Cumulative, true)]
         public void SdkSupportsMultipleReaders(MetricReaderTemporalityPreference aggregationTemporality, bool hasViews)
@@ -51,7 +51,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportedItems1, metricReaderOptions =>
                 {
-                    metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.MonotonicDelta;
+                    metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
                 })
                 .AddInMemoryExporter(exportedItems2, metricReaderOptions =>
                 {
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             // Check value exported for ObservableCounter
             AssertLongSumValueForMetric(exportedItems1[2], 1000);
-            if (aggregationTemporality == MetricReaderTemporalityPreference.MonotonicDelta)
+            if (aggregationTemporality == MetricReaderTemporalityPreference.Delta)
             {
                 AssertLongSumValueForMetric(exportedItems2[2], 1200);
             }
@@ -128,7 +128,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             // Check value exported for Counter
             AssertLongSumValueForMetric(exportedItems1[0], 15);
-            if (aggregationTemporality == MetricReaderTemporalityPreference.MonotonicDelta)
+            if (aggregationTemporality == MetricReaderTemporalityPreference.Delta)
             {
                 AssertLongSumValueForMetric(exportedItems2[0], 15);
             }
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             // Check value exported for ObservableCounter
             AssertLongSumValueForMetric(exportedItems1[2], 300);
-            if (aggregationTemporality == MetricReaderTemporalityPreference.MonotonicDelta)
+            if (aggregationTemporality == MetricReaderTemporalityPreference.Delta)
             {
                 AssertLongSumValueForMetric(exportedItems2[2], 200);
             }

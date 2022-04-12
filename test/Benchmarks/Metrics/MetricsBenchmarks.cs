@@ -61,7 +61,7 @@ namespace Benchmarks.Metrics
         private MeterProvider provider;
         private Meter meter;
 
-        [Params(MetricReaderTemporalityPreference.Cumulative, MetricReaderTemporalityPreference.MonotonicDelta)]
+        [Params(MetricReaderTemporalityPreference.Cumulative, MetricReaderTemporalityPreference.Delta)]
         public MetricReaderTemporalityPreference AggregationTemporality { get; set; }
 
         [GlobalSetup]

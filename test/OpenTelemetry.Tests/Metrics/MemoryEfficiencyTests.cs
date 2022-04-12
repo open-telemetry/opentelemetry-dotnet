@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics.Tests
     {
         [Theory]
         [InlineData(MetricReaderTemporalityPreference.Cumulative)]
-        [InlineData(MetricReaderTemporalityPreference.MonotonicDelta)]
+        [InlineData(MetricReaderTemporalityPreference.Delta)]
         public void ExportOnlyWhenPointChanged(MetricReaderTemporalityPreference temporality)
         {
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");

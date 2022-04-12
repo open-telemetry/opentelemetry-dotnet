@@ -262,9 +262,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData("test_counter", null, null, 123, null, MetricReaderTemporalityPreference.Cumulative, true)]
         [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, true)]
-        [InlineData("test_counter", null, null, 123, null, MetricReaderTemporalityPreference.MonotonicDelta, true)]
+        [InlineData("test_counter", null, null, 123, null, MetricReaderTemporalityPreference.Delta, true)]
         [InlineData("test_counter", "description", "unit", 123, null, MetricReaderTemporalityPreference.Cumulative, true)]
-        [InlineData("test_counter", null, null, 123, null, MetricReaderTemporalityPreference.MonotonicDelta, true, "key1", "value1", "key2", 123)]
+        [InlineData("test_counter", null, null, 123, null, MetricReaderTemporalityPreference.Delta, true, "key1", "value1", "key2", 123)]
         public void TestCounterToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool isMonotonic, params object[] keysValues)
         {
             var metrics = new List<Metric>();
@@ -358,9 +358,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData("test_histogram", null, null, 123, null, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
-        [InlineData("test_histogram", null, null, 123, null, MetricReaderTemporalityPreference.MonotonicDelta)]
+        [InlineData("test_histogram", null, null, 123, null, MetricReaderTemporalityPreference.Delta)]
         [InlineData("test_histogram", "description", "unit", 123, null, MetricReaderTemporalityPreference.Cumulative)]
-        [InlineData("test_histogram", null, null, 123, null, MetricReaderTemporalityPreference.MonotonicDelta, "key1", "value1", "key2", 123)]
+        [InlineData("test_histogram", null, null, 123, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
         public void TestHistogramToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, params object[] keysValues)
         {
             var metrics = new List<Metric>();
