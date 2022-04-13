@@ -135,7 +135,6 @@ static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetMaxMetricStreams(
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.SetResourceBuilder(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, OpenTelemetry.Resources.ResourceBuilder resourceBuilder) -> OpenTelemetry.Metrics.MeterProviderBuilder
 static OpenTelemetry.Metrics.MeterProviderExtensions.ForceFlush(this OpenTelemetry.Metrics.MeterProvider provider, int timeoutMilliseconds = -1) -> bool
 static OpenTelemetry.Metrics.MeterProviderExtensions.Shutdown(this OpenTelemetry.Metrics.MeterProvider provider, int timeoutMilliseconds = -1) -> bool
-static OpenTelemetry.Metrics.MeterProviderExtensions.TryFindExporter<T>(this OpenTelemetry.Metrics.MeterProvider provider, out T exporter) -> bool
 static OpenTelemetry.Metrics.MetricStreamConfiguration.Drop.get -> OpenTelemetry.Metrics.MetricStreamConfiguration
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsDouble(this OpenTelemetry.Metrics.MetricType self) -> bool
 static OpenTelemetry.Metrics.MetricTypeExtensions.IsGauge(this OpenTelemetry.Metrics.MetricType self) -> bool
