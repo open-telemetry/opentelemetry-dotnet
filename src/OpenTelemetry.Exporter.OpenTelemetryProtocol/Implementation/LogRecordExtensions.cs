@@ -41,15 +41,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             };
             request.ResourceLogs.Add(resourceLogs);
 
-            var instrumentationLibraryLogs = new OtlpLogs.InstrumentationLibraryLogs();
-            resourceLogs.InstrumentationLibraryLogs.Add(instrumentationLibraryLogs);
+            var scopeLogs = new OtlpLogs.ScopeLogs();
+            resourceLogs.ScopeLogs.Add(scopeLogs);
 
             foreach (var logRecord in logRecordBatch)
             {
                 var otlpLogRecord = logRecord.ToOtlpLog();
                 if (otlpLogRecord != null)
                 {
-                    instrumentationLibraryLogs.Logs.Add(otlpLogRecord);
+                    scopeLogs.LogRecords.Add(otlpLogRecord);
                 }
             }
         }
@@ -64,12 +64,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 otlpLogRecord = new OtlpLogs.LogRecord
                 {
                     TimeUnixNano = (ulong)logRecord.Timestamp.ToUnixTimeNanoseconds(),
-                    Name = logRecord.CategoryName,
 
                     // TODO: Devise mapping of LogLevel to SeverityNumber
                     // See: https://github.com/open-telemetry/opentelemetry-proto/blob/bacfe08d84e21fb2a779e302d12e8dfeb67e7b86/opentelemetry/proto/logs/v1/logs.proto#L100-L102
                     SeverityText = logRecord.LogLevel.ToString(),
                 };
+
+                // TODO: Add logRecord.CategoryName as an attribute
 
                 if (logRecord.FormattedMessage != null)
                 {

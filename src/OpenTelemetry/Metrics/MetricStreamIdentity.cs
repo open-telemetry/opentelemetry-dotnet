@@ -24,34 +24,18 @@ namespace OpenTelemetry.Metrics
         private static readonly StringArrayEqualityComparer StringArrayComparer = new StringArrayEqualityComparer();
         private readonly int hashCode;
 
-        public MetricStreamIdentity(Meter meter, string instrumentName, string unit, string description, Type instrumentType, string[] tagKeys, double[] histogramBucketBounds)
+        public MetricStreamIdentity(Instrument instrument, MetricStreamConfiguration metricStreamConfiguration)
         {
-            this.MeterName = meter.Name;
-            this.MeterVersion = meter.Version ?? string.Empty;
-            this.InstrumentName = instrumentName;
-            this.Unit = unit ?? string.Empty;
-            this.Description = description ?? string.Empty;
-            this.InstrumentType = instrumentType;
-
-            if (tagKeys != null && tagKeys.Length > 0)
-            {
-                this.TagKeys = new string[tagKeys.Length];
-                tagKeys.CopyTo(this.TagKeys, 0);
-            }
-            else
-            {
-                this.TagKeys = null;
-            }
-
-            if (histogramBucketBounds != null && histogramBucketBounds.Length > 0)
-            {
-                this.HistogramBucketBounds = new double[histogramBucketBounds.Length];
-                histogramBucketBounds.CopyTo(this.HistogramBucketBounds, 0);
-            }
-            else
-            {
-                this.HistogramBucketBounds = null;
-            }
+            this.MeterName = instrument.Meter.Name;
+            this.MeterVersion = instrument.Meter.Version ?? string.Empty;
+            this.InstrumentName = metricStreamConfiguration?.Name ?? instrument.Name;
+            this.Unit = instrument.Unit ?? string.Empty;
+            this.Description = metricStreamConfiguration?.Description ?? instrument.Description ?? string.Empty;
+            this.InstrumentType = instrument.GetType();
+            this.ViewId = metricStreamConfiguration?.ViewId;
+            this.MetricStreamName = $"{this.MeterName}.{this.MeterVersion}.{this.InstrumentName}";
+            this.TagKeys = metricStreamConfiguration?.CopiedTagKeys;
+            this.HistogramBucketBounds = (metricStreamConfiguration as ExplicitBucketHistogramConfiguration)?.CopiedBoundaries;
 
             unchecked
             {
@@ -62,6 +46,7 @@ namespace OpenTelemetry.Metrics
                 hash = (hash * 31) + this.InstrumentName.GetHashCode();
                 hash = this.Unit == null ? hash : (hash * 31) + this.Unit.GetHashCode();
                 hash = this.Description == null ? hash : (hash * 31) + this.Description.GetHashCode();
+                hash = !this.ViewId.HasValue ? hash : (hash * 31) + this.ViewId.Value;
                 hash = this.TagKeys == null ? hash : (hash * 31) + StringArrayComparer.GetHashCode(this.TagKeys);
                 if (this.HistogramBucketBounds != null)
                 {
@@ -88,6 +73,10 @@ namespace OpenTelemetry.Metrics
 
         public Type InstrumentType { get; }
 
+        public int? ViewId { get; }
+
+        public string MetricStreamName { get; }
+
         public string[] TagKeys { get; }
 
         public double[] HistogramBucketBounds { get; }
@@ -109,6 +98,7 @@ namespace OpenTelemetry.Metrics
                 && this.InstrumentName == other.InstrumentName
                 && this.Unit == other.Unit
                 && this.Description == other.Description
+                && this.ViewId == other.ViewId
                 && StringArrayComparer.Equals(this.TagKeys, other.TagKeys)
                 && HistogramBoundsEqual(this.HistogramBucketBounds, other.HistogramBucketBounds);
         }

@@ -34,7 +34,7 @@ internal static class PeriodicExportingMetricReaderHelper
 
         var metricReader = new PeriodicExportingMetricReader(exporter, exportInterval, exportTimeout)
         {
-            Temporality = options.Temporality,
+            TemporalityPreference = options.TemporalityPreference,
         };
 
         return metricReader;
