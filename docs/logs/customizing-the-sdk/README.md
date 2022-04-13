@@ -28,7 +28,7 @@ See [Program.cs](Program.cs) for an example.
 
 `IncludeFormattedMessage` indicates if the `LogRecord.FormattedMessage` will be
 set by invoking the formatter from [ILogger.Log](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger.log).
-`IncludeFormattedMessage` is off by default.
+`IncludeFormattedMessage` is `false` by default.
 
 ### ParseStateValues
 
