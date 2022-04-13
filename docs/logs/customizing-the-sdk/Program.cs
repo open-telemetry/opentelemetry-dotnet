@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
-
 using Microsoft.Extensions.Logging;
 
 using OpenTelemetry.Logs;
@@ -50,31 +48,11 @@ public class Program
         // structured log with template
         logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
 
-        // structured log with strong type
-        logger.LogInformation("{food}", new Food { Name = "artichoke", Price = 3.99 });
-
-        // structured log with anonymous type
-        logger.LogInformation("{food}", new { Name = "pumpkin", Price = 5.99 });
-
-        // structured log with general type
-        logger.LogInformation("{food}", new Dictionary<string, object>
-        {
-            ["Name"] = "truffle",
-            ["Price"] = 299.99,
-        });
-
         // log with scopes
         using (logger.BeginScope("operation"))
         using (logger.BeginScope("hardware"))
         {
             logger.LogError("{name} is broken.", "refrigerator");
         }
-    }
-
-    internal struct Food
-    {
-        public string Name { get; set; }
-
-        public double Price { get; set; }
     }
 }
