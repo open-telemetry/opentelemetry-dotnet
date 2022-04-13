@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc5
+
+Released 2022-Apr-12
+
 * Removed the `Temporality` setting on `MetricReader` and replaced it with
   `TemporalityPreference`. This is a breaking change.
   `TemporalityPreference` is used to determine the `AggregationTemporality`

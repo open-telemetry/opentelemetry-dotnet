@@ -38,7 +38,7 @@ namespace OpenTelemetry.Metrics
 
         internal AggregationTemporality GetAggregationTemporality(Type instrumentType)
         {
-            return this.temporatlityFunc(instrumentType);
+            return this.temporalityFunc(instrumentType);
         }
 
         internal Metric AddMetricWithNoViews(Instrument instrument)
