@@ -26,9 +26,9 @@ See [Program.cs](Program.cs) for an example.
 
 ### IncludeFormattedMessage
 
-`IncludeFormattedMessage` will invoke a formatter with the signature
-`Func<TState, Exception, string>` to set the value of `LogRecord.FormattedMessage`.
-The default message formatter will only return the value of the `object TState`.
+`IncludeFormattedMessage` indicates if the `LogRecord.FormattedMessage` will be
+set by invoking the formatter from [ILogger.Log](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging.ilogger.log).
+`IncludeFormattedMessage` is off by default.
 
 ### ParseStateValues
 
