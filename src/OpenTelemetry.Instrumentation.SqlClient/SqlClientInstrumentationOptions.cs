@@ -133,7 +133,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
         /// <summary>
         /// Gets or sets a Filter function that determines whether or not to collect telemetry of SQL execution per execution basis.
         /// The Filter gets the SQL Payload, and should return a boolean.
-        /// If Filter returns true, the request is collected.
+        /// If Filter returns true, the telemetry is collected.
         /// If Filter returns false or throw exception, the request is filtered out.
         /// </summary>
         public Func<object, bool> Filter { get; set; }
