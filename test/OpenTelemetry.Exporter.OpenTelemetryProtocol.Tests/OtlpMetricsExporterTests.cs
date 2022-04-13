@@ -178,11 +178,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
             }
 
-            Assert.Single(resourceMetric.InstrumentationLibraryMetrics);
-            var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.First();
+            Assert.Single(resourceMetric.ScopeMetrics);
+            var instrumentationLibraryMetrics = resourceMetric.ScopeMetrics.First();
             Assert.Equal(string.Empty, instrumentationLibraryMetrics.SchemaUrl);
-            Assert.Equal(meter.Name, instrumentationLibraryMetrics.InstrumentationLibrary.Name);
-            Assert.Equal("0.0.1", instrumentationLibraryMetrics.InstrumentationLibrary.Version);
+            Assert.Equal(meter.Name, instrumentationLibraryMetrics.Scope.Name);
+            Assert.Equal("0.0.1", instrumentationLibraryMetrics.Scope.Version);
         }
 
         [Theory]
@@ -216,8 +216,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
 
             var resourceMetric = request.ResourceMetrics.Single();
-            var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.Single();
-            var actual = instrumentationLibraryMetrics.Metrics.Single();
+            var scopeMetrics = resourceMetric.ScopeMetrics.Single();
+            var actual = scopeMetrics.Metrics.Single();
 
             Assert.Equal(name, actual.Name);
             Assert.Equal(description ?? string.Empty, actual.Description);
@@ -250,13 +250,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Empty(dataPoint.Attributes);
 
             Assert.Empty(dataPoint.Exemplars);
-
-#pragma warning disable CS0612 // Type or member is obsolete
-            Assert.Null(actual.IntGauge);
-            Assert.Null(actual.IntSum);
-            Assert.Null(actual.IntHistogram);
-            Assert.Empty(dataPoint.Labels);
-#pragma warning restore CS0612 // Type or member is obsolete
         }
 
         [Theory]
@@ -298,8 +291,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
 
             var resourceMetric = request.ResourceMetrics.Single();
-            var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.Single();
-            var actual = instrumentationLibraryMetrics.Metrics.Single();
+            var scopeMetrics = resourceMetric.ScopeMetrics.Single();
+            var actual = scopeMetrics.Metrics.Single();
 
             Assert.Equal(name, actual.Name);
             Assert.Equal(description ?? string.Empty, actual.Description);
@@ -346,13 +339,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
 
             Assert.Empty(dataPoint.Exemplars);
-
-#pragma warning disable CS0612 // Type or member is obsolete
-            Assert.Null(actual.IntGauge);
-            Assert.Null(actual.IntSum);
-            Assert.Null(actual.IntHistogram);
-            Assert.Empty(dataPoint.Labels);
-#pragma warning restore CS0612 // Type or member is obsolete
         }
 
         [Theory]
@@ -394,8 +380,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
 
             var resourceMetric = request.ResourceMetrics.Single();
-            var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.Single();
-            var actual = instrumentationLibraryMetrics.Metrics.Single();
+            var scopeMetrics = resourceMetric.ScopeMetrics.Single();
+            var actual = scopeMetrics.Metrics.Single();
 
             Assert.Equal(name, actual.Name);
             Assert.Equal(description ?? string.Empty, actual.Description);
@@ -453,13 +439,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
 
             Assert.Empty(dataPoint.Exemplars);
-
-#pragma warning disable CS0612 // Type or member is obsolete
-            Assert.Null(actual.IntGauge);
-            Assert.Null(actual.IntSum);
-            Assert.Null(actual.IntHistogram);
-            Assert.Empty(dataPoint.Labels);
-#pragma warning restore CS0612 // Type or member is obsolete
         }
 
         private static IEnumerable<KeyValuePair<string, object>> ToAttributes(object[] keysValues)
