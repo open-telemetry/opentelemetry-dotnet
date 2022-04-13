@@ -36,7 +36,7 @@ ILogger supports [message templates](https://docs.microsoft.com/dotnet/core/exte
 which can contain placeholders for arguments provided as parameters.
 
 `ParseStateValues` determines if the individual arguments will be stored as
-key/value pairs in the exported `LogRecord.StateValues`.
+key-value pairs in the exported `LogRecord.StateValues`.
 
 See [Program.cs](Program.cs) for an example.
 
