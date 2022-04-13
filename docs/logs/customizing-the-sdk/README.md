@@ -32,7 +32,14 @@ set by invoking the formatter from [ILogger.Log](https://docs.microsoft.com/dotn
 
 ### ParseStateValues
 
-TODO
+`ILogger` supports structured logging which can assign either types or
+[message templates](https://docs.microsoft.com/dotnet/core/extensions/logging#log-message-template)
+to the log state.
+
+`ParseStateValues` indicates if the log state will be parsed into
+`LogRecord.StateValues`. `ParseStateValues` is `false` by default.
+
+See [Program.cs](Program.cs) for examples.
 
 ### AddProcessor
 
