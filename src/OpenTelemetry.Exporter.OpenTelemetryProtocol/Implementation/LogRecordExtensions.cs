@@ -70,6 +70,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     SeverityText = logRecord.LogLevel.ToString(),
                 };
 
+                // TODO: Add logRecord.CategoryName as an attribute
+
                 if (logRecord.FormattedMessage != null)
                 {
                     otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = logRecord.FormattedMessage };
