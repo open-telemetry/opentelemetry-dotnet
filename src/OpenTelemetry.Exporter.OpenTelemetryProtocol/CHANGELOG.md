@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc5
+
+Released 2022-Apr-12
+
 * Updated underlying proto files to
   [v0.16.0](https://github.com/open-telemetry/opentelemetry-proto/releases/tag/v0.16.0).
   The LogRecord.Name field was removed. The CategoryName provided
