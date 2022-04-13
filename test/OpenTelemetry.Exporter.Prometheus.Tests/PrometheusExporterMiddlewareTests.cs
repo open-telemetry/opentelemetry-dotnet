@@ -18,7 +18,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -36,12 +38,156 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         private static readonly string MeterName = Utils.GetCurrentMethodName();
 
         [Fact]
-        public async Task PrometheusExporterMiddlewareIntegration()
+        public Task PrometheusExporterMiddlewareIntegration()
         {
-            var host = await new HostBuilder()
+            return RunPrometheusExporterMiddlewareIntegrationTest(
+                "/metrics",
+                app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
+        }
+
+        [Fact]
+        public Task PrometheusExporterMiddlewareIntegration_Options()
+        {
+            return RunPrometheusExporterMiddlewareIntegrationTest(
+                "/metrics_options",
+                app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+                services => services.Configure<PrometheusExporterOptions>(o => o.ScrapeEndpointPath = "metrics_options"));
+        }
+
+        [Fact]
+        public Task PrometheusExporterMiddlewareIntegration_OptionsFallback()
+        {
+            return RunPrometheusExporterMiddlewareIntegrationTest(
+                "/metrics",
+                app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+                services => services.Configure<PrometheusExporterOptions>(o => o.ScrapeEndpointPath = null));
+        }
+
+        [Fact]
+        public Task PrometheusExporterMiddlewareIntegration_OptionsViaAddPrometheusExporter()
+        {
+            return RunPrometheusExporterMiddlewareIntegrationTest(
+                "/metrics_from_AddPrometheusExporter",
+                app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+                configureOptions: o => o.ScrapeEndpointPath = "/metrics_from_AddPrometheusExporter");
+        }
+
+        [Fact]
+        public Task PrometheusExporterMiddlewareIntegration_PathOverride()
+        {
+            return RunPrometheusExporterMiddlewareIntegrationTest(
+                "/metrics_override",
+                app => app.UseOpenTelemetryPrometheusScrapingEndpoint("/metrics_override"));
+        }
+
+        [Fact]
+        public Task PrometheusExporterMiddlewareIntegration_Predicate()
+        {
+            return RunPrometheusExporterMiddlewareIntegrationTest(
+                "/metrics_predicate?enabled=true",
+                app => app.UseOpenTelemetryPrometheusScrapingEndpoint(httpcontext => httpcontext.Request.Path == "/metrics_predicate" && httpcontext.Request.Query["enabled"] == "true"));
+        }
+
+        [Fact]
+        public Task PrometheusExporterMiddlewareIntegration_MixedPredicateAndPath()
+        {
+            return RunPrometheusExporterMiddlewareIntegrationTest(
+                "/metrics_predicate",
+                app => app.UseOpenTelemetryPrometheusScrapingEndpoint(
+                    meterProvider: null,
+                    predicate: httpcontext => httpcontext.Request.Path == "/metrics_predicate",
+                    path: "/metrics_path",
+                    configureBranchedPipeline: branch => branch.Use((context, next) =>
+                    {
+                        context.Response.Headers.Add("X-MiddlewareExecuted", "true");
+                        return next();
+                    })),
+                services => services.Configure<PrometheusExporterOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
+                validateResponse: rsp =>
+                {
+                    if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string> headers))
+                    {
+                        headers = Array.Empty<string>();
+                    }
+
+                    Assert.Equal("true", headers.FirstOrDefault());
+                });
+        }
+
+        [Fact]
+        public Task PrometheusExporterMiddlewareIntegration_MixedPath()
+        {
+            return RunPrometheusExporterMiddlewareIntegrationTest(
+                "/metrics_path",
+                app => app.UseOpenTelemetryPrometheusScrapingEndpoint(
+                    meterProvider: null,
+                    predicate: null,
+                    path: "/metrics_path",
+                    configureBranchedPipeline: branch => branch.Use((context, next) =>
+                    {
+                        context.Response.Headers.Add("X-MiddlewareExecuted", "true");
+                        return next();
+                    })),
+                services => services.Configure<PrometheusExporterOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
+                validateResponse: rsp =>
+                {
+                    if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string> headers))
+                    {
+                        headers = Array.Empty<string>();
+                    }
+
+                    Assert.Equal("true", headers.FirstOrDefault());
+                });
+        }
+
+        [Fact]
+        public async Task PrometheusExporterMiddlewareIntegration_MeterProvider()
+        {
+            using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(MeterName)
+                .AddPrometheusExporter()
+                .Build();
+
+            await RunPrometheusExporterMiddlewareIntegrationTest(
+                "/metrics",
+                app => app.UseOpenTelemetryPrometheusScrapingEndpoint(
+                    meterProvider: meterProvider,
+                    predicate: null,
+                    path: null,
+                    configureBranchedPipeline: null),
+                registerMeterProvider: false).ConfigureAwait(false);
+        }
+
+        private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
+            string path,
+            Action<IApplicationBuilder> configure,
+            Action<IServiceCollection> configureServices = null,
+            Action<HttpResponseMessage> validateResponse = null,
+            bool registerMeterProvider = true,
+            Action<PrometheusExporterOptions> configureOptions = null)
+        {
+            using var host = await new HostBuilder()
                .ConfigureWebHost(webBuilder => webBuilder
                    .UseTestServer()
-                   .UseStartup<Startup>())
+                   .ConfigureServices(services =>
+                   {
+                       if (registerMeterProvider)
+                       {
+                           services.AddOpenTelemetryMetrics(builder => builder
+                                .AddMeter(MeterName)
+                                .AddPrometheusExporter(o =>
+                                {
+                                    configureOptions?.Invoke(o);
+                                    if (o.StartHttpListener)
+                                    {
+                                        throw new InvalidOperationException("StartHttpListener should be false on .NET Core 3.1+.");
+                                    }
+                                }));
+                       }
+
+                       configureServices?.Invoke(services);
+                   })
+                   .Configure(configure))
                .StartAsync();
 
             var tags = new KeyValuePair<string, object>[]
@@ -58,7 +204,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             counter.Add(100.18D, tags);
             counter.Add(0.99D, tags);
 
-            using var response = await host.GetTestClient().GetAsync("/metrics").ConfigureAwait(false);
+            using var response = await host.GetTestClient().GetAsync(path).ConfigureAwait(false);
 
             var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
@@ -80,34 +226,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             var index = content.LastIndexOf(' ');
 
-            Assert.Equal('\n', content[content.Length - 1]);
+            Assert.Equal('\n', content[^1]);
 
             var timestamp = long.Parse(content.Substring(index, content.Length - index - 1));
 
             Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
 
+            validateResponse?.Invoke(response);
+
             await host.StopAsync().ConfigureAwait(false);
-        }
-
-        public class Startup
-        {
-            public void ConfigureServices(IServiceCollection services)
-            {
-                services.AddOpenTelemetryMetrics(builder => builder
-                    .AddMeter(MeterName)
-                    .AddPrometheusExporter(o =>
-                    {
-                        if (o.StartHttpListener)
-                        {
-                            throw new InvalidOperationException("StartHttpListener should be false on .NET Core 3.1+.");
-                        }
-                    }));
-            }
-
-            public void Configure(IApplicationBuilder app)
-            {
-                app.UseOpenTelemetryPrometheusScrapingEndpoint();
-            }
         }
     }
 }
