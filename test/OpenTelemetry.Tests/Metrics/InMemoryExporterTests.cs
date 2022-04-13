@@ -33,7 +33,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    metricReaderOptions.Temporality = AggregationTemporality.Delta;
+                    metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
                 })
                 .Build();
 

@@ -25,7 +25,8 @@ using OpenTelemetry.Resources;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Build MeterProvider with Resource, Readers, and Instrumentation.
+    /// Build MeterProvider with Instrumentations, Meters,
+    /// Resource, Readers, and Views.
     /// </summary>
     public abstract class MeterProviderBuilderBase : MeterProviderBuilder
     {
@@ -81,7 +82,12 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilder AddView(string instrumentName, string name)
         {
-            return this.AddView(instrumentName, new MetricStreamConfiguration() { Name = name });
+            return this.AddView(
+                instrumentName,
+                new MetricStreamConfiguration
+                {
+                    Name = name,
+                });
         }
 
         internal MeterProviderBuilder AddView(string instrumentName, MetricStreamConfiguration metricStreamConfiguration)

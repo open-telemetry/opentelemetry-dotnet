@@ -24,7 +24,7 @@ namespace OpenTelemetry.Context.Propagation.Tests
 {
     public class CompositePropagatorTest
     {
-        private static readonly string[] Empty = new string[0];
+        private static readonly string[] Empty = Array.Empty<string>();
         private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter = (headers, name) =>
         {
             count++;

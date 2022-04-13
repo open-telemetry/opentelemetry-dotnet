@@ -23,7 +23,6 @@ using OpenTelemetry.Instrumentation;
 namespace Benchmarks.Instrumentation
 {
     [InProcess]
-    [MemoryDiagnoser]
     public class DiagnosticSourceSubscriberBenchmark
     {
         [Params(1, 2)]

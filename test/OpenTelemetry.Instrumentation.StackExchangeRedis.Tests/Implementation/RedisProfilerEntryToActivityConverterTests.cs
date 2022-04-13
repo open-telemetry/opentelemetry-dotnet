@@ -51,6 +51,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
         {
             this.tracerProvider.Dispose();
             this.connection.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         [Fact]
@@ -160,7 +161,7 @@ namespace OpenTelemetry.Instrumentation.StackExchangeRedis.Implementation
             Assert.Equal(dnsEndPoint.Port, result.GetTagValue(SemanticConventions.AttributeNetPeerPort));
         }
 
-#if !NET461
+#if !NETFRAMEWORK
         [Fact]
         public void ProfilerCommandToActivity_UsesOtherEndPointAsEndPoint()
         {

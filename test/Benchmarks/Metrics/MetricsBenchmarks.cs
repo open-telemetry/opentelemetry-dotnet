@@ -52,17 +52,16 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
 
 namespace Benchmarks.Metrics
 {
-    [MemoryDiagnoser]
     public class MetricsBenchmarks
     {
+        private readonly Random random = new();
+        private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
         private Counter<long> counter;
         private MeterProvider provider;
         private Meter meter;
-        private Random random = new();
-        private string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
 
-        [Params(AggregationTemporality.Cumulative, AggregationTemporality.Delta)]
-        public AggregationTemporality AggregationTemporality { get; set; }
+        [Params(MetricReaderTemporalityPreference.Cumulative, MetricReaderTemporalityPreference.Delta)]
+        public MetricReaderTemporalityPreference AggregationTemporality { get; set; }
 
         [GlobalSetup]
         public void Setup()
@@ -75,7 +74,7 @@ namespace Benchmarks.Metrics
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
                     metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
-                    metricReaderOptions.Temporality = this.AggregationTemporality;
+                    metricReaderOptions.TemporalityPreference = this.AggregationTemporality;
                 })
                 .Build();
 

@@ -295,7 +295,7 @@ allowed to be `1`. This means that the SDK would export measurements from only
 one `MetricStream`. The very first instrument that is published
 (`MyFruitCounter` in this case) will create a `MetricStream` and the SDK will
 thereby reach the maximum `MetricStream` limit of `1`. The measurements from any
-susequent instruments added will be dropped.
+subsequent instruments added will be dropped.
 
 ```csharp
 using System.Diagnostics.Metrics;

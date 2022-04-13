@@ -22,10 +22,9 @@ namespace OpenTelemetry.Metrics;
 public class MetricReaderOptions
 {
     /// <summary>
-    /// Gets or sets the AggregationTemporality used for Histogram
-    /// and Sum metrics.
+    /// Gets or sets the <see cref="MetricReaderTemporalityPreference" />.
     /// </summary>
-    public AggregationTemporality Temporality { get; set; } = AggregationTemporality.Cumulative;
+    public MetricReaderTemporalityPreference TemporalityPreference { get; set; } = MetricReaderTemporalityPreference.Cumulative;
 
     /// <summary>
     /// Gets the <see cref="PeriodicExportingMetricReaderOptions" /> options.

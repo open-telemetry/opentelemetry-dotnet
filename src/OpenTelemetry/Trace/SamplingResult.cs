@@ -87,7 +87,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override bool Equals(object obj)
         {
-            if (!(obj is SamplingResult))
+            if (obj is not SamplingResult)
             {
                 return false;
             }

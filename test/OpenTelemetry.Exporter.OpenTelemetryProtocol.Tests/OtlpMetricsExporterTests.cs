@@ -58,7 +58,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.NotNull(metricReader);
 
             var exportIntervalMilliseconds = (int)typeof(PeriodicExportingMetricReader)
-                .GetField("exportIntervalMilliseconds", bindingFlags)
+                .GetField("ExportIntervalMilliseconds", bindingFlags)
                 .GetValue(metricReader);
 
             Assert.Equal(60000, exportIntervalMilliseconds);
@@ -166,23 +166,23 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.Single(request.ResourceMetrics);
             var resourceMetric = request.ResourceMetrics.First();
-            var oltpResource = resourceMetric.Resource;
+            var otlpResource = resourceMetric.Resource;
 
             if (includeServiceNameInResource)
             {
-                Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service-name");
-                Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceNamespace && kvp.Value.StringValue == "ns1");
+                Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service-name");
+                Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceNamespace && kvp.Value.StringValue == "ns1");
             }
             else
             {
-                Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
+                Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
             }
 
-            Assert.Single(resourceMetric.InstrumentationLibraryMetrics);
-            var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.First();
+            Assert.Single(resourceMetric.ScopeMetrics);
+            var instrumentationLibraryMetrics = resourceMetric.ScopeMetrics.First();
             Assert.Equal(string.Empty, instrumentationLibraryMetrics.SchemaUrl);
-            Assert.Equal(meter.Name, instrumentationLibraryMetrics.InstrumentationLibrary.Name);
-            Assert.Equal("0.0.1", instrumentationLibraryMetrics.InstrumentationLibrary.Version);
+            Assert.Equal(meter.Name, instrumentationLibraryMetrics.Scope.Name);
+            Assert.Equal("0.0.1", instrumentationLibraryMetrics.Scope.Version);
         }
 
         [Theory]
@@ -216,8 +216,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
 
             var resourceMetric = request.ResourceMetrics.Single();
-            var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.Single();
-            var actual = instrumentationLibraryMetrics.Metrics.Single();
+            var scopeMetrics = resourceMetric.ScopeMetrics.Single();
+            var actual = scopeMetrics.Metrics.Single();
 
             Assert.Equal(name, actual.Name);
             Assert.Equal(description ?? string.Empty, actual.Description);
@@ -250,22 +250,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Empty(dataPoint.Attributes);
 
             Assert.Empty(dataPoint.Exemplars);
-
-#pragma warning disable CS0612 // Type or member is obsolete
-            Assert.Null(actual.IntGauge);
-            Assert.Null(actual.IntSum);
-            Assert.Null(actual.IntHistogram);
-            Assert.Empty(dataPoint.Labels);
-#pragma warning restore CS0612 // Type or member is obsolete
         }
 
         [Theory]
-        [InlineData("test_counter", null, null, 123, null, AggregationTemporality.Cumulative, true)]
-        [InlineData("test_counter", null, null, null, 123.45, AggregationTemporality.Cumulative, true)]
-        [InlineData("test_counter", null, null, 123, null, AggregationTemporality.Delta, true)]
-        [InlineData("test_counter", "description", "unit", 123, null, AggregationTemporality.Cumulative, true)]
-        [InlineData("test_counter", null, null, 123, null, AggregationTemporality.Delta, true, "key1", "value1", "key2", 123)]
-        public void TestCounterToOltpMetric(string name, string description, string unit, long? longValue, double? doubleValue, AggregationTemporality aggregationTemporality, bool isMonotonic, params object[] keysValues)
+        [InlineData("test_counter", null, null, 123, null, MetricReaderTemporalityPreference.Cumulative, true)]
+        [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, true)]
+        [InlineData("test_counter", null, null, 123, null, MetricReaderTemporalityPreference.Delta, true)]
+        [InlineData("test_counter", "description", "unit", 123, null, MetricReaderTemporalityPreference.Cumulative, true)]
+        [InlineData("test_counter", null, null, 123, null, MetricReaderTemporalityPreference.Delta, true, "key1", "value1", "key2", 123)]
+        public void TestCounterToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool isMonotonic, params object[] keysValues)
         {
             var metrics = new List<Metric>();
 
@@ -274,7 +267,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(metrics, metricReaderOptions =>
                 {
-                    metricReaderOptions.Temporality = aggregationTemporality;
+                    metricReaderOptions.TemporalityPreference = aggregationTemporality;
                 })
                 .Build();
 
@@ -298,8 +291,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
 
             var resourceMetric = request.ResourceMetrics.Single();
-            var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.Single();
-            var actual = instrumentationLibraryMetrics.Metrics.Single();
+            var scopeMetrics = resourceMetric.ScopeMetrics.Single();
+            var actual = scopeMetrics.Metrics.Single();
 
             Assert.Equal(name, actual.Name);
             Assert.Equal(description ?? string.Empty, actual.Description);
@@ -315,7 +308,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.Equal(isMonotonic, actual.Sum.IsMonotonic);
 
-            var otlpAggregationTemporality = aggregationTemporality == AggregationTemporality.Cumulative
+            var otlpAggregationTemporality = aggregationTemporality == MetricReaderTemporalityPreference.Cumulative
                 ? OtlpMetrics.AggregationTemporality.Cumulative
                 : OtlpMetrics.AggregationTemporality.Delta;
             Assert.Equal(otlpAggregationTemporality, actual.Sum.AggregationTemporality);
@@ -346,22 +339,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
 
             Assert.Empty(dataPoint.Exemplars);
-
-#pragma warning disable CS0612 // Type or member is obsolete
-            Assert.Null(actual.IntGauge);
-            Assert.Null(actual.IntSum);
-            Assert.Null(actual.IntHistogram);
-            Assert.Empty(dataPoint.Labels);
-#pragma warning restore CS0612 // Type or member is obsolete
         }
 
         [Theory]
-        [InlineData("test_histogram", null, null, 123, null, AggregationTemporality.Cumulative)]
-        [InlineData("test_histogram", null, null, null, 123.45, AggregationTemporality.Cumulative)]
-        [InlineData("test_histogram", null, null, 123, null, AggregationTemporality.Delta)]
-        [InlineData("test_histogram", "description", "unit", 123, null, AggregationTemporality.Cumulative)]
-        [InlineData("test_histogram", null, null, 123, null, AggregationTemporality.Delta, "key1", "value1", "key2", 123)]
-        public void TestHistogramToOltpMetric(string name, string description, string unit, long? longValue, double? doubleValue, AggregationTemporality aggregationTemporality, params object[] keysValues)
+        [InlineData("test_histogram", null, null, 123, null, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_histogram", null, null, 123, null, MetricReaderTemporalityPreference.Delta)]
+        [InlineData("test_histogram", "description", "unit", 123, null, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_histogram", null, null, 123, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
+        public void TestHistogramToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, params object[] keysValues)
         {
             var metrics = new List<Metric>();
 
@@ -370,7 +356,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(metrics, metricReaderOptions =>
                 {
-                    metricReaderOptions.Temporality = aggregationTemporality;
+                    metricReaderOptions.TemporalityPreference = aggregationTemporality;
                 })
                 .Build();
 
@@ -394,8 +380,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
 
             var resourceMetric = request.ResourceMetrics.Single();
-            var instrumentationLibraryMetrics = resourceMetric.InstrumentationLibraryMetrics.Single();
-            var actual = instrumentationLibraryMetrics.Metrics.Single();
+            var scopeMetrics = resourceMetric.ScopeMetrics.Single();
+            var actual = scopeMetrics.Metrics.Single();
 
             Assert.Equal(name, actual.Name);
             Assert.Equal(description ?? string.Empty, actual.Description);
@@ -409,7 +395,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Null(actual.ExponentialHistogram);
             Assert.Null(actual.Summary);
 
-            var otlpAggregationTemporality = aggregationTemporality == AggregationTemporality.Cumulative
+            var otlpAggregationTemporality = aggregationTemporality == MetricReaderTemporalityPreference.Cumulative
                 ? OtlpMetrics.AggregationTemporality.Cumulative
                 : OtlpMetrics.AggregationTemporality.Delta;
             Assert.Equal(otlpAggregationTemporality, actual.Histogram.AggregationTemporality);
@@ -453,13 +439,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
 
             Assert.Empty(dataPoint.Exemplars);
-
-#pragma warning disable CS0612 // Type or member is obsolete
-            Assert.Null(actual.IntGauge);
-            Assert.Null(actual.IntSum);
-            Assert.Null(actual.IntHistogram);
-            Assert.Empty(dataPoint.Labels);
-#pragma warning restore CS0612 // Type or member is obsolete
         }
 
         private static IEnumerable<KeyValuePair<string, object>> ToAttributes(object[] keysValues)
