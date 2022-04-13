@@ -30,10 +30,10 @@ namespace OpenTelemetry.Metrics
     {
         private const MetricReaderTemporalityPreference MetricReaderTemporalityPreferenceUnspecified = (MetricReaderTemporalityPreference)0;
 
-        private static Func<Type, AggregationTemporality> cumulativeTemporatlityPreferenceFunc =
+        private static Func<Type, AggregationTemporality> cumulativeTemporalityPreferenceFunc =
             (instrumentType) => AggregationTemporality.Cumulative;
 
-        private static Func<Type, AggregationTemporality> monotonicDeltaTemporatlityPreferenceFunc = (instrumentType) =>
+        private static Func<Type, AggregationTemporality> monotonicDeltaTemporalityPreferenceFunc = (instrumentType) =>
         {
             return instrumentType.GetGenericTypeDefinition() switch
             {
@@ -61,7 +61,7 @@ namespace OpenTelemetry.Metrics
         private readonly object onCollectLock = new();
         private readonly TaskCompletionSource<bool> shutdownTcs = new();
         private MetricReaderTemporalityPreference temporalityPreference = MetricReaderTemporalityPreferenceUnspecified;
-        private Func<Type, AggregationTemporality> temporatlityFunc = cumulativeTemporatlityPreferenceFunc;
+        private Func<Type, AggregationTemporality> temporalityFunc = cumulativeTemporalityPreferenceFunc;
         private int shutdownCount;
         private TaskCompletionSource<bool> collectionTcs;
         private BaseProvider parentProvider;
@@ -89,11 +89,11 @@ namespace OpenTelemetry.Metrics
                 switch (value)
                 {
                     case MetricReaderTemporalityPreference.Delta:
-                        this.temporatlityFunc = monotonicDeltaTemporatlityPreferenceFunc;
+                        this.temporalityFunc = monotonicDeltaTemporalityPreferenceFunc;
                         break;
                     case MetricReaderTemporalityPreference.Cumulative:
                     default:
-                        this.temporatlityFunc = cumulativeTemporatlityPreferenceFunc;
+                        this.temporalityFunc = cumulativeTemporalityPreferenceFunc;
                         break;
                 }
             }

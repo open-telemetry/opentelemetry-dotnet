@@ -32,7 +32,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class MetricItemExtensions
     {
-        private static readonly ConcurrentBag<OtlpMetrics.InstrumentationLibraryMetrics> MetricListPool = new();
+        private static readonly ConcurrentBag<OtlpMetrics.ScopeMetrics> MetricListPool = new();
         private static readonly Action<RepeatedField<OtlpMetrics.Metric>, int> RepeatedFieldOfMetricSetCountAction = CreateRepeatedFieldOfMetricSetCountAction();
 
         internal static void AddMetrics(
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             OtlpResource.Resource processResource,
             in Batch<Metric> metrics)
         {
-            var metricsByLibrary = new Dictionary<string, OtlpMetrics.InstrumentationLibraryMetrics>();
+            var metricsByLibrary = new Dictionary<string, OtlpMetrics.ScopeMetrics>();
             var resourceMetrics = new OtlpMetrics.ResourceMetrics
             {
                 Resource = processResource,
@@ -61,15 +61,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 }
 
                 var meterName = metric.MeterName;
-                if (!metricsByLibrary.TryGetValue(meterName, out var instrumentationLibraryMetrics))
+                if (!metricsByLibrary.TryGetValue(meterName, out var scopeMetrics))
                 {
-                    instrumentationLibraryMetrics = GetMetricListFromPool(meterName, metric.MeterVersion);
+                    scopeMetrics = GetMetricListFromPool(meterName, metric.MeterVersion);
 
-                    metricsByLibrary.Add(meterName, instrumentationLibraryMetrics);
-                    resourceMetrics.InstrumentationLibraryMetrics.Add(instrumentationLibraryMetrics);
+                    metricsByLibrary.Add(meterName, scopeMetrics);
+                    resourceMetrics.ScopeMetrics.Add(scopeMetrics);
                 }
 
-                instrumentationLibraryMetrics.Metrics.Add(otlpMetric);
+                scopeMetrics.Metrics.Add(otlpMetric);
             }
         }
 
@@ -82,21 +82,21 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 return;
             }
 
-            foreach (var libraryMetrics in resourceMetrics.InstrumentationLibraryMetrics)
+            foreach (var scope in resourceMetrics.ScopeMetrics)
             {
-                RepeatedFieldOfMetricSetCountAction(libraryMetrics.Metrics, 0);
-                MetricListPool.Add(libraryMetrics);
+                RepeatedFieldOfMetricSetCountAction(scope.Metrics, 0);
+                MetricListPool.Add(scope);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static OtlpMetrics.InstrumentationLibraryMetrics GetMetricListFromPool(string name, string version)
+        internal static OtlpMetrics.ScopeMetrics GetMetricListFromPool(string name, string version)
         {
             if (!MetricListPool.TryTake(out var metrics))
             {
-                metrics = new OtlpMetrics.InstrumentationLibraryMetrics
+                metrics = new OtlpMetrics.ScopeMetrics
                 {
-                    InstrumentationLibrary = new OtlpCommon.InstrumentationLibrary
+                    Scope = new OtlpCommon.InstrumentationScope
                     {
                         Name = name, // Name is enforced to not be null, but it can be empty.
                         Version = version ?? string.Empty, // NRE throw by proto
@@ -105,8 +105,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
             else
             {
-                metrics.InstrumentationLibrary.Name = name;
-                metrics.InstrumentationLibrary.Version = version ?? string.Empty;
+                metrics.Scope.Name = name;
+                metrics.Scope.Version = version ?? string.Empty;
             }
 
             return metrics;

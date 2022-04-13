@@ -35,7 +35,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class ActivityExtensions
     {
-        private static readonly ConcurrentBag<OtlpTrace.InstrumentationLibrarySpans> SpanListPool = new();
+        private static readonly ConcurrentBag<OtlpTrace.ScopeSpans> SpanListPool = new();
         private static readonly Action<RepeatedField<OtlpTrace.Span>, int> RepeatedFieldOfSpanSetCountAction = CreateRepeatedFieldOfSpanSetCountAction();
 
         internal static void AddBatch(
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             OtlpResource.Resource processResource,
             in Batch<Activity> activityBatch)
         {
-            Dictionary<string, OtlpTrace.InstrumentationLibrarySpans> spansByLibrary = new Dictionary<string, OtlpTrace.InstrumentationLibrarySpans>();
+            Dictionary<string, OtlpTrace.ScopeSpans> spansByLibrary = new Dictionary<string, OtlpTrace.ScopeSpans>();
             OtlpTrace.ResourceSpans resourceSpans = new OtlpTrace.ResourceSpans
             {
                 Resource = processResource,
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     spans = GetSpanListFromPool(activitySourceName, activity.Source.Version);
 
                     spansByLibrary.Add(activitySourceName, spans);
-                    resourceSpans.InstrumentationLibrarySpans.Add(spans);
+                    resourceSpans.ScopeSpans.Add(spans);
                 }
 
                 spans.Spans.Add(span);
@@ -83,21 +83,21 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 return;
             }
 
-            foreach (var librarySpans in resourceSpans.InstrumentationLibrarySpans)
+            foreach (var scope in resourceSpans.ScopeSpans)
             {
-                RepeatedFieldOfSpanSetCountAction(librarySpans.Spans, 0);
-                SpanListPool.Add(librarySpans);
+                RepeatedFieldOfSpanSetCountAction(scope.Spans, 0);
+                SpanListPool.Add(scope);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static OtlpTrace.InstrumentationLibrarySpans GetSpanListFromPool(string name, string version)
+        internal static OtlpTrace.ScopeSpans GetSpanListFromPool(string name, string version)
         {
             if (!SpanListPool.TryTake(out var spans))
             {
-                spans = new OtlpTrace.InstrumentationLibrarySpans
+                spans = new OtlpTrace.ScopeSpans
                 {
-                    InstrumentationLibrary = new OtlpCommon.InstrumentationLibrary
+                    Scope = new OtlpCommon.InstrumentationScope
                     {
                         Name = name, // Name is enforced to not be null, but it can be empty.
                         Version = version ?? string.Empty, // NRE throw by proto
@@ -106,8 +106,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
             else
             {
-                spans.InstrumentationLibrary.Name = name;
-                spans.InstrumentationLibrary.Version = version ?? string.Empty;
+                spans.Scope.Name = name;
+                spans.Scope.Version = version ?? string.Empty;
             }
 
             return spans;
