@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Added `IApplicationBuilder` extension methods to help with Prometheus
+  middleware configuration on ASP.NET Core
+  ([#3029](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3029))
+
 ## 1.2.0-rc5
 
 Released 2022-Apr-12
@@ -19,7 +23,7 @@ Released 2022-Mar-04
 Released 2022-Feb-02
 
 * Update default `httpListenerPrefixes` for PrometheusExporter to be `http://localhost:9464/`.
-([2783](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2783))
+([#2783](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2783))
 
 ## 1.2.0-rc1
 
