@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 1.0.0-rc5
+## 1.2.0-rc5
 
 Released 2022-Apr-12
 
