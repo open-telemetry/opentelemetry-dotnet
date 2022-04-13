@@ -106,7 +106,14 @@ namespace OpenTelemetry.Metrics
             return true;
         }
 
-        public static bool TryFindExporter<T>(this MeterProvider provider, out T exporter)
+        /// <summary>
+        /// Finds the Metric exporter of the given type from the provider.
+        /// </summary>
+        /// <typeparam name="T">The type of the Exporter.</typeparam>
+        /// <param name="provider">The MeterProvider from which Exporter should be found.</param>
+        /// <param name="exporter">The exporter instance.</param>
+        /// <returns>true if the exporter of specified Type is found; otherwise false.</returns>
+        internal static bool TryFindExporter<T>(this MeterProvider provider, out T exporter)
             where T : BaseExporter<Metric>
         {
             if (provider is MeterProviderSdk meterProviderSdk)

@@ -22,7 +22,6 @@ using OpenTelemetry.Tests;
 
 namespace Benchmarks.Instrumentation
 {
-    [MemoryDiagnoser]
     public class UninstrumentedHttpClientBenchmark
     {
         private IDisposable serverLifeTime;

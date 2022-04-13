@@ -21,7 +21,6 @@ using OpenTelemetry.Trace;
 
 namespace Benchmarks.Trace
 {
-    [MemoryDiagnoser]
     public class TraceBenchmarks
     {
         private readonly ActivitySource sourceWithNoListener = new("Benchmark.NoListener");
