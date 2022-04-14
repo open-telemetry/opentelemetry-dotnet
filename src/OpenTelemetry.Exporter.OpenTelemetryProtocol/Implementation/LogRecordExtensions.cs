@@ -20,6 +20,7 @@ using Google.Protobuf;
 using Google.Protobuf.Collections;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
 using OtlpCollector = Opentelemetry.Proto.Collector.Logs.V1;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
@@ -38,7 +39,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         internal static void AddBatch(
             this OtlpCollector.ExportLogsServiceRequest request,
             OtlpResource.Resource processResource,
-            in Batch<Logs.LogRecord> logRecordBatch)
+            in Batch<LogRecord> logRecordBatch)
         {
             var resourceLogs = new OtlpLogs.ResourceLogs
             {
@@ -60,7 +61,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static OtlpLogs.LogRecord ToOtlpLog(this Logs.LogRecord logRecord)
+        internal static OtlpLogs.LogRecord ToOtlpLog(this LogRecord logRecord)
         {
             OtlpLogs.LogRecord otlpLogRecord = null;
 
