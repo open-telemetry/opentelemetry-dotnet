@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
     public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         [Fact]
-        public void OtlpLogRecordTestWhenStateValuesArePopulated()
+        public void OtlpLogRecordTestAttributesWithParseStateValuesEnabled()
         {
             var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
@@ -44,7 +44,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 });
             });
 
-            var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+            var logger = loggerFactory.CreateLogger("OtlpLogRecordTestAttributesWithParseStateValuesEnabled");
+
+            // Scenario 1 - Using Log Extension Methods
+            // which automatically produces "state"
+            // as IReadOnlyList<KeyValuePair<string, object>>
             logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
 
             Assert.Single(logRecords);
@@ -67,6 +71,168 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             attribute = otlpLogRecord.Attributes[2];
             Assert.Equal("{OriginalFormat}", attribute.Key);
             Assert.Equal("Hello from {name} {price}.", attribute.Value.StringValue);
+            logRecords.Clear();
+
+            // Scenario 2 - Using raw Log Method
+            // with custom "state" of type
+            // IReadOnlyList<KeyValuePair<string, object>>
+            logger.Log(
+                    LogLevel.Information,
+                    eventId: default,
+                    state: new List<KeyValuePair<string, object>>()
+                    {
+                        new KeyValuePair<string, object>("name", "tomato"),
+                        new KeyValuePair<string, object>("price", 2.99),
+                    },
+                    exception: null,
+                    (state, ex) => "Hello from tomato 2.99.");
+
+            Assert.Single(logRecords);
+
+            logRecord = logRecords[0];
+            otlpLogRecord = logRecord.ToOtlpLog();
+
+            Assert.NotNull(otlpLogRecord);
+            Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
+            Assert.Equal(2, otlpLogRecord.Attributes.Count);
+
+            attribute = otlpLogRecord.Attributes[0];
+            Assert.Equal("name", attribute.Key);
+            Assert.Equal("tomato", attribute.Value.StringValue);
+
+            attribute = otlpLogRecord.Attributes[1];
+            Assert.Equal("price", attribute.Key);
+            Assert.Equal(2.99, attribute.Value.DoubleValue);
+            logRecords.Clear();
+
+            // Scenario 3 - Using raw Log Method
+            // with custom "state" of a type, which is
+            // not of type IReadOnlyList<KeyValuePair<string, object>>
+            logger.Log(
+                    LogLevel.Information,
+                    eventId: default,
+                    state: "my custom state",
+                    exception: null,
+                    (state, ex) => "Hello from tomato 2.99.");
+
+            Assert.Single(logRecords);
+
+            logRecord = logRecords[0];
+            otlpLogRecord = logRecord.ToOtlpLog();
+
+            Assert.NotNull(otlpLogRecord);
+
+            // Body comes from FormattedMessage
+            Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
+
+            // Exporter does not know what to do
+            // with state. But SDK has converted
+            // it to a single element List with empty
+            // key, courtesy of ParseStateValues=true
+            Assert.Single(otlpLogRecord.Attributes);
+            attribute = otlpLogRecord.Attributes[0];
+            Assert.Equal(string.Empty, attribute.Key);
+            Assert.Equal("my custom state", attribute.Value.StringValue);
+        }
+
+        [Fact]
+        public void OtlpLogRecordTestAttributesWithParseStateValuesDisabled()
+        {
+            var logRecords = new List<LogRecord>();
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.IncludeFormattedMessage = true;
+                    options.ParseStateValues = false;
+                    options.AddInMemoryExporter(logRecords);
+                });
+            });
+
+            var logger = loggerFactory.CreateLogger("OtlpLogRecordTestAttributesWithParseStateValuesDisabled");
+
+            // Scenario 1 - Using Log Extension Methods
+            // which automatically produces "state"
+            // as IReadOnlyList<KeyValuePair<string, object>>
+            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+
+            Assert.Single(logRecords);
+
+            var logRecord = logRecords[0];
+            var otlpLogRecord = logRecord.ToOtlpLog();
+
+            Assert.NotNull(otlpLogRecord);
+            Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
+            Assert.Equal(3, otlpLogRecord.Attributes.Count);
+
+            var attribute = otlpLogRecord.Attributes[0];
+            Assert.Equal("name", attribute.Key);
+            Assert.Equal("tomato", attribute.Value.StringValue);
+
+            attribute = otlpLogRecord.Attributes[1];
+            Assert.Equal("price", attribute.Key);
+            Assert.Equal(2.99, attribute.Value.DoubleValue);
+
+            attribute = otlpLogRecord.Attributes[2];
+            Assert.Equal("{OriginalFormat}", attribute.Key);
+            Assert.Equal("Hello from {name} {price}.", attribute.Value.StringValue);
+            logRecords.Clear();
+
+            // Scenario 2 - Using raw Log Method
+            // with custom "state" of type
+            // IReadOnlyList<KeyValuePair<string, object>>
+            logger.Log(
+                    LogLevel.Information,
+                    eventId: default,
+                    state: new List<KeyValuePair<string, object>>()
+                    {
+                        new KeyValuePair<string, object>("name", "tomato"),
+                        new KeyValuePair<string, object>("price", 2.99),
+                    },
+                    exception: null,
+                    (state, ex) => "Hello from tomato 2.99.");
+
+            Assert.Single(logRecords);
+
+            logRecord = logRecords[0];
+            otlpLogRecord = logRecord.ToOtlpLog();
+
+            Assert.NotNull(otlpLogRecord);
+            Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
+            Assert.Equal(2, otlpLogRecord.Attributes.Count);
+
+            attribute = otlpLogRecord.Attributes[0];
+            Assert.Equal("name", attribute.Key);
+            Assert.Equal("tomato", attribute.Value.StringValue);
+
+            attribute = otlpLogRecord.Attributes[1];
+            Assert.Equal("price", attribute.Key);
+            Assert.Equal(2.99, attribute.Value.DoubleValue);
+            logRecords.Clear();
+
+            // Scenario 3 - Using raw Log Method
+            // with custom "state" of a type, which is
+            // not of type IReadOnlyList<KeyValuePair<string, object>>
+            logger.Log(
+                    LogLevel.Information,
+                    eventId: default,
+                    state: "my custom state",
+                    exception: null,
+                    (state, ex) => "Hello from tomato 2.99.");
+
+            Assert.Single(logRecords);
+
+            logRecord = logRecords[0];
+            otlpLogRecord = logRecord.ToOtlpLog();
+
+            Assert.NotNull(otlpLogRecord);
+
+            // Body comes from FormattedMessage
+            Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
+
+            // Exporter does not know what to do
+            // with state.
+            Assert.Empty(otlpLogRecord.Attributes);
         }
 
         [Fact]

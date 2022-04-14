@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
@@ -83,22 +84,37 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     bodyPopulatedFromFormattedMessage = true;
                 }
 
-                if (logRecord.StateValues != null)
+                IReadOnlyList<KeyValuePair<string, object>> attributes;
+                if (logRecord.State == null)
                 {
-                    foreach (var stateValue in logRecord.StateValues)
+                    // When State is null, OTel SDK guarantees StateValues is populated
+                    // TODO: Debug.Assert?
+                    attributes = logRecord.StateValues;
+                }
+                else
+                {
+                    // Attempt to see if State could be ROL_KVP.
+                    // If this fails, attributes will be empty
+                    // TODO: Should exporter attempt ToString()
+                    // on logRecord.State?
+                    attributes = logRecord.State as IReadOnlyList<KeyValuePair<string, object>>;
+                }
+
+                for (int i = 0; i < attributes?.Count; i++)
+                {
+                    var attribute = attributes[i];
+
+                    // Special casing {OriginalFormat}
+                    // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
+                    // for explanation.
+                    if (attribute.Key.Equals("{OriginalFormat}") && !bodyPopulatedFromFormattedMessage)
                     {
-                        // Special casing {OriginalFormat}
-                        // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
-                        // for explanation.
-                        if (stateValue.Key.Equals("{OriginalFormat}") && !bodyPopulatedFromFormattedMessage)
-                        {
-                            otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = stateValue.Value as string };
-                        }
-                        else
-                        {
-                            var otlpAttribute = stateValue.ToOtlpAttribute();
-                            otlpLogRecord.Attributes.Add(otlpAttribute);
-                        }
+                        otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = attribute.Value as string };
+                    }
+                    else
+                    {
+                        var otlpAttribute = attribute.ToOtlpAttribute();
+                        otlpLogRecord.Attributes.Add(otlpAttribute);
                     }
                 }
 
