@@ -158,13 +158,23 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 registerMeterProvider: false).ConfigureAwait(false);
         }
 
+        [Fact]
+        public Task PrometheusExporterMiddlewareIntegration_NoMetrics()
+        {
+            return RunPrometheusExporterMiddlewareIntegrationTest(
+                "/metrics",
+                app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+                skipMetrics: true);
+        }
+
         private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
             string path,
             Action<IApplicationBuilder> configure,
             Action<IServiceCollection> configureServices = null,
             Action<HttpResponseMessage> validateResponse = null,
             bool registerMeterProvider = true,
-            Action<PrometheusExporterOptions> configureOptions = null)
+            Action<PrometheusExporterOptions> configureOptions = null,
+            bool skipMetrics = false)
         {
             using var host = await new HostBuilder()
                .ConfigureWebHost(webBuilder => webBuilder
@@ -201,36 +211,46 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             var beginTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
             var counter = meter.CreateCounter<double>("counter_double");
-            counter.Add(100.18D, tags);
-            counter.Add(0.99D, tags);
+            if (!skipMetrics)
+            {
+                counter.Add(100.18D, tags);
+                counter.Add(0.99D, tags);
+            }
 
             using var response = await host.GetTestClient().GetAsync(path).ConfigureAwait(false);
 
             var endTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.True(response.Content.Headers.Contains("Last-Modified"));
-            Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
+            if (!skipMetrics)
+            {
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.True(response.Content.Headers.Contains("Last-Modified"));
+                Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
 
-            string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-            string[] lines = content.Split('\n');
+                string[] lines = content.Split('\n');
 
-            Assert.Equal(
-                $"# TYPE counter_double counter",
-                lines[0]);
+                Assert.Equal(
+                    $"# TYPE counter_double counter",
+                    lines[0]);
 
-            Assert.Contains(
-                $"counter_double{{key1=\"value1\",key2=\"value2\"}} 101.17",
-                lines[1]);
+                Assert.Contains(
+                    $"counter_double{{key1=\"value1\",key2=\"value2\"}} 101.17",
+                    lines[1]);
 
-            var index = content.LastIndexOf(' ');
+                var index = content.LastIndexOf(' ');
 
-            Assert.Equal('\n', content[^1]);
+                Assert.Equal('\n', content[^1]);
 
-            var timestamp = long.Parse(content.Substring(index, content.Length - index - 1));
+                var timestamp = long.Parse(content.Substring(index, content.Length - index - 1));
 
-            Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
+                Assert.True(beginTimestamp <= timestamp && timestamp <= endTimestamp);
+            }
+            else
+            {
+                Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+            }
 
             validateResponse?.Invoke(response);
 

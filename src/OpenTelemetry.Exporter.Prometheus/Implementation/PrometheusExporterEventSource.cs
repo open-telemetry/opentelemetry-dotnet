@@ -72,5 +72,14 @@ namespace OpenTelemetry.Exporter.Prometheus
         {
             this.WriteEvent(3, exception);
         }
+
+        [Event(4, Message = "No metrics are available for export.", Level = EventLevel.Warning)]
+        public void NoMetrics()
+        {
+            if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+            {
+                this.WriteEvent(4);
+            }
+        }
     }
 }
