@@ -18,8 +18,9 @@ using System;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Logs;
+using Opentelemetry.Proto.Logs.V1;
 using OpenTelemetry.Trace;
 using OtlpCollector = Opentelemetry.Proto.Collector.Logs.V1;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
@@ -30,18 +31,23 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class LogRecordExtensions
     {
+        private static readonly string[] LogLevels = new string[7]
+        {
+            "Trace", "Debug", "Information", "Warning", "Error", "Critical", "None",
+        };
+
         internal static void AddBatch(
             this OtlpCollector.ExportLogsServiceRequest request,
             OtlpResource.Resource processResource,
-            in Batch<LogRecord> logRecordBatch)
+            in Batch<Logs.LogRecord> logRecordBatch)
         {
-            OtlpLogs.ResourceLogs resourceLogs = new OtlpLogs.ResourceLogs
+            ResourceLogs resourceLogs = new ResourceLogs
             {
                 Resource = processResource,
             };
             request.ResourceLogs.Add(resourceLogs);
 
-            var scopeLogs = new OtlpLogs.ScopeLogs();
+            var scopeLogs = new ScopeLogs();
             resourceLogs.ScopeLogs.Add(scopeLogs);
 
             foreach (var logRecord in logRecordBatch)
@@ -55,19 +61,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static OtlpLogs.LogRecord ToOtlpLog(this LogRecord logRecord)
+        internal static LogRecord ToOtlpLog(this Logs.LogRecord logRecord)
         {
-            OtlpLogs.LogRecord otlpLogRecord = null;
+            LogRecord otlpLogRecord = null;
 
             try
             {
-                otlpLogRecord = new OtlpLogs.LogRecord
+                otlpLogRecord = new LogRecord
                 {
                     TimeUnixNano = (ulong)logRecord.Timestamp.ToUnixTimeNanoseconds(),
-
-                    // TODO: Devise mapping of LogLevel to SeverityNumber
-                    // See: https://github.com/open-telemetry/opentelemetry-proto/blob/bacfe08d84e21fb2a779e302d12e8dfeb67e7b86/opentelemetry/proto/logs/v1/logs.proto#L100-L102
-                    SeverityText = logRecord.LogLevel.ToString(),
+                    SeverityNumber = GetSeverityNumber(logRecord.LogLevel),
+                    SeverityText = LogLevels[(int)logRecord.LogLevel],
                 };
 
                 // TODO: Add logRecord.CategoryName as an attribute
@@ -143,6 +147,38 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 Key = key,
                 Value = new OtlpCommon.AnyValue { IntValue = value },
             });
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static SeverityNumber GetSeverityNumber(LogLevel logLevel)
+        {
+            // Maps the ILogger LogLevel to OpenTelemetry logging level.
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#appendix-b-severitynumber-example-mappings
+            // TODO: for improving perf simply do ((int)loglevel * 4) + 1
+            // or ((int)logLevel << 2) + 1
+            // Current code is just for ease of reading.
+            switch (logLevel)
+            {
+                case LogLevel.Trace:
+                    return SeverityNumber.Trace;
+                case LogLevel.Debug:
+                    return SeverityNumber.Debug;
+                case LogLevel.Information:
+                    return SeverityNumber.Info;
+                case LogLevel.Warning:
+                    return SeverityNumber.Warn;
+                case LogLevel.Error:
+                    return SeverityNumber.Error;
+                case LogLevel.Critical:
+                    return SeverityNumber.Fatal;
+
+                // TODO:
+                // we reach default only for LogLevel.None
+                // but that is filtered out anyway.
+                // should we throw here then?
+                default:
+                    return SeverityNumber.Debug;
+            }
         }
     }
 }
