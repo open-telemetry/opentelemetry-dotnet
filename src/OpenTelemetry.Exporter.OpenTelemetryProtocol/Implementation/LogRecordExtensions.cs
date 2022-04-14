@@ -87,6 +87,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 {
                     foreach (var stateValue in logRecord.StateValues)
                     {
+                        // Special casing {OriginalFormat}
+                        // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
+                        // for explanation.
                         if (stateValue.Key.Equals("{OriginalFormat}") && !bodyPopulatedFromFormattedMessage)
                         {
                             otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = stateValue.Value as string };
