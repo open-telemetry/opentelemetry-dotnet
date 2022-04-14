@@ -24,7 +24,6 @@ using Opentelemetry.Proto.Logs.V1;
 using OpenTelemetry.Trace;
 using OtlpCollector = Opentelemetry.Proto.Collector.Logs.V1;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
-using OtlpLogs = Opentelemetry.Proto.Logs.V1;
 using OtlpResource = Opentelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
