@@ -19,7 +19,7 @@ jobs:
         version: [netcoreapp3.1,net5.0,net6.0]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install dependencies
       run: dotnet restore
