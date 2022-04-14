@@ -58,7 +58,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                     {
                         _ = this.commandFetcher.TryFetch(payload, out var command);
 
-                        if (this.options?.EventFilter(command) == false)
+                        if (this.options.EventFilter(command) == false)
                         {
                             return;
                         }

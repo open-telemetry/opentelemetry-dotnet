@@ -134,7 +134,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                  { "CommandText", eventData.Payload[3] },
             });
 
-            if (this.options?.EventFilter(payload) == false)
+            if (this.options.EventFilter(payload) == false)
             {
                 return;
             }

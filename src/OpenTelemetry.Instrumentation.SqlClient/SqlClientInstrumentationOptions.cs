@@ -18,6 +18,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Data;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Trace;
@@ -267,6 +268,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool EventFilter(object payload)
         {
             try
