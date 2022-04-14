@@ -15,8 +15,6 @@
 // </copyright>
 #if NETFRAMEWORK
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using OpenTelemetry.Trace;
@@ -127,14 +125,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 return;
             }
 
-            var payload = new ReadOnlyDictionary<string, object>(new Dictionary<string, object>
-            {
-                 { "DataSource", eventData.Payload[1] },
-                 { "DatabaseName", eventData.Payload[2] },
-                 { "CommandText", eventData.Payload[3] },
-            });
-
-            if (this.options.EventFilter(payload) == false)
+            if (this.options.EventFilter(eventData.Payload) == false)
             {
                 return;
             }
@@ -151,17 +142,20 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
                 return;
             }
 
-            activity.DisplayName = payload["DatabaseName"].ToString();
+            string databaseName = (string)eventData.Payload[2];
+
+            activity.DisplayName = databaseName;
 
             if (activity.IsAllDataRequested)
             {
-                activity.SetTag(SemanticConventions.AttributeDbName, payload["DatabaseName"].ToString());
+                activity.SetTag(SemanticConventions.AttributeDbName, databaseName);
 
-                this.options.AddConnectionLevelDetailsToActivity(payload["DataSource"].ToString(), activity);
+                this.options.AddConnectionLevelDetailsToActivity((string)eventData.Payload[1], activity);
 
-                if (!string.IsNullOrEmpty(payload["CommandText"].ToString()) && this.options.SetDbStatement)
+                string commandText = (string)eventData.Payload[3];
+                if (!string.IsNullOrEmpty(commandText) && this.options.SetDbStatement)
                 {
-                    activity.SetTag(SemanticConventions.AttributeDbStatement, payload["CommandText"].ToString());
+                    activity.SetTag(SemanticConventions.AttributeDbStatement, commandText);
                 }
             }
         }

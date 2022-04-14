@@ -63,14 +63,13 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     {
                         options.Filter = (payload) =>
                         {
-                            if (payload == null || payload is not ReadOnlyDictionary<string, object>)
+                            if (payload == null || payload is not ReadOnlyCollection<object>)
                             {
                                 return true;
                             }
 
-                            var dictionaryPayload = payload as ReadOnlyDictionary<string, object>;
-                            _ = dictionaryPayload.TryGetValue("CommandText", out var commandText);
-                            if (commandText.ToString().Contains("sp_who"))
+                            var payLoadCollection = payload as ReadOnlyCollection<object>;
+                            if (payLoadCollection[3].ToString().Contains("sp_who"))
                             {
                                 return false;
                             }
@@ -146,14 +145,13 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     {
                         options.Filter = (payload) =>
                         {
-                            if (payload == null || payload is not ReadOnlyDictionary<string, object>)
+                            if (payload == null || payload is not ReadOnlyCollection<object>)
                             {
                                 return true;
                             }
 
-                            var dictionary = payload as ReadOnlyDictionary<string, object>;
-                            _ = dictionary.TryGetValue("CommandText", out var commandText);
-                            if (commandText.ToString().Contains("sp_who"))
+                            var payLoadCollection = payload as ReadOnlyCollection<object>;
+                            if (payLoadCollection[3].ToString().Contains("sp_who"))
                             {
                                 return false;
                             }
