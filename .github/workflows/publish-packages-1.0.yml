@@ -42,7 +42,7 @@ jobs:
       run: dotnet pack OpenTelemetry.proj --configuration Release --no-build
 
     - name: Publish Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.os }}-packages
         path: '**/bin/**/*.*nupkg'
