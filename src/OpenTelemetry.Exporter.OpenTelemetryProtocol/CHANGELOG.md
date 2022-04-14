@@ -2,8 +2,11 @@
 
 ## Unreleased
 
-* LogExporter to correcly map Severity to OTLP.
+* LogExporter to correctly map Severity to OTLP.
   ([#3177](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3177))
+
+* LogExporter to special case {OriginalFormat} to populate
+  Body. ([#3182](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182))
 
 ## 1.2.0-rc5
 

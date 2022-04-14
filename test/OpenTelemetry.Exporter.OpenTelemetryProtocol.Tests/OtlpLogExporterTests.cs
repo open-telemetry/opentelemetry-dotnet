@@ -225,8 +225,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             }
         }
 
-        [Fact]
-        public void CheckToOtlpLogRecordFormattedMessage()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CheckToOtlpLogRecordBodyIsPopulated(bool includeFormattedMessage)
         {
             var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
@@ -234,11 +236,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 builder.AddOpenTelemetry(options =>
                 {
                     options.AddInMemoryExporter(logRecords);
-                    options.IncludeFormattedMessage = true;
+                    options.IncludeFormattedMessage = includeFormattedMessage;
+                    options.ParseStateValues = true;
                 });
             });
 
             var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+
+            // Scenario 1 - Using ExtensionMethods on ILogger.Log
             logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
             Assert.Single(logRecords);
 
@@ -246,7 +251,56 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var otlpLogRecord = logRecord.ToOtlpLog();
 
             Assert.NotNull(otlpLogRecord);
-            Assert.Equal(logRecord.FormattedMessage, otlpLogRecord.Body.StringValue);
+            if (includeFormattedMessage)
+            {
+                Assert.Equal(logRecord.FormattedMessage, otlpLogRecord.Body.StringValue);
+            }
+            else
+            {
+                Assert.Equal("OpenTelemetry {Greeting} {Subject}!", otlpLogRecord.Body.StringValue);
+            }
+
+            logRecords.Clear();
+
+            // Scenario 2 - Using the raw ILogger.Log Method
+            logger.Log(LogLevel.Information, default, "state", exception: null, (st, ex) => "Formatted Message");
+            Assert.Single(logRecords);
+
+            logRecord = logRecords[0];
+            otlpLogRecord = logRecord.ToOtlpLog();
+
+            Assert.NotNull(otlpLogRecord);
+            if (includeFormattedMessage)
+            {
+                Assert.Equal(logRecord.FormattedMessage, otlpLogRecord.Body.StringValue);
+            }
+            else
+            {
+                Assert.Null(otlpLogRecord.Body);
+            }
+
+            logRecords.Clear();
+
+            // Scenario 3 - Using the raw ILogger.Log Method, but with null
+            // formatter.
+            logger.Log(LogLevel.Information, default, "state", exception: null, formatter: null);
+            Assert.Single(logRecords);
+
+            logRecord = logRecords[0];
+            otlpLogRecord = logRecord.ToOtlpLog();
+
+            Assert.NotNull(otlpLogRecord);
+
+            // There is no formatter, so no way to populate Body.
+            // Exporter won't even attempt to do ToString() on State.
+            if (includeFormattedMessage)
+            {
+                Assert.Null(otlpLogRecord.Body);
+            }
+            else
+            {
+                Assert.Null(otlpLogRecord.Body);
+            }
         }
 
         [Fact]

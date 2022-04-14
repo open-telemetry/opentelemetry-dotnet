@@ -76,17 +76,29 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                 // TODO: Add logRecord.CategoryName as an attribute
 
+                bool bodyPopulatedFromFormattedMessage = false;
                 if (logRecord.FormattedMessage != null)
                 {
                     otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = logRecord.FormattedMessage };
+                    bodyPopulatedFromFormattedMessage = true;
                 }
 
                 if (logRecord.StateValues != null)
                 {
                     foreach (var stateValue in logRecord.StateValues)
                     {
-                        var otlpAttribute = stateValue.ToOtlpAttribute();
-                        otlpLogRecord.Attributes.Add(otlpAttribute);
+                        // Special casing {OriginalFormat}
+                        // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
+                        // for explanation.
+                        if (stateValue.Key.Equals("{OriginalFormat}") && !bodyPopulatedFromFormattedMessage)
+                        {
+                            otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = stateValue.Value as string };
+                        }
+                        else
+                        {
+                            var otlpAttribute = stateValue.ToOtlpAttribute();
+                            otlpLogRecord.Attributes.Add(otlpAttribute);
+                        }
                     }
                 }
 
