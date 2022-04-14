@@ -29,5 +29,5 @@ public class MetricReaderOptions
     /// <summary>
     /// Gets the <see cref="PeriodicExportingMetricReaderOptions" /> options.
     /// </summary>
-    public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions { get; private set; } = new PeriodicExportingMetricReaderOptions();
+    public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions { get; set; } = new PeriodicExportingMetricReaderOptions();
 }
