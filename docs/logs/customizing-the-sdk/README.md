@@ -32,11 +32,10 @@ set by invoking the formatter from [ILogger.Log](https://docs.microsoft.com/dotn
 
 ### ParseStateValues
 
-ILogger supports [message templates](https://docs.microsoft.com/dotnet/core/extensions/logging#log-message-template)
-which can contain placeholders for arguments provided as parameters.
-
-`ParseStateValues` determines if the individual arguments will be stored as
-key-value pairs in the exported `LogRecord.StateValues`.
+Gets or sets a value indicating whether or not log state should be parsed into
+`LogRecord.StateValues` on generated `LogRecord`s. The default value is
+`false`. Note that when `ParseStateValues` is set to `true`
+`LogRecord.State` will always be `null`.
 
 See [Program.cs](Program.cs) for an example.
 
