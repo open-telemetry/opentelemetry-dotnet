@@ -21,10 +21,10 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
-using Opentelemetry.Proto.Logs.V1;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+using OtlpLogs = Opentelemetry.Proto.Logs.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
@@ -33,7 +33,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void CheckToOtlpLogRecordStateValues()
         {
-            var logRecords = new List<Logs.LogRecord>();
+            var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void CheckToOtlpLogRecordEventId()
         {
-            var logRecords = new List<Logs.LogRecord>();
+            var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void CheckToOtlpLogRecordTraceIdSpanIdFlagWithNoActivity()
         {
-            var logRecords = new List<Logs.LogRecord>();
+            var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
@@ -134,7 +134,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void CheckToOtlpLogRecordSpanIdTraceIdAndFlag()
         {
-            var logRecords = new List<Logs.LogRecord>();
+            var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
@@ -172,7 +172,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData(LogLevel.Critical)]
         public void CheckToOtlpLogRecordSeverityLevelAndText(LogLevel logLevel)
         {
-            var logRecords = new List<Logs.LogRecord>();
+            var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
@@ -195,22 +195,22 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             switch (logLevel)
             {
                 case LogLevel.Trace:
-                    Assert.Equal(SeverityNumber.Trace, otlpLogRecord.SeverityNumber);
+                    Assert.Equal(OtlpLogs.SeverityNumber.Trace, otlpLogRecord.SeverityNumber);
                     break;
                 case LogLevel.Debug:
-                    Assert.Equal(SeverityNumber.Debug, otlpLogRecord.SeverityNumber);
+                    Assert.Equal(OtlpLogs.SeverityNumber.Debug, otlpLogRecord.SeverityNumber);
                     break;
                 case LogLevel.Information:
-                    Assert.Equal(SeverityNumber.Info, otlpLogRecord.SeverityNumber);
+                    Assert.Equal(OtlpLogs.SeverityNumber.Info, otlpLogRecord.SeverityNumber);
                     break;
                 case LogLevel.Warning:
-                    Assert.Equal(SeverityNumber.Warn, otlpLogRecord.SeverityNumber);
+                    Assert.Equal(OtlpLogs.SeverityNumber.Warn, otlpLogRecord.SeverityNumber);
                     break;
                 case LogLevel.Error:
-                    Assert.Equal(SeverityNumber.Error, otlpLogRecord.SeverityNumber);
+                    Assert.Equal(OtlpLogs.SeverityNumber.Error, otlpLogRecord.SeverityNumber);
                     break;
                 case LogLevel.Critical:
-                    Assert.Equal(SeverityNumber.Fatal, otlpLogRecord.SeverityNumber);
+                    Assert.Equal(OtlpLogs.SeverityNumber.Fatal, otlpLogRecord.SeverityNumber);
                     break;
             }
         }
@@ -218,7 +218,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void CheckToOtlpLogRecordFormattedMessage()
         {
-            var logRecords = new List<Logs.LogRecord>();
+            var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
@@ -242,7 +242,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void CheckToOtlpLogRecordExceptionAttributes()
         {
-            var logRecords = new List<Logs.LogRecord>();
+            var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>

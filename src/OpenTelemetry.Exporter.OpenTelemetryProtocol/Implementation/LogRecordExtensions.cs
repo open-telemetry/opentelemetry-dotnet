@@ -20,10 +20,10 @@ using Google.Protobuf;
 using Google.Protobuf.Collections;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
-using Opentelemetry.Proto.Logs.V1;
 using OpenTelemetry.Trace;
 using OtlpCollector = Opentelemetry.Proto.Collector.Logs.V1;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
+using OtlpLogs = Opentelemetry.Proto.Logs.V1;
 using OtlpResource = Opentelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
@@ -40,13 +40,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             OtlpResource.Resource processResource,
             in Batch<Logs.LogRecord> logRecordBatch)
         {
-            ResourceLogs resourceLogs = new ResourceLogs
+            var resourceLogs = new OtlpLogs.ResourceLogs
             {
                 Resource = processResource,
             };
             request.ResourceLogs.Add(resourceLogs);
 
-            var scopeLogs = new ScopeLogs();
+            var scopeLogs = new OtlpLogs.ScopeLogs();
             resourceLogs.ScopeLogs.Add(scopeLogs);
 
             foreach (var logRecord in logRecordBatch)
@@ -60,13 +60,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static LogRecord ToOtlpLog(this Logs.LogRecord logRecord)
+        internal static OtlpLogs.LogRecord ToOtlpLog(this Logs.LogRecord logRecord)
         {
-            LogRecord otlpLogRecord = null;
+            OtlpLogs.LogRecord otlpLogRecord = null;
 
             try
             {
-                otlpLogRecord = new LogRecord
+                otlpLogRecord = new OtlpLogs.LogRecord
                 {
                     TimeUnixNano = (ulong)logRecord.Timestamp.ToUnixTimeNanoseconds(),
                     SeverityNumber = GetSeverityNumber(logRecord.LogLevel),
@@ -149,7 +149,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static SeverityNumber GetSeverityNumber(LogLevel logLevel)
+        private static OtlpLogs.SeverityNumber GetSeverityNumber(LogLevel logLevel)
         {
             // Maps the ILogger LogLevel to OpenTelemetry logging level.
             // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#appendix-b-severitynumber-example-mappings
@@ -159,24 +159,24 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             switch (logLevel)
             {
                 case LogLevel.Trace:
-                    return SeverityNumber.Trace;
+                    return OtlpLogs.SeverityNumber.Trace;
                 case LogLevel.Debug:
-                    return SeverityNumber.Debug;
+                    return OtlpLogs.SeverityNumber.Debug;
                 case LogLevel.Information:
-                    return SeverityNumber.Info;
+                    return OtlpLogs.SeverityNumber.Info;
                 case LogLevel.Warning:
-                    return SeverityNumber.Warn;
+                    return OtlpLogs.SeverityNumber.Warn;
                 case LogLevel.Error:
-                    return SeverityNumber.Error;
+                    return OtlpLogs.SeverityNumber.Error;
                 case LogLevel.Critical:
-                    return SeverityNumber.Fatal;
+                    return OtlpLogs.SeverityNumber.Fatal;
 
                 // TODO:
                 // we reach default only for LogLevel.None
                 // but that is filtered out anyway.
                 // should we throw here then?
                 default:
-                    return SeverityNumber.Debug;
+                    return OtlpLogs.SeverityNumber.Debug;
             }
         }
     }
