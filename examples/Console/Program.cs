@@ -27,14 +27,18 @@ namespace Examples.Console
         /// Main method - invoke this using command line.
         /// For example:
         ///
-        /// dotnet run --project Examples.Console.csproj console
-        /// dotnet run --project Examples.Console.csproj inmemory
-        /// dotnet run --project Examples.Console.csproj zipkin -u http://localhost:9411/api/v2/spans
-        /// dotnet run --project Examples.Console.csproj jaeger -h localhost -p 6831
-        /// dotnet run --project Examples.Console.csproj prometheus -p 9464
-        /// dotnet run --project Examples.Console.csproj otlp -e "http://localhost:4317" -p "grpc"
-        /// dotnet run --project Examples.Console.csproj zpages
-        /// dotnet run --project Examples.Console.csproj metrics --help
+        /// dotnet run --project Examples.Console.csproj -- console
+        /// dotnet run --project Examples.Console.csproj -- inmemory
+        /// dotnet run --project Examples.Console.csproj -- zipkin -u http://localhost:9411/api/v2/spans
+        /// dotnet run --project Examples.Console.csproj -- jaeger -h localhost -p 6831
+        /// dotnet run --project Examples.Console.csproj -- prometheus -p 9464
+        /// dotnet run --project Examples.Console.csproj -- otlp -e "http://localhost:4317" -p "grpc"
+        /// dotnet run --project Examples.Console.csproj -- zpages
+        /// dotnet run --project Examples.Console.csproj -- metrics --help
+        ///
+        /// To see all available examples in the project run:
+        ///
+        /// dotnet run --project Examples.Console.csproj -- --help
         ///
         /// The above must be run from the project root folder
         /// (eg: C:\repos\opentelemetry-dotnet\examples\Console\).
@@ -153,7 +157,7 @@ namespace Examples.Console
     [Verb("otlp", HelpText = "Specify the options required to test OpenTelemetry Protocol (OTLP)")]
     internal class OtlpOptions
     {
-        [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics", Default = "http://localhost:4317")]
+        [Option('e', "endpoint", HelpText = "Target to which the exporter is going to send traces or metrics (default value depends on protocol).", Default = null)]
         public string Endpoint { get; set; }
 
         [Option('p', "protocol", HelpText = "Transport protocol used by exporter. Supported values: grpc and http/protobuf.", Default = "grpc")]

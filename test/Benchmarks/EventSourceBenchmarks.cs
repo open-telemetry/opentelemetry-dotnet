@@ -20,7 +20,6 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Benchmarks
 {
-    [MemoryDiagnoser]
     public class EventSourceBenchmarks
     {
         [Benchmark]

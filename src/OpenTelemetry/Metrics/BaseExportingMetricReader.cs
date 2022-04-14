@@ -45,14 +45,7 @@ namespace OpenTelemetry.Metrics
             this.exporter = exporter;
 
             var exportorType = exporter.GetType();
-            var attributes = exportorType.GetCustomAttributes(typeof(AggregationTemporalityAttribute), true);
-            if (attributes.Length > 0)
-            {
-                var attr = (AggregationTemporalityAttribute)attributes[attributes.Length - 1];
-                this.Temporality = attr.Temporality;
-            }
-
-            attributes = exportorType.GetCustomAttributes(typeof(ExportModesAttribute), true);
+            var attributes = exportorType.GetCustomAttributes(typeof(ExportModesAttribute), true);
             if (attributes.Length > 0)
             {
                 var attr = (ExportModesAttribute)attributes[attributes.Length - 1];

@@ -155,9 +155,40 @@ namespace OpenTelemetry.Metrics
                         // There may be excess space wasted, but it'll eligible for
                         // GC right after this method.
                         var metricStreamConfigs = new List<MetricStreamConfiguration>(viewConfigCount);
-                        foreach (var viewConfig in this.viewConfigs)
+                        for (var i = 0; i < viewConfigCount; ++i)
                         {
-                            var metricStreamConfig = viewConfig(instrument);
+                            var viewConfig = this.viewConfigs[i];
+                            MetricStreamConfiguration metricStreamConfig = null;
+
+                            try
+                            {
+                                metricStreamConfig = viewConfig(instrument);
+
+                                // The SDK provides some static MetricStreamConfigurations.
+                                // For example, the Drop configuration. The static ViewId
+                                // should not be changed for these configurations.
+                                if (!metricStreamConfig.ViewId.HasValue)
+                                {
+                                    metricStreamConfig.ViewId = i;
+                                }
+
+                                if (metricStreamConfig is ExplicitBucketHistogramConfiguration
+                                    && instrument.GetType().GetGenericTypeDefinition() != typeof(Histogram<>))
+                                {
+                                    metricStreamConfig = null;
+
+                                    OpenTelemetrySdkEventSource.Log.MetricViewIgnored(
+                                        instrument.Name,
+                                        instrument.Meter.Name,
+                                        "The current SDK does not allow aggregating non-Histogram instruments as Histograms.",
+                                        "Fix the view configuration.");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                OpenTelemetrySdkEventSource.Log.MetricViewIgnored(instrument.Name, instrument.Meter.Name, ex.Message, "Fix the view configuration.");
+                            }
+
                             if (metricStreamConfig != null)
                             {
                                 metricStreamConfigs.Add(metricStreamConfig);
@@ -194,7 +225,7 @@ namespace OpenTelemetry.Metrics
                             }
                         }
 
-                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Succeeded publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Completed publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
                     }
                     catch (Exception)
                     {
@@ -259,7 +290,7 @@ namespace OpenTelemetry.Metrics
                             }
                         }
 
-                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Succeeded publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+                        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Completed publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
                     }
                     catch (Exception)
                     {

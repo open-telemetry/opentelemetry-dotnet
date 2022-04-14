@@ -2,10 +2,22 @@
 
 ## Unreleased
 
+## 1.2.0-rc5
+
+Released 2022-Apr-12
+
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
 * Added support for Activity Status and StatusDescription which were
-  added to Activity from version 6.0. To maintain backward
-  compatibility, the exporter falls back to checking status inside
-  the special tags "otel.status_code", "otel.status_description".
+  added to Activity from `System.Diagnostics.DiagnosticSource` version 6.0.
+  Prior to version 6.0, setting the status of an Activity was provided by the
+  .NET OpenTelemetry API via the `Activity.SetStatus` extension method in the
+  `OpenTelemetry.Trace` namespace. Internally, this extension method added the
+  status as tags on the Activity: `otel.status_code` and `otel.status_description`.
+  Therefore, to maintain backward compatibility, the exporter falls back to using
+  these tags to infer status.
  ([#3003](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3003))
 
 ## 1.2.0-rc3
@@ -53,7 +65,7 @@ Released 2021-Sep-13
   `BatchExportActivityProcessorOptions` which supports field value overriding
   using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
   `OTEL_BSP_MAX_QUEUE_SIZE`, `OTEL_BSP_MAX_EXPORT_BATCH_SIZE`
-  envionmental variables as defined in the
+  environmental variables as defined in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/sdk-environment-variables.md#batch-span-processor).
   ([#2219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2219))
 

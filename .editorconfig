@@ -102,6 +102,8 @@ csharp_style_throw_expression = true:suggestion
 csharp_style_conditional_delegate_call = true:suggestion
 
 # Other features
+csharp_style_prefer_index_operator = false:none
+csharp_style_prefer_range_operator = false:none
 csharp_style_pattern_local_over_anonymous_function = true:suggestion
 csharp_style_deconstructed_variable_declaration = true:suggestion
 

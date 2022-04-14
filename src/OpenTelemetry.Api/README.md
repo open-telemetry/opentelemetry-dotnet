@@ -392,8 +392,26 @@ corresponding overloads of `ActivityEvent`.
 
 OpenTelemetry defines a concept called
 [Status](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status)
-to be associated with `Activity`. There is no `Status` class in .NET, and hence
-`Status` is set to an `Activity` using the following special tags:
+to be associated with `Activity`. Starting with [DiagnosticSource
+6.0](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/6.0.0),
+`SetStatus` API on `Activity` can be used to set the status and description
+as shown below:
+
+```csharp
+activity?.SetStatus(ActivityStatusCode.Ok);
+activity?.SetStatus(ActivityStatusCode.Error, "Error Description");
+```
+
+All the official
+[Exporters](../../docs/trace/extending-the-sdk/README.md#exporter) shipped from
+this repo support the above shown mechanism of setting status.
+
+#### Setting Status - DiagnosticSource version older than 6.0
+
+Prior to [DiagnosticSource
+6.0](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/6.0.0)
+there was no `Status` field in `Activity`, and hence `Status` is set to an
+`Activity` using the following special tags:
 
 `otel.status_code` is the `Tag` name used to store the `StatusCode`, and
 `otel.status_description` is the `Tag` name used to store the optional

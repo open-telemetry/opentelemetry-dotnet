@@ -406,6 +406,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             this.serverLifeTime?.Dispose();
             Activity.Current = null;
+            GC.SuppressFinalize(this);
         }
 
         private static void ActivityEnrichmentSetTag(Activity activity, string method, object obj)
