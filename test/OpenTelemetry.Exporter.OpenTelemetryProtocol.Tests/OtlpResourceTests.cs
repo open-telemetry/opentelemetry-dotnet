@@ -27,7 +27,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData(false)]
         public void ToOtlpResourceTest(bool includeServiceNameInResource)
         {
-            // Targetted test to cover OTel Resource to OTLP Resource
+            // Targeted test to cover OTel Resource to OTLP Resource
             // conversion, independent of signals.
             var resourceBuilder = ResourceBuilder.CreateEmpty();
             if (includeServiceNameInResource)
