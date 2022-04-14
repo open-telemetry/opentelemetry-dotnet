@@ -137,12 +137,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var resourceBuilder = ResourceBuilder.CreateEmpty();
             if (includeServiceNameInResource)
             {
-                resourceBuilder.AddAttributes(
-                    new List<KeyValuePair<string, object>>
-                    {
-                        new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, "service-name"),
-                        new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceNamespace, "ns1"),
-                    });
+                resourceBuilder.AddService("service-name", "ns1");
             }
 
             var builder = Sdk.CreateTracerProviderBuilder()
@@ -164,7 +159,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 var activityTags = isEven ? evenTags : oddTags;
 
                 using Activity activity = source.StartActivity($"span-{i}", activityKind, parentContext: default, activityTags);
-                processor.OnEnd(activity);
             }
 
             processor.Shutdown();
