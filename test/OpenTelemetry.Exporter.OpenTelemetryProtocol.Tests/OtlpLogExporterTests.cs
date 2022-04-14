@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
     public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         [Fact]
-        public void CheckToOtlpLogRecordStateValues()
+        public void OtlpLogRecordTestWhenStateValuesArePopulated()
         {
             var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
@@ -54,9 +54,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.NotNull(otlpLogRecord);
             Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
-            Assert.Contains("name", otlpLogRecord.Attributes.ToString());
-            Assert.Contains("tomato", otlpLogRecord.Attributes.ToString());
-            Assert.Contains("{OriginalFormat}", otlpLogRecord.Attributes.ToString());
+            Assert.Equal(3, otlpLogRecord.Attributes.Count);
+
+            var attribute = otlpLogRecord.Attributes[0];
+            Assert.Equal("name", attribute.Key);
+            Assert.Equal("tomato", attribute.Value.StringValue);
+
+            attribute = otlpLogRecord.Attributes[1];
+            Assert.Equal("price", attribute.Key);
+            Assert.Equal(2.99, attribute.Value.DoubleValue);
+
+            attribute = otlpLogRecord.Attributes[2];
+            Assert.Equal("{OriginalFormat}", attribute.Key);
+            Assert.Equal("Hello from {name} {price}.", attribute.Value.StringValue);
         }
 
         [Fact]
