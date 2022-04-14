@@ -40,7 +40,6 @@ Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical c
 
 namespace Benchmarks.Metrics
 {
-    [MemoryDiagnoser]
     public class MetricsViewBenchmarks
     {
         private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());

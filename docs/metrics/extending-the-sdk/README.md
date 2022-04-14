@@ -9,8 +9,8 @@
 
 OpenTelemetry .NET SDK has provided the following built-in metric exporters:
 
-* [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
 * [InMemory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
+* [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
 * [OpenTelemetryProtocol](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
 * [Prometheus](../../../src/OpenTelemetry.Exporter.Prometheus/README.md)
 

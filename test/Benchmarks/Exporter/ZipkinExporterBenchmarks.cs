@@ -28,7 +28,6 @@ using Zipkin::OpenTelemetry.Exporter;
 
 namespace Benchmarks.Exporter
 {
-    [MemoryDiagnoser]
 #if !NET462
     [ThreadingDiagnoser]
 #endif

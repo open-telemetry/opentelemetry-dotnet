@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+* LogExporter to correcly map Severity to OTLP.
+  ([#3177](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3177))
+
+## 1.2.0-rc5
+
+Released 2022-Apr-12
+
+* Updated underlying proto files to
+  [v0.16.0](https://github.com/open-telemetry/opentelemetry-proto/releases/tag/v0.16.0).
+  The LogRecord.Name field was removed. The CategoryName provided
+  when calling CreateLogger previously populated this field. For now,
+  CategoryName is no longer exported via OTLP. It will be reintroduced
+  in the future as an attribute.
+
 ## 1.2.0-rc4
 
 Released 2022-Mar-30
