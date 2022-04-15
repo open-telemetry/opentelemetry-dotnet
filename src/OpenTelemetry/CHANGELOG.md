@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0
+
+Released 2022-Apr-15
+
 * Make setter for `MetricReaderOptions.PeriodicExportingMetricReaderOptions`
   property public.
   ([#3184](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3184))
