@@ -83,7 +83,7 @@ namespace Benchmarks.Metrics
                 this.bounds[i] = i * MaxValue / this.bounds.Length;
             }
 
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             this.provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name)

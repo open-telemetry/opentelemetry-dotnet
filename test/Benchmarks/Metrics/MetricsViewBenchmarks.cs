@@ -45,7 +45,7 @@ namespace Benchmarks.Metrics
         private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
         private static readonly string[] DimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
         private static readonly int DimensionsValuesLength = DimensionValues.Length;
-        private List<Metric> metrics;
+        private List<ExportableMetricCopy> metrics;
         private Counter<long> counter;
         private MeterProvider provider;
         private Meter meter;
@@ -81,7 +81,7 @@ namespace Benchmarks.Metrics
         {
             this.meter = new Meter(Utils.GetCurrentMethodName());
             this.counter = this.meter.CreateCounter<long>("counter");
-            this.metrics = new List<Metric>();
+            this.metrics = new List<ExportableMetricCopy>();
 
             if (this.ViewConfig == ViewConfiguration.NoView)
             {

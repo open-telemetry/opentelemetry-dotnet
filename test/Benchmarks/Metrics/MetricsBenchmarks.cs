@@ -68,7 +68,7 @@ namespace Benchmarks.Metrics
         {
             this.meter = new Meter(Utils.GetCurrentMethodName());
 
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             this.provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name) // All instruments from this meter are enabled.
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
