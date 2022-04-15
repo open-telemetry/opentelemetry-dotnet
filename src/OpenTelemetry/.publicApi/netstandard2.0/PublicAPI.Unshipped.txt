@@ -1,6 +1,9 @@
 OpenTelemetry.BaseExporter<T>.ForceFlush(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Batch<T>.Batch(T[] items, int count) -> void
 OpenTelemetry.Batch<T>.Count.get -> long
+OpenTelemetry.Logs.LogRecord.FormattedMessage.set -> void
+OpenTelemetry.Logs.LogRecord.State.set -> void
+OpenTelemetry.Logs.LogRecord.StateValues.set -> void
 OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration
 OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.Boundaries.get -> double[]
 OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration.Boundaries.set -> void

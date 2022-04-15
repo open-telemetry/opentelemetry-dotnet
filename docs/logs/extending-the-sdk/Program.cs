@@ -31,6 +31,7 @@ public class Program
                 options.AddProcessor(new MyProcessor("ProcessorA"))
                        .AddProcessor(new MyProcessor("ProcessorB"))
                        .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
+                       .AddProcessor(new MyRedactionProcessor("RedctionProcessor"))
                        .AddMyExporter();
             }));
 
@@ -64,6 +65,9 @@ public class Program
         {
             logger.LogError("{name} is broken.", "refrigerator");
         }
+
+        // message will be redacted by MyRedactionProcessor
+        logger.LogInformation("Message to log: {message}.", "sensitive information");
     }
 
     internal struct Food

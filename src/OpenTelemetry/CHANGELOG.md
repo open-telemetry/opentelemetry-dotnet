@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Add setters for `State`, `StateValues`, and `FormattedMessage` for LogRecord.
+  ([2864](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2864))
+
 * Make setter for `MetricReaderOptions.PeriodicExportingMetricReaderOptions`
   property public.
   ([#3184](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3184))
