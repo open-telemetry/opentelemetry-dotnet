@@ -49,7 +49,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 })
                 .Build();
 
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterprovider = Sdk.CreateMeterProviderBuilder()
                 .AddAspNetInstrumentation()
                 .AddInMemoryExporter(exportedItems)
@@ -61,7 +61,7 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
             meterprovider.ForceFlush();
 
             var metricPoints = new List<MetricPoint>();
-            foreach (var p in exportedItems[0].GetMetricPoints())
+            foreach (var p in exportedItems[0].MetricPoints)
             {
                 metricPoints.Add(p);
             }
