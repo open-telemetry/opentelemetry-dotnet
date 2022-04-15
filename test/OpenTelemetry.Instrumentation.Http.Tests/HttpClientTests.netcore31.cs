@@ -54,7 +54,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             var processor = new Mock<BaseProcessor<Activity>>();
             tc.Url = HttpTestData.NormalizeValues(tc.Url, host, port);
 
-            var metrics = new List<Metric>();
+            var metrics = new List<ExportableMetricCopy>();
 
             var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddHttpClientInstrumentation()
@@ -146,7 +146,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.True(metric.MetricType == MetricType.Histogram);
 
                 var metricPoints = new List<MetricPoint>();
-                foreach (var p in metric.GetMetricPoints())
+                foreach (var p in metric.MetricPoints)
                 {
                     metricPoints.Add(p);
                 }
