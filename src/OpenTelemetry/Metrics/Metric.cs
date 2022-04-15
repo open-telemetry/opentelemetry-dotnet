@@ -115,6 +115,7 @@ namespace OpenTelemetry.Metrics
             this.MetricType = other.MetricType;
             this.InstrumentIdentity = other.InstrumentIdentity;
             this.aggStore = other.aggStore.Copy();
+            this.Temporality = other.Temporality;
         }
 
         public MetricType MetricType { get; private set; }

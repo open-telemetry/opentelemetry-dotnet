@@ -82,6 +82,7 @@ namespace OpenTelemetry.Metrics
 
         private AggregatorStore(AggregatorStore other)
         {
+            this.name = other.name;
             this.batchSize = other.batchSize;
 
             this.currentMetricPointBatch = (int[])other.currentMetricPointBatch.Clone();
