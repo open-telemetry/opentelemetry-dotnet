@@ -28,8 +28,66 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
     public class PrometheusExporterHttpServerTests
     {
+        private readonly string meterName = Utils.GetCurrentMethodName();
+
         [Fact]
         public async Task PrometheusExporterHttpServerIntegration()
+        {
+            await this.RunPrometheusExporterHttpServerIntegrationTest();
+        }
+
+        [Fact]
+        public async Task PrometheusExporterHttpServerIntegration_NoMetrics()
+        {
+            await this.RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
+        }
+
+        [Theory]
+        [InlineData("http://example.com")]
+        [InlineData("https://example.com")]
+        [InlineData("http://127.0.0.1")]
+        [InlineData("http://example.com", "https://example.com", "http://127.0.0.1")]
+        public void ServerEndpointSanityCheckPositiveTest(params string[] uris)
+        {
+            using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddPrometheusExporter(opt =>
+                {
+                    opt.HttpListenerPrefixes = uris;
+                })
+                .Build();
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(null)]
+        [InlineData("ftp://example.com")]
+        [InlineData("http://example.com", "https://example.com", "ftp://example.com")]
+        public void ServerEndpointSanityCheckNegativeTest(params string[] uris)
+        {
+            try
+            {
+                using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+                    .AddPrometheusExporter(opt =>
+                    {
+                        opt.HttpListenerPrefixes = uris;
+                    })
+                    .Build();
+            }
+            catch (Exception ex)
+            {
+                if (ex is not ArgumentNullException)
+                {
+                    Assert.Equal("System.ArgumentException", ex.GetType().ToString());
+#if NETFRAMEWORK
+                    Assert.Equal("Prometheus server path should be a valid URI with http/https scheme.\r\nParameter name: httpListenerPrefixes", ex.Message);
+#else
+                    Assert.Equal("Prometheus server path should be a valid URI with http/https scheme. (Parameter 'httpListenerPrefixes')", ex.Message);
+#endif
+                }
+            }
+        }
+
+        private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false)
         {
             Random random = new Random();
             int port = 0;
@@ -37,7 +95,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             MeterProvider provider;
             string address = null;
 
-            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var meter = new Meter(this.meterName);
 
             while (true)
             {
@@ -90,64 +148,29 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             };
 
             var counter = meter.CreateCounter<double>("counter_double");
-            counter.Add(100.18D, tags);
-            counter.Add(0.99D, tags);
+            if (!skipMetrics)
+            {
+                counter.Add(100.18D, tags);
+                counter.Add(0.99D, tags);
+            }
 
             using HttpClient client = new HttpClient();
 
             using var response = await client.GetAsync($"{address}metrics").ConfigureAwait(false);
 
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.True(response.Content.Headers.Contains("Last-Modified"));
-            Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
-
-            Assert.Matches(
-                "^# TYPE counter_double counter\ncounter_double{key1='value1',key2='value2'} 101.17 \\d+\n$".Replace('\'', '"'),
-                await response.Content.ReadAsStringAsync().ConfigureAwait(false));
-        }
-
-        [Theory]
-        [InlineData("http://example.com")]
-        [InlineData("https://example.com")]
-        [InlineData("http://127.0.0.1")]
-        [InlineData("http://example.com", "https://example.com", "http://127.0.0.1")]
-        public void ServerEndpointSanityCheckPositiveTest(params string[] uris)
-        {
-            using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddPrometheusExporter(opt =>
-                {
-                    opt.HttpListenerPrefixes = uris;
-                })
-                .Build();
-        }
-
-        [Theory]
-        [InlineData("")]
-        [InlineData(null)]
-        [InlineData("ftp://example.com")]
-        [InlineData("http://example.com", "https://example.com", "ftp://example.com")]
-        public void ServerEndpointSanityCheckNegativeTest(params string[] uris)
-        {
-            try
+            if (!skipMetrics)
             {
-                using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                    .AddPrometheusExporter(opt =>
-                    {
-                        opt.HttpListenerPrefixes = uris;
-                    })
-                    .Build();
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.True(response.Content.Headers.Contains("Last-Modified"));
+                Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType.ToString());
+
+                Assert.Matches(
+                    "^# TYPE counter_double counter\ncounter_double{key1='value1',key2='value2'} 101.17 \\d+\n$".Replace('\'', '"'),
+                    await response.Content.ReadAsStringAsync().ConfigureAwait(false));
             }
-            catch (Exception ex)
+            else
             {
-                if (ex is not ArgumentNullException)
-                {
-                    Assert.Equal("System.ArgumentException", ex.GetType().ToString());
-#if NETFRAMEWORK
-                    Assert.Equal("Prometheus server path should be a valid URI with http/https scheme.\r\nParameter name: httpListenerPrefixes", ex.Message);
-#else
-                    Assert.Equal("Prometheus server path should be a valid URI with http/https scheme. (Parameter 'httpListenerPrefixes')", ex.Message);
-#endif
-                }
+                Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
             }
         }
     }

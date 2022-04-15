@@ -10,6 +10,7 @@ OpenTelemetry.Metrics.MetricReader.TemporalityPreference.set -> void
 OpenTelemetry.Metrics.MetricReaderOptions
 OpenTelemetry.Metrics.MetricReaderOptions.MetricReaderOptions() -> void
 OpenTelemetry.Metrics.MetricReaderOptions.PeriodicExportingMetricReaderOptions.get -> OpenTelemetry.Metrics.PeriodicExportingMetricReaderOptions
+OpenTelemetry.Metrics.MetricReaderOptions.PeriodicExportingMetricReaderOptions.set -> void
 OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporality.Cumulative = 1 -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporality.Delta = 2 -> OpenTelemetry.Metrics.AggregationTemporality
