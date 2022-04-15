@@ -47,21 +47,39 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 .AddOtlpExporter()
                 .Build();
 
-            var bindingFlags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            CheckMetricReaderDefaults();
 
-            var metricReader = typeof(MetricReader)
-                .Assembly
-                .GetType("OpenTelemetry.Metrics.MeterProviderSdk")
-                .GetField("reader", bindingFlags)
-                .GetValue(meterProvider) as PeriodicExportingMetricReader;
+            meterProvider.Dispose();
 
-            Assert.NotNull(metricReader);
+            meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddOtlpExporter((exporterOptions, metricReaderOptions) =>
+                {
+                    metricReaderOptions.PeriodicExportingMetricReaderOptions = null;
+                })
+                .Build();
 
-            var exportIntervalMilliseconds = (int)typeof(PeriodicExportingMetricReader)
-                .GetField("ExportIntervalMilliseconds", bindingFlags)
-                .GetValue(metricReader);
+            CheckMetricReaderDefaults();
 
-            Assert.Equal(60000, exportIntervalMilliseconds);
+            meterProvider.Dispose();
+
+            void CheckMetricReaderDefaults()
+            {
+                var bindingFlags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+
+                var metricReader = typeof(MetricReader)
+                    .Assembly
+                    .GetType("OpenTelemetry.Metrics.MeterProviderSdk")
+                    .GetField("reader", bindingFlags)
+                    .GetValue(meterProvider) as PeriodicExportingMetricReader;
+
+                Assert.NotNull(metricReader);
+
+                var exportIntervalMilliseconds = (int)typeof(PeriodicExportingMetricReader)
+                    .GetField("ExportIntervalMilliseconds", bindingFlags)
+                    .GetValue(metricReader);
+
+                Assert.Equal(60000, exportIntervalMilliseconds);
+            }
         }
 
         [Fact]
