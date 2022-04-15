@@ -67,7 +67,7 @@ public class Program
         }
 
         // message will be redacted by MyRedactionProcessor
-        logger.LogInformation("Message to log: {message}.", "sensitive information");
+        logger.LogInformation("Message to log: {personId}, {message}.", "12", "sensitive information");
     }
 
     internal struct Food
