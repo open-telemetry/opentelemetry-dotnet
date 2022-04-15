@@ -28,13 +28,15 @@ namespace OpenTelemetry.Metrics
         [ThreadStatic]
         private static ThreadStaticStorage storage;
 
-        private readonly TagStorage[] tagStorage = new TagStorage[MaxTagCacheSize];
+        private readonly TagStorage[] primaryTagStorage = new TagStorage[MaxTagCacheSize];
+        private readonly TagStorage[] secondaryTagStorage = new TagStorage[MaxTagCacheSize];
 
         private ThreadStaticStorage()
         {
             for (int i = 0; i < MaxTagCacheSize; i++)
             {
-                this.tagStorage[i] = new TagStorage(i + 1);
+                this.primaryTagStorage[i] = new TagStorage(i + 1);
+                this.secondaryTagStorage[i] = new TagStorage(i + 1);
             }
         }
 
@@ -56,8 +58,8 @@ namespace OpenTelemetry.Metrics
 
             if (tagLength <= MaxTagCacheSize)
             {
-                tagKeys = this.tagStorage[tagLength - 1].TagKeys;
-                tagValues = this.tagStorage[tagLength - 1].TagValues;
+                tagKeys = this.primaryTagStorage[tagLength - 1].TagKeys;
+                tagValues = this.primaryTagStorage[tagLength - 1].TagValues;
             }
             else
             {
@@ -94,8 +96,8 @@ namespace OpenTelemetry.Metrics
             }
             else if (actualLength <= MaxTagCacheSize)
             {
-                tagKeys = this.tagStorage[actualLength - 1].TagKeys;
-                tagValues = this.tagStorage[actualLength - 1].TagValues;
+                tagKeys = this.primaryTagStorage[actualLength - 1].TagKeys;
+                tagValues = this.primaryTagStorage[actualLength - 1].TagValues;
             }
             else
             {
@@ -122,6 +124,29 @@ namespace OpenTelemetry.Metrics
                     tagValues[i] = tag.Value;
                     i++;
                 }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void CloneKeysAndValues(string[] inputTagKeys, object[] inputTagValues, int tagLength, out string[] clonedTagKeys, out object[] clonedTagValues)
+        {
+            Guard.ThrowIfZero(tagLength, $"There must be at least one tag to use {nameof(ThreadStaticStorage)}", $"{nameof(tagLength)}");
+
+            if (tagLength <= MaxTagCacheSize)
+            {
+                clonedTagKeys = this.secondaryTagStorage[tagLength - 1].TagKeys;
+                clonedTagValues = this.secondaryTagStorage[tagLength - 1].TagValues;
+            }
+            else
+            {
+                clonedTagKeys = new string[tagLength];
+                clonedTagValues = new object[tagLength];
+            }
+
+            for (int i = 0; i < tagLength; i++)
+            {
+                clonedTagKeys[i] = inputTagKeys[i];
+                clonedTagValues[i] = inputTagValues[i];
             }
         }
 
