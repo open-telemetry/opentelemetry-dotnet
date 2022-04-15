@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics.Tests
         {
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
 
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)

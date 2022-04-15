@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void ViewToRenameMetric()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .AddView("name1", "renamed")
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Metrics.Tests
         [MemberData(nameof(MetricTestData.InvalidInstrumentNames), MemberType = typeof(MetricTestData))]
         public void AddViewWithInvalidNameThrowsArgumentException(string viewNewName)
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter1 = new Meter("AddViewWithInvalidNameThrowsArgumentException");
 
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void AddViewWithNullMetricStreamConfigurationThrowsArgumentnullException()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter1 = new Meter("AddViewWithInvalidNameThrowsArgumentException");
 
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void AddViewWithNameThrowsInvalidArgumentExceptionWhenConflict()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter1 = new Meter("AddViewWithGuaranteedConflictThrowsInvalidArgumentException");
 
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void AddViewWithNameInMetricStreamConfigurationThrowsInvalidArgumentExceptionWhenConflict()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter1 = new Meter("AddViewWithGuaranteedConflictThrowsInvalidArgumentException");
 
@@ -240,7 +240,7 @@ namespace OpenTelemetry.Metrics.Tests
         [MemberData(nameof(MetricTestData.ValidInstrumentNames), MemberType = typeof(MetricTestData))]
         public void ViewWithValidNameExported(string viewNewName)
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter1 = new Meter("ViewWithInvalidNameIgnoredTest");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -265,7 +265,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.1");
             using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.2");
 
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter1.Name)
@@ -306,7 +306,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void ViewWithInvalidNameIgnoredConditionally(string viewNewName)
         {
             using var meter1 = new Meter("ViewToRenameMetricConditionallyTest");
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter1.Name)
 
@@ -343,7 +343,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void ViewWithValidNameConditionally(string viewNewName)
         {
             using var meter1 = new Meter("ViewToRenameMetricConditionallyTest");
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter1.Name)
                 .AddView((instrument) =>
@@ -377,7 +377,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewWithNullCustomNameTakesInstrumentName()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter("ViewToRenameMetricConditionallyTest");
 
@@ -415,7 +415,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void ViewToProduceMultipleStreamsFromInstrument()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .AddView("name1", "renamedStream1")
@@ -436,7 +436,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void ViewToProduceMultipleStreamsWithDuplicatesFromInstrument()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .AddView("name1", "renamedStream1")
@@ -492,7 +492,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void ViewToProduceCustomHistogramBound()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             var boundaries = new double[] { 10, 20 };
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
@@ -518,7 +518,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("MyHistogram", metricCustom.Name);
 
             List<MetricPoint> metricPointsDefault = new List<MetricPoint>();
-            foreach (ref readonly var mp in metricDefault.GetMetricPoints())
+            foreach (var mp in metricDefault.MetricPoints)
             {
                 metricPointsDefault.Add(mp);
             }
@@ -545,7 +545,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(Metric.DefaultHistogramBounds.Length + 1, actualCount);
 
             List<MetricPoint> metricPointsCustom = new List<MetricPoint>();
-            foreach (ref readonly var mp in metricCustom.GetMetricPoints())
+            foreach (var mp in metricCustom.MetricPoints)
             {
                 metricPointsCustom.Add(mp);
             }
@@ -576,7 +576,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void ViewToSelectTagKeys()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .AddView("FruitCounter", new MetricStreamConfiguration()
@@ -612,7 +612,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0];
             Assert.Equal("NameOnly", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric.GetMetricPoints())
+            foreach (var mp in metric.MetricPoints)
             {
                 metricPoints.Add(mp);
             }
@@ -623,7 +623,7 @@ namespace OpenTelemetry.Metrics.Tests
             metric = exportedItems[1];
             Assert.Equal("SizeOnly", metric.Name);
             metricPoints.Clear();
-            foreach (ref readonly var mp in metric.GetMetricPoints())
+            foreach (var mp in metric.MetricPoints)
             {
                 metricPoints.Add(mp);
             }
@@ -634,7 +634,7 @@ namespace OpenTelemetry.Metrics.Tests
             metric = exportedItems[2];
             Assert.Equal("NoTags", metric.Name);
             metricPoints.Clear();
-            foreach (ref readonly var mp in metric.GetMetricPoints())
+            foreach (var mp in metric.MetricPoints)
             {
                 metricPoints.Add(mp);
             }
@@ -647,7 +647,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void ViewToDropSingleInstrument()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .AddView("counterNotInteresting", MetricStreamConfiguration.Drop)
@@ -670,7 +670,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void ViewToDropSingleInstrumentObservableCounter()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .AddView("observableCounterNotInteresting", MetricStreamConfiguration.Drop)
@@ -691,7 +691,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void ViewToDropSingleInstrumentObservableGauge()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .AddView("observableGaugeNotInteresting", MetricStreamConfiguration.Drop)
@@ -712,7 +712,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void ViewToDropMultipleInstruments()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .AddView("server*", MetricStreamConfiguration.Drop)
@@ -739,7 +739,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void ViewToDropAndRetainInstrument()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .AddView("server.requests", MetricStreamConfiguration.Drop)

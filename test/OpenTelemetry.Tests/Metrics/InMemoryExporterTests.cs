@@ -23,10 +23,10 @@ namespace OpenTelemetry.Metrics.Tests
 {
     public class InMemoryExporterTests
     {
-        [Fact(Skip = "To be run after https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361 is fixed")]
+        [Fact]
         public void InMemoryExporterShouldDeepCopyMetricPoints()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -45,9 +45,9 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush();
 
             var metric = exportedItems[0]; // Only one Metric object is added to the collection at this point
-            var metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
+            var metricPointsEnumerator = metric.MetricPoints.GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
-            ref readonly var metricPointForFirstExport = ref metricPointsEnumerator.Current;
+            var metricPointForFirstExport = metricPointsEnumerator.Current;
             Assert.Equal(10, metricPointForFirstExport.GetSumLong());
 
             // Emit 25 for the MetricPoint with a single key-vaue pair: ("tag1", "value1")
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush();
 
             metric = exportedItems[1]; // Second Metric object is added to the collection at this point
-            metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
+            metricPointsEnumerator = metric.MetricPoints.GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
             var metricPointForSecondExport = metricPointsEnumerator.Current;
             Assert.Equal(25, metricPointForSecondExport.GetSumLong());
