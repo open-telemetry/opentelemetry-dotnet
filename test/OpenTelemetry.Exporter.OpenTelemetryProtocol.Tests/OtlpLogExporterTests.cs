@@ -33,8 +33,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
     public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         [Fact]
+        public void AddOtlpLogExporterOptionstest()
+        {
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            var loggerOptions = new OpenTelemetryLoggerOptions();
+            Assert.False(loggerOptions.ParseStateValues);
+            loggerOptions.AddOtlpExporter();
+            Assert.True(loggerOptions.ParseStateValues);
+        }
+
+        [Fact]
         public void AddOtlpLogExporterSetsParseStateValueToTrue()
         {
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
             var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
@@ -56,6 +67,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void AddOtlpLogExporterParseStateValueCanBeTurnedOff()
         {
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
             var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
@@ -80,6 +92,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             var logRecords = new List<LogRecord>();
 
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
             var hostBuilder = new HostBuilder();
             hostBuilder.ConfigureLogging(logging => logging.AddOpenTelemetry(options =>
             {
