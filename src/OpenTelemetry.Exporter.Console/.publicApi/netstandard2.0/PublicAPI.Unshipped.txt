@@ -1,7 +1,0 @@
-OpenTelemetry.Exporter.ConsoleMetricExporter
-OpenTelemetry.Exporter.ConsoleMetricExporter.ConsoleMetricExporter(OpenTelemetry.Exporter.ConsoleExporterOptions options) -> void
-OpenTelemetry.Metrics.ConsoleExporterMetricsExtensions
-override OpenTelemetry.Exporter.ConsoleMetricExporter.Export(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric> batch) -> OpenTelemetry.ExportResult
-static OpenTelemetry.Metrics.ConsoleExporterMetricsExtensions.AddConsoleExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder) -> OpenTelemetry.Metrics.MeterProviderBuilder
-static OpenTelemetry.Metrics.ConsoleExporterMetricsExtensions.AddConsoleExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Action<OpenTelemetry.Exporter.ConsoleExporterOptions, OpenTelemetry.Metrics.MetricReaderOptions> configureExporterAndMetricReader) -> OpenTelemetry.Metrics.MeterProviderBuilder
-static OpenTelemetry.Metrics.ConsoleExporterMetricsExtensions.AddConsoleExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Action<OpenTelemetry.Exporter.ConsoleExporterOptions> configureExporter) -> OpenTelemetry.Metrics.MeterProviderBuilder
