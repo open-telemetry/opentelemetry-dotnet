@@ -5,6 +5,13 @@
 * Add setters for `State`, `StateValues`, and `FormattedMessage` for LogRecord.
   ([2864](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2864))
 
+* Removes .NET Framework 4.6.1. The minimum .NET Framework
+  version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
+
+## 1.2.0
+
+Released 2022-Apr-15
+
 * Make setter for `MetricReaderOptions.PeriodicExportingMetricReaderOptions`
   property public.
   ([#3184](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3184))
