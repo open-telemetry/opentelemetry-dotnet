@@ -28,6 +28,7 @@ public class Program
             builder.AddOpenTelemetry(options =>
             {
                 options.IncludeScopes = true;
+                options.IncludeFormattedMessage = true;
                 options.AddProcessor(new MyProcessor("ProcessorA"))
                        .AddProcessor(new MyProcessor("ProcessorB"))
                        .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
@@ -67,7 +68,7 @@ public class Program
         }
 
         // message will be redacted by MyRedactionProcessor
-        logger.LogInformation("Message to log: {personId}, {message}.", "12", "sensitive information");
+        logger.LogInformation("OpenTelemetry {personName} {message}!", "David", "sensitive information");
     }
 
     internal struct Food

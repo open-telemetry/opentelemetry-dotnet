@@ -15,8 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 
@@ -31,35 +29,12 @@ internal class MyRedactionProcessor : BaseProcessor<LogRecord>
 
     public override void OnEnd(LogRecord logRecord)
     {
-        var listKvp = logRecord.State as IReadOnlyList<KeyValuePair<string, object>>;
-        int kvpCount = listKvp == null ? 0 : listKvp.Count;
-
-        Console.WriteLine($"{this.name}.OnEnd(LogRecord.State before redaction: {logRecord.State})");
-        var newStateAsList = new List<KeyValuePair<string, object>>();
-        for (int i = 0; i < kvpCount; ++i)
+        Console.WriteLine($"{this.name}.OnEnd(logRecord.FormattedMessage before redaction: {logRecord.FormattedMessage})");
+        if (logRecord.FormattedMessage.Contains("sensitive information"))
         {
-            var entry = listKvp[i];
-            if (kvpCount > 1 && StringComparer.Ordinal.Equals(entry.Key, "{OriginalFormat}"))
-            {
-                continue;
-            }
-
-            if (entry.Value is string str && str.Contains("sensitive information"))
-            {
-                newStateAsList.Add(new KeyValuePair<string, object>("redactedKey", "redactedVal"));
-            }
+            logRecord.FormattedMessage = "This message contains sensitive information and is thus redacted.";
         }
 
-        logRecord.State = newStateAsList;
-        var newLogRecordStateAsList = logRecord.State as IReadOnlyList<KeyValuePair<string, object>>;
-
-        StringBuilder sb = new StringBuilder();
-        foreach (var entry in newLogRecordStateAsList)
-        {
-            sb.Append(entry.Key + ", ");
-            sb.Append(entry.Value + ".");
-        }
-
-        Console.WriteLine($"{this.name}.OnEnd(LogRecord.State after redaction: {sb})");
+        Console.WriteLine($"{this.name}.OnEnd(logRecord.FormattedMessage after redaction: {logRecord.FormattedMessage})");
     }
 }
