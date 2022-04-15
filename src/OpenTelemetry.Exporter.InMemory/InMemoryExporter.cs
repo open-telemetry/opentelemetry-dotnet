@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Exporter
@@ -28,16 +29,20 @@ namespace OpenTelemetry.Exporter
             this.exportedItems = exportedItems;
         }
 
+        public Action<T> AdditionalExportAction { get; set; }
+
         public override ExportResult Export(in Batch<T> batch)
         {
-            if (this.exportedItems == null)
+            if (this.exportedItems == null && this.AdditionalExportAction == null)
             {
                 return ExportResult.Failure;
             }
 
             foreach (var data in batch)
             {
-                this.exportedItems.Add(data);
+                this.exportedItems?.Add(data);
+
+                this.AdditionalExportAction?.Invoke(data);
             }
 
             return ExportResult.Success;
