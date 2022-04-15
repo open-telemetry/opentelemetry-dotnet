@@ -52,6 +52,7 @@ namespace OpenTelemetry.Metrics
             HistogramBuckets copy = new HistogramBuckets(this.ExplicitBounds);
 
             Array.Copy(this.SnapshotBucketCounts, copy.SnapshotBucketCounts, this.SnapshotBucketCounts.Length);
+            Array.Copy(this.RunningBucketCounts, copy.RunningBucketCounts, this.RunningBucketCounts.Length);
             copy.SnapshotSum = this.SnapshotSum;
 
             return copy;

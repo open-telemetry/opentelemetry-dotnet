@@ -16,6 +16,8 @@
 
 using System.Collections.Generic;
 
+using OpenTelemetry.Metrics;
+
 namespace OpenTelemetry.Exporter
 {
     public class InMemoryExporter<T> : BaseExporter<T>
@@ -37,7 +39,17 @@ namespace OpenTelemetry.Exporter
 
             foreach (var data in batch)
             {
-                this.exportedItems.Add(data);
+                if (data is Metric metric)
+                {
+                    // By design, The MetricApi reuses Metrics (see: MetricReader.metricsCurrentBatch).
+                    // Here we need to copy the metric to be exported to
+                    // prevent the exported instance from being updated.
+                    this.exportedItems.Add(metric.Copy() as T);
+                }
+                else
+                {
+                    this.exportedItems.Add(data);
+                }
             }
 
             return ExportResult.Success;

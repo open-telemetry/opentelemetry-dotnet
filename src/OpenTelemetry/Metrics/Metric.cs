@@ -110,6 +110,13 @@ namespace OpenTelemetry.Metrics
             this.InstrumentDisposed = false;
         }
 
+        private Metric(Metric other)
+        {
+            this.MetricType = other.MetricType;
+            this.InstrumentIdentity = other.InstrumentIdentity;
+            this.aggStore = other.aggStore.Copy();
+        }
+
         public MetricType MetricType { get; private set; }
 
         public AggregationTemporality Temporality { get; private set; }
@@ -146,6 +153,11 @@ namespace OpenTelemetry.Metrics
         internal int Snapshot()
         {
             return this.aggStore.Snapshot();
+        }
+
+        internal Metric Copy()
+        {
+            return new Metric(this);
         }
     }
 }

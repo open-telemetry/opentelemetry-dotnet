@@ -80,6 +80,14 @@ namespace OpenTelemetry.Metrics
             }
         }
 
+        private AggregatorStore(AggregatorStore other)
+        {
+            this.batchSize = other.batchSize;
+
+            this.currentMetricPointBatch = (int[])other.currentMetricPointBatch.Clone();
+            this.metricPoints = Array.ConvertAll(other.metricPoints, metricPoints => metricPoints.Copy());
+        }
+
         private delegate void UpdateLongDelegate(long value, ReadOnlySpan<KeyValuePair<string, object>> tags);
 
         private delegate void UpdateDoubleDelegate(double value, ReadOnlySpan<KeyValuePair<string, object>> tags);
@@ -154,6 +162,8 @@ namespace OpenTelemetry.Metrics
 
         internal MetricPointsAccessor GetMetricPoints()
             => new(this.metricPoints, this.currentMetricPointBatch, this.batchSize);
+
+        internal AggregatorStore Copy() => new(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void InitializeZeroTagPointIfNotInitialized()
