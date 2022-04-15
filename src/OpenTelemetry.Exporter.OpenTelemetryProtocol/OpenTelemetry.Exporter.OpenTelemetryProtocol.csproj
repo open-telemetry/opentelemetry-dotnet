@@ -1,17 +1,15 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>net5.0;netstandard2.1;netstandard2.0;net461</TargetFrameworks>
+    <TargetFrameworks>net5.0;netstandard2.1;netstandard2.0;net462</TargetFrameworks>
     <Description>OpenTelemetry protocol exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);OTLP</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
-    <!-- TODO: Remove this once a version targeting net5.0 is released -->
-    <RunApiCompat Condition="$(TargetFramework) == 'net5.0'">false</RunApiCompat>
   </PropertyGroup>
 
-  <!--Do not run ApiCompat for net461 as this is newly added. There is no existing contract for net461 against which we could compare the implementation.
-  Remove this property once we have released a stable net461 version.-->
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net461'">
+  <!--Do not run ApiCompat for net462 as this is newly added. There is no existing contract for net461 against which we could compare the implementation.
+  Remove this property once we have released a stable net462 version.-->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net462'">
     <RunApiCompat>false</RunApiCompat>
   </PropertyGroup>
 
@@ -27,7 +25,7 @@
     <PackageReference Include="Grpc" Version="$(GrpcPkgVer)" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <PackageReference Include="Grpc" Version="$(GrpcPkgVer)" />
   </ItemGroup>
 
