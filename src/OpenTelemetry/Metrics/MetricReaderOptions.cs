@@ -27,7 +27,7 @@ public class MetricReaderOptions
     public MetricReaderTemporalityPreference TemporalityPreference { get; set; } = MetricReaderTemporalityPreference.Cumulative;
 
     /// <summary>
-    /// Gets the <see cref="PeriodicExportingMetricReaderOptions" /> options.
+    /// Gets or sets the <see cref="PeriodicExportingMetricReaderOptions" />.
     /// </summary>
-    public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions { get; private set; } = new PeriodicExportingMetricReaderOptions();
+    public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions { get; set; } = new PeriodicExportingMetricReaderOptions();
 }
