@@ -12,6 +12,16 @@
     <NoWarn>$(NoWarn),1591</NoWarn>
   </PropertyGroup>
 
+  <!--Do not run ApiCompat as this package was left out from the
+  1.2.0 stable release. This is only temporary, and this package
+  is expected to always version together with core packages.
+  Remove this property once we have released the 1.3.0 stable version
+  of this package. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/3192
+  -->
+  <PropertyGroup>
+    <RunApiCompat>false</RunApiCompat>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
