@@ -55,7 +55,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [Fact]
         public async Task RequestMetricIsCaptured()
         {
-            var metricItems = new List<Metric>();
+            var metricItems = new List<ExportableMetricCopy>();
 
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddAspNetCoreInstrumentation()
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.NotNull(metric);
             Assert.True(metric.MetricType == MetricType.Histogram);
             var metricPoints = new List<MetricPoint>();
-            foreach (var p in metric.GetMetricPoints())
+            foreach (var p in metric.MetricPoints)
             {
                 metricPoints.Add(p);
             }
