@@ -9,6 +9,9 @@
 * Changed Prometheus exporter to return 204 No Content and log a warning event
   if there are no metrics to collect.
 
+* Removes .NET Framework 4.6.1. The minimum .NET Framework
+  version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
+
 ## 1.2.0-rc5
 
 Released 2022-Apr-12
