@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.2.0
+
+Released 2022-Apr-15
+
 * LogExporter to correctly map Severity to OTLP.
   ([#3177](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3177))
 
