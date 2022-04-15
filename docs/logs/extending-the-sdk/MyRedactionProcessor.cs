@@ -32,7 +32,7 @@ internal class MyRedactionProcessor : BaseProcessor<LogRecord>
         Console.WriteLine($"{this.name}.OnEnd(logRecord.FormattedMessage before redaction: {logRecord.FormattedMessage})");
         if (logRecord.FormattedMessage.Contains("sensitive information"))
         {
-            logRecord.FormattedMessage = "This message contains sensitive information and is thus redacted.";
+            logRecord.FormattedMessage = "This message is redacted.";
         }
 
         Console.WriteLine($"{this.name}.OnEnd(logRecord.FormattedMessage after redaction: {logRecord.FormattedMessage})");
