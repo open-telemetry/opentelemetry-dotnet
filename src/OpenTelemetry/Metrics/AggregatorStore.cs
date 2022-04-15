@@ -181,28 +181,32 @@ namespace OpenTelemetry.Metrics
                 if (length > 1)
                 {
                     // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                    // Create a new array for the sorted Tag keys.
-                    var sortedTagKeys = new string[length];
-                    tagKeys.CopyTo(sortedTagKeys, 0);
+                    // Create or obtain new arrays to temporarily hold the sorted tag Keys and Values
+                    var storage = ThreadStaticStorage.GetStorage();
+                    storage.CloneKeysAndValues(tagKeys, tagValues, length, out var tempSortedTagKeys, out var tempSortedTagValues);
 
-                    // Create a new array for the sorted Tag values.
-                    var sortedTagValues = new object[length];
-                    tagValues.CopyTo(sortedTagValues, 0);
+                    Array.Sort(tempSortedTagKeys, tempSortedTagValues);
 
-                    Array.Sort(sortedTagKeys, sortedTagValues);
-
-                    var sortedTags = new Tags(sortedTagKeys, sortedTagValues);
+                    var sortedTags = new Tags(tempSortedTagKeys, tempSortedTagValues);
 
                     if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
                     {
-                        // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                        // Note: We are using storage from ThreadStatic for both the input order of tags and the sorted order of tags,
+                        // so we need to make a deep copy for Dictionary storage.
                         var givenKeys = new string[length];
                         tagKeys.CopyTo(givenKeys, 0);
 
                         var givenValues = new object[length];
                         tagValues.CopyTo(givenValues, 0);
 
+                        var sortedTagKeys = new string[length];
+                        tempSortedTagKeys.CopyTo(sortedTagKeys, 0);
+
+                        var sortedTagValues = new object[length];
+                        tempSortedTagValues.CopyTo(sortedTagValues, 0);
+
                         givenTags = new Tags(givenKeys, givenValues);
+                        sortedTags = new Tags(sortedTagKeys, sortedTagValues);
 
                         aggregatorIndex = this.metricPointIndex;
                         if (aggregatorIndex >= this.maxMetricPoints)
