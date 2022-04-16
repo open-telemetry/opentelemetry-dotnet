@@ -26,7 +26,7 @@ namespace OpenTelemetry.Metrics.Tests
     {
         private readonly Meter meter;
         private readonly MeterProvider provider;
-        private readonly Metric metric;
+        private readonly ExportableMetricCopy metric;
         private readonly Histogram<long> histogram;
         private readonly double[] bounds;
         private MetricPoint metricPoint;
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Metrics.Tests
                 this.bounds[i] = i * 1000 / this.bounds.Length;
             }
 
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             this.provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name)
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Metrics.Tests
             this.provider.ForceFlush();
 
             this.metric = exportedItems[0];
-            var metricPointsEnumerator = this.metric.GetMetricPoints().GetEnumerator();
+            var metricPointsEnumerator = this.metric.MetricPoints.GetEnumerator();
             metricPointsEnumerator.MoveNext();
             this.metricPoint = metricPointsEnumerator.Current;
         }

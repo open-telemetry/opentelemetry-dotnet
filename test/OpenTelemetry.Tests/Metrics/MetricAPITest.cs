@@ -46,7 +46,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void ObserverCallbackTest()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportedItems)
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0];
             Assert.Equal("myGauge", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric.GetMetricPoints())
+            foreach (var mp in metric.MetricPoints)
             {
                 metricPoints.Add(mp);
             }
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void ObserverCallbackExceptionTest()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportedItems)
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0];
             Assert.Equal("myGauge", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric.GetMetricPoints())
+            foreach (var mp in metric.MetricPoints)
             {
                 metricPoints.Add(mp);
             }
@@ -107,7 +107,7 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(null)]
         public void MetricUnitIsExportedCorrectly(string unit)
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -130,7 +130,7 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(null)]
         public void MetricDescriptionIsExportedCorrectly(string description)
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -150,7 +150,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void DuplicateInstrumentRegistration_NoViews_IdenticalInstruments()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -171,7 +171,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0];
             Assert.Equal("instrumentName", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric.GetMetricPoints())
+            foreach (var mp in metric.MetricPoints)
             {
                 metricPoints.Add(mp);
             }
@@ -184,7 +184,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void DuplicateInstrumentRegistration_NoViews_DuplicateInstruments_DifferentDescription()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -208,7 +208,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("instrumentDescription2", metric2.Description);
 
             List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric1.GetMetricPoints())
+            foreach (var mp in metric1.MetricPoints)
             {
                 metric1MetricPoints.Add(mp);
             }
@@ -218,7 +218,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(10, metricPoint1.GetSumLong());
 
             List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric2.GetMetricPoints())
+            foreach (var mp in metric2.MetricPoints)
             {
                 metric2MetricPoints.Add(mp);
             }
@@ -231,7 +231,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void DuplicateInstrumentRegistration_NoViews_DuplicateInstruments_DifferentUnit()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -255,7 +255,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("instrumentUnit2", metric2.Unit);
 
             List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric1.GetMetricPoints())
+            foreach (var mp in metric1.MetricPoints)
             {
                 metric1MetricPoints.Add(mp);
             }
@@ -265,7 +265,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(10, metricPoint1.GetSumLong());
 
             List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric2.GetMetricPoints())
+            foreach (var mp in metric2.MetricPoints)
             {
                 metric2MetricPoints.Add(mp);
             }
@@ -278,7 +278,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void DuplicateInstrumentRegistration_NoViews_DuplicateInstruments_DifferentDataType()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -300,7 +300,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric2 = exportedItems[1];
 
             List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric1.GetMetricPoints())
+            foreach (var mp in metric1.MetricPoints)
             {
                 metric1MetricPoints.Add(mp);
             }
@@ -310,7 +310,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(10, metricPoint1.GetSumLong());
 
             List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric2.GetMetricPoints())
+            foreach (var mp in metric2.MetricPoints)
             {
                 metric2MetricPoints.Add(mp);
             }
@@ -323,7 +323,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void DuplicateInstrumentRegistration_NoViews_DuplicateInstruments_DifferentInstrumentType()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -345,7 +345,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric2 = exportedItems[1];
 
             List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric1.GetMetricPoints())
+            foreach (var mp in metric1.MetricPoints)
             {
                 metric1MetricPoints.Add(mp);
             }
@@ -355,7 +355,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(10, metricPoint1.GetSumLong());
 
             List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric2.GetMetricPoints())
+            foreach (var mp in metric2.MetricPoints)
             {
                 metric2MetricPoints.Add(mp);
             }
@@ -369,7 +369,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void DuplicateInstrumentNamesFromDifferentMetersWithSameNameDifferentVersion()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}", "1.0");
             using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}", "2.0");
@@ -402,7 +402,7 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(MetricReaderTemporalityPreference.Delta, false)]
         public void DuplicateInstrumentNamesFromDifferentMetersAreAllowed(MetricReaderTemporalityPreference temporality, bool hasView)
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.1.{temporality}");
             using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.2.{temporality}");
@@ -449,7 +449,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter5 = new Meter("GhiCompany.qweProduct.ComponentN");
             using var meter6 = new Meter("SomeCompany.SomeProduct.SomeComponent");
 
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddMeter("AbcCompany.XyzProduct.Component?")
                 .AddMeter("DefCompany.*.ComponentC")
@@ -498,7 +498,7 @@ namespace OpenTelemetry.Metrics.Tests
             using var meter1 = new Meter($"AbcCompany.XyzProduct.ComponentA.{hasView}");
             using var meter2 = new Meter($"abcCompany.xYzProduct.componentC.{hasView}");
 
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddInMemoryExporter(exportedItems);
 
@@ -524,7 +524,7 @@ namespace OpenTelemetry.Metrics.Tests
         {
             DateTime testStartTime = DateTime.UtcNow;
 
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
             var counterLong = meter.CreateCounter<long>("mycounter");
@@ -616,7 +616,7 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(false)]
         public void ObservableCounterAggregationTest(bool exportDelta)
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
             int i = 1;
@@ -672,7 +672,7 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(false)]
         public void ObservableCounterWithTagsAggregationTest(bool exportDelta)
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             var tags1 = new List<KeyValuePair<string, object>>
             {
                 new("statusCode", 200),
@@ -718,7 +718,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0];
             Assert.Equal("observable-counter", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric.GetMetricPoints())
+            foreach (var mp in metric.MetricPoints)
             {
                 metricPoints.Add(mp);
             }
@@ -744,7 +744,7 @@ namespace OpenTelemetry.Metrics.Tests
             metric = exportedItems[0];
             Assert.Equal("observable-counter", metric.Name);
             metricPoints.Clear();
-            foreach (ref readonly var mp in metric.GetMetricPoints())
+            foreach (var mp in metric.MetricPoints)
             {
                 metricPoints.Add(mp);
             }
@@ -769,7 +769,7 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(false)]
         public void ObservableCounterSpatialAggregationTest(bool exportDelta)
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             var tags1 = new List<KeyValuePair<string, object>>
             {
                 new("statusCode", 200),
@@ -815,7 +815,7 @@ namespace OpenTelemetry.Metrics.Tests
             var metric = exportedItems[0];
             Assert.Equal("requestCount", metric.Name);
             List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric.GetMetricPoints())
+            foreach (var mp in metric.MetricPoints)
             {
                 metricPoints.Add(mp);
             }
@@ -836,7 +836,7 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(false)]
         public void DimensionsAreOrderInsensitiveWithSortedKeysFirst(bool exportDelta)
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
             var counterLong = meter.CreateCounter<long>("Counter");
@@ -927,7 +927,7 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(false)]
         public void DimensionsAreOrderInsensitiveWithUnsortedKeysFirst(bool exportDelta)
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
             var counterLong = meter.CreateCounter<long>("Counter");
@@ -1018,7 +1018,7 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(MetricReaderTemporalityPreference.Delta)]
         public void TestInstrumentDisposal(MetricReaderTemporalityPreference temporality)
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}.1");
             var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}.2");
@@ -1073,7 +1073,7 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(MetricReaderTemporalityPreference.Delta)]
         public void TestMetricPointCap(MetricReaderTemporalityPreference temporality)
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             int MetricPointCount()
             {
@@ -1081,7 +1081,7 @@ namespace OpenTelemetry.Metrics.Tests
 
                 foreach (var metric in exportedItems)
                 {
-                    foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                    foreach (var mp in metric.MetricPoints)
                     {
                         count++;
                     }
@@ -1184,7 +1184,7 @@ namespace OpenTelemetry.Metrics.Tests
         [MemberData(nameof(MetricTestData.InvalidInstrumentNames), MemberType = typeof(MetricTestData))]
         public void InstrumentWithInvalidNameIsIgnoredTest(string instrumentName)
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter("InstrumentWithInvalidNameIsIgnoredTest");
 
@@ -1206,7 +1206,7 @@ namespace OpenTelemetry.Metrics.Tests
         [MemberData(nameof(MetricTestData.ValidInstrumentNames), MemberType = typeof(MetricTestData))]
         public void InstrumentWithValidNameIsExportedTest(string name)
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter("InstrumentValidNameIsExportedTest");
 
@@ -1251,7 +1251,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void UnsupportedMetricInstrument()
         {
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems)
@@ -1329,7 +1329,7 @@ namespace OpenTelemetry.Metrics.Tests
         private void MultithreadedCounterTest<T>(T deltaValueUpdatedByEachCall)
             where T : struct, IComparable
         {
-            var metricItems = new List<Metric>();
+            var metricItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{typeof(T).Name}.{deltaValueUpdatedByEachCall}");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()

@@ -118,7 +118,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void AddViewWithExceptionInUserCallbackAppliedDefault()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter1 = new Meter("AddViewWithExceptionInUserCallback");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -144,7 +144,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void AddViewWithExceptionInUserCallbackNoDefault()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter1 = new Meter("AddViewWithExceptionInUserCallback");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -172,7 +172,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void AddViewsWithAndWithoutExceptionInUserCallback()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter1 = new Meter("AddViewWithExceptionInUserCallback");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -211,7 +211,7 @@ namespace OpenTelemetry.Metrics.Tests
         [MemberData(nameof(MetricTestData.InvalidHistogramBoundaries), MemberType = typeof(MetricTestData))]
         public void AddViewWithInvalidHistogramBoundsIgnored(double[] boundaries)
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter1 = new Meter("AddViewWithInvalidHistogramBoundsIgnored");
 
@@ -461,7 +461,7 @@ namespace OpenTelemetry.Metrics.Tests
         public void ViewWithHistogramConfigurationIgnoredWhenAppliedToNonHistogram()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
                 .AddView("NotAHistogram", new ExplicitBucketHistogramConfiguration() { Name = "ImAHistogram" })
@@ -478,7 +478,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("NotAHistogram", metric.Name);
 
             List<MetricPoint> metricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric.GetMetricPoints())
+            foreach (var mp in metric.MetricPoints)
             {
                 metricPoints.Add(mp);
             }
@@ -762,7 +762,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewConflict_OneInstrument_DifferentDescription()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -786,7 +786,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("newDescription2", metric2.Description);
 
             List<MetricPoint> metric1MetricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric1.GetMetricPoints())
+            foreach (var mp in metric1.MetricPoints)
             {
                 metric1MetricPoints.Add(mp);
             }
@@ -796,7 +796,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal(10, metricPoint1.GetSumLong());
 
             List<MetricPoint> metric2MetricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric2.GetMetricPoints())
+            foreach (var mp in metric2.MetricPoints)
             {
                 metric2MetricPoints.Add(mp);
             }
@@ -809,7 +809,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewConflict_TwoDistinctInstruments_ThreeStreams()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -850,10 +850,10 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("MetricStreamC", metricC.Name);
             Assert.Equal(10, GetAggregatedValue(metricC));
 
-            long GetAggregatedValue(Metric metric)
+            long GetAggregatedValue(ExportableMetricCopy metric)
             {
                 var metricPoints = new List<MetricPoint>();
-                foreach (ref readonly var mp in metric.GetMetricPoints())
+                foreach (var mp in metric.MetricPoints)
                 {
                     metricPoints.Add(mp);
                 }
@@ -866,7 +866,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewConflict_TwoIdenticalInstruments_TwoViews_DifferentTags()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -898,8 +898,8 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
             Assert.Equal(2, exportedItems.Count);
-            var metric1 = new List<Metric>() { exportedItems[0] };
-            var metric2 = new List<Metric>() { exportedItems[1] };
+            var metric1 = new List<ExportableMetricCopy>() { exportedItems[0] };
+            var metric2 = new List<ExportableMetricCopy>() { exportedItems[1] };
             var tag1 = new List<KeyValuePair<string, object>> { tags[0] };
             var tag2 = new List<KeyValuePair<string, object>> { tags[1] };
 
@@ -914,7 +914,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewConflict_TwoIdenticalInstruments_TwoViews_SameTags()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -947,13 +947,13 @@ namespace OpenTelemetry.Metrics.Tests
 
             Assert.Equal(2, exportedItems.Count);
 
-            var metric1 = new List<Metric>() { exportedItems[0] };
+            var metric1 = new List<ExportableMetricCopy>() { exportedItems[0] };
             var tag1 = new List<KeyValuePair<string, object>> { tags[0] };
             Assert.Equal("name", exportedItems[0].Name);
             Assert.Equal(20, GetLongSum(metric1));
             CheckTagsForNthMetricPoint(metric1, tag1, 1);
 
-            var metric2 = new List<Metric>() { exportedItems[1] };
+            var metric2 = new List<ExportableMetricCopy>() { exportedItems[1] };
             var tag2 = new List<KeyValuePair<string, object>> { tags[0] };
             Assert.Equal("name", exportedItems[1].Name);
             Assert.Equal(20, GetLongSum(metric2));
@@ -963,7 +963,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewConflict_TwoIdenticalInstruments_TwoViews_DifferentHistogramBounds()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -996,7 +996,7 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("name", exportedItems[1].Name);
 
             var metricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric1.GetMetricPoints())
+            foreach (var mp in metric1.MetricPoints)
             {
                 metricPoints.Add(mp);
             }
@@ -1017,7 +1017,7 @@ namespace OpenTelemetry.Metrics.Tests
             }
 
             metricPoints = new List<MetricPoint>();
-            foreach (ref readonly var mp in metric2.GetMetricPoints())
+            foreach (var mp in metric2.MetricPoints)
             {
                 metricPoints.Add(mp);
             }
@@ -1041,7 +1041,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewConflict_TwoInstruments_OneMatchesView()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -1076,8 +1076,8 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
             Assert.Equal(2, exportedItems.Count);
-            var metric1 = new List<Metric>() { exportedItems[0] };
-            var metric2 = new List<Metric>() { exportedItems[1] };
+            var metric1 = new List<ExportableMetricCopy>() { exportedItems[0] };
+            var metric2 = new List<ExportableMetricCopy>() { exportedItems[1] };
 
             var tags1 = new List<KeyValuePair<string, object>> { tags[0] };
             var tags2 = new List<KeyValuePair<string, object>> { tags[0], tags[1] };
@@ -1095,7 +1095,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void ViewConflict_TwoInstruments_ConflictAvoidedBecauseSecondInstrumentIsDropped()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}");
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
@@ -1124,7 +1124,7 @@ namespace OpenTelemetry.Metrics.Tests
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
             Assert.Single(exportedItems);
-            var metric1 = new List<Metric>() { exportedItems[0] };
+            var metric1 = new List<ExportableMetricCopy>() { exportedItems[0] };
 
             Assert.Equal("othername", exportedItems[0].Name);
             Assert.Equal(10, GetLongSum(metric1));

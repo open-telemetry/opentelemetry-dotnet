@@ -30,8 +30,8 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(MetricReaderTemporalityPreference.Cumulative, true)]
         public void SdkSupportsMultipleReaders(MetricReaderTemporalityPreference aggregationTemporality, bool hasViews)
         {
-            var exportedItems1 = new List<Metric>();
-            var exportedItems2 = new List<Metric>();
+            var exportedItems1 = new List<ExportableMetricCopy>();
+            var exportedItems2 = new List<ExportableMetricCopy>();
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{aggregationTemporality}.{hasViews}");
 
@@ -158,8 +158,8 @@ namespace OpenTelemetry.Metrics.Tests
         [InlineData(true)]
         public void ObservableInstrumentCallbacksInvokedForEachReaders(bool hasViews)
         {
-            var exportedItems1 = new List<Metric>();
-            var exportedItems2 = new List<Metric>();
+            var exportedItems1 = new List<ExportableMetricCopy>();
+            var exportedItems2 = new List<ExportableMetricCopy>();
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{hasViews}");
             int callbackInvocationCount = 0;
             var gauge = meter.CreateObservableGauge("gauge", () =>
@@ -198,12 +198,12 @@ namespace OpenTelemetry.Metrics.Tests
             }
         }
 
-        private static void AssertLongSumValueForMetric(Metric metric, long value)
+        private static void AssertLongSumValueForMetric(ExportableMetricCopy metric, long value)
         {
-            var metricPoints = metric.GetMetricPoints();
+            var metricPoints = metric.MetricPoints;
             var metricPointsEnumerator = metricPoints.GetEnumerator();
             Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
-            ref readonly var metricPointForFirstExport = ref metricPointsEnumerator.Current;
+            var metricPointForFirstExport = metricPointsEnumerator.Current;
             if (metric.MetricType.IsSum())
             {
                 Assert.Equal(value, metricPointForFirstExport.GetSumLong());

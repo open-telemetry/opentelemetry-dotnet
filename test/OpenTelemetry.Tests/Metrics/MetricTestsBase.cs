@@ -34,12 +34,12 @@ public class MetricTestsBase
         Assert.Equal(expectedTags.Count, tagIndex);
     }
 
-    public static long GetLongSum(List<Metric> metrics)
+    public static long GetLongSum(List<ExportableMetricCopy> metrics)
     {
         long sum = 0;
         foreach (var metric in metrics)
         {
-            foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+            foreach (var metricPoint in metric.MetricPoints)
             {
                 if (metric.MetricType.IsSum())
                 {
@@ -55,12 +55,12 @@ public class MetricTestsBase
         return sum;
     }
 
-    public static double GetDoubleSum(List<Metric> metrics)
+    public static double GetDoubleSum(List<ExportableMetricCopy> metrics)
     {
         double sum = 0;
         foreach (var metric in metrics)
         {
-            foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+            foreach (var metricPoint in metric.MetricPoints)
             {
                 if (metric.MetricType.IsSum())
                 {
@@ -76,12 +76,12 @@ public class MetricTestsBase
         return sum;
     }
 
-    public static int GetNumberOfMetricPoints(List<Metric> metrics)
+    public static int GetNumberOfMetricPoints(List<ExportableMetricCopy> metrics)
     {
         int count = 0;
         foreach (var metric in metrics)
         {
-            foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+            foreach (var metricPoint in metric.MetricPoints)
             {
                 count++;
             }
@@ -90,11 +90,11 @@ public class MetricTestsBase
         return count;
     }
 
-    public static MetricPoint? GetFirstMetricPoint(List<Metric> metrics)
+    public static MetricPoint? GetFirstMetricPoint(List<ExportableMetricCopy> metrics)
     {
         foreach (var metric in metrics)
         {
-            foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+            foreach (var metricPoint in metric.MetricPoints)
             {
                 return metricPoint;
             }
@@ -104,10 +104,10 @@ public class MetricTestsBase
     }
 
     // Provide tags input sorted by Key
-    public static void CheckTagsForNthMetricPoint(List<Metric> metrics, List<KeyValuePair<string, object>> tags, int n)
+    public static void CheckTagsForNthMetricPoint(List<ExportableMetricCopy> metrics, List<KeyValuePair<string, object>> tags, int n)
     {
         var metric = metrics[0];
-        var metricPointEnumerator = metric.GetMetricPoints().GetEnumerator();
+        var metricPointEnumerator = metric.MetricPoints.GetEnumerator();
 
         for (int i = 0; i < n; i++)
         {

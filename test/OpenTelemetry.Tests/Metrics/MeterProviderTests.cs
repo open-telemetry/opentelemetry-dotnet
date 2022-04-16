@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void MeterProviderFindExporterTest()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<ExportableMetricCopy>();
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddInMemoryExporter(exportedItems)
                 .Build();
