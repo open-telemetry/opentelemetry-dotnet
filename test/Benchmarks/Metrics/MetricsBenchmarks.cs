@@ -74,7 +74,6 @@ namespace Benchmarks.Metrics
                 .AddMeter(this.meter.Name) // All instruments from this meter are enabled.
                 .AddInMemoryExporter(exportedItems, metricReaderOptions =>
                 {
-                    metricReaderOptions.MetricReaderType = MetricReaderType.Periodic;
                     metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
                     metricReaderOptions.Temporality = this.AggregationTemporality;
                 })
