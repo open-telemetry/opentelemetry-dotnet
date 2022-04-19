@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 using System;
+using System.Net.Http;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 
 namespace OpenTelemetry.Instrumentation.Http
@@ -25,13 +26,31 @@ namespace OpenTelemetry.Instrumentation.Http
     {
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
+        private readonly Func<string, object, object, bool> isEnabled = (activityName, obj1, obj2) =>
+        {
+            if (activityName.Equals("System.Net.Http.HttpRequestOut"))
+            {
+                return false;
+            }
+
+            return true;
+        };
+
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientInstrumentation"/> class.
         /// </summary>
         /// <param name="options">Configuration options for HTTP client instrumentation.</param>
         public HttpClientInstrumentation(HttpClientInstrumentationOptions options)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options), null);
+            if (typeof(HttpClient).Assembly.GetName().Version.Major >= 7)
+            {
+                this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options), this.isEnabled);
+            }
+            else
+            {
+                this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options), null);
+            }
+
             this.diagnosticSourceSubscriber.Subscribe();
         }
 
