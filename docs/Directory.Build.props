@@ -9,12 +9,4 @@
     <!-- https://dotnet.microsoft.com/download/dotnet-framework -->
     <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net462;net47;net471;net472;net48</TargetFrameworks>
   </PropertyGroup>
-
-  <PropertyGroup Label="Package versions used in this folder">
-    <!--
-      Please sort alphabetically.
-      Refer to https://docs.microsoft.com/nuget/concepts/package-versioning for semver syntax.
-    -->
-    <MicrosoftExtensionsLoggingPkgVer>[6.0.0,)</MicrosoftExtensionsLoggingPkgVer>
-  </PropertyGroup>
 </Project>
