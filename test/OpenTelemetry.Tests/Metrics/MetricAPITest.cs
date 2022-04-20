@@ -1384,8 +1384,16 @@ namespace OpenTelemetry.Metrics.Tests
         {
             var bucketCounts = new long[11];
 
-            var metrics = new List<Metric>();
-            var metricReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(metrics));
+            var metrics = new List<ExportableMetricCopy>();
+            var metricReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportFunc: batch =>
+            {
+                foreach (var metric in batch)
+                {
+                    metrics.Add(new ExportableMetricCopy(metric));
+                }
+
+                return ExportResult.Success;
+            }));
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{typeof(T).Name}");
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -1423,7 +1431,7 @@ namespace OpenTelemetry.Metrics.Tests
 
             foreach (var metric in metrics)
             {
-                foreach (var metricPoint in metric.GetMetricPoints())
+                foreach (var metricPoint in metric.MetricPoints)
                 {
                     bucketCounts = metricPoint.GetHistogramBuckets().RunningBucketCounts;
                 }

@@ -27,7 +27,7 @@ namespace OpenTelemetry.Metrics
     {
         private readonly MetricStreamIdentity instrumentIdentity;
 
-        internal ExportableMetricCopy(Metric metric)
+        public ExportableMetricCopy(Metric metric)
         {
             this.instrumentIdentity = metric.InstrumentIdentity;
             this.MetricType = metric.MetricType;

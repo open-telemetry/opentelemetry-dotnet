@@ -1,6 +1,7 @@
 OpenTelemetry.Exporter.InMemoryExporter<T>.InMemoryExporter(System.Func<OpenTelemetry.Batch<T>, OpenTelemetry.ExportResult> exportFunc) -> void
 OpenTelemetry.Metrics.ExportableMetricCopy
 OpenTelemetry.Metrics.ExportableMetricCopy.Description.get -> string
+OpenTelemetry.Metrics.ExportableMetricCopy.ExportableMetricCopy(OpenTelemetry.Metrics.Metric metric) -> void
 OpenTelemetry.Metrics.ExportableMetricCopy.MeterName.get -> string
 OpenTelemetry.Metrics.ExportableMetricCopy.MeterVersion.get -> string
 OpenTelemetry.Metrics.ExportableMetricCopy.MetricPoints.get -> System.Collections.Generic.IReadOnlyList<OpenTelemetry.Metrics.MetricPoint>
