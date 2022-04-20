@@ -99,7 +99,7 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine("\nResource associated with LogRecord:");
                     foreach (var resourceAttribute in resource.Attributes)
                     {
-                        this.WriteLine($"    {resourceAttribute.Key}: {resourceAttribute.Value}");
+                        this.WriteLine($"{resourceAttribute.Key}: {resourceAttribute.Value}");
                     }
                 }
 
