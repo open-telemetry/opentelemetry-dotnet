@@ -23,17 +23,34 @@ namespace OpenTelemetry.Exporter
         where T : class
     {
         private readonly ICollection<T> exportedItems;
+        private readonly ExportDelegate onExport;
 
         public InMemoryExporter(ICollection<T> exportedItems)
         {
+            if (typeof(T) == typeof(Metrics.Metric))
+            {
+                // TODO: users should be discouraged from using the InMemoryExporter
+                // in this way for Metrics. Exported Metrics are not trustworthy
+                // because they can continue to be updated after export.
+                throw new NotSupportedException("TODO: MESSAGE");
+            }
+
             this.exportedItems = exportedItems;
+            this.onExport = this.DefaultExport;
         }
 
-        public Action<T> AdditionalExportAction { get; set; }
-
-        public override ExportResult Export(in Batch<T> batch)
+        public InMemoryExporter(Func<Batch<T>, ExportResult> exportFunc)
         {
-            if (this.exportedItems == null && this.AdditionalExportAction == null)
+            this.onExport = (in Batch<T> batch) => exportFunc(batch);
+        }
+
+        private delegate ExportResult ExportDelegate(in Batch<T> batch);
+
+        public override ExportResult Export(in Batch<T> batch) => this.onExport(batch);
+
+        private ExportResult DefaultExport(in Batch<T> batch)
+        {
+            if (this.exportedItems == null)
             {
                 return ExportResult.Failure;
             }
@@ -41,8 +58,6 @@ namespace OpenTelemetry.Exporter
             foreach (var data in batch)
             {
                 this.exportedItems?.Add(data);
-
-                this.AdditionalExportAction?.Invoke(data);
             }
 
             return ExportResult.Success;

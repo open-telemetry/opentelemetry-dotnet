@@ -1,5 +1,4 @@
-OpenTelemetry.Exporter.InMemoryExporter<T>.AdditionalExportAction.get -> System.Action<T>
-OpenTelemetry.Exporter.InMemoryExporter<T>.AdditionalExportAction.set -> void
+OpenTelemetry.Exporter.InMemoryExporter<T>.InMemoryExporter(System.Func<OpenTelemetry.Batch<T>, OpenTelemetry.ExportResult> exportFunc) -> void
 OpenTelemetry.Metrics.ExportableMetricCopy
 OpenTelemetry.Metrics.ExportableMetricCopy.Description.get -> string
 OpenTelemetry.Metrics.ExportableMetricCopy.MeterName.get -> string
@@ -11,5 +10,5 @@ OpenTelemetry.Metrics.ExportableMetricCopy.Unit.get -> string
 OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions
 static OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions.AddInMemoryExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Collections.Generic.ICollection<OpenTelemetry.Metrics.ExportableMetricCopy> exportedItems) -> OpenTelemetry.Metrics.MeterProviderBuilder
 static OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions.AddInMemoryExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Collections.Generic.ICollection<OpenTelemetry.Metrics.ExportableMetricCopy> exportedItems, System.Action<OpenTelemetry.Metrics.MetricReaderOptions> configureMetricReader) -> OpenTelemetry.Metrics.MeterProviderBuilder
-static OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions.AddInMemoryExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Collections.Generic.ICollection<OpenTelemetry.Metrics.Metric> exportedItems) -> OpenTelemetry.Metrics.MeterProviderBuilder
-static OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions.AddInMemoryExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Collections.Generic.ICollection<OpenTelemetry.Metrics.Metric> exportedItems, System.Action<OpenTelemetry.Metrics.MetricReaderOptions> configureMetricReader) -> OpenTelemetry.Metrics.MeterProviderBuilder
+static OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions.AddInMemoryExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Func<OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric>, OpenTelemetry.ExportResult> exportFunc) -> OpenTelemetry.Metrics.MeterProviderBuilder
+static OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions.AddInMemoryExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Func<OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric>, OpenTelemetry.ExportResult> exportFunc, System.Action<OpenTelemetry.Metrics.MetricReaderOptions> configureMetricReader) -> OpenTelemetry.Metrics.MeterProviderBuilder

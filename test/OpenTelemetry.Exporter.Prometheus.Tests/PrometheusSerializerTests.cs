@@ -34,7 +34,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(metrics)
+                .AddInMemoryExporter(exportFunc: batch =>
+                {
+                    foreach (var metric in batch)
+                    {
+                        metrics.Add(metric);
+                    }
+
+                    return ExportResult.Success;
+                })
                 .Build();
 
             meter.CreateObservableGauge("test_gauge", () => 123);
@@ -59,7 +67,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(metrics)
+                .AddInMemoryExporter(exportFunc: batch =>
+                {
+                    foreach (var metric in batch)
+                    {
+                        metrics.Add(metric);
+                    }
+
+                    return ExportResult.Success;
+                })
                 .Build();
 
             meter.CreateObservableGauge("test_gauge", () => 123, description: "Hello, world!");
@@ -85,7 +101,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(metrics)
+                .AddInMemoryExporter(exportFunc: batch =>
+                {
+                    foreach (var metric in batch)
+                    {
+                        metrics.Add(metric);
+                    }
+
+                    return ExportResult.Success;
+                })
                 .Build();
 
             meter.CreateObservableGauge("test_gauge", () => 123, unit: "seconds");
@@ -110,7 +134,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(metrics)
+                .AddInMemoryExporter(exportFunc: batch =>
+                {
+                    foreach (var metric in batch)
+                    {
+                        metrics.Add(metric);
+                    }
+
+                    return ExportResult.Success;
+                })
                 .Build();
 
             meter.CreateObservableGauge(
@@ -137,7 +169,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(metrics)
+                .AddInMemoryExporter(exportFunc: batch =>
+                {
+                    foreach (var metric in batch)
+                    {
+                        metrics.Add(metric);
+                    }
+
+                    return ExportResult.Success;
+                })
                 .Build();
 
             meter.CreateObservableGauge("test_gauge", () => new List<Measurement<double>>
@@ -169,7 +209,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(metrics)
+                .AddInMemoryExporter(exportFunc: batch =>
+                {
+                    foreach (var metric in batch)
+                    {
+                        metrics.Add(metric);
+                    }
+
+                    return ExportResult.Success;
+                })
                 .Build();
 
             var counter = meter.CreateCounter<double>("test_counter");
@@ -196,7 +244,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(metrics)
+                .AddInMemoryExporter(exportFunc: batch =>
+                {
+                    foreach (var metric in batch)
+                    {
+                        metrics.Add(metric);
+                    }
+
+                    return ExportResult.Success;
+                })
                 .Build();
 
             var histogram = meter.CreateHistogram<double>("test_histogram");
@@ -235,7 +291,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(metrics)
+                .AddInMemoryExporter(exportFunc: batch =>
+                {
+                    foreach (var metric in batch)
+                    {
+                        metrics.Add(metric);
+                    }
+
+                    return ExportResult.Success;
+                })
                 .Build();
 
             var histogram = meter.CreateHistogram<double>("test_histogram");
@@ -274,7 +338,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(metrics)
+                .AddInMemoryExporter(exportFunc: batch =>
+                {
+                    foreach (var metric in batch)
+                    {
+                        metrics.Add(metric);
+                    }
+
+                    return ExportResult.Success;
+                })
                 .Build();
 
             var histogram = meter.CreateHistogram<double>("test_histogram");
@@ -313,7 +385,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(metrics)
+                .AddInMemoryExporter(exportFunc: batch =>
+                {
+                    foreach (var metric in batch)
+                    {
+                        metrics.Add(metric);
+                    }
+
+                    return ExportResult.Success;
+                })
                 .Build();
 
             var histogram = meter.CreateHistogram<double>("test_histogram");
@@ -353,7 +433,15 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(metrics)
+                .AddInMemoryExporter(exportFunc: batch =>
+                {
+                    foreach (var metric in batch)
+                    {
+                        metrics.Add(metric);
+                    }
+
+                    return ExportResult.Success;
+                })
                 .Build();
 
             var histogram = meter.CreateHistogram<double>("test_histogram");

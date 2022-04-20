@@ -163,13 +163,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     });
             }
 
-            var metrics = new List<Metric>();
+            Batch<Metric> metricBatch = default;
 
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{includeServiceNameInResource}", "0.0.1");
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(metrics)
+                .AddInMemoryExporter(exportFunc: batch =>
+                {
+                    metricBatch = batch;
+                    return ExportResult.Success;
+                })
                 .Build();
 
             var counter = meter.CreateCounter<int>("counter");
@@ -177,10 +181,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             provider.ForceFlush();
 
-            var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
-
             var request = new OtlpCollector.ExportMetricsServiceRequest();
-            request.AddMetrics(resourceBuilder.Build().ToOtlpResource(), batch);
+            request.AddMetrics(resourceBuilder.Build().ToOtlpResource(), metricBatch);
 
             Assert.Single(request.ResourceMetrics);
             var resourceMetric = request.ResourceMetrics.First();
@@ -209,12 +211,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData("test_gauge", "description", "unit", 123, null)]
         public void TestGaugeToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue)
         {
-            var metrics = new List<Metric>();
+            Batch<Metric> metricBatch = default;
 
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(metrics)
+                .AddInMemoryExporter(exportFunc: batch =>
+                {
+                    metricBatch = batch;
+                    return ExportResult.Success;
+                })
                 .Build();
 
             if (longValue.HasValue)
@@ -228,10 +234,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             provider.ForceFlush();
 
-            var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
-
             var request = new OtlpCollector.ExportMetricsServiceRequest();
-            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
+            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), metricBatch);
 
             var resourceMetric = request.ResourceMetrics.Single();
             var scopeMetrics = resourceMetric.ScopeMetrics.Single();
@@ -278,15 +282,22 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData("test_counter", null, null, 123, null, MetricReaderTemporalityPreference.Delta, true, "key1", "value1", "key2", 123)]
         public void TestCounterToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool isMonotonic, params object[] keysValues)
         {
-            var metrics = new List<Metric>();
+            var metrics = new List<ExportableMetricCopy>();
+            Batch<Metric> metricBatch = default;
 
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(metrics, metricReaderOptions =>
-                {
-                    metricReaderOptions.TemporalityPreference = aggregationTemporality;
-                })
+                .AddInMemoryExporter(
+                    exportFunc: batch =>
+                    {
+                        metricBatch = batch;
+                        return ExportResult.Success;
+                    },
+                    metricReaderOptions =>
+                    {
+                        metricReaderOptions.TemporalityPreference = aggregationTemporality;
+                    })
                 .Build();
 
             var attributes = ToAttributes(keysValues).ToArray();
@@ -303,10 +314,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             provider.ForceFlush();
 
-            var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
-
             var request = new OtlpCollector.ExportMetricsServiceRequest();
-            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
+            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), metricBatch);
 
             var resourceMetric = request.ResourceMetrics.Single();
             var scopeMetrics = resourceMetric.ScopeMetrics.Single();
@@ -367,15 +376,22 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData("test_histogram", null, null, 123, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
         public void TestHistogramToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, params object[] keysValues)
         {
-            var metrics = new List<Metric>();
+            var metrics = new List<ExportableMetricCopy>();
+            Batch<Metric> metricBatch = default;
 
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddInMemoryExporter(metrics, metricReaderOptions =>
-                {
-                    metricReaderOptions.TemporalityPreference = aggregationTemporality;
-                })
+                .AddInMemoryExporter(
+                    exportFunc: batch =>
+                    {
+                        metricBatch = batch;
+                        return ExportResult.Success;
+                    },
+                    metricReaderOptions =>
+                    {
+                        metricReaderOptions.TemporalityPreference = aggregationTemporality;
+                    })
                 .Build();
 
             var attributes = ToAttributes(keysValues).ToArray();
@@ -392,10 +408,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             provider.ForceFlush();
 
-            var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
-
             var request = new OtlpCollector.ExportMetricsServiceRequest();
-            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
+            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), metricBatch);
 
             var resourceMetric = request.ResourceMetrics.Single();
             var scopeMetrics = resourceMetric.ScopeMetrics.Single();
