@@ -28,8 +28,6 @@ public class Program
         {
             builder.AddOpenTelemetry(options => options
                 .AddConsoleExporter());
-
-            builder.Services.Configure<OpenTelemetryLoggerOptions>(opt => opt.ParseStateValues = true);
         });
 
         var logger = loggerFactory.CreateLogger<Program>();
