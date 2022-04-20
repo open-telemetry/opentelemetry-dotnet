@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 
@@ -27,6 +28,8 @@ public class Program
         {
             builder.AddOpenTelemetry(options => options
                 .AddConsoleExporter());
+
+            builder.Services.Configure<OpenTelemetryLoggerOptions>(opt => opt.ParseStateValues = true);
         });
 
         var logger = loggerFactory.CreateLogger<Program>();
