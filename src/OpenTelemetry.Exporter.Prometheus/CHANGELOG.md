@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.3.0-beta.1
+
+Released 2022-Apr-15
+
 * Added `IApplicationBuilder` extension methods to help with Prometheus
   middleware configuration on ASP.NET Core
   ([#3029](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3029))
