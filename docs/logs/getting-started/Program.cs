@@ -28,7 +28,6 @@ public class Program
             builder.AddOpenTelemetry(options =>
             {
                 options.AddConsoleExporter();
-                options.IncludeScopes = true;
             });
         });
 
