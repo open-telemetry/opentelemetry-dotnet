@@ -44,6 +44,7 @@ namespace OpenTelemetry.Exporter
 
                 this.WriteLine($"{"LogRecord.CategoryName:",-RightPaddingLength}{logRecord.CategoryName}");
                 this.WriteLine($"{"LogRecord.LogLevel:",-RightPaddingLength}{logRecord.LogLevel}");
+
                 if (logRecord.FormattedMessage != null)
                 {
                     this.WriteLine($"{"LogRecord.FormattedMessage:",-RightPaddingLength}{logRecord.FormattedMessage}");
@@ -58,7 +59,17 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine("LogRecord.StateValues (Key:Value):");
                     for (int i = 0; i < logRecord.StateValues.Count; i++)
                     {
-                        this.WriteLine($"{logRecord.StateValues[i].Key,-RightPaddingLength}{logRecord.StateValues[i].Value}");
+                        // Special casing {OriginalFormat}
+                        // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
+                        // for explanation.
+                        if (logRecord.StateValues[i].Key.Equals("{OriginalFormat}"))
+                        {
+                            this.WriteLine($"{string.Empty,-4}{"OriginalFormat (a.k.a. Body)",-RightPaddingLength}{logRecord.StateValues[i].Value}");
+                        }
+                        else
+                        {
+                            this.WriteLine($"{string.Empty,-4}{logRecord.StateValues[i].Key,-RightPaddingLength}{logRecord.StateValues[i].Value}");
+                        }
                     }
                 }
 

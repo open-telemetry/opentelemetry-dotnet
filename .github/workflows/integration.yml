@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [netcoreapp3.1,net5.0,net6.0]
+        version: [netcoreapp3.1,net6.0]
     steps:
       - uses: actions/checkout@v3
 
@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [netcoreapp3.1,net5.0,net6.0]
+        version: [netcoreapp3.1,net6.0]
     steps:
       - uses: actions/checkout@v3
 
@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [netcoreapp3.1,net5.0,net6.0]
+        version: [netcoreapp3.1,net6.0]
     steps:
       - uses: actions/checkout@v3
 
@@ -52,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [netcoreapp3.1,net5.0,net6.0]
+        version: [netcoreapp3.1,net6.0]
     steps:
       - uses: actions/checkout@v3
 
