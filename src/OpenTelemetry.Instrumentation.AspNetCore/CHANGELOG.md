@@ -1,13 +1,5 @@
 # Changelog
 
-* Fix: Http server span status is now unset for `400`-`499`.
-  ([#2904](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2904))
-* Fix: drop direct reference of the `Microsoft.AspNetCore.Http.Features` from
-  net5 & net6 targets (already part of the FrameworkReference since the net5).
-  ([#2860](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2860))
-* Reduce allocations calculating the http.url tag.
-  ([#2947](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2947))
-
 ## Unreleased
 
 ## 1.0.0-rc9.3
@@ -21,6 +13,14 @@ Released 2022-Apr-12
 ## 1.0.0-rc9.1
 
 Released 2022-Mar-30
+
+* Fix: Http server span status is now unset for `400`-`499`.
+  ([#2904](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2904))
+* Fix: drop direct reference of the `Microsoft.AspNetCore.Http.Features` from
+  net5 & net6 targets (already part of the FrameworkReference since the net5).
+  ([#2860](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2860))
+* Reduce allocations calculating the http.url tag.
+  ([#2947](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2947))
 
 ## 1.0.0-rc10 (broken. use 1.0.0-rc9.1 and newer)
 
