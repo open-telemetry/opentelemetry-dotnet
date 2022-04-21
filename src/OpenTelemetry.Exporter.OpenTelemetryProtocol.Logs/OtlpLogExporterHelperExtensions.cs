@@ -42,7 +42,7 @@ namespace OpenTelemetry.Logs
         {
             configure?.Invoke(exporterOptions);
             var otlpExporter = new OtlpLogExporter(exporterOptions);
-
+            loggerOptions.ParseStateValues = true;
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {
                 return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(otlpExporter));

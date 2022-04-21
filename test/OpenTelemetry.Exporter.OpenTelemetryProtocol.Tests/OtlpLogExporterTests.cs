@@ -17,6 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
@@ -30,6 +32,87 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
     public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
+        [Fact]
+        public void AddOtlpLogExporterOptionstest()
+        {
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            var loggerOptions = new OpenTelemetryLoggerOptions();
+            Assert.False(loggerOptions.ParseStateValues);
+            loggerOptions.AddOtlpExporter();
+            Assert.True(loggerOptions.ParseStateValues);
+        }
+
+        [Fact]
+        public void AddOtlpLogExporterSetsParseStateValueToTrue()
+        {
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            var logRecords = new List<LogRecord>();
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.AddInMemoryExporter(logRecords);
+                    options.AddOtlpExporter();
+                });
+            });
+
+            var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            Assert.Single(logRecords);
+            var logRecord = logRecords[0];
+            Assert.Null(logRecord.State);
+            Assert.NotNull(logRecord.StateValues);
+        }
+
+        [Fact]
+        public void AddOtlpLogExporterParseStateValueCanBeTurnedOff()
+        {
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            var logRecords = new List<LogRecord>();
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.AddInMemoryExporter(logRecords);
+                    options.AddOtlpExporter();
+                    options.ParseStateValues = false;
+                });
+            });
+
+            var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            Assert.Single(logRecords);
+            var logRecord = logRecords[0];
+            Assert.NotNull(logRecord.State);
+            Assert.Null(logRecord.StateValues);
+        }
+
+        [Fact]
+        public void AddOtlpLogExporterParseStateValueCanBeTurnedOffHosting()
+        {
+            var logRecords = new List<LogRecord>();
+
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            var hostBuilder = new HostBuilder();
+            hostBuilder.ConfigureLogging(logging => logging.AddOpenTelemetry(options =>
+            {
+                options.AddInMemoryExporter(logRecords);
+                options.AddOtlpExporter();
+            }));
+
+            hostBuilder.ConfigureServices(services =>
+            services.Configure<OpenTelemetryLoggerOptions>(options => options.ParseStateValues = false));
+
+            var host = hostBuilder.Build();
+            var loggerFactory = host.Services.GetService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            Assert.Single(logRecords);
+            var logRecord = logRecords[0];
+            Assert.NotNull(logRecord.State);
+            Assert.Null(logRecord.StateValues);
+        }
+
         [Fact]
         public void OtlpLogRecordTestWhenStateValuesArePopulated()
         {
