@@ -42,6 +42,14 @@ namespace OpenTelemetry.Logs
         {
             configure?.Invoke(exporterOptions);
             var otlpExporter = new OtlpLogExporter(exporterOptions);
+
+            // OpenTelemetryLoggerProvider receives
+            // "state" from the ILogger.Log API call.
+            // The state can be anything, and
+            // OTLP Exporter wants the SDK to
+            // parse it to produce StateValues.
+            // This maybe revised in the future,
+            // if SDK can do it by default.
             loggerOptions.ParseStateValues = true;
             if (exporterOptions.ExportProcessorType == ExportProcessorType.Simple)
             {

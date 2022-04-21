@@ -32,6 +32,14 @@ namespace OpenTelemetry.Logs
         {
             Guard.ThrowIfNull(loggerOptions);
 
+            // OpenTelemetryLoggerProvider receives
+            // "state" from the ILogger.Log API call.
+            // The state can be anything, and
+            // Console Exporter wants the SDK to
+            // parse it to produce StateValues.
+            // This maybe revised in the future,
+            // if SDK can do it by default.
+            loggerOptions.ParseStateValues = true;
             var options = new ConsoleExporterOptions();
             configure?.Invoke(options);
             return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(new ConsoleLogRecordExporter(options)));

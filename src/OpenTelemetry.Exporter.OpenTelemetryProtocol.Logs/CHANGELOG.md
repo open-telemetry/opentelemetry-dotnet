@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+`AddOtlpExporter` extension method on `OpenTelemetryLoggerOptions`
+now enables `ParseStateValues`. ([#3186](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3186))
+
 ## 1.0.0-rc9.3
 
 Released 2022-Apr-15
