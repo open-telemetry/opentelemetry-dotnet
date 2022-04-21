@@ -1,1 +1,0 @@
-OpenTelemetry.Batch<T>.ToCollection() -> System.Collections.Generic.ICollection<T>
