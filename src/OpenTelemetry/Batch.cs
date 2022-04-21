@@ -107,7 +107,7 @@ namespace OpenTelemetry
         }
 
         /// <summary>
-        /// Creates a <see cref="ICollection{T}"/> containing the times of the <see cref="Batch{T}"/>.
+        /// Creates a <see cref="ICollection{T}"/> containing the items of the <see cref="Batch{T}"/>.
         /// </summary>
         /// <returns>A collection containing the items of the <see cref="Batch{T}"/>.</returns>
         public ICollection<T> ToCollection() => new List<T>(this.items);
