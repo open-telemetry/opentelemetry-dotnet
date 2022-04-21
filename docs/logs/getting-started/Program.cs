@@ -25,11 +25,18 @@ public class Program
     {
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options => options
-                .AddConsoleExporter());
+            builder.AddOpenTelemetry(options =>
+            {
+                options.AddConsoleExporter();
+                options.IncludeScopes = true;
+            });
         });
 
         var logger = loggerFactory.CreateLogger<Program>();
-        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+        using (logger.BeginScope("My scope 1 with {food} and {color}", "apple", "green"))
+        using (logger.BeginScope("My scope 2 with {food} and {color}", "apple", "green"))
+        {
+            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+        }
     }
 }
