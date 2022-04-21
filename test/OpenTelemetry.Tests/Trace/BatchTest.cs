@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+
 using OpenTelemetry.Internal;
 using Xunit;
 
@@ -158,6 +160,20 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Equal(1, batch.Count);
 
             ValidateEnumerator(batch.GetEnumerator(), "b");
+        }
+
+        [Fact]
+        public void VerifyToCollection()
+        {
+            var batch = new Batch<string>(items: new string[] { "0", "1", "2", "3" }, count: 4);
+
+            var list = (List<string>)batch.ToCollection();
+
+            Assert.Equal(4, list.Count);
+            for (int i = 0; i < list.Count; i++)
+            {
+                Assert.Equal(i.ToString(), list[i]);
+            }
         }
 
         private static void ValidateEnumerator(Batch<string>.Enumerator enumerator, string expected)

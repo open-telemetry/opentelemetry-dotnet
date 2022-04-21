@@ -28,8 +28,8 @@ namespace Benchmarks.Exporter
 {
     public class PrometheusSerializerBenchmarks
     {
-        private readonly List<Metric> metrics = new();
         private readonly byte[] buffer = new byte[85000];
+        private List<Metric> metrics = new();
         private Meter meter;
         private MeterProvider meterProvider;
 
@@ -44,14 +44,12 @@ namespace Benchmarks.Exporter
                 .AddMeter(this.meter.Name)
                 .AddInMemoryExporter(exportFunc: batch =>
                 {
-                    foreach (var metric in batch)
-                    {
-                        this.metrics.Add(metric);
-                    }
-
+                    this.metrics = (List<Metric>)batch.ToCollection();
                     return ExportResult.Success;
                 })
                 .Build();
+
+            this.metrics.ToArray();
 
             var counter = this.meter.CreateCounter<long>("counter_name_1", "long", "counter_name_1_description");
             counter.Add(18, new("label1", "value1"), new("label2", "value2"));
