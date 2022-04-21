@@ -28,6 +28,9 @@ namespace OpenTelemetry.Logs
         /// <param name="loggerOptions"><see cref="OpenTelemetryLoggerOptions"/> options to use.</param>
         /// <param name="configure">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="OpenTelemetryLoggerOptions"/> to chain the calls.</returns>
+        /// <remarks>This method also sets <see cref="OpenTelemetryLoggerOptions.ParseStateValues"/>
+        /// to true.
+        /// </remarks>
         public static OpenTelemetryLoggerOptions AddConsoleExporter(this OpenTelemetryLoggerOptions loggerOptions, Action<ConsoleExporterOptions> configure = null)
         {
             Guard.ThrowIfNull(loggerOptions);
