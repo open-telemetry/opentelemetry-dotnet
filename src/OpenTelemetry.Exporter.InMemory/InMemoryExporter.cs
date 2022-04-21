@@ -29,10 +29,7 @@ namespace OpenTelemetry.Exporter
         {
             if (typeof(T) == typeof(Metrics.Metric))
             {
-                // TODO: users should be discouraged from using the InMemoryExporter
-                // in this way for Metrics. Exported Metrics are not trustworthy
-                // because they can continue to be updated after export.
-                throw new NotSupportedException("TODO: MESSAGE");
+                throw new NotSupportedException("Exported Metrics are not trustworthy because they can continue to be updated after export. Recommend use ExportableMetricCopy.");
             }
 
             this.exportedItems = exportedItems;
@@ -57,7 +54,7 @@ namespace OpenTelemetry.Exporter
 
             foreach (var data in batch)
             {
-                this.exportedItems?.Add(data);
+                this.exportedItems.Add(data);
             }
 
             return ExportResult.Success;

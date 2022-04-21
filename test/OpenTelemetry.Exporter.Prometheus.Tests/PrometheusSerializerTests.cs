@@ -54,7 +54,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
 
-
         [Fact]
         public void GaugeZeroDimensionWithDescription()
         {

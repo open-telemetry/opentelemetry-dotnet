@@ -53,8 +53,6 @@ namespace Benchmarks.Exporter
                 })
                 .Build();
 
-            this.metrics.ToArray();
-
             var counter = this.meter.CreateCounter<long>("counter_name_1", "long", "counter_name_1_description");
             counter.Add(18, new("label1", "value1"), new("label2", "value2"));
 

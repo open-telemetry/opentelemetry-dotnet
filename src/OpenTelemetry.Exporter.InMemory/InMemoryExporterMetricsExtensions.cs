@@ -53,18 +53,7 @@ namespace OpenTelemetry.Metrics
             this MeterProviderBuilder builder,
             Func<Batch<Metric>, ExportResult> exportFunc)
         {
-            Guard.ThrowIfNull(builder);
-            Guard.ThrowIfNull(exportFunc);
-
-            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
-            {
-                return deferredMeterProviderBuilder.Configure((sp, builder) =>
-                {
-                    AddInMemoryExporter(builder, exportFunc, sp.GetOptions<MetricReaderOptions>(), null);
-                });
-            }
-
-            return AddInMemoryExporter(builder, exportFunc, new MetricReaderOptions(), null);
+            return builder.AddInMemoryExporter(exportFunc: exportFunc, configureMetricReader: null);
         }
 
         /// <summary>

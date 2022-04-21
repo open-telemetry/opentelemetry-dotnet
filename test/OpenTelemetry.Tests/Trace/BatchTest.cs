@@ -15,8 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-
 using OpenTelemetry.Internal;
 using Xunit;
 
