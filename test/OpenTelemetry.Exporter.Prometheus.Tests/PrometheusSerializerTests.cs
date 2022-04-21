@@ -36,7 +36,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportFunc: batch =>
                 {
-                    metrics = (List<Metric>)batch.ToCollection();
+                    metrics = BatchToList(batch);
                     return ExportResult.Success;
                 })
                 .Build();
@@ -54,6 +54,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
 
+
         [Fact]
         public void GaugeZeroDimensionWithDescription()
         {
@@ -65,7 +66,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportFunc: batch =>
                 {
-                    metrics = (List<Metric>)batch.ToCollection();
+                    metrics = BatchToList(batch);
                     return ExportResult.Success;
                 })
                 .Build();
@@ -95,7 +96,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportFunc: batch =>
                 {
-                    metrics = (List<Metric>)batch.ToCollection();
+                    metrics = BatchToList(batch);
                     return ExportResult.Success;
                 })
                 .Build();
@@ -124,7 +125,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportFunc: batch =>
                 {
-                    metrics = (List<Metric>)batch.ToCollection();
+                    metrics = BatchToList(batch);
                     return ExportResult.Success;
                 })
                 .Build();
@@ -155,7 +156,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportFunc: batch =>
                 {
-                    metrics = (List<Metric>)batch.ToCollection();
+                    metrics = BatchToList(batch);
                     return ExportResult.Success;
                 })
                 .Build();
@@ -191,7 +192,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportFunc: batch =>
                 {
-                    metrics = (List<Metric>)batch.ToCollection();
+                    metrics = BatchToList(batch);
                     return ExportResult.Success;
                 })
                 .Build();
@@ -222,7 +223,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportFunc: batch =>
                 {
-                    metrics = (List<Metric>)batch.ToCollection();
+                    metrics = BatchToList(batch);
                     return ExportResult.Success;
                 })
                 .Build();
@@ -265,7 +266,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportFunc: batch =>
                 {
-                    metrics = (List<Metric>)batch.ToCollection();
+                    metrics = BatchToList(batch);
                     return ExportResult.Success;
                 })
                 .Build();
@@ -308,7 +309,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportFunc: batch =>
                 {
-                    metrics = (List<Metric>)batch.ToCollection();
+                    metrics = BatchToList(batch);
                     return ExportResult.Success;
                 })
                 .Build();
@@ -351,7 +352,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportFunc: batch =>
                 {
-                    metrics = (List<Metric>)batch.ToCollection();
+                    metrics = BatchToList(batch);
                     return ExportResult.Success;
                 })
                 .Build();
@@ -395,7 +396,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 .AddMeter(meter.Name)
                 .AddInMemoryExporter(exportFunc: batch =>
                 {
-                    metrics = (List<Metric>)batch.ToCollection();
+                    metrics = BatchToList(batch);
                     return ExportResult.Success;
                 })
                 .Build();
@@ -426,6 +427,17 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     + "test_histogram_count 3 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        private static List<Metric> BatchToList(Batch<Metric> batch)
+        {
+            var result = new List<Metric>();
+            foreach (var metric in batch)
+            {
+                result.Add(metric);
+            }
+
+            return result;
         }
     }
 }

@@ -162,20 +162,6 @@ namespace OpenTelemetry.Trace.Tests
             ValidateEnumerator(batch.GetEnumerator(), "b");
         }
 
-        [Fact]
-        public void VerifyToCollection()
-        {
-            var batch = new Batch<string>(items: new string[] { "0", "1", "2", "3" }, count: 4);
-
-            var list = (List<string>)batch.ToCollection();
-
-            Assert.Equal(4, list.Count);
-            for (int i = 0; i < list.Count; i++)
-            {
-                Assert.Equal(i.ToString(), list[i]);
-            }
-        }
-
         private static void ValidateEnumerator(Batch<string>.Enumerator enumerator, string expected)
         {
             if (enumerator.Current != null)
