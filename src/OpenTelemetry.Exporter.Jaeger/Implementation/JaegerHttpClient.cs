@@ -72,7 +72,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 Headers = { ContentType = ContentTypeHeader },
             };
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
             using HttpResponseMessage response = this.httpClient.Send(request);
 #else
             using HttpResponseMessage response = this.httpClient.SendAsync(request).GetAwaiter().GetResult();
