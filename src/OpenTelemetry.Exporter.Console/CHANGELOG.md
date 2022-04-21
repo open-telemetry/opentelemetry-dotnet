@@ -3,7 +3,7 @@
 ## Unreleased
 
 `AddConsoleExporter` extension method on `OpenTelemetryLoggerOptions`
-now enables `ParseStateValues`. ([#3187](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3187))
+now enables `ParseStateValues`. ([#3212](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3212))
 
 ## 1.3.0-beta.1
 
