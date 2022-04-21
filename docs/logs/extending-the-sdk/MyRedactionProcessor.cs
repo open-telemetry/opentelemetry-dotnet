@@ -14,27 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-using System;
+using System.Collections.Generic;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 
 internal class MyRedactionProcessor : BaseProcessor<LogRecord>
 {
-    private readonly string name;
-
-    public MyRedactionProcessor(string name)
-    {
-        this.name = name;
-    }
-
     public override void OnEnd(LogRecord logRecord)
     {
-        Console.WriteLine($"{this.name}.OnEnd(logRecord.FormattedMessage before redaction: {logRecord.FormattedMessage})");
-        if (logRecord.FormattedMessage.Contains("sensitive information"))
+        if (logRecord.State is IReadOnlyList<KeyValuePair<string, object>> listOfKvp)
         {
-            logRecord.FormattedMessage = "This message is redacted.";
+            logRecord.State = new MyClassWithRedactionEnumerator(listOfKvp);
         }
-
-        Console.WriteLine($"{this.name}.OnEnd(logRecord.FormattedMessage after redaction: {logRecord.FormattedMessage})");
     }
 }

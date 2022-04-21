@@ -28,11 +28,10 @@ public class Program
             builder.AddOpenTelemetry(options =>
             {
                 options.IncludeScopes = true;
-                options.IncludeFormattedMessage = true;
                 options.AddProcessor(new MyProcessor("ProcessorA"))
                        .AddProcessor(new MyProcessor("ProcessorB"))
                        .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
-                       .AddProcessor(new MyRedactionProcessor("RedctionProcessor"))
+                       .AddProcessor(new MyRedactionProcessor())
                        .AddMyExporter();
             }));
 
@@ -68,7 +67,7 @@ public class Program
         }
 
         // message will be redacted by MyRedactionProcessor
-        logger.LogInformation("OpenTelemetry {personName} {message}!", "David", "sensitive information");
+        logger.LogInformation("OpenTelemetry {phoneNumber}.", "(000)000.0000");
     }
 
     internal struct Food
