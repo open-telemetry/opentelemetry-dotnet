@@ -64,7 +64,7 @@ namespace OpenTelemetry.Exporter
                         // for explanation.
                         if (logRecord.StateValues[i].Key.Equals("{OriginalFormat}"))
                         {
-                            this.WriteLine($"{string.Empty,-4}{"OriginalFormat (a.k.a Body)",-RightPaddingLength}{logRecord.StateValues[i].Value}");
+                            this.WriteLine($"{string.Empty,-4}{"OriginalFormat (a.k.a. Body)",-RightPaddingLength}{logRecord.StateValues[i].Value}");
                         }
                         else
                         {
