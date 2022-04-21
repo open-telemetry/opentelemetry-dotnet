@@ -33,10 +33,6 @@ public class Program
         });
 
         var logger = loggerFactory.CreateLogger<Program>();
-        using (logger.BeginScope("My scope 1 with {food} and {color}", "apple", "green"))
-        using (logger.BeginScope("My scope 2 with {food} and {color}", "apple", "green"))
-        {
-            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
-        }
+        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
     }
 }

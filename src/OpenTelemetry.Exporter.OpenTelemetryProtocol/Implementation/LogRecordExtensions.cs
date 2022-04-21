@@ -142,7 +142,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     foreach (var scopeItem in scope)
                     {
                         var scopeItemWithDepthInfo = new KeyValuePair<string, object>($"[Scope.{scopeDepth}]:{scopeItem.Key}", scopeItem.Value);
-                        var otlpAttribute = scopeItem.ToOtlpAttribute();
+                        var otlpAttribute = scopeItemWithDepthInfo.ToOtlpAttribute();
                         otlpLog.Attributes.Add(otlpAttribute);
                     }
                 }
