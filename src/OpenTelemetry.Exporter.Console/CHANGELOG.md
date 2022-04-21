@@ -2,11 +2,6 @@
 
 ## Unreleased
 
-* LogExporter to print Body from `LogRecord.FormattedMessage`
-  or from special casing `{OriginalFormat}` Key from
-  `LogRecord.StateValues`.
-  ([#3213](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3213))
-
 ## 1.3.0-beta.1
 
 Released 2022-Apr-15

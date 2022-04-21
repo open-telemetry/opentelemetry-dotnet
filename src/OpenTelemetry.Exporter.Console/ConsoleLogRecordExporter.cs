@@ -45,10 +45,9 @@ namespace OpenTelemetry.Exporter
                 this.WriteLine($"{"LogRecord.CategoryName:",-RightPaddingLength}{logRecord.CategoryName}");
                 this.WriteLine($"{"LogRecord.LogLevel:",-RightPaddingLength}{logRecord.LogLevel}");
 
-                string body = string.Empty;
                 if (logRecord.FormattedMessage != null)
                 {
-                    body = logRecord.FormattedMessage;
+                    this.WriteLine($"{"LogRecord.FormattedMessage:",-RightPaddingLength}{logRecord.FormattedMessage}");
                 }
 
                 if (logRecord.State != null)
@@ -63,20 +62,15 @@ namespace OpenTelemetry.Exporter
                         // Special casing {OriginalFormat}
                         // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
                         // for explanation.
-                        if (logRecord.StateValues[i].Key.Equals("{OriginalFormat}") && string.IsNullOrEmpty(body))
+                        if (logRecord.StateValues[i].Key.Equals("{OriginalFormat}"))
                         {
-                            body = logRecord.StateValues[i].Value as string;
+                            this.WriteLine($"{string.Empty,-4}{"OriginalFormat (a.k.a Body)",-RightPaddingLength}{logRecord.StateValues[i].Value}");
                         }
                         else
                         {
-                            this.WriteLine($"{logRecord.StateValues[i].Key,-RightPaddingLength}{logRecord.StateValues[i].Value}");
+                            this.WriteLine($"{string.Empty,-4}{logRecord.StateValues[i].Key,-RightPaddingLength}{logRecord.StateValues[i].Value}");
                         }
                     }
-                }
-
-                if (!string.IsNullOrEmpty(body))
-                {
-                    this.WriteLine($"{"Body:",-RightPaddingLength}{body}");
                 }
 
                 if (logRecord.EventId != default)
