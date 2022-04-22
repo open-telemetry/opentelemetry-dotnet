@@ -17,6 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Internal;
@@ -24,15 +26,97 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
+using OtlpLogs = Opentelemetry.Proto.Logs.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
     public class OtlpLogExporterTests : Http2UnencryptedSupportTests
     {
         [Fact]
-        public void CheckToOtlpLogRecordStateValues()
+        public void AddOtlpLogExporterOptionstest()
         {
-            List<LogRecord> logRecords = new List<LogRecord>();
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            var loggerOptions = new OpenTelemetryLoggerOptions();
+            Assert.False(loggerOptions.ParseStateValues);
+            loggerOptions.AddOtlpExporter();
+            Assert.True(loggerOptions.ParseStateValues);
+        }
+
+        [Fact]
+        public void AddOtlpLogExporterSetsParseStateValueToTrue()
+        {
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            var logRecords = new List<LogRecord>();
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.AddInMemoryExporter(logRecords);
+                    options.AddOtlpExporter();
+                });
+            });
+
+            var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            Assert.Single(logRecords);
+            var logRecord = logRecords[0];
+            Assert.Null(logRecord.State);
+            Assert.NotNull(logRecord.StateValues);
+        }
+
+        [Fact]
+        public void AddOtlpLogExporterParseStateValueCanBeTurnedOff()
+        {
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            var logRecords = new List<LogRecord>();
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.AddInMemoryExporter(logRecords);
+                    options.AddOtlpExporter();
+                    options.ParseStateValues = false;
+                });
+            });
+
+            var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            Assert.Single(logRecords);
+            var logRecord = logRecords[0];
+            Assert.NotNull(logRecord.State);
+            Assert.Null(logRecord.StateValues);
+        }
+
+        [Fact]
+        public void AddOtlpLogExporterParseStateValueCanBeTurnedOffHosting()
+        {
+            var logRecords = new List<LogRecord>();
+
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+            var hostBuilder = new HostBuilder();
+            hostBuilder.ConfigureLogging(logging => logging.AddOpenTelemetry(options =>
+            {
+                options.AddInMemoryExporter(logRecords);
+                options.AddOtlpExporter();
+            }));
+
+            hostBuilder.ConfigureServices(services =>
+            services.Configure<OpenTelemetryLoggerOptions>(options => options.ParseStateValues = false));
+
+            var host = hostBuilder.Build();
+            var loggerFactory = host.Services.GetService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            Assert.Single(logRecords);
+            var logRecord = logRecords[0];
+            Assert.NotNull(logRecord.State);
+            Assert.Null(logRecord.StateValues);
+        }
+
+        [Fact]
+        public void OtlpLogRecordTestWhenStateValuesArePopulated()
+        {
+            var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
@@ -53,15 +137,25 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.NotNull(otlpLogRecord);
             Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
-            Assert.Contains("name", otlpLogRecord.Attributes.ToString());
-            Assert.Contains("tomato", otlpLogRecord.Attributes.ToString());
-            Assert.Contains("{OriginalFormat}", otlpLogRecord.Attributes.ToString());
+            Assert.Equal(3, otlpLogRecord.Attributes.Count);
+
+            var attribute = otlpLogRecord.Attributes[0];
+            Assert.Equal("name", attribute.Key);
+            Assert.Equal("tomato", attribute.Value.StringValue);
+
+            attribute = otlpLogRecord.Attributes[1];
+            Assert.Equal("price", attribute.Key);
+            Assert.Equal(2.99, attribute.Value.DoubleValue);
+
+            attribute = otlpLogRecord.Attributes[2];
+            Assert.Equal("{OriginalFormat}", attribute.Key);
+            Assert.Equal("Hello from {name} {price}.", attribute.Value.StringValue);
         }
 
         [Fact]
         public void CheckToOtlpLogRecordEventId()
         {
-            List<LogRecord> logRecords = new List<LogRecord>();
+            var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
@@ -110,7 +204,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void CheckToOtlpLogRecordTraceIdSpanIdFlagWithNoActivity()
         {
-            List<LogRecord> logRecords = new List<LogRecord>();
+            var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
@@ -133,7 +227,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void CheckToOtlpLogRecordSpanIdTraceIdAndFlag()
         {
-            List<LogRecord> logRecords = new List<LogRecord>();
+            var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
@@ -162,21 +256,28 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal((uint)logRecord.TraceFlags, otlpLogRecord.Flags);
         }
 
-        [Fact]
-        public void CheckToOtlpLogRecordSeverityText()
+        [Theory]
+        [InlineData(LogLevel.Trace)]
+        [InlineData(LogLevel.Debug)]
+        [InlineData(LogLevel.Information)]
+        [InlineData(LogLevel.Warning)]
+        [InlineData(LogLevel.Error)]
+        [InlineData(LogLevel.Critical)]
+        public void CheckToOtlpLogRecordSeverityLevelAndText(LogLevel logLevel)
         {
-            List<LogRecord> logRecords = new List<LogRecord>();
+            var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
                 {
                     options.AddInMemoryExporter(logRecords);
                     options.IncludeFormattedMessage = true;
-                });
+                })
+                .AddFilter("CheckToOtlpLogRecordSeverityLevelAndText", LogLevel.Trace);
             });
 
-            var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            var logger = loggerFactory.CreateLogger("CheckToOtlpLogRecordSeverityLevelAndText");
+            logger.Log(logLevel, "Hello from {name} {price}.", "tomato", 2.99);
             Assert.Single(logRecords);
 
             var logRecord = logRecords[0];
@@ -184,22 +285,48 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.NotNull(otlpLogRecord);
             Assert.Equal(logRecord.LogLevel.ToString(), otlpLogRecord.SeverityText);
+            switch (logLevel)
+            {
+                case LogLevel.Trace:
+                    Assert.Equal(OtlpLogs.SeverityNumber.Trace, otlpLogRecord.SeverityNumber);
+                    break;
+                case LogLevel.Debug:
+                    Assert.Equal(OtlpLogs.SeverityNumber.Debug, otlpLogRecord.SeverityNumber);
+                    break;
+                case LogLevel.Information:
+                    Assert.Equal(OtlpLogs.SeverityNumber.Info, otlpLogRecord.SeverityNumber);
+                    break;
+                case LogLevel.Warning:
+                    Assert.Equal(OtlpLogs.SeverityNumber.Warn, otlpLogRecord.SeverityNumber);
+                    break;
+                case LogLevel.Error:
+                    Assert.Equal(OtlpLogs.SeverityNumber.Error, otlpLogRecord.SeverityNumber);
+                    break;
+                case LogLevel.Critical:
+                    Assert.Equal(OtlpLogs.SeverityNumber.Fatal, otlpLogRecord.SeverityNumber);
+                    break;
+            }
         }
 
-        [Fact]
-        public void CheckToOtlpLogRecordFormattedMessage()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CheckToOtlpLogRecordBodyIsPopulated(bool includeFormattedMessage)
         {
-            List<LogRecord> logRecords = new List<LogRecord>();
+            var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
                 {
                     options.AddInMemoryExporter(logRecords);
-                    options.IncludeFormattedMessage = true;
+                    options.IncludeFormattedMessage = includeFormattedMessage;
+                    options.ParseStateValues = true;
                 });
             });
 
             var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+
+            // Scenario 1 - Using ExtensionMethods on ILogger.Log
             logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
             Assert.Single(logRecords);
 
@@ -207,13 +334,62 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var otlpLogRecord = logRecord.ToOtlpLog();
 
             Assert.NotNull(otlpLogRecord);
-            Assert.Equal(logRecord.FormattedMessage, otlpLogRecord.Body.StringValue);
+            if (includeFormattedMessage)
+            {
+                Assert.Equal(logRecord.FormattedMessage, otlpLogRecord.Body.StringValue);
+            }
+            else
+            {
+                Assert.Equal("OpenTelemetry {Greeting} {Subject}!", otlpLogRecord.Body.StringValue);
+            }
+
+            logRecords.Clear();
+
+            // Scenario 2 - Using the raw ILogger.Log Method
+            logger.Log(LogLevel.Information, default, "state", exception: null, (st, ex) => "Formatted Message");
+            Assert.Single(logRecords);
+
+            logRecord = logRecords[0];
+            otlpLogRecord = logRecord.ToOtlpLog();
+
+            Assert.NotNull(otlpLogRecord);
+            if (includeFormattedMessage)
+            {
+                Assert.Equal(logRecord.FormattedMessage, otlpLogRecord.Body.StringValue);
+            }
+            else
+            {
+                Assert.Null(otlpLogRecord.Body);
+            }
+
+            logRecords.Clear();
+
+            // Scenario 3 - Using the raw ILogger.Log Method, but with null
+            // formatter.
+            logger.Log(LogLevel.Information, default, "state", exception: null, formatter: null);
+            Assert.Single(logRecords);
+
+            logRecord = logRecords[0];
+            otlpLogRecord = logRecord.ToOtlpLog();
+
+            Assert.NotNull(otlpLogRecord);
+
+            // There is no formatter, so no way to populate Body.
+            // Exporter won't even attempt to do ToString() on State.
+            if (includeFormattedMessage)
+            {
+                Assert.Null(otlpLogRecord.Body);
+            }
+            else
+            {
+                Assert.Null(otlpLogRecord.Body);
+            }
         }
 
         [Fact]
         public void CheckToOtlpLogRecordExceptionAttributes()
         {
-            List<LogRecord> logRecords = new List<LogRecord>();
+            var logRecords = new List<LogRecord>();
             using var loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>

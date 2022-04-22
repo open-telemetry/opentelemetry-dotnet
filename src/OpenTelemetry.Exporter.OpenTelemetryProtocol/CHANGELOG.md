@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+* LogExporter to support Logging Scopes.
+  ([#3277](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3217))
+
+## 1.3.0-beta.1
+
+Released 2022-Apr-15
+
+* Removes .NET Framework 4.6.1. The minimum .NET Framework
+  version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
+
+## 1.2.0
+
+Released 2022-Apr-15
+
+* LogExporter to correctly map Severity to OTLP.
+  ([#3177](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3177))
+
+* LogExporter to special case {OriginalFormat} to populate
+  Body. ([#3182](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182))
+
 ## 1.2.0-rc5
 
 Released 2022-Apr-12

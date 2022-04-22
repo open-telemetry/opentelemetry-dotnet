@@ -1,4 +1,4 @@
-// <copyright file="Program.cs" company="OpenTelemetry Authors">
+// <copyright file="MyRedactionProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,24 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using OpenTelemetry;
 using OpenTelemetry.Logs;
 
-namespace GettingStarted;
-
-public class Program
+internal class MyRedactionProcessor : BaseProcessor<LogRecord>
 {
-    public static void Main()
+    public override void OnEnd(LogRecord logRecord)
     {
-        using var loggerFactory = LoggerFactory.Create(builder =>
+        if (logRecord.State is IReadOnlyList<KeyValuePair<string, object>> listOfKvp)
         {
-            builder.AddOpenTelemetry(options =>
-            {
-                options.AddConsoleExporter();
-            });
-        });
-
-        var logger = loggerFactory.CreateLogger<Program>();
-        logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            logRecord.State = new MyClassWithRedactionEnumerator(listOfKvp);
+        }
     }
 }
