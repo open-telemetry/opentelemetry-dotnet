@@ -169,6 +169,9 @@ namespace Examples.Console
     {
         [Option("useExporter", Default = "otlp", HelpText = "Options include otlp or console.", Required = false)]
         public string UseExporter { get; set; }
+
+        [Option('p', "protocol", HelpText = "Transport protocol used by OTLP exporter. Supported values: grpc and http/protobuf. Only applicable if Exporter is OTLP", Default = "grpc")]
+        public string Protocol { get; set; }
     }
 
     [Verb("inmemory", HelpText = "Specify the options required to test InMemory Exporter")]
