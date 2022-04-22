@@ -14,8 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -63,6 +66,14 @@ namespace OpenTelemetry.Metrics.Tests
 
             // MetricPoint.LongValue for the first exporter metric should still be 10
             Assert.Equal(10, metricPointForFirstExport.GetSumLong());
+        }
+
+        [Fact]
+        public void CannotCreateInMemoryExporterWithMetric()
+        {
+            // Exported Metrics are not trustworthy because they can continue to be updated after export.
+            var metrics = new List<Metric>();
+            Assert.Throws<NotSupportedException>(() => new InMemoryExporter<Metric>(metrics));
         }
     }
 }
