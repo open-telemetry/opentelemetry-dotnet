@@ -21,7 +21,7 @@ using OtlpCollector = Opentelemetry.Proto.Collector.Logs.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
 {
-    /// <summary>Class for sending OTLP metrics export request over gRPC.</summary>
+    /// <summary>Class for sending OTLP Logs export request over gRPC.</summary>
     internal sealed class OtlpGrpcLogExportClient : BaseOtlpGrpcExportClient<OtlpCollector.ExportLogsServiceRequest>
     {
         private readonly OtlpCollector.LogsService.LogsServiceClient logsClient;

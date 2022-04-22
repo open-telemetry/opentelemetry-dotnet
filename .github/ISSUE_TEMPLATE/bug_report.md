@@ -12,7 +12,7 @@ using (e.g. `OpenTelemetry 1.0.2`):
 
 * TBD
 
-Runtime version (e.g. `net461`, `net48`, `netcoreapp3.1`, `net5.0` etc. You can
+Runtime version (e.g. `net462`, `net48`, `netcoreapp3.1`, `net6.0` etc. You can
 find this information from the `*.csproj` file):
 
 * TBD
