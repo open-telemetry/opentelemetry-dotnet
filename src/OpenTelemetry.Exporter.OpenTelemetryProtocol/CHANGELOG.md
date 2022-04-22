@@ -5,6 +5,10 @@
 * LogExporter to support Logging Scopes.
   ([#3277](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3217))
 
+* Support `HttpProtobuf` protocol with logs & added `HttpClientFactory`
+option
+([#3224](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3224))
+
 ## 1.3.0-beta.1
 
 Released 2022-Apr-15
