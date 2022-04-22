@@ -29,6 +29,7 @@ namespace Examples.Console
                 builder.AddOpenTelemetry((opt) =>
                 {
                     opt.IncludeFormattedMessage = true;
+                    opt.IncludeScopes = true;
                     if (options.UseExporter.Equals("otlp", StringComparison.OrdinalIgnoreCase))
                     {
                         /*
@@ -68,7 +69,12 @@ namespace Examples.Console
             });
 
             var logger = loggerFactory.CreateLogger<Program>();
-            logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            using (logger.BeginScope("My scope 1 with {food} and {color}", "apple", "green"))
+            using (logger.BeginScope("My scope 2 with {food} and {color}", "banana", "yellow"))
+            {
+                logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
+            }
+
             return null;
         }
     }
