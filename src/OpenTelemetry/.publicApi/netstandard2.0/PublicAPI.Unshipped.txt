@@ -1,0 +1,3 @@
+OpenTelemetry.Logs.LogRecord.FormattedMessage.set -> void
+OpenTelemetry.Logs.LogRecord.State.set -> void
+OpenTelemetry.Logs.LogRecord.StateValues.set -> void

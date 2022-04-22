@@ -28,7 +28,8 @@ public class Program
             builder.AddOpenTelemetry(options =>
             {
                 options.IncludeScopes = true;
-                options.AddProcessor(new MyProcessor("ProcessorA"))
+                options.AddProcessor(new MyRedactionProcessor())
+                       .AddProcessor(new MyProcessor("ProcessorA"))
                        .AddProcessor(new MyProcessor("ProcessorB"))
                        .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
                        .AddMyExporter();
@@ -64,6 +65,9 @@ public class Program
         {
             logger.LogError("{name} is broken.", "refrigerator");
         }
+
+        // message will be redacted by MyRedactionProcessor
+        logger.LogInformation("OpenTelemetry {sensitiveString}.", "<secret>");
     }
 
     internal struct Food
