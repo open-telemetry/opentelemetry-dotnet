@@ -44,11 +44,6 @@ internal class MyExporter : BaseExporter<LogRecord>
 
             sb.Append($"{record}(");
 
-            if (record.State != null)
-            {
-                Console.WriteLine($"{"LogRecord.State:"}{record.State}");
-            }
-
             int scopeDepth = -1;
 
             record.ForEachScope(ProcessScope, sb);

@@ -1,4 +1,4 @@
-// <copyright file="MyRedactionProcessor.cs" company="OpenTelemetry Authors">
+// <copyright file="MyClassWithRedactionEnumerator.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,29 +16,26 @@
 
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
 
 internal class MyClassWithRedactionEnumerator : IReadOnlyList<KeyValuePair<string, object>>
 {
-    private static readonly Regex Rgx = new("\\(?\\d{3}[\\.|\\)]?\\d{3}[\\.|\\-]\\d{4}");
-    private readonly IReadOnlyList<KeyValuePair<string, object>> myList;
+    private readonly IReadOnlyList<KeyValuePair<string, object>> state;
 
-    public MyClassWithRedactionEnumerator(IReadOnlyList<KeyValuePair<string, object>> traits)
+    public MyClassWithRedactionEnumerator(IReadOnlyList<KeyValuePair<string, object>> state)
     {
-        this.myList = traits;
+        this.state = state;
     }
 
-    public int Count => this.myList.Count;
+    public int Count => this.state.Count;
 
-    public KeyValuePair<string, object> this[int index] => this.myList[index];
+    public KeyValuePair<string, object> this[int index] => this.state[index];
 
     public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
     {
-        foreach (var entry in this.myList)
+        foreach (var entry in this.state)
         {
             var entryVal = entry.Value;
-            if (entryVal != null && Rgx.IsMatch(entryVal.ToString()))
+            if (entryVal != null && entryVal.ToString() != null && entryVal.ToString().Contains("<secret>"))
             {
                 yield return new KeyValuePair<string, object>(entry.Key, "newRedactedValueHere");
             }
@@ -52,21 +49,5 @@ internal class MyClassWithRedactionEnumerator : IReadOnlyList<KeyValuePair<strin
     IEnumerator IEnumerable.GetEnumerator()
     {
         return this.GetEnumerator();
-    }
-
-    public override string ToString()
-    {
-        var cur = this.GetEnumerator();
-        var sb = new StringBuilder();
-
-        cur.MoveNext();
-        sb.Append(cur.Current.ToString());
-        while (cur.MoveNext())
-        {
-            sb.Append(", ");
-            sb.Append(cur.Current.ToString());
-        }
-
-        return sb.ToString();
     }
 }
