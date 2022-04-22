@@ -19,7 +19,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
 using System.Threading;
 #endif
 using System.Threading.Tasks;
@@ -56,7 +56,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
                 this.Headers.ContentType = ProtobufMediaTypeHeader;
             }
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
             protected override void SerializeToStream(Stream stream, TransportContext context, CancellationToken cancellationToken)
             {
                 this.SerializeToStreamInternal(stream);

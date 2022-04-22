@@ -20,7 +20,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
-#if !NET5_0_OR_GREATER
+#if !NET6_0_OR_GREATER
 using System.Threading.Tasks;
 #endif
 using Moq;
@@ -98,7 +98,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var httpRequestContent = Array.Empty<byte>();
 
             httpHandlerMock.Protected()
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
                 .Setup<HttpResponseMessage>("Send", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
                 .Returns((HttpRequestMessage request, CancellationToken token) =>
                 {
