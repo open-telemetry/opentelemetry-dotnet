@@ -19,7 +19,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using OpenTelemetry.Internal;
-#if NETSTANDARD2_1 || NET5_0_OR_GREATER
+#if NETSTANDARD2_1 || NET6_0_OR_GREATER
 using Grpc.Net.Client;
 #endif
 
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             this.TimeoutMilliseconds = options.TimeoutMilliseconds;
         }
 
-#if NETSTANDARD2_1 || NET5_0_OR_GREATER
+#if NETSTANDARD2_1 || NET6_0_OR_GREATER
         internal GrpcChannel Channel { get; set; }
 #else
         internal Channel Channel { get; set; }
