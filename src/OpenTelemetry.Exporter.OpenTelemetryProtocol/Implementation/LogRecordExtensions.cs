@@ -75,7 +75,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     SeverityText = LogLevels[(int)logRecord.LogLevel],
                 };
 
-                // TODO: Add logRecord.CategoryName as an attribute
+                if (!string.IsNullOrEmpty(logRecord.CategoryName))
+                {
+                    otlpLogRecord.Attributes.AddStringAttribute("dotnet.ilogger.category", logRecord.CategoryName);
+                }
 
                 bool bodyPopulatedFromFormattedMessage = false;
                 if (logRecord.FormattedMessage != null)
