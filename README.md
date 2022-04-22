@@ -22,14 +22,14 @@ files.
 
 | Signal  | Status     |
 | ------- | ---------- |
-| Traces  | Stable     |
+| Logs    | Stable*    |
 | Metrics | Stable     |
-| Logs    | Stable [1] |
+| Traces  | Stable     |
 
-- [1]: While the `OpenTelemetryLoggerProvider` (i.e integration with `ILogger`)
-      is stable, the [OTLP Exporter for
-      Logs](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol#otlp-logs)
-      is still non-stable.
+*While the `OpenTelemetryLoggerProvider` (i.e integration with `ILogger`) is
+ stable, the [OTLP Exporter for
+ Logs](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol#otlp-logs)
+ is still non-stable.
 
 ## Getting Started
 
