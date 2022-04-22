@@ -42,15 +42,7 @@ namespace Benchmarks.Exporter
             this.meter = new Meter(Utils.GetCurrentMethodName());
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name)
-                .AddInMemoryExporter(exportFunc: batch =>
-                {
-                    foreach (var metric in batch)
-                    {
-                        this.metrics.Add(metric);
-                    }
-
-                    return ExportResult.Success;
-                })
+                .AddInMemoryExporter(this.metrics)
                 .Build();
 
             var counter = this.meter.CreateCounter<long>("counter_name_1", "long", "counter_name_1_description");

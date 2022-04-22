@@ -38,6 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\InMemoryExporterMetricsExtensions.cs" Link="Includes\InMemoryExporterMetricsExtensions.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\Utils.cs" Link="Includes\Utils.cs" />
   </ItemGroup>
 
