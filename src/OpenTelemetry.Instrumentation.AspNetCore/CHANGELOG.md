@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Removes net5.0 target as .NET 5.0 is going out
+  of support. The package keeps netstandard2.1 target, so it
+  can still be used with .NET5.0 apps.
+  ([#3147](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3147))
+
 ## 1.0.0-rc9.3
 
 Released 2022-Apr-15
