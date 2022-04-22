@@ -190,10 +190,8 @@ namespace OpenTelemetry.Trace.Tests
         [Fact]
         public void CheckExportDrainsBatchOnFailure()
         {
-            using var exporter = new InMemoryExporter<Activity>(exportFunc: x => ExportResult.Failure);
-
             using var processor = new BatchActivityExportProcessor(
-                exporter,
+                exporter: new FailureExporter(),
                 maxQueueSize: 3,
                 maxExportBatchSize: 3);
 
@@ -208,6 +206,11 @@ namespace OpenTelemetry.Trace.Tests
             processor.Shutdown();
 
             Assert.Equal(3, processor.ProcessedCount); // Verify batch was drained even though nothing was exported.
+        }
+
+        private class FailureExporter : BaseExporter<Activity>
+        {
+            public override ExportResult Export(in Batch<Activity> batch) => ExportResult.Failure;
         }
     }
 }
