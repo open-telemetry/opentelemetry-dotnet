@@ -92,7 +92,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
         protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
             return this.HttpClient.Send(request, cancellationToken);
 #else
             return this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();
