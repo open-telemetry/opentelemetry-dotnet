@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
@@ -132,8 +133,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     otlpLogRecord.Flags = (uint)logRecord.TraceFlags;
                 }
 
-                // TODO: Add additional attributes from scope and state
-                // Might make sense to take an approach similar to https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/897b734aa5ea9992538f04f6ea6871fe211fa903/src/OpenTelemetry.Contrib.Preview/Internal/DefaultLogStateConverter.cs
+                int scopeDepth = -1;
+                logRecord.ForEachScope(ProcessScope, otlpLogRecord);
+
+                void ProcessScope(LogRecordScope scope, OtlpLogs.LogRecord otlpLog)
+                {
+                    scopeDepth++;
+                    foreach (var scopeItem in scope)
+                    {
+                        var scopeItemWithDepthInfo = new KeyValuePair<string, object>($"[Scope.{scopeDepth}]:{scopeItem.Key}", scopeItem.Value);
+                        var otlpAttribute = scopeItemWithDepthInfo.ToOtlpAttribute();
+                        otlpLog.Attributes.Add(otlpAttribute);
+                    }
+                }
             }
             catch (Exception ex)
             {
