@@ -35,6 +35,20 @@ namespace OpenTelemetry.Trace
         /// </summary>
         public static TracerProvider Default { get; } = new TracerProvider();
 
+        internal static int? SpanAttributeCountLimit { get; set; }
+
+        internal static int? SpanAttributeValueLengthLimit { get; set; }
+
+        /// <summary>
+        /// Configures the <see cref="SpanLimits" /> for the default <see cref="TracerProvider" />.
+        /// </summary>
+        /// <param name="spanLimits">The configured <see cref="SpanLimits" />.</param>
+        public static void SetSpanLimits(SpanLimits spanLimits)
+        {
+            SpanAttributeCountLimit = spanLimits.AttributeCountLimit;
+            SpanAttributeValueLengthLimit = spanLimits.AttributeValueLengthLimit;
+        }
+
         /// <summary>
         /// Gets a tracer with given name and version.
         /// </summary>

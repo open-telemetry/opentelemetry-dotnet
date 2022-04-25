@@ -81,5 +81,29 @@ namespace OpenTelemetry.Trace.Tests
         {
             Assert.Throws<ArgumentNullException>(() => new SpanAttributes(null));
         }
+
+        [Fact]
+        public void SpanLimits()
+        {
+            TracerProvider.SetSpanLimits(new SpanLimits
+            {
+                AttributeCountLimit = 3,
+                AttributeValueLengthLimit = 4,
+            });
+
+            var spanAttributes = new SpanAttributes(
+               new List<KeyValuePair<string, object>>()
+               {
+                    new KeyValuePair<string, object>("StringAttribute", "12345"),
+                    new KeyValuePair<string, object>("IntAttribute", 12345),
+                    new KeyValuePair<string, object>("StringArrayAttribute", new[] { "ABCDE", "FGHIJ", "KLMN" }),
+                    new KeyValuePair<string, object>("DoubleAttribute", 12345.6),
+               });
+
+            Assert.Equal(3, spanAttributes.Attributes.Count);
+            Assert.Equal("1234", spanAttributes.Attributes["StringAttribute"]);
+            Assert.Equal(12345, spanAttributes.Attributes["IntAttribute"]);
+            Assert.Equal(new[] { "ABCD", "FGHI", "KLMN" }, spanAttributes.Attributes["StringArrayAttribute"]);
+        }
     }
 }

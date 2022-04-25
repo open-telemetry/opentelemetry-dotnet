@@ -43,9 +43,13 @@ namespace OpenTelemetry.Trace
         {
             Guard.ThrowIfNull(attributes);
 
+            var attributeCountLimit = TracerProvider.SpanAttributeCountLimit ?? -1;
             foreach (KeyValuePair<string, object> kvp in attributes)
             {
-                this.AddInternal(kvp.Key, kvp.Value);
+                if (attributeCountLimit-- != 0)
+                {
+                    this.AddInternal(kvp.Key, kvp.Value);
+                }
             }
         }
 
@@ -134,6 +138,26 @@ namespace OpenTelemetry.Trace
         private void AddInternal(string key, object value)
         {
             Guard.ThrowIfNull(key);
+
+            if (TracerProvider.SpanAttributeValueLengthLimit.HasValue)
+            {
+                if (value is string[] strArr)
+                {
+                    var newArr = new string[strArr.Length];
+                    strArr.CopyTo(newArr, 0);
+                    for (var i = 0; i < strArr.Length; ++i)
+                    {
+                        newArr[i] = newArr[i].Substring(0, TracerProvider.SpanAttributeValueLengthLimit.Value);
+                    }
+
+                    value = newArr;
+                }
+
+                if (value is string str)
+                {
+                    value = str.Substring(0, TracerProvider.SpanAttributeValueLengthLimit.Value);
+                }
+            }
 
             this.Attributes[key] = value;
         }
