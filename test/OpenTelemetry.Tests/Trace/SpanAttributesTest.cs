@@ -20,8 +20,14 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
 {
-    public class SpanAttributesTest
+    public class SpanAttributesTest : IDisposable
     {
+        public void Dispose()
+        {
+            TracerProvider.SpanAttributeCountLimit = null;
+            TracerProvider.SpanAttributeValueLengthLimit = null;
+        }
+
         [Fact]
         public void ValidateConstructor()
         {
