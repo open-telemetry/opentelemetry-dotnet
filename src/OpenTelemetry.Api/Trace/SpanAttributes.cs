@@ -139,6 +139,11 @@ namespace OpenTelemetry.Trace
         {
             Guard.ThrowIfNull(key);
 
+            if (this.Attributes.Count == TracerProvider.SpanAttributeCountLimit)
+            {
+                return;
+            }
+
             if (TracerProvider.SpanAttributeValueLengthLimit.HasValue)
             {
                 if (value is string[] strArr)

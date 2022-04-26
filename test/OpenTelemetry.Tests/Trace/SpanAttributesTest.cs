@@ -89,7 +89,32 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void SpanLimits()
+        public void SpanLimitsAddOneAtATime()
+        {
+            TracerProvider.SetSpanLimits(new SpanLimits
+            {
+                AttributeCountLimit = 4,
+                AttributeValueLengthLimit = 4,
+            });
+
+            var spanAttributes = new SpanAttributes();
+            spanAttributes.Add("TruncatedStringAttribute", "12345");
+            spanAttributes.Add("StringAttribute", "123");
+
+            // There is no Add overload that takes an int. This invokes the Add(string, long) overload.
+            spanAttributes.Add("IntAttribute", 12345);
+            spanAttributes.Add("StringArrayAttribute", new[] { "ABCDE", "FGHIJ", "KLMN", "OPQ" });
+            spanAttributes.Add("DoubleAttribute", 12345.6);
+
+            Assert.Equal(4, spanAttributes.Attributes.Count);
+            Assert.Equal("1234", spanAttributes.Attributes["TruncatedStringAttribute"]);
+            Assert.Equal("123", spanAttributes.Attributes["StringAttribute"]);
+            Assert.Equal(12345L, spanAttributes.Attributes["IntAttribute"]);
+            Assert.Equal(new[] { "ABCD", "FGHI", "KLMN", "OPQ" }, spanAttributes.Attributes["StringArrayAttribute"]);
+        }
+
+        [Fact]
+        public void SpanLimitsAddMultipleAtOnce()
         {
             TracerProvider.SetSpanLimits(new SpanLimits
             {
