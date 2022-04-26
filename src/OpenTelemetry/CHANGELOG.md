@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+* Exposed public setters for `LogRecord.State`, `LogRecord.StateValues`,
+  and `LogRecord.FormattedMessage`.
+ ([#3217](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3217))
+
+## 1.3.0-beta.1
+
+Released 2022-Apr-15
+
+* Removes .NET Framework 4.6.1. The minimum .NET Framework
+  version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
+
+* Bumped minimum required version of `Microsoft.Extensions.Logging`
+  and `Microsoft.Extensions.Logging.Configuration` to 3.1.0
+  ([#2582](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3196))
+
+## 1.2.0
+
+Released 2022-Apr-15
+
+* Make setter for `MetricReaderOptions.PeriodicExportingMetricReaderOptions`
+  property public.
+  ([#3184](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3184))
+
 ## 1.2.0-rc5
 
 Released 2022-Apr-12

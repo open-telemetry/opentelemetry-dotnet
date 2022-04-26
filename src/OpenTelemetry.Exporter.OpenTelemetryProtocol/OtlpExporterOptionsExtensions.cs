@@ -19,9 +19,10 @@ using System.Net.Http;
 using System.Reflection;
 using Grpc.Core;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
-#if NETSTANDARD2_1 || NET5_0_OR_GREATER
+#if NETSTANDARD2_1 || NET6_0_OR_GREATER
 using Grpc.Net.Client;
 #endif
+using LogOtlpCollector = Opentelemetry.Proto.Collector.Logs.V1;
 using MetricsOtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
 using TraceOtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
 
@@ -29,7 +30,7 @@ namespace OpenTelemetry.Exporter
 {
     internal static class OtlpExporterOptionsExtensions
     {
-#if NETSTANDARD2_1 || NET5_0_OR_GREATER
+#if NETSTANDARD2_1 || NET6_0_OR_GREATER
         public static GrpcChannel CreateChannel(this OtlpExporterOptions options)
 #else
         public static Channel CreateChannel(this OtlpExporterOptions options)
@@ -40,7 +41,7 @@ namespace OpenTelemetry.Exporter
                 throw new NotSupportedException($"Endpoint URI scheme ({options.Endpoint.Scheme}) is not supported. Currently only \"http\" and \"https\" are supported.");
             }
 
-#if NETSTANDARD2_1 || NET5_0_OR_GREATER
+#if NETSTANDARD2_1 || NET6_0_OR_GREATER
             return GrpcChannel.ForAddress(options.Endpoint);
 #else
             ChannelCredentials channelCredentials;
@@ -105,6 +106,16 @@ namespace OpenTelemetry.Exporter
             {
                 OtlpExportProtocol.Grpc => new OtlpGrpcMetricsExportClient(options),
                 OtlpExportProtocol.HttpProtobuf => new OtlpHttpMetricsExportClient(
+                    options,
+                    options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
+                _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
+            };
+
+        public static IExportClient<LogOtlpCollector.ExportLogsServiceRequest> GetLogExportClient(this OtlpExporterOptions options) =>
+            options.Protocol switch
+            {
+                OtlpExportProtocol.Grpc => new OtlpGrpcLogExportClient(options),
+                OtlpExportProtocol.HttpProtobuf => new OtlpHttpLogExportClient(
                     options,
                     options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.")),
                 _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),

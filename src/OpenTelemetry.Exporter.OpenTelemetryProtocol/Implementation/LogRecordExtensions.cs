@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
@@ -76,17 +77,29 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                 // TODO: Add logRecord.CategoryName as an attribute
 
+                bool bodyPopulatedFromFormattedMessage = false;
                 if (logRecord.FormattedMessage != null)
                 {
                     otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = logRecord.FormattedMessage };
+                    bodyPopulatedFromFormattedMessage = true;
                 }
 
                 if (logRecord.StateValues != null)
                 {
                     foreach (var stateValue in logRecord.StateValues)
                     {
-                        var otlpAttribute = stateValue.ToOtlpAttribute();
-                        otlpLogRecord.Attributes.Add(otlpAttribute);
+                        // Special casing {OriginalFormat}
+                        // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
+                        // for explanation.
+                        if (stateValue.Key.Equals("{OriginalFormat}") && !bodyPopulatedFromFormattedMessage)
+                        {
+                            otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = stateValue.Value as string };
+                        }
+                        else
+                        {
+                            var otlpAttribute = stateValue.ToOtlpAttribute();
+                            otlpLogRecord.Attributes.Add(otlpAttribute);
+                        }
                     }
                 }
 
@@ -120,8 +133,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     otlpLogRecord.Flags = (uint)logRecord.TraceFlags;
                 }
 
-                // TODO: Add additional attributes from scope and state
-                // Might make sense to take an approach similar to https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/897b734aa5ea9992538f04f6ea6871fe211fa903/src/OpenTelemetry.Contrib.Preview/Internal/DefaultLogStateConverter.cs
+                int scopeDepth = -1;
+                logRecord.ForEachScope(ProcessScope, otlpLogRecord);
+
+                void ProcessScope(LogRecordScope scope, OtlpLogs.LogRecord otlpLog)
+                {
+                    scopeDepth++;
+                    foreach (var scopeItem in scope)
+                    {
+                        var scopeItemWithDepthInfo = new KeyValuePair<string, object>($"[Scope.{scopeDepth}]:{scopeItem.Key}", scopeItem.Value);
+                        var otlpAttribute = scopeItemWithDepthInfo.ToOtlpAttribute();
+                        otlpLog.Attributes.Add(otlpAttribute);
+                    }
+                }
             }
             catch (Exception ex)
             {

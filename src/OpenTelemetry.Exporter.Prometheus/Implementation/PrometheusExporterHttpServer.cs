@@ -156,10 +156,10 @@ namespace OpenTelemetry.Exporter.Prometheus
                 var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
                 try
                 {
+                    context.Response.Headers.Add("Server", string.Empty);
                     if (collectionResponse.View.Count > 0)
                     {
                         context.Response.StatusCode = 200;
-                        context.Response.Headers.Add("Server", string.Empty);
                         context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
                         context.Response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
 
@@ -167,7 +167,9 @@ namespace OpenTelemetry.Exporter.Prometheus
                     }
                     else
                     {
-                        throw new InvalidOperationException("Collection failure.");
+                        // It's not expected to have no metrics to collect, but it's not necessarily a failure, either.
+                        context.Response.StatusCode = 204;
+                        PrometheusExporterEventSource.Log.NoMetrics();
                     }
                 }
                 finally

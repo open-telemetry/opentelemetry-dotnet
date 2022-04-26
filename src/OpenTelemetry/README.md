@@ -55,7 +55,7 @@ This repo ships an OpenTelemetry
 which provides the ability to enrich logs emitted with `ILogger` with
 `ActivityContext`, and export them to multiple destinations, similar to tracing.
 `ILogger` based API will become the OpenTelemetry .NET implementation of
-OpenTelemetry logging
+OpenTelemetry logging.
 
 ## Getting started with Tracing
 

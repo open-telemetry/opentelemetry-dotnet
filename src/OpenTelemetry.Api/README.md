@@ -467,9 +467,9 @@ runtime itself, as part of the
 package. This means, users can instrument their applications/libraries to emit
 metrics by simply using the `System.Diagnostics.DiagnosticSource` package. This
 package can be used in applications targeting any of the officially supported
-versions of [.NET Core](https://dotnet.microsoft.com/download/dotnet-core), and
-[.NET Framework](https://dotnet.microsoft.com/download/dotnet-framework) except
-for versions lower than `.NET Framework 4.6.1`.
+versions of [.NET](https://dotnet.microsoft.com/download/dotnet) and
+[.NET Framework](https://dotnet.microsoft.com/download/dotnet-framework) (an
+older Windows-based .NET implementation).
 
 ## Instrumenting a library/application with .NET Metrics API
 
