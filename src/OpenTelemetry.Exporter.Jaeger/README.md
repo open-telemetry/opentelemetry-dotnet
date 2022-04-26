@@ -9,13 +9,6 @@ following the [OpenTelemetry specification](https://github.com/open-telemetry/op
 The exporter communicates to a Jaeger Agent through the thrift protocol on
 the Compact Thrift API port, and as such only supports Thrift over UDP.
 
-## Supported .NET Versions
-
-This package supports all the officially supported versions of [.NET
-Core](https://dotnet.microsoft.com/download/dotnet-core).
-
-For .NET Framework, versions 4.6.1 and above are supported.
-
 ## Prerequisite
 
 * [Get Jaeger](https://www.jaegertracing.io/docs/1.13/getting-started/)

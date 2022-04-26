@@ -14,9 +14,22 @@ The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 Packages shipped from this repository generally support all the officially
 supported versions of [.NET](https://dotnet.microsoft.com/download/dotnet) and
 [.NET Framework](https://dotnet.microsoft.com/download/dotnet-framework) (an
-older Windows-based .NET implementation), except for versions lower than `.NET
-Framework 4.6.1`. Any exceptions to this are noted in the individual `README.md`
+older Windows-based .NET implementation), except `.NET Framework 3.5`.
+Any exceptions to this are noted in the individual `README.md`
 files.
+
+## Project Status
+
+| Signal  | Status     |
+| ------- | ---------- |
+| Logs    | Stable*    |
+| Metrics | Stable     |
+| Traces  | Stable     |
+
+*While the `OpenTelemetryLoggerProvider` (i.e integration with `ILogger`) is
+ stable, the [OTLP Exporter for
+ Logs](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol#otlp-logs)
+ is still non-stable.
 
 ## Getting Started
 
@@ -126,9 +139,6 @@ released a stable version. Components which are marked
 [pre-release](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/VERSIONING.md#pre-releases),
 are still work in progress and can undergo many breaking changes before stable
 release.
-
-See special note about [Metrics release
-plans](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501).
 
 See the [release
 notes](https://github.com/open-telemetry/opentelemetry-dotnet/releases) for
