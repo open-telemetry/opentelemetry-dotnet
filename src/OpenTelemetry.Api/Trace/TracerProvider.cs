@@ -45,8 +45,13 @@ namespace OpenTelemetry.Trace
         /// <param name="spanLimits">The configured <see cref="SpanLimits" />.</param>
         public static void SetSpanLimits(SpanLimits spanLimits)
         {
-            SpanAttributeCountLimit = spanLimits.AttributeCountLimit;
-            SpanAttributeValueLengthLimit = spanLimits.AttributeValueLengthLimit;
+            SpanAttributeCountLimit = spanLimits.AttributeCountLimit.HasValue && spanLimits.AttributeCountLimit.Value >= 0
+                ? spanLimits.AttributeCountLimit.Value
+                : null;
+
+            SpanAttributeValueLengthLimit = spanLimits.AttributeValueLengthLimit.HasValue && spanLimits.AttributeCountLimit.Value >= 0
+                ? spanLimits.AttributeValueLengthLimit.Value
+                : null;
         }
 
         /// <summary>

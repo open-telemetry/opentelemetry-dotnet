@@ -87,23 +87,79 @@ namespace OpenTelemetry.Trace.Tests
         {
             TracerProvider.SetSpanLimits(new SpanLimits
             {
-                AttributeCountLimit = 3,
+                AttributeCountLimit = 4,
                 AttributeValueLengthLimit = 4,
             });
 
             var spanAttributes = new SpanAttributes(
                new List<KeyValuePair<string, object>>()
                {
-                    new KeyValuePair<string, object>("StringAttribute", "12345"),
+                    new KeyValuePair<string, object>("TruncatedStringAttribute", "12345"),
+                    new KeyValuePair<string, object>("StringAttribute", "123"),
                     new KeyValuePair<string, object>("IntAttribute", 12345),
-                    new KeyValuePair<string, object>("StringArrayAttribute", new[] { "ABCDE", "FGHIJ", "KLMN" }),
+                    new KeyValuePair<string, object>("StringArrayAttribute", new[] { "ABCDE", "FGHIJ", "KLMN", "OPQ" }),
                     new KeyValuePair<string, object>("DoubleAttribute", 12345.6),
                });
 
-            Assert.Equal(3, spanAttributes.Attributes.Count);
-            Assert.Equal("1234", spanAttributes.Attributes["StringAttribute"]);
+            Assert.Equal(4, spanAttributes.Attributes.Count);
+            Assert.Equal("1234", spanAttributes.Attributes["TruncatedStringAttribute"]);
+            Assert.Equal("123", spanAttributes.Attributes["StringAttribute"]);
             Assert.Equal(12345, spanAttributes.Attributes["IntAttribute"]);
-            Assert.Equal(new[] { "ABCD", "FGHI", "KLMN" }, spanAttributes.Attributes["StringArrayAttribute"]);
+            Assert.Equal(new[] { "ABCD", "FGHI", "KLMN", "OPQ" }, spanAttributes.Attributes["StringArrayAttribute"]);
+        }
+
+        [Fact]
+        public void SpanLimitsUnset()
+        {
+            TracerProvider.SetSpanLimits(new SpanLimits
+            {
+                AttributeCountLimit = null,
+                AttributeValueLengthLimit = null,
+            });
+
+            var spanAttributes = new SpanAttributes(
+               new List<KeyValuePair<string, object>>()
+               {
+                    new KeyValuePair<string, object>("TruncatedStringAttribute", "12345"),
+                    new KeyValuePair<string, object>("StringAttribute", "123"),
+                    new KeyValuePair<string, object>("IntAttribute", 12345),
+                    new KeyValuePair<string, object>("StringArrayAttribute", new[] { "ABCDE", "FGHIJ", "KLMN", "OPQ" }),
+                    new KeyValuePair<string, object>("DoubleAttribute", 12345.6),
+               });
+
+            Assert.Equal(5, spanAttributes.Attributes.Count);
+            Assert.Equal("12345", spanAttributes.Attributes["TruncatedStringAttribute"]);
+            Assert.Equal("123", spanAttributes.Attributes["StringAttribute"]);
+            Assert.Equal(12345, spanAttributes.Attributes["IntAttribute"]);
+            Assert.Equal(new[] { "ABCDE", "FGHIJ", "KLMN", "OPQ" }, spanAttributes.Attributes["StringArrayAttribute"]);
+            Assert.Equal(12345.6, spanAttributes.Attributes["DoubleAttribute"]);
+        }
+
+        [Fact]
+        public void SpanLimitsIgnoredWhenSetToInvalidValue()
+        {
+            TracerProvider.SetSpanLimits(new SpanLimits
+            {
+                AttributeCountLimit = -5,
+                AttributeValueLengthLimit = -5,
+            });
+
+            var spanAttributes = new SpanAttributes(
+               new List<KeyValuePair<string, object>>()
+               {
+                    new KeyValuePair<string, object>("TruncatedStringAttribute", "12345"),
+                    new KeyValuePair<string, object>("StringAttribute", "123"),
+                    new KeyValuePair<string, object>("IntAttribute", 12345),
+                    new KeyValuePair<string, object>("StringArrayAttribute", new[] { "ABCDE", "FGHIJ", "KLMN", "OPQ" }),
+                    new KeyValuePair<string, object>("DoubleAttribute", 12345.6),
+               });
+
+            Assert.Equal(5, spanAttributes.Attributes.Count);
+            Assert.Equal("12345", spanAttributes.Attributes["TruncatedStringAttribute"]);
+            Assert.Equal("123", spanAttributes.Attributes["StringAttribute"]);
+            Assert.Equal(12345, spanAttributes.Attributes["IntAttribute"]);
+            Assert.Equal(new[] { "ABCDE", "FGHIJ", "KLMN", "OPQ" }, spanAttributes.Attributes["StringArrayAttribute"]);
+            Assert.Equal(12345.6, spanAttributes.Attributes["DoubleAttribute"]);
         }
     }
 }

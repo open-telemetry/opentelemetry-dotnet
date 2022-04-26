@@ -147,7 +147,10 @@ namespace OpenTelemetry.Trace
                     strArr.CopyTo(newArr, 0);
                     for (var i = 0; i < strArr.Length; ++i)
                     {
-                        newArr[i] = newArr[i].Substring(0, TracerProvider.SpanAttributeValueLengthLimit.Value);
+                        var limit = TracerProvider.SpanAttributeValueLengthLimit.Value;
+                        newArr[i] = newArr[i].Length > limit
+                            ? newArr[i].Substring(0, limit)
+                            : newArr[i];
                     }
 
                     value = newArr;
@@ -155,7 +158,10 @@ namespace OpenTelemetry.Trace
 
                 if (value is string str)
                 {
-                    value = str.Substring(0, TracerProvider.SpanAttributeValueLengthLimit.Value);
+                    var limit = TracerProvider.SpanAttributeValueLengthLimit.Value;
+                    value = str.Length > limit
+                        ? str.Substring(0, limit)
+                        : str;
                 }
             }
 
