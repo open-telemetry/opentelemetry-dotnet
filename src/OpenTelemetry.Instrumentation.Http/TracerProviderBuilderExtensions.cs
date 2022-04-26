@@ -64,11 +64,21 @@ namespace OpenTelemetry.Trace
         {
             Guard.ThrowIfNull(builder);
 
-            var httpClientOptions = new HttpClientInstrumentationOptions();
+            if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+            {
+                return deferredTracerProviderBuilder.Configure((sp, builder) =>
+                {
+                    AddHttpClientInstrumentation(builder, sp.GetOptions<HttpClientInstrumentationOptions>(), configureHttpClientInstrumentationOptions);
+                });
+            }
 
-            configureHttpClientInstrumentationOptions?.Invoke(httpClientOptions);
+            return AddHttpClientInstrumentation(builder, new HttpClientInstrumentationOptions(), configureHttpClientInstrumentationOptions);
+        }
 
-            builder.AddInstrumentation(() => new HttpClientInstrumentation(httpClientOptions));
+        internal static TracerProviderBuilder AddHttpClientInstrumentation(
+            this TracerProviderBuilder builder,
+            HttpClientInstrumentation instrumentation)
+        {
             if (typeof(HttpClient).Assembly.GetName().Version.Major >= 7)
             {
                 builder.AddSource("System.Net.Http");
@@ -78,8 +88,18 @@ namespace OpenTelemetry.Trace
                 builder.AddSource(HttpHandlerDiagnosticListener.ActivitySourceName);
                 builder.AddLegacySource("System.Net.Http.HttpRequestOut");
             }
+            return builder.AddInstrumentation(() => instrumentation);
+        }
 
-            return builder;
+        private static TracerProviderBuilder AddHttpClientInstrumentation(
+            TracerProviderBuilder builder,
+            HttpClientInstrumentationOptions options,
+            Action<HttpClientInstrumentationOptions> configure = null)
+        {
+            configure?.Invoke(options);
+            return AddHttpClientInstrumentation(
+                builder,
+                new HttpClientInstrumentation(options));
         }
 #endif
     }

@@ -17,6 +17,9 @@
 using Microsoft.Extensions.Logging;
 
 using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
+
+namespace CustomizingTheSdk;
 
 public class Program
 {
@@ -26,6 +29,10 @@ public class Program
         {
             builder.AddOpenTelemetry(options =>
             {
+                options.IncludeScopes = true;
+                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+                    serviceName: "MyService",
+                    serviceVersion: "1.0.0"));
                 options.AddConsoleExporter();
             });
         });
@@ -35,5 +42,12 @@ public class Program
         logger.LogInformation("Hello Information");
         logger.LogWarning("Hello Warning");
         logger.LogError("Hello Error");
+
+        // log with scopes
+        using (logger.BeginScope("operation"))
+        using (logger.BeginScope("hardware"))
+        {
+            logger.LogError("{name} is broken.", "refrigerator");
+        }
     }
 }

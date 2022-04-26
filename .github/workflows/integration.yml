@@ -16,9 +16,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [netcoreapp3.1,net5.0,net6.0]
+        version: [netcoreapp3.1,net6.0]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Run redis docker-compose.integration
         run: docker-compose --file=test/OpenTelemetry.Instrumentation.StackExchangeRedis.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
@@ -28,9 +28,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [netcoreapp3.1,net5.0,net6.0]
+        version: [netcoreapp3.1,net6.0]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Run sql docker-compose.integration
         run: docker-compose --file=test/OpenTelemetry.Instrumentation.SqlClient.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
@@ -40,9 +40,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [netcoreapp3.1,net5.0,net6.0]
+        version: [netcoreapp3.1,net6.0]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Run W3C Trace Context docker-compose.integration
         run: docker-compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build
@@ -52,9 +52,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [netcoreapp3.1,net5.0,net6.0]
+        version: [netcoreapp3.1,net6.0]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Run OTLP Exporter docker-compose.integration
         run: docker-compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/docker-compose.yml --file=build/docker-compose.${{ matrix.version }}.yml --project-directory=. up --exit-code-from=tests --build

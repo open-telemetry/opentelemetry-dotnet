@@ -79,7 +79,9 @@ namespace OpenTelemetry.Exporter.Prometheus
                     }
                     else
                     {
-                        throw new InvalidOperationException("Collection failure.");
+                        // It's not expected to have no metrics to collect, but it's not necessarily a failure, either.
+                        response.StatusCode = 204;
+                        PrometheusExporterEventSource.Log.NoMetrics();
                     }
                 }
                 finally

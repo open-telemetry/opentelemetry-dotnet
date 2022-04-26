@@ -25,15 +25,17 @@ internal static class PeriodicExportingMetricReaderHelper
         int defaultExportTimeoutMilliseconds)
     {
         var exportInterval =
-            options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds
+            options.PeriodicExportingMetricReaderOptions?.ExportIntervalMilliseconds
             ?? defaultExportIntervalMilliseconds;
 
         var exportTimeout =
-            options.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds
+            options.PeriodicExportingMetricReaderOptions?.ExportTimeoutMilliseconds
             ?? defaultExportTimeoutMilliseconds;
 
-        var metricReader = new PeriodicExportingMetricReader(exporter, exportInterval, exportTimeout);
-        metricReader.Temporality = options.Temporality;
+        var metricReader = new PeriodicExportingMetricReader(exporter, exportInterval, exportTimeout)
+        {
+            TemporalityPreference = options.TemporalityPreference,
+        };
 
         return metricReader;
     }

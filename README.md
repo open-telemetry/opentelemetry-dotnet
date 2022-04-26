@@ -2,7 +2,6 @@
 
 [![Slack](https://img.shields.io/badge/slack-@cncf/otel/dotnet-brightgreen.svg?logo=slack)](https://cloud-native.slack.com/archives/C01N3BC2W7Q)
 [![codecov.io](https://codecov.io/gh/open-telemetry/opentelemetry-dotnet/branch/main/graphs/badge.svg?)](https://codecov.io/gh/open-telemetry/opentelemetry-dotnet/)
-[![Release](https://img.shields.io/github/v/release/open-telemetry/opentelemetry-dotnet)](https://github.com/open-telemetry/opentelemetry-dotnet/releases/)
 [![Nuget](https://img.shields.io/nuget/v/OpenTelemetry.svg)](https://www.nuget.org/profiles/OpenTelemetry)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.svg)](https://www.nuget.org/profiles/OpenTelemetry)
 [![Linux](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/linux-ci.yml/badge.svg?branch=main)](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/linux-ci.yml)
@@ -13,11 +12,24 @@ The .NET [OpenTelemetry](https://opentelemetry.io/) client.
 ## Supported .NET Versions
 
 Packages shipped from this repository generally support all the officially
-supported versions of [.NET
-Core](https://dotnet.microsoft.com/download/dotnet-core), and [.NET
-Framework](https://dotnet.microsoft.com/download/dotnet-framework) except for
-versions lower than `.NET Framework 4.6.1`.
-Any exceptions to this are noted in the individual `README.md` files.
+supported versions of [.NET](https://dotnet.microsoft.com/download/dotnet) and
+[.NET Framework](https://dotnet.microsoft.com/download/dotnet-framework) (an
+older Windows-based .NET implementation), except `.NET Framework 3.5`.
+Any exceptions to this are noted in the individual `README.md`
+files.
+
+## Project Status
+
+| Signal  | Status     |
+| ------- | ---------- |
+| Logs    | Stable*    |
+| Metrics | Stable     |
+| Traces  | Stable     |
+
+*While the `OpenTelemetryLoggerProvider` (i.e integration with `ILogger`) is
+ stable, the [OTLP Exporter for
+ Logs](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol#otlp-logs)
+ is still non-stable.
 
 ## Getting Started
 
@@ -127,9 +139,6 @@ released a stable version. Components which are marked
 [pre-release](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/VERSIONING.md#pre-releases),
 are still work in progress and can undergo many breaking changes before stable
 release.
-
-See special note about [Metrics release
-plans](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1501).
 
 See the [release
 notes](https://github.com/open-telemetry/opentelemetry-dotnet/releases) for

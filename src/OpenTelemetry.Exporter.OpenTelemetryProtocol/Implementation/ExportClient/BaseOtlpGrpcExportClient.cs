@@ -14,11 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using OpenTelemetry.Internal;
-#if NETSTANDARD2_1 || NET5_0_OR_GREATER
+#if NETSTANDARD2_1 || NET6_0_OR_GREATER
 using Grpc.Net.Client;
 #endif
 
@@ -35,19 +36,22 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
             ExporterClientValidation.EnsureUnencryptedSupportIsEnabled(options);
 
-            this.Options = options;
+            this.Endpoint = new UriBuilder(options.Endpoint).Uri;
             this.Headers = options.GetMetadataFromHeaders();
+            this.TimeoutMilliseconds = options.TimeoutMilliseconds;
         }
 
-        internal OtlpExporterOptions Options { get; }
-
-#if NETSTANDARD2_1 || NET5_0_OR_GREATER
+#if NETSTANDARD2_1 || NET6_0_OR_GREATER
         internal GrpcChannel Channel { get; set; }
 #else
         internal Channel Channel { get; set; }
 #endif
 
+        internal Uri Endpoint { get; }
+
         internal Metadata Headers { get; }
+
+        internal int TimeoutMilliseconds { get; }
 
         /// <inheritdoc/>
         public abstract bool SendExportRequest(TRequest request, CancellationToken cancellationToken = default);

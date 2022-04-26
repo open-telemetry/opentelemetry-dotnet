@@ -28,9 +28,6 @@ using OpenTelemetry.Trace;
 #if NETCOREAPP3_1
 using TestApp.AspNetCore._3._1;
 #endif
-#if NET5_0
-using TestApp.AspNetCore._5._0;
-#endif
 #if NET6_0
 using TestApp.AspNetCore._6._0;
 #endif
@@ -145,13 +142,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 Assert.Equal("exception", activity.Events.First().Name);
             }
 
-            this.ValidateTagValue(activity, SemanticConventions.AttributeHttpUserAgent, userAgent);
+            ValidateTagValue(activity, SemanticConventions.AttributeHttpUserAgent, userAgent);
 
             activity.Dispose();
             processor.Object.Dispose();
         }
 
-        private void ValidateTagValue(Activity activity, string attribute, string expectedValue)
+        private static void ValidateTagValue(Activity activity, string attribute, string expectedValue)
         {
             if (string.IsNullOrEmpty(expectedValue))
             {

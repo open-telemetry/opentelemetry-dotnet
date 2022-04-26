@@ -55,8 +55,7 @@ namespace OpenTelemetry.Exporter
             }
             else
             {
-                // TODO: this instantiation should be aligned with the protocol option (grpc or http/protobuf) when OtlpHttpMetricsExportClient will be implemented.
-                this.exportClient = new OtlpGrpcLogExportClient(options);
+                this.exportClient = options.GetLogExportClient();
             }
         }
 

@@ -51,13 +51,13 @@ On all platforms, the minimum requirements are:
 * Visual Studio 2022+ for Mac or Visual Studio Code
 
 Mono might be required by your IDE but is not required by this project. This is
-because unit tests targeting .NET Framework (i.e: `net461`) are disabled outside
+because unit tests targeting .NET Framework (i.e: `net462`) are disabled outside
 of Windows.
 
 ### Windows
 
 * Visual Studio 2022+ or Visual Studio Code
-* .NET Framework 4.6.1+
+* .NET Framework 4.6.2+
 
 ### Public API
 
@@ -211,6 +211,6 @@ This project includes a [`.editorconfig`](./.editorconfig) file which is
 supported by all the IDEs/editor mentioned above. It works with the IDE/editor
 only and does not affect the actual build of the project.
 
-This repository also includes stylecop ruleset files under the `./build` folder.
+This repository also includes StyleCop ruleset files under the `./build` folder.
 These files are used to configure the _StyleCop.Analyzers_ which runs during
 build. Breaking the rules will result in a build failure.

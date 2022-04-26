@@ -35,7 +35,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class ActivityExtensions
     {
-        private static readonly ConcurrentBag<OtlpTrace.InstrumentationLibrarySpans> SpanListPool = new();
+        private static readonly ConcurrentBag<OtlpTrace.ScopeSpans> SpanListPool = new();
         private static readonly Action<RepeatedField<OtlpTrace.Span>, int> RepeatedFieldOfSpanSetCountAction = CreateRepeatedFieldOfSpanSetCountAction();
 
         internal static void AddBatch(
@@ -43,7 +43,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             OtlpResource.Resource processResource,
             in Batch<Activity> activityBatch)
         {
-            Dictionary<string, OtlpTrace.InstrumentationLibrarySpans> spansByLibrary = new Dictionary<string, OtlpTrace.InstrumentationLibrarySpans>();
+            Dictionary<string, OtlpTrace.ScopeSpans> spansByLibrary = new Dictionary<string, OtlpTrace.ScopeSpans>();
             OtlpTrace.ResourceSpans resourceSpans = new OtlpTrace.ResourceSpans
             {
                 Resource = processResource,
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     spans = GetSpanListFromPool(activitySourceName, activity.Source.Version);
 
                     spansByLibrary.Add(activitySourceName, spans);
-                    resourceSpans.InstrumentationLibrarySpans.Add(spans);
+                    resourceSpans.ScopeSpans.Add(spans);
                 }
 
                 spans.Spans.Add(span);
@@ -83,21 +83,21 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 return;
             }
 
-            foreach (var librarySpans in resourceSpans.InstrumentationLibrarySpans)
+            foreach (var scope in resourceSpans.ScopeSpans)
             {
-                RepeatedFieldOfSpanSetCountAction(librarySpans.Spans, 0);
-                SpanListPool.Add(librarySpans);
+                RepeatedFieldOfSpanSetCountAction(scope.Spans, 0);
+                SpanListPool.Add(scope);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static OtlpTrace.InstrumentationLibrarySpans GetSpanListFromPool(string name, string version)
+        internal static OtlpTrace.ScopeSpans GetSpanListFromPool(string name, string version)
         {
             if (!SpanListPool.TryTake(out var spans))
             {
-                spans = new OtlpTrace.InstrumentationLibrarySpans
+                spans = new OtlpTrace.ScopeSpans
                 {
-                    InstrumentationLibrary = new OtlpCommon.InstrumentationLibrary
+                    Scope = new OtlpCommon.InstrumentationScope
                     {
                         Name = name, // Name is enforced to not be null, but it can be empty.
                         Version = version ?? string.Empty, // NRE throw by proto
@@ -106,8 +106,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
             else
             {
-                spans.InstrumentationLibrary.Name = name;
-                spans.InstrumentationLibrary.Version = version ?? string.Empty;
+                spans.Scope.Name = name;
+                spans.Scope.Version = version ?? string.Empty;
             }
 
             return spans;
@@ -178,7 +178,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 otlpTags.Tags.Return();
             }
 
-            otlpSpan.Status = ToOtlpStatus(ref otlpTags);
+            otlpSpan.Status = activity.ToOtlpStatus(ref otlpTags);
 
             EventEnumerationState otlpEvents = default;
             activity.EnumerateEvents(ref otlpEvents);
@@ -237,37 +237,42 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static OtlpTrace.Status ToOtlpStatus(ref TagEnumerationState otlpTags)
+        private static OtlpTrace.Status ToOtlpStatus(this Activity activity, ref TagEnumerationState otlpTags)
         {
-            var status = StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode);
-
-            if (!status.HasValue)
+            var statusCodeForTagValue = StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode);
+            if (activity.Status == ActivityStatusCode.Unset && statusCodeForTagValue == null)
             {
                 return null;
             }
 
-            var otlpStatus = new OtlpTrace.Status
+            OtlpTrace.Status.Types.StatusCode otlpActivityStatusCode = OtlpTrace.Status.Types.StatusCode.Unset;
+            string otlpStatusDescription = null;
+            if (activity.Status != ActivityStatusCode.Unset)
             {
                 // The numerical values of the two enumerations match, a simple cast is enough.
-                Code = (OtlpTrace.Status.Types.StatusCode)(int)status,
-            };
-
-            if (otlpStatus.Code != OtlpTrace.Status.Types.StatusCode.Error)
-            {
-#pragma warning disable CS0612 // Type or member is obsolete
-                otlpStatus.DeprecatedCode = OtlpTrace.Status.Types.DeprecatedStatusCode.Ok;
-#pragma warning restore CS0612 // Type or member is obsolete
+                otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)activity.Status;
+                if (activity.Status == ActivityStatusCode.Error && !string.IsNullOrEmpty(activity.StatusDescription))
+                {
+                    otlpStatusDescription = activity.StatusDescription;
+                }
             }
             else
             {
-#pragma warning disable CS0612 // Type or member is obsolete
-                otlpStatus.DeprecatedCode = OtlpTrace.Status.Types.DeprecatedStatusCode.UnknownError;
-#pragma warning restore CS0612 // Type or member is obsolete
+                if (statusCodeForTagValue != StatusCode.Unset)
+                {
+                    // The numerical values of the two enumerations match, a simple cast is enough.
+                    otlpActivityStatusCode = (OtlpTrace.Status.Types.StatusCode)(int)statusCodeForTagValue;
+                    if (statusCodeForTagValue == StatusCode.Error && !string.IsNullOrEmpty(otlpTags.StatusDescription))
+                    {
+                        otlpStatusDescription = otlpTags.StatusDescription;
+                    }
+                }
             }
 
-            if (!string.IsNullOrEmpty(otlpTags.StatusDescription))
+            var otlpStatus = new OtlpTrace.Status { Code = otlpActivityStatusCode };
+            if (!string.IsNullOrEmpty(otlpStatusDescription))
             {
-                otlpStatus.Message = otlpTags.StatusDescription;
+                otlpStatus.Message = otlpStatusDescription;
             }
 
             return otlpStatus;

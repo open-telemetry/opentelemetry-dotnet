@@ -43,15 +43,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
         /// <inheritdoc/>
         public override bool SendExportRequest(OtlpCollector.ExportTraceServiceRequest request, CancellationToken cancellationToken = default)
         {
-            var deadline = DateTime.UtcNow.AddMilliseconds(this.Options.TimeoutMilliseconds);
+            var deadline = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
 
             try
             {
-                this.traceClient.Export(request, headers: this.Headers, deadline: deadline);
+                this.traceClient.Export(request, headers: this.Headers, deadline: deadline, cancellationToken: cancellationToken);
             }
             catch (RpcException ex)
             {
-                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Options.Endpoint, ex);
+                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
                 return false;
             }

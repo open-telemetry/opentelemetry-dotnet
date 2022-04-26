@@ -21,7 +21,6 @@ using OpenTelemetry.Trace;
 
 namespace Benchmarks.Trace
 {
-    [MemoryDiagnoser]
     public class TraceShimBenchmarks
     {
         private readonly Tracer tracerWithNoListener = TracerProvider.Default.GetTracer("Benchmark.NoListener");

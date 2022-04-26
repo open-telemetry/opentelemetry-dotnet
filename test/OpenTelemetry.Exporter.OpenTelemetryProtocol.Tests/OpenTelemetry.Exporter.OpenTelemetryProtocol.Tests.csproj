@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == ''">net6.0;net5.0;netcoreapp3.1</TargetFrameworks>
-    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == '' AND $(OS) == 'Windows_NT'">$(TargetFrameworks);net461</TargetFrameworks>
+    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == ''">net6.0;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == '' AND $(OS) == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) != ''">$(TARGET_FRAMEWORK)</TargetFrameworks>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -24,6 +24,7 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.Hosting\OpenTelemetry.Extensions.Hosting.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs\OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs.csproj" />
   </ItemGroup>
 
   <ItemGroup>

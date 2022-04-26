@@ -77,7 +77,7 @@ namespace OpenTelemetry.Exporter
                     Content = new JsonContent(this, batch),
                 };
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
                 using var response = this.httpClient.Send(request, CancellationToken.None);
 #else
                 using var response = this.httpClient.SendAsync(request, CancellationToken.None).GetAwaiter().GetResult();
@@ -206,7 +206,7 @@ namespace OpenTelemetry.Exporter
                 this.Headers.ContentType = JsonHeader;
             }
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
             protected override void SerializeToStream(Stream stream, TransportContext context, CancellationToken cancellationToken)
             {
                 this.SerializeToStreamInternal(stream);

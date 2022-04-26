@@ -22,7 +22,6 @@ using OpenTelemetry.Trace;
 
 namespace Benchmarks.Trace
 {
-    [MemoryDiagnoser]
     public class OpenTelemetrySdkBenchmarksActivity
     {
         private readonly ActivitySource benchmarkSource = new("Benchmark");

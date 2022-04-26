@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.3
+
+Released 2022-Apr-15
+
+* Removes .NET Framework 4.6.1. The minimum .NET Framework
+  version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
+
+* Bumped minimum required version of `Microsoft.Extensions.Options`
+  to 3.1.0. ([#2582](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3196))
+
+## 1.0.0-rc9.2
+
+Released 2022-Apr-12
+
+## 1.0.0-rc9.1
+
+Released 2022-Mar-30
+
 ## 1.0.0-rc10
 
 Released 2022-Mar-04

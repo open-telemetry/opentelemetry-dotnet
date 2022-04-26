@@ -242,16 +242,11 @@ namespace OpenTelemetry.Exporter.Prometheus
             for (int i = 0; i < metricName.Length; i++)
             {
                 var ordinal = (ushort)metricName[i];
-                switch (ordinal)
+                buffer[cursor++] = ordinal switch
                 {
-                    case ASCII_FULL_STOP:
-                    case ASCII_HYPHEN_MINUS:
-                        buffer[cursor++] = unchecked((byte)'_');
-                        break;
-                    default:
-                        buffer[cursor++] = unchecked((byte)ordinal);
-                        break;
-                }
+                    ASCII_FULL_STOP or ASCII_HYPHEN_MINUS => unchecked((byte)'_'),
+                    _ => unchecked((byte)ordinal),
+                };
             }
 
             if (!string.IsNullOrEmpty(metricUnit))

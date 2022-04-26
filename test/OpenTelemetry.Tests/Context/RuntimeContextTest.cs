@@ -102,6 +102,7 @@ namespace OpenTelemetry.Context.Tests
         public void Dispose()
         {
             RuntimeContext.Clear();
+            GC.SuppressFinalize(this);
         }
 
 #if NETFRAMEWORK

@@ -55,7 +55,7 @@ This repo ships an OpenTelemetry
 which provides the ability to enrich logs emitted with `ILogger` with
 `ActivityContext`, and export them to multiple destinations, similar to tracing.
 `ILogger` based API will become the OpenTelemetry .NET implementation of
-OpenTelemetry logging
+OpenTelemetry logging.
 
 ## Getting started with Tracing
 
@@ -120,7 +120,7 @@ provider to start collecting traces from them.
 
 `AddSource` method on `TracerProviderBuilder` can be used to add a
 `ActivitySource` to the provider. Multiple `AddSource` can be called to add more
-than one source. It also supports wild-card subscription model as well.
+than one source. It also supports wildcard subscription model as well.
 
 Similar to `Sampler` and `Resource`, it is not possible to add sources *after*
 the provider is built, by calling the `Build()` method on the
