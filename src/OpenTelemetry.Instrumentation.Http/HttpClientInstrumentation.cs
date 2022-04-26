@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 using System;
-using System.Net.Http;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 
 namespace OpenTelemetry.Instrumentation.Http
@@ -42,7 +41,13 @@ namespace OpenTelemetry.Instrumentation.Http
         /// <param name="options">Configuration options for HTTP client instrumentation.</param>
         public HttpClientInstrumentation(HttpClientInstrumentationOptions options)
         {
-            if (typeof(HttpClient).Assembly.GetName().Version.Major >= 7)
+            // For .NET7.0 activity will be created using activitySource.
+            // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
+            // However, in case when activity creation returns null (due to sampling)
+            // the framework will fall back to creating activity anyways due to active diagnostic source listener
+            // To prevent this, isEnabled is implemented which will return false always
+            // so that the sampler's decision is respected.
+            if (HttpHandlerDiagnosticListener.IsNet7)
             {
                 this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options), this.isEnabled);
             }

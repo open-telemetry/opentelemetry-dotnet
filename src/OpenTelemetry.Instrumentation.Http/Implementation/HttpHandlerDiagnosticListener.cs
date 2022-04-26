@@ -32,8 +32,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     {
         internal static readonly AssemblyName AssemblyName = typeof(HttpHandlerDiagnosticListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
+        internal static readonly string FrameworkActivitySourceName = "System.Net.Http";
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
+        internal static readonly bool IsNet7 = typeof(HttpClient).Assembly.GetName().Version.Major >= 7;
 
         private static readonly Regex CoreAppMajorVersionCheckRegex = new("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -42,7 +44,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
         private readonly PropertyFetcher<TaskStatus> stopRequestStatusFetcher = new("RequestTaskStatus");
         private readonly bool httpClientSupportsW3C;
-        private readonly bool net7;
         private readonly HttpClientInstrumentationOptions options;
 
         public HttpHandlerDiagnosticListener(HttpClientInstrumentationOptions options)
@@ -63,7 +64,6 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 this.httpClientSupportsW3C = match.Success && int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture) >= 3;
             }
 
-            this.net7 = typeof(HttpClient).Assembly.GetName().Version.Major >= 7;
             this.options = options;
         }
 
@@ -79,7 +79,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             // By this time, samplers have already run and
             // activity.IsAllDataRequested populated accordingly.
 
-            if (Sdk.SuppressInstrumentation || (this.net7 && activity.Source.Name != "System.Net.Http"))
+            if (Sdk.SuppressInstrumentation || (IsNet7 && string.IsNullOrEmpty(activity.Source.Name)))
             {
                 return;
             }
@@ -129,7 +129,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-                if (!this.net7)
+                if (!IsNet7)
                 {
                     ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
                     ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
@@ -156,7 +156,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public override void OnStopActivity(Activity activity, object payload)
         {
-            if (this.net7 && activity.Source.Name != "System.Net.Http")
+            if (IsNet7 && string.IsNullOrEmpty(activity.Source.Name))
             {
                 return;
             }
@@ -210,7 +210,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public override void OnException(Activity activity, object payload)
         {
-            if (this.net7 && activity.Source.Name != "System.Net.Http")
+            if (IsNet7 && string.IsNullOrEmpty(activity.Source.Name))
             {
                 return;
             }

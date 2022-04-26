@@ -81,13 +81,14 @@ namespace OpenTelemetry.Trace
         {
             if (typeof(HttpClient).Assembly.GetName().Version.Major >= 7)
             {
-                builder.AddSource("System.Net.Http");
+                builder.AddSource(HttpHandlerDiagnosticListener.FrameworkActivitySourceName);
             }
             else
             {
                 builder.AddSource(HttpHandlerDiagnosticListener.ActivitySourceName);
                 builder.AddLegacySource("System.Net.Http.HttpRequestOut");
             }
+
             return builder.AddInstrumentation(() => instrumentation);
         }
 
