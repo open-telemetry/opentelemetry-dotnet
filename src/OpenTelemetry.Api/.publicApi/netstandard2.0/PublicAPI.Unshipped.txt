@@ -1,0 +1,7 @@
+OpenTelemetry.Trace.SpanLimits
+OpenTelemetry.Trace.SpanLimits.AttributeCountLimit.get -> int?
+OpenTelemetry.Trace.SpanLimits.AttributeCountLimit.set -> void
+OpenTelemetry.Trace.SpanLimits.AttributeValueLengthLimit.get -> int?
+OpenTelemetry.Trace.SpanLimits.AttributeValueLengthLimit.set -> void
+OpenTelemetry.Trace.SpanLimits.SpanLimits() -> void
+static OpenTelemetry.Trace.TracerProvider.SetSpanLimits(OpenTelemetry.Trace.SpanLimits spanLimits) -> void
