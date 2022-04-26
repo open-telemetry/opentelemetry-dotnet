@@ -137,19 +137,59 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.NotNull(otlpLogRecord);
             Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
-            Assert.Equal(3, otlpLogRecord.Attributes.Count);
+            Assert.Equal(4, otlpLogRecord.Attributes.Count);
 
             var attribute = otlpLogRecord.Attributes[0];
+            Assert.Equal("dotnet.ilogger.category", attribute.Key);
+            Assert.Equal("OtlpLogExporterTests", attribute.Value.StringValue);
+
+            attribute = otlpLogRecord.Attributes[1];
             Assert.Equal("name", attribute.Key);
             Assert.Equal("tomato", attribute.Value.StringValue);
 
-            attribute = otlpLogRecord.Attributes[1];
+            attribute = otlpLogRecord.Attributes[2];
             Assert.Equal("price", attribute.Key);
             Assert.Equal(2.99, attribute.Value.DoubleValue);
 
-            attribute = otlpLogRecord.Attributes[2];
+            attribute = otlpLogRecord.Attributes[3];
             Assert.Equal("{OriginalFormat}", attribute.Key);
             Assert.Equal("Hello from {name} {price}.", attribute.Value.StringValue);
+        }
+
+        [Fact]
+        public void CheckToOtlpLogRecordLoggerCategory()
+        {
+            var logRecords = new List<LogRecord>();
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.AddInMemoryExporter(logRecords);
+                });
+            });
+
+            var logger1 = loggerFactory.CreateLogger("CategoryA");
+            logger1.LogInformation("Hello");
+            Assert.Single(logRecords);
+
+            var logRecord = logRecords[0];
+            var otlpLogRecord = logRecord.ToOtlpLog();
+            Assert.NotNull(otlpLogRecord);
+            Assert.Single(otlpLogRecord.Attributes);
+
+            var attribute = otlpLogRecord.Attributes[0];
+            Assert.Equal("dotnet.ilogger.category", attribute.Key);
+            Assert.Equal("CategoryA", attribute.Value.StringValue);
+
+            logRecords.Clear();
+            var logger2 = loggerFactory.CreateLogger(string.Empty);
+            logger2.LogInformation("Hello");
+            Assert.Single(logRecords);
+
+            logRecord = logRecords[0];
+            otlpLogRecord = logRecord.ToOtlpLog();
+            Assert.NotNull(otlpLogRecord);
+            Assert.Empty(otlpLogRecord.Attributes);
         }
 
         [Fact]
