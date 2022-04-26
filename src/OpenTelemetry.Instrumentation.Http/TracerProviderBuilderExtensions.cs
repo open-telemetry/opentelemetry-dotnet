@@ -18,7 +18,6 @@ using System;
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 #if !NETFRAMEWORK
-using System.Net.Http;
 using OpenTelemetry.Internal;
 #endif
 
@@ -79,7 +78,7 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             HttpClientInstrumentation instrumentation)
         {
-            if (typeof(HttpClient).Assembly.GetName().Version.Major >= 7)
+            if (HttpHandlerDiagnosticListener.IsNet7)
             {
                 builder.AddSource(HttpHandlerDiagnosticListener.FrameworkActivitySourceName);
             }
