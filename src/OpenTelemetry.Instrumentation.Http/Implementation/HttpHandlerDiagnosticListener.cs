@@ -16,11 +16,9 @@
 
 using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OpenTelemetry.Context.Propagation;
