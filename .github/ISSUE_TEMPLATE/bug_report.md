@@ -23,7 +23,7 @@ A clear and concise description of what the bug is.
 
 **What is the expected behavior?**
 
-What do you expect to see?
+What did you expect to see?
 
 **What is the actual behavior?**
 
