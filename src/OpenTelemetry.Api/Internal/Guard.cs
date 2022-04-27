@@ -49,6 +49,8 @@ namespace System.Runtime.CompilerServices
 }
 #endif
 
+#nullable enable
+
 #pragma warning disable SA1403 // File may only contain a single namespace
 namespace OpenTelemetry.Internal
 #pragma warning restore SA1403 // File may only contain a single namespace
@@ -65,7 +67,7 @@ namespace OpenTelemetry.Internal
         /// <param name="paramName">The parameter name to use in the thrown exception.</param>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ThrowIfNull(object value, [CallerArgumentExpression("value")] string paramName = null)
+        public static void ThrowIfNull(object value, [CallerArgumentExpression("value")] string? paramName = null)
         {
             if (value is null)
             {
@@ -80,7 +82,7 @@ namespace OpenTelemetry.Internal
         /// <param name="paramName">The parameter name to use in the thrown exception.</param>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ThrowIfNullOrEmpty(string value, [CallerArgumentExpression("value")] string paramName = null)
+        public static void ThrowIfNullOrEmpty(string value, [CallerArgumentExpression("value")] string? paramName = null)
         {
             if (string.IsNullOrEmpty(value))
             {
@@ -95,7 +97,7 @@ namespace OpenTelemetry.Internal
         /// <param name="paramName">The parameter name to use in the thrown exception.</param>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ThrowIfNullOrWhitespace(string value, [CallerArgumentExpression("value")] string paramName = null)
+        public static void ThrowIfNullOrWhitespace(string value, [CallerArgumentExpression("value")] string? paramName = null)
         {
             if (string.IsNullOrWhiteSpace(value))
             {
@@ -111,7 +113,7 @@ namespace OpenTelemetry.Internal
         /// <param name="paramName">The parameter name to use in the thrown exception.</param>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ThrowIfZero(int value, string message = "Must not be zero", [CallerArgumentExpression("value")] string paramName = null)
+        public static void ThrowIfZero(int value, string message = "Must not be zero", [CallerArgumentExpression("value")] string? paramName = null)
         {
             if (value == 0)
             {
@@ -126,7 +128,7 @@ namespace OpenTelemetry.Internal
         /// <param name="paramName">The parameter name to use in the thrown exception.</param>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ThrowIfInvalidTimeout(int value, [CallerArgumentExpression("value")] string paramName = null)
+        public static void ThrowIfInvalidTimeout(int value, [CallerArgumentExpression("value")] string? paramName = null)
         {
             ThrowIfOutOfRange(value, paramName, min: Timeout.Infinite, message: $"Must be non-negative or '{nameof(Timeout)}.{nameof(Timeout.Infinite)}'");
         }
@@ -143,7 +145,7 @@ namespace OpenTelemetry.Internal
         /// <param name="message">An optional custom message to use in the thrown exception.</param>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ThrowIfOutOfRange(int value, [CallerArgumentExpression("value")] string paramName = null, int min = int.MinValue, int max = int.MaxValue, string minName = null, string maxName = null, string message = null)
+        public static void ThrowIfOutOfRange(int value, [CallerArgumentExpression("value")] string? paramName = null, int min = int.MinValue, int max = int.MaxValue, string? minName = null, string? maxName = null, string? message = null)
         {
             Range(value, paramName, min, max, minName, maxName, message);
         }
@@ -160,7 +162,7 @@ namespace OpenTelemetry.Internal
         /// <param name="message">An optional custom message to use in the thrown exception.</param>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ThrowIfOutOfRange(double value, [CallerArgumentExpression("value")] string paramName = null, double min = double.MinValue, double max = double.MaxValue, string minName = null, string maxName = null, string message = null)
+        public static void ThrowIfOutOfRange(double value, [CallerArgumentExpression("value")] string? paramName = null, double min = double.MinValue, double max = double.MaxValue, string? minName = null, string? maxName = null, string? message = null)
         {
             Range(value, paramName, min, max, minName, maxName, message);
         }
@@ -174,7 +176,7 @@ namespace OpenTelemetry.Internal
         /// <returns>The value casted to the specified type.</returns>
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T ThrowIfNotOfType<T>(object value, [CallerArgumentExpression("value")] string paramName = null)
+        public static T ThrowIfNotOfType<T>(object value, [CallerArgumentExpression("value")] string? paramName = null)
         {
             if (value is not T result)
             {
@@ -186,7 +188,7 @@ namespace OpenTelemetry.Internal
 
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void Range<T>(T value, string paramName, T min, T max, string minName, string maxName, string message)
+        private static void Range<T>(T value, string? paramName, T min, T max, string? minName, string? maxName, string? message)
             where T : IComparable<T>
         {
             if (value.CompareTo(min) < 0 || value.CompareTo(max) > 0)
