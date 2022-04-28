@@ -78,7 +78,7 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             HttpClientInstrumentation instrumentation)
         {
-            if (HttpHandlerDiagnosticListener.IsNet7)
+            if (HttpHandlerDiagnosticListener.IsNet7OrGreater)
             {
                 builder.AddSource(HttpHandlerDiagnosticListener.FrameworkActivitySourceName);
             }

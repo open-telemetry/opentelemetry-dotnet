@@ -33,7 +33,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         internal static readonly string FrameworkActivitySourceName = "System.Net.Http";
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
-        internal static readonly bool IsNet7 = typeof(HttpClient).Assembly.GetName().Version.Major >= 7;
+        internal static readonly bool IsNet7OrGreater = typeof(HttpClient).Assembly.GetName().Version.Major >= 7;
 
         private static readonly Regex CoreAppMajorVersionCheckRegex = new("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -61,7 +61,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             // By this time, samplers have already run and
             // activity.IsAllDataRequested populated accordingly.
 
-            if (Sdk.SuppressInstrumentation || (IsNet7 && string.IsNullOrEmpty(activity.Source.Name)))
+            if (Sdk.SuppressInstrumentation || (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name)))
             {
                 return;
             }
@@ -111,7 +111,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-                if (!IsNet7)
+                if (!IsNet7OrGreater)
                 {
                     ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
                     ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
@@ -138,7 +138,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public override void OnStopActivity(Activity activity, object payload)
         {
-            if (IsNet7 && string.IsNullOrEmpty(activity.Source.Name))
+            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
             {
                 return;
             }
@@ -192,7 +192,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public override void OnException(Activity activity, object payload)
         {
-            if (IsNet7 && string.IsNullOrEmpty(activity.Source.Name))
+            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
             {
                 return;
             }

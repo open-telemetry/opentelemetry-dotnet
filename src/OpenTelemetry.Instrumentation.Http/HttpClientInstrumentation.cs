@@ -47,7 +47,7 @@ namespace OpenTelemetry.Instrumentation.Http
             // the framework will fall back to creating activity anyways due to active diagnostic source listener
             // To prevent this, isEnabled is implemented which will return false always
             // so that the sampler's decision is respected.
-            if (HttpHandlerDiagnosticListener.IsNet7)
+            if (HttpHandlerDiagnosticListener.IsNet7OrGreater)
             {
                 this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options), this.isEnabled);
             }
