@@ -55,6 +55,8 @@ namespace OpenTelemetry.Context.Propagation
 
         private readonly bool singleHeader;
 
+        public static B3Propagator Log = new();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="B3Propagator"/> class.
         /// </summary>

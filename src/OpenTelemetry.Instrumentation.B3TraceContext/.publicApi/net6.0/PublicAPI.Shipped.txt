@@ -1,3 +1,0 @@
-OpenTelemetry.Context.Propagation.B3Propagator
-OpenTelemetry.Context.Propagation.B3Propagator.B3Propagator() -> void
-OpenTelemetry.Context.Propagation.B3Propagator.B3Propagator(bool singleHeader) -> void
