@@ -1,27 +1,29 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>net6.0;netcoreapp3.1;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net462;netstandard2.0</TargetFrameworks>
     <Description>OpenTelemetry Propagator B3 Context</Description>
-    <PackageTags>$(PackageTags);distributed-tracing;AspNet;AspNetCore;WebAPI</PackageTags>
+    <PackageTags>$(PackageTags);distributed-tracing;AspNet;AspNetCore;B3</PackageTags>
     <IncludeInstrumentationHelpers>true</IncludeInstrumentationHelpers>
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="System.Web" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\OpenTelemetryApiEventSource.cs" Link="Includes\OpenTelemetryApiEventSource.cs" />
   </ItemGroup>
+
+  <!--Do not run ApiCompat for net462 as this is newly added. There is no existing contract for net462 against which we could compare the implementation.
+  Remove this property once we have released a stable net462 version.-->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net462'">
+    <RunApiCompat>false</RunApiCompat>
+  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
+  <PropertyGroup>
+    <NoWarn>$(NoWarn),1591</NoWarn>
+  </PropertyGroup>
 
 </Project>
