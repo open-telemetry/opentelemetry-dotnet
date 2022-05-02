@@ -33,58 +33,56 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             for (int i = 0; i < expectedAttributes.Count; i++)
             {
                 var current = expectedAttributes[i].Value;
+                Assert.Equal(expectedAttributes[i].Key, actual[i].Key);
 
                 if (current.GetType().IsArray)
                 {
+                    Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, actual[i].Value.ValueCase);
                     if (current is bool[] boolArray)
                     {
-                        int index = 0;
-                        foreach (var item in boolArray)
+                        Assert.Equal(boolArray.Length, actual[i].Value.ArrayValue.Values.Count);
+                        for (var j = 0; j < boolArray.Length; ++j)
                         {
-                            Assert.Equal(expectedAttributes[i].Key, actual[i + index].Key);
-                            AssertOtlpAttributeValue(item, actual[i + index]);
-                            index++;
-                            expectedSize++;
+                            AssertOtlpAttributeValue(boolArray[j], actual[i].Value.ArrayValue.Values[j]);
                         }
+
+                        expectedSize++;
                     }
                     else if (current is int[] intArray)
                     {
-                        int index = 1;
-                        foreach (var item in intArray)
+                        Assert.Equal(intArray.Length, actual[i].Value.ArrayValue.Values.Count);
+                        for (var j = 0; j < intArray.Length; ++j)
                         {
-                            Assert.Equal(expectedAttributes[i].Key, actual[i + index].Key);
-                            AssertOtlpAttributeValue(item, actual[i + index]);
-                            index++;
-                            expectedSize++;
+                            AssertOtlpAttributeValue(intArray[j], actual[i].Value.ArrayValue.Values[j]);
                         }
+
+                        expectedSize++;
                     }
                     else if (current is double[] doubleArray)
                     {
-                        int index = 2;
-                        foreach (var item in doubleArray)
+                        Assert.Equal(doubleArray.Length, actual[i].Value.ArrayValue.Values.Count);
+                        for (var j = 0; j < doubleArray.Length; ++j)
                         {
-                            Assert.Equal(expectedAttributes[i].Key, actual[i + index].Key);
-                            AssertOtlpAttributeValue(item, actual[i + index]);
-                            index++;
-                            expectedSize++;
+                            AssertOtlpAttributeValue(doubleArray[j], actual[i].Value.ArrayValue.Values[j]);
                         }
+
+                        expectedSize++;
                     }
                     else if (current is string[] stringArray)
                     {
-                        int index = 3;
-                        foreach (var item in stringArray)
+                        Assert.Equal(stringArray.Length, actual[i].Value.ArrayValue.Values.Count);
+                        for (var j = 0; j < stringArray.Length; ++j)
                         {
-                            Assert.Equal(expectedAttributes[i].Key, actual[i + index].Key);
-                            AssertOtlpAttributeValue(item, actual[i + index]);
-                            index++;
-                            expectedSize++;
+                            AssertOtlpAttributeValue(stringArray[j], actual[i].Value.ArrayValue.Values[j]);
                         }
+
+                        expectedSize++;
                     }
                 }
                 else
                 {
                     Assert.Equal(expectedAttributes[i].Key, actual[i].Key);
-                    AssertOtlpAttributeValue(current, actual[i]);
+                    AssertOtlpAttributeValue(current, actual[i].Value);
                     expectedSize++;
                 }
             }
@@ -92,27 +90,27 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Equal(expectedSize, actual.Count);
         }
 
-        private static void AssertOtlpAttributeValue(object expected, OtlpCommon.KeyValue actual)
+        private static void AssertOtlpAttributeValue(object expected, OtlpCommon.AnyValue actual)
         {
             switch (expected)
             {
                 case string s:
-                    Assert.Equal(s, actual.Value.StringValue);
+                    Assert.Equal(s, actual.StringValue);
                     break;
                 case bool b:
-                    Assert.Equal(b, actual.Value.BoolValue);
+                    Assert.Equal(b, actual.BoolValue);
                     break;
                 case long l:
-                    Assert.Equal(l, actual.Value.IntValue);
+                    Assert.Equal(l, actual.IntValue);
                     break;
                 case double d:
-                    Assert.Equal(d, actual.Value.DoubleValue);
+                    Assert.Equal(d, actual.DoubleValue);
                     break;
                 case int i:
-                    Assert.Equal(i, actual.Value.IntValue);
+                    Assert.Equal(i, actual.IntValue);
                     break;
                 default:
-                    Assert.Equal(expected.ToString(), actual.Value.StringValue);
+                    Assert.Equal(expected.ToString(), actual.StringValue);
                     break;
             }
         }
