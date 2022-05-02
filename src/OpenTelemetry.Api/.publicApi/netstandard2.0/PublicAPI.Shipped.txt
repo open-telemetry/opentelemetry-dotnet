@@ -3,6 +3,8 @@ abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Fields.get -> Syste
 abstract OpenTelemetry.Context.Propagation.TextMapPropagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
 abstract OpenTelemetry.Context.RuntimeContextSlot<T>.Get() -> T
 abstract OpenTelemetry.Context.RuntimeContextSlot<T>.Set(T value) -> void
+abstract OpenTelemetry.Metrics.MeterProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder
+abstract OpenTelemetry.Metrics.MeterProviderBuilder.AddMeter(params string[] names) -> OpenTelemetry.Metrics.MeterProviderBuilder
 abstract OpenTelemetry.Trace.TracerProviderBuilder.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
 abstract OpenTelemetry.Trace.TracerProviderBuilder.AddLegacySource(string operationName) -> OpenTelemetry.Trace.TracerProviderBuilder
 abstract OpenTelemetry.Trace.TracerProviderBuilder.AddSource(params string[] names) -> OpenTelemetry.Trace.TracerProviderBuilder
@@ -25,6 +27,11 @@ OpenTelemetry.BaseProvider.BaseProvider() -> void
 OpenTelemetry.BaseProvider.Dispose() -> void
 OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>
 OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.AsyncLocalRuntimeContextSlot(string name) -> void
+OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Value.get -> object
+OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Value.set -> void
+OpenTelemetry.Context.IRuntimeContextSlotValueAccessor
+OpenTelemetry.Context.IRuntimeContextSlotValueAccessor.Value.get -> object
+OpenTelemetry.Context.IRuntimeContextSlotValueAccessor.Value.set -> void
 OpenTelemetry.Context.Propagation.B3Propagator
 OpenTelemetry.Context.Propagation.B3Propagator.B3Propagator() -> void
 OpenTelemetry.Context.Propagation.B3Propagator.B3Propagator(bool singleHeader) -> void
@@ -50,6 +57,14 @@ OpenTelemetry.Context.RuntimeContextSlot<T>.Name.get -> string
 OpenTelemetry.Context.RuntimeContextSlot<T>.RuntimeContextSlot(string name) -> void
 OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>
 OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.ThreadLocalRuntimeContextSlot(string name) -> void
+OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Value.get -> object
+OpenTelemetry.Context.ThreadLocalRuntimeContextSlot<T>.Value.set -> void
+OpenTelemetry.Metrics.IDeferredMeterProviderBuilder
+OpenTelemetry.Metrics.IDeferredMeterProviderBuilder.Configure(System.Action<System.IServiceProvider, OpenTelemetry.Metrics.MeterProviderBuilder> configure) -> OpenTelemetry.Metrics.MeterProviderBuilder
+OpenTelemetry.Metrics.MeterProvider
+OpenTelemetry.Metrics.MeterProvider.MeterProvider() -> void
+OpenTelemetry.Metrics.MeterProviderBuilder
+OpenTelemetry.Metrics.MeterProviderBuilder.MeterProviderBuilder() -> void
 OpenTelemetry.Trace.ActivityExtensions
 OpenTelemetry.Trace.IDeferredTracerProviderBuilder
 OpenTelemetry.Trace.IDeferredTracerProviderBuilder.Configure(System.Action<System.IServiceProvider, OpenTelemetry.Trace.TracerProviderBuilder> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
@@ -108,6 +123,7 @@ OpenTelemetry.Trace.TelemetrySpan.Dispose() -> void
 OpenTelemetry.Trace.TelemetrySpan.End() -> void
 OpenTelemetry.Trace.TelemetrySpan.End(System.DateTimeOffset endTimestamp) -> void
 OpenTelemetry.Trace.TelemetrySpan.IsRecording.get -> bool
+OpenTelemetry.Trace.TelemetrySpan.ParentSpanId.get -> System.Diagnostics.ActivitySpanId
 OpenTelemetry.Trace.TelemetrySpan.RecordException(string type, string message, string stacktrace) -> OpenTelemetry.Trace.TelemetrySpan
 OpenTelemetry.Trace.TelemetrySpan.RecordException(System.Exception ex) -> OpenTelemetry.Trace.TelemetrySpan
 OpenTelemetry.Trace.TelemetrySpan.SetAttribute(string key, bool value) -> OpenTelemetry.Trace.TelemetrySpan
@@ -178,7 +194,11 @@ static OpenTelemetry.Context.Propagation.Propagators.DefaultTextMapPropagator.ge
 static OpenTelemetry.Context.RuntimeContext.ContextSlotType.get -> System.Type
 static OpenTelemetry.Context.RuntimeContext.ContextSlotType.set -> void
 static OpenTelemetry.Context.RuntimeContext.GetSlot<T>(string slotName) -> OpenTelemetry.Context.RuntimeContextSlot<T>
+static OpenTelemetry.Context.RuntimeContext.GetValue(string slotName) -> object
+static OpenTelemetry.Context.RuntimeContext.GetValue<T>(string slotName) -> T
 static OpenTelemetry.Context.RuntimeContext.RegisterSlot<T>(string slotName) -> OpenTelemetry.Context.RuntimeContextSlot<T>
+static OpenTelemetry.Context.RuntimeContext.SetValue(string slotName, object value) -> void
+static OpenTelemetry.Context.RuntimeContext.SetValue<T>(string slotName, T value) -> void
 static OpenTelemetry.Trace.ActivityExtensions.GetStatus(this System.Diagnostics.Activity activity) -> OpenTelemetry.Trace.Status
 static OpenTelemetry.Trace.ActivityExtensions.RecordException(this System.Diagnostics.Activity activity, System.Exception ex) -> void
 static OpenTelemetry.Trace.ActivityExtensions.SetStatus(this System.Diagnostics.Activity activity, OpenTelemetry.Trace.Status status) -> void

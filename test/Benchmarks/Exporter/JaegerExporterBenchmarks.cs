@@ -27,7 +27,6 @@ using OpenTelemetry.Internal;
 
 namespace Benchmarks.Exporter
 {
-    [MemoryDiagnoser]
     public class JaegerExporterBenchmarks
     {
         private Activity activity;

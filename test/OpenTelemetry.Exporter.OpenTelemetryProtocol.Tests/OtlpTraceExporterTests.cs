@@ -137,12 +137,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var resourceBuilder = ResourceBuilder.CreateEmpty();
             if (includeServiceNameInResource)
             {
-                resourceBuilder.AddAttributes(
-                    new List<KeyValuePair<string, object>>
-                    {
-                        new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, "service-name"),
-                        new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceNamespace, "ns1"),
-                    });
+                resourceBuilder.AddService("service-name", "ns1");
             }
 
             var builder = Sdk.CreateTracerProviderBuilder()
@@ -164,7 +159,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 var activityTags = isEven ? evenTags : oddTags;
 
                 using Activity activity = source.StartActivity($"span-{i}", activityKind, parentContext: default, activityTags);
-                processor.OnEnd(activity);
             }
 
             processor.Shutdown();
@@ -179,36 +173,36 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 request.AddBatch(resourceBuilder.Build().ToOtlpResource(), batch);
 
                 Assert.Single(request.ResourceSpans);
-                var oltpResource = request.ResourceSpans.First().Resource;
+                var otlpResource = request.ResourceSpans.First().Resource;
                 if (includeServiceNameInResource)
                 {
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service-name");
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceNamespace && kvp.Value.StringValue == "ns1");
+                    Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.StringValue == "service-name");
+                    Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceNamespace && kvp.Value.StringValue == "ns1");
                 }
                 else
                 {
-                    Assert.Contains(oltpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
+                    Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
                 }
 
-                foreach (var instrumentationLibrarySpans in request.ResourceSpans.First().InstrumentationLibrarySpans)
+                foreach (var scope in request.ResourceSpans.First().ScopeSpans)
                 {
-                    Assert.Equal(numOfSpans / 2, instrumentationLibrarySpans.Spans.Count);
-                    Assert.NotNull(instrumentationLibrarySpans.InstrumentationLibrary);
+                    Assert.Equal(numOfSpans / 2, scope.Spans.Count);
+                    Assert.NotNull(scope.Scope);
 
                     var expectedSpanNames = new List<string>();
-                    var start = instrumentationLibrarySpans.InstrumentationLibrary.Name == "even" ? 0 : 1;
+                    var start = scope.Scope.Name == "even" ? 0 : 1;
                     for (var i = start; i < numOfSpans; i += 2)
                     {
                         expectedSpanNames.Add($"span-{i}");
                     }
 
-                    var otlpSpans = instrumentationLibrarySpans.Spans;
+                    var otlpSpans = scope.Spans;
                     Assert.Equal(expectedSpanNames.Count, otlpSpans.Count);
 
                     var kv0 = new OtlpCommon.KeyValue { Key = "k0", Value = new OtlpCommon.AnyValue { StringValue = "v0" } };
                     var kv1 = new OtlpCommon.KeyValue { Key = "k1", Value = new OtlpCommon.AnyValue { StringValue = "v1" } };
 
-                    var expectedTag = instrumentationLibrarySpans.InstrumentationLibrary.Name == "even"
+                    var expectedTag = scope.Scope.Name == "even"
                         ? kv0
                         : kv1;
 
@@ -342,15 +336,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var stringArray = otlpSpan.Attributes.Where(kvp => kvp.Key == "stringArray").ToList();
 
             Assert.NotNull(stringArray);
-            Assert.Equal(3, stringArray.Count());
+            Assert.Equal(3, stringArray.Count);
             Assert.Equal("test", stringArray[0].Value.StringValue);
             Assert.Equal(string.Empty, stringArray[1].Value.StringValue);
             Assert.Null(stringArray[2].Value);
         }
 
         [Theory]
-        [InlineData(ActivityStatusCode.Unset, "Description will be ingored if status is Unset.")]
-        [InlineData(ActivityStatusCode.Ok, "Description will be ingored if status is Okay.")]
+        [InlineData(ActivityStatusCode.Unset, "Description will be ignored if status is Unset.")]
+        [InlineData(ActivityStatusCode.Ok, "Description will be ignored if status is Okay.")]
         [InlineData(ActivityStatusCode.Error, "Description will be kept if status is Error.")]
         public void ToOtlpSpanNativeActivityStatusTest(ActivityStatusCode expectedStatusCode, string statusDescription)
         {

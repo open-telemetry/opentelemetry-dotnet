@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 1.3.0-beta.1
+
+Released 2022-Apr-15
+
+* Removes .NET Framework 4.6.1. The minimum .NET Framework
+  version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
+
+## 1.2.0
+
+Released 2022-Apr-15
+
+## 1.2.0-rc5
+
+Released 2022-Apr-12
+
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
 * Added StatusCode, StatusDescription support to
   `ConsoleActivityExporter`.
   ([#2929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2929)

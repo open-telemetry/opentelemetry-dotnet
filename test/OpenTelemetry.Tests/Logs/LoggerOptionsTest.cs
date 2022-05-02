@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if !NET461
 
 using Xunit;
 
@@ -51,4 +50,3 @@ namespace OpenTelemetry.Logs.Tests
         }
     }
 }
-#endif

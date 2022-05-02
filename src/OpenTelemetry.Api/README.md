@@ -392,8 +392,26 @@ corresponding overloads of `ActivityEvent`.
 
 OpenTelemetry defines a concept called
 [Status](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status)
-to be associated with `Activity`. There is no `Status` class in .NET, and hence
-`Status` is set to an `Activity` using the following special tags:
+to be associated with `Activity`. Starting with [DiagnosticSource
+6.0](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/6.0.0),
+`SetStatus` API on `Activity` can be used to set the status and description
+as shown below:
+
+```csharp
+activity?.SetStatus(ActivityStatusCode.Ok);
+activity?.SetStatus(ActivityStatusCode.Error, "Error Description");
+```
+
+All the official
+[Exporters](../../docs/trace/extending-the-sdk/README.md#exporter) shipped from
+this repo support the above shown mechanism of setting status.
+
+#### Setting Status - DiagnosticSource version older than 6.0
+
+Prior to [DiagnosticSource
+6.0](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/6.0.0)
+there was no `Status` field in `Activity`, and hence `Status` is set to an
+`Activity` using the following special tags:
 
 `otel.status_code` is the `Tag` name used to store the `StatusCode`, and
 `otel.status_description` is the `Tag` name used to store the optional
@@ -449,9 +467,9 @@ runtime itself, as part of the
 package. This means, users can instrument their applications/libraries to emit
 metrics by simply using the `System.Diagnostics.DiagnosticSource` package. This
 package can be used in applications targeting any of the officially supported
-versions of [.NET Core](https://dotnet.microsoft.com/download/dotnet-core), and
-[.NET Framework](https://dotnet.microsoft.com/download/dotnet-framework) except
-for versions lower than `.NET Framework 4.6.1`.
+versions of [.NET](https://dotnet.microsoft.com/download/dotnet) and
+[.NET Framework](https://dotnet.microsoft.com/download/dotnet-framework) (an
+older Windows-based .NET implementation).
 
 ## Instrumenting a library/application with .NET Metrics API
 

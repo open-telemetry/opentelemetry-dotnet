@@ -52,7 +52,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// </remarks>
         public bool RecordException { get; set; }
 
-#if NETSTANDARD2_1 || NETCOREAPP3_1 || NET5_0_OR_GREATER
+#if NETSTANDARD2_1 || NETCOREAPP3_1 || NET6_0_OR_GREATER
         /// <summary>
         /// Gets or sets a value indicating whether RPC attributes are added to an Activity when using Grpc.AspNetCore. Default is true.
         /// </summary>

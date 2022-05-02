@@ -19,6 +19,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using Microsoft.Extensions.Logging;
@@ -32,8 +33,15 @@ namespace OpenTelemetry.Logs.Tests
 {
     public sealed class LogRecordTest
     {
+        private enum Field
+        {
+            FormattedMessage,
+            State,
+            StateValues,
+        }
+
         [Fact]
-        public void CheckCateogryNameForLog()
+        public void CheckCategoryNameForLog()
         {
             using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
@@ -56,8 +64,8 @@ namespace OpenTelemetry.Logs.Tests
             using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
-            var message = $"Log {logLevel}";
-            logger.Log(logLevel, message);
+            const string message = "Log {logLevel}";
+            logger.Log(logLevel, message, logLevel);
 
             var logLevelRecorded = exportedItems[0].LogLevel;
             Assert.Equal(logLevel, logLevelRecorded);
@@ -69,17 +77,18 @@ namespace OpenTelemetry.Logs.Tests
             using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
-            var message = "Hello, World!";
+            const string message = "Hello, World!";
             logger.LogInformation(message);
             var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
             // state only has {OriginalFormat}
             Assert.Equal(1, state.Count);
 
-            Assert.Equal(message.ToString(), state.ToString());
+            Assert.Equal(message, state.ToString());
         }
 
         [Fact]
+        [SuppressMessage("CA2254", "CA2254", Justification = "While you shouldn't use interpolation in a log message, this test verifies things work with it anyway.")]
         public void CheckStateForUnstructuredLogWithStringInterpolation()
         {
             using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
@@ -92,7 +101,7 @@ namespace OpenTelemetry.Logs.Tests
             // state only has {OriginalFormat}
             Assert.Equal(1, state.Count);
 
-            Assert.Equal(message.ToString(), state.ToString());
+            Assert.Equal(message, state.ToString());
         }
 
         [Fact]
@@ -101,7 +110,7 @@ namespace OpenTelemetry.Logs.Tests
             using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
-            var message = "Hello from {name} {price}.";
+            const string message = "Hello from {name} {price}.";
             logger.LogInformation(message, "tomato", 2.99);
             var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
 
@@ -178,7 +187,7 @@ namespace OpenTelemetry.Logs.Tests
         }
 
         [Fact]
-        public void CheckStateForStrucutredLogWithGeneralType()
+        public void CheckStateForStructuredLogWithGeneralType()
         {
             using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
@@ -224,7 +233,8 @@ namespace OpenTelemetry.Logs.Tests
 
             var exceptionMessage = "Exception Message";
             var exception = new Exception(exceptionMessage);
-            var message = "Exception Occurred";
+
+            const string message = "Exception Occurred";
             logger.LogInformation(exception, message);
 
             var state = exportedItems[0].State;
@@ -237,7 +247,123 @@ namespace OpenTelemetry.Logs.Tests
             Assert.NotNull(loggedException);
             Assert.Equal(exceptionMessage, loggedException.Message);
 
-            Assert.Equal(message.ToString(), state.ToString());
+            Assert.Equal(message, state.ToString());
+        }
+
+        [Fact]
+        public void CheckStateCanBeSet()
+        {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
+            var message = $"This does not matter.";
+            logger.LogInformation(message);
+
+            var logRecord = exportedItems[0];
+            logRecord.State = "newState";
+
+            var expectedState = "newState";
+            Assert.Equal(expectedState, logRecord.State);
+        }
+
+        [Fact]
+        public void CheckStateValuesCanBeSet()
+        {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
+            logger.Log(
+                LogLevel.Information,
+                0,
+                new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("Key1", "Value1") },
+                null,
+                (s, e) => "OpenTelemetry!");
+
+            var logRecord = exportedItems[0];
+            var expectedStateValues = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("Key2", "Value2") };
+            logRecord.StateValues = expectedStateValues;
+
+            Assert.Equal(expectedStateValues, logRecord.StateValues);
+        }
+
+        [Fact]
+        public void CheckFormattedMessageCanBeSet()
+        {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
+            logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
+            var logRecord = exportedItems[0];
+            var expectedFormattedMessage = "OpenTelemetry Good Night!";
+            logRecord.FormattedMessage = expectedFormattedMessage;
+
+            Assert.Equal(expectedFormattedMessage, logRecord.FormattedMessage);
+        }
+
+        [Fact]
+        public void CheckStateCanBeSetByProcessor()
+        {
+            var exportedItems = new List<LogRecord>();
+            var exporter = new InMemoryExporter<LogRecord>(exportedItems);
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.AddProcessor(new RedactionProcessor(Field.State));
+                    options.AddInMemoryExporter(exportedItems);
+                });
+            });
+
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+            logger.LogInformation($"This does not matter.");
+
+            var state = exportedItems[0].State as IReadOnlyList<KeyValuePair<string, object>>;
+            Assert.Equal("newStateKey", state[0].Key.ToString());
+            Assert.Equal("newStateValue", state[0].Value.ToString());
+        }
+
+        [Fact]
+        public void CheckStateValuesCanBeSetByProcessor()
+        {
+            var exportedItems = new List<LogRecord>();
+            var exporter = new InMemoryExporter<LogRecord>(exportedItems);
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.AddProcessor(new RedactionProcessor(Field.StateValues));
+                    options.AddInMemoryExporter(exportedItems);
+                    options.ParseStateValues = true;
+                });
+            });
+
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+            logger.LogInformation("This does not matter.");
+
+            var stateValue = exportedItems[0];
+            Assert.Equal(new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue"), stateValue.StateValues[0]);
+        }
+
+        [Fact]
+        public void CheckFormattedMessageCanBeSetByProcessor()
+        {
+            var exportedItems = new List<LogRecord>();
+            var exporter = new InMemoryExporter<LogRecord>(exportedItems);
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddOpenTelemetry(options =>
+                {
+                    options.AddProcessor(new RedactionProcessor(Field.FormattedMessage));
+                    options.AddInMemoryExporter(exportedItems);
+                    options.IncludeFormattedMessage = true;
+                });
+            });
+
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+            logger.LogInformation("OpenTelemetry {Greeting} {Subject}!", "Hello", "World");
+
+            var item = exportedItems[0];
+            Assert.Equal("OpenTelemetry Good Night!", item.FormattedMessage);
         }
 
         [Fact]
@@ -662,6 +788,32 @@ namespace OpenTelemetry.Logs.Tests
             IEnumerator IEnumerable.GetEnumerator()
             {
                 return this.list.GetEnumerator();
+            }
+        }
+
+        private class RedactionProcessor : BaseProcessor<LogRecord>
+        {
+            private readonly Field fieldToUpdate;
+
+            public RedactionProcessor(Field fieldToUpdate)
+            {
+                this.fieldToUpdate = fieldToUpdate;
+            }
+
+            public override void OnEnd(LogRecord logRecord)
+            {
+                if (this.fieldToUpdate == Field.State)
+                {
+                    logRecord.State = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateKey", "newStateValue") };
+                }
+                else if (this.fieldToUpdate == Field.StateValues)
+                {
+                    logRecord.StateValues = new List<KeyValuePair<string, object>> { new KeyValuePair<string, object>("newStateValueKey", "newStateValueValue") };
+                }
+                else
+                {
+                    logRecord.FormattedMessage = "OpenTelemetry Good Night!";
+                }
             }
         }
 

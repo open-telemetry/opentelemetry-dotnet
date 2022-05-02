@@ -81,6 +81,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         public void Dispose()
         {
             this.testServer.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         [Fact]
@@ -91,7 +92,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Tests
         }
 
         [Fact]
-        public void SuppresssesInstrumentation()
+        public void SuppressesInstrumentation()
         {
             const string ActivitySourceName = "zipkin.test";
             Guid requestId = Guid.NewGuid();

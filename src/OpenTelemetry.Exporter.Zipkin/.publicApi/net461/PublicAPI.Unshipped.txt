@@ -1,2 +1,0 @@
-OpenTelemetry.Exporter.ZipkinExporterOptions.HttpClientFactory.get -> System.Func<System.Net.Http.HttpClient>
-OpenTelemetry.Exporter.ZipkinExporterOptions.HttpClientFactory.set -> void

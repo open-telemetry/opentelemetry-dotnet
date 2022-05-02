@@ -23,7 +23,6 @@ using OpenTelemetry.Logs;
 
 namespace Benchmarks.Logs
 {
-    [MemoryDiagnoser]
     public class LogScopeBenchmarks
     {
         private readonly LoggerExternalScopeProvider scopeProvider = new();

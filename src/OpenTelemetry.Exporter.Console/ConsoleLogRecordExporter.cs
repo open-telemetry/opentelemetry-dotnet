@@ -22,7 +22,7 @@ namespace OpenTelemetry.Exporter
 {
     public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
     {
-        private const int RightPaddingLength = 30;
+        private const int RightPaddingLength = 35;
 
         public ConsoleLogRecordExporter(ConsoleExporterOptions options)
             : base(options)
@@ -33,14 +33,18 @@ namespace OpenTelemetry.Exporter
         {
             foreach (var logRecord in batch)
             {
-                this.WriteLine($"{"LogRecord.TraceId:",-RightPaddingLength}{logRecord.TraceId}");
-                this.WriteLine($"{"LogRecord.SpanId:",-RightPaddingLength}{logRecord.SpanId}");
                 this.WriteLine($"{"LogRecord.Timestamp:",-RightPaddingLength}{logRecord.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
-                this.WriteLine($"{"LogRecord.EventId:",-RightPaddingLength}{logRecord.EventId.Id}");
-                this.WriteLine($"{"LogRecord.EventName:",-RightPaddingLength}{logRecord.EventId.Name}");
+
+                if (logRecord.TraceId != default)
+                {
+                    this.WriteLine($"{"LogRecord.TraceId:",-RightPaddingLength}{logRecord.TraceId}");
+                    this.WriteLine($"{"LogRecord.SpanId:",-RightPaddingLength}{logRecord.SpanId}");
+                    this.WriteLine($"{"LogRecord.TraceFlags:",-RightPaddingLength}{logRecord.TraceFlags}");
+                }
+
                 this.WriteLine($"{"LogRecord.CategoryName:",-RightPaddingLength}{logRecord.CategoryName}");
                 this.WriteLine($"{"LogRecord.LogLevel:",-RightPaddingLength}{logRecord.LogLevel}");
-                this.WriteLine($"{"LogRecord.TraceFlags:",-RightPaddingLength}{logRecord.TraceFlags}");
+
                 if (logRecord.FormattedMessage != null)
                 {
                     this.WriteLine($"{"LogRecord.FormattedMessage:",-RightPaddingLength}{logRecord.FormattedMessage}");
@@ -55,7 +59,26 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine("LogRecord.StateValues (Key:Value):");
                     for (int i = 0; i < logRecord.StateValues.Count; i++)
                     {
-                        this.WriteLine($"{logRecord.StateValues[i].Key,-RightPaddingLength}{logRecord.StateValues[i].Value}");
+                        // Special casing {OriginalFormat}
+                        // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
+                        // for explanation.
+                        if (logRecord.StateValues[i].Key.Equals("{OriginalFormat}"))
+                        {
+                            this.WriteLine($"{string.Empty,-4}{"OriginalFormat (a.k.a. Body)",-RightPaddingLength}{logRecord.StateValues[i].Value}");
+                        }
+                        else
+                        {
+                            this.WriteLine($"{string.Empty,-4}{logRecord.StateValues[i].Key,-RightPaddingLength}{logRecord.StateValues[i].Value}");
+                        }
+                    }
+                }
+
+                if (logRecord.EventId != default)
+                {
+                    this.WriteLine($"{"LogRecord.EventId:",-RightPaddingLength}{logRecord.EventId.Id}");
+                    if (string.IsNullOrEmpty(logRecord.EventId.Name))
+                    {
+                        this.WriteLine($"{"LogRecord.EventName:",-RightPaddingLength}{logRecord.EventId.Name}");
                     }
                 }
 
@@ -84,10 +107,10 @@ namespace OpenTelemetry.Exporter
                 var resource = this.ParentProvider.GetResource();
                 if (resource != Resource.Empty)
                 {
-                    this.WriteLine("Resource associated with LogRecord:");
+                    this.WriteLine("\nResource associated with LogRecord:");
                     foreach (var resourceAttribute in resource.Attributes)
                     {
-                        this.WriteLine($"    {resourceAttribute.Key}: {resourceAttribute.Value}");
+                        this.WriteLine($"{resourceAttribute.Key}: {resourceAttribute.Value}");
                     }
                 }
 

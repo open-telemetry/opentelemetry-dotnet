@@ -106,11 +106,11 @@ namespace OpenTelemetry.Trace.Tests
             var rootSpan1 = exportedItems[1];
             Assert.Equal("RootSpan2", rootSpan2.DisplayName);
             Assert.Equal("RootSpan1", rootSpan1.DisplayName);
-            Assert.Equal(default(ActivitySpanId), rootSpan1.ParentSpanId);
+            Assert.Equal(default, rootSpan1.ParentSpanId);
 
             // This is where this test currently fails
             // rootSpan2 should be a root span of a new trace and not a child of rootSpan1
-            Assert.Equal(default(ActivitySpanId), rootSpan2.ParentSpanId);
+            Assert.Equal(default, rootSpan2.ParentSpanId);
             Assert.NotEqual(rootSpan2.TraceId, rootSpan1.TraceId);
             Assert.NotEqual(rootSpan2.ParentSpanId, rootSpan1.SpanId);
         }
