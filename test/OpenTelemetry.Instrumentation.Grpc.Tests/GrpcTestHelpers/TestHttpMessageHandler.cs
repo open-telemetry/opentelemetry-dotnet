@@ -23,11 +23,11 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
 {
     public class TestHttpMessageHandler : HttpMessageHandler
     {
-        private readonly Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> _sendAsync;
+        private readonly Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> sendAsync;
 
         public TestHttpMessageHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> sendAsync)
         {
-            _sendAsync = sendAsync;
+            this.sendAsync = sendAsync;
         }
 
         public static TestHttpMessageHandler Create(Func<HttpRequestMessage, Task<HttpResponseMessage>> sendAsync)
@@ -50,7 +50,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            return _sendAsync(request, cancellationToken);
+            return this.sendAsync(request, cancellationToken);
         }
     }
 }

@@ -28,11 +28,13 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
 {
     internal static class ResponseUtils
     {
-        internal static readonly MediaTypeHeaderValue GrpcContentTypeHeaderValue = new MediaTypeHeaderValue("application/grpc");
-        internal static readonly Version ProtocolVersion = new Version(2, 0);
         internal const string MessageEncodingHeader = "grpc-encoding";
         internal const string IdentityGrpcEncoding = "identity";
         internal const string StatusTrailer = "grpc-status";
+        internal static readonly MediaTypeHeaderValue GrpcContentTypeHeaderValue = new MediaTypeHeaderValue("application/grpc");
+        internal static readonly Version ProtocolVersion = new Version(2, 0);
+        private const int MessageDelimiterSize = 4; // how many bytes it takes to encode "Message-Length"
+        private const int HeaderSize = MessageDelimiterSize + 1; // message length + compression flag
 
         public static HttpResponseMessage CreateResponse(
             HttpStatusCode statusCode,
@@ -61,15 +63,6 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
             return message;
         }
 
-#if NETFRAMEWORK
-        private class ResponseTrailers : HttpHeaders
-        {
-        }
-#endif
-
-        private const int MessageDelimiterSize = 4; // how many bytes it takes to encode "Message-Length"
-        private const int HeaderSize = MessageDelimiterSize + 1; // message length + compression flag
-
         public static Task WriteHeaderAsync(Stream stream, int length, bool compress, CancellationToken cancellationToken)
         {
             var headerData = new byte[HeaderSize];
@@ -89,5 +82,11 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
 
             BinaryPrimitives.WriteUInt32BigEndian(destination, (uint)messageLength);
         }
+
+#if NETFRAMEWORK
+        private class ResponseTrailers : HttpHeaders
+        {
+        }
+#endif
     }
 }

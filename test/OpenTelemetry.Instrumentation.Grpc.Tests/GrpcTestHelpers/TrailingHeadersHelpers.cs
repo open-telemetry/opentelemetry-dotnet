@@ -21,6 +21,8 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
 {
     internal static class TrailingHeadersHelpers
     {
+        public static readonly string ResponseTrailersKey = "__ResponseTrailers";
+
         public static HttpHeaders TrailingHeaders(this HttpResponseMessage responseMessage)
         {
 #if !NETFRAMEWORK
@@ -47,8 +49,6 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
                 responseMessage.RequestMessage.Properties[ResponseTrailersKey] = new ResponseTrailers();
             }
         }
-
-        public static readonly string ResponseTrailersKey = "__ResponseTrailers";
 
         private class ResponseTrailers : HttpHeaders
         {

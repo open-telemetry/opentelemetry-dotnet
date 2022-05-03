@@ -27,7 +27,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
 {
     internal static class ClientTestHelpers
     {
-        public static HttpClient CreateTestClient(Func<HttpRequestMessage, Task<HttpResponseMessage>> sendAsync, Uri? baseAddress = null)
+        public static HttpClient CreateTestClient(Func<HttpRequestMessage, Task<HttpResponseMessage>> sendAsync, Uri baseAddress = null)
         {
             var handler = TestHttpMessageHandler.Create(sendAsync);
             var httpClient = new HttpClient(handler);
@@ -36,29 +36,18 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
             return httpClient;
         }
 
-        public static Task<StreamContent> CreateResponseContent<TResponse>(TResponse response, ICompressionProvider? compressionProvider = null) where TResponse : IMessage<TResponse>
+        public static Task<StreamContent> CreateResponseContent<TResponse>(TResponse response, ICompressionProvider compressionProvider = null)
+            where TResponse : IMessage<TResponse>
         {
             return CreateResponseContentCore(new[] { response }, compressionProvider);
         }
 
-        private static async Task<StreamContent> CreateResponseContentCore<TResponse>(TResponse[] responses, ICompressionProvider? compressionProvider) where TResponse : IMessage<TResponse>
-        {
-            var ms = new MemoryStream();
-            foreach (var response in responses)
-            {
-                await WriteResponseAsync(ms, response, compressionProvider);
-            }
-            ms.Seek(0, SeekOrigin.Begin);
-            var streamContent = new StreamContent(ms);
-            streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/grpc");
-            return streamContent;
-        }
-
-        public static async Task WriteResponseAsync<TResponse>(Stream ms, TResponse response, ICompressionProvider? compressionProvider) where TResponse : IMessage<TResponse>
+        public static async Task WriteResponseAsync<TResponse>(Stream ms, TResponse response, ICompressionProvider compressionProvider)
+            where TResponse : IMessage<TResponse>
         {
             var compress = false;
 
-            byte[]? data;
+            byte[] data;
             if (compressionProvider != null)
             {
                 compress = true;
@@ -83,6 +72,21 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers
 #else
             await ms.WriteAsync(data, 0, data.Length);
 #endif
+        }
+
+        private static async Task<StreamContent> CreateResponseContentCore<TResponse>(TResponse[] responses, ICompressionProvider compressionProvider)
+            where TResponse : IMessage<TResponse>
+        {
+            var ms = new MemoryStream();
+            foreach (var response in responses)
+            {
+                await WriteResponseAsync(ms, response, compressionProvider);
+            }
+
+            ms.Seek(0, SeekOrigin.Begin);
+            var streamContent = new StreamContent(ms);
+            streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/grpc");
+            return streamContent;
         }
     }
 }
