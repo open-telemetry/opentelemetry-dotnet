@@ -396,6 +396,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     this.Created = true;
                 }
 
+                OtlpCommon.ArrayValue arrayValue;
+
                 switch (activityTag.Value)
                 {
                     case string s:
@@ -416,39 +418,49 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { DoubleValue = d }));
                         break;
                     case int[] intArray:
+                        arrayValue = new OtlpCommon.ArrayValue();
                         foreach (var item in intArray)
                         {
-                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { IntValue = item }));
+                            arrayValue.Values.Add(new OtlpCommon.AnyValue { IntValue = item });
                         }
 
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { ArrayValue = arrayValue }));
                         break;
                     case double[] doubleArray:
+                        arrayValue = new OtlpCommon.ArrayValue();
                         foreach (var item in doubleArray)
                         {
-                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { DoubleValue = item }));
+                            arrayValue.Values.Add(new OtlpCommon.AnyValue { DoubleValue = item });
                         }
 
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { ArrayValue = arrayValue }));
                         break;
                     case bool[] boolArray:
+                        arrayValue = new OtlpCommon.ArrayValue();
                         foreach (var item in boolArray)
                         {
-                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { BoolValue = item }));
+                            arrayValue.Values.Add(new OtlpCommon.AnyValue { BoolValue = item });
                         }
 
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { ArrayValue = arrayValue }));
                         break;
                     case string[] stringArray:
+                        arrayValue = new OtlpCommon.ArrayValue();
                         foreach (var item in stringArray)
                         {
-                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, item == null ? null : new OtlpCommon.AnyValue { StringValue = item }));
+                            arrayValue.Values.Add(item == null ? new OtlpCommon.AnyValue() : new OtlpCommon.AnyValue { StringValue = item });
                         }
 
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { ArrayValue = arrayValue }));
                         break;
                     case long[] longArray:
+                        arrayValue = new OtlpCommon.ArrayValue();
                         foreach (var item in longArray)
                         {
-                            PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { IntValue = item }));
+                            arrayValue.Values.Add(new OtlpCommon.AnyValue { IntValue = item });
                         }
 
+                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { ArrayValue = arrayValue }));
                         break;
                     default:
                         PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { StringValue = activityTag.Value.ToString() }));

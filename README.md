@@ -37,7 +37,7 @@ If you are new here, please read the getting started docs:
 
 * [logs](./docs/logs/getting-started/README.md)
 * [metrics](./docs/metrics/getting-started/README.md)
-* [trace](./docs/trace/getting-started/README.md)
+* [traces](./docs/trace/getting-started/README.md)
 
 This repository includes multiple installable components, available on
 [NuGet](https://www.nuget.org/profiles/OpenTelemetry). Each component has its
@@ -68,25 +68,28 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [Jaeger](./src/OpenTelemetry.Exporter.Jaeger/README.md)
 * [OTLP](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
   (OpenTelemetry Protocol)
-* [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md)
 * [Prometheus](./src/OpenTelemetry.Exporter.Prometheus/README.md)
+* [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md)
 
 See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) for
 more exporters.
 
-## Customization
+## Extensibility
 
-OpenTelemetry .NET is designed to be customizable and extensible. Here are the
-most common customization and extension scenarios:
+OpenTelemetry .NET is designed to be extensible. Here are the most common
+extension scenarios:
 
-* [Building a custom instrumentation
-  library](./docs/trace/extending-the-sdk/README.md#instrumentation-library)
-* [Building a custom log
-  exporter/processor/sampler](./docs/logs/extending-the-sdk/README.md)
-* [Building a custom metrics
-  exporter/reader/exemplar](./docs/metrics/extending-the-sdk/README.md)
-* [Building a custom trace
-  exporter/processor/sampler](./docs/trace/extending-the-sdk/README.md)
+* Building a custom [instrumentation
+  library](./docs/trace/extending-the-sdk/README.md#instrumentation-library).
+* Building a custom exporter for
+  [logs](./docs/logs/extending-the-sdk/README.md#exporter),
+  [metrics](./docs/metrics/extending-the-sdk/README.md#exporter) and
+  [traces](./docs/trace/extending-the-sdk/README.md#exporter).
+* Building a custom processor for
+  [logs](./docs/logs/extending-the-sdk/README.md#processor) and
+  [traces](./docs/trace/extending-the-sdk/README.md#processor).
+* Building a custom sampler for
+  [traces](./docs/trace/extending-the-sdk/README.md#sampler).
 
 ## Contributing
 
