@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Use binary search for histograms with a large amount of buckets.
-  ([#3251](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3251))
+  ([#3252](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3252))
 
 * Exposed public setters for `LogRecord.State`, `LogRecord.StateValues`,
   and `LogRecord.FormattedMessage`.
