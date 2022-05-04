@@ -67,6 +67,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             TagList tags;
 
+            // We need following directive as
+            // RouteEndpoint is not available in netstandard2.0 and netstandard2.1
 #if NETCOREAPP
             var target = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
 
