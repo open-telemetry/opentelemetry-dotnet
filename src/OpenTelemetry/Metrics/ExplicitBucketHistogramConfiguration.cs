@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics
         /// Requirements:
         /// <list type="bullet">
         /// <item>The array must be in ascending order with distinct
-        /// values.</item>
+        /// values. double.NaN is not allowed</item>
         /// <item>An empty array would result in no histogram buckets being
         /// calculated.</item>
         /// <item>A null value would result in default bucket boundaries being
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (!IsSortedAndDistinct(value))
                     {
-                        throw new ArgumentException($"Histogram boundaries are invalid. Histogram boundaries must be in ascending order with distinct values.", nameof(value));
+                        throw new ArgumentException($"Histogram boundaries are invalid. Histogram boundaries must be in ascending order with distinct values. double.NaN is not allowed.", nameof(value));
                     }
 
                     double[] copy = new double[value.Length];
@@ -76,9 +76,14 @@ namespace OpenTelemetry.Metrics
 
         private static bool IsSortedAndDistinct(double[] values)
         {
+            if (double.IsNaN(values[0]))
+            {
+                return false;
+            }
+
             for (int i = 1; i < values.Length; i++)
             {
-                if (values[i] <= values[i - 1])
+                if (double.IsNaN(values[i]) || values[i] <= values[i - 1])
                 {
                     return false;
                 }

@@ -30,6 +30,8 @@ namespace OpenTelemetry.Metrics
 
         private readonly AggregationType aggType;
 
+        private readonly Func<double[], double, int> findHistogramBucketIndex = FindHistogramBucketIndexLinear;
+
         private HistogramBuckets histogramBuckets;
 
         // Represents temporality adjusted "value" for double/long metric types or "count" when histogram
@@ -61,6 +63,10 @@ namespace OpenTelemetry.Metrics
             if (this.aggType == AggregationType.Histogram)
             {
                 this.histogramBuckets = new HistogramBuckets(histogramExplicitBounds);
+                if (histogramExplicitBounds.Length >= Metric.DefaultHistogramCountForBinarySearch)
+                {
+                    this.findHistogramBucketIndex = FindHistogramBucketIndexBinary;
+                }
             }
             else if (this.aggType == AggregationType.HistogramSumCount)
             {
@@ -324,15 +330,9 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        int i;
-                        for (i = 0; i < this.histogramBuckets.ExplicitBounds.Length; i++)
-                        {
-                            // Upper bound is inclusive
-                            if (number <= this.histogramBuckets.ExplicitBounds[i])
-                            {
-                                break;
-                            }
-                        }
+                        int i = double.IsNaN(number)
+                            ? this.histogramBuckets.ExplicitBounds.Length
+                            : this.findHistogramBucketIndex(this.histogramBuckets.ExplicitBounds, number);
 
                         var sw = default(SpinWait);
                         while (true)
@@ -544,6 +544,48 @@ namespace OpenTelemetry.Metrics
         private readonly void ThrowNotSupportedMetricTypeException(string methodName)
         {
             throw new NotSupportedException($"{methodName} is not supported for this metric type.");
+        }
+
+#pragma warning disable SA1204 // Static elements should appear before instance elements
+        private static int FindHistogramBucketIndexLinear(double[] bounds, double number)
+#pragma warning restore SA1204 // Static elements should appear before instance elements
+        {
+            int i;
+
+            for (i = 0; i < bounds.Length; i++)
+            {
+                if (number <= bounds[i])
+                {
+                    break;
+                }
+            }
+
+            return i;
+        }
+
+        private static int FindHistogramBucketIndexBinary(double[] bounds, double number)
+        {
+            var left = 0;
+            var right = bounds.Length - 1;
+
+            while (left <= right)
+            {
+                var mid = (int)Math.Floor((double)(left + right) / 2);
+                if (number == bounds[mid])
+                {
+                    return mid;
+                }
+                else if (number > bounds[mid])
+                {
+                    left = mid + 1;
+                }
+                else
+                {
+                    right = mid - 1;
+                }
+            }
+
+            return right + 1;
         }
     }
 }
