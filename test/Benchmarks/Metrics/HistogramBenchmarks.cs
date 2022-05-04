@@ -59,7 +59,7 @@ namespace Benchmarks.Metrics
 {
     public class HistogramBenchmarks
     {
-        private const int MaxValue = 1000;
+        private const int MaxValue = 10000;
         private readonly Random random = new();
         private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
         private Histogram<long> histogram;
@@ -67,7 +67,7 @@ namespace Benchmarks.Metrics
         private Meter meter;
         private double[] bounds;
 
-        [Params(10, 20, 50, 100)]
+        [Params(10, 20, 50, 100, 200, 500, 1000)]
         public int BoundCount { get; set; }
 
         [GlobalSetup]

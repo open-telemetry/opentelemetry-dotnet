@@ -27,6 +27,8 @@ namespace OpenTelemetry.Metrics
     {
         internal static readonly double[] DefaultHistogramBounds = new double[] { 0, 5, 10, 25, 50, 75, 100, 250, 500, 1000 };
 
+        internal static readonly int DefaultHistogramCountForBinarySearch = 140;
+
         private readonly AggregatorStore aggStore;
 
         internal Metric(
