@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics
 
         private readonly AggregationType aggType;
 
-        private readonly Func<double[], double, int> findHistogramBucketIndex;
+        private readonly Func<double[], double, int> findHistogramBucketIndex = FindHistogramBucketIndexLinear;
 
         private HistogramBuckets histogramBuckets;
 
@@ -63,9 +63,10 @@ namespace OpenTelemetry.Metrics
             if (this.aggType == AggregationType.Histogram)
             {
                 this.histogramBuckets = new HistogramBuckets(histogramExplicitBounds);
-                this.findHistogramBucketIndex = histogramExplicitBounds.Length >= Metric.DefaultHistogramCountForBinarySearch
-                    ? FindHistogramBucketIndexBinary
-                    : FindHistogramBucketIndexLinear;
+                if (histogramExplicitBounds.Length >= Metric.DefaultHistogramCountForBinarySearch)
+                {
+                    this.findHistogramBucketIndex = FindHistogramBucketIndexBinary;
+                }
             }
             else if (this.aggType == AggregationType.HistogramSumCount)
             {
