@@ -160,8 +160,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var sqlConnection = new SqlConnection(TestConnectionString);
             using var sqlCommand = sqlConnection.CreateCommand();
 
-            var processor = new Mock<BaseProcessor<Activity>>();
-            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
+            var activities = new List<Activity>();
             using (Sdk.CreateTracerProviderBuilder()
                     .AddSqlClientInstrumentation(
                         (opt) =>
@@ -173,7 +172,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                                 opt.Enrich = ActivityEnrichment;
                             }
                         })
-                    .AddProcessor(processor.Object)
+                    .AddInMemoryExporter(activities)
                     .Build())
             {
                 var operationId = Guid.NewGuid();
@@ -203,7 +202,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     afterExecuteEventData);
             }
 
-            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            Assert.Single(activities);
+            var activity = activities[0];
 
             VerifyActivityData(
                 sqlCommand.CommandType,
@@ -214,7 +214,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 false,
                 shouldEnrich,
                 sqlConnection.DataSource,
-                (Activity)processor.Invocations[2].Arguments[0]);
+                activity);
         }
 
         [Theory]
@@ -229,8 +229,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             using var sqlConnection = new SqlConnection(TestConnectionString);
             using var sqlCommand = sqlConnection.CreateCommand();
 
-            var processor = new Mock<BaseProcessor<Activity>>();
-            processor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
+            var activities = new List<Activity>();
             using (Sdk.CreateTracerProviderBuilder()
                 .AddSqlClientInstrumentation(options =>
                 {
@@ -240,7 +239,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                         options.Enrich = ActivityEnrichment;
                     }
                 })
-                .AddProcessor(processor.Object)
+                .AddInMemoryExporter(activities)
                 .Build())
             {
                 var operationId = Guid.NewGuid();
@@ -271,7 +270,8 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                     commandErrorEventData);
             }
 
-            Assert.Equal(5, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnShutdown/Dispose called.
+            Assert.Single(activities);
+            var activity = activities[0];
 
             VerifyActivityData(
                 sqlCommand.CommandType,
@@ -282,7 +282,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 recordException,
                 shouldEnrich,
                 sqlConnection.DataSource,
-                (Activity)processor.Invocations[2].Arguments[0]);
+                activity);
         }
 
         [Theory]
