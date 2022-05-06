@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Greet;
@@ -25,6 +26,7 @@ using Grpc.Net.Client;
 using Microsoft.AspNetCore.Http;
 using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
 using OpenTelemetry.Trace;
@@ -44,8 +46,16 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         [InlineData("http://[::1]", false)]
         public void GrpcClientCallsAreCollectedSuccessfully(string baseAddress, bool shouldEnrich = true)
         {
-            var uri = new Uri($"{baseAddress}:{this.server.Port}");
+            var uri = new Uri($"{baseAddress}:1234");
             var uriHostNameType = Uri.CheckHostName(uri.Host);
+
+            var httpClient = ClientTestHelpers.CreateTestClient(async request =>
+            {
+                var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply());
+                var response = ResponseUtils.CreateResponse(HttpStatusCode.OK, streamContent, grpcStatusCode: global::Grpc.Core.StatusCode.OK);
+                response.TrailingHeaders().Add("grpc-message", "value");
+                return response;
+            });
 
             var processor = new Mock<BaseProcessor<Activity>>();
 
@@ -65,7 +75,10 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     .AddProcessor(processor.Object)
                     .Build())
             {
-                var channel = GrpcChannel.ForAddress(uri);
+                var channel = GrpcChannel.ForAddress(uri, new GrpcChannelOptions
+                {
+                    HttpClient = httpClient,
+                });
                 var client = new Greeter.GreeterClient(channel);
                 var rs = client.SayHello(new HelloRequest());
             }
@@ -104,6 +117,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal(0, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
         }
 
+#if !NETFRAMEWORK
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -427,6 +441,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 }));
             }
         }
+#endif
 
         [Fact]
         public void Grpc_BadArgs()

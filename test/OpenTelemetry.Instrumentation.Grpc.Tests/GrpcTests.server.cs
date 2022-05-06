@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+#if !NETFRAMEWORK
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -247,3 +248,4 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         }
     }
 }
+#endif
