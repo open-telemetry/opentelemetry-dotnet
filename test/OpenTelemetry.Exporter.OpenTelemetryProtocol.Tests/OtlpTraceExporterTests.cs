@@ -333,13 +333,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.NotNull(otlpSpan);
 
-            var stringArray = otlpSpan.Attributes.Where(kvp => kvp.Key == "stringArray").ToList();
+            var stringArray = otlpSpan.Attributes.FirstOrDefault(kvp => kvp.Key == "stringArray");
 
             Assert.NotNull(stringArray);
-            Assert.Equal(3, stringArray.Count);
-            Assert.Equal("test", stringArray[0].Value.StringValue);
-            Assert.Equal(string.Empty, stringArray[1].Value.StringValue);
-            Assert.Null(stringArray[2].Value);
+            Assert.Equal("test", stringArray.Value.ArrayValue.Values[0].StringValue);
+            Assert.Equal(string.Empty, stringArray.Value.ArrayValue.Values[1].StringValue);
+            Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.None, stringArray.Value.ArrayValue.Values[2].ValueCase);
         }
 
         [Theory]
