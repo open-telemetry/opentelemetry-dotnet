@@ -83,7 +83,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     { SemanticConventions.AttributeHttpMethod, context.Request.Method },
                     { SemanticConventions.AttributeHttpHost, host },
                     { SemanticConventions.AttributeHttpTarget, target },
-                    { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode },
+                    { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString() },
                 };
             }
             else
@@ -94,7 +94,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
                     { SemanticConventions.AttributeHttpMethod, context.Request.Method },
                     { SemanticConventions.AttributeHttpHost, host },
-                    { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode },
+                    { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString() },
                 };
             }
 #else
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
                 { SemanticConventions.AttributeHttpMethod, context.Request.Method },
                 { SemanticConventions.AttributeHttpHost, host },
-                { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode },
+                { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString() },
             };
 
 #endif
