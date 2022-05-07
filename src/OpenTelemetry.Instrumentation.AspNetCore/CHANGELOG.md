@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Added additional metric dimensions.
+  ([3247](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3247))
+
 * Removes net5.0 target as .NET 5.0 is going out
   of support. The package keeps netstandard2.1 target, so it
   can still be used with .NET5.0 apps.

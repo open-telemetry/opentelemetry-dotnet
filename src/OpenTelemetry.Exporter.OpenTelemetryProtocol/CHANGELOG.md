@@ -15,6 +15,9 @@ option
   can still be used with .NET5.0 apps.
   ([#3147](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3147))
 
+* Fix handling of array-valued attributes for the OTLP trace exporter.
+  ([#3238](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3238))
+
 ## 1.3.0-beta.1
 
 Released 2022-Apr-15
