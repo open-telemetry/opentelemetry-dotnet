@@ -16,7 +16,7 @@
 using System.Runtime.CompilerServices;
 #if SIGNED
 
-[assembly: InternalsVisibleTo("OpenTelemetry.Instrumentation.B3TraceContext.Tests" + AssemblyInfo.PublicKey)]
+[assembly: InternalsVisibleTo("OpenTelemetry.Extensions.Propagators.Tests" + AssemblyInfo.PublicKey)]
 
 internal static class AssemblyInfo
 {
@@ -25,7 +25,7 @@ internal static class AssemblyInfo
 }
 #else
 
-[assembly: InternalsVisibleTo("OpenTelemetry.Instrumentation.B3TraceContext.Tests")]
+[assembly: InternalsVisibleTo("OpenTelemetry.Extensions.Propagators.Tests")]
 
 internal static class AssemblyInfo
 {
