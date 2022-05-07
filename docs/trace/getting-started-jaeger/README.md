@@ -20,12 +20,14 @@ dotnet run
 ```
 
 Add reference to [Console
-Exporter](../../../src/OpenTelemetry.Exporter.Console/README.md) and [Jaeger
-Exporter](../../../src/OpenTelemetry.Exporter.Jaeger/README.md):
+Exporter](../../../src/OpenTelemetry.Exporter.Console/README.md), [Jaeger
+Exporter](../../../src/OpenTelemetry.Exporter.Jaeger/README.md) and [HttpClient
+Instrumentation](../../../src/OpenTelemetry.Instrumentation.Http/README.md):
 
 ```sh
 dotnet add package OpenTelemetry.Exporter.Console
 dotnet add package OpenTelemetry.Exporter.Jaeger
+dotnet add package OpenTelemetry.Instrumentation.Http
 ```
 
 Now copy the code from [Program.cs](./Program.cs).
