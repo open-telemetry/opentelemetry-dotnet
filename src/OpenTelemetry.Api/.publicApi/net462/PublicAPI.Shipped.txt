@@ -32,6 +32,9 @@ OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Value.set -> void
 OpenTelemetry.Context.IRuntimeContextSlotValueAccessor
 OpenTelemetry.Context.IRuntimeContextSlotValueAccessor.Value.get -> object
 OpenTelemetry.Context.IRuntimeContextSlotValueAccessor.Value.set -> void
+OpenTelemetry.Context.Propagation.B3Propagator
+OpenTelemetry.Context.Propagation.B3Propagator.B3Propagator() -> void
+OpenTelemetry.Context.Propagation.B3Propagator.B3Propagator(bool singleHeader) -> void
 OpenTelemetry.Context.Propagation.BaggagePropagator
 OpenTelemetry.Context.Propagation.BaggagePropagator.BaggagePropagator() -> void
 OpenTelemetry.Context.Propagation.CompositeTextMapPropagator
@@ -152,6 +155,9 @@ override OpenTelemetry.Baggage.Equals(object obj) -> bool
 override OpenTelemetry.Baggage.GetHashCode() -> int
 override OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Get() -> T
 override OpenTelemetry.Context.AsyncLocalRuntimeContextSlot<T>.Set(T value) -> void
+override OpenTelemetry.Context.Propagation.B3Propagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> OpenTelemetry.Context.Propagation.PropagationContext
+override OpenTelemetry.Context.Propagation.B3Propagator.Fields.get -> System.Collections.Generic.ISet<string>
+override OpenTelemetry.Context.Propagation.B3Propagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
 override OpenTelemetry.Context.Propagation.BaggagePropagator.Extract<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> OpenTelemetry.Context.Propagation.PropagationContext
 override OpenTelemetry.Context.Propagation.BaggagePropagator.Fields.get -> System.Collections.Generic.ISet<string>
 override OpenTelemetry.Context.Propagation.BaggagePropagator.Inject<T>(OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void

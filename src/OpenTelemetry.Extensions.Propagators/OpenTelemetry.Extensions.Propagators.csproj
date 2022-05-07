@@ -2,7 +2,7 @@
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
     <TargetFrameworks>net462;netstandard2.0</TargetFrameworks>
-    <Description>OpenTelemetry Extensiona Propagators</Description>
+    <Description>OpenTelemetry Extensions Propagators</Description>
     <PackageTags>$(PackageTags);distributed-tracing;AspNet;AspNetCore;B3</PackageTags>
     <IncludeInstrumentationHelpers>true</IncludeInstrumentationHelpers>
   </PropertyGroup>

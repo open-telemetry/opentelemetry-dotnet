@@ -16,10 +16,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using OpenTelemetry.Context.Propagation;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace OpenTelemetry.Context.Propagation.Tests
+namespace OpenTelemetry.Extensions.Propagators.Tests
 {
     public class B3PropagatorTest
     {
