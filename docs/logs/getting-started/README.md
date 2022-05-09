@@ -70,7 +70,6 @@ application](../../../examples/AspNetCore/Program.cs)
 
 ## Learn more
 
-* If you want to build a custom exporter/processor/sampler, refer to [extending
-  the SDK](../extending-the-sdk/README.md).
-* If you want to customize the SDK, refer to [customizing
-  the SDK](../customizing-the-sdk/README.md).
+* [Compile-time logging source generation](../source-generation/README.md)
+* [Customizing the OpenTelemetry .NET SDK](../customizing-the-sdk/README.md)
+* [Extending the OpenTelemetry .NET SDK](../extending-the-sdk/README.md)
