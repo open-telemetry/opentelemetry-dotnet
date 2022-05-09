@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Google.Protobuf.Collections;
 using OtlpCommon = Opentelemetry.Proto.Common.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
