@@ -91,6 +91,24 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
+```mermaid
+graph LR
+
+subgraph SDK
+  TracerProvider
+  Processor["SimpleExportProcessor < Activity >"]
+  ConsoleExporter
+end
+
+subgraph API
+  ActivitySource["ActivitySource(#quot;MyCompany.MyProduct.MyLibrary#quot;)"]
+end
+
+ActivitySource --> | System.Diagnostics.Activity | TracerProvider
+
+TracerProvider --> | System.Diagnostics.Activity | Processor --> | Batch | ConsoleExporter
+```
+
 ## TracerProvider
 
 As shown in the above program, a valid `TracerProvider` must be configured and
@@ -120,10 +138,6 @@ to learn more.
 
 ## Learn more
 
-* If you want to collect and visualize traces using
-  [Jaeger](https://www.jaegertracing.io/), refer to [Getting Started with
-  Jaeger](../getting-started-jaeger/README.md).
-* If you want to customize the SDK, refer to [customizing
-  the SDK](../customizing-the-sdk/README.md).
-* If you want to build a custom exporter/processor/sampler, refer to [extending
-  the SDK](../extending-the-sdk/README.md).
+* [Getting Started with Jaeger](../getting-started-jaeger/README.md)
+* [Customizing OpenTelemetry .NET SDK](../customizing-the-sdk/README.md)
+* [Extending the OpenTelemetry .NET SDK](../extending-the-sdk/README.md)

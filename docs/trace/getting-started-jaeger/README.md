@@ -79,6 +79,28 @@ Since we didn't have Jaeger running, the traces received by `JaegerExporter`
 were simply dropped on the floor. In the next step, we are going to learn about
 how to use Jaeger to collect and visualize the traces.
 
+```mermaid
+graph LR
+
+subgraph SDK
+  TracerProvider
+  SimpleExportProcessor["SimpleExportProcessor < Activity >"]
+  BatchExportProcessor["BatchExportProcessor < Activity >"]
+  ConsoleExporter
+  JaegerExporter
+end
+
+subgraph API
+  ActivitySource["ActivitySource(#quot;MyCompany.MyProduct.MyLibrary#quot;)"]
+end
+
+ActivitySource --> | System.Diagnostics.Activity | TracerProvider
+
+TracerProvider --> | System.Diagnostics.Activity | SimpleExportProcessor --> | Batch | ConsoleExporter
+
+TracerProvider --> | System.Diagnostics.Activity | BatchExportProcessor --> | Batch | JaegerExporter
+```
+
 ## Collect and visualize traces using Jaeger
 
 ### Install and run Jaeger
@@ -108,6 +130,13 @@ Chart](https://en.wikipedia.org/wiki/Gantt_chart):
 
 ![image](https://user-images.githubusercontent.com/17327289/167234792-c53413a1-0e9f-4ec9-8435-5a0c79681c7e.png)
 
+```mermaid
+graph TD
+
+JaegerExporter["JaegerExporter"] --> |udp://localhost:6831| Jaeger
+Jaeger -->|http://localhost:16686/| JaegerUI["Browser<br/>(Jaeger UI)"]
+```
+
 ## Final cleanup
 
 In the end, remove the Console Exporter so we only have Jaeger Exporter in the
@@ -124,6 +153,24 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 ```sh
 dotnet remove package OpenTelemetry.Exporter.Console
+```
+
+```mermaid
+graph LR
+
+subgraph SDK
+  TracerProvider
+  BatchExportProcessor["BatchExportProcessor < Activity >"]
+  JaegerExporter
+end
+
+subgraph API
+  ActivitySource["ActivitySource(#quot;MyCompany.MyProduct.MyLibrary#quot;)"]
+end
+
+ActivitySource --> | System.Diagnostics.Activity | TracerProvider --> | System.Diagnostics.Activity | BatchExportProcessor
+
+BatchExportProcessor --> | Batch | JaegerExporter
 ```
 
 ## Learn more
