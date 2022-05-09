@@ -3,6 +3,7 @@
     <Description>Unit test project for OpenTelemetry Grpc for .NET instrumentation</Description>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
     <TargetFrameworks>net6.0;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,9 +21,13 @@
     <DotNetCliToolReference Include="dotnet-xunit" Version="$(DotNetXUnitCliVer)" />
 
     <PackageReference Include="Google.Protobuf" Version="$(GoogleProtobufPkgVer)" />
-    <PackageReference Include="Grpc.AspNetCore.Server" Version="$(GrpcAspNetCoreServerPkgVer)" />
+    <PackageReference Include="Grpc.AspNetCore.Server" Version="$(GrpcAspNetCoreServerPkgVer)" Condition="'$(TargetFramework)' != 'net462'" />
     <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" />
     <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsPkgVer)" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Net.Http" Condition="'$(TargetFramework)' == 'net462'" />
   </ItemGroup>
 
   <ItemGroup>

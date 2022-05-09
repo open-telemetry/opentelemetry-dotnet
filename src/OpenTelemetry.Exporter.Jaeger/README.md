@@ -6,12 +6,13 @@
 The Jaeger exporter converts OpenTelemetry traces into the Jaeger model
 following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/jaeger.md).
 
-The exporter communicates to a Jaeger Agent through the thrift protocol on
+The exporter communicates to a Jaeger Agent through the Thrift protocol on
 the Compact Thrift API port, and as such only supports Thrift over UDP.
 
-## Prerequisite
+## Getting Started
 
-* [Get Jaeger](https://www.jaegertracing.io/docs/1.13/getting-started/)
+Refer to the [Getting Started with
+Jaeger](../../docs/trace/getting-started-jaeger/README.md) tutorial.
 
 ## Installation
 
