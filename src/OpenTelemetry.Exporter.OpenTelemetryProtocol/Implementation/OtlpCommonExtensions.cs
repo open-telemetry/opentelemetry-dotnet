@@ -58,6 +58,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     break;
                 case Array array:
                     var arrayValue = attrib.Value.ArrayValue = new OtlpCommon.ArrayValue();
+#pragma warning disable SA1011 // Closing square brackets should be spaced correctly
                     switch (kvp.Value)
                     {
                         case char[]:
@@ -99,6 +100,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         default:
                             return null;
                     }
+#pragma warning restore SA1011 // Closing square brackets should be spaced correctly
 
                     break;
 
