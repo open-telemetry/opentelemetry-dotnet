@@ -27,7 +27,9 @@ option
   [built-in value types](https://docs.microsoft.com/dotnet/csharp/language-reference/builtin-types/built-in-types)
   with a few exceptions where overflow or rounding may occur (`ulong` and
   `decimal`). Additionally, arrays of these data types are supported.
-  *Breaking Change*: Previously, the OTLP exporter would `ToString()` any
+  ([#3262](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3262))
+
+* **Breaking Change**: Previously, the OTLP exporter would `ToString()` any
   `object`-valued attribute. This was a bug. In many circumstances `ToString()`
   on an arbitrary type is not meaningful or worse could cause unintended, hard
   to diagnose problems. Any type that is not explicitly supported is now
