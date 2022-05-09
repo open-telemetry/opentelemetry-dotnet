@@ -82,6 +82,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         case int[]:
                         case uint[]:
                         case long[]:
+#if NETSTANDARD || NETFRAMEWORK
+                            if (array is nint[])
+                            {
+                                return null;
+                            }
+#endif
                             foreach (var item in array)
                             {
                                 arrayValue.Values.Add(new OtlpCommon.AnyValue { IntValue = Convert.ToInt64(item) });
