@@ -3,7 +3,7 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Extensions.Propagators.svg)](https://www.nuget.org/packages/OpenTelemetry.Extensions.Propagators)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Extensions.Propagators.svg)](https://www.nuget.org/packages/OpenTelemetry.Extensions.Propagators)
 
-The package provides context propagators (currently supporting B3 format) for tracing. 
+The package provides context propagators (currently supporting B3 format) for tracing.
 
 ## Installation
 
@@ -15,7 +15,7 @@ dotnet add package OpenTelemetry.Extensions.Propagators
 
 Run `B3 OpenZipkin` context only:
 
-```
+```csharp
 Sdk.SetDefaultTextMapPropagator(new B3Propagator())
 ```
 
@@ -28,7 +28,6 @@ Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropag
         new BaggagePropagator(),
     }));
 ```
-
 
 ## References
 
