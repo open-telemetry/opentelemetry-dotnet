@@ -21,7 +21,7 @@ Sdk.SetDefaultTextMapPropagator(new B3Propagator())
 
 Run `B3 OpenZipkin` and `W3C Baggage` Propagator:
 
-```
+```csharp
 Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
     {
         new B3Propagator(),
