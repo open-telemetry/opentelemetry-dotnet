@@ -15,7 +15,7 @@ also collects traces from incoming gRPC requests using
 and
 [traces](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions),
 which are
-[experimental](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/document-status.md),
+[Experimental](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/document-status.md),
 and hence, this package is a [pre-release](../../VERSIONING.md#pre-releases).
 Until a stable version is released, there can be breaking changes. You can track
 the progress from
