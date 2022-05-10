@@ -25,6 +25,20 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
     public class OtlpAttributeTests
     {
+        [Fact]
+        public void EmptyArrays()
+        {
+            var kvp = new KeyValuePair<string, object>("key", new int[] { });
+            var attribute = kvp.ToOtlpAttribute();
+            Assert.NotNull(attribute);
+            Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
+            Assert.Empty(attribute.Value.ArrayValue.Values);
+
+            kvp = new KeyValuePair<string, object>("key", new object[] { });
+            attribute = kvp.ToOtlpAttribute();
+            Assert.Null(attribute);
+        }
+
         [Theory]
         [InlineData(sbyte.MaxValue)]
         [InlineData(byte.MaxValue)]
