@@ -26,6 +26,7 @@ namespace OpenTelemetry.Extensions.Propagators
 {
     /// <summary>
     /// A text map propagator for B3. See https://github.com/openzipkin/b3-propagation.
+    /// This has been lift-and-shifted as is from the <see cref="Context.Propagation.B3Propagator"/>.
     /// </summary>
     public sealed class B3Propagator : TextMapPropagator
     {
