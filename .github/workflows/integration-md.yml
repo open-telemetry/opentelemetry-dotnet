@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [netcoreapp3.1,net5.0,net6.0]
+        version: [netcoreapp3.1,net6.0]
     steps:
       - run: 'echo "No build required"'
 
@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [netcoreapp3.1,net5.0,net6.0]
+        version: [netcoreapp3.1,net6.0]
     steps:
       - run: 'echo "No build required"'
 
@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [netcoreapp3.1,net5.0,net6.0]
+        version: [netcoreapp3.1,net6.0]
     steps:
       - run: 'echo "No build required"'
 
@@ -42,6 +42,6 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [netcoreapp3.1,net5.0,net6.0]
+        version: [netcoreapp3.1,net6.0]
     steps:
       - run: 'echo "No build required"'
