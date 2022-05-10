@@ -31,17 +31,25 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 return null;
             }
 
-            var attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
+            var value = kvp.Value is Array array
+                ? ToOtlpArrayValue(array)
+                : ToOtlpValue(kvp.Value);
 
-            switch (kvp.Value)
+            return value != null
+                ? new OtlpCommon.KeyValue { Key = kvp.Key, Value = value }
+                : null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static OtlpCommon.AnyValue ToOtlpValue(object value)
+        {
+            switch (value)
             {
                 case char:
                 case string:
-                    attrib.Value.StringValue = Convert.ToString(kvp.Value);
-                    break;
+                    return new OtlpCommon.AnyValue { StringValue = Convert.ToString(value) };
                 case bool b:
-                    attrib.Value.BoolValue = b;
-                    break;
+                    return new OtlpCommon.AnyValue { BoolValue = b };
                 case byte:
                 case sbyte:
                 case short:
@@ -49,65 +57,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 case int:
                 case uint:
                 case long:
-                    attrib.Value.IntValue = Convert.ToInt64(kvp.Value);
-                    break;
+                    return new OtlpCommon.AnyValue { IntValue = Convert.ToInt64(value) };
                 case float:
                 case double:
-                    attrib.Value.DoubleValue = Convert.ToDouble(kvp.Value);
-                    break;
-                case Array array:
-                    var arrayValue = attrib.Value.ArrayValue = new OtlpCommon.ArrayValue();
-#pragma warning disable SA1011 // Closing square brackets should be spaced correctly
-                    switch (kvp.Value)
-                    {
-                        case char[]:
-                        case string[]:
-                            foreach (var item in array)
-                            {
-                                arrayValue.Values.Add(new OtlpCommon.AnyValue { StringValue = Convert.ToString(item) });
-                            }
-
-                            break;
-                        case bool[]:
-                            foreach (var item in array)
-                            {
-                                arrayValue.Values.Add(new OtlpCommon.AnyValue { BoolValue = Convert.ToBoolean(item) });
-                            }
-
-                            break;
-                        case byte[]:
-                        case sbyte[]:
-                        case short[]:
-                        case ushort[]:
-                        case int[]:
-                        case uint[]:
-                        case long[]:
-#if NETSTANDARD || NETFRAMEWORK
-                            if (array is nint[])
-                            {
-                                return null;
-                            }
-#endif
-                            foreach (var item in array)
-                            {
-                                arrayValue.Values.Add(new OtlpCommon.AnyValue { IntValue = Convert.ToInt64(item) });
-                            }
-
-                            break;
-                        case float[]:
-                        case double[]:
-                            foreach (var item in array)
-                            {
-                                arrayValue.Values.Add(new OtlpCommon.AnyValue { DoubleValue = Convert.ToDouble(item) });
-                            }
-
-                            break;
-                        default:
-                            return null;
-                    }
-#pragma warning restore SA1011 // Closing square brackets should be spaced correctly
-
-                    break;
+                    return new OtlpCommon.AnyValue { DoubleValue = Convert.ToDouble(value) };
 
                 // case nint:    Pointer type.
                 // case nuint:   Pointer type.
@@ -116,8 +69,45 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 default:
                     return null;
             }
+        }
 
-            return attrib;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static OtlpCommon.AnyValue ToOtlpArrayValue(Array array)
+        {
+#pragma warning disable SA1011 // Closing square brackets should be spaced correctly
+            switch (array)
+            {
+                case char[]:
+                case string[]:
+                case bool[]:
+                case byte[]:
+                case sbyte[]:
+                case short[]:
+                case ushort[]:
+                case int[]:
+                case uint[]:
+                case long[]:
+                case float[]:
+                case double[]:
+                    var arrayValue = new OtlpCommon.ArrayValue();
+                    foreach (var item in array)
+                    {
+                        var value = ToOtlpValue(item);
+
+                        // nint[] and nuint[] falls through to this case and ToOtlpValue will return null
+                        if (value == null)
+                        {
+                            return null;
+                        }
+
+                        arrayValue.Values.Add(value);
+                    }
+
+                    return new OtlpCommon.AnyValue { ArrayValue = arrayValue };
+                default:
+                    return null;
+            }
+#pragma warning restore SA1011 // Closing square brackets should be spaced correctly
         }
     }
 }
