@@ -26,6 +26,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
     public class OtlpAttributeTests
     {
         [Fact]
+        public void NullValueAttribute()
+        {
+            var kvp = new KeyValuePair<string, object>("key", null);
+            var attribute = kvp.ToOtlpAttribute();
+            Assert.Null(attribute);
+        }
+
+        [Fact]
         public void EmptyArrays()
         {
             var kvp = new KeyValuePair<string, object>("key", new int[] { });
