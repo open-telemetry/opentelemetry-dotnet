@@ -94,11 +94,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     {
                         var value = ToOtlpValue(item);
 
+#if NETFRAMEWORK || NETSTANDARD
                         // nint[] and nuint[] falls through to this case and ToOtlpValue will return null
                         if (value == null)
                         {
                             return null;
                         }
+#endif
 
                         arrayValue.Values.Add(value);
                     }
