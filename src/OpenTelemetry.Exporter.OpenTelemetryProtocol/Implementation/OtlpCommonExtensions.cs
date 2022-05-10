@@ -33,9 +33,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             var value = ToOtlpValue(kvp.Value);
 
-            return value != null
-                ? new OtlpCommon.KeyValue { Key = kvp.Key, Value = value }
-                : null;
+            if (value == null)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType(kvp.Value.GetType(), kvp.Key);
+                return null;
+            }
+
+            return new OtlpCommon.KeyValue { Key = kvp.Key, Value = value };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
