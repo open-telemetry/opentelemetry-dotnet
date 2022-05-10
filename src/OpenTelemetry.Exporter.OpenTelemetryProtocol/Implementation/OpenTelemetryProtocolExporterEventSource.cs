@@ -81,7 +81,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [Event(10, Message = "Unsupported attribute type '{0}' for '{1}'. Attribute will not be exported.", Level = EventLevel.Warning)]
-        public void UnsupportedAttributeType(Type type, string key)
+        public void UnsupportedAttributeType(string type, string key)
         {
             this.WriteEvent(10, type.ToString(), key);
         }
