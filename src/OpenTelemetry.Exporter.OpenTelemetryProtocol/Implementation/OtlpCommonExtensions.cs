@@ -31,9 +31,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 return null;
             }
 
-            var value = kvp.Value is Array array
-                ? ToOtlpArrayValue(array)
-                : ToOtlpValue(kvp.Value);
+            var value = ToOtlpValue(kvp.Value);
 
             return value != null
                 ? new OtlpCommon.KeyValue { Key = kvp.Key, Value = value }
@@ -61,6 +59,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 case float:
                 case double:
                     return new OtlpCommon.AnyValue { DoubleValue = Convert.ToDouble(value) };
+                case Array array:
+                    return ToOtlpArrayValue(array);
 
                 // case nint:    Pointer type.
                 // case nuint:   Pointer type.
