@@ -26,7 +26,6 @@ namespace OpenTelemetry.Context.Propagation
     /// <summary>
     /// A text map propagator for B3. See https://github.com/openzipkin/b3-propagation.
     /// </summary>
-    [Obsolete("Use OpenTelemetry.Extensions.Propagators package instead.")]
     public sealed class B3Propagator : TextMapPropagator
     {
         internal const string XB3TraceId = "X-B3-TraceId";
@@ -59,8 +58,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <summary>
         /// Initializes a new instance of the <see cref="B3Propagator"/> class.
         /// </summary>
-        [Obsolete("Use OpenTelemetry.Extensions.Propagators package instead.")]
-        public B3Propagator()
+            public B3Propagator()
             : this(false)
         {
         }
@@ -69,8 +67,7 @@ namespace OpenTelemetry.Context.Propagation
         /// Initializes a new instance of the <see cref="B3Propagator"/> class.
         /// </summary>
         /// <param name="singleHeader">Determines whether to use single or multiple headers when extracting or injecting span context.</param>
-        [Obsolete("Use OpenTelemetry.Extensions.Propagators package instead.")]
-        public B3Propagator(bool singleHeader)
+            public B3Propagator(bool singleHeader)
         {
             this.singleHeader = singleHeader;
         }
@@ -79,8 +76,7 @@ namespace OpenTelemetry.Context.Propagation
         public override ISet<string> Fields => AllFields;
 
         /// <inheritdoc/>
-        [Obsolete("Use OpenTelemetry.Extensions.Propagators package instead.")]
-        public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+            public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
             if (context.ActivityContext.IsValid())
             {
@@ -111,8 +107,7 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        [Obsolete("Use OpenTelemetry.Extensions.Propagators package instead.")]
-        public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
+            public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
             if (context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
             {

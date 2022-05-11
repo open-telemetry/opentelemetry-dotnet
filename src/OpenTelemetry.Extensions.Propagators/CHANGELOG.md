@@ -1,5 +1,5 @@
 # Changelog
 
-## Unreleased
+## 1.0.0
 
-* Initial release, after splitting from `OpenTelemetry.Api` project.
+* Initial release
