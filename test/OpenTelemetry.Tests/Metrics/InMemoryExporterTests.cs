@@ -28,7 +28,7 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void InMemoryExporterShouldDeepCopyMetricPoints()
         {
-            var exportedItems = new List<MetricCopy>();
+            var exportedItems = new List<ReadOnlyMetric>();
 
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
