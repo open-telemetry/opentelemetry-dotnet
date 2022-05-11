@@ -226,6 +226,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-prometheus-
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customizing-the-sdk", "docs\logs\customizing-the-sdk\customizing-the-sdk.csproj", "{6C7A1595-36D6-4229-BBB5-5A6B5791791D}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Propagators", "src\OpenTelemetry.Extensions.Propagators\OpenTelemetry.Extensions.Propagators.csproj", "{E91B2E40-E428-43B3-8A43-09709F0E69E4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Propagators.Tests", "test\OpenTelemetry.Extensions.Propagators.Tests\OpenTelemetry.Extensions.Propagators.Tests.csproj", "{476D804B-BFEC-4D34-814C-DFFD97109989}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -472,6 +476,14 @@ Global
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E91B2E40-E428-43B3-8A43-09709F0E69E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E91B2E40-E428-43B3-8A43-09709F0E69E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E91B2E40-E428-43B3-8A43-09709F0E69E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E91B2E40-E428-43B3-8A43-09709F0E69E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{476D804B-BFEC-4D34-814C-DFFD97109989}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{476D804B-BFEC-4D34-814C-DFFD97109989}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{476D804B-BFEC-4D34-814C-DFFD97109989}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{476D804B-BFEC-4D34-814C-DFFD97109989}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -202,41 +202,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static OtlpCommon.KeyValue ToOtlpAttribute(this KeyValuePair<string, object> kvp)
-        {
-            if (kvp.Value == null)
-            {
-                return null;
-            }
-
-            var attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
-
-            switch (kvp.Value)
-            {
-                case string s:
-                    attrib.Value.StringValue = s;
-                    break;
-                case bool b:
-                    attrib.Value.BoolValue = b;
-                    break;
-                case int i:
-                    attrib.Value.IntValue = i;
-                    break;
-                case long l:
-                    attrib.Value.IntValue = l;
-                    break;
-                case double d:
-                    attrib.Value.DoubleValue = d;
-                    break;
-                default:
-                    attrib.Value.StringValue = kvp.Value.ToString();
-                    break;
-            }
-
-            return attrib;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static OtlpTrace.Status ToOtlpStatus(this Activity activity, ref TagEnumerationState otlpTags)
         {
             var statusCodeForTagValue = StatusHelper.GetStatusCodeForTagValue(otlpTags.StatusCode);
