@@ -3,11 +3,11 @@
 ## Unreleased
 
 * LogExporter to support Logging Scopes.
-  ([#3277](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3217))
+  ([#3218](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3218))
 
 * Support `HttpProtobuf` protocol with logs & added `HttpClientFactory`
 option
-([#3224](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3224))
+([#3225](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3225))
 
 * Removes net5.0 target and replaced with net6.0
   as .NET 5.0 is going out of support.
