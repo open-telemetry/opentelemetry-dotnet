@@ -18,22 +18,17 @@ option
 * Fix handling of array-valued attributes for the OTLP trace exporter.
   ([#3238](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3238))
 
-* Standardize on the set of data types supported for attribute values on
-  resources, metrics, and logs. The list of data types that must be supported
-  per the
+* Improve the conversion and formatting of attribute values to the OTLP format
+  for resources, metrics, and logs. The list of data types that must be
+  supported per the
   [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/common#attribute)
-  is more narrow than what the .NET OpenTelemetry SDK supports. Supported data
-  types includes strings and most
+  is more narrow than what the .NET OpenTelemetry SDK supports. Numeric
   [built-in value types](https://docs.microsoft.com/dotnet/csharp/language-reference/builtin-types/built-in-types)
-  with a few exceptions where overflow or rounding may occur (`ulong` and
-  `decimal`). Additionally, arrays of these data types are supported.
-  ([#3262](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3262))
-
-* **Breaking Change**: Previously, the OTLP exporter would `ToString()` any
-  `object`-valued attribute. This was a bug. In many circumstances `ToString()`
-  on an arbitrary type is not meaningful or worse could cause unintended, hard
-  to diagnose problems. Any type that is not explicitly supported is now
-  dropped.
+  are supported by converting to a `long` or `double` as appropriate except for
+  numeric types that could cause overflow (`ulong`) or rounding (`decimal`)
+  which are converted to strings. Non-numeric built-in types - `string`,
+  `char`, `bool` are supported. All other types are converted to a `string`.
+  Array values are also supported.
   ([#3262](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3262))
 
 ## 1.3.0-beta.1
