@@ -105,8 +105,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 case double[]:
                     foreach (var item in array)
                     {
-                        var value = ToOtlpValue(item);
-                        arrayValue.Values.Add(value);
+                        arrayValue.Values.Add(ToOtlpValue(item));
                     }
 
                     return new OtlpCommon.AnyValue { ArrayValue = arrayValue };
