@@ -66,12 +66,21 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 case Array array:
                     return ToOtlpArrayValue(array);
 
+                // All other types are converted to strings including the following
+                // built-in value types:
                 // case nint:    Pointer type.
                 // case nuint:   Pointer type.
                 // case ulong:   May throw an exception on overflow.
                 // case decimal: Converting to double produces rounding errors.
                 default:
-                    return null;
+                    try
+                    {
+                        return new OtlpCommon.AnyValue { StringValue = value.ToString() };
+                    }
+                    catch
+                    {
+                        return null;
+                    }
             }
         }
 
@@ -79,6 +88,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         private static OtlpCommon.AnyValue ToOtlpArrayValue(Array array)
         {
 #pragma warning disable SA1011 // Closing square brackets should be spaced correctly
+            var arrayValue = new OtlpCommon.ArrayValue();
             switch (array)
             {
                 case char[]:
@@ -93,25 +103,27 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 case long[]:
                 case float[]:
                 case double[]:
-                    var arrayValue = new OtlpCommon.ArrayValue();
                     foreach (var item in array)
                     {
                         var value = ToOtlpValue(item);
-
-#if NETFRAMEWORK || NETSTANDARD
-                        // nint[] and nuint[] falls through to this case and ToOtlpValue will return null
-                        if (value == null)
-                        {
-                            return null;
-                        }
-#endif
-
                         arrayValue.Values.Add(value);
                     }
 
                     return new OtlpCommon.AnyValue { ArrayValue = arrayValue };
                 default:
-                    return null;
+                    foreach (var item in array)
+                    {
+                        try
+                        {
+                            arrayValue.Values.Add(ToOtlpValue(item.ToString()));
+                        }
+                        catch
+                        {
+                            return null;
+                        }
+                    }
+
+                    return new OtlpCommon.AnyValue { ArrayValue = arrayValue };
             }
 #pragma warning restore SA1011 // Closing square brackets should be spaced correctly
         }

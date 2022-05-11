@@ -44,7 +44,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             kvp = new KeyValuePair<string, object>("key", new object[] { });
             attribute = kvp.ToOtlpAttribute();
-            Assert.Null(attribute);
+            Assert.NotNull(attribute);
+            Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
+            Assert.Empty(attribute.Value.ArrayValue.Values);
         }
 
         [Theory]
@@ -177,39 +179,67 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
-        public void UnsupportedTypes()
+        public void ToStringIsCalledForAllOtherTypes()
         {
-            var kvp = new KeyValuePair<string, object>("key", (nint)int.MaxValue);
+            var testValues = new object[]
+            {
+                (nint)int.MaxValue,
+                (nuint)uint.MaxValue,
+                decimal.MaxValue,
+                new object(),
+            };
+
+            var testArrayValues = new object[]
+            {
+                new nint[] { 1, 2, 3 },
+                new nuint[] { 1, 2, 3 },
+                new decimal[] { 1, 2, 3 },
+                new object[] { 1, new object(), false },
+            };
+
+            foreach (var value in testValues)
+            {
+                var kvp = new KeyValuePair<string, object>("key", value);
+                var attribute = kvp.ToOtlpAttribute();
+                Assert.NotNull(attribute);
+                Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ValueCase);
+                Assert.Equal(value.ToString(), attribute.Value.StringValue);
+            }
+
+            foreach (var value in testArrayValues)
+            {
+                var kvp = new KeyValuePair<string, object>("key", value);
+                var attribute = kvp.ToOtlpAttribute();
+                Assert.NotNull(attribute);
+                Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
+
+                var array = value as Array;
+                for (var i = 0; i < attribute.Value.ArrayValue.Values.Count; ++i)
+                {
+                    Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ArrayValue.Values[i].ValueCase);
+                    Assert.Equal(array.GetValue(i).ToString(), attribute.Value.ArrayValue.Values[i].StringValue);
+                }
+            }
+        }
+
+        [Fact]
+        public void ExceptionInToStringIsCaught()
+        {
+            var kvp = new KeyValuePair<string, object>("key", new MyToStringMethodThrowsAnException());
             var attribute = kvp.ToOtlpAttribute();
             Assert.Null(attribute);
 
-            kvp = new KeyValuePair<string, object>("key", (nuint)uint.MaxValue);
+            kvp = new KeyValuePair<string, object>("key", new object[] { 1, false, new MyToStringMethodThrowsAnException() });
             attribute = kvp.ToOtlpAttribute();
             Assert.Null(attribute);
+        }
 
-            kvp = new KeyValuePair<string, object>("key", decimal.MaxValue);
-            attribute = kvp.ToOtlpAttribute();
-            Assert.Null(attribute);
-
-            kvp = new KeyValuePair<string, object>("key", new object());
-            attribute = kvp.ToOtlpAttribute();
-            Assert.Null(attribute);
-
-            kvp = new KeyValuePair<string, object>("key", new nint[] { 1, 2, 3 });
-            attribute = kvp.ToOtlpAttribute();
-            Assert.Null(attribute);
-
-            kvp = new KeyValuePair<string, object>("key", new nuint[] { 1, 2, 3 });
-            attribute = kvp.ToOtlpAttribute();
-            Assert.Null(attribute);
-
-            kvp = new KeyValuePair<string, object>("key", new decimal[] { 1, 2, 3 });
-            attribute = kvp.ToOtlpAttribute();
-            Assert.Null(attribute);
-
-            kvp = new KeyValuePair<string, object>("key", new object[] { new object(), new object(), new object() });
-            attribute = kvp.ToOtlpAttribute();
-            Assert.Null(attribute);
+        private class MyToStringMethodThrowsAnException
+        {
+            public override string ToString()
+            {
+                throw new Exception("Nope.");
+            }
         }
     }
 }
