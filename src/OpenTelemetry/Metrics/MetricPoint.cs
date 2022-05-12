@@ -330,9 +330,7 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        int i = double.IsNaN(number)
-                            ? this.histogramBuckets.ExplicitBounds.Length
-                            : this.findHistogramBucketIndex(this.histogramBuckets.ExplicitBounds, number);
+                        int i = this.findHistogramBucketIndex(this.histogramBuckets.ExplicitBounds, number);
 
                         var sw = default(SpinWait);
                         while (true)
