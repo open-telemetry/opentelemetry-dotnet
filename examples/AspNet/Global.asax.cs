@@ -90,10 +90,6 @@ namespace Examples.AspNet
                     meterBuilder.AddConsoleExporter((exporterOptions, metricReaderOptions) =>
                     {
                         exporterOptions.Targets = ConsoleExporterOutputTargets.Debug;
-
-                        // The ConsoleMetricExporter defaults to a manual collect cycle.
-                        // This configuration causes metrics to be exported to stdout on a 10s interval.
-                        metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 10000;
                     });
                     break;
             }

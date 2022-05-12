@@ -2,6 +2,7 @@
   "recommendations": [
     "editorconfig.editorconfig",
     "davidanson.vscode-markdownlint",
-    "ms-dotnettools.csharp"
+    "ms-dotnettools.csharp",
+    "streetsidesoftware.code-spell-checker"
   ]
 }

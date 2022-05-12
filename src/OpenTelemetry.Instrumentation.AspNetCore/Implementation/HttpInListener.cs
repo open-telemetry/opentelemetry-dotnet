@@ -263,8 +263,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     }
 
                     // TODO: Should we get values from RouteData?
-                    // private readonly PropertyFetcher beforActionRouteDataFetcher = new PropertyFetcher("routeData");
-                    // var routeData = this.beforActionRouteDataFetcher.Fetch(payload) as RouteData;
+                    // private readonly PropertyFetcher beforeActionRouteDataFetcher = new PropertyFetcher("routeData");
+                    // var routeData = this.beforeActionRouteDataFetcher.Fetch(payload) as RouteData;
                 }
             }
         }

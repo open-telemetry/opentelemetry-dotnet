@@ -52,6 +52,7 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
         public void Dispose()
         {
             this.DisposeServer();
+            GC.SuppressFinalize(this);
         }
 
         private static string GetTimestamp()

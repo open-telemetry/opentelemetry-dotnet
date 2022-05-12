@@ -38,7 +38,7 @@ namespace OpenTelemetry.Internal.Tests
                     ""path"": ""Diagnostics"",
                     ""FileSize"": 1024
                     }";
-            Assert.False(SelfDiagnosticsConfigParser.TryParseLogDirectory(configJson, out string logDirectory));
+            Assert.False(SelfDiagnosticsConfigParser.TryParseLogDirectory(configJson, out _));
         }
 
         [Fact]
@@ -71,7 +71,7 @@ namespace OpenTelemetry.Internal.Tests
                     ""LogDirectory"": ""Diagnostics"",
                     ""size"": 1024
                     }";
-            Assert.False(SelfDiagnosticsConfigParser.TryParseFileSize(configJson, out int fileSize));
+            Assert.False(SelfDiagnosticsConfigParser.TryParseFileSize(configJson, out _));
         }
 
         [Fact]

@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 1.3.0-beta.1
+
+Released 2022-Apr-15
+
+* Removes .NET Framework 4.6.1. The minimum .NET Framework
+  version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
+
+## 1.2.0
+
+Released 2022-Apr-15
+
+## 1.2.0-rc5
+
+Released 2022-Apr-12
+
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
 ## 1.2.0-rc3
 
 Released 2022-Mar-04
@@ -166,7 +185,7 @@ Released 2020-Nov-5
   ([#1413](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1413))
 * Moving grpc status and helper to grpc project
   ([#1422](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1422))
-* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor to
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropagator to
   CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator and
   changed from interface to abstract class.
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
