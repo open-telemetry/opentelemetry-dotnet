@@ -565,12 +565,12 @@ namespace OpenTelemetry.Metrics
 
         private static int FindHistogramBucketIndexBinary(double[] bounds, double number)
         {
-            var left = 0;
-            var right = bounds.Length - 1;
+            int left = 0;
+            int right = bounds.Length - 1;
 
             while (left <= right)
             {
-                var mid = (int)Math.Floor((double)(left + right) / 2);
+                int mid = (left + right) / 2;
                 if (number == bounds[mid])
                 {
                     return mid;
