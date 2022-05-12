@@ -204,7 +204,7 @@ namespace OpenTelemetry.Metrics.Tests
             var ex = Assert.Throws<ArgumentException>(() => Sdk.CreateMeterProviderBuilder()
                 .AddView("name1", new ExplicitBucketHistogramConfiguration { Boundaries = boundaries }));
 
-            Assert.Contains("Histogram boundaries must be in ascending order with distinct values", ex.Message);
+            Assert.Contains("Histogram boundaries must be in ascending order with distinct values. double.NaN is not allowed", ex.Message);
         }
 
         [Theory]
@@ -501,7 +501,7 @@ namespace OpenTelemetry.Metrics.Tests
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 
-            var histogram = meter.CreateHistogram<long>("MyHistogram");
+            var histogram = meter.CreateHistogram<double>("MyHistogram");
             histogram.Record(-10);
             histogram.Record(0);
             histogram.Record(1);
@@ -509,6 +509,7 @@ namespace OpenTelemetry.Metrics.Tests
             histogram.Record(10);
             histogram.Record(11);
             histogram.Record(19);
+            histogram.Record(double.NaN);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             Assert.Equal(2, exportedItems.Count);
             var metricDefault = exportedItems[0];
@@ -530,11 +531,11 @@ namespace OpenTelemetry.Metrics.Tests
             var sum = histogramPoint.GetHistogramSum();
 
             Assert.Equal(40, sum);
-            Assert.Equal(7, count);
+            Assert.Equal(8, count);
 
             int index = 0;
             int actualCount = 0;
-            var expectedBucketCounts = new long[] { 2, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0 };
+            var expectedBucketCounts = new long[] { 2, 1, 2, 2, 0, 0, 0, 0, 0, 0, 1 };
             foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
             {
                 Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);
@@ -557,11 +558,11 @@ namespace OpenTelemetry.Metrics.Tests
             sum = histogramPoint.GetHistogramSum();
 
             Assert.Equal(40, sum);
-            Assert.Equal(7, count);
+            Assert.Equal(8, count);
 
             index = 0;
             actualCount = 0;
-            expectedBucketCounts = new long[] { 5, 2, 0 };
+            expectedBucketCounts = new long[] { 5, 2, 1 };
             foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
             {
                 Assert.Equal(expectedBucketCounts[index], histogramMeasurement.BucketCount);

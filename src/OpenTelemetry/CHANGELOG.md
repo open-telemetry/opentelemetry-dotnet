@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Recording a `double.NaN` value on a histogram increases the count of the
+  greatest bucket and does not affect the sum.
+  ([#xxx](https://github.com/open-telemetry/opentelemetry-dotnet/pull/xxx))
+
 * Exposed public setters for `LogRecord.State`, `LogRecord.StateValues`,
   and `LogRecord.FormattedMessage`.
  ([#3217](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3217))

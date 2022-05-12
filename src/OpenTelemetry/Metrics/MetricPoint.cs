@@ -324,13 +324,16 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        int i;
-                        for (i = 0; i < this.histogramBuckets.ExplicitBounds.Length; i++)
+                        int i = this.histogramBuckets.ExplicitBounds.Length;
+                        if (!double.IsNaN(number))
                         {
-                            // Upper bound is inclusive
-                            if (number <= this.histogramBuckets.ExplicitBounds[i])
+                            for (i = 0; i < this.histogramBuckets.ExplicitBounds.Length; i++)
                             {
-                                break;
+                                // Upper bound is inclusive
+                                if (number <= this.histogramBuckets.ExplicitBounds[i])
+                                {
+                                    break;
+                                }
                             }
                         }
 
@@ -342,8 +345,11 @@ namespace OpenTelemetry.Metrics
                                 unchecked
                                 {
                                     this.runningValue.AsLong++;
-                                    this.histogramBuckets.RunningSum += number;
                                     this.histogramBuckets.RunningBucketCounts[i]++;
+                                    if (!double.IsNaN(number))
+                                    {
+                                        this.histogramBuckets.RunningSum += number;
+                                    }
                                 }
 
                                 this.histogramBuckets.IsCriticalSectionOccupied = 0;
@@ -366,7 +372,10 @@ namespace OpenTelemetry.Metrics
                                 unchecked
                                 {
                                     this.runningValue.AsLong++;
-                                    this.histogramBuckets.RunningSum += number;
+                                    if (!double.IsNaN(number))
+                                    {
+                                        this.histogramBuckets.RunningSum += number;
+                                    }
                                 }
 
                                 this.histogramBuckets.IsCriticalSectionOccupied = 0;
