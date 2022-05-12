@@ -33,26 +33,31 @@ AMD Ryzen 9 3900X, 1 CPU, 24 logical and 12 physical cores
 
 |                      Method | BoundCount |      Mean |    Error |   StdDev | Allocated |
 |---------------------------- |----------- |----------:|---------:|---------:|----------:|
-|            HistogramHotPath |         10 |  42.68 ns | 0.116 ns | 0.109 ns |         - |
-|  HistogramWith1LabelHotPath |         10 |  89.94 ns | 0.195 ns | 0.173 ns |         - |
-| HistogramWith3LabelsHotPath |         10 | 175.81 ns | 0.597 ns | 0.558 ns |         - |
-| HistogramWith5LabelsHotPath |         10 | 259.52 ns | 0.435 ns | 0.363 ns |         - |
-| HistogramWith7LabelsHotPath |         10 | 316.83 ns | 0.530 ns | 0.470 ns |         - |
-|            HistogramHotPath |         50 |  50.70 ns | 0.356 ns | 0.333 ns |         - |
-|  HistogramWith1LabelHotPath |         50 | 101.23 ns | 0.155 ns | 0.145 ns |         - |
-| HistogramWith3LabelsHotPath |         50 | 185.92 ns | 0.290 ns | 0.271 ns |         - |
-| HistogramWith5LabelsHotPath |         50 | 275.40 ns | 0.357 ns | 0.316 ns |         - |
-| HistogramWith7LabelsHotPath |         50 | 333.33 ns | 0.646 ns | 0.540 ns |         - |
-|            HistogramHotPath |        390 | 115.16 ns | 0.115 ns | 0.108 ns |         - |
-|  HistogramWith1LabelHotPath |        390 | 165.81 ns | 0.378 ns | 0.353 ns |         - |
-| HistogramWith3LabelsHotPath |        390 | 265.34 ns | 1.043 ns | 0.975 ns |         - |
-| HistogramWith5LabelsHotPath |        390 | 374.90 ns | 0.938 ns | 0.878 ns |         - |
-| HistogramWith7LabelsHotPath |        390 | 437.83 ns | 1.014 ns | 0.847 ns |         - |
-|            HistogramHotPath |        410 | 118.25 ns | 0.103 ns | 0.096 ns |         - |
-|  HistogramWith1LabelHotPath |        410 | 171.96 ns | 0.139 ns | 0.130 ns |         - |
-| HistogramWith3LabelsHotPath |        410 | 269.87 ns | 0.679 ns | 0.635 ns |         - |
-| HistogramWith5LabelsHotPath |        410 | 355.99 ns | 0.831 ns | 0.778 ns |         - |
-| HistogramWith7LabelsHotPath |        410 | 421.68 ns | 0.663 ns | 0.587 ns |         - |
+|            HistogramHotPath |         10 |  41.79 ns | 0.096 ns | 0.089 ns |         - |
+|  HistogramWith1LabelHotPath |         10 |  93.32 ns | 0.185 ns | 0.173 ns |         - |
+| HistogramWith3LabelsHotPath |         10 | 173.11 ns | 0.090 ns | 0.079 ns |         - |
+| HistogramWith5LabelsHotPath |         10 | 263.42 ns | 0.542 ns | 0.507 ns |         - |
+| HistogramWith7LabelsHotPath |         10 | 318.65 ns | 0.388 ns | 0.344 ns |         - |
+|            HistogramHotPath |         50 |  51.52 ns | 0.234 ns | 0.208 ns |         - |
+|  HistogramWith1LabelHotPath |         50 | 102.16 ns | 0.201 ns | 0.178 ns |         - |
+| HistogramWith3LabelsHotPath |         50 | 188.54 ns | 0.263 ns | 0.246 ns |         - |
+| HistogramWith5LabelsHotPath |         50 | 274.89 ns | 0.471 ns | 0.441 ns |         - |
+| HistogramWith7LabelsHotPath |         50 | 334.87 ns | 0.541 ns | 0.451 ns |         - |
+|            HistogramHotPath |        139 |  75.40 ns | 0.085 ns | 0.075 ns |         - |
+|  HistogramWith1LabelHotPath |        139 | 123.86 ns | 0.510 ns | 0.477 ns |         - |
+| HistogramWith3LabelsHotPath |        139 | 211.11 ns | 0.415 ns | 0.368 ns |         - |
+| HistogramWith5LabelsHotPath |        139 | 298.31 ns | 0.788 ns | 0.737 ns |         - |
+| HistogramWith7LabelsHotPath |        139 | 357.28 ns | 0.619 ns | 0.548 ns |         - |
+|            HistogramHotPath |        140 |  69.13 ns | 0.171 ns | 0.160 ns |         - |
+|  HistogramWith1LabelHotPath |        140 | 117.86 ns | 0.182 ns | 0.171 ns |         - |
+| HistogramWith3LabelsHotPath |        140 | 208.26 ns | 0.382 ns | 0.319 ns |         - |
+| HistogramWith5LabelsHotPath |        140 | 297.56 ns | 0.769 ns | 0.682 ns |         - |
+| HistogramWith7LabelsHotPath |        140 | 349.53 ns | 0.581 ns | 0.515 ns |         - |
+|            HistogramHotPath |       1000 |  85.90 ns | 0.263 ns | 0.246 ns |         - |
+|  HistogramWith1LabelHotPath |       1000 | 136.94 ns | 0.475 ns | 0.444 ns |         - |
+| HistogramWith3LabelsHotPath |       1000 | 230.74 ns | 0.465 ns | 0.435 ns |         - |
+| HistogramWith5LabelsHotPath |       1000 | 325.73 ns | 2.040 ns | 1.908 ns |         - |
+| HistogramWith7LabelsHotPath |       1000 | 379.81 ns | 2.100 ns | 1.964 ns |         - |
 */
 
 namespace Benchmarks.Metrics
@@ -67,7 +72,8 @@ namespace Benchmarks.Metrics
         private Meter meter;
         private double[] bounds;
 
-        [Params(10, 50, 390, 410)]
+        // Note: Values related to `Metric.DefaultHistogramCountForBinarySearch`
+        [Params(10, 50, 139, 140, 1000)]
         public int BoundCount { get; set; }
 
         [GlobalSetup]
