@@ -72,35 +72,35 @@ namespace OpenTelemetry.Metrics
 
         /// <summary>
         /// Adds InMemory metric exporter to the <see cref="MeterProviderBuilder"/> using default options.
-        /// The exporter will be setup to export <see cref="ReadOnlyMetric"/>.
+        /// The exporter will be setup to export <see cref="MetricSnapshot"/>.
         /// </summary>
         /// <remarks>
         /// Use this if you need a copy of <see cref="Metric"/> that will not be updated after export.
         /// </remarks>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
-        /// <param name="exportedItems">Collection which will be populated with the exported <see cref="Metric"/> represented as <see cref="ReadOnlyMetric"/>.</param>
+        /// <param name="exportedItems">Collection which will be populated with the exported <see cref="Metric"/> represented as <see cref="MetricSnapshot"/>.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddInMemoryExporter(
             this MeterProviderBuilder builder,
-            ICollection<ReadOnlyMetric> exportedItems)
+            ICollection<MetricSnapshot> exportedItems)
         {
             return builder.AddInMemoryExporter(exportedItems: exportedItems, configureMetricReader: null);
         }
 
         /// <summary>
         /// Adds InMemory metric exporter to the <see cref="MeterProviderBuilder"/>.
-        /// The exporter will be setup to export <see cref="ReadOnlyMetric"/>.
+        /// The exporter will be setup to export <see cref="MetricSnapshot"/>.
         /// </summary>
         /// <remarks>
         /// Use this if you need a copy of <see cref="Metric"/> that will not be updated after export.
         /// </remarks>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
-        /// <param name="exportedItems">Collection which will be populated with the exported <see cref="Metric"/> represented as <see cref="ReadOnlyMetric"/>.</param>
+        /// <param name="exportedItems">Collection which will be populated with the exported <see cref="Metric"/> represented as <see cref="MetricSnapshot"/>.</param>
         /// <param name="configureMetricReader"><see cref="MetricReader"/> configuration options.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddInMemoryExporter(
             this MeterProviderBuilder builder,
-            ICollection<ReadOnlyMetric> exportedItems,
+            ICollection<MetricSnapshot> exportedItems,
             Action<MetricReaderOptions> configureMetricReader)
         {
             Guard.ThrowIfNull(builder);
@@ -138,7 +138,7 @@ namespace OpenTelemetry.Metrics
 
         private static MeterProviderBuilder AddInMemoryExporter(
             MeterProviderBuilder builder,
-            ICollection<ReadOnlyMetric> exportedItems,
+            ICollection<MetricSnapshot> exportedItems,
             MetricReaderOptions metricReaderOptions,
             Action<MetricReaderOptions> configureMetricReader)
         {
@@ -149,7 +149,7 @@ namespace OpenTelemetry.Metrics
                 {
                     foreach (var metric in metricBatch)
                     {
-                        exportedItems.Add(new ReadOnlyMetric(metric));
+                        exportedItems.Add(new MetricSnapshot(metric));
                     }
 
                     return ExportResult.Success;

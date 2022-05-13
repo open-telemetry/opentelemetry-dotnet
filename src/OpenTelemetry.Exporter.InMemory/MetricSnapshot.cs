@@ -1,4 +1,4 @@
-// <copyright file="ReadOnlyMetric.cs" company="OpenTelemetry Authors">
+// <copyright file="MetricSnapshot.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,11 +23,11 @@ namespace OpenTelemetry.Metrics
     /// This contains the minimum fields and properties needed for most
     /// unit testing scenarios.
     /// </summary>
-    public class ReadOnlyMetric
+    public class MetricSnapshot
     {
         private readonly MetricStreamIdentity instrumentIdentity;
 
-        public ReadOnlyMetric(Metric metric)
+        public MetricSnapshot(Metric metric)
         {
             this.instrumentIdentity = metric.InstrumentIdentity;
             this.MetricType = metric.MetricType;
