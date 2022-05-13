@@ -359,16 +359,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 if (attribute != null)
                 {
                     PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, attribute);
-                }
 
-                switch (activityTag.Value)
-                {
-                    case string s:
-                        PeerServiceResolver.InspectTag(ref this, key, s);
-                        break;
-                    case int i:
-                        PeerServiceResolver.InspectTag(ref this, key, i);
-                        break;
+                    switch (attribute.Value.ValueCase)
+                    {
+                        case OtlpCommon.AnyValue.ValueOneofCase.StringValue:
+                            PeerServiceResolver.InspectTag(ref this, key, attribute.Value.StringValue);
+                            break;
+                        case OtlpCommon.AnyValue.ValueOneofCase.IntValue:
+                            PeerServiceResolver.InspectTag(ref this, key, attribute.Value.IntValue);
+                            break;
+                    }
                 }
 
                 return true;
