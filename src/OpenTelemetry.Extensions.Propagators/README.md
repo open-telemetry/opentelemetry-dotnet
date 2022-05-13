@@ -20,6 +20,7 @@ dotnet add package OpenTelemetry.Extensions.Propagators
 Use `B3 OpenZipkin` context only:
 
 ```csharp
+using OpenTelemetry;
 using OpenTelemetry.Extensions.Propagators;
 
 Sdk.SetDefaultTextMapPropagator(new B3Propagator())
@@ -28,11 +29,13 @@ Sdk.SetDefaultTextMapPropagator(new B3Propagator())
 Use `B3 OpenZipkin` and `W3C Baggage` propagators at the same time:
 
 ```csharp
+using OpenTelemetry;
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Extensions.Propagators;
 
 Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
     {
-        new B3Propagator(),
+        new OpenTelemetry.Extensions.Propagators.B3Propagator(),
         new BaggagePropagator(),
     }));
 ```
