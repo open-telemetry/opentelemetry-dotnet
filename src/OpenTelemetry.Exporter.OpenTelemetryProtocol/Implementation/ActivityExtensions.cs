@@ -360,14 +360,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 {
                     PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, attribute);
 
-                    switch (attribute.Value.ValueCase)
+                    if (attribute.Value.ValueCase == OtlpCommon.AnyValue.ValueOneofCase.StringValue)
                     {
-                        case OtlpCommon.AnyValue.ValueOneofCase.StringValue:
-                            PeerServiceResolver.InspectTag(ref this, key, attribute.Value.StringValue);
-                            break;
-                        case OtlpCommon.AnyValue.ValueOneofCase.IntValue:
-                            PeerServiceResolver.InspectTag(ref this, key, attribute.Value.IntValue);
-                            break;
+                        PeerServiceResolver.InspectTag(ref this, key, attribute.Value.StringValue);
+                    }
+                    else if (attribute.Value.ValueCase == OtlpCommon.AnyValue.ValueOneofCase.IntValue)
+                    {
+                        PeerServiceResolver.InspectTag(ref this, key, attribute.Value.IntValue);
                     }
                 }
 
