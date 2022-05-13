@@ -3,7 +3,7 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Extensions.Propagators.svg)](https://www.nuget.org/packages/OpenTelemetry.Extensions.Propagators)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Extensions.Propagators.svg)](https://www.nuget.org/packages/OpenTelemetry.Extensions.Propagators)
 
-The package provides context propagators (currently supporting B3 format) for tracing.
+The package provides context propagators (currently supporting [B3](https://github.com/openzipkin/b3-propagation) format) for tracing.
 
 ## Installation
 
