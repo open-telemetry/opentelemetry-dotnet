@@ -23,23 +23,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class OtlpCommonExtensions
     {
+        private static OtlpKeyValueTransformer tagTransformer = new OtlpKeyValueTransformer();
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static OtlpCommon.KeyValue ToOtlpAttribute(this KeyValuePair<string, object> kvp)
         {
-            if (kvp.Value == null)
-            {
-                return null;
-            }
-
-            var value = ToOtlpValue(kvp.Value);
-
-            if (value == null)
-            {
-                OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType(kvp.Value.GetType().ToString(), kvp.Key);
-                return null;
-            }
-
-            return new OtlpCommon.KeyValue { Key = kvp.Key, Value = value };
+            return tagTransformer.TransformTag(kvp);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

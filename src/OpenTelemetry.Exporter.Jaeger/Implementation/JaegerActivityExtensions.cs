@@ -45,6 +45,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
         private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond; // 62,135,596,800,000,000
 
+        private static JaegerTagTransformer tagTransformer = new JaegerTagTransformer();
+
         public static JaegerSpan ToJaegerSpan(this Activity activity)
         {
             var jaegerTags = new TagEnumerationState
@@ -232,16 +234,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public static JaegerTag ToJaegerTag(this KeyValuePair<string, object> attribute)
         {
-            return attribute.Value switch
-            {
-                string s => new JaegerTag(attribute.Key, JaegerTagType.STRING, vStr: s),
-                int i => new JaegerTag(attribute.Key, JaegerTagType.LONG, vLong: Convert.ToInt64(i)),
-                long l => new JaegerTag(attribute.Key, JaegerTagType.LONG, vLong: l),
-                float f => new JaegerTag(attribute.Key, JaegerTagType.DOUBLE, vDouble: Convert.ToDouble(f)),
-                double d => new JaegerTag(attribute.Key, JaegerTagType.DOUBLE, vDouble: d),
-                bool b => new JaegerTag(attribute.Key, JaegerTagType.BOOL, vBool: b),
-                _ => new JaegerTag(attribute.Key, JaegerTagType.STRING, vStr: attribute.Value.ToString()),
-            };
+            return tagTransformer.TransformTag(attribute);
         }
 
         public static long ToEpochMicroseconds(this DateTime utcDateTime)
@@ -316,14 +309,16 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             public bool ForEach(KeyValuePair<string, object> activityTag)
             {
-                if (activityTag.Value is Array)
-                {
-                    ProcessJaegerTagArray(ref this.Tags, activityTag);
-                }
-                else if (activityTag.Value != null)
+                if (activityTag.Value != null)
                 {
                     var key = activityTag.Key;
                     var jaegerTag = activityTag.ToJaegerTag();
+
+                    if (jaegerTag.Equals(default(JaegerTag)))
+                    {
+                        return true;
+                    }
+
                     if (jaegerTag.VStr != null)
                     {
                         PeerServiceResolver.InspectTag(ref this, key, jaegerTag.VStr);
