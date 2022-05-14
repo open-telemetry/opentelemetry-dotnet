@@ -43,5 +43,4 @@ Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropag
 ## References
 
 * [B3 (Zipkin) Context specification](https://github.com/openzipkin/b3-propagation)
-
 * [OpenTelemetry Project](https://opentelemetry.io/)
