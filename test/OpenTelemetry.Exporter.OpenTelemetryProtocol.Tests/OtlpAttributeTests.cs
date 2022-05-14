@@ -163,19 +163,32 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         public void StringArrayTypesSupported()
         {
             var charArray = new char[] { 'a', 'b', 'c' };
-            var stringArray = new string[] { "a", "b", "c" };
+            var stringArray = new string[] { "a", "b", "c", string.Empty, null };
 
             var kvp = new KeyValuePair<string, object>("key", charArray);
             var attribute = kvp.ToOtlpAttribute();
             Assert.NotNull(attribute);
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
-            Assert.Equal(stringArray, attribute.Value.ArrayValue.Values.Select(x => x.StringValue));
+            Assert.Equal(charArray.Select(x => x.ToString()), attribute.Value.ArrayValue.Values.Select(x => x.StringValue));
 
             kvp = new KeyValuePair<string, object>("key", stringArray);
             attribute = kvp.ToOtlpAttribute();
             Assert.NotNull(attribute);
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
-            Assert.Equal(stringArray, attribute.Value.ArrayValue.Values.Select(x => x.StringValue));
+
+            for (var i = 0; i < stringArray.Length; ++i)
+            {
+                var expectedValue = stringArray[i];
+                var expectedValueCase = expectedValue != null
+                    ? OtlpCommon.AnyValue.ValueOneofCase.StringValue
+                    : OtlpCommon.AnyValue.ValueOneofCase.None;
+
+                Assert.Equal(expectedValueCase, attribute.Value.ArrayValue.Values[i].ValueCase);
+                if (expectedValueCase != OtlpCommon.AnyValue.ValueOneofCase.None)
+                {
+                    Assert.Equal(expectedValue, attribute.Value.ArrayValue.Values[i].StringValue);
+                }
+            }
         }
 
         [Fact]
@@ -194,7 +207,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 new nint[] { 1, 2, 3 },
                 new nuint[] { 1, 2, 3 },
                 new decimal[] { 1, 2, 3 },
-                new object[] { 1, new object(), false },
+                new object[] { 1, new object(), false, null },
             };
 
             foreach (var value in testValues)
@@ -216,8 +229,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 var array = value as Array;
                 for (var i = 0; i < attribute.Value.ArrayValue.Values.Count; ++i)
                 {
-                    Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ArrayValue.Values[i].ValueCase);
-                    Assert.Equal(array.GetValue(i).ToString(), attribute.Value.ArrayValue.Values[i].StringValue);
+                    var expectedValue = array.GetValue(i)?.ToString();
+                    var expectedValueCase = expectedValue != null
+                        ? OtlpCommon.AnyValue.ValueOneofCase.StringValue
+                        : OtlpCommon.AnyValue.ValueOneofCase.None;
+
+                    Assert.Equal(expectedValueCase, attribute.Value.ArrayValue.Values[i].ValueCase);
+                    if (expectedValueCase != OtlpCommon.AnyValue.ValueOneofCase.None)
+                    {
+                        Assert.Equal(array.GetValue(i).ToString(), attribute.Value.ArrayValue.Values[i].StringValue);
+                    }
                 }
             }
         }
