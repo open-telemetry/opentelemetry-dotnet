@@ -64,7 +64,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 default:
                     try
                     {
-                        return new OtlpCommon.AnyValue { StringValue = value.ToString() };
+                        return value != null
+                            ? new OtlpCommon.AnyValue { StringValue = value.ToString() }
+                            : null;
                     }
                     catch
                     {
@@ -94,7 +96,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 case double[]:
                     foreach (var item in array)
                     {
-                        arrayValue.Values.Add(ToOtlpValue(item));
+                        arrayValue.Values.Add(ToOtlpValue(item) ?? new OtlpCommon.AnyValue { });
                     }
 
                     return new OtlpCommon.AnyValue { ArrayValue = arrayValue };
@@ -103,7 +105,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     {
                         try
                         {
-                            arrayValue.Values.Add(ToOtlpValue(item.ToString()));
+                            var value = item != null
+                                ? ToOtlpValue(item.ToString())
+                                : new OtlpCommon.AnyValue { };
+                            arrayValue.Values.Add(value);
                         }
                         catch
                         {
