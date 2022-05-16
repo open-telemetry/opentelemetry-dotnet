@@ -1,10 +1,12 @@
-# Trace context propagators for OpenTelemetry .NET
+# Propagator formats for OpenTelemetry .NET
 
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Extensions.Propagators.svg)](https://www.nuget.org/packages/OpenTelemetry.Extensions.Propagators)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Extensions.Propagators.svg)](https://www.nuget.org/packages/OpenTelemetry.Extensions.Propagators)
 
-The package provides context propagators (currently
-supporting [B3](https://github.com/openzipkin/b3-propagation) format) for tracing.
+The package provides context
+propagators by following the [OpenTelemetry specification](https://opentelemetry.io/docs/reference/specification/context/api-propagators/)
+(currently supporting [B3](https://github.com/openzipkin/b3-propagation) format)
+for tracing.
 
 ## Installation
 
@@ -13,7 +15,7 @@ Add a reference to the
 package in your project.
 
 ```shell
-dotnet add package OpenTelemetry.Extensions.Propagators
+dotnet add package --prerelease OpenTelemetry.Extensions.Propagators
 ```
 
 ## Configuration
