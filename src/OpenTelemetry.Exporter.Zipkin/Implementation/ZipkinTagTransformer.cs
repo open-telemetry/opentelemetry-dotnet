@@ -14,44 +14,20 @@
 // limitations under the License.
 // </copyright>
 
-using System.Text.Json;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
-    internal class ZipkinTagTransformer : TagTransformer<bool>
+    internal class ZipkinTagTransformer : TagTransformer<string>
     {
-        private readonly Utf8JsonWriter writer;
-
-        public ZipkinTagTransformer(Utf8JsonWriter writer)
-        {
-            this.writer = writer;
-        }
-
         protected override bool JsonifyArrays => true;
 
-        protected override bool TransformIntegralTag(string key, long value)
-        {
-            this.writer.WriteString(key, value.ToString());
-            return true;
-        }
+        protected override string TransformIntegralTag(string key, long value) => value.ToString();
 
-        protected override bool TransformFloatingPointTag(string key, double value)
-        {
-            this.writer.WriteString(key, value.ToString());
-            return true;
-        }
+        protected override string TransformFloatingPointTag(string key, double value) => value.ToString();
 
-        protected override bool TransformBooleanTag(string key, bool value)
-        {
-            this.writer.WriteString(key, value ? "true" : "false");
-            return true;
-        }
+        protected override string TransformBooleanTag(string key, bool value) => value ? "true" : "false";
 
-        protected override bool TransformStringTag(string key, string value)
-        {
-            this.writer.WriteString(key, value.ToString());
-            return true;
-        }
+        protected override string TransformStringTag(string key, string value) => value;
     }
 }

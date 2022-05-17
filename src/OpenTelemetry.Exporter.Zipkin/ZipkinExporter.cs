@@ -233,7 +233,7 @@ namespace OpenTelemetry.Exporter
                 if (this.writer == null)
                 {
                     this.writer = new Utf8JsonWriter(stream);
-                    this.tagTransformer = new ZipkinTagTransformer(this.writer);
+                    this.tagTransformer = new ZipkinTagTransformer();
                 }
                 else
                 {

@@ -178,12 +178,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 {
                     foreach (var tag in this.LocalEndpoint.Tags ?? Enumerable.Empty<KeyValuePair<string, object>>())
                     {
-                        tagTransformer.TransformTag(tag);
+                        writer.WriteString(tag.Key, tagTransformer.TransformTag(tag));
                     }
 
                     foreach (var tag in this.Tags)
                     {
-                        tagTransformer.TransformTag(tag);
+                        writer.WriteString(tag.Key, tagTransformer.TransformTag(tag));
                     }
                 }
                 finally
