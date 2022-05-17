@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Fix null reference exception when a metric view does not match an instrument.
+  ([#3285](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3285))
+
 ## 1.3.0-beta.2
 
 Released 2022-May-16
