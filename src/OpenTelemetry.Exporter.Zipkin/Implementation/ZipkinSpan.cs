@@ -91,7 +91,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             this.Tags.Return();
         }
 
-        public void Write(Utf8JsonWriter writer)
+        public void Write(Utf8JsonWriter writer, ZipkinTagTransformer tagTransformer)
         {
             writer.WriteStartObject();
 
@@ -178,12 +178,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 {
                     foreach (var tag in this.LocalEndpoint.Tags ?? Enumerable.Empty<KeyValuePair<string, object>>())
                     {
-                        writer.WriteString(tag.Key, ConvertObjectToString(tag.Value));
+                        tagTransformer.TransformTag(tag);
                     }
 
                     foreach (var tag in this.Tags)
                     {
-                        writer.WriteString(tag.Key, ConvertObjectToString(tag.Value));
+                        tagTransformer.TransformTag(tag);
                     }
                 }
                 finally
@@ -195,27 +195,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             }
 
             writer.WriteEndObject();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static string ConvertObjectToString(object obj)
-        {
-            return obj switch
-            {
-                string stringVal => stringVal,
-                bool boolVal => GetBoolString(boolVal),
-                int[] arrayValue => string.Join(",", arrayValue),
-                long[] arrayValue => string.Join(",", arrayValue),
-                double[] arrayValue => string.Join(",", arrayValue),
-                bool[] arrayValue => string.Join(",", arrayValue.Select(GetBoolString)),
-                _ => obj.ToString(),
-            };
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static string GetBoolString(bool value)
-        {
-            return value ? "true" : "false";
         }
     }
 }
