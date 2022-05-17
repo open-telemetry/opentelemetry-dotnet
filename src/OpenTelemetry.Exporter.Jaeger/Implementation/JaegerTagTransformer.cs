@@ -20,24 +20,24 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal class JaegerTagTransformer : TagTransformer<JaegerTag>
     {
-        public override bool JsonifyArrays => true;
+        protected override bool JsonifyArrays => true;
 
-        public override JaegerTag TransformIntegralTag(string key, long value)
+        protected override JaegerTag TransformIntegralTag(string key, long value)
         {
             return new JaegerTag(key, JaegerTagType.LONG, vLong: value);
         }
 
-        public override JaegerTag TransformFloatingPointTag(string key, double value)
+        protected override JaegerTag TransformFloatingPointTag(string key, double value)
         {
             return new JaegerTag(key, JaegerTagType.DOUBLE, vDouble: value);
         }
 
-        public override JaegerTag TransformBooleanTag(string key, bool value)
+        protected override JaegerTag TransformBooleanTag(string key, bool value)
         {
             return new JaegerTag(key, JaegerTagType.BOOL, vBool: value);
         }
 
-        public override JaegerTag TransformStringTag(string key, string value)
+        protected override JaegerTag TransformStringTag(string key, string value)
         {
             return new JaegerTag(key, JaegerTagType.STRING, vStr: value);
         }

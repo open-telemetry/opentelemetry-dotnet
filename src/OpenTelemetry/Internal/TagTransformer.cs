@@ -22,15 +22,7 @@ namespace OpenTelemetry.Internal;
 
 internal abstract class TagTransformer<T>
 {
-    public virtual bool JsonifyArrays => false;
-
-    public abstract T TransformIntegralTag(string key, long value);
-
-    public abstract T TransformFloatingPointTag(string key, double value);
-
-    public abstract T TransformBooleanTag(string key, bool value);
-
-    public abstract T TransformStringTag(string key, string value);
+    protected virtual bool JsonifyArrays => false;
 
     public T TransformTag(KeyValuePair<string, object> tag)
     {
@@ -88,6 +80,14 @@ internal abstract class TagTransformer<T>
 
         return result;
     }
+
+    protected abstract T TransformIntegralTag(string key, long value);
+
+    protected abstract T TransformFloatingPointTag(string key, double value);
+
+    protected abstract T TransformBooleanTag(string key, bool value);
+
+    protected abstract T TransformStringTag(string key, string value);
 
     private T ToJsonArray(string key, Array array)
     {

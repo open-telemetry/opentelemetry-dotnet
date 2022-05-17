@@ -21,22 +21,22 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal class OtlpKeyValueTransformer : TagTransformer<OtlpCommon.KeyValue>
     {
-        public override OtlpCommon.KeyValue TransformIntegralTag(string key, long value)
+        protected override OtlpCommon.KeyValue TransformIntegralTag(string key, long value)
         {
             return new OtlpCommon.KeyValue { Key = key, Value = new OtlpCommon.AnyValue { IntValue = value } };
         }
 
-        public override OtlpCommon.KeyValue TransformFloatingPointTag(string key, double value)
+        protected override OtlpCommon.KeyValue TransformFloatingPointTag(string key, double value)
         {
             return new OtlpCommon.KeyValue { Key = key, Value = new OtlpCommon.AnyValue { DoubleValue = value } };
         }
 
-        public override OtlpCommon.KeyValue TransformBooleanTag(string key, bool value)
+        protected override OtlpCommon.KeyValue TransformBooleanTag(string key, bool value)
         {
             return new OtlpCommon.KeyValue { Key = key, Value = new OtlpCommon.AnyValue { BoolValue = value } };
         }
 
-        public override OtlpCommon.KeyValue TransformStringTag(string key, string value)
+        protected override OtlpCommon.KeyValue TransformStringTag(string key, string value)
         {
             return new OtlpCommon.KeyValue { Key = key, Value = new OtlpCommon.AnyValue { StringValue = value } };
         }
