@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.3.0-beta.2
+
+Released 2022-May-16
+
 * LogExporter to support Logging Scopes.
   ([#3218](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3218))
 

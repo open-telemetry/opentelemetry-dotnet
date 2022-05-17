@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.3.0-beta.2
+
+Released 2022-May-16
+
 * Removes net5.0 target and replaced with net6.0
   as .NET 5.0 is going out of support.
   The package keeps netstandard2.0 target, so it
