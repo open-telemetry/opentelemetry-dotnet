@@ -167,7 +167,7 @@ namespace OpenTelemetry.Metrics
                                 // The SDK provides some static MetricStreamConfigurations.
                                 // For example, the Drop configuration. The static ViewId
                                 // should not be changed for these configurations.
-                                if (!metricStreamConfig.ViewId.HasValue)
+                                if (metricStreamConfig != null && !metricStreamConfig.ViewId.HasValue)
                                 {
                                     metricStreamConfig.ViewId = i;
                                 }
