@@ -53,7 +53,7 @@ internal abstract class TagTransformer<T>
             case Array array:
                 return this.JsonifyArrays
                     ? this.ToJsonArray(tag.Key, array)
-                    : default;
+                    : this.TransformArrayTag(tag.Key, array);
 
             // All other types are converted to strings including the following
             // built-in value types:
@@ -88,6 +88,34 @@ internal abstract class TagTransformer<T>
     protected abstract T TransformBooleanTag(string key, bool value);
 
     protected abstract T TransformStringTag(string key, string value);
+
+    protected virtual T TransformIntegralArrayTag(string key, Array array) => default;
+
+    protected virtual T TransformFloatingPointArrayTag(string key, Array array) => default;
+
+    protected virtual T TransformBooleanArrayTag(string key, Array array) => default;
+
+    protected virtual T TransformStringArrayTag(string key, Array array) => default;
+
+    protected virtual T TransformArrayTag(string key, Array array)
+    {
+        return array switch
+        {
+            char[] => this.TransformStringArrayTag(key, array),
+            string[] => this.TransformStringArrayTag(key, array),
+            bool[] => this.TransformBooleanArrayTag(key, array),
+            byte[] => this.TransformIntegralArrayTag(key, array),
+            sbyte[] => this.TransformIntegralArrayTag(key, array),
+            short[] => this.TransformIntegralArrayTag(key, array),
+            ushort[] => this.TransformIntegralArrayTag(key, array),
+            int[] => this.TransformIntegralArrayTag(key, array),
+            uint[] => this.TransformIntegralArrayTag(key, array),
+            long[] => this.TransformIntegralArrayTag(key, array),
+            float[] => this.TransformFloatingPointArrayTag(key, array),
+            double[] => this.TransformFloatingPointArrayTag(key, array),
+            _ => this.TransformStringArrayTag(key, array),
+        };
+    }
 
     private T ToJsonArray(string key, Array array)
     {
