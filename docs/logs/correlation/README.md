@@ -1,7 +1,7 @@
 # Logs correlation
 
 The getting started docs for [logs](../getting-started/README.md) and
-[traces](../../traces/getting-started/readme.md) showed how to emit logs and
+[traces](../../traces/getting-started/README.md) showed how to emit logs and
 traces independently, and export them to console exporter.
 
 This doc explains how logs can be correlated to traces.
