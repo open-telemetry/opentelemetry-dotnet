@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* B3 Propagator class has been deprecated and moved as is to a new
+ `OpenTelemetry.Extensions.Propagators` package.
+ It will be removed in the next major release, see issue [#3259](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3259)
+
 ## 1.3.0-beta.2
 
 Released 2022-May-16
