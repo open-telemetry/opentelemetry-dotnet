@@ -8,9 +8,11 @@ This doc explains how logs can be correlated to traces.
 
 ## Logging Data Model support for correlation
 
-[Logging Data Model](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#trace-context-fields)
-defines fields which allow a log to be correlated with span (`Activity` in .NET). The fields `TraceId` and `SpanId`
-allows a log to be correlated to corresponding `Activity`.
+[Logging Data
+Model](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#trace-context-fields)
+defines fields which allow a log to be correlated with span (`Activity` in
+.NET). The fields `TraceId` and `SpanId` allows a log to be correlated to
+corresponding `Activity`.
 
 ## Correlation in OpenTelemetry .NET
 
