@@ -76,7 +76,8 @@ namespace OpenTelemetry.Instrumentation.AspNet
         {
             Debug.Assert(context != null, "Context is null.");
 
-            PropagationContext propagationContext = textMapPropagator.Extract(default, context.Request, HttpRequestHeaderValuesGetter);
+            PropagationContext propagationContext = default;
+            textMapPropagator.Extract(ref propagationContext, context.Request, HttpRequestHeaderValuesGetter);
 
             Activity activity = AspNetSource.StartActivity(TelemetryHttpModule.AspNetActivityName, ActivityKind.Server, propagationContext.ActivityContext);
 

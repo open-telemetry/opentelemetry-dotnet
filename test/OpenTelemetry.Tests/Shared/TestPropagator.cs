@@ -38,21 +38,27 @@ namespace OpenTelemetry.Context.Propagation.Tests
 
         public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
+            this.Extract(ref context, carrier, getter);
+            return context;
+        }
+
+        public override void Extract<T>(ref PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        {
             if (this.defaultContext)
             {
-                return context;
+                return;
             }
 
-            IEnumerable<string> id = getter(carrier, this.idHeaderName);
+            IEnumerable<string> id = getter(carrier, this.idHeaderName) ?? Array.Empty<string>();
             if (!id.Any())
             {
-                return context;
+                return;
             }
 
             var traceparentParsed = TraceContextPropagator.TryExtractTraceparent(id.First(), out var traceId, out var spanId, out var traceoptions);
             if (!traceparentParsed)
             {
-                return context;
+                return;
             }
 
             string tracestate = string.Empty;
@@ -62,12 +68,17 @@ namespace OpenTelemetry.Context.Propagation.Tests
                 TraceContextPropagator.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
             }
 
-            return new PropagationContext(
+            context = new PropagationContext(
                 new ActivityContext(traceId, spanId, traceoptions, tracestate),
                 context.Baggage);
         }
 
         public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
+        {
+            this.Inject(in context, carrier, setter);
+        }
+
+        public override void Inject<T>(in PropagationContext context, T carrier, Action<T, string, string> setter)
         {
             string headerNumber = this.stateHeaderName.Split('-').Last();
 

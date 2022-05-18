@@ -21,6 +21,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Context.Propagation.Tests;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -131,9 +132,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [InlineData(false)]
         public async Task HttpClientInstrumentationInjectsHeadersAsync_CustomFormat(bool shouldEnrich)
         {
-            var propagator = new Mock<TextMapPropagator>();
-            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
+            var propagator = new TestPropagator<HttpRequestMessage>(
+                injectDelegate: (in PropagationContext context, HttpRequestMessage message, Action<HttpRequestMessage, string, string> action) =>
                 {
                     action(message, "custom_traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
                     action(message, "custom_tracestate", Activity.Current.TraceStateString);
@@ -153,7 +153,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             parent.TraceStateString = "k1=v1,k2=v2";
             parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            Sdk.SetDefaultTextMapPropagator(propagator);
 
             using (Sdk.CreateTracerProviderBuilder()
                    .AddHttpClientInstrumentation((opt) =>
@@ -198,9 +198,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             try
             {
-                var propagator = new Mock<TextMapPropagator>();
-                propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                    .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
+                var propagator = new TestPropagator<HttpRequestMessage>(
+                    injectDelegate: (in PropagationContext context, HttpRequestMessage message, Action<HttpRequestMessage, string, string> action) =>
                     {
                         action(message, "custom_traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
                         action(message, "custom_tracestate", Activity.Current.TraceStateString);
@@ -220,7 +219,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 parent.TraceStateString = "k1=v1,k2=v2";
                 parent.ActivityTraceFlags = ActivityTraceFlags.Recorded;
 
-                Sdk.SetDefaultTextMapPropagator(propagator.Object);
+                Sdk.SetDefaultTextMapPropagator(propagator);
 
                 using (Sdk.CreateTracerProviderBuilder()
                        .AddHttpClientInstrumentation()

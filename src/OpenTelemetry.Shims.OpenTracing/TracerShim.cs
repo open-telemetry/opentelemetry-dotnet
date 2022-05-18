@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 using OpenTracing.Propagation;
@@ -75,7 +76,7 @@ namespace OpenTelemetry.Shims.OpenTracing
                     return value;
                 }
 
-                propagationContext = this.propagator.Extract(propagationContext, carrierMap, GetCarrierKeyValue);
+                this.propagator.Extract(ref propagationContext, carrierMap, GetCarrierKeyValue);
             }
 
             // TODO:
@@ -83,7 +84,9 @@ namespace OpenTelemetry.Shims.OpenTracing
             //  But that code doesn't seem to exist.
             // Baggage.Current = propagationContext.Baggage;
 
-            return !propagationContext.ActivityContext.IsValid() ? null : new SpanContextShim(new Trace.SpanContext(propagationContext.ActivityContext));
+            ref readonly ActivityContext activityContext = ref PropagationContext.GetActivityContextRef(in propagationContext);
+
+            return !ActivityContextExtensions.IsValid(in activityContext) ? null : new SpanContextShim(new Trace.SpanContext(activityContext));
         }
 
         /// <inheritdoc/>
@@ -99,8 +102,9 @@ namespace OpenTelemetry.Shims.OpenTracing
 
             if ((format == BuiltinFormats.TextMap || format == BuiltinFormats.HttpHeaders) && carrier is ITextMap textMapCarrier)
             {
+                var context = new PropagationContext(shim.SpanContext, Baggage.Current);
                 this.propagator.Inject(
-                    new PropagationContext(shim.SpanContext, Baggage.Current),
+                    in context,
                     textMapCarrier,
                     (instrumentation, key, value) => instrumentation.Set(key, value));
             }

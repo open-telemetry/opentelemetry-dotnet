@@ -71,7 +71,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
 
             // TODO: Investigate why this check is needed.
-            if (Propagators.DefaultTextMapPropagator.Extract(default, request, HttpRequestMessageContextPropagation.HeaderValuesGetter) != default)
+            PropagationContext context = default;
+            Propagators.DefaultTextMapPropagator.Extract(ref context, request, HttpRequestMessageContextPropagation.HeaderValuesGetter);
+            ref readonly ActivityContext activityContext = ref PropagationContext.GetActivityContextRef(in context);
+            if (ActivityContextExtensions.IsValid(in activityContext))
             {
                 // this request is already instrumented, we should back off
                 activity.IsAllDataRequested = false;
@@ -82,7 +85,8 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
             if (textMapPropagator is not TraceContextPropagator)
             {
-                textMapPropagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
+                var ctx = PropagationContext.CreateFromActivity(activity, Baggage.Current);
+                textMapPropagator.Inject(in ctx, request, HttpRequestMessageContextPropagation.HeaderValueSetter);
             }
 
             // enrich Activity from payload only if sampling decision

@@ -43,6 +43,18 @@ namespace OpenTelemetry.Context.Propagation
         public abstract void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter);
 
         /// <summary>
+        /// Injects <see cref="PropagationContext"/> into a carrier.
+        /// </summary>
+        /// <typeparam name="T">Type of an object to set context on. Typically HttpRequest or similar.</typeparam>
+        /// <param name="context">The default context to transmit over the wire.</param>
+        /// <param name="carrier">Object to set context on. Instance of this object will be passed to setter.</param>
+        /// <param name="setter">Action that will set name and value pair on the object.</param>
+        public virtual void Inject<T>(in PropagationContext context, T carrier, Action<T, string, string> setter)
+        {
+            this.Inject(context, carrier, setter);
+        }
+
+        /// <summary>
         /// Extracts the context from a carrier.
         /// </summary>
         /// <typeparam name="T">Type of object to extract context from. Typically HttpRequest or similar.</typeparam>
@@ -51,5 +63,17 @@ namespace OpenTelemetry.Context.Propagation
         /// <param name="getter">Function that will return string value of a key with the specified name.</param>
         /// <returns>Context from it's text representation.</returns>
         public abstract PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter);
+
+        /// <summary>
+        /// Extracts <see cref="PropagationContext"/> from a carrier.
+        /// </summary>
+        /// <typeparam name="T">Type of an object to set context on. Typically HttpRequest or similar.</typeparam>
+        /// <param name="context">The extracted context.</param>
+        /// <param name="carrier">Object to set context on. Instance of this object will be passed to setter.</param>
+        /// <param name="getter">Function that will return string value of a key with the specified name.</param>
+        public virtual void Extract<T>(ref PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        {
+            context = this.Extract(context, carrier, getter);
+        }
     }
 }

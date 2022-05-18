@@ -24,24 +24,32 @@ namespace OpenTelemetry.Context.Propagation
     /// </summary>
     public readonly struct PropagationContext : IEquatable<PropagationContext>
     {
+        private readonly ActivityContext activityContext;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PropagationContext"/> struct.
         /// </summary>
         /// <param name="activityContext"><see cref="System.Diagnostics.ActivityContext"/>.</param>
-        /// <param name="baggage"><see cref="Baggage"/>.</param>
+        /// <param name="baggage"><see cref="OpenTelemetry.Baggage"/>.</param>
         public PropagationContext(ActivityContext activityContext, Baggage baggage)
         {
-            this.ActivityContext = activityContext;
+            this.activityContext = activityContext;
+            this.Baggage = baggage;
+        }
+
+        private PropagationContext(Activity activity, Baggage baggage)
+        {
+            this.activityContext = activity?.Context ?? default;
             this.Baggage = baggage;
         }
 
         /// <summary>
         /// Gets <see cref="System.Diagnostics.ActivityContext"/>.
         /// </summary>
-        public ActivityContext ActivityContext { get; }
+        public ActivityContext ActivityContext => this.activityContext;
 
         /// <summary>
-        /// Gets <see cref="Baggage"/>.
+        /// Gets <see cref="OpenTelemetry.Baggage"/>.
         /// </summary>
         public Baggage Baggage { get; }
 
@@ -58,6 +66,29 @@ namespace OpenTelemetry.Context.Propagation
         /// <param name="left">First Entry to compare.</param>
         /// <param name="right">Second Entry to compare.</param>
         public static bool operator !=(PropagationContext left, PropagationContext right) => !(left == right);
+
+        /// <summary>
+        /// Create a <see cref="PropagationContext"/> from a <see cref="Activity"/>.
+        /// </summary>
+        /// <param name="activity"><see cref="Activity"/>.</param>
+        /// <param name="baggage"><see cref="OpenTelemetry.Baggage"/>.</param>
+        /// <returns><see cref="PropagationContext"/>.</returns>
+        public static PropagationContext CreateFromActivity(Activity activity, Baggage baggage = default)
+        {
+            return new PropagationContext(activity, baggage);
+        }
+
+        /// <summary>
+        /// Returns a reference to the <see
+        /// cref="System.Diagnostics.ActivityContext"/> contained within the
+        /// supplied <see cref="PropagationContext"/>.
+        /// </summary>
+        /// <param name="propagationContext"><see cref="PropagationContext"/>.</param>
+        /// <returns><see cref="System.Diagnostics.ActivityContext"/>.</returns>
+        public static ref readonly ActivityContext GetActivityContextRef(in PropagationContext propagationContext)
+        {
+            return ref propagationContext.activityContext;
+        }
 
         /// <inheritdoc/>
         public bool Equals(PropagationContext value)

@@ -1,0 +1,13 @@
+override OpenTelemetry.Context.Propagation.B3Propagator.Extract<T>(ref OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> void
+override OpenTelemetry.Context.Propagation.B3Propagator.Inject<T>(in OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
+override OpenTelemetry.Context.Propagation.BaggagePropagator.Extract<T>(ref OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> void
+override OpenTelemetry.Context.Propagation.BaggagePropagator.Inject<T>(in OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
+override OpenTelemetry.Context.Propagation.CompositeTextMapPropagator.Extract<T>(ref OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> void
+override OpenTelemetry.Context.Propagation.CompositeTextMapPropagator.Inject<T>(in OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
+override OpenTelemetry.Context.Propagation.TraceContextPropagator.Extract<T>(ref OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> void
+override OpenTelemetry.Context.Propagation.TraceContextPropagator.Inject<T>(in OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void
+static OpenTelemetry.ActivityContextExtensions.IsValid(this in System.Diagnostics.ActivityContext ctx) -> bool
+static OpenTelemetry.Context.Propagation.PropagationContext.CreateFromActivity(System.Diagnostics.Activity activity, OpenTelemetry.Baggage baggage = default(OpenTelemetry.Baggage)) -> OpenTelemetry.Context.Propagation.PropagationContext
+static OpenTelemetry.Context.Propagation.PropagationContext.GetActivityContextRef(in OpenTelemetry.Context.Propagation.PropagationContext propagationContext) -> System.Diagnostics.ActivityContext
+virtual OpenTelemetry.Context.Propagation.TextMapPropagator.Extract<T>(ref OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> void
+virtual OpenTelemetry.Context.Propagation.TextMapPropagator.Inject<T>(in OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void

@@ -30,7 +30,15 @@ namespace OpenTelemetry.Context.Propagation
             return DefaultPropagationContext;
         }
 
+        public override void Extract<T>(ref PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        {
+        }
+
         public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
+        {
+        }
+
+        public override void Inject<T>(in PropagationContext context, T carrier, Action<T, string, string> setter)
         {
         }
     }

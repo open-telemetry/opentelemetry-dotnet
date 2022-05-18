@@ -16,6 +16,7 @@
 
 using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("Benchmarks" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("OpenTelemetry.Shims.OpenTracing.Tests" + AssemblyInfo.PublicKey)]

@@ -30,5 +30,6 @@
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="EventSourceTestHelper.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestEventListener.cs" Link="TestEventListener.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\InMemoryEventListener.cs" Link="InMemoryEventListener.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestPropagator{TCarrier}.cs" Link="TestPropagator{TCarrier}.cs" />
   </ItemGroup>
 </Project>

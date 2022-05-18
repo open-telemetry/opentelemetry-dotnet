@@ -22,6 +22,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Context.Propagation.Tests;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -100,14 +101,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             ActivityContext contentFromPropagator = default;
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            var propagator = new Mock<TextMapPropagator>();
-            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
-                .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, message, action) =>
+            var propagator = new TestPropagator<HttpWebRequest>(
+                injectDelegate: (in PropagationContext context, HttpWebRequest message, Action<HttpWebRequest, string, string> setter) =>
                 {
                     contentFromPropagator = context.ActivityContext;
                 });
 
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            Sdk.SetDefaultTextMapPropagator(propagator);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation()
@@ -145,16 +145,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task HttpWebRequestInstrumentationInjectsHeadersAsync_CustomFormat()
         {
-            var propagator = new Mock<TextMapPropagator>();
-            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpWebRequest>(), It.IsAny<Action<HttpWebRequest, string, string>>()))
-                .Callback<PropagationContext, HttpWebRequest, Action<HttpWebRequest, string, string>>((context, message, action) =>
+            var propagator = new TestPropagator<HttpWebRequest>(
+                injectDelegate: (in PropagationContext context, HttpWebRequest carrier, Action<HttpWebRequest, string, string> setter) =>
                 {
-                    action(message, "custom_traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
-                    action(message, "custom_tracestate", Activity.Current.TraceStateString);
+                    setter(carrier, "custom_traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
+                    setter(carrier, "custom_tracestate", Activity.Current.TraceStateString);
                 });
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            Sdk.SetDefaultTextMapPropagator(propagator);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation()

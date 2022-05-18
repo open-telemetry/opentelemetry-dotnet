@@ -29,8 +29,8 @@ namespace OpenTelemetry.Context.Propagation
     /// </summary>
     public class TraceContextPropagator : TextMapPropagator
     {
-        private const string TraceParent = "traceparent";
-        private const string TraceState = "tracestate";
+        internal const string TraceParent = "traceparent";
+        internal const string TraceState = "tracestate";
 
         private static readonly int VersionPrefixIdLength = "00-".Length;
         private static readonly int TraceIdLength = "0af7651916cd43dd8448eb211c80319c".Length;
@@ -52,22 +52,30 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
-            if (context.ActivityContext.IsValid())
+            this.Extract(ref context, carrier, getter);
+            return context;
+        }
+
+        /// <inheritdoc/>
+        public override void Extract<T>(ref PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        {
+            ref readonly ActivityContext activityContext = ref PropagationContext.GetActivityContextRef(in context);
+            if (ActivityContextExtensions.IsValid(in activityContext))
             {
                 // If a valid context has already been extracted, perform a noop.
-                return context;
+                return;
             }
 
             if (carrier == null)
             {
                 OpenTelemetryApiEventSource.Log.FailedToExtractActivityContext(nameof(TraceContextPropagator), "null carrier");
-                return context;
+                return;
             }
 
             if (getter == null)
             {
                 OpenTelemetryApiEventSource.Log.FailedToExtractActivityContext(nameof(TraceContextPropagator), "null getter");
-                return context;
+                return;
             }
 
             try
@@ -77,7 +85,7 @@ namespace OpenTelemetry.Context.Propagation
                 // There must be a single traceparent
                 if (traceparentCollection == null || traceparentCollection.Count() != 1)
                 {
-                    return context;
+                    return;
                 }
 
                 var traceparent = traceparentCollection.First();
@@ -85,7 +93,7 @@ namespace OpenTelemetry.Context.Propagation
 
                 if (!traceparentParsed)
                 {
-                    return context;
+                    return;
                 }
 
                 string tracestate = null;
@@ -95,7 +103,7 @@ namespace OpenTelemetry.Context.Propagation
                     TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
                 }
 
-                return new PropagationContext(
+                context = new PropagationContext(
                     new ActivityContext(traceId, spanId, traceoptions, tracestate, isRemote: true),
                     context.Baggage);
             }
@@ -103,15 +111,20 @@ namespace OpenTelemetry.Context.Propagation
             {
                 OpenTelemetryApiEventSource.Log.ActivityContextExtractException(nameof(TraceContextPropagator), ex);
             }
-
-            // in case of exception indicate to upstream that there is no parseable context from the top
-            return context;
         }
 
         /// <inheritdoc/>
         public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
-            if (context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
+            this.Inject(in context, carrier, setter);
+        }
+
+        /// <inheritdoc/>
+        public override void Inject<T>(in PropagationContext context, T carrier, Action<T, string, string> setter)
+        {
+            ref readonly ActivityContext activityContext = ref PropagationContext.GetActivityContextRef(in context);
+
+            if (!ActivityContextExtensions.IsValid(in activityContext))
             {
                 OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(TraceContextPropagator), "Invalid context");
                 return;
@@ -129,12 +142,12 @@ namespace OpenTelemetry.Context.Propagation
                 return;
             }
 
-            var traceparent = string.Concat("00-", context.ActivityContext.TraceId.ToHexString(), "-", context.ActivityContext.SpanId.ToHexString());
-            traceparent = string.Concat(traceparent, (context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0 ? "-01" : "-00");
+            var traceparent = string.Concat("00-", activityContext.TraceId.ToHexString(), "-", activityContext.SpanId.ToHexString());
+            traceparent = string.Concat(traceparent, (activityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0 ? "-01" : "-00");
 
             setter(carrier, TraceParent, traceparent);
 
-            string tracestateStr = context.ActivityContext.TraceState;
+            string tracestateStr = activityContext.TraceState;
             if (tracestateStr?.Length > 0)
             {
                 setter(carrier, TraceState, tracestateStr);

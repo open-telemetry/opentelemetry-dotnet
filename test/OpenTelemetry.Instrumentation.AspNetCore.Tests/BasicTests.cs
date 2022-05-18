@@ -28,6 +28,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Context.Propagation.Tests;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -207,21 +208,23 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 var expectedTraceId = ActivityTraceId.CreateRandom();
                 var expectedSpanId = ActivitySpanId.CreateRandom();
 
-                var propagator = new Mock<TextMapPropagator>();
-                propagator.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>())).Returns(
-                    new PropagationContext(
-                        new ActivityContext(
-                            expectedTraceId,
-                            expectedSpanId,
-                            ActivityTraceFlags.Recorded),
-                        default));
+                var propagator = new TestPropagator<HttpRequest>(
+                    extractDelegate: (ref PropagationContext context, HttpRequest request, Func<HttpRequest, string, IEnumerable<string>> getter) =>
+                    {
+                        context = new PropagationContext(
+                            new ActivityContext(
+                                expectedTraceId,
+                                expectedSpanId,
+                                ActivityTraceFlags.Recorded),
+                            default);
+                    });
 
                 // Arrange
                 using (var testFactory = this.factory
                     .WithWebHostBuilder(builder =>
                         builder.ConfigureTestServices(services =>
                         {
-                            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+                            Sdk.SetDefaultTextMapPropagator(propagator);
                             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                                 .AddAspNetCoreInstrumentation()
                                 .AddProcessor(activityProcessor.Object)

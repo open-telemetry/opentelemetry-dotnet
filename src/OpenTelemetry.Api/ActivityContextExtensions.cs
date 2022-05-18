@@ -14,7 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 // The ActivityContext class is in the System.Diagnostics namespace.
 // These extension methods on ActivityContext are intentionally not placed in the
@@ -29,13 +31,27 @@ namespace OpenTelemetry
     public static class ActivityContextExtensions
     {
         /// <summary>
-        /// Returns a bool indicating if a ActivityContext is valid or not.
+        /// Returns a value indicating whether or not a <see cref="ActivityContext"/> is valid.
         /// </summary>
-        /// <param name="ctx">ActivityContext.</param>
-        /// <returns>whether the context is a valid one or not.</returns>
+        /// <param name="ctx"><see cref="ActivityContext"/>.</param>
+        /// <returns><see langword="true"/> if the context is a valid otherwise <see langword="false"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("Use the IsValid method which accepts ActivityContext by reference for better performance.")]
         public static bool IsValid(this ActivityContext ctx)
         {
             return ctx != default;
+        }
+
+        /// <summary>
+        /// Returns a value indicating whether or not a <see cref="ActivityContext"/> is valid.
+        /// </summary>
+        /// <param name="ctx"><see cref="ActivityContext"/>.</param>
+        /// <returns><see langword="true"/> if the context is a valid otherwise <see langword="false"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsValid(this in ActivityContext ctx)
+        {
+            return !ctx.SpanId.Equals(default)
+                && !ctx.TraceId.Equals(default);
         }
     }
 }

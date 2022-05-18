@@ -55,11 +55,29 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
+        public override void Extract<T>(ref PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        {
+            foreach (var propagator in this.propagators)
+            {
+                propagator.Extract(ref context, carrier, getter);
+            }
+        }
+
+        /// <inheritdoc/>
         public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
         {
             foreach (var propagator in this.propagators)
             {
                 propagator.Inject(context, carrier, setter);
+            }
+        }
+
+        /// <inheritdoc/>
+        public override void Inject<T>(in PropagationContext context, T carrier, Action<T, string, string> setter)
+        {
+            foreach (var propagator in this.propagators)
+            {
+                propagator.Inject(in context, carrier, setter);
             }
         }
     }

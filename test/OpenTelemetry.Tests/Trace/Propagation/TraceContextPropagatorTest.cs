@@ -63,16 +63,28 @@ namespace OpenTelemetry.Context.Propagation.Tests
             };
 
             var f = new TraceContextPropagator();
+
             var ctx = f.Extract(default, headers, Getter);
+            RunAsserts(ctx);
 
-            Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), ctx.ActivityContext.TraceId);
-            Assert.Equal(ActivitySpanId.CreateFromString(SpanId.AsSpan()), ctx.ActivityContext.SpanId);
+            ctx = default;
+            f.Extract(ref ctx, headers, Getter);
+            RunAsserts(ctx);
 
-            Assert.True(ctx.ActivityContext.IsRemote);
-            Assert.True(ctx.ActivityContext.IsValid());
-            Assert.True((ctx.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0);
+            static void RunAsserts(PropagationContext ctx)
+            {
+                Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), ctx.ActivityContext.TraceId);
+                Assert.Equal(ActivitySpanId.CreateFromString(SpanId.AsSpan()), ctx.ActivityContext.SpanId);
 
-            Assert.Equal($"congo=lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4,rojo=00-{TraceId}-00f067aa0ba902b7-01", ctx.ActivityContext.TraceState);
+                Assert.True(ctx.ActivityContext.IsRemote);
+                Assert.True(ctx.ActivityContext.IsValid());
+                Assert.True((ctx.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0);
+
+                ref readonly ActivityContext activityContext = ref PropagationContext.GetActivityContextRef(in ctx);
+                Assert.True(ActivityContextExtensions.IsValid(in activityContext));
+
+                Assert.Equal($"congo=lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4,rojo=00-{TraceId}-00f067aa0ba902b7-01", ctx.ActivityContext.TraceState);
+            }
         }
 
         [Fact]
@@ -92,6 +104,9 @@ namespace OpenTelemetry.Context.Propagation.Tests
 
             Assert.True(ctx.ActivityContext.IsRemote);
             Assert.True(ctx.ActivityContext.IsValid());
+
+            ref readonly ActivityContext activityContext = ref PropagationContext.GetActivityContextRef(in ctx);
+            Assert.True(ActivityContextExtensions.IsValid(in activityContext));
         }
 
         [Fact]
@@ -103,6 +118,9 @@ namespace OpenTelemetry.Context.Propagation.Tests
             var ctx = f.Extract(default, headers, Getter);
 
             Assert.False(ctx.ActivityContext.IsValid());
+
+            ref readonly ActivityContext activityContext = ref PropagationContext.GetActivityContextRef(in ctx);
+            Assert.False(ActivityContextExtensions.IsValid(in activityContext));
         }
 
         [Fact]
@@ -117,6 +135,9 @@ namespace OpenTelemetry.Context.Propagation.Tests
             var ctx = f.Extract(default, headers, Getter);
 
             Assert.False(ctx.ActivityContext.IsValid());
+
+            ref readonly ActivityContext activityContext = ref PropagationContext.GetActivityContextRef(in ctx);
+            Assert.False(ActivityContextExtensions.IsValid(in activityContext));
         }
 
         [Fact]
@@ -143,8 +164,12 @@ namespace OpenTelemetry.Context.Propagation.Tests
             };
 
             var f = new TraceContextPropagator();
-            var ctx = f.Extract(default, headers, Getter);
 
+            var ctx = f.Extract(default, headers, Getter);
+            Assert.Equal("k1=v1,k2=v2,k3=v3", ctx.ActivityContext.TraceState);
+
+            ctx = default;
+            f.Extract(ref ctx, headers, Getter);
             Assert.Equal("k1=v1,k2=v2,k3=v3", ctx.ActivityContext.TraceState);
         }
 
@@ -160,10 +185,15 @@ namespace OpenTelemetry.Context.Propagation.Tests
 
             var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, traceState: null);
             PropagationContext propagationContext = new PropagationContext(activityContext, default);
-            var carrier = new Dictionary<string, string>();
-            var f = new TraceContextPropagator();
-            f.Inject(propagationContext, carrier, Setter);
 
+            var f = new TraceContextPropagator();
+
+            var carrier = new Dictionary<string, string>();
+            f.Inject(propagationContext, carrier, Setter);
+            Assert.Equal(expectedHeaders, carrier);
+
+            carrier = new Dictionary<string, string>();
+            f.Inject(in propagationContext, carrier, Setter);
             Assert.Equal(expectedHeaders, carrier);
         }
 

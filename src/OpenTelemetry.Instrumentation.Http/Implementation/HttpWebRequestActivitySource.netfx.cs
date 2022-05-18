@@ -196,12 +196,20 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void InstrumentRequest(HttpWebRequest request, ActivityContext activityContext)
-            => Propagators.DefaultTextMapPropagator.Inject(new PropagationContext(activityContext, Baggage.Current), request, HttpWebRequestHeaderValuesSetter);
+        private static void InstrumentRequest(HttpWebRequest request, Activity activity)
+        {
+            var context = PropagationContext.CreateFromActivity(activity, Baggage.Current);
+            Propagators.DefaultTextMapPropagator.Inject(in context, request, HttpWebRequestHeaderValuesSetter);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsRequestInstrumented(HttpWebRequest request)
-            => Propagators.DefaultTextMapPropagator.Extract(default, request, HttpWebRequestHeaderValuesGetter) != default;
+        {
+            PropagationContext context = default;
+            Propagators.DefaultTextMapPropagator.Extract(ref context, request, HttpWebRequestHeaderValuesGetter);
+            ref readonly ActivityContext activityContext = ref PropagationContext.GetActivityContextRef(in context);
+            return ActivityContextExtensions.IsValid(in activityContext);
+        }
 
         private static void ProcessRequest(HttpWebRequest request)
         {
@@ -212,7 +220,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 // Propagation must still be done in such cases, to allow
                 // downstream services to continue from parent context, if any.
                 // Eg: Parent could be the Asp.Net activity.
-                InstrumentRequest(request, Activity.Current?.Context ?? default);
+                InstrumentRequest(request, Activity.Current);
                 return;
             }
 
@@ -224,12 +232,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             }
 
             var activity = WebRequestActivitySource.StartActivity(ActivityName, ActivityKind.Client);
-            var activityContext = Activity.Current?.Context ?? default;
 
             // Propagation must still be done in all cases, to allow
             // downstream services to continue from parent context, if any.
             // Eg: Parent could be the Asp.Net activity.
-            InstrumentRequest(request, activityContext);
+            InstrumentRequest(request, Activity.Current);
             if (activity == null)
             {
                 // There is a listener but it decided not to sample the current request.

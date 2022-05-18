@@ -1,0 +1,2 @@
+override OpenTelemetry.Extensions.Propagators.B3Propagator.Extract<T>(ref OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Func<T, string, System.Collections.Generic.IEnumerable<string>> getter) -> void
+override OpenTelemetry.Extensions.Propagators.B3Propagator.Inject<T>(in OpenTelemetry.Context.Propagation.PropagationContext context, T carrier, System.Action<T, string, string> setter) -> void

@@ -42,22 +42,29 @@ namespace OpenTelemetry.Context.Propagation
         /// <inheritdoc/>
         public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
         {
+            this.Extract(ref context, carrier, getter);
+            return context;
+        }
+
+        /// <inheritdoc/>
+        public override void Extract<T>(ref PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
+        {
             if (context.Baggage != default)
             {
                 // If baggage has already been extracted, perform a noop.
-                return context;
+                return;
             }
 
             if (carrier == null)
             {
                 OpenTelemetryApiEventSource.Log.FailedToExtractBaggage(nameof(BaggagePropagator), "null carrier");
-                return context;
+                return;
             }
 
             if (getter == null)
             {
                 OpenTelemetryApiEventSource.Log.FailedToExtractBaggage(nameof(BaggagePropagator), "null getter");
-                return context;
+                return;
             }
 
             try
@@ -69,7 +76,7 @@ namespace OpenTelemetry.Context.Propagation
                     TryExtractBaggage(baggageCollection.ToArray(), out baggage);
                 }
 
-                return new PropagationContext(
+                context = new PropagationContext(
                     context.ActivityContext,
                     baggage == null ? context.Baggage : new Baggage(baggage));
             }
@@ -77,12 +84,16 @@ namespace OpenTelemetry.Context.Propagation
             {
                 OpenTelemetryApiEventSource.Log.BaggageExtractException(nameof(BaggagePropagator), ex);
             }
-
-            return context;
         }
 
         /// <inheritdoc/>
         public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
+        {
+            this.Inject(in context, carrier, setter);
+        }
+
+        /// <inheritdoc/>
+        public override void Inject<T>(in PropagationContext context, T carrier, Action<T, string, string> setter)
         {
             if (carrier == null)
             {

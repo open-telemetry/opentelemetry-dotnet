@@ -24,6 +24,7 @@ using System.Web;
 using System.Web.Routing;
 using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Context.Propagation.Tests;
 using OpenTelemetry.Instrumentation.AspNet.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -258,16 +259,14 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 new HttpResponse(new StringWriter()));
 
             bool isPropagatorCalled = false;
-            var propagator = new Mock<TextMapPropagator>();
-            propagator.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>()))
-                .Returns(() =>
+            var propagator = new TestPropagator<HttpRequest>(
+                extractDelegate: (ref PropagationContext context, HttpRequest request, Func<HttpRequest, string, IEnumerable<string>> getter) =>
                 {
                     isPropagatorCalled = true;
-                    return default;
                 });
 
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            Sdk.SetDefaultTextMapPropagator(propagator);
             using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new TestSampler(samplingDecision))
                 .AddAspNetInstrumentation()
@@ -294,17 +293,15 @@ namespace OpenTelemetry.Instrumentation.AspNet.Tests
                 new HttpResponse(new StringWriter()));
 
             bool isPropagatorCalled = false;
-            var propagator = new Mock<TextMapPropagator>();
-            propagator.Setup(m => m.Extract(It.IsAny<PropagationContext>(), It.IsAny<HttpRequest>(), It.IsAny<Func<HttpRequest, string, IEnumerable<string>>>()))
-                .Returns(() =>
+            var propagator = new TestPropagator<HttpRequest>(
+                extractDelegate: (ref PropagationContext context, HttpRequest request, Func<HttpRequest, string, IEnumerable<string>> getter) =>
                 {
                     isPropagatorCalled = true;
-                    return default;
                 });
 
             bool isFilterCalled = false;
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            Sdk.SetDefaultTextMapPropagator(propagator.Object);
+            Sdk.SetDefaultTextMapPropagator(propagator);
             using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddAspNetInstrumentation(options =>
                 {

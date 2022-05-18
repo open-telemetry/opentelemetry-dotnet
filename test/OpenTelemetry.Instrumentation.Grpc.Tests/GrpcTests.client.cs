@@ -26,6 +26,7 @@ using Grpc.Net.Client;
 using Microsoft.AspNetCore.Http;
 using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Context.Propagation.Tests;
 using OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
@@ -242,9 +243,8 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
                 using var source = new ActivitySource("test-source");
 
-                var propagator = new Mock<TextMapPropagator>();
-                propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                    .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
+                var propagator = new TestPropagator<HttpRequestMessage>(
+                    injectDelegate: (in PropagationContext context, HttpRequestMessage message, Action<HttpRequestMessage, string, string> action) =>
                     {
                         action(message, "customField", "customValue");
                     });
@@ -252,7 +252,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
                 {
                     new TraceContextPropagator(),
-                    propagator.Object,
+                    propagator,
                 }));
 
                 using (Sdk.CreateTracerProviderBuilder()
@@ -334,14 +334,13 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 using var source = new ActivitySource("test-source");
 
                 bool isPropagatorCalled = false;
-                var propagator = new Mock<TextMapPropagator>();
-                propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                    .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
+                var propagator = new TestPropagator<HttpRequestMessage>(
+                    injectDelegate: (in PropagationContext context, HttpRequestMessage message, Action<HttpRequestMessage, string, string> action) =>
                     {
                         isPropagatorCalled = true;
                     });
 
-                Sdk.SetDefaultTextMapPropagator(propagator.Object);
+                Sdk.SetDefaultTextMapPropagator(propagator);
 
                 var headers = new Metadata();
 
@@ -394,9 +393,8 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 using var source = new ActivitySource("test-source");
 
                 bool isPropagatorCalled = false;
-                var propagator = new Mock<TextMapPropagator>();
-                propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
-                    .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
+                var propagator = new TestPropagator<HttpRequestMessage>(
+                    injectDelegate: (in PropagationContext context, HttpRequestMessage message, Action<HttpRequestMessage, string, string> action) =>
                     {
                         isPropagatorCalled = true;
                     });
@@ -404,7 +402,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropagator[]
                 {
                     new TraceContextPropagator(),
-                    propagator.Object,
+                    propagator,
                 }));
 
                 using (Sdk.CreateTracerProviderBuilder()

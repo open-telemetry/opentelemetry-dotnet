@@ -88,17 +88,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
             if (textMapPropagator is not TraceContextPropagator)
             {
-                var ctx = textMapPropagator.Extract(default, request, HttpRequestHeaderValuesGetter);
+                PropagationContext ctx = default;
+                textMapPropagator.Extract(ref ctx, request, HttpRequestHeaderValuesGetter);
 
-                if (ctx.ActivityContext.IsValid()
-                    && ctx.ActivityContext != new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString, true))
+                ref readonly ActivityContext activityContext = ref PropagationContext.GetActivityContextRef(in ctx);
+
+                if (ActivityContextExtensions.IsValid(in activityContext)
+                    && activityContext != new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString, true))
                 {
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
                     // Asp.Net Core.
                     Activity newOne = new Activity(ActivityOperationName);
-                    newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
-                    newOne.TraceStateString = ctx.ActivityContext.TraceState;
+                    newOne.SetParentId(activityContext.TraceId, activityContext.SpanId, activityContext.TraceFlags);
+                    newOne.TraceStateString = activityContext.TraceState;
 
                     newOne.SetTag("IsCreatedByInstrumentation", bool.TrueString);
 
