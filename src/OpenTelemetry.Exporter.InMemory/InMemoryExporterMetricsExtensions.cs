@@ -147,6 +147,11 @@ namespace OpenTelemetry.Metrics
             var metricExporter = new InMemoryExporter<Metric>(
                 exportFunc: metricBatch =>
                 {
+                    if (exportedItems == null)
+                    {
+                        return ExportResult.Failure;
+                    }
+
                     foreach (var metric in metricBatch)
                     {
                         exportedItems.Add(new MetricSnapshot(metric));

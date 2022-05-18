@@ -23,20 +23,18 @@ namespace OpenTelemetry.Exporter
         where T : class
     {
         private readonly ICollection<T> exportedItems;
-        private readonly ExportDelegate onExport;
+        private readonly Func<Batch<T>, ExportResult> onExport;
 
         public InMemoryExporter(ICollection<T> exportedItems)
         {
             this.exportedItems = exportedItems;
-            this.onExport = this.DefaultExport;
+            this.onExport = (Batch<T> batch) => this.DefaultExport(batch);
         }
 
         public InMemoryExporter(Func<Batch<T>, ExportResult> exportFunc)
         {
-            this.onExport = (in Batch<T> batch) => exportFunc(batch);
+            this.onExport = exportFunc;
         }
-
-        private delegate ExportResult ExportDelegate(in Batch<T> batch);
 
         public override ExportResult Export(in Batch<T> batch) => this.onExport(batch);
 
