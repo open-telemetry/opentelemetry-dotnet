@@ -1,7 +1,7 @@
 # Logs correlation
 
 The getting started docs for [logs](../getting-started/README.md) and
-[traces](../../traces/getting-started/README.md) showed how to emit logs and
+[traces](../../trace/getting-started/README.md) showed how to emit logs and
 traces independently, and export them to console exporter.
 
 This doc explains how logs can be correlated to traces.
@@ -11,17 +11,18 @@ This doc explains how logs can be correlated to traces.
 [Logging Data
 Model](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#trace-context-fields)
 defines fields which allow a log to be correlated with span (`Activity` in
-.NET). The fields `TraceId` and `SpanId` allows a log to be correlated to
+.NET). The fields `TraceId` and `SpanId` allow a log to be correlated to
 corresponding `Activity`.
 
 ## Correlation in OpenTelemetry .NET
 
 The good news is that, in OpenTelemetry .NET SDK, there is no user action
 required to enable correlation. i.e the SDK automatically enables logs to
-`Activity` correlation, by populating the fields `TraceId` and `SpanId` from the
-active activity (i.e `Activity.Current`), if any.
+`Activity` correlation, by populating the fields `TraceId`, `SpanId`,
+`TraceFlags`, `TraceState` from the active activity (i.e `Activity.Current`), if
+any.
 
-The example [Program.cs](./Program.cs), shows how to emit logs within the context
+The example [Program.cs](./Program.cs) shows how to emit logs within the context
 of an active `Activity`. Running the application will show the following output
 on the console:
 
