@@ -4,6 +4,9 @@
 
 * Fix null reference exception when a metric view does not match an instrument.
   ([#3285](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3285))
+* Swallow `ObjectDisposedException` in `BatchExportProcessor` and
+* `PeriodicExportingMetricReader`.
+  ([#3291](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3291))
 
 ## 1.3.0-beta.2
 
