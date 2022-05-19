@@ -6,7 +6,7 @@
   ([#3285](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3285))
 * Swallow `ObjectDisposedException` in `BatchExportProcessor` and
 * `PeriodicExportingMetricReader`.
-  ([#TBD](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TBD))
+  ([#3291](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3291))
 
 ## 1.3.0-beta.2
 
