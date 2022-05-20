@@ -75,7 +75,14 @@ namespace OpenTelemetry.Metrics
         {
             var result = true;
 
-            this.shutdownTrigger.Set();
+            try
+            {
+                this.shutdownTrigger.Set();
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
 
             if (timeoutMilliseconds == Timeout.Infinite)
             {
