@@ -145,20 +145,7 @@ namespace OpenTelemetry.Metrics
             configureMetricReader?.Invoke(metricReaderOptions);
 
             var metricExporter = new InMemoryExporter<Metric>(
-                exportFunc: metricBatch =>
-                {
-                    if (exportedItems == null)
-                    {
-                        return ExportResult.Failure;
-                    }
-
-                    foreach (var metric in metricBatch)
-                    {
-                        exportedItems.Add(new MetricSnapshot(metric));
-                    }
-
-                    return ExportResult.Success;
-                });
+                exportFunc: metricBatch => ExportMetricSnapshot(metricBatch, exportedItems));
 
             var metricReader = PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
                 metricExporter,
@@ -167,6 +154,21 @@ namespace OpenTelemetry.Metrics
                 DefaultExportTimeoutMilliseconds);
 
             return builder.AddReader(metricReader);
+        }
+
+        private static ExportResult ExportMetricSnapshot(in Batch<Metric> batch, ICollection<MetricSnapshot> exportedItems)
+        {
+            if (exportedItems == null)
+            {
+                return ExportResult.Failure;
+            }
+
+            foreach (var metric in batch)
+            {
+                exportedItems.Add(new MetricSnapshot(metric));
+            }
+
+            return ExportResult.Success;
         }
     }
 }
