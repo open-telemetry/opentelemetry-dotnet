@@ -150,52 +150,6 @@ namespace Microsoft.AspNetCore.Builder
                     builder.UseMiddleware<PrometheusExporterMiddleware>(meterProvider);
                 });
         }
-
-        /// <summary>
-        /// Adds OpenTelemetry Prometheus scraping endpoint middleware to an
-        /// <see cref="IEndpointRouteBuilder"/> instance.
-        /// </summary>
-        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add
-        /// middleware to.</param>
-        /// <param name="path">Optional path to use for the branched pipeline.</param>
-        /// <param name="meterProvider">Optional <see cref="MeterProvider"/>
-        /// containing a <see cref="PrometheusExporter"/> otherwise the primary
-        /// SDK provider will be resolved using application services.</param>
-        /// <param name="configureBranchedPipeline">Optional callback to
-        /// configure the branched pipeline. Called before registration of the
-        /// Prometheus middleware.</param>
-        /// <returns>A convention routes for the Prometheus scraping endpoint.</returns>
-        public static IEndpointConventionBuilder MapPrometheusScrapingEndpoint(
-            this IEndpointRouteBuilder endpoints,
-            string path = null,
-            MeterProvider meterProvider = null,
-            Action<IApplicationBuilder> configureBranchedPipeline = null)
-        {
-            var builder = endpoints.CreateApplicationBuilder();
-
-            // Note: Order is important here. MeterProvider is accessed before
-            // GetOptions<PrometheusExporterOptions> so that any changes made to
-            // PrometheusExporterOptions in deferred AddPrometheusExporter
-            // configure actions are reflected.
-            meterProvider ??= builder.ApplicationServices.GetRequiredService<MeterProvider>();
-
-            if (path == null)
-            {
-                var options = builder.ApplicationServices.GetOptions<PrometheusExporterOptions>();
-                path = options.ScrapeEndpointPath ?? PrometheusExporterOptions.DefaultScrapeEndpointPath;
-            }
-
-            if (!path.StartsWith("/"))
-            {
-                path = $"/{path}";
-            }
-
-            configureBranchedPipeline?.Invoke(builder);
-
-            builder.UseMiddleware<PrometheusExporterMiddleware>(meterProvider);
-
-            return endpoints.Map(new PathString(path), builder.Build());
-        }
     }
 }
 #endif
