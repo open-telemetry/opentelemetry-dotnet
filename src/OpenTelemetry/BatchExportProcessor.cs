@@ -100,7 +100,13 @@ namespace OpenTelemetry
             {
                 if (this.circularBuffer.Count >= this.maxExportBatchSize)
                 {
-                    this.exportTrigger.Set();
+                    try
+                    {
+                        this.exportTrigger.Set();
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                    }
                 }
 
                 return; // enqueue succeeded
@@ -121,7 +127,14 @@ namespace OpenTelemetry
                 return true; // nothing to flush
             }
 
-            this.exportTrigger.Set();
+            try
+            {
+                this.exportTrigger.Set();
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
 
             if (timeoutMilliseconds == 0)
             {
@@ -186,7 +199,15 @@ namespace OpenTelemetry
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
             this.shutdownDrainTarget = this.circularBuffer.AddedCount;
-            this.shutdownTrigger.Set();
+
+            try
+            {
+                this.shutdownTrigger.Set();
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
 
             OpenTelemetrySdkEventSource.Log.DroppedExportProcessorItems(this.GetType().Name, this.exporter.GetType().Name, this.droppedCount);
 
