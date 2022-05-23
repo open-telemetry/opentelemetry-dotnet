@@ -1,4 +1,3 @@
-OpenTelemetry.Exporter.InMemoryExporter<T>.InMemoryExporter(System.Func<OpenTelemetry.Batch<T>, OpenTelemetry.ExportResult> exportFunc) -> void
 OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions
 OpenTelemetry.Metrics.MetricSnapshot
 OpenTelemetry.Metrics.MetricSnapshot.Description.get -> string

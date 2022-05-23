@@ -31,7 +31,7 @@ namespace OpenTelemetry.Exporter
             this.onExport = (Batch<T> batch) => this.DefaultExport(batch);
         }
 
-        public InMemoryExporter(Func<Batch<T>, ExportResult> exportFunc)
+        internal InMemoryExporter(Func<Batch<T>, ExportResult> exportFunc)
         {
             this.onExport = exportFunc;
         }

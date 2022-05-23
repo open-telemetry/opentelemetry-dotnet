@@ -158,11 +158,6 @@ namespace OpenTelemetry.Metrics
 
         private static ExportResult ExportMetricSnapshot(in Batch<Metric> batch, ICollection<MetricSnapshot> exportedItems)
         {
-            if (exportedItems == null)
-            {
-                return ExportResult.Failure;
-            }
-
             foreach (var metric in batch)
             {
                 exportedItems.Add(new MetricSnapshot(metric));
