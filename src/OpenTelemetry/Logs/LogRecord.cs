@@ -68,22 +68,49 @@ namespace OpenTelemetry.Logs
             this.Exception = exception;
         }
 
+        /// <summary>
+        /// Gets the log timestamp.
+        /// </summary>
         public DateTime Timestamp { get; }
 
+        /// <summary>
+        /// Gets the log <see cref="ActivityTraceId"/>.
+        /// </summary>
         public ActivityTraceId TraceId { get; }
 
+        /// <summary>
+        /// Gets the log <see cref="ActivitySpanId"/>.
+        /// </summary>
         public ActivitySpanId SpanId { get; }
 
+        /// <summary>
+        /// Gets the log <see cref="ActivityTraceFlags"/>.
+        /// </summary>
         public ActivityTraceFlags TraceFlags { get; }
 
+        /// <summary>
+        /// Gets the log trace state.
+        /// </summary>
         public string? TraceState { get; }
 
+        /// <summary>
+        /// Gets the log category name.
+        /// </summary>
         public string CategoryName { get; }
 
+        /// <summary>
+        /// Gets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
+        /// </summary>
         public LogLevel LogLevel { get; }
 
+        /// <summary>
+        /// Gets the log <see cref="EventId"/>.
+        /// </summary>
         public EventId EventId { get; }
 
+        /// <summary>
+        /// Gets or sets the log formatted message.
+        /// </summary>
         public string? FormattedMessage { get; set; }
 
         /// <summary>
@@ -100,6 +127,9 @@ namespace OpenTelemetry.Logs
         /// </summary>
         public IReadOnlyList<KeyValuePair<string, object?>>? StateValues { get; set; }
 
+        /// <summary>
+        /// Gets the log <see cref="System.Exception"/>.
+        /// </summary>
         public Exception? Exception { get; }
 
         internal IExternalScopeProvider? ScopeProvider { get; set; }
