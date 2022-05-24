@@ -42,7 +42,11 @@ namespace Microsoft.Extensions.Logging
             Guard.ThrowIfNull(builder);
 
             builder.AddConfiguration();
-            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>());
+            builder.Services.TryAddSingleton<OpenTelemetryLoggerProvider>();
+            builder.Services.TryAddSingleton<LogEmitter>();
+            builder.Services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(
+                    sp => sp.GetRequiredService<OpenTelemetryLoggerProvider>()));
 
             if (configure != null)
             {

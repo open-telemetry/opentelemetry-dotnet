@@ -36,6 +36,29 @@ namespace OpenTelemetry.Logs
 
         private List<object?>? bufferedScopes;
 
+        public LogRecord(
+            string categoryName,
+            DateTime timestamp,
+            LogLevel logLevel,
+            string message,
+            EventId eventId = default,
+            Exception? exception = null,
+            IReadOnlyList<KeyValuePair<string, object?>>? stateValues = null)
+            : this(
+                  scopeProvider: null,
+                  timestamp.Kind == DateTimeKind.Local ? timestamp.ToUniversalTime() : timestamp,
+                  categoryName,
+                  logLevel,
+                  eventId,
+                  message,
+                  state: null,
+                  exception,
+                  stateValues)
+        {
+            Guard.ThrowIfNullOrEmpty(categoryName);
+            Guard.ThrowIfNullOrEmpty(message);
+        }
+
         internal LogRecord(
             IExternalScopeProvider? scopeProvider,
             DateTime timestamp,

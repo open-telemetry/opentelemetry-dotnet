@@ -17,6 +17,7 @@
 namespace Examples.AspNetCore.Controllers;
 
 using Microsoft.AspNetCore.Mvc;
+using OpenTelemetry.Logs;
 
 [ApiController]
 [Route("[controller]")]
@@ -24,16 +25,20 @@ public class WeatherForecastController : ControllerBase
 {
     private static readonly string[] Summaries = new[]
     {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching",
+        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching",
     };
 
     private static readonly HttpClient HttpClient = new();
 
     private readonly ILogger<WeatherForecastController> logger;
+    private readonly LogEmitter logEmitter;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger)
+    public WeatherForecastController(
+        ILogger<WeatherForecastController> logger,
+        LogEmitter logEmitter)
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        this.logEmitter = logEmitter ?? throw new ArgumentNullException(nameof(logEmitter));
     }
 
     [HttpGet]
@@ -54,10 +59,19 @@ public class WeatherForecastController : ControllerBase
         })
         .ToArray();
 
+        // Log using ILogger API.
         this.logger.LogInformation(
             "WeatherForecasts generated {count}: {forecasts}",
             forecast.Length,
             forecast);
+
+        // Log using LogEmitter API.
+        this.logEmitter.Log(new(
+            categoryName: "WeatherForecasts",
+            timestamp: DateTime.UtcNow,
+            logLevel: LogLevel.Information,
+            message: "WeatherForecasts generated.",
+            stateValues: new List<KeyValuePair<string, object?>>() { new KeyValuePair<string, object?>("count", forecast.Length) }));
 
         return forecast;
     }

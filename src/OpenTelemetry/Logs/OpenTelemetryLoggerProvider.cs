@@ -112,6 +112,12 @@ namespace OpenTelemetry.Logs
             return logger;
         }
 
+        /// <summary>
+        /// Create a <see cref="LogEmitter"/>.
+        /// </summary>
+        /// <returns><see cref="LogEmitter"/>.</returns>
+        public LogEmitter CreateEmitter() => new(this);
+
         internal OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
         {
             Guard.ThrowIfNull(processor);
