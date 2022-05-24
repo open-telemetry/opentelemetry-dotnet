@@ -73,8 +73,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             foreach (var item in array)
             {
-                var value = item != null ? this.TransformValue(item) : new OtlpCommon.AnyValue();
-                arrayValue.Values.Add(value);
+                try
+                {
+                    var value = item != null ? this.TransformValue(item) : new OtlpCommon.AnyValue();
+                    arrayValue.Values.Add(value);
+                }
+                catch
+                {
+                    return null;
+                }
             }
 
             return new OtlpCommon.AnyValue { ArrayValue = arrayValue };

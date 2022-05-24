@@ -41,7 +41,8 @@ internal abstract class TagAndValueTransformer<T, TValue> : TagTransformer<T>
             case double:
                 return this.TransformFloatingPointValue(Convert.ToDouble(value));
             default:
-                return default(TValue);
+                // This could throw an exception. The caller is expected to handle.
+                return this.TransformStringValue(value.ToString());
         }
     }
 

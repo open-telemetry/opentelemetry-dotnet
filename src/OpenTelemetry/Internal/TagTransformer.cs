@@ -28,7 +28,6 @@ internal abstract class TagTransformer<T>
             return default;
         }
 
-        T result = default;
         switch (tag.Value)
         {
             case char:
@@ -48,7 +47,16 @@ internal abstract class TagTransformer<T>
             case double:
                 return this.TransformFloatingPointTag(tag.Key, Convert.ToDouble(tag.Value));
             case Array array:
-                return this.TransformArrayTagInternal(tag.Key, array);
+                try
+                {
+                    return this.TransformArrayTagInternal(tag.Key, array);
+                }
+                catch
+                {
+                    // If ToString throws an exception then the tag is ignored.
+                    // OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tag.Value.GetType().ToString(), tag.Key);
+                    return default(T);
+                }
 
             // All other types are converted to strings including the following
             // built-in value types:
@@ -59,22 +67,15 @@ internal abstract class TagTransformer<T>
             default:
                 try
                 {
-                    result = this.TransformStringTag(tag.Key, tag.Value.ToString());
+                    return this.TransformStringTag(tag.Key, tag.Value.ToString());
                 }
                 catch
                 {
                     // If ToString throws an exception then the tag is ignored.
+                    // OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tag.Value.GetType().ToString(), tag.Key);
+                    return default(T);
                 }
-
-                break;
         }
-
-        // if (result == null)
-        // {
-        //     // OpenTelemetryProtocolExporterEventSource.Log.UnsupportedAttributeType(kvp.Value.GetType().ToString(), kvp.Key);
-        // }
-
-        return result;
     }
 
     protected abstract T TransformIntegralTag(string key, long value);
