@@ -63,22 +63,22 @@ OpenTelemetry.Logs.LogRecord.FormattedMessage.get -> string?
 OpenTelemetry.Logs.LogRecord.LogLevel.get -> Microsoft.Extensions.Logging.LogLevel
 OpenTelemetry.Logs.LogRecord.SpanId.get -> System.Diagnostics.ActivitySpanId
 OpenTelemetry.Logs.LogRecord.State.get -> object?
-OpenTelemetry.Logs.LogRecord.StateValues.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, object!>>?
+OpenTelemetry.Logs.LogRecord.StateValues.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, object?>>?
 OpenTelemetry.Logs.LogRecord.Timestamp.get -> System.DateTime
 OpenTelemetry.Logs.LogRecord.TraceFlags.get -> System.Diagnostics.ActivityTraceFlags
 OpenTelemetry.Logs.LogRecord.TraceId.get -> System.Diagnostics.ActivityTraceId
 OpenTelemetry.Logs.LogRecord.TraceState.get -> string?
 OpenTelemetry.Logs.LogRecordScope
 OpenTelemetry.Logs.LogRecordScope.Enumerator
-~OpenTelemetry.Logs.LogRecordScope.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string, object>
+OpenTelemetry.Logs.LogRecordScope.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string!, object?>
 OpenTelemetry.Logs.LogRecordScope.Enumerator.Dispose() -> void
 OpenTelemetry.Logs.LogRecordScope.Enumerator.Enumerator() -> void
-~OpenTelemetry.Logs.LogRecordScope.Enumerator.Enumerator(object scope) -> void
+OpenTelemetry.Logs.LogRecordScope.Enumerator.Enumerator(object? scope) -> void
 OpenTelemetry.Logs.LogRecordScope.Enumerator.MoveNext() -> bool
 OpenTelemetry.Logs.LogRecordScope.Enumerator.Reset() -> void
 OpenTelemetry.Logs.LogRecordScope.GetEnumerator() -> OpenTelemetry.Logs.LogRecordScope.Enumerator
 OpenTelemetry.Logs.LogRecordScope.LogRecordScope() -> void
-~OpenTelemetry.Logs.LogRecordScope.Scope.get -> object
+OpenTelemetry.Logs.LogRecordScope.Scope.get -> object?
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions
 ~OpenTelemetry.Logs.OpenTelemetryLoggerOptions.AddProcessor(OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord> processor) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.IncludeFormattedMessage.get -> bool
@@ -90,8 +90,8 @@ OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ParseStateValues.get -> bool
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ParseStateValues.set -> void
 ~OpenTelemetry.Logs.OpenTelemetryLoggerOptions.SetResourceBuilder(OpenTelemetry.Resources.ResourceBuilder resourceBuilder) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider
-~OpenTelemetry.Logs.OpenTelemetryLoggerProvider.CreateLogger(string categoryName) -> Microsoft.Extensions.Logging.ILogger
-~OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider(Microsoft.Extensions.Options.IOptionsMonitor<OpenTelemetry.Logs.OpenTelemetryLoggerOptions> options) -> void
+OpenTelemetry.Logs.OpenTelemetryLoggerProvider.CreateLogger(string! categoryName) -> Microsoft.Extensions.Logging.ILogger!
+OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider(Microsoft.Extensions.Options.IOptionsMonitor<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>! options) -> void
 OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporality.Cumulative = 1 -> OpenTelemetry.Metrics.AggregationTemporality
 OpenTelemetry.Metrics.AggregationTemporality.Delta = 2 -> OpenTelemetry.Metrics.AggregationTemporality
