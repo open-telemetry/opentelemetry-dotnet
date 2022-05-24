@@ -54,7 +54,7 @@ internal abstract class TagTransformer<T>
                 catch
                 {
                     // If ToString throws an exception then the tag is ignored.
-                    // OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tag.Value.GetType().ToString(), tag.Key);
+                    OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tag.Value.GetType().ToString(), tag.Key);
                     return default(T);
                 }
 
@@ -72,7 +72,7 @@ internal abstract class TagTransformer<T>
                 catch
                 {
                     // If ToString throws an exception then the tag is ignored.
-                    // OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tag.Value.GetType().ToString(), tag.Key);
+                    OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tag.Value.GetType().ToString(), tag.Key);
                     return default(T);
                 }
         }
