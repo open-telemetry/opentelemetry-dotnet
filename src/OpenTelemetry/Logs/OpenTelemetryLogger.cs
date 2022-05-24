@@ -24,7 +24,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
 {
-    internal class OpenTelemetryLogger : ILogger
+    internal sealed class OpenTelemetryLogger : ILogger
     {
         private readonly string categoryName;
         private readonly OpenTelemetryLoggerProvider provider;

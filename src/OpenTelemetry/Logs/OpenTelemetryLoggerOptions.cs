@@ -22,6 +22,9 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Logs
 {
+    /// <summary>
+    /// Contains OpenTelemetry logging options.
+    /// </summary>
     public class OpenTelemetryLoggerOptions
     {
         internal readonly List<BaseProcessor<LogRecord>> Processors = new();

@@ -52,6 +52,10 @@ namespace OpenTelemetry.Logs
             private readonly IReadOnlyList<KeyValuePair<string, object?>> scope;
             private int position;
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Enumerator"/> struct.
+            /// </summary>
+            /// <param name="scope">Scope.</param>
             public Enumerator(object? scope)
             {
                 if (scope is IReadOnlyList<KeyValuePair<string, object?>> scopeList)
@@ -74,10 +78,12 @@ namespace OpenTelemetry.Logs
                 this.Current = default;
             }
 
+            /// <inheritdoc/>
             public KeyValuePair<string, object?> Current { get; private set; }
 
             object IEnumerator.Current => this.Current;
 
+            /// <inheritdoc/>
             public bool MoveNext()
             {
                 if (this.position < this.scope.Count)
@@ -89,10 +95,12 @@ namespace OpenTelemetry.Logs
                 return false;
             }
 
+            /// <inheritdoc/>
             public void Dispose()
             {
             }
 
+            /// <inheritdoc/>
             public void Reset()
                 => throw new NotSupportedException();
         }
