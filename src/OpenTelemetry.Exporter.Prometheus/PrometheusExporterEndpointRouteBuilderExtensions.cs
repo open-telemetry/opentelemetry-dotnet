@@ -36,9 +36,35 @@ namespace Microsoft.AspNetCore.Builder
         /// Adds OpenTelemetry Prometheus scraping endpoint middleware to an
         /// <see cref="IEndpointRouteBuilder"/> instance.
         /// </summary>
+        /// <remarks>Note: A branched pipeline is created for the route
+        /// specified by <see
+        /// cref="PrometheusExporterOptions.ScrapeEndpointPath"/>.</remarks>
         /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add
         /// middleware to.</param>
-        /// <param name="path">Optional path to use for the branched pipeline.</param>
+        /// <returns>A convention routes for the Prometheus scraping endpoint.</returns>
+        public static IEndpointConventionBuilder MapPrometheusScrapingEndpoint(this IEndpointRouteBuilder endpoints)
+            => MapPrometheusScrapingEndpoint(endpoints, path: null, meterProvider: null, configureBranchedPipeline: null);
+
+        /// <summary>
+        /// Adds OpenTelemetry Prometheus scraping endpoint middleware to an
+        /// <see cref="IEndpointRouteBuilder"/> instance.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add
+        /// middleware to.</param>
+        /// <param name="path">The path to use for the branched pipeline.</param>
+        /// <returns>A convention routes for the Prometheus scraping endpoint.</returns>
+        public static IEndpointConventionBuilder MapPrometheusScrapingEndpoint(this IEndpointRouteBuilder endpoints, string path)
+            => MapPrometheusScrapingEndpoint(endpoints, path, meterProvider: null, configureBranchedPipeline: null);
+
+        /// <summary>
+        /// Adds OpenTelemetry Prometheus scraping endpoint middleware to an
+        /// <see cref="IEndpointRouteBuilder"/> instance.
+        /// </summary>
+        /// <param name="endpoints">The <see cref="IEndpointRouteBuilder"/> to add
+        /// middleware to.</param>
+        /// <param name="path">Optional path to use for the branched pipeline.
+        /// If not provided then <see cref="PrometheusExporterOptions.ScrapeEndpointPath"/>
+        /// is used.</param>
         /// <param name="meterProvider">Optional <see cref="MeterProvider"/>
         /// containing a <see cref="PrometheusExporter"/> otherwise the primary
         /// SDK provider will be resolved using application services.</param>
