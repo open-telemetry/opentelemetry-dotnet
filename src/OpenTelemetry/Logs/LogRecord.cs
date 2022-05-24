@@ -29,12 +29,12 @@ namespace OpenTelemetry.Logs
     /// </summary>
     public sealed class LogRecord
     {
-        private static readonly Action<object, List<object>> AddScopeToBufferedList = (object scope, List<object> state) =>
+        private static readonly Action<object?, List<object?>> AddScopeToBufferedList = (object? scope, List<object?> state) =>
         {
             state.Add(scope);
         };
 
-        private List<object>? bufferedScopes;
+        private List<object?>? bufferedScopes;
 
         internal LogRecord(
             IExternalScopeProvider? scopeProvider,
@@ -45,7 +45,7 @@ namespace OpenTelemetry.Logs
             string? formattedMessage,
             object? state,
             Exception? exception,
-            IReadOnlyList<KeyValuePair<string, object>>? stateValues)
+            IReadOnlyList<KeyValuePair<string, object?>>? stateValues)
         {
             this.ScopeProvider = scopeProvider;
 
@@ -98,7 +98,7 @@ namespace OpenTelemetry.Logs
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled
         /// otherwise <see langword="null"/>.
         /// </summary>
-        public IReadOnlyList<KeyValuePair<string, object>>? StateValues { get; set; }
+        public IReadOnlyList<KeyValuePair<string, object?>>? StateValues { get; set; }
 
         public Exception? Exception { get; }
 
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Logs
 
             if (this.bufferedScopes != null)
             {
-                foreach (object scope in this.bufferedScopes)
+                foreach (object? scope in this.bufferedScopes)
                 {
                     ScopeForEachState<TState>.ForEachScope(scope, forEachScopeState);
                 }
@@ -149,7 +149,7 @@ namespace OpenTelemetry.Logs
                 return;
             }
 
-            List<object> scopes = new List<object>();
+            List<object?> scopes = new List<object?>();
 
             this.ScopeProvider?.ForEachScope(AddScopeToBufferedList, scopes);
 
@@ -158,7 +158,7 @@ namespace OpenTelemetry.Logs
 
         private readonly struct ScopeForEachState<TState>
         {
-            public static readonly Action<object, ScopeForEachState<TState>> ForEachScope = (object scope, ScopeForEachState<TState> state) =>
+            public static readonly Action<object?, ScopeForEachState<TState>> ForEachScope = (object? scope, ScopeForEachState<TState> state) =>
             {
                 LogRecordScope logRecordScope = new LogRecordScope(scope);
 

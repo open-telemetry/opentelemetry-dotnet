@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -36,9 +38,9 @@ namespace OpenTelemetry.Logs
             this.provider = provider;
         }
 
-        internal IExternalScopeProvider ScopeProvider { get; set; }
+        internal IExternalScopeProvider? ScopeProvider { get; set; }
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
             if (!this.IsEnabled(logLevel)
                 || Sdk.SuppressInstrumentation)
@@ -73,24 +75,33 @@ namespace OpenTelemetry.Logs
             return logLevel != LogLevel.None;
         }
 
-        public IDisposable BeginScope<TState>(TState state) => this.ScopeProvider?.Push(state) ?? null;
+        public IDisposable BeginScope<TState>(TState state) => this.ScopeProvider?.Push(state) ?? NullScope.Instance;
 
-        private IReadOnlyList<KeyValuePair<string, object>> ParseState<TState>(TState state)
+        private IReadOnlyList<KeyValuePair<string, object?>> ParseState<TState>(TState state)
         {
-            if (state is IReadOnlyList<KeyValuePair<string, object>> stateList)
+            if (state is IReadOnlyList<KeyValuePair<string, object?>> stateList)
             {
                 return stateList;
             }
-            else if (state is IEnumerable<KeyValuePair<string, object>> stateValues)
+            else if (state is IEnumerable<KeyValuePair<string, object?>> stateValues)
             {
-                return new List<KeyValuePair<string, object>>(stateValues);
+                return new List<KeyValuePair<string, object?>>(stateValues);
             }
             else
             {
-                return new List<KeyValuePair<string, object>>
+                return new List<KeyValuePair<string, object?>>
                 {
-                    new KeyValuePair<string, object>(string.Empty, state),
+                    new KeyValuePair<string, object?>(string.Empty, state),
                 };
+            }
+        }
+
+        private sealed class NullScope : IDisposable
+        {
+            public static NullScope Instance { get; } = new();
+
+            public void Dispose()
+            {
             }
         }
     }
