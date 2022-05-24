@@ -14,10 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
 {
@@ -31,18 +34,18 @@ namespace OpenTelemetry.Logs
             state.Add(scope);
         };
 
-        private List<object> bufferedScopes;
+        private List<object>? bufferedScopes;
 
         internal LogRecord(
-            IExternalScopeProvider scopeProvider,
+            IExternalScopeProvider? scopeProvider,
             DateTime timestamp,
             string categoryName,
             LogLevel logLevel,
             EventId eventId,
-            string formattedMessage,
-            object state,
-            Exception exception,
-            IReadOnlyList<KeyValuePair<string, object>> stateValues)
+            string? formattedMessage,
+            object? state,
+            Exception? exception,
+            IReadOnlyList<KeyValuePair<string, object>>? stateValues)
         {
             this.ScopeProvider = scopeProvider;
 
@@ -73,7 +76,7 @@ namespace OpenTelemetry.Logs
 
         public ActivityTraceFlags TraceFlags { get; }
 
-        public string TraceState { get; }
+        public string? TraceState { get; }
 
         public string CategoryName { get; }
 
@@ -81,25 +84,25 @@ namespace OpenTelemetry.Logs
 
         public EventId EventId { get; }
 
-        public string FormattedMessage { get; set; }
+        public string? FormattedMessage { get; set; }
 
         /// <summary>
         /// Gets or sets the raw state attached to the log. Set to <see
         /// langword="null"/> when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled.
         /// </summary>
-        public object State { get; set; }
+        public object? State { get; set; }
 
         /// <summary>
         /// Gets or sets the parsed state values attached to the log. Set when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled
         /// otherwise <see langword="null"/>.
         /// </summary>
-        public IReadOnlyList<KeyValuePair<string, object>> StateValues { get; set; }
+        public IReadOnlyList<KeyValuePair<string, object>>? StateValues { get; set; }
 
-        public Exception Exception { get; }
+        public Exception? Exception { get; }
 
-        internal IExternalScopeProvider ScopeProvider { get; set; }
+        internal IExternalScopeProvider? ScopeProvider { get; set; }
 
         /// <summary>
         /// Executes callback for each currently active scope objects in order
@@ -118,6 +121,8 @@ namespace OpenTelemetry.Logs
         /// <param name="state">The state object to be passed into the callback.</param>
         public void ForEachScope<TState>(Action<LogRecordScope, TState> callback, TState state)
         {
+            Guard.ThrowIfNull(callback);
+
             var forEachScopeState = new ScopeForEachState<TState>(callback, state);
 
             if (this.bufferedScopes != null)
