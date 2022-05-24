@@ -15,7 +15,8 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Internal;
+
+namespace OpenTelemetry.Internal;
 
 internal abstract class TagAndValueTransformer<T, TValue> : TagTransformer<T>
 {
