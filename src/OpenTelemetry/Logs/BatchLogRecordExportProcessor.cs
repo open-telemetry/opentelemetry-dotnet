@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
+using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 
 namespace OpenTelemetry
@@ -37,6 +40,8 @@ namespace OpenTelemetry
 
         public override void OnEnd(LogRecord data)
         {
+            Guard.ThrowIfNull(data);
+
             data.BufferLogScopes();
 
             base.OnEnd(data);
