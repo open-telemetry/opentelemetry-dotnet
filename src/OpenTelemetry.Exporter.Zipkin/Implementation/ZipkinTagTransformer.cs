@@ -20,8 +20,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
     internal class ZipkinTagTransformer : TagTransformer<string>
     {
-        protected override bool JsonifyArrays => true;
-
         protected override string TransformIntegralTag(string key, long value) => value.ToString();
 
         protected override string TransformFloatingPointTag(string key, double value) => value.ToString();

@@ -20,89 +20,64 @@ using OtlpCommon = Opentelemetry.Proto.Common.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
-    internal class OtlpKeyValueTransformer : TagTransformer<OtlpCommon.KeyValue>
+    internal class OtlpKeyValueTransformer : TagAndValueTransformer<OtlpCommon.KeyValue, OtlpCommon.AnyValue>
     {
         protected override OtlpCommon.KeyValue TransformIntegralTag(string key, long value)
         {
-            return new OtlpCommon.KeyValue { Key = key, Value = new OtlpCommon.AnyValue { IntValue = value } };
+            return new OtlpCommon.KeyValue { Key = key, Value = this.TransformIntegralValue(value) };
         }
 
         protected override OtlpCommon.KeyValue TransformFloatingPointTag(string key, double value)
         {
-            return new OtlpCommon.KeyValue { Key = key, Value = new OtlpCommon.AnyValue { DoubleValue = value } };
+            return new OtlpCommon.KeyValue { Key = key, Value = this.TransformFloatingPointValue(value) };
         }
 
         protected override OtlpCommon.KeyValue TransformBooleanTag(string key, bool value)
         {
-            return new OtlpCommon.KeyValue { Key = key, Value = new OtlpCommon.AnyValue { BoolValue = value } };
+            return new OtlpCommon.KeyValue { Key = key, Value = this.TransformBooleanValue(value) };
         }
 
         protected override OtlpCommon.KeyValue TransformStringTag(string key, string value)
         {
-            return new OtlpCommon.KeyValue { Key = key, Value = new OtlpCommon.AnyValue { StringValue = value } };
+            return new OtlpCommon.KeyValue { Key = key, Value = this.TransformStringValue(value) };
         }
 
-        protected override OtlpCommon.KeyValue TransformIntegralArrayTag(string key, Array array)
+        protected override OtlpCommon.KeyValue TransformArrayTag(string key, Array array)
+        {
+            return new OtlpCommon.KeyValue { Key = key, Value = this.TransformArrayValue(array) };
+        }
+
+        protected override OtlpCommon.AnyValue TransformIntegralValue(long value)
+        {
+            return new OtlpCommon.AnyValue { IntValue = value };
+        }
+
+        protected override OtlpCommon.AnyValue TransformFloatingPointValue(double value)
+        {
+            return new OtlpCommon.AnyValue { DoubleValue = value };
+        }
+
+        protected override OtlpCommon.AnyValue TransformBooleanValue(bool value)
+        {
+            return new OtlpCommon.AnyValue { BoolValue = value };
+        }
+
+        protected override OtlpCommon.AnyValue TransformStringValue(string value)
+        {
+            return new OtlpCommon.AnyValue { StringValue = value };
+        }
+
+        protected override OtlpCommon.AnyValue TransformArrayValue(Array array)
         {
             var arrayValue = new OtlpCommon.ArrayValue();
 
             foreach (var item in array)
             {
-                var anyValue = new OtlpCommon.AnyValue { IntValue = Convert.ToInt64(item) };
-                arrayValue.Values.Add(anyValue);
+                var value = item != null ? this.TransformValue(item) : new OtlpCommon.AnyValue();
+                arrayValue.Values.Add(value);
             }
 
-            return new OtlpCommon.KeyValue { Key = key, Value = new OtlpCommon.AnyValue { ArrayValue = arrayValue } };
-        }
-
-        protected override OtlpCommon.KeyValue TransformFloatingPointArrayTag(string key, Array array)
-        {
-            var arrayValue = new OtlpCommon.ArrayValue();
-
-            foreach (var item in array)
-            {
-                var anyValue = new OtlpCommon.AnyValue { DoubleValue = Convert.ToDouble(item) };
-                arrayValue.Values.Add(anyValue);
-            }
-
-            return new OtlpCommon.KeyValue { Key = key, Value = new OtlpCommon.AnyValue { ArrayValue = arrayValue } };
-        }
-
-        protected override OtlpCommon.KeyValue TransformBooleanArrayTag(string key, Array array)
-        {
-            var arrayValue = new OtlpCommon.ArrayValue();
-
-            foreach (var item in array)
-            {
-                var anyValue = new OtlpCommon.AnyValue { BoolValue = Convert.ToBoolean(item) };
-                arrayValue.Values.Add(anyValue);
-            }
-
-            return new OtlpCommon.KeyValue { Key = key, Value = new OtlpCommon.AnyValue { ArrayValue = arrayValue } };
-        }
-
-        protected override OtlpCommon.KeyValue TransformStringArrayTag(string key, Array array)
-        {
-            var arrayValue = new OtlpCommon.ArrayValue();
-
-            foreach (var item in array)
-            {
-                try
-                {
-                    var value = item != null
-                        ? Convert.ToString(item)
-                        : null;
-
-                    var anyValue = item != null ? new OtlpCommon.AnyValue { StringValue = value } : new OtlpCommon.AnyValue { };
-                    arrayValue.Values.Add(anyValue);
-                }
-                catch
-                {
-                    return default;
-                }
-            }
-
-            return new OtlpCommon.KeyValue { Key = key, Value = new OtlpCommon.AnyValue { ArrayValue = arrayValue } };
+            return new OtlpCommon.AnyValue { ArrayValue = arrayValue };
         }
     }
 }
