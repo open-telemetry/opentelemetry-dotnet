@@ -6,8 +6,9 @@
 
 Released 2022-Apr-15
 
-* Removes .NET Framework 4.6.1. The minimum .NET Framework
-  version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
+* Removes .NET Framework 4.6.1. The minimum .NET Framework version supported is
+  .NET 4.6.2.
+  ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
 
 ## 1.0.0-rc9.2
 
@@ -17,7 +18,7 @@ Released 2022-Apr-12
 
 Released 2022-Mar-30
 
-## 1.0.0-rc10
+## 1.0.0-rc10 (broken. use 1.0.0-rc9.1 and newer)
 
 Released 2022-Mar-04
 
@@ -30,7 +31,8 @@ Released 2022-Feb-02
 Released 2021-Oct-08
 
 * Removes .NET Framework 4.5.2 support. The minimum .NET Framework version
-  supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
+  supported is .NET 4.6.1.
+  ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
 
 ## 1.0.0-rc7
 
@@ -49,8 +51,9 @@ Released 2021-Jun-09
 Released 2021-Apr-23
 
 * Instrumentation modified to depend only on the API.
-* Activities are now created with the `db.system` attribute set for usage
-  during sampling. ([#1979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1979))
+* Activities are now created with the `db.system` attribute set for usage during
+  sampling.
+  ([#1979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1979))
 
 ## 1.0.0-rc3
 
@@ -60,8 +63,8 @@ Released 2021-Mar-19
 
 Released 2021-Jan-29
 
-* Microsoft.Data.SqlClient v2.0.0 and higher is now properly instrumented
-  on .NET Framework.
+* Microsoft.Data.SqlClient v2.0.0 and higher is now properly instrumented on
+  .NET Framework.
   ([#1599](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1599))
 * SqlClientInstrumentationOptions API changes: `SetStoredProcedureCommandName`
   and `SetTextCommandContent` have been renamed to
