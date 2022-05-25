@@ -90,7 +90,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             this.Tags.Return();
         }
 
-        public void Write(Utf8JsonWriter writer, ZipkinTagTransformer tagTransformer)
+        public void Write(Utf8JsonWriter writer)
         {
             writer.WriteStartObject();
 
@@ -177,7 +177,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 {
                     foreach (var tag in this.LocalEndpoint.Tags ?? Enumerable.Empty<KeyValuePair<string, object>>())
                     {
-                        if (tagTransformer.TryTransformTag(tag, out var result))
+                        if (ZipkinTagTransformer.Instance.TryTransformTag(tag, out var result))
                         {
                             writer.WriteString(tag.Key, result);
                         }
@@ -185,7 +185,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
                     foreach (var tag in this.Tags)
                     {
-                        if (tagTransformer.TryTransformTag(tag, out var result))
+                        if (ZipkinTagTransformer.Instance.TryTransformTag(tag, out var result))
                         {
                             writer.WriteString(tag.Key, result);
                         }

@@ -22,6 +22,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal class OtlpKeyValueTransformer : TagAndValueTransformer<OtlpCommon.KeyValue, OtlpCommon.AnyValue>
     {
+        public static OtlpKeyValueTransformer Instance = new();
+
+        private OtlpKeyValueTransformer()
+        {
+        }
+
         protected override OtlpCommon.KeyValue TransformIntegralTag(string key, long value)
         {
             return new OtlpCommon.KeyValue { Key = key, Value = this.TransformIntegralValue(value) };

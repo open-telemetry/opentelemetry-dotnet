@@ -197,7 +197,6 @@ namespace OpenTelemetry.Exporter
             private readonly ZipkinExporter exporter;
             private readonly Batch<Activity> batch;
             private Utf8JsonWriter writer;
-            private ZipkinTagTransformer tagTransformer;
 
             public JsonContent(ZipkinExporter exporter, in Batch<Activity> batch)
             {
@@ -233,7 +232,6 @@ namespace OpenTelemetry.Exporter
                 if (this.writer == null)
                 {
                     this.writer = new Utf8JsonWriter(stream);
-                    this.tagTransformer = new ZipkinTagTransformer();
                 }
                 else
                 {
@@ -246,7 +244,7 @@ namespace OpenTelemetry.Exporter
                 {
                     var zipkinSpan = activity.ToZipkinSpan(this.exporter.LocalEndpoint, this.exporter.options.UseShortTraceIds);
 
-                    zipkinSpan.Write(this.writer, this.tagTransformer);
+                    zipkinSpan.Write(this.writer);
 
                     zipkinSpan.Return();
                     if (this.writer.BytesPending >= this.exporter.maxPayloadSizeInBytes)

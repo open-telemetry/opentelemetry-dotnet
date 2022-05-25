@@ -24,15 +24,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class ResourceExtensions
     {
-        private static readonly OtlpKeyValueTransformer TagTransformer = new();
-
         public static OtlpResource.Resource ToOtlpResource(this Resource resource)
         {
             var processResource = new OtlpResource.Resource();
 
             foreach (KeyValuePair<string, object> attribute in resource.Attributes)
             {
-                if (TagTransformer.TryTransformTag(attribute, out var result))
+                if (OtlpKeyValueTransformer.Instance.TryTransformTag(attribute, out var result))
                 {
                     processResource.Attributes.Add(result);
                 }
