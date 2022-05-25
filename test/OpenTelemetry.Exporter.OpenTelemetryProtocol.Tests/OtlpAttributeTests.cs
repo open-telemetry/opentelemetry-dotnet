@@ -37,12 +37,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void EmptyArrays()
         {
-            var kvp = new KeyValuePair<string, object>("key", new int[] { });
+            var kvp = new KeyValuePair<string, object>("key", Array.Empty<int>());
             Assert.True(TagTransformer.TryTransformTag(kvp, out var attribute));
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
             Assert.Empty(attribute.Value.ArrayValue.Values);
 
-            kvp = new KeyValuePair<string, object>("key", new object[] { });
+            kvp = new KeyValuePair<string, object>("key", Array.Empty<object>());
             Assert.True(TagTransformer.TryTransformTag(kvp, out attribute));
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
             Assert.Empty(attribute.Value.ArrayValue.Values);
