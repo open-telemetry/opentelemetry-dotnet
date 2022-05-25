@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.Prometheus;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
 namespace Microsoft.AspNetCore.Builder
@@ -54,7 +55,10 @@ namespace Microsoft.AspNetCore.Builder
         /// <param name="path">The path to use for the branched pipeline.</param>
         /// <returns>A convention routes for the Prometheus scraping endpoint.</returns>
         public static IEndpointConventionBuilder MapPrometheusScrapingEndpoint(this IEndpointRouteBuilder endpoints, string path)
-            => MapPrometheusScrapingEndpoint(endpoints, path, meterProvider: null, configureBranchedPipeline: null);
+        {
+            Guard.ThrowIfNull(path);
+            return MapPrometheusScrapingEndpoint(endpoints, path, meterProvider: null, configureBranchedPipeline: null);
+        }
 
         /// <summary>
         /// Adds OpenTelemetry Prometheus scraping endpoint middleware to an
