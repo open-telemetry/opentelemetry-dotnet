@@ -2,8 +2,18 @@
 OpenTelemetry.Logs.LogEmitter
 OpenTelemetry.Logs.LogEmitter.Log(OpenTelemetry.Logs.LogRecord! logRecord) -> void
 OpenTelemetry.Logs.LogEmitter.LogEmitter(OpenTelemetry.Logs.OpenTelemetryLoggerProvider! loggerProvider) -> void
+OpenTelemetry.Logs.LogRecord.CategoryName.set -> void
+OpenTelemetry.Logs.LogRecord.EventId.set -> void
+OpenTelemetry.Logs.LogRecord.Exception.set -> void
 OpenTelemetry.Logs.LogRecord.FormattedMessage.set -> void
-OpenTelemetry.Logs.LogRecord.LogRecord(string! categoryName, System.DateTime timestamp, Microsoft.Extensions.Logging.LogLevel logLevel, string! message, Microsoft.Extensions.Logging.EventId eventId = default(Microsoft.Extensions.Logging.EventId), System.Exception? exception = null, System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, object?>>? stateValues = null) -> void
+OpenTelemetry.Logs.LogRecord.LogLevel.set -> void
+OpenTelemetry.Logs.LogRecord.LogRecord() -> void
+OpenTelemetry.Logs.LogRecord.SetActivityContext(System.Diagnostics.Activity? activity) -> void
+OpenTelemetry.Logs.LogRecord.SpanId.set -> void
 OpenTelemetry.Logs.LogRecord.State.set -> void
 OpenTelemetry.Logs.LogRecord.StateValues.set -> void
+OpenTelemetry.Logs.LogRecord.Timestamp.set -> void
+OpenTelemetry.Logs.LogRecord.TraceFlags.set -> void
+OpenTelemetry.Logs.LogRecord.TraceId.set -> void
+OpenTelemetry.Logs.LogRecord.TraceState.set -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.CreateEmitter() -> OpenTelemetry.Logs.LogEmitter!

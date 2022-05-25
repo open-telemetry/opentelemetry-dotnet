@@ -42,7 +42,11 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"{"LogRecord.TraceFlags:",-RightPaddingLength}{logRecord.TraceFlags}");
                 }
 
-                this.WriteLine($"{"LogRecord.CategoryName:",-RightPaddingLength}{logRecord.CategoryName}");
+                if (logRecord.CategoryName != null)
+                {
+                    this.WriteLine($"{"LogRecord.CategoryName:",-RightPaddingLength}{logRecord.CategoryName}");
+                }
+
                 this.WriteLine($"{"LogRecord.LogLevel:",-RightPaddingLength}{logRecord.LogLevel}");
 
                 if (logRecord.FormattedMessage != null)

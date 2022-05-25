@@ -35,30 +35,21 @@ namespace OpenTelemetry.Logs
         };
 
         private List<object?>? bufferedScopes;
+        private DateTime timestamp;
 
-        public LogRecord(
-            string categoryName,
-            DateTime timestamp,
-            LogLevel logLevel,
-            string message,
-            EventId eventId = default,
-            Exception? exception = null,
-            IReadOnlyList<KeyValuePair<string, object?>>? stateValues = null)
-            : this(
-                  scopeProvider: null,
-                  timestamp.Kind == DateTimeKind.Local ? timestamp.ToUniversalTime() : timestamp,
-                  categoryName,
-                  logLevel,
-                  eventId,
-                  message,
-                  state: null,
-                  exception,
-                  stateValues)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LogRecord"/> class.
+        /// </summary>
+        /// <remarks>
+        /// Note: The <see cref="Timestamp"/> property is initialized to <see
+        /// cref="DateTime.UtcNow"/>.
+        /// </remarks>
+        public LogRecord()
         {
-            Guard.ThrowIfNullOrEmpty(categoryName);
-            Guard.ThrowIfNullOrEmpty(message);
+            this.timestamp = DateTime.UtcNow;
         }
 
+        // Note: Some users are calling this with reflection. Try not to change the signature to be nice.
         internal LogRecord(
             IExternalScopeProvider? scopeProvider,
             DateTime timestamp,
@@ -71,17 +62,7 @@ namespace OpenTelemetry.Logs
             IReadOnlyList<KeyValuePair<string, object?>>? stateValues)
         {
             this.ScopeProvider = scopeProvider;
-
-            var activity = Activity.Current;
-            if (activity != null)
-            {
-                this.TraceId = activity.TraceId;
-                this.SpanId = activity.SpanId;
-                this.TraceState = activity.TraceStateString;
-                this.TraceFlags = activity.ActivityTraceFlags;
-            }
-
-            this.Timestamp = timestamp;
+            this.timestamp = timestamp;
             this.CategoryName = categoryName;
             this.LogLevel = logLevel;
             this.EventId = eventId;
@@ -89,47 +70,53 @@ namespace OpenTelemetry.Logs
             this.State = state;
             this.StateValues = stateValues;
             this.Exception = exception;
+
+            this.SetActivityContext(Activity.Current);
         }
 
         /// <summary>
-        /// Gets the log timestamp.
+        /// Gets or sets the log timestamp.
         /// </summary>
-        public DateTime Timestamp { get; }
+        public DateTime Timestamp
+        {
+            get => this.timestamp;
+            set { this.timestamp = value.Kind == DateTimeKind.Local ? value.ToUniversalTime() : value; }
+        }
 
         /// <summary>
-        /// Gets the log <see cref="ActivityTraceId"/>.
+        /// Gets or sets the log <see cref="ActivityTraceId"/>.
         /// </summary>
-        public ActivityTraceId TraceId { get; }
+        public ActivityTraceId TraceId { get; set; }
 
         /// <summary>
-        /// Gets the log <see cref="ActivitySpanId"/>.
+        /// Gets or sets the log <see cref="ActivitySpanId"/>.
         /// </summary>
-        public ActivitySpanId SpanId { get; }
+        public ActivitySpanId SpanId { get; set; }
 
         /// <summary>
-        /// Gets the log <see cref="ActivityTraceFlags"/>.
+        /// Gets or sets the log <see cref="ActivityTraceFlags"/>.
         /// </summary>
-        public ActivityTraceFlags TraceFlags { get; }
+        public ActivityTraceFlags TraceFlags { get; set; }
 
         /// <summary>
-        /// Gets the log trace state.
+        /// Gets or sets the log trace state.
         /// </summary>
-        public string? TraceState { get; }
+        public string? TraceState { get; set; }
 
         /// <summary>
-        /// Gets the log category name.
+        /// Gets or sets the log category name.
         /// </summary>
-        public string CategoryName { get; }
+        public string? CategoryName { get; set; }
 
         /// <summary>
-        /// Gets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
+        /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
         /// </summary>
-        public LogLevel LogLevel { get; }
+        public LogLevel LogLevel { get; set; }
 
         /// <summary>
-        /// Gets the log <see cref="EventId"/>.
+        /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.EventId"/>.
         /// </summary>
-        public EventId EventId { get; }
+        public EventId EventId { get; set; }
 
         /// <summary>
         /// Gets or sets the log formatted message.
@@ -151,11 +138,26 @@ namespace OpenTelemetry.Logs
         public IReadOnlyList<KeyValuePair<string, object?>>? StateValues { get; set; }
 
         /// <summary>
-        /// Gets the log <see cref="System.Exception"/>.
+        /// Gets or sets the log <see cref="System.Exception"/>.
         /// </summary>
-        public Exception? Exception { get; }
+        public Exception? Exception { get; set; }
 
         internal IExternalScopeProvider? ScopeProvider { get; set; }
+
+        /// <summary>
+        /// Set the log activity context fields from the supplied <see cref="Activity"/>.
+        /// </summary>
+        /// <param name="activity"><see cref="Activity"/>.</param>
+        public void SetActivityContext(Activity? activity)
+        {
+            if (activity != null)
+            {
+                this.TraceId = activity.TraceId;
+                this.SpanId = activity.SpanId;
+                this.TraceState = activity.TraceStateString;
+                this.TraceFlags = activity.ActivityTraceFlags;
+            }
+        }
 
         /// <summary>
         /// Executes callback for each currently active scope objects in order
