@@ -88,7 +88,7 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient.Implementation
                 // propagator is used, as HttpClient by itself will only
                 // do TraceContext propagation.
                 var textMapPropagator = Propagators.DefaultTextMapPropagator;
-                var context = new PropagationContext(activity.Context, Baggage.Current);
+                var context = PropagationContext.CreateFromActivity(activity, Baggage.Current);
                 textMapPropagator.Inject(
                     in context,
                     request,
