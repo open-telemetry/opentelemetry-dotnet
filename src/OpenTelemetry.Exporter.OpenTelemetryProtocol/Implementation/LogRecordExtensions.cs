@@ -32,6 +32,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class LogRecordExtensions
     {
+        private static readonly OtlpKeyValueTransformer TagTransformer = new();
+
         private static readonly string[] LogLevels = new string[7]
         {
             "Trace", "Debug", "Information", "Warning", "Error", "Critical", "None",
@@ -105,8 +107,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         }
                         else
                         {
-                            var otlpAttribute = stateValue.ToOtlpAttribute();
-                            otlpLogRecord.Attributes.Add(otlpAttribute);
+                            if (TagTransformer.TryTransformTag(stateValue, out var result))
+                            {
+                                otlpLogRecord.Attributes.Add(result);
+                            }
                         }
                     }
                 }
@@ -150,8 +154,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     foreach (var scopeItem in scope)
                     {
                         var scopeItemWithDepthInfo = new KeyValuePair<string, object>($"[Scope.{scopeDepth}]:{scopeItem.Key}", scopeItem.Value);
-                        var otlpAttribute = scopeItemWithDepthInfo.ToOtlpAttribute();
-                        otlpLog.Attributes.Add(otlpAttribute);
+                        if (TagTransformer.TryTransformTag(scopeItemWithDepthInfo, out var result))
+                        {
+                            otlpLog.Attributes.Add(result);
+                        }
                     }
                 }
             }

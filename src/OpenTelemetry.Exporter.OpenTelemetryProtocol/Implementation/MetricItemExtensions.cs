@@ -34,6 +34,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
     {
         private static readonly ConcurrentBag<OtlpMetrics.ScopeMetrics> MetricListPool = new();
         private static readonly Action<RepeatedField<OtlpMetrics.Metric>, int> RepeatedFieldOfMetricSetCountAction = CreateRepeatedFieldOfMetricSetCountAction();
+        private static readonly OtlpKeyValueTransformer TagTransformer = new();
 
         internal static void AddMetrics(
             this OtlpCollector.ExportMetricsServiceRequest request,
@@ -279,7 +280,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         {
             foreach (var tag in tags)
             {
-                attributes.Add(tag.ToOtlpAttribute());
+                if (TagTransformer.TryTransformTag(tag, out var result))
+                {
+                    attributes.Add(result);
+                }
             }
         }
 

@@ -37,6 +37,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
     {
         private static readonly ConcurrentBag<OtlpTrace.ScopeSpans> SpanListPool = new();
         private static readonly Action<RepeatedField<OtlpTrace.Span>, int> RepeatedFieldOfSpanSetCountAction = CreateRepeatedFieldOfSpanSetCountAction();
+        private static readonly OtlpKeyValueTransformer TagTransformer = new();
 
         internal static void AddBatch(
             this OtlpCollector.ExportTraceServiceRequest request,
@@ -355,8 +356,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     this.Created = true;
                 }
 
-                var attribute = activityTag.ToOtlpAttribute();
-                if (attribute != null)
+                if (TagTransformer.TryTransformTag(activityTag, out var attribute))
                 {
                     PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, attribute);
 

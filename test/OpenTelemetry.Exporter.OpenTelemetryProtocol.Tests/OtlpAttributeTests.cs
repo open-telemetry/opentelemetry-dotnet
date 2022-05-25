@@ -25,26 +25,25 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
     public class OtlpAttributeTests
     {
+        private static readonly OtlpKeyValueTransformer TagTransformer = new();
+
         [Fact]
         public void NullValueAttribute()
         {
             var kvp = new KeyValuePair<string, object>("key", null);
-            var attribute = kvp.ToOtlpAttribute();
-            Assert.Null(attribute);
+            Assert.False(TagTransformer.TryTransformTag(kvp, out var _));
         }
 
         [Fact]
         public void EmptyArrays()
         {
             var kvp = new KeyValuePair<string, object>("key", new int[] { });
-            var attribute = kvp.ToOtlpAttribute();
-            Assert.NotNull(attribute);
+            Assert.True(TagTransformer.TryTransformTag(kvp, out var attribute));
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
             Assert.Empty(attribute.Value.ArrayValue.Values);
 
             kvp = new KeyValuePair<string, object>("key", new object[] { });
-            attribute = kvp.ToOtlpAttribute();
-            Assert.NotNull(attribute);
+            Assert.True(TagTransformer.TryTransformTag(kvp, out attribute));
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
             Assert.Empty(attribute.Value.ArrayValue.Values);
         }
@@ -67,8 +66,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         public void IntegralTypesSupported(object value)
         {
             var kvp = new KeyValuePair<string, object>("key", value);
-            var attribute = kvp.ToOtlpAttribute();
-            Assert.NotNull(attribute);
+            Assert.True(TagTransformer.TryTransformTag(kvp, out var attribute));
 
             switch (value)
             {
@@ -97,8 +95,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         public void FloatingPointTypesSupported(object value)
         {
             var kvp = new KeyValuePair<string, object>("key", value);
-            var attribute = kvp.ToOtlpAttribute();
-            Assert.NotNull(attribute);
+            Assert.True(TagTransformer.TryTransformTag(kvp, out var attribute));
 
             switch (value)
             {
@@ -125,8 +122,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         public void BooleanTypeSupported(object value)
         {
             var kvp = new KeyValuePair<string, object>("key", value);
-            var attribute = kvp.ToOtlpAttribute();
-            Assert.NotNull(attribute);
+            Assert.True(TagTransformer.TryTransformTag(kvp, out var attribute));
 
             switch (value)
             {
@@ -153,8 +149,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         public void StringTypesSupported(object value)
         {
             var kvp = new KeyValuePair<string, object>("key", value);
-            var attribute = kvp.ToOtlpAttribute();
-            Assert.NotNull(attribute);
+            Assert.True(TagTransformer.TryTransformTag(kvp, out var attribute));
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ValueCase);
             Assert.Equal(Convert.ToString(value), attribute.Value.StringValue);
         }
@@ -166,14 +161,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var stringArray = new string[] { "a", "b", "c", string.Empty, null };
 
             var kvp = new KeyValuePair<string, object>("key", charArray);
-            var attribute = kvp.ToOtlpAttribute();
-            Assert.NotNull(attribute);
+            Assert.True(TagTransformer.TryTransformTag(kvp, out var attribute));
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
             Assert.Equal(charArray.Select(x => x.ToString()), attribute.Value.ArrayValue.Values.Select(x => x.StringValue));
 
             kvp = new KeyValuePair<string, object>("key", stringArray);
-            attribute = kvp.ToOtlpAttribute();
-            Assert.NotNull(attribute);
+            Assert.True(TagTransformer.TryTransformTag(kvp, out attribute));
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
 
             for (var i = 0; i < stringArray.Length; ++i)
@@ -213,8 +206,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             foreach (var value in testValues)
             {
                 var kvp = new KeyValuePair<string, object>("key", value);
-                var attribute = kvp.ToOtlpAttribute();
-                Assert.NotNull(attribute);
+                Assert.True(TagTransformer.TryTransformTag(kvp, out var attribute));
                 Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ValueCase);
                 Assert.Equal(value.ToString(), attribute.Value.StringValue);
             }
@@ -222,8 +214,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             foreach (var value in testArrayValues)
             {
                 var kvp = new KeyValuePair<string, object>("key", value);
-                var attribute = kvp.ToOtlpAttribute();
-                Assert.NotNull(attribute);
+                Assert.True(TagTransformer.TryTransformTag(kvp, out var attribute));
                 Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.ArrayValue, attribute.Value.ValueCase);
 
                 var array = value as Array;
@@ -247,12 +238,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         public void ExceptionInToStringIsCaught()
         {
             var kvp = new KeyValuePair<string, object>("key", new MyToStringMethodThrowsAnException());
-            var attribute = kvp.ToOtlpAttribute();
-            Assert.Null(attribute);
+            Assert.False(TagTransformer.TryTransformTag(kvp, out var _));
 
             kvp = new KeyValuePair<string, object>("key", new object[] { 1, false, new MyToStringMethodThrowsAnException() });
-            attribute = kvp.ToOtlpAttribute();
-            Assert.Null(attribute);
+            Assert.False(TagTransformer.TryTransformTag(kvp, out var _));
         }
 
         private class MyToStringMethodThrowsAnException
