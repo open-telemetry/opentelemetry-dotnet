@@ -21,20 +21,24 @@ namespace OpenTelemetry.Internal;
 
 internal abstract class TagTransformer<T>
 {
-    public T TransformTag(KeyValuePair<string, object> tag)
+    public bool TryTransformTag(KeyValuePair<string, object> tag, out T result)
     {
+        result = default(T);
+
         if (tag.Value == null)
         {
-            return default;
+            return false;
         }
 
         switch (tag.Value)
         {
             case char:
             case string:
-                return this.TransformStringTag(tag.Key, Convert.ToString(tag.Value));
+                result = this.TransformStringTag(tag.Key, Convert.ToString(tag.Value));
+                break;
             case bool b:
-                return this.TransformBooleanTag(tag.Key, b);
+                result = this.TransformBooleanTag(tag.Key, b);
+                break;
             case byte:
             case sbyte:
             case short:
@@ -42,21 +46,25 @@ internal abstract class TagTransformer<T>
             case int:
             case uint:
             case long:
-                return this.TransformIntegralTag(tag.Key, Convert.ToInt64(tag.Value));
+                result = this.TransformIntegralTag(tag.Key, Convert.ToInt64(tag.Value));
+                break;
             case float:
             case double:
-                return this.TransformFloatingPointTag(tag.Key, Convert.ToDouble(tag.Value));
+                result = this.TransformFloatingPointTag(tag.Key, Convert.ToDouble(tag.Value));
+                break;
             case Array array:
                 try
                 {
-                    return this.TransformArrayTagInternal(tag.Key, array);
+                    result = this.TransformArrayTagInternal(tag.Key, array);
                 }
                 catch
                 {
                     // If ToString throws an exception then the tag is ignored.
                     OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tag.Value.GetType().ToString(), tag.Key);
-                    return default(T);
+                    return false;
                 }
+
+                break;
 
             // All other types are converted to strings including the following
             // built-in value types:
@@ -67,15 +75,19 @@ internal abstract class TagTransformer<T>
             default:
                 try
                 {
-                    return this.TransformStringTag(tag.Key, tag.Value.ToString());
+                    result = this.TransformStringTag(tag.Key, tag.Value.ToString());
                 }
                 catch
                 {
                     // If ToString throws an exception then the tag is ignored.
                     OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tag.Value.GetType().ToString(), tag.Key);
-                    return default(T);
+                    return false;
                 }
+
+                break;
         }
+
+        return true;
     }
 
     protected abstract T TransformIntegralTag(string key, long value);

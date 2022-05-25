@@ -234,7 +234,9 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
         public static JaegerTag ToJaegerTag(this KeyValuePair<string, object> attribute)
         {
-            return tagTransformer.TransformTag(attribute);
+            // TODO: Check status of try
+            tagTransformer.TryTransformTag(attribute, out var result);
+            return result;
         }
 
         public static long ToEpochMicroseconds(this DateTime utcDateTime)

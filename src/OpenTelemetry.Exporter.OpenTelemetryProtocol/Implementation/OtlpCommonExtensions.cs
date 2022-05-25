@@ -27,7 +27,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static OtlpCommon.KeyValue ToOtlpAttribute(this KeyValuePair<string, object> kvp)
         {
-            return tagTransformer.TransformTag(kvp);
+            // TODO: Check status of try
+            tagTransformer.TryTransformTag(kvp, out var result);
+            return result;
         }
     }
 }
