@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+using System.Net.Http.Formatting;
+using System.Web.Http;
+
 namespace Examples.AspNet
 {
     public static class WebApiConfig

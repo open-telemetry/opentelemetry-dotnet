@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System.Web.Mvc;
+
 namespace Examples.AspNet.Controllers
 {
     public class HomeController : Controller
