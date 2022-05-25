@@ -20,11 +20,11 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
     internal class ZipkinTagTransformer : TagTransformer<string>
     {
-        public static ZipkinTagTransformer Instance = new();
-
         private ZipkinTagTransformer()
         {
         }
+
+        public static ZipkinTagTransformer Instance { get; } = new();
 
         protected override string TransformIntegralTag(string key, long value) => value.ToString();
 

@@ -22,11 +22,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal class OtlpKeyValueTransformer : TagAndValueTransformer<OtlpCommon.KeyValue, OtlpCommon.AnyValue>
     {
-        public static OtlpKeyValueTransformer Instance = new();
-
         private OtlpKeyValueTransformer()
         {
         }
+
+        public static OtlpKeyValueTransformer Instance { get; } = new();
 
         protected override OtlpCommon.KeyValue TransformIntegralTag(string key, long value)
         {
