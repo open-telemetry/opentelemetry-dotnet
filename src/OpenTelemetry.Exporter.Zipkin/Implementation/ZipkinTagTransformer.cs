@@ -17,25 +17,24 @@
 using System;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter.Zipkin.Implementation
+namespace OpenTelemetry.Exporter.Zipkin.Implementation;
+
+internal sealed class ZipkinTagTransformer : TagTransformer<string>
 {
-    internal sealed class ZipkinTagTransformer : TagTransformer<string>
+    private ZipkinTagTransformer()
     {
-        private ZipkinTagTransformer()
-        {
-        }
-
-        public static ZipkinTagTransformer Instance { get; } = new();
-
-        protected override string TransformIntegralTag(string key, long value) => value.ToString();
-
-        protected override string TransformFloatingPointTag(string key, double value) => value.ToString();
-
-        protected override string TransformBooleanTag(string key, bool value) => value ? "true" : "false";
-
-        protected override string TransformStringTag(string key, string value) => value;
-
-        protected override string TransformArrayTag(string key, Array array)
-            => this.TransformStringTag(key, System.Text.Json.JsonSerializer.Serialize(array));
     }
+
+    public static ZipkinTagTransformer Instance { get; } = new();
+
+    protected override string TransformIntegralTag(string key, long value) => value.ToString();
+
+    protected override string TransformFloatingPointTag(string key, double value) => value.ToString();
+
+    protected override string TransformBooleanTag(string key, bool value) => value ? "true" : "false";
+
+    protected override string TransformStringTag(string key, string value) => value;
+
+    protected override string TransformArrayTag(string key, Array array)
+        => this.TransformStringTag(key, System.Text.Json.JsonSerializer.Serialize(array));
 }

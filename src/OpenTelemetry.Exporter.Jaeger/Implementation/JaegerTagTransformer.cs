@@ -17,37 +17,36 @@
 using System;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter.Jaeger.Implementation
+namespace OpenTelemetry.Exporter.Jaeger.Implementation;
+
+internal sealed class JaegerTagTransformer : TagTransformer<JaegerTag>
 {
-    internal sealed class JaegerTagTransformer : TagTransformer<JaegerTag>
+    private JaegerTagTransformer()
     {
-        private JaegerTagTransformer()
-        {
-        }
-
-        public static JaegerTagTransformer Instance { get; } = new();
-
-        protected override JaegerTag TransformIntegralTag(string key, long value)
-        {
-            return new JaegerTag(key, JaegerTagType.LONG, vLong: value);
-        }
-
-        protected override JaegerTag TransformFloatingPointTag(string key, double value)
-        {
-            return new JaegerTag(key, JaegerTagType.DOUBLE, vDouble: value);
-        }
-
-        protected override JaegerTag TransformBooleanTag(string key, bool value)
-        {
-            return new JaegerTag(key, JaegerTagType.BOOL, vBool: value);
-        }
-
-        protected override JaegerTag TransformStringTag(string key, string value)
-        {
-            return new JaegerTag(key, JaegerTagType.STRING, vStr: value);
-        }
-
-        protected override JaegerTag TransformArrayTag(string key, Array array)
-            => this.TransformStringTag(key, System.Text.Json.JsonSerializer.Serialize(array));
     }
+
+    public static JaegerTagTransformer Instance { get; } = new();
+
+    protected override JaegerTag TransformIntegralTag(string key, long value)
+    {
+        return new JaegerTag(key, JaegerTagType.LONG, vLong: value);
+    }
+
+    protected override JaegerTag TransformFloatingPointTag(string key, double value)
+    {
+        return new JaegerTag(key, JaegerTagType.DOUBLE, vDouble: value);
+    }
+
+    protected override JaegerTag TransformBooleanTag(string key, bool value)
+    {
+        return new JaegerTag(key, JaegerTagType.BOOL, vBool: value);
+    }
+
+    protected override JaegerTag TransformStringTag(string key, string value)
+    {
+        return new JaegerTag(key, JaegerTagType.STRING, vStr: value);
+    }
+
+    protected override JaegerTag TransformArrayTag(string key, Array array)
+        => this.TransformStringTag(key, System.Text.Json.JsonSerializer.Serialize(array));
 }
