@@ -191,7 +191,27 @@ namespace OpenTelemetry.Metrics
         {
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                meterProviderBuilderBase.SetResourceBuilder(resourceBuilder);
+                meterProviderBuilderBase.ResourceBuilder = resourceBuilder;
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Modify the <see cref="ResourceBuilder"/> from which the Resource associated with
+        /// this provider is built from in-place.
+        /// </summary>
+        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
+        /// <param name="configure">An action which modifies the provided <see cref="ResourceBuilder"/> in-place.</param>
+        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        public static MeterProviderBuilder ConfigureResources(this MeterProviderBuilder meterProviderBuilder, Action<ResourceBuilder> configure)
+        {
+            Guard.ThrowIfNull(meterProviderBuilder, nameof(meterProviderBuilder));
+            Guard.ThrowIfNull(configure, nameof(configure));
+
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                configure(meterProviderBuilderBase.ResourceBuilder);
             }
 
             return meterProviderBuilder;

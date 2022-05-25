@@ -35,6 +35,8 @@ Released 2022-June-1
 * Swallow `ObjectDisposedException` in `BatchExportProcessor` and
   `PeriodicExportingMetricReader`.
   ([#3291](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3291))
+* Add `ConfigureResources` which can replace SetResourceBuilder more succinctly in most cases
+  and has greater flexibility (applies to TracerProvicerBuilder, MeterProviderBuilder, OpenTelemetryLoggingOptions).
 
 ## 1.3.0-beta.2
 

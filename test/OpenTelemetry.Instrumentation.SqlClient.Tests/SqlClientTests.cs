@@ -20,7 +20,6 @@ using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.Data.SqlClient;
-using Moq;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
