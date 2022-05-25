@@ -21,7 +21,7 @@ namespace OpenTelemetry.Internal;
 
 internal abstract class TagAndValueTransformer<T, TValue> : TagTransformer<T>
 {
-    public TValue TransformValue(object value)
+    protected TValue TransformValue(object value)
     {
         Debug.Assert(value != null, $"{nameof(value)} was null");
 
