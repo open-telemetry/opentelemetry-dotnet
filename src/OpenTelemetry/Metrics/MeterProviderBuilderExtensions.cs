@@ -183,6 +183,8 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
         /// this provider is built from. Overwrites currently set ResourceBuilder.
+        /// You should usually use <see cref="ConfigureResources(MeterProviderBuilder, Action{ResourceBuilder})"/> instead
+        /// (call <see cref="ResourceBuilder.Clear"/> if desired).
         /// </summary>
         /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
         /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
