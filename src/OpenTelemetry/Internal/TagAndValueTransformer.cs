@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 
 namespace OpenTelemetry.Internal;
 
@@ -22,6 +23,8 @@ internal abstract class TagAndValueTransformer<T, TValue> : TagTransformer<T>
 {
     public TValue TransformValue(object value)
     {
+        Debug.Assert(value != null, $"{nameof(value)} was null");
+
         switch (value)
         {
             case char:
