@@ -1,4 +1,4 @@
-// <copyright file="JaegerExporterOptionsHelpersTests.cs" company="OpenTelemetry Authors">
+// <copyright file="JaegerExporterProtocolParserTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.Jaeger.Tests;
 
-public class JaegerExporterOptionsHelpersTests
+public class JaegerExporterProtocolParserTests
 {
     [Theory]
     [InlineData("udp/thrift.compact", true, JaegerExportProtocol.UdpCompactThrift)]
@@ -26,7 +26,7 @@ public class JaegerExporterOptionsHelpersTests
     [InlineData("unsupported", false, default(JaegerExportProtocol))]
     public void TryParseProtocol_Protocol_MapsToCorrectValue(string protocol, bool expectedResult, JaegerExportProtocol expectedExportProtocol)
     {
-        var result = JaegerExporterOptionsHelpers.TryParseProtocol(protocol, out var exportProtocol);
+        var result = JaegerExporterProtocolParser.TryParseProtocol(protocol, out var exportProtocol);
 
         Assert.Equal(expectedExportProtocol, exportProtocol);
         Assert.Equal(expectedResult, result);

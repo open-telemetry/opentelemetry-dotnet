@@ -1,4 +1,4 @@
-// <copyright file="JaegerExporterOptionsHelpers.cs" company="OpenTelemetry Authors">
+// <copyright file="JaegerExporterProtocolParser.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 
 namespace OpenTelemetry.Exporter;
 
-internal static class JaegerExporterOptionsHelpers
+internal static class JaegerExporterProtocolParser
 {
     public static bool TryParseProtocol(string value, out JaegerExportProtocol result)
     {

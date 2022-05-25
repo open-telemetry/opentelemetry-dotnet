@@ -1,4 +1,4 @@
-// <copyright file="OtlpExporterOptionsHelpersTests.cs" company="OpenTelemetry Authors">
+// <copyright file="OtlpExportProtocolParserTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@ using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
-    public class OtlpExporterOptionsHelpersTests : Http2UnencryptedSupportTests
+    public class OtlpExportProtocolParserTests : Http2UnencryptedSupportTests
     {
         [Theory]
         [InlineData("grpc", true, OtlpExportProtocol.Grpc)]
@@ -26,7 +26,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData("unsupported", false, default(OtlpExportProtocol))]
         public void TryParseProtocol_Protocol_MapsToCorrectValue(string protocol, bool expectedResult, OtlpExportProtocol expectedExportProtocol)
         {
-            var result = OtlpExporterOptionsHelpers.TryParseProtocol(protocol, out var exportProtocol);
+            var result = OtlpExportProtocolParser.TryParseProtocol(protocol, out var exportProtocol);
 
             Assert.Equal(expectedExportProtocol, exportProtocol);
             Assert.Equal(expectedResult, result);
