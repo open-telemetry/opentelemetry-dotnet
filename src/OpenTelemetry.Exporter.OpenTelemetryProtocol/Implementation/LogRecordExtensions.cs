@@ -103,12 +103,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         {
                             otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = stateValue.Value as string };
                         }
-                        else
+                        else if (OtlpKeyValueTransformer.Instance.TryTransformTag(stateValue, out var result))
                         {
-                            if (OtlpKeyValueTransformer.Instance.TryTransformTag(stateValue, out var result))
-                            {
-                                otlpLogRecord.Attributes.Add(result);
-                            }
+                            otlpLogRecord.Attributes.Add(result);
                         }
                     }
                 }
