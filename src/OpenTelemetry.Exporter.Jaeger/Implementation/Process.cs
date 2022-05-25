@@ -29,20 +29,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             this.ServiceName = serviceName;
         }
 
-        public Process(string serviceName, IEnumerable<KeyValuePair<string, object>> processTags)
-            : this(serviceName, processTags?.Select(pt => pt.ToJaegerTag()).ToDictionary(pt => pt.Key, pt => pt))
-        {
-        }
-
-        internal Process(string serviceName, Dictionary<string, JaegerTag> processTags)
-            : this(serviceName)
-        {
-            if (processTags != null)
-            {
-                this.Tags = processTags;
-            }
-        }
-
         public string ServiceName { get; internal set; }
 
         internal Dictionary<string, JaegerTag> Tags { get; set; }

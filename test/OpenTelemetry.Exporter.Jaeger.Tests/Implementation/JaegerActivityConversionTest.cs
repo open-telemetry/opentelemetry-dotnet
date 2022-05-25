@@ -103,18 +103,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(4, jaegerLog.Fields.Count);
+            Assert.Equal(3, jaegerLog.Fields.Count);
             var eventFields = jaegerLog.Fields.ToArray();
             var eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[1];
             Assert.Equal("string_array", eventField.Key);
-            Assert.Equal("a", eventField.VStr);
+            Assert.Equal(@"[""a"",""b""]", eventField.VStr);
             eventField = eventFields[2];
-            Assert.Equal("string_array", eventField.Key);
-            Assert.Equal("b", eventField.VStr);
-            eventField = eventFields[3];
             Assert.Equal("event", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
 
@@ -168,12 +165,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(4, jaegerLog.Fields.Count);
+            Assert.Equal(3, jaegerLog.Fields.Count);
             var eventFields = jaegerLog.Fields.ToArray();
             var eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
-            eventField = eventFields[3];
+            eventField = eventFields[2];
             Assert.Equal("event", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
 
@@ -338,12 +335,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(4, jaegerLog.Fields.Count);
+            Assert.Equal(3, jaegerLog.Fields.Count);
             var eventFields = jaegerLog.Fields.ToArray();
             var eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
-            eventField = eventFields[3];
+            eventField = eventFields[2];
             Assert.Equal("event", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);

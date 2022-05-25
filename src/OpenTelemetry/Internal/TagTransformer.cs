@@ -59,7 +59,9 @@ internal abstract class TagTransformer<T>
                 }
                 catch
                 {
-                    // If ToString throws an exception then the tag is ignored.
+                    // If an exception is thrown when calling ToString
+                    // on any element of the array, then the entire array value
+                    // is ignored.
                     OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tag.Value.GetType().ToString(), tag.Key);
                     return false;
                 }
@@ -124,23 +126,13 @@ internal abstract class TagTransformer<T>
 
     private T ConvertToStringArrayThenTransformArrayTag(string key, Array array)
     {
-        try
-        {
-            var stringArray = new string[array.Length];
+        var stringArray = new string[array.Length];
 
-            for (var i = 0; i < array.Length; ++i)
-            {
-                stringArray[i] = array.GetValue(i)?.ToString();
-            }
-
-            return this.TransformArrayTag(key, stringArray);
-        }
-        catch
+        for (var i = 0; i < array.Length; ++i)
         {
-            // If an exception is thrown when calling ToString
-            // on any element of the array, then the entire array value
-            // is ignored.
-            return default;
+            stringArray[i] = array.GetValue(i)?.ToString();
         }
+
+        return this.TransformArrayTag(key, stringArray);
     }
 }

@@ -20,6 +20,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal class JaegerTagTransformer : TagTransformer<JaegerTag>
     {
+        public static JaegerTagTransformer Instance = new JaegerTagTransformer();
+
         protected override JaegerTag TransformIntegralTag(string key, long value)
         {
             return new JaegerTag(key, JaegerTagType.LONG, vLong: value);

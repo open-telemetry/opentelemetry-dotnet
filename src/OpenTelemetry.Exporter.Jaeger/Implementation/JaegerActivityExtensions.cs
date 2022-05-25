@@ -45,8 +45,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
         private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond; // 62,135,596,800,000,000
 
-        private static readonly JaegerTagTransformer TagTransformer = new();
-
         public static JaegerSpan ToJaegerSpan(this Activity activity)
         {
             var jaegerTags = new TagEnumerationState
@@ -232,13 +230,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             return new JaegerSpanRef(refType, traceId.Low, traceId.High, spanId.Low);
         }
 
-        public static JaegerTag ToJaegerTag(this KeyValuePair<string, object> attribute)
-        {
-            // TODO: Check status of try
-            TagTransformer.TryTransformTag(attribute, out var result);
-            return result;
-        }
-
         public static long ToEpochMicroseconds(this DateTime utcDateTime)
         {
             // Truncate sub-microsecond precision before offsetting by the Unix Epoch to avoid
@@ -253,42 +244,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             // the last digit being off by one for dates that result in negative Unix times
             long microseconds = timestamp.UtcDateTime.Ticks / TicksPerMicrosecond;
             return microseconds - UnixEpochMicroseconds;
-        }
-
-        private static void ProcessJaegerTagArray(ref PooledList<JaegerTag> tags, KeyValuePair<string, object> activityTag)
-        {
-            if (activityTag.Value is int[] intArray)
-            {
-                foreach (var item in intArray)
-                {
-                    JaegerTag jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.LONG, vLong: Convert.ToInt64(item));
-                    PooledList<JaegerTag>.Add(ref tags, jaegerTag);
-                }
-            }
-            else if (activityTag.Value is string[] stringArray)
-            {
-                foreach (var item in stringArray)
-                {
-                    JaegerTag jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.STRING, vStr: item);
-                    PooledList<JaegerTag>.Add(ref tags, jaegerTag);
-                }
-            }
-            else if (activityTag.Value is bool[] boolArray)
-            {
-                foreach (var item in boolArray)
-                {
-                    JaegerTag jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.BOOL, vBool: item);
-                    PooledList<JaegerTag>.Add(ref tags, jaegerTag);
-                }
-            }
-            else if (activityTag.Value is double[] doubleArray)
-            {
-                foreach (var item in doubleArray)
-                {
-                    JaegerTag jaegerTag = new JaegerTag(activityTag.Key, JaegerTagType.DOUBLE, vDouble: item);
-                    PooledList<JaegerTag>.Add(ref tags, jaegerTag);
-                }
-            }
         }
 
         private struct TagEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>, PeerServiceResolver.IPeerServiceState
@@ -314,9 +269,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
                 if (activityTag.Value != null)
                 {
                     var key = activityTag.Key;
-                    var jaegerTag = activityTag.ToJaegerTag();
 
-                    if (jaegerTag.Equals(default(JaegerTag)))
+                    if (!JaegerTagTransformer.Instance.TryTransformTag(activityTag, out var jaegerTag))
                     {
                         return true;
                     }
@@ -397,18 +351,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             public bool ForEach(KeyValuePair<string, object> tag)
             {
-                if (tag.Value is Array)
+                if (JaegerTagTransformer.Instance.TryTransformTag(tag, out var result))
                 {
-                    ProcessJaegerTagArray(ref this.Tags, tag);
-                }
-                else if (tag.Value != null)
-                {
-                    PooledList<JaegerTag>.Add(ref this.Tags, tag.ToJaegerTag());
-                }
+                    PooledList<JaegerTag>.Add(ref this.Tags, result);
 
-                if (tag.Key == "event")
-                {
-                    this.HasEvent = true;
+                    if (tag.Key == "event")
+                    {
+                        this.HasEvent = true;
+                    }
                 }
 
                 return true;
