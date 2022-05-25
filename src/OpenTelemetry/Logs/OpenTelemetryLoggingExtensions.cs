@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -24,9 +26,18 @@ using OpenTelemetry.Logs;
 
 namespace Microsoft.Extensions.Logging
 {
+    /// <summary>
+    /// Contains extension methods for registering <see cref="OpenTelemetryLoggerProvider"/> into a <see cref="ILoggingBuilder"/> instance.
+    /// </summary>
     public static class OpenTelemetryLoggingExtensions
     {
-        public static ILoggingBuilder AddOpenTelemetry(this ILoggingBuilder builder, Action<OpenTelemetryLoggerOptions> configure = null)
+        /// <summary>
+        /// Adds a OpenTelemetry logger named 'OpenTelemetry' to the factory.
+        /// </summary>
+        /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+        /// <param name="configure">Optional configuration action.</param>
+        /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+        public static ILoggingBuilder AddOpenTelemetry(this ILoggingBuilder builder, Action<OpenTelemetryLoggerOptions>? configure = null)
         {
             Guard.ThrowIfNull(builder);
 
