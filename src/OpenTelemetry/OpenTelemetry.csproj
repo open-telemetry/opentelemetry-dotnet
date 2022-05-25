@@ -16,13 +16,6 @@
     <RunApiCompat>false</RunApiCompat>
   </PropertyGroup>
 
-  <!--These files are shared and included by other projects.
-      Excluding them from compilation because they introduce an unnecessary dependency on System.Text.Json. -->
-  <ItemGroup>
-    <Compile Remove="Internal\TagAndValueTransformer.cs" />
-    <Compile Remove="Internal\TagTransformer.cs" />
-  </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutablePkgVer)" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="$(SystemReflectionEmitLightweightPkgVer)" />

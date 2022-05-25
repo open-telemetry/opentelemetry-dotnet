@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
@@ -45,5 +46,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         {
             return new JaegerTag(key, JaegerTagType.STRING, vStr: value);
         }
+
+        protected override JaegerTag TransformArrayTag(string key, Array array)
+            => this.TransformStringTag(key, System.Text.Json.JsonSerializer.Serialize(array));
     }
 }

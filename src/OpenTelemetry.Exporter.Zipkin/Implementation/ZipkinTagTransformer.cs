@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
@@ -33,5 +34,8 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
         protected override string TransformBooleanTag(string key, bool value) => value ? "true" : "false";
 
         protected override string TransformStringTag(string key, string value) => value;
+
+        protected override string TransformArrayTag(string key, Array array)
+            => this.TransformStringTag(key, System.Text.Json.JsonSerializer.Serialize(array));
     }
 }

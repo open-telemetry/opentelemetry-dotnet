@@ -101,8 +101,7 @@ internal abstract class TagTransformer<T>
 
     protected abstract T TransformStringTag(string key, string value);
 
-    protected virtual T TransformArrayTag(string key, Array array) =>
-        this.TransformStringTag(key, System.Text.Json.JsonSerializer.Serialize(array));
+    protected abstract T TransformArrayTag(string key, Array array);
 
     private T TransformArrayTagInternal(string key, Array array)
     {
