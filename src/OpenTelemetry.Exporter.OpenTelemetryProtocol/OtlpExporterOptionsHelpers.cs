@@ -18,12 +18,20 @@ namespace OpenTelemetry.Exporter
 {
     internal static class OtlpExporterOptionsHelpers
     {
-        public static OtlpExportProtocol? ToOtlpExportProtocol(this string protocol) =>
-            protocol.Trim() switch
+        public static bool TryParseProtocol(string value, out OtlpExportProtocol result)
+        {
+            switch (value?.Trim())
             {
-                "grpc" => OtlpExportProtocol.Grpc,
-                "http/protobuf" => OtlpExportProtocol.HttpProtobuf,
-                _ => null,
-            };
+                case "grpc":
+                    result = OtlpExportProtocol.Grpc;
+                    return true;
+                case "http/protobuf":
+                    result = OtlpExportProtocol.HttpProtobuf;
+                    return true;
+                default:
+                    result = default;
+                    return false;
+            }
+        }
     }
 }

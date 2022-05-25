@@ -69,10 +69,9 @@ namespace OpenTelemetry.Exporter
 
             if (EnvironmentVariableHelper.LoadString(ProtocolEnvVarName, out string protocolEnvVar))
             {
-                var protocol = protocolEnvVar.ToOtlpExportProtocol();
-                if (protocol.HasValue)
+                if (OtlpExporterOptionsHelpers.TryParseProtocol(protocolEnvVar, out var protocol))
                 {
-                    this.Protocol = protocol.Value;
+                    this.Protocol = protocol;
                 }
                 else
                 {

@@ -21,14 +21,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
     public class OtlpExporterOptionsHelpersTests : Http2UnencryptedSupportTests
     {
         [Theory]
-        [InlineData("grpc", OtlpExportProtocol.Grpc)]
-        [InlineData("http/protobuf", OtlpExportProtocol.HttpProtobuf)]
-        [InlineData("unsupported", null)]
-        public void ToOtlpExportProtocol_Protocol_MapsToCorrectValue(string protocol, OtlpExportProtocol? expectedExportProtocol)
+        [InlineData("grpc", true, OtlpExportProtocol.Grpc)]
+        [InlineData("http/protobuf", true, OtlpExportProtocol.HttpProtobuf)]
+        [InlineData("unsupported", false, default(OtlpExportProtocol))]
+        public void TryParseProtocol_Protocol_MapsToCorrectValue(string protocol, bool expectedResult, OtlpExportProtocol expectedExportProtocol)
         {
-            var exportProtocol = protocol.ToOtlpExportProtocol();
+            var result = OtlpExporterOptionsHelpers.TryParseProtocol(protocol, out var exportProtocol);
 
             Assert.Equal(expectedExportProtocol, exportProtocol);
+            Assert.Equal(expectedResult, result);
         }
     }
 }
