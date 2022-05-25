@@ -18,7 +18,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation
 {
-    internal class ZipkinTagTransformer : TagTransformer<string>
+    internal sealed class ZipkinTagTransformer : TagTransformer<string>
     {
         private ZipkinTagTransformer()
         {

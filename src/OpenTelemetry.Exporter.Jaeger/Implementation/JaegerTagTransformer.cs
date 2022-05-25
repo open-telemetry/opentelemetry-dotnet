@@ -18,7 +18,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
-    internal class JaegerTagTransformer : TagTransformer<JaegerTag>
+    internal sealed class JaegerTagTransformer : TagTransformer<JaegerTag>
     {
         private JaegerTagTransformer()
         {
