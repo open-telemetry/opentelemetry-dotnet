@@ -23,7 +23,7 @@ internal abstract class TagTransformer<T>
 {
     public bool TryTransformTag(KeyValuePair<string, object> tag, out T result)
     {
-        result = default(T);
+        result = default;
 
         if (tag.Value == null)
         {
@@ -140,7 +140,7 @@ internal abstract class TagTransformer<T>
             // If an exception is thrown when calling ToString
             // on any element of the array, then the entire array value
             // is ignored.
-            return default(T);
+            return default;
         }
     }
 }
