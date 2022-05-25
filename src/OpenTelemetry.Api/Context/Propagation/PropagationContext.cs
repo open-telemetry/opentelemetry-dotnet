@@ -46,6 +46,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <summary>
         /// Gets <see cref="System.Diagnostics.ActivityContext"/>.
         /// </summary>
+        [Obsolete("Use the GetActivityContextRef method to access ActivityContext by reference for better performance.")]
         public ActivityContext ActivityContext => this.activityContext;
 
         /// <summary>
