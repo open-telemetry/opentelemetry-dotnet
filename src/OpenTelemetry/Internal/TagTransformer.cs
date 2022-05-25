@@ -23,10 +23,9 @@ internal abstract class TagTransformer<T>
 {
     public bool TryTransformTag(KeyValuePair<string, object> tag, out T result)
     {
-        result = default;
-
         if (tag.Value == null)
         {
+            result = default;
             return false;
         }
 
@@ -63,6 +62,7 @@ internal abstract class TagTransformer<T>
                     // on any element of the array, then the entire array value
                     // is ignored.
                     OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tag.Value.GetType().ToString(), tag.Key);
+                    result = default;
                     return false;
                 }
 
@@ -83,6 +83,7 @@ internal abstract class TagTransformer<T>
                 {
                     // If ToString throws an exception then the tag is ignored.
                     OpenTelemetrySdkEventSource.Log.UnsupportedAttributeType(tag.Value.GetType().ToString(), tag.Key);
+                    result = default;
                     return false;
                 }
 
