@@ -45,7 +45,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
         private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond; // 62,135,596,800,000,000
 
-        private static JaegerTagTransformer tagTransformer = new JaegerTagTransformer();
+        private static readonly JaegerTagTransformer TagTransformer = new();
 
         public static JaegerSpan ToJaegerSpan(this Activity activity)
         {
@@ -235,7 +235,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         public static JaegerTag ToJaegerTag(this KeyValuePair<string, object> attribute)
         {
             // TODO: Check status of try
-            tagTransformer.TryTransformTag(attribute, out var result);
+            TagTransformer.TryTransformTag(attribute, out var result);
             return result;
         }
 

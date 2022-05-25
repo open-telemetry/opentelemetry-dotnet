@@ -22,13 +22,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class OtlpCommonExtensions
     {
-        private static OtlpKeyValueTransformer tagTransformer = new OtlpKeyValueTransformer();
+        private static readonly OtlpKeyValueTransformer TagTransformer = new();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static OtlpCommon.KeyValue ToOtlpAttribute(this KeyValuePair<string, object> kvp)
         {
             // TODO: Check status of try
-            tagTransformer.TryTransformTag(kvp, out var result);
+            TagTransformer.TryTransformTag(kvp, out var result);
             return result;
         }
     }
