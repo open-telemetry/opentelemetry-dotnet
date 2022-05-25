@@ -47,11 +47,9 @@ namespace OpenTelemetry.Exporter
         {
             if (EnvironmentVariableHelper.LoadString(OTelProtocolEnvVarKey, out string protocolEnvVar))
             {
-                var protocol = protocolEnvVar.ToJaegerExportProtocol();
-
-                if (protocol.HasValue)
+                if (JaegerExporterOptionsHelpers.TryParseProtocol(protocolEnvVar, out var protocol))
                 {
-                    this.Protocol = protocol.Value;
+                    this.Protocol = protocol;
                 }
                 else
                 {
