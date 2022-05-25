@@ -14,10 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
 {
@@ -26,23 +29,23 @@ namespace OpenTelemetry.Logs
     /// </summary>
     public sealed class LogRecord
     {
-        private static readonly Action<object, List<object>> AddScopeToBufferedList = (object scope, List<object> state) =>
+        private static readonly Action<object?, List<object?>> AddScopeToBufferedList = (object? scope, List<object?> state) =>
         {
             state.Add(scope);
         };
 
-        private List<object> bufferedScopes;
+        private List<object?>? bufferedScopes;
 
         internal LogRecord(
-            IExternalScopeProvider scopeProvider,
+            IExternalScopeProvider? scopeProvider,
             DateTime timestamp,
             string categoryName,
             LogLevel logLevel,
             EventId eventId,
-            string formattedMessage,
-            object state,
-            Exception exception,
-            IReadOnlyList<KeyValuePair<string, object>> stateValues)
+            string? formattedMessage,
+            object? state,
+            Exception? exception,
+            IReadOnlyList<KeyValuePair<string, object?>>? stateValues)
         {
             this.ScopeProvider = scopeProvider;
 
@@ -65,41 +68,71 @@ namespace OpenTelemetry.Logs
             this.Exception = exception;
         }
 
+        /// <summary>
+        /// Gets the log timestamp.
+        /// </summary>
         public DateTime Timestamp { get; }
 
+        /// <summary>
+        /// Gets the log <see cref="ActivityTraceId"/>.
+        /// </summary>
         public ActivityTraceId TraceId { get; }
 
+        /// <summary>
+        /// Gets the log <see cref="ActivitySpanId"/>.
+        /// </summary>
         public ActivitySpanId SpanId { get; }
 
+        /// <summary>
+        /// Gets the log <see cref="ActivityTraceFlags"/>.
+        /// </summary>
         public ActivityTraceFlags TraceFlags { get; }
 
-        public string TraceState { get; }
+        /// <summary>
+        /// Gets the log trace state.
+        /// </summary>
+        public string? TraceState { get; }
 
+        /// <summary>
+        /// Gets the log category name.
+        /// </summary>
         public string CategoryName { get; }
 
+        /// <summary>
+        /// Gets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
+        /// </summary>
         public LogLevel LogLevel { get; }
 
+        /// <summary>
+        /// Gets the log <see cref="EventId"/>.
+        /// </summary>
         public EventId EventId { get; }
 
-        public string FormattedMessage { get; set; }
+        /// <summary>
+        /// Gets or sets the log formatted message.
+        /// </summary>
+        public string? FormattedMessage { get; set; }
 
         /// <summary>
         /// Gets or sets the raw state attached to the log. Set to <see
         /// langword="null"/> when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled.
         /// </summary>
-        public object State { get; set; }
+        public object? State { get; set; }
 
         /// <summary>
         /// Gets or sets the parsed state values attached to the log. Set when <see
         /// cref="OpenTelemetryLoggerOptions.ParseStateValues"/> is enabled
         /// otherwise <see langword="null"/>.
         /// </summary>
-        public IReadOnlyList<KeyValuePair<string, object>> StateValues { get; set; }
+        public IReadOnlyList<KeyValuePair<string, object?>>? StateValues { get; set; }
 
-        public Exception Exception { get; }
+        /// <summary>
+        /// Gets the log <see cref="System.Exception"/>.
+        /// </summary>
+        public Exception? Exception { get; }
 
-        internal IExternalScopeProvider ScopeProvider { get; set; }
+        internal IExternalScopeProvider? ScopeProvider { get; set; }
 
         /// <summary>
         /// Executes callback for each currently active scope objects in order
@@ -118,11 +151,13 @@ namespace OpenTelemetry.Logs
         /// <param name="state">The state object to be passed into the callback.</param>
         public void ForEachScope<TState>(Action<LogRecordScope, TState> callback, TState state)
         {
+            Guard.ThrowIfNull(callback);
+
             var forEachScopeState = new ScopeForEachState<TState>(callback, state);
 
             if (this.bufferedScopes != null)
             {
-                foreach (object scope in this.bufferedScopes)
+                foreach (object? scope in this.bufferedScopes)
                 {
                     ScopeForEachState<TState>.ForEachScope(scope, forEachScopeState);
                 }
@@ -144,7 +179,7 @@ namespace OpenTelemetry.Logs
                 return;
             }
 
-            List<object> scopes = new List<object>();
+            List<object?> scopes = new List<object?>();
 
             this.ScopeProvider?.ForEachScope(AddScopeToBufferedList, scopes);
 
@@ -153,7 +188,7 @@ namespace OpenTelemetry.Logs
 
         private readonly struct ScopeForEachState<TState>
         {
-            public static readonly Action<object, ScopeForEachState<TState>> ForEachScope = (object scope, ScopeForEachState<TState> state) =>
+            public static readonly Action<object?, ScopeForEachState<TState>> ForEachScope = (object? scope, ScopeForEachState<TState> state) =>
             {
                 LogRecordScope logRecordScope = new LogRecordScope(scope);
 

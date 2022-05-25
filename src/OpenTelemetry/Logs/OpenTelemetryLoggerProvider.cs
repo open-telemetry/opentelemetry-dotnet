@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Collections;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -22,17 +24,19 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Logs
 {
+    /// <summary>
+    /// An <see cref="ILoggerProvider"/> implementation for exporting logs using OpenTelemetry.
+    /// </summary>
     [ProviderAlias("OpenTelemetry")]
     public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISupportExternalScope
     {
         internal readonly bool IncludeScopes;
         internal readonly bool IncludeFormattedMessage;
         internal readonly bool ParseStateValues;
-        internal BaseProcessor<LogRecord> Processor;
+        internal BaseProcessor<LogRecord>? Processor;
         internal Resource Resource;
         private readonly Hashtable loggers = new();
         private bool disposed;
-        private IExternalScopeProvider scopeProvider;
 
         static OpenTelemetryLoggerProvider()
         {
@@ -41,8 +45,12 @@ namespace OpenTelemetry.Logs
             _ = Sdk.SuppressInstrumentation;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OpenTelemetryLoggerProvider"/> class.
+        /// </summary>
+        /// <param name="options"><see cref="OpenTelemetryLoggerOptions"/>.</param>
         public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options)
-            : this(options?.CurrentValue)
+            : this(options?.CurrentValue!)
         {
         }
 
@@ -62,9 +70,12 @@ namespace OpenTelemetry.Logs
             }
         }
 
+        internal IExternalScopeProvider? ScopeProvider { get; private set; }
+
+        /// <inheritdoc/>
         void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)
         {
-            this.scopeProvider = scopeProvider;
+            this.ScopeProvider = scopeProvider;
 
             lock (this.loggers)
             {
@@ -78,18 +89,19 @@ namespace OpenTelemetry.Logs
             }
         }
 
+        /// <inheritdoc/>
         public ILogger CreateLogger(string categoryName)
         {
             if (this.loggers[categoryName] is not OpenTelemetryLogger logger)
             {
                 lock (this.loggers)
                 {
-                    logger = this.loggers[categoryName] as OpenTelemetryLogger;
+                    logger = (this.loggers[categoryName] as OpenTelemetryLogger)!;
                     if (logger == null)
                     {
                         logger = new OpenTelemetryLogger(categoryName, this)
                         {
-                            ScopeProvider = this.scopeProvider,
+                            ScopeProvider = this.ScopeProvider,
                         };
 
                         this.loggers[categoryName] = logger;
@@ -126,6 +138,7 @@ namespace OpenTelemetry.Logs
             return this;
         }
 
+        /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
             if (!this.disposed)
