@@ -94,7 +94,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 ref readonly ActivityContext activityContext = ref PropagationContext.GetActivityContextRef(in ctx);
 
                 if (ActivityContextExtensions.IsValid(in activityContext)
-                    && activityContext != new ActivityContext(activity.TraceId, activity.ParentSpanId, activity.ActivityTraceFlags, activity.TraceStateString, true))
+                    && (!activityContext.TraceId.Equals(activity.TraceId)
+                    || !activityContext.SpanId.Equals(activity.ParentSpanId)
+                    || activityContext.TraceFlags != activity.ActivityTraceFlags
+                    || activityContext.TraceState != activity.TraceStateString))
                 {
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
