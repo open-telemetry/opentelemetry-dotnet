@@ -18,7 +18,7 @@ namespace OpenTelemetry.Exporter
 {
     internal static class OtlpExportProtocolParser
     {
-        public static bool TryParseProtocol(string value, out OtlpExportProtocol result)
+        public static bool TryParse(string value, out OtlpExportProtocol result)
         {
             switch (value?.Trim())
             {

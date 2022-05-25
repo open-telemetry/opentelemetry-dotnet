@@ -18,7 +18,7 @@ namespace OpenTelemetry.Exporter;
 
 internal static class JaegerExporterProtocolParser
 {
-    public static bool TryParseProtocol(string value, out JaegerExportProtocol result)
+    public static bool TryParse(string value, out JaegerExportProtocol result)
     {
         switch (value?.Trim())
         {

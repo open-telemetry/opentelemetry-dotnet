@@ -24,9 +24,9 @@ public class JaegerExporterProtocolParserTests
     [InlineData("udp/thrift.compact", true, JaegerExportProtocol.UdpCompactThrift)]
     [InlineData("http/thrift.binary", true, JaegerExportProtocol.HttpBinaryThrift)]
     [InlineData("unsupported", false, default(JaegerExportProtocol))]
-    public void TryParseProtocol_Protocol_MapsToCorrectValue(string protocol, bool expectedResult, JaegerExportProtocol expectedExportProtocol)
+    public void TryParse_Protocol_MapsToCorrectValue(string protocol, bool expectedResult, JaegerExportProtocol expectedExportProtocol)
     {
-        var result = JaegerExporterProtocolParser.TryParseProtocol(protocol, out var exportProtocol);
+        var result = JaegerExporterProtocolParser.TryParse(protocol, out var exportProtocol);
 
         Assert.Equal(expectedExportProtocol, exportProtocol);
         Assert.Equal(expectedResult, result);
