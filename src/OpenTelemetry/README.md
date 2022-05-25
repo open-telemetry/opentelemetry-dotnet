@@ -242,10 +242,10 @@ The `ConfigureResource` method on `TracerProviderBuilder` can be used to set a
 configure the resource on the provider. When the provider is built, it automatically
 builds the final `Resource` from the configured `ResourceBuilder`. As with
 samplers, there can only be a single `Resource` associated with a provider.
-It is not possible to change the resource builder *after* the provider is built, by
-calling the `Build()` method on the `TracerProviderBuilder`. `ResourceBuilder`
-offers various methods to construct resource comprising of multiple attributes
-from various sources.
+It is not possible to change the resource builder *after* the provider is
+built, by calling the `Build()` method on the `TracerProviderBuilder`.
+`ResourceBuilder` offers various methods to construct resource comprising
+of multiple attributes from various sources.
 
 The snippet below shows configuring a custom `ResourceBuilder` to the provider.
 
