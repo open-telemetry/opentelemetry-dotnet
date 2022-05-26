@@ -74,6 +74,19 @@ namespace OpenTelemetry.Logs
         /// <param name="logRecord"><see cref="LogRecord"/>.</param>
         public static void Return(LogRecord logRecord) => current.ReturnCore(logRecord);
 
+        /// <summary>
+        /// Tracks a reference to the supplied <see cref="LogRecord"/>.
+        /// </summary>
+        /// <remarks>
+        /// Note: A <see cref="LogRecord"/> will not be returned to the pool
+        /// until it no longer has any references.
+        /// </remarks>
+        /// <param name="logRecord"><see cref="LogRecord"/>.</param>
+        public static void TrackReference(LogRecord logRecord)
+        {
+            Interlocked.Increment(ref logRecord.PoolReferences);
+        }
+
         internal static LogRecord Rent(bool clearIfReused) => current.RentCore(clearIfReused);
 
         private LogRecord RentCore(bool clearIfReused)
@@ -122,11 +135,20 @@ namespace OpenTelemetry.Logs
                 wait.SpinOnce();
             }
 
-            return new LogRecord();
+            return new LogRecord()
+            {
+                PoolReferences = 1,
+            };
         }
 
         private void ReturnCore(LogRecord logRecord)
         {
+            int poolReferences = Interlocked.Decrement(ref logRecord.PoolReferences);
+            if (poolReferences > 0)
+            {
+                return;
+            }
+
             if (threadStaticLogRecord == null)
             {
                 threadStaticLogRecord = logRecord;

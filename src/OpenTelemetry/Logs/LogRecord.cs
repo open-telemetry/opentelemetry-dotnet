@@ -29,6 +29,8 @@ namespace OpenTelemetry.Logs
     /// </summary>
     public sealed class LogRecord
     {
+        internal int PoolReferences = int.MaxValue;
+
         private static readonly Action<object?, List<object?>> AddScopeToBufferedList = (object? scope, List<object?> state) =>
         {
             state.Add(scope);
@@ -193,6 +195,7 @@ namespace OpenTelemetry.Logs
         internal void Clear(bool clearAllData)
         {
             this.timestamp = DateTime.UtcNow;
+            this.PoolReferences = 1;
 
             if (!clearAllData)
             {

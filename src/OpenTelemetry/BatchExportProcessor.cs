@@ -96,6 +96,11 @@ namespace OpenTelemetry
         internal long ProcessedCount => this.circularBuffer.RemovedCount;
 
         /// <summary>
+        /// Gets an initialization action to be called before each item is exported.
+        /// </summary>
+        protected Action<T>? InitializeAction { get; init; }
+
+        /// <summary>
         /// Gets a cleanup action to be called after each item is exported.
         /// </summary>
         protected Action<T>? CleanupAction { get; init; }
@@ -103,6 +108,8 @@ namespace OpenTelemetry
         /// <inheritdoc/>
         protected override void OnExport(T data)
         {
+            this.InitializeAction?.Invoke(data);
+
             if (this.circularBuffer.TryAdd(data, maxSpinCount: 50000))
             {
                 if (this.circularBuffer.Count >= this.maxExportBatchSize)
@@ -118,6 +125,9 @@ namespace OpenTelemetry
 
                 return; // enqueue succeeded
             }
+
+            // If item couldn't be added to batch we still call cleanup.
+            this.CleanupAction?.Invoke(data);
 
             // either the queue is full or exceeded the spin limit, drop the item on the floor
             Interlocked.Increment(ref this.droppedCount);

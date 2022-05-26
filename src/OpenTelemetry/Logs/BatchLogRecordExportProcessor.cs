@@ -47,6 +47,7 @@ namespace OpenTelemetry
                 exporterTimeoutMilliseconds,
                 maxExportBatchSize)
         {
+            this.InitializeAction = LogRecordPool.TrackReference;
             this.CleanupAction = LogRecordPool.Return;
         }
 
