@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Adds new `AddInMemoryExporter` extension method to export `Metric` as new
+  type `MetricSnapshot`.
+  ([#2361](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361))
+
 ## 1.3.0-beta.2
 
 Released 2022-May-16
