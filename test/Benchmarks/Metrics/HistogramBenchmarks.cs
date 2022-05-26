@@ -24,8 +24,8 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet=v0.13.1, OS=Windows 10.0.22000
-Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
+BenchmarkDotNet=v0.13.1, OS=Windows 10.0.19044.1706 (21H2)
+AMD Ryzen 9 3900X, 1 CPU, 24 logical and 12 physical cores
 .NET SDK=6.0.203
   [Host]     : .NET 6.0.5 (6.0.522.21309), X64 RyuJIT
   DefaultJob : .NET 6.0.5 (6.0.522.21309), X64 RyuJIT
@@ -33,26 +33,26 @@ Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
 
 |                      Method | BoundCount |      Mean |     Error |    StdDev |
 |---------------------------- |----------- |----------:|----------:|----------:|
-|            HistogramHotPath |         10 |  55.07 ns |  0.664 ns |  1.091 ns |
-|  HistogramWith1LabelHotPath |         10 | 108.66 ns |  1.324 ns |  1.174 ns |
-| HistogramWith3LabelsHotPath |         10 | 193.79 ns |  3.261 ns |  3.349 ns |
-| HistogramWith5LabelsHotPath |         10 | 279.44 ns |  4.608 ns |  3.848 ns |
-| HistogramWith7LabelsHotPath |         10 | 334.28 ns |  6.650 ns |  5.895 ns |
-|            HistogramHotPath |         49 |  68.27 ns |  0.744 ns |  0.581 ns |
-|  HistogramWith1LabelHotPath |         49 | 125.55 ns |  2.265 ns |  2.518 ns |
-| HistogramWith3LabelsHotPath |         49 | 207.95 ns |  4.023 ns |  3.951 ns |
-| HistogramWith5LabelsHotPath |         49 | 293.45 ns |  5.689 ns |  5.842 ns |
-| HistogramWith7LabelsHotPath |         49 | 362.19 ns |  5.610 ns |  6.003 ns |
-|            HistogramHotPath |         50 |  69.64 ns |  1.422 ns |  1.330 ns |
-|  HistogramWith1LabelHotPath |         50 | 118.15 ns |  2.040 ns |  1.908 ns |
-| HistogramWith3LabelsHotPath |         50 | 250.31 ns |  4.617 ns |  9.326 ns |
-| HistogramWith5LabelsHotPath |         50 | 335.31 ns |  3.904 ns |  3.461 ns |
-| HistogramWith7LabelsHotPath |         50 | 398.02 ns |  6.815 ns |  6.374 ns |
-|            HistogramHotPath |       1000 |  94.05 ns |  1.890 ns |  2.100 ns |
-|  HistogramWith1LabelHotPath |       1000 | 148.57 ns |  2.055 ns |  1.822 ns |
-| HistogramWith3LabelsHotPath |       1000 | 661.78 ns | 11.599 ns | 20.314 ns |
-| HistogramWith5LabelsHotPath |       1000 | 761.54 ns | 15.049 ns | 16.727 ns |
-| HistogramWith7LabelsHotPath |       1000 | 830.14 ns | 16.063 ns | 17.853 ns |
+|            HistogramHotPath |         10 |  45.19 ns |  0.321 ns |  0.285 ns |
+|  HistogramWith1LabelHotPath |         10 |  97.21 ns |  0.129 ns |  0.114 ns |
+| HistogramWith3LabelsHotPath |         10 | 179.77 ns |  0.270 ns |  0.239 ns |
+| HistogramWith5LabelsHotPath |         10 | 263.30 ns |  2.423 ns |  2.267 ns |
+| HistogramWith7LabelsHotPath |         10 | 338.42 ns |  3.121 ns |  2.919 ns |
+|            HistogramHotPath |         49 |  56.18 ns |  0.593 ns |  0.554 ns |
+|  HistogramWith1LabelHotPath |         49 | 110.60 ns |  0.815 ns |  0.762 ns |
+| HistogramWith3LabelsHotPath |         49 | 193.30 ns |  1.048 ns |  0.980 ns |
+| HistogramWith5LabelsHotPath |         49 | 281.55 ns |  1.638 ns |  1.532 ns |
+| HistogramWith7LabelsHotPath |         49 | 343.88 ns |  2.148 ns |  2.010 ns |
+|            HistogramHotPath |         50 |  57.46 ns |  0.264 ns |  0.234 ns |
+|  HistogramWith1LabelHotPath |         50 | 121.73 ns |  0.372 ns |  0.348 ns |
+| HistogramWith3LabelsHotPath |         50 | 227.95 ns |  1.074 ns |  1.004 ns |
+| HistogramWith5LabelsHotPath |         50 | 313.15 ns |  1.068 ns |  0.999 ns |
+| HistogramWith7LabelsHotPath |         50 | 377.04 ns |  1.191 ns |  0.930 ns |
+|            HistogramHotPath |       1000 |  78.33 ns |  0.441 ns |  0.391 ns |
+|  HistogramWith1LabelHotPath |       1000 | 127.57 ns |  0.457 ns |  0.428 ns |
+| HistogramWith3LabelsHotPath |       1000 | 494.19 ns |  4.490 ns |  3.980 ns |
+| HistogramWith5LabelsHotPath |       1000 | 608.75 ns | 11.306 ns | 10.576 ns |
+| HistogramWith7LabelsHotPath |       1000 | 649.16 ns |  3.273 ns |  2.555 ns |
 */
 
 namespace Benchmarks.Metrics
