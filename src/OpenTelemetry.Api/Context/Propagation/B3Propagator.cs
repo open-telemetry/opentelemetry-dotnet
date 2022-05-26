@@ -27,7 +27,7 @@ namespace OpenTelemetry.Context.Propagation
     /// A text map propagator for B3. See https://github.com/openzipkin/b3-propagation.
     /// This class has been deprecated in favour of OpenTelemetry.Extensions.Propagators package.
     /// </summary>
-    [Obsolete("Use B3Propagator class from OpenTelemetry.Extensions.Propagators namespace, shipped as part of the same nuget package.")]
+    [Obsolete("Use B3Propagator class from OpenTelemetry.Extensions.Propagators namespace, shipped as part of OpenTelemetry.Extensions.Propagators package.")]
     public sealed class B3Propagator : TextMapPropagator
     {
         internal const string XB3TraceId = "X-B3-TraceId";
