@@ -26,6 +26,8 @@ namespace OpenTelemetry.Metrics
     // Note: Does not implement IEnumerable<> to prevent accidental boxing.
     public class HistogramBuckets
     {
+        internal const int DefaultHistogramCountForBinarySearch = 50;
+
         internal readonly double[] ExplicitBounds;
 
         internal readonly long[] RunningBucketCounts;
@@ -46,7 +48,7 @@ namespace OpenTelemetry.Metrics
         {
             this.ExplicitBounds = explicitBounds;
             this.findHistogramBucketIndex = this.FindBucketIndexLinear;
-            if (explicitBounds != null && explicitBounds.Length >= Metric.DefaultHistogramCountForBinarySearch)
+            if (explicitBounds != null && explicitBounds.Length >= DefaultHistogramCountForBinarySearch)
             {
                 this.root = ConstructBalancedTree(explicitBounds, 0, explicitBounds.Length);
                 this.findHistogramBucketIndex = this.FindBucketIndexBinary;

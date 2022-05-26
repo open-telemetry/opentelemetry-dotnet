@@ -72,8 +72,8 @@ namespace Benchmarks.Metrics
         private Meter meter;
         private double[] bounds;
 
-        // Note: Values related to `Metric.DefaultHistogramCountForBinarySearch`
-        [Params(10, 50, 139, 140, 1000)]
+        // Note: Values related to `HistogramBuckets.DefaultHistogramCountForBinarySearch`
+        [Params(10, 49, 50, 1000)]
         public int BoundCount { get; set; }
 
         [GlobalSetup]
