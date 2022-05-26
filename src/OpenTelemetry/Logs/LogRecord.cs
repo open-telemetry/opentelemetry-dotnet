@@ -139,29 +139,12 @@ namespace OpenTelemetry.Logs
 
         internal IExternalScopeProvider? ScopeProvider { get; set; }
 
-        internal void Clear(bool clearAllData)
-        {
-            this.timestamp = DateTime.UtcNow;
-
-            if (!clearAllData)
-            {
-                return;
-            }
-
-            this.CategoryName = null;
-            this.LogLevel = LogLevel.Trace;
-            this.EventId = default;
-            this.FormattedMessage = null;
-            this.State = null;
-            this.StateValues = null;
-            this.Exception = null;
-
-            this.TraceId = default;
-            this.SpanId = default;
-            this.TraceState = null;
-            this.TraceFlags = ActivityTraceFlags.None;
-        }
-
+        /// <summary>
+        /// Sets the log <see cref="TraceId"/>, <see cref="SpanId"/>, <see
+        /// cref="TraceState"/>, and <see cref="TraceFlags"/> from the supplied
+        /// <see cref="Activity"/>.
+        /// </summary>
+        /// <param name="activity"><see cref="Activity"/>.</param>
         public void SetActivityContext(Activity? activity)
         {
             if (activity != null)
@@ -205,6 +188,29 @@ namespace OpenTelemetry.Logs
             {
                 this.ScopeProvider.ForEachScope(ScopeForEachState<TState>.ForEachScope, forEachScopeState);
             }
+        }
+
+        internal void Clear(bool clearAllData)
+        {
+            this.timestamp = DateTime.UtcNow;
+
+            if (!clearAllData)
+            {
+                return;
+            }
+
+            this.CategoryName = null;
+            this.LogLevel = LogLevel.Trace;
+            this.EventId = default;
+            this.FormattedMessage = null;
+            this.State = null;
+            this.StateValues = null;
+            this.Exception = null;
+
+            this.TraceId = default;
+            this.SpanId = default;
+            this.TraceState = null;
+            this.TraceFlags = ActivityTraceFlags.None;
         }
 
         /// <summary>
