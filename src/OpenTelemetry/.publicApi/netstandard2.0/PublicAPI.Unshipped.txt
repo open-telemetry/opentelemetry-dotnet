@@ -12,7 +12,6 @@ OpenTelemetry.Logs.LogRecord.EventId.set -> void
 OpenTelemetry.Logs.LogRecord.Exception.set -> void
 OpenTelemetry.Logs.LogRecord.FormattedMessage.set -> void
 OpenTelemetry.Logs.LogRecord.LogLevel.set -> void
-OpenTelemetry.Logs.LogRecord.LogRecord() -> void
 OpenTelemetry.Logs.LogRecord.SetActivityContext(System.Diagnostics.Activity? activity) -> void
 OpenTelemetry.Logs.LogRecord.SpanId.set -> void
 OpenTelemetry.Logs.LogRecord.State.set -> void
