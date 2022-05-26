@@ -14,10 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry
@@ -29,9 +32,9 @@ namespace OpenTelemetry
     public readonly struct Batch<T> : IDisposable
         where T : class
     {
-        private readonly T item;
-        private readonly CircularBuffer<T> circularBuffer;
-        private readonly T[] items;
+        private readonly T? item;
+        private readonly CircularBuffer<T>? circularBuffer;
+        private readonly T[]? items;
         private readonly long targetCount;
 
         /// <summary>
@@ -50,9 +53,13 @@ namespace OpenTelemetry
             this.Count = this.targetCount = count;
         }
 
-        internal Batch(T item)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Batch{T}"/> struct.
+        /// </summary>
+        /// <param name="item">The item to store in the batch.</param>
+        public Batch(T item)
         {
-            Debug.Assert(item != null, $"{nameof(item)} was null.");
+            Guard.ThrowIfNull(item);
 
             this.item = item;
             this.circularBuffer = null;
@@ -68,7 +75,7 @@ namespace OpenTelemetry
             this.item = null;
             this.items = null;
             this.circularBuffer = circularBuffer;
-            this.Count = Math.Min(maxSize, circularBuffer.Count);
+            this.Count = Math.Min(maxSize, circularBuffer!.Count);
             this.targetCount = circularBuffer.RemovedCount + this.Count;
         }
 
@@ -79,6 +86,11 @@ namespace OpenTelemetry
         /// </summary>
         public long Count { get; }
 
+        /// <summary>
+        /// Gets a cleanup action to be called after each item in the batch is processed.
+        /// </summary>
+        public Action<T>? CleanupAction { get; init; } = null;
+
         /// <inheritdoc/>
         public void Dispose()
         {
@@ -87,8 +99,33 @@ namespace OpenTelemetry
                 // Drain anything left in the batch.
                 while (this.circularBuffer.RemovedCount < this.targetCount)
                 {
-                    this.circularBuffer.Read();
+                    T item = this.circularBuffer.Read();
+                    this.CleanupAction?.Invoke(item);
                 }
+
+                return;
+            }
+
+            var cleanupAction = this.CleanupAction;
+            if (cleanupAction == null)
+            {
+                return;
+            }
+
+            if (this.items != null)
+            {
+                for (int i = 0; i < this.Count; i++)
+                {
+                    var item = this.items[i];
+                    if (item != null)
+                    {
+                        cleanupAction(item);
+                    }
+                }
+            }
+            else
+            {
+                cleanupAction(this.item!);
             }
         }
 
@@ -99,7 +136,7 @@ namespace OpenTelemetry
         public Enumerator GetEnumerator()
         {
             return this.circularBuffer != null
-                ? new Enumerator(this.circularBuffer, this.targetCount)
+                ? new Enumerator(this.circularBuffer, this.targetCount, this.CleanupAction)
                 : this.item != null
                     ? new Enumerator(this.item)
                     /* In the event someone uses default/new Batch() to create Batch we fallback to empty items mode. */
@@ -115,7 +152,7 @@ namespace OpenTelemetry
             {
                 if (enumerator.targetCount >= 0)
                 {
-                    enumerator.Current = null;
+                    enumerator.current = null;
                     return false;
                 }
 
@@ -127,13 +164,33 @@ namespace OpenTelemetry
             {
                 var circularBuffer = enumerator.circularBuffer;
 
-                if (circularBuffer.RemovedCount < enumerator.targetCount)
+                if (circularBuffer!.RemovedCount < enumerator.targetCount)
                 {
-                    enumerator.Current = circularBuffer.Read();
+                    enumerator.current = circularBuffer.Read();
                     return true;
                 }
 
-                enumerator.Current = null;
+                enumerator.current = null;
+                return false;
+            };
+
+            private static readonly BatchEnumeratorMoveNextFunc MoveNextCircularBufferWithCleanup = (ref Enumerator enumerator) =>
+            {
+                var circularBuffer = enumerator.circularBuffer;
+
+                var currentItem = enumerator.Current;
+                if (currentItem != null)
+                {
+                    enumerator.cleanupAction!(currentItem);
+                }
+
+                if (circularBuffer!.RemovedCount < enumerator.targetCount)
+                {
+                    enumerator.current = circularBuffer.Read();
+                    return true;
+                }
+
+                enumerator.current = null;
                 return false;
             };
 
@@ -143,59 +200,74 @@ namespace OpenTelemetry
 
                 if (enumerator.itemIndex < enumerator.targetCount)
                 {
-                    enumerator.Current = items[enumerator.itemIndex++];
+                    enumerator.current = items![enumerator.itemIndex++];
                     return true;
                 }
 
-                enumerator.Current = null;
+                enumerator.current = null;
                 return false;
             };
 
-            private readonly CircularBuffer<T> circularBuffer;
-            private readonly T[] items;
+            private readonly CircularBuffer<T>? circularBuffer;
+            private readonly T[]? items;
             private readonly BatchEnumeratorMoveNextFunc moveNextFunc;
+            private readonly Action<T>? cleanupAction;
             private long targetCount;
             private int itemIndex;
+            [AllowNull]
+            private T current;
 
             internal Enumerator(T item)
             {
-                this.Current = item;
+                this.current = item;
                 this.circularBuffer = null;
                 this.items = null;
                 this.targetCount = -1;
                 this.itemIndex = 0;
+                this.cleanupAction = null;
                 this.moveNextFunc = MoveNextSingleItem;
             }
 
-            internal Enumerator(CircularBuffer<T> circularBuffer, long targetCount)
+            internal Enumerator(CircularBuffer<T> circularBuffer, long targetCount, Action<T>? cleanupAction)
             {
-                this.Current = null;
+                this.current = null;
                 this.items = null;
                 this.circularBuffer = circularBuffer;
                 this.targetCount = targetCount;
                 this.itemIndex = 0;
-                this.moveNextFunc = MoveNextCircularBuffer;
+                this.cleanupAction = cleanupAction;
+                this.moveNextFunc = cleanupAction != null ? MoveNextCircularBufferWithCleanup : MoveNextCircularBuffer;
             }
 
             internal Enumerator(T[] items, long targetCount)
             {
-                this.Current = null;
+                this.current = null;
                 this.circularBuffer = null;
                 this.items = items;
                 this.targetCount = targetCount;
                 this.itemIndex = 0;
+                this.cleanupAction = null;
                 this.moveNextFunc = MoveNextArray;
             }
 
             /// <inheritdoc/>
-            public T Current { get; private set; }
+            public readonly T Current => this.current;
 
             /// <inheritdoc/>
-            object IEnumerator.Current => this.Current;
+            readonly object? IEnumerator.Current => this.current;
 
             /// <inheritdoc/>
             public void Dispose()
             {
+                if (this.cleanupAction != null)
+                {
+                    var currentItem = this.current;
+                    if (currentItem != null)
+                    {
+                        this.cleanupAction(currentItem);
+                        this.current = null;
+                    }
+                }
             }
 
             /// <inheritdoc/>
@@ -205,7 +277,7 @@ namespace OpenTelemetry
             }
 
             /// <inheritdoc/>
-            public void Reset()
+            public readonly void Reset()
                 => throw new NotSupportedException();
         }
     }

@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -92,6 +94,11 @@ namespace OpenTelemetry
         /// Gets the number of telemetry objects processed by the underlying exporter.
         /// </summary>
         internal long ProcessedCount => this.circularBuffer.RemovedCount;
+
+        /// <summary>
+        /// Gets a cleanup action to be called after each item is exported.
+        /// </summary>
+        protected Action<T>? CleanupAction { get; init; }
 
         /// <inheritdoc/>
         protected override void OnExport(T data)
@@ -248,6 +255,8 @@ namespace OpenTelemetry
 
         private void ExporterProc()
         {
+            var cleanupAction = this.CleanupAction;
+
             var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
 
             while (true)
@@ -268,7 +277,10 @@ namespace OpenTelemetry
 
                 if (this.circularBuffer.Count > 0)
                 {
-                    using (var batch = new Batch<T>(this.circularBuffer, this.maxExportBatchSize))
+                    using (var batch = new Batch<T>(this.circularBuffer, this.maxExportBatchSize)
+                    {
+                        CleanupAction = cleanupAction,
+                    })
                     {
                         this.exporter.Export(batch);
                     }

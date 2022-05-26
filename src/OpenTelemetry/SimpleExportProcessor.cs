@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using OpenTelemetry.Internal;
 
@@ -37,6 +39,11 @@ namespace OpenTelemetry
         {
         }
 
+        /// <summary>
+        /// Gets a cleanup action to be called after each item is exported.
+        /// </summary>
+        protected Action<T>? CleanupAction { get; init; }
+
         /// <inheritdoc />
         protected override void OnExport(T data)
         {
@@ -44,7 +51,12 @@ namespace OpenTelemetry
             {
                 try
                 {
-                    this.exporter.Export(new Batch<T>(data));
+                    using var batch = new Batch<T>(data)
+                    {
+                        CleanupAction = this.CleanupAction,
+                    };
+
+                    this.exporter.Export(batch);
                 }
                 catch (Exception ex)
                 {

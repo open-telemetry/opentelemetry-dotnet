@@ -32,6 +32,7 @@ namespace OpenTelemetry
         public SimpleLogRecordExportProcessor(BaseExporter<LogRecord> exporter)
             : base(exporter)
         {
+            this.CleanupAction = LogRecordPool.Return;
         }
     }
 }

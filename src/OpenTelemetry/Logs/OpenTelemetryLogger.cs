@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
@@ -52,16 +53,19 @@ namespace OpenTelemetry.Logs
             var processor = provider.Processor;
             if (processor != null)
             {
-                var record = new LogRecord(
-                    provider.IncludeScopes ? this.ScopeProvider : null,
-                    DateTime.UtcNow,
-                    this.categoryName,
-                    logLevel,
-                    eventId,
-                    provider.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
-                    provider.ParseStateValues ? null : state,
-                    exception,
-                    provider.ParseStateValues ? this.ParseState(state) : null);
+                var record = LogRecordPool.Rent(clearIfReused: false);
+
+                record.ScopeProvider = provider.IncludeScopes ? this.ScopeProvider : null;
+
+                record.CategoryName = this.categoryName;
+                record.LogLevel = logLevel;
+                record.EventId = eventId;
+                record.FormattedMessage = provider.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null;
+                record.State = provider.ParseStateValues ? null : state;
+                record.Exception = exception;
+                record.StateValues = provider.ParseStateValues ? this.ParseState(state) : null;
+
+                record.SetActivityContext(Activity.Current);
 
                 processor.OnEnd(record);
 

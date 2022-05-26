@@ -37,19 +37,13 @@ namespace OpenTelemetry.Logs
         private List<object?>? bufferedScopes;
         private DateTime timestamp;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LogRecord"/> class.
-        /// </summary>
-        /// <remarks>
-        /// Note: The <see cref="Timestamp"/> property is initialized to <see
-        /// cref="DateTime.UtcNow"/>.
-        /// </remarks>
-        public LogRecord()
+        internal LogRecord()
         {
             this.timestamp = DateTime.UtcNow;
         }
 
         // Note: Some users are calling this with reflection. Try not to change the signature to be nice.
+        [Obsolete("Call LogRecordPool.Rent instead.")]
         internal LogRecord(
             IExternalScopeProvider? scopeProvider,
             DateTime timestamp,
@@ -61,8 +55,9 @@ namespace OpenTelemetry.Logs
             Exception? exception,
             IReadOnlyList<KeyValuePair<string, object?>>? stateValues)
         {
-            this.ScopeProvider = scopeProvider;
             this.timestamp = timestamp;
+
+            this.ScopeProvider = scopeProvider;
             this.CategoryName = categoryName;
             this.LogLevel = logLevel;
             this.EventId = eventId;
@@ -144,10 +139,29 @@ namespace OpenTelemetry.Logs
 
         internal IExternalScopeProvider? ScopeProvider { get; set; }
 
-        /// <summary>
-        /// Set the log activity context fields from the supplied <see cref="Activity"/>.
-        /// </summary>
-        /// <param name="activity"><see cref="Activity"/>.</param>
+        internal void Clear(bool clearAllData)
+        {
+            this.timestamp = DateTime.UtcNow;
+
+            if (!clearAllData)
+            {
+                return;
+            }
+
+            this.CategoryName = null;
+            this.LogLevel = LogLevel.Trace;
+            this.EventId = default;
+            this.FormattedMessage = null;
+            this.State = null;
+            this.StateValues = null;
+            this.Exception = null;
+
+            this.TraceId = default;
+            this.SpanId = default;
+            this.TraceState = null;
+            this.TraceFlags = ActivityTraceFlags.None;
+        }
+
         public void SetActivityContext(Activity? activity)
         {
             if (activity != null)

@@ -1,4 +1,9 @@
 #nullable enable
+OpenTelemetry.Batch<T>.Batch(T! item) -> void
+OpenTelemetry.Batch<T>.CleanupAction.get -> System.Action<T!>?
+OpenTelemetry.Batch<T>.CleanupAction.init -> void
+OpenTelemetry.BatchExportProcessor<T>.CleanupAction.get -> System.Action<T!>?
+OpenTelemetry.BatchExportProcessor<T>.CleanupAction.init -> void
 OpenTelemetry.Logs.LogEmitter
 OpenTelemetry.Logs.LogEmitter.Log(OpenTelemetry.Logs.LogRecord! logRecord) -> void
 OpenTelemetry.Logs.LogEmitter.LogEmitter(OpenTelemetry.Logs.OpenTelemetryLoggerProvider! loggerProvider) -> void
@@ -16,4 +21,10 @@ OpenTelemetry.Logs.LogRecord.Timestamp.set -> void
 OpenTelemetry.Logs.LogRecord.TraceFlags.set -> void
 OpenTelemetry.Logs.LogRecord.TraceId.set -> void
 OpenTelemetry.Logs.LogRecord.TraceState.set -> void
+OpenTelemetry.Logs.LogRecordPool
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.CreateEmitter() -> OpenTelemetry.Logs.LogEmitter!
+OpenTelemetry.SimpleExportProcessor<T>.CleanupAction.get -> System.Action<T!>?
+OpenTelemetry.SimpleExportProcessor<T>.CleanupAction.init -> void
+static OpenTelemetry.Logs.LogRecordPool.Rent() -> OpenTelemetry.Logs.LogRecord!
+static OpenTelemetry.Logs.LogRecordPool.Resize(int size) -> void
+static OpenTelemetry.Logs.LogRecordPool.Return(OpenTelemetry.Logs.LogRecord! logRecord) -> void

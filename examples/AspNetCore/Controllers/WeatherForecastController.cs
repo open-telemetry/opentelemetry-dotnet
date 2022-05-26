@@ -16,6 +16,7 @@
 
 namespace Examples.AspNetCore.Controllers;
 
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using OpenTelemetry.Logs;
 
@@ -66,12 +67,15 @@ public class WeatherForecastController : ControllerBase
             forecast);
 
         // Log using LogEmitter API.
-        this.logEmitter.Log(new(
-            categoryName: "WeatherForecasts",
-            timestamp: DateTime.UtcNow,
-            logLevel: LogLevel.Information,
-            message: "WeatherForecasts generated.",
-            stateValues: new List<KeyValuePair<string, object?>>() { new KeyValuePair<string, object?>("count", forecast.Length) }));
+        var logRecord = LogRecordPool.Rent();
+
+        logRecord.CategoryName = "WeatherForecasts";
+        logRecord.LogLevel = LogLevel.Information;
+        logRecord.FormattedMessage = "WeatherForecasts generated.";
+        logRecord.StateValues = new List<KeyValuePair<string, object?>>() { new KeyValuePair<string, object?>("count", forecast.Length) };
+        logRecord.SetActivityContext(Activity.Current);
+
+        this.logEmitter.Log(logRecord);
 
         return forecast;
     }
