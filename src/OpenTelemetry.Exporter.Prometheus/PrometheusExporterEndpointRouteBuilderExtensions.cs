@@ -88,11 +88,11 @@ namespace Microsoft.AspNetCore.Builder
             // GetOptions<PrometheusExporterOptions> so that any changes made to
             // PrometheusExporterOptions in deferred AddPrometheusExporter
             // configure actions are reflected.
-            meterProvider ??= builder.ApplicationServices.GetRequiredService<MeterProvider>();
+            meterProvider ??= endpoints.ServiceProvider.GetRequiredService<MeterProvider>();
 
             if (path == null)
             {
-                var options = builder.ApplicationServices.GetOptions<PrometheusExporterOptions>();
+                var options = endpoints.ServiceProvider.GetOptions<PrometheusExporterOptions>();
                 path = options.ScrapeEndpointPath ?? PrometheusExporterOptions.DefaultScrapeEndpointPath;
             }
 
