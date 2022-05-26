@@ -1,4 +1,4 @@
-// <copyright file="JaegerExporterOptionsExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="JaegerExporterProtocolParser.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,13 +16,21 @@
 
 namespace OpenTelemetry.Exporter;
 
-internal static class JaegerExporterOptionsExtensions
+internal static class JaegerExporterProtocolParser
 {
-    public static JaegerExportProtocol? ToJaegerExportProtocol(this string protocol) =>
-        protocol?.Trim() switch
+    public static bool TryParse(string value, out JaegerExportProtocol result)
+    {
+        switch (value?.Trim())
         {
-            "udp/thrift.compact" => JaegerExportProtocol.UdpCompactThrift,
-            "http/thrift.binary" => JaegerExportProtocol.HttpBinaryThrift,
-            _ => null,
-        };
+            case "udp/thrift.compact":
+                result = JaegerExportProtocol.UdpCompactThrift;
+                return true;
+            case "http/thrift.binary":
+                result = JaegerExportProtocol.HttpBinaryThrift;
+                return true;
+            default:
+                result = default;
+                return false;
+        }
+    }
 }
