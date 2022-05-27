@@ -222,7 +222,7 @@ namespace OpenTelemetry.Trace.Tests
             }
         }
 
-        [Fact]
+        [Fact(Skip = "Disabled")]
         public void TracerSdkSetsActivitySamplingResultAsPropagationWhenParentIsRemote()
         {
             var testSampler = new TestSampler();
