@@ -38,6 +38,9 @@ using TestApp.AspNetCore._3._1;
 #if NET6_0
 using TestApp.AspNetCore._6._0;
 #endif
+#if NET7_0
+using TestApp.AspNetCore._7._0;
+#endif
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
@@ -618,8 +621,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         private static void ValidateAspNetCoreActivity(Activity activityToValidate, string expectedHttpPath)
         {
             Assert.Equal(ActivityKind.Server, activityToValidate.Kind);
+#if NET7_0_OR_GREATER
+            Assert.Equal(HttpInListener.FrameworkActivitySourceName, activityToValidate.Source.Name);
+            Assert.Empty(activityToValidate.Source.Version);
+#else
             Assert.Equal(HttpInListener.ActivitySourceName, activityToValidate.Source.Name);
             Assert.Equal(HttpInListener.Version.ToString(), activityToValidate.Source.Version);
+#endif
             Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SemanticConventions.AttributeHttpTarget) as string);
         }
 

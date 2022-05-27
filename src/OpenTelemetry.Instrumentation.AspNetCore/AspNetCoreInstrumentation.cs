@@ -25,9 +25,27 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     {
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
+        private readonly Func<string, object, object, bool> isEnabled = (activityName, obj1, obj2) =>
+        {
+            if (activityName.Equals("Microsoft.AspNetCore.Hosting.HttpRequestIn"))
+            {
+                return false;
+            }
+
+            return true;
+        };
+
         public AspNetCoreInstrumentation(HttpInListener httpInListener)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(httpInListener, null);
+            if (HttpInListener.IsNet7OrGreater)
+            {
+                this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(httpInListener, this.isEnabled);
+            }
+            else
+            {
+                this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(httpInListener, null);
+            }
+
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

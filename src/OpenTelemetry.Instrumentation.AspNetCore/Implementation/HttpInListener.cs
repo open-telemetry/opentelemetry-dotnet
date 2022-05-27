@@ -36,9 +36,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     {
         internal const string ActivityOperationName = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
+        internal static readonly string FrameworkActivitySourceName = "Microsoft.AspNetCore";
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
+        internal static readonly bool IsNet7OrGreater = typeof(HttpRequest).Assembly.GetName().Version.Major >= 7;
         private const string DiagnosticSourceName = "Microsoft.AspNetCore";
         private const string UnknownHostName = "UNKNOWN-HOST";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
@@ -71,7 +73,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // By this time, samplers have already run and
             // activity.IsAllDataRequested populated accordingly.
 
-            if (Sdk.SuppressInstrumentation)
+            if (Sdk.SuppressInstrumentation || (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name)))
             {
                 return;
             }
@@ -96,8 +98,25 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
                     // Asp.Net Core.
+#if NET7_0_OR_GREATER
+                    Activity newOne;
+                    newOne = activity.Source.CreateActivity(ActivityOperationName, ActivityKind.Server, ctx.ActivityContext);
+
+                    // Sampling call resulted in drop
+                    // we still need to create an activity so that the correct context gets propagated
+                    // if we do not create an activity here, the trace will be broken
+                    // as there is no other way to propagate context to the next hop.
+                    if (newOne == null)
+                    {
+                        newOne = new Activity(ActivityOperationName);
+                        newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
+                        ActivityInstrumentationHelper.SetActivitySourceProperty(activity, activity.Source);
+                        ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
+                    }
+#else
                     Activity newOne = new Activity(ActivityOperationName);
                     newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
+#endif
                     newOne.TraceStateString = ctx.ActivityContext.TraceState;
 
                     newOne.SetTag("IsCreatedByInstrumentation", bool.TrueString);
@@ -135,8 +154,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     return;
                 }
 
-                ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
-                ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
+                if (!IsNet7OrGreater)
+                {
+                    ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+                    ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
+                }
 
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
@@ -175,6 +197,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         public override void OnStopActivity(Activity activity, object payload)
         {
+            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
+            {
+                return;
+            }
+
             if (activity.IsAllDataRequested)
             {
                 _ = this.stopContextFetcher.TryFetch(payload, out HttpContext context);
@@ -242,6 +269,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         public override void OnCustom(string name, Activity activity, object payload)
         {
+            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
+            {
+                return;
+            }
+
             if (name == "Microsoft.AspNetCore.Mvc.BeforeAction")
             {
                 if (activity.IsAllDataRequested)
@@ -271,6 +303,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         public override void OnException(Activity activity, object payload)
         {
+            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
+            {
+                return;
+            }
+
             if (activity.IsAllDataRequested)
             {
                 if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
