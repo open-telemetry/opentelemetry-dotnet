@@ -247,7 +247,7 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.False(activity.IsAllDataRequested);
                 Assert.False(activity.Recorded);
 
-                // This is not a root activity.
+                // This is not a root activity and parent is not remote.
                 // If sampling returns false, no activity is created at all.
                 using var innerActivity = activitySource.StartActivity("inner");
                 Assert.Null(innerActivity);
