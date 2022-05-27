@@ -239,7 +239,7 @@ namespace OpenTelemetry.Trace.Tests
 
             ActivityContext ctx = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, isRemote: true);
 
-            using (var activity = activitySource.StartActivity("root",ActivityKind.Server, ctx))
+            using (var activity = activitySource.StartActivity("root", ActivityKind.Server, ctx))
             {
                 // Even if sampling returns false, for activities with remote parent,
                 // activity is still created with PropagationOnly.
