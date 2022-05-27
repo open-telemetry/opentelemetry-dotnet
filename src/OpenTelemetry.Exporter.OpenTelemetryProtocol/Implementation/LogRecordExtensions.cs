@@ -103,10 +103,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         {
                             otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = stateValue.Value as string };
                         }
-                        else
+                        else if (OtlpKeyValueTransformer.Instance.TryTransformTag(stateValue, out var result))
                         {
-                            var otlpAttribute = stateValue.ToOtlpAttribute();
-                            otlpLogRecord.Attributes.Add(otlpAttribute);
+                            otlpLogRecord.Attributes.Add(result);
                         }
                     }
                 }
@@ -150,8 +149,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     foreach (var scopeItem in scope)
                     {
                         var scopeItemWithDepthInfo = new KeyValuePair<string, object>($"[Scope.{scopeDepth}]:{scopeItem.Key}", scopeItem.Value);
-                        var otlpAttribute = scopeItemWithDepthInfo.ToOtlpAttribute();
-                        otlpLog.Attributes.Add(otlpAttribute);
+                        if (OtlpKeyValueTransformer.Instance.TryTransformTag(scopeItemWithDepthInfo, out var result))
+                        {
+                            otlpLog.Attributes.Add(result);
+                        }
                     }
                 }
             }
