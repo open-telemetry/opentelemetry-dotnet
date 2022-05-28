@@ -221,14 +221,14 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int WriteLabel(byte[] buffer, int cursor, string labelKey, object labelValue)
+        public static int WriteLabel(byte[] buffer, int cursor, string labelKey, string labelValue)
         {
             cursor = WriteLabelKey(buffer, cursor, labelKey);
             buffer[cursor++] = unchecked((byte)'=');
             buffer[cursor++] = unchecked((byte)'"');
 
             // In Prometheus, a label with an empty label value is considered equivalent to a label that does not exist.
-            cursor = WriteLabelValue(buffer, cursor, labelValue?.ToString() ?? string.Empty);
+            cursor = WriteLabelValue(buffer, cursor, labelValue ?? string.Empty);
             buffer[cursor++] = unchecked((byte)'"');
 
             return cursor;

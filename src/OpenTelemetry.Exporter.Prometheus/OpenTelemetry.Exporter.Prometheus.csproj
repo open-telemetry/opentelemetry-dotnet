@@ -18,6 +18,10 @@
     <RunApiCompat>false</RunApiCompat>
   </PropertyGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonPkgVer)" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>

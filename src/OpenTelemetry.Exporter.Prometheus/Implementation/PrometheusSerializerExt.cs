@@ -54,8 +54,11 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                         foreach (var tag in tags)
                         {
-                            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                            buffer[cursor++] = unchecked((byte)',');
+                            if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result))
+                            {
+                                cursor = WriteLabel(buffer, cursor, tag.Key, result);
+                                buffer[cursor++] = unchecked((byte)',');
+                            }
                         }
 
                         buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
@@ -113,8 +116,11 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                         foreach (var tag in tags)
                         {
-                            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                            buffer[cursor++] = unchecked((byte)',');
+                            if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result))
+                            {
+                                cursor = WriteLabel(buffer, cursor, tag.Key, result);
+                                buffer[cursor++] = unchecked((byte)',');
+                            }
                         }
 
                         cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
@@ -148,8 +154,11 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                         foreach (var tag in tags)
                         {
-                            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                            buffer[cursor++] = unchecked((byte)',');
+                            if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result))
+                            {
+                                cursor = WriteLabel(buffer, cursor, tag.Key, result);
+                                buffer[cursor++] = unchecked((byte)',');
+                            }
                         }
 
                         buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
@@ -174,8 +183,11 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                         foreach (var tag in tags)
                         {
-                            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                            buffer[cursor++] = unchecked((byte)',');
+                            if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result))
+                            {
+                                cursor = WriteLabel(buffer, cursor, tag.Key, result);
+                                buffer[cursor++] = unchecked((byte)',');
+                            }
                         }
 
                         buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
