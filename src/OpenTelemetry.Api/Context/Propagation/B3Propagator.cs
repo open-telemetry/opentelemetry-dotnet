@@ -60,7 +60,7 @@ namespace OpenTelemetry.Context.Propagation
         /// <summary>
         /// Initializes a new instance of the <see cref="B3Propagator"/> class.
         /// </summary>
-        [Obsolete("Use B3Propagator contructor from OpenTelemetry.Extensions.Propagators namespace, shipped as part of OpenTelemetry.Extensions.Propagators package.")]
+        [Obsolete("Use B3Propagator class from OpenTelemetry.Extensions.Propagators namespace, shipped as part of OpenTelemetry.Extensions.Propagators package.")]
         public B3Propagator()
             : this(false)
         {
@@ -70,7 +70,7 @@ namespace OpenTelemetry.Context.Propagation
         /// Initializes a new instance of the <see cref="B3Propagator"/> class.
         /// </summary>
         /// <param name="singleHeader">Determines whether to use single or multiple headers when extracting or injecting span context.</param>
-        [Obsolete("Use B3Propagator contructor from OpenTelemetry.Extensions.Propagators namespace, shipped as part of OpenTelemetry.Extensions.Propagators package.")]
+        [Obsolete("Use B3Propagator class from OpenTelemetry.Extensions.Propagators namespace, shipped as part of OpenTelemetry.Extensions.Propagators package.")]
         public B3Propagator(bool singleHeader)
         {
             this.singleHeader = singleHeader;
@@ -80,7 +80,7 @@ namespace OpenTelemetry.Context.Propagation
         public override ISet<string> Fields => AllFields;
 
         /// <inheritdoc/>
-        [Obsolete("Use Extract function from OpenTelemetry.Extensions.Propagators namespace, shipped as part of OpenTelemetry.Extensions.Propagators package.")]
+        [Obsolete("Use B3Propagator class from OpenTelemetry.Extensions.Propagators namespace, shipped as part of OpenTelemetry.Extensions.Propagators package.")]
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
         public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>> getter)
 #pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
@@ -114,7 +114,7 @@ namespace OpenTelemetry.Context.Propagation
         }
 
         /// <inheritdoc/>
-        [Obsolete("Use Inject function from OpenTelemetry.Extensions.Propagators namespace, shipped as part of OpenTelemetry.Extensions.Propagators package.")]
+        [Obsolete("Use B3Propagator class from OpenTelemetry.Extensions.Propagators namespace, shipped as part of OpenTelemetry.Extensions.Propagators package.")]
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
         public override void Inject<T>(PropagationContext context, T carrier, Action<T, string, string> setter)
 #pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
