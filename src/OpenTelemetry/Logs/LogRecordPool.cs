@@ -55,41 +55,14 @@ namespace OpenTelemetry.Logs
             current = new LogRecordPool(size);
         }
 
-        /// <summary>
-        /// Rent a <see cref="LogRecord"/> from the pool.
-        /// </summary>
-        /// <returns><see cref="LogRecord"/>.</returns>
-        public static LogRecord Rent() => current.RentCore(clearIfReused: true);
+        internal static LogRecord Rent() => current.RentCore();
 
-        /// <summary>
-        /// Return a <see cref="LogRecord"/> to the pool.
-        /// </summary>
-        /// <remarks>
-        /// Note: If the rented <see cref="LogRecord"/> is being processed by a
-        /// <see cref="SimpleLogRecordExportProcessor"/> or a <see
-        /// cref="BatchLogRecordExportProcessor"/> then <see cref="Return"/>
-        /// should NOT be called, the instance will automatically be returned to
-        /// the pool after being exported.
-        /// </remarks>
-        /// <param name="logRecord"><see cref="LogRecord"/>.</param>
-        public static void Return(LogRecord logRecord) => current.ReturnCore(logRecord);
+        internal static void Return(LogRecord logRecord) => current.ReturnCore(logRecord);
 
-        /// <summary>
-        /// Tracks a reference to the supplied <see cref="LogRecord"/>.
-        /// </summary>
-        /// <remarks>
-        /// Note: A <see cref="LogRecord"/> will not be returned to the pool
-        /// until it no longer has any references.
-        /// </remarks>
-        /// <param name="logRecord"><see cref="LogRecord"/>.</param>
-        public static void TrackReference(LogRecord logRecord)
-        {
-            Interlocked.Increment(ref logRecord.PoolReferences);
-        }
+        internal static void TrackReference(LogRecord logRecord)
+            => Interlocked.Increment(ref logRecord.PoolReferences);
 
-        internal static LogRecord Rent(bool clearIfReused) => current.RentCore(clearIfReused);
-
-        private LogRecord RentCore(bool clearIfReused)
+        private LogRecord RentCore()
         {
             LogRecord? logRecord = threadStaticLogRecord;
 
@@ -97,7 +70,7 @@ namespace OpenTelemetry.Logs
             {
                 threadStaticLogRecord = null;
 
-                logRecord.Clear(clearIfReused);
+                logRecord.PoolReferences = 1;
 
                 return logRecord;
             }
@@ -127,7 +100,7 @@ namespace OpenTelemetry.Logs
 
                     this.sharedPool[sharedPoolIndex] = null;
 
-                    logRecord.Clear(clearIfReused);
+                    logRecord.PoolReferences = 1;
 
                     return logRecord;
                 }
@@ -147,6 +120,22 @@ namespace OpenTelemetry.Logs
             if (poolReferences > 0)
             {
                 return;
+            }
+
+            var attributeStorage = logRecord.AttributeStorage;
+            if (attributeStorage != null)
+            {
+                if (attributeStorage.Count > 64)
+                {
+                    // Don't allow the pool to grow unconstained.
+                    logRecord.AttributeStorage = null;
+                }
+                else
+                {
+                    /* List<T>.Clear sets the size to 0 but it maintains the
+                    underlying array. */
+                    attributeStorage.Clear();
+                }
             }
 
             if (threadStaticLogRecord == null)

@@ -67,15 +67,17 @@ public class WeatherForecastController : ControllerBase
             forecast);
 
         // Log using LogEmitter API.
-        var logRecord = LogRecordPool.Rent();
-
-        logRecord.CategoryName = "WeatherForecasts";
-        logRecord.LogLevel = LogLevel.Information;
-        logRecord.FormattedMessage = "WeatherForecasts generated.";
-        logRecord.StateValues = new List<KeyValuePair<string, object?>>() { new KeyValuePair<string, object?>("count", forecast.Length) };
-        logRecord.SetActivityContext(Activity.Current);
-
-        this.logEmitter.Log(logRecord);
+        this.logEmitter.Log(
+            new LogRecordData(Activity.Current)
+            {
+                CategoryName = "WeatherForecasts",
+                LogLevel = LogLevel.Information,
+                Message = "WeatherForecasts generated.",
+            },
+            new LogRecordAttributes()
+            {
+                ["count"] = forecast.Length,
+            });
 
         return forecast;
     }

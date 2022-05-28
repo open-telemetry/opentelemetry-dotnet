@@ -287,10 +287,7 @@ namespace OpenTelemetry
 
                 if (this.circularBuffer.Count > 0)
                 {
-                    using (var batch = new Batch<T>(this.circularBuffer, this.maxExportBatchSize)
-                    {
-                        CleanupAction = cleanupAction,
-                    })
+                    using (var batch = new Batch<T>(this.circularBuffer, this.maxExportBatchSize, cleanupAction))
                     {
                         this.exporter.Export(batch);
                     }

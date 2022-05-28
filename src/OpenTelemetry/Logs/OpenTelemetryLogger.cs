@@ -53,19 +53,22 @@ namespace OpenTelemetry.Logs
             var processor = provider.Processor;
             if (processor != null)
             {
-                var record = LogRecordPool.Rent(clearIfReused: false);
+                var record = LogRecordPool.Rent();
 
                 record.ScopeProvider = provider.IncludeScopes ? this.ScopeProvider : null;
-
-                record.CategoryName = this.categoryName;
-                record.LogLevel = logLevel;
-                record.EventId = eventId;
-                record.FormattedMessage = provider.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null;
                 record.State = provider.ParseStateValues ? null : state;
-                record.Exception = exception;
-                record.StateValues = provider.ParseStateValues ? this.ParseState(state) : null;
+                record.StateValues = provider.ParseStateValues ? this.ParseState(record, state) : null;
 
-                record.SetActivityContext(Activity.Current);
+                ref LogRecordData data = ref record.Data;
+
+                data.TimestampBacking = DateTime.UtcNow;
+                data.CategoryName = this.categoryName;
+                data.LogLevel = logLevel;
+                data.EventId = eventId;
+                data.Message = provider.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null;
+                data.Exception = exception;
+
+                LogRecordData.SetActivityContext(ref data, Activity.Current);
 
                 processor.OnEnd(record);
 
@@ -85,22 +88,37 @@ namespace OpenTelemetry.Logs
 
         public IDisposable BeginScope<TState>(TState state) => this.ScopeProvider?.Push(state) ?? NullScope.Instance;
 
-        private IReadOnlyList<KeyValuePair<string, object?>> ParseState<TState>(TState state)
+        private IReadOnlyList<KeyValuePair<string, object?>> ParseState<TState>(LogRecord logRecord, TState state)
         {
-            if (state is IReadOnlyList<KeyValuePair<string, object?>> stateList)
+            if (state is LogRecordAttributes logRecordAttributes)
             {
-                return stateList;
+                logRecordAttributes.ApplyToLogRecord(logRecord);
+                return logRecord.AttributeStorage!;
+            }
+            else if (state is IReadOnlyList<KeyValuePair<string, object?>> stateList)
+            {
+                var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(stateList.Count);
+                attributeStorage.AddRange(stateList);
+                return attributeStorage;
             }
             else if (state is IEnumerable<KeyValuePair<string, object?>> stateValues)
             {
-                return new List<KeyValuePair<string, object?>>(stateValues);
+                var attributeStorage = logRecord.AttributeStorage;
+                if (attributeStorage == null)
+                {
+                    return logRecord.AttributeStorage = new List<KeyValuePair<string, object?>>(stateValues);
+                }
+                else
+                {
+                    attributeStorage.AddRange(stateValues);
+                    return attributeStorage;
+                }
             }
             else
             {
-                return new List<KeyValuePair<string, object?>>
-                {
-                    new KeyValuePair<string, object?>(string.Empty, state),
-                };
+                var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(8);
+                attributeStorage.Add(new KeyValuePair<string, object?>(string.Empty, state));
+                return attributeStorage;
             }
         }
 

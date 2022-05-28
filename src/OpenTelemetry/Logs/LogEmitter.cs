@@ -44,15 +44,20 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Emit a <see cref="LogRecord"/>.
         /// </summary>
-        /// <param name="logRecord"><see cref="LogRecord"/>.</param>
-        public void Log(LogRecord logRecord)
+        /// <param name="data"><see cref="LogRecordData"/>.</param>
+        /// <param name="attributes"><see cref="LogRecordAttributes"/>.</param>
+        public void Log(in LogRecordData data, in LogRecordAttributes attributes = default)
         {
-            Guard.ThrowIfNull(logRecord);
-
             var provider = this.loggerProvider;
             var processor = provider.Processor;
             if (processor != null)
             {
+                var logRecord = LogRecordPool.Rent();
+
+                logRecord.Data = data;
+
+                attributes.ApplyToLogRecord(logRecord);
+
                 if (provider.IncludeScopes)
                 {
                     logRecord.ScopeProvider = provider.ScopeProvider;

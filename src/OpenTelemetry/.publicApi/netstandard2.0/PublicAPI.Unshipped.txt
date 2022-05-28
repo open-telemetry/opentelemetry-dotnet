@@ -1,30 +1,52 @@
 #nullable enable
-OpenTelemetry.Batch<T>.Batch(T! item) -> void
-OpenTelemetry.Batch<T>.CleanupAction.get -> System.Action<T!>?
-OpenTelemetry.Batch<T>.CleanupAction.init -> void
 OpenTelemetry.BatchExportProcessor<T>.CleanupAction.get -> System.Action<T!>?
 OpenTelemetry.BatchExportProcessor<T>.CleanupAction.init -> void
 OpenTelemetry.BatchExportProcessor<T>.InitializeAction.get -> System.Action<T!>?
 OpenTelemetry.BatchExportProcessor<T>.InitializeAction.init -> void
 OpenTelemetry.Logs.LogEmitter
-OpenTelemetry.Logs.LogEmitter.Log(OpenTelemetry.Logs.LogRecord! logRecord) -> void
+OpenTelemetry.Logs.LogEmitter.Log(in OpenTelemetry.Logs.LogRecordData data, in OpenTelemetry.Logs.LogRecordAttributes attributes = default(OpenTelemetry.Logs.LogRecordAttributes)) -> void
 OpenTelemetry.Logs.LogEmitter.LogEmitter(OpenTelemetry.Logs.OpenTelemetryLoggerProvider! loggerProvider) -> void
-OpenTelemetry.Logs.LogRecord.CategoryName.set -> void
-OpenTelemetry.Logs.LogRecord.EventId.set -> void
-OpenTelemetry.Logs.LogRecord.Exception.set -> void
 OpenTelemetry.Logs.LogRecord.FormattedMessage.set -> void
-OpenTelemetry.Logs.LogRecord.LogLevel.set -> void
-OpenTelemetry.Logs.LogRecord.SetActivityContext(System.Diagnostics.Activity? activity) -> void
-OpenTelemetry.Logs.LogRecord.SpanId.set -> void
 OpenTelemetry.Logs.LogRecord.State.set -> void
 OpenTelemetry.Logs.LogRecord.StateValues.set -> void
-OpenTelemetry.Logs.LogRecord.Timestamp.set -> void
-OpenTelemetry.Logs.LogRecord.TraceFlags.set -> void
-OpenTelemetry.Logs.LogRecord.TraceId.set -> void
-OpenTelemetry.Logs.LogRecord.TraceState.set -> void
+OpenTelemetry.Logs.LogRecordAttributes
+OpenTelemetry.Logs.LogRecordAttributes.Add(string! key, object? value) -> void
+OpenTelemetry.Logs.LogRecordAttributes.Add(System.Collections.Generic.KeyValuePair<string!, object?> attribute) -> void
+OpenTelemetry.Logs.LogRecordAttributes.Count.get -> int
+OpenTelemetry.Logs.LogRecordAttributes.Enumerator
+OpenTelemetry.Logs.LogRecordAttributes.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string!, object?>
+OpenTelemetry.Logs.LogRecordAttributes.Enumerator.Dispose() -> void
+OpenTelemetry.Logs.LogRecordAttributes.Enumerator.Enumerator() -> void
+OpenTelemetry.Logs.LogRecordAttributes.Enumerator.MoveNext() -> bool
+OpenTelemetry.Logs.LogRecordAttributes.GetEnumerator() -> OpenTelemetry.Logs.LogRecordAttributes.Enumerator
+OpenTelemetry.Logs.LogRecordAttributes.LogRecordAttributes() -> void
+OpenTelemetry.Logs.LogRecordAttributes.this[int index].get -> System.Collections.Generic.KeyValuePair<string!, object?>
+OpenTelemetry.Logs.LogRecordAttributes.this[int index].set -> void
+OpenTelemetry.Logs.LogRecordAttributes.this[string! key].set -> void
+OpenTelemetry.Logs.LogRecordData
+OpenTelemetry.Logs.LogRecordData.CategoryName.get -> string?
+OpenTelemetry.Logs.LogRecordData.CategoryName.set -> void
+OpenTelemetry.Logs.LogRecordData.EventId.get -> Microsoft.Extensions.Logging.EventId
+OpenTelemetry.Logs.LogRecordData.EventId.set -> void
+OpenTelemetry.Logs.LogRecordData.Exception.get -> System.Exception?
+OpenTelemetry.Logs.LogRecordData.Exception.set -> void
+OpenTelemetry.Logs.LogRecordData.LogLevel.get -> Microsoft.Extensions.Logging.LogLevel
+OpenTelemetry.Logs.LogRecordData.LogLevel.set -> void
+OpenTelemetry.Logs.LogRecordData.LogRecordData() -> void
+OpenTelemetry.Logs.LogRecordData.LogRecordData(System.Diagnostics.Activity? activity = null) -> void
+OpenTelemetry.Logs.LogRecordData.Message.get -> string?
+OpenTelemetry.Logs.LogRecordData.Message.set -> void
+OpenTelemetry.Logs.LogRecordData.SpanId.get -> System.Diagnostics.ActivitySpanId
+OpenTelemetry.Logs.LogRecordData.SpanId.set -> void
+OpenTelemetry.Logs.LogRecordData.Timestamp.get -> System.DateTime
+OpenTelemetry.Logs.LogRecordData.Timestamp.set -> void
+OpenTelemetry.Logs.LogRecordData.TraceFlags.get -> System.Diagnostics.ActivityTraceFlags
+OpenTelemetry.Logs.LogRecordData.TraceFlags.set -> void
+OpenTelemetry.Logs.LogRecordData.TraceId.get -> System.Diagnostics.ActivityTraceId
+OpenTelemetry.Logs.LogRecordData.TraceId.set -> void
+OpenTelemetry.Logs.LogRecordData.TraceState.get -> string?
+OpenTelemetry.Logs.LogRecordData.TraceState.set -> void
 OpenTelemetry.Logs.LogRecordPool
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.CreateEmitter() -> OpenTelemetry.Logs.LogEmitter!
-static OpenTelemetry.Logs.LogRecordPool.Rent() -> OpenTelemetry.Logs.LogRecord!
+static OpenTelemetry.Logs.LogRecordAttributes.CreateFromEnumerable(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>! attributes) -> OpenTelemetry.Logs.LogRecordAttributes
 static OpenTelemetry.Logs.LogRecordPool.Resize(int size) -> void
-static OpenTelemetry.Logs.LogRecordPool.Return(OpenTelemetry.Logs.LogRecord! logRecord) -> void
-static OpenTelemetry.Logs.LogRecordPool.TrackReference(OpenTelemetry.Logs.LogRecord! logRecord) -> void

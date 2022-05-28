@@ -30,6 +30,8 @@ namespace OpenTelemetry.Logs
     public sealed class LogRecord
     {
         internal int PoolReferences = int.MaxValue;
+        internal LogRecordData Data;
+        internal List<KeyValuePair<string, object?>>? AttributeStorage;
 
         private static readonly Action<object?, List<object?>> AddScopeToBufferedList = (object? scope, List<object?> state) =>
         {
@@ -37,11 +39,9 @@ namespace OpenTelemetry.Logs
         };
 
         private List<object?>? bufferedScopes;
-        private DateTime timestamp;
 
         internal LogRecord()
         {
-            this.timestamp = DateTime.UtcNow;
         }
 
         // Note: Some users are calling this with reflection. Try not to change the signature to be nice.
@@ -57,68 +57,70 @@ namespace OpenTelemetry.Logs
             Exception? exception,
             IReadOnlyList<KeyValuePair<string, object?>>? stateValues)
         {
-            this.timestamp = timestamp;
+            this.Data = new(Activity.Current)
+            {
+                TimestampBacking = timestamp,
+
+                CategoryName = categoryName,
+                LogLevel = logLevel,
+                EventId = eventId,
+                Message = formattedMessage,
+                Exception = exception,
+            };
 
             this.ScopeProvider = scopeProvider;
-            this.CategoryName = categoryName;
-            this.LogLevel = logLevel;
-            this.EventId = eventId;
-            this.FormattedMessage = formattedMessage;
-            this.State = state;
             this.StateValues = stateValues;
-            this.Exception = exception;
-
-            this.SetActivityContext(Activity.Current);
+            this.State = state;
         }
 
         /// <summary>
-        /// Gets or sets the log timestamp.
+        /// Gets the log timestamp.
         /// </summary>
-        public DateTime Timestamp
-        {
-            get => this.timestamp;
-            set { this.timestamp = value.Kind == DateTimeKind.Local ? value.ToUniversalTime() : value; }
-        }
+        public DateTime Timestamp => this.Data.Timestamp;
 
         /// <summary>
-        /// Gets or sets the log <see cref="ActivityTraceId"/>.
+        /// Gets the log <see cref="ActivityTraceId"/>.
         /// </summary>
-        public ActivityTraceId TraceId { get; set; }
+        public ActivityTraceId TraceId => this.Data.TraceId;
 
         /// <summary>
-        /// Gets or sets the log <see cref="ActivitySpanId"/>.
+        /// Gets the log <see cref="ActivitySpanId"/>.
         /// </summary>
-        public ActivitySpanId SpanId { get; set; }
+        public ActivitySpanId SpanId => this.Data.SpanId;
 
         /// <summary>
-        /// Gets or sets the log <see cref="ActivityTraceFlags"/>.
+        /// Gets the log <see cref="ActivityTraceFlags"/>.
         /// </summary>
-        public ActivityTraceFlags TraceFlags { get; set; }
+        public ActivityTraceFlags TraceFlags => this.Data.TraceFlags;
 
         /// <summary>
-        /// Gets or sets the log trace state.
+        /// Gets the log trace state.
         /// </summary>
-        public string? TraceState { get; set; }
+        public string? TraceState => this.Data.TraceState;
 
         /// <summary>
-        /// Gets or sets the log category name.
+        /// Gets the log category name.
         /// </summary>
-        public string? CategoryName { get; set; }
+        public string? CategoryName => this.Data.CategoryName;
 
         /// <summary>
-        /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
+        /// Gets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
         /// </summary>
-        public LogLevel LogLevel { get; set; }
+        public LogLevel LogLevel => this.Data.LogLevel;
 
         /// <summary>
-        /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.EventId"/>.
+        /// Gets the log <see cref="Microsoft.Extensions.Logging.EventId"/>.
         /// </summary>
-        public EventId EventId { get; set; }
+        public EventId EventId => this.Data.EventId;
 
         /// <summary>
         /// Gets or sets the log formatted message.
         /// </summary>
-        public string? FormattedMessage { get; set; }
+        public string? FormattedMessage
+        {
+            get => this.Data.Message;
+            set => this.Data.Message = value;
+        }
 
         /// <summary>
         /// Gets or sets the raw state attached to the log. Set to <see
@@ -135,28 +137,11 @@ namespace OpenTelemetry.Logs
         public IReadOnlyList<KeyValuePair<string, object?>>? StateValues { get; set; }
 
         /// <summary>
-        /// Gets or sets the log <see cref="System.Exception"/>.
+        /// Gets the log <see cref="System.Exception"/>.
         /// </summary>
-        public Exception? Exception { get; set; }
+        public Exception? Exception => this.Data.Exception;
 
         internal IExternalScopeProvider? ScopeProvider { get; set; }
-
-        /// <summary>
-        /// Sets the log <see cref="TraceId"/>, <see cref="SpanId"/>, <see
-        /// cref="TraceState"/>, and <see cref="TraceFlags"/> from the supplied
-        /// <see cref="Activity"/>.
-        /// </summary>
-        /// <param name="activity"><see cref="Activity"/>.</param>
-        public void SetActivityContext(Activity? activity)
-        {
-            if (activity != null)
-            {
-                this.TraceId = activity.TraceId;
-                this.SpanId = activity.SpanId;
-                this.TraceState = activity.TraceStateString;
-                this.TraceFlags = activity.ActivityTraceFlags;
-            }
-        }
 
         /// <summary>
         /// Executes callback for each currently active scope objects in order
@@ -190,30 +175,6 @@ namespace OpenTelemetry.Logs
             {
                 this.ScopeProvider.ForEachScope(ScopeForEachState<TState>.ForEachScope, forEachScopeState);
             }
-        }
-
-        internal void Clear(bool clearAllData)
-        {
-            this.timestamp = DateTime.UtcNow;
-            this.PoolReferences = 1;
-
-            if (!clearAllData)
-            {
-                return;
-            }
-
-            this.CategoryName = null;
-            this.LogLevel = LogLevel.Trace;
-            this.EventId = default;
-            this.FormattedMessage = null;
-            this.State = null;
-            this.StateValues = null;
-            this.Exception = null;
-
-            this.TraceId = default;
-            this.SpanId = default;
-            this.TraceState = null;
-            this.TraceFlags = ActivityTraceFlags.None;
         }
 
         /// <summary>
