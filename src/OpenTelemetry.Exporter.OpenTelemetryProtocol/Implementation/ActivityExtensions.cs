@@ -355,8 +355,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     this.Created = true;
                 }
 
-                var attribute = activityTag.ToOtlpAttribute();
-                if (attribute != null)
+                if (OtlpKeyValueTransformer.Instance.TryTransformTag(activityTag, out var attribute))
                 {
                     PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, attribute);
 
