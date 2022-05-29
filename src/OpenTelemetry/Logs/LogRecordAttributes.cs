@@ -197,8 +197,8 @@ namespace OpenTelemetry.Logs
 
         internal readonly void ApplyToLogRecord(LogRecord logRecord)
         {
-            int attributeCount = this.count;
-            if (attributeCount <= 0)
+            int count = this.count;
+            if (count <= 0)
             {
                 return;
             }
@@ -211,30 +211,13 @@ namespace OpenTelemetry.Logs
                 return;
             }
 
-            int count = this.count;
-
             Debug.Assert(count <= 8, "Invalid size detected.");
 
             var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(OverflowAdditionalCapacity);
 
             try
             {
-                /* Note: If we ever add NET6+ target, this can be done more efficiently:
-                attributeStorage.EnsureCapacity(count);
-
-                switch (count)
-                {
-                    case 0: break;
-                    case 8: attributeStorage[7] = this.attribute8; goto case 7;
-                    case 7: attributeStorage[6] = this.attribute7; goto case 6;
-                    case 6: attributeStorage[5] = this.attribute6; goto case 5;
-                    case 5: attributeStorage[4] = this.attribute5; goto case 4;
-                    case 4: attributeStorage[3] = this.attribute4; goto case 3;
-                    case 3: attributeStorage[2] = this.attribute3; goto case 2;
-                    case 2: attributeStorage[1] = this.attribute2; goto case 1;
-                    case 1: attributeStorage[0] = this.attribute1; break;
-                }
-                */
+                // TODO: Perf test this, adjust as needed.
 
                 attributeStorage.Add(this.attribute1);
                 if (count == 1)
