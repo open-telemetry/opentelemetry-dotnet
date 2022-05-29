@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using OpenTelemetry.Logs;
 
 namespace OpenTelemetry.Exporter
 {
@@ -24,11 +25,13 @@ namespace OpenTelemetry.Exporter
     {
         private readonly ICollection<T> exportedItems;
         private readonly Func<Batch<T>, ExportResult> onExport;
+        private readonly bool isLogExporter;
 
         public InMemoryExporter(ICollection<T> exportedItems)
         {
             this.exportedItems = exportedItems;
             this.onExport = (Batch<T> batch) => this.DefaultExport(batch);
+            this.isLogExporter = typeof(T) == typeof(LogRecord);
         }
 
         internal InMemoryExporter(Func<Batch<T>, ExportResult> exportFunc)
@@ -47,6 +50,11 @@ namespace OpenTelemetry.Exporter
 
             foreach (var data in batch)
             {
+                if (this.isLogExporter)
+                {
+                    LogRecordPool.TrackReference((LogRecord)(object)data);
+                }
+
                 this.exportedItems.Add(data);
             }
 
