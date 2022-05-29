@@ -66,7 +66,7 @@ namespace OpenTelemetry
             this.Count = this.targetCount = 1;
         }
 
-        internal Batch(CircularBuffer<T> circularBuffer, int maxSize, Action<T>? cleanupAction)
+        internal Batch(CircularBuffer<T> circularBuffer, int maxSize, Action<T>? cleanupAction = null)
         {
             Debug.Assert(maxSize > 0, $"{nameof(maxSize)} should be a positive number.");
             Debug.Assert(circularBuffer != null, $"{nameof(circularBuffer)} was null.");
