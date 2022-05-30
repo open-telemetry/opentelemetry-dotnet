@@ -4,25 +4,25 @@ OpenTelemetry.BatchExportProcessor<T>.CleanupAction.init -> void
 OpenTelemetry.BatchExportProcessor<T>.InitializeAction.get -> System.Action<T!>?
 OpenTelemetry.BatchExportProcessor<T>.InitializeAction.init -> void
 OpenTelemetry.Logs.LogEmitter
-OpenTelemetry.Logs.LogEmitter.Log(in OpenTelemetry.Logs.LogRecordData data, in OpenTelemetry.Logs.LogRecordAttributes attributes = default(OpenTelemetry.Logs.LogRecordAttributes)) -> void
+OpenTelemetry.Logs.LogEmitter.Log(in OpenTelemetry.Logs.LogRecordData data, in OpenTelemetry.Logs.LogRecordAttributeList attributes = default(OpenTelemetry.Logs.LogRecordAttributeList)) -> void
 OpenTelemetry.Logs.LogEmitter.LogEmitter(OpenTelemetry.Logs.OpenTelemetryLoggerProvider! loggerProvider) -> void
 OpenTelemetry.Logs.LogRecord.FormattedMessage.set -> void
 OpenTelemetry.Logs.LogRecord.State.set -> void
 OpenTelemetry.Logs.LogRecord.StateValues.set -> void
-OpenTelemetry.Logs.LogRecordAttributes
-OpenTelemetry.Logs.LogRecordAttributes.Add(string! key, object? value) -> void
-OpenTelemetry.Logs.LogRecordAttributes.Add(System.Collections.Generic.KeyValuePair<string!, object?> attribute) -> void
-OpenTelemetry.Logs.LogRecordAttributes.Count.get -> int
-OpenTelemetry.Logs.LogRecordAttributes.Enumerator
-OpenTelemetry.Logs.LogRecordAttributes.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string!, object?>
-OpenTelemetry.Logs.LogRecordAttributes.Enumerator.Dispose() -> void
-OpenTelemetry.Logs.LogRecordAttributes.Enumerator.Enumerator() -> void
-OpenTelemetry.Logs.LogRecordAttributes.Enumerator.MoveNext() -> bool
-OpenTelemetry.Logs.LogRecordAttributes.GetEnumerator() -> OpenTelemetry.Logs.LogRecordAttributes.Enumerator
-OpenTelemetry.Logs.LogRecordAttributes.LogRecordAttributes() -> void
-OpenTelemetry.Logs.LogRecordAttributes.this[int index].get -> System.Collections.Generic.KeyValuePair<string!, object?>
-OpenTelemetry.Logs.LogRecordAttributes.this[int index].set -> void
-OpenTelemetry.Logs.LogRecordAttributes.this[string! key].set -> void
+OpenTelemetry.Logs.LogRecordAttributeList
+OpenTelemetry.Logs.LogRecordAttributeList.Add(string! key, object? value) -> void
+OpenTelemetry.Logs.LogRecordAttributeList.Add(System.Collections.Generic.KeyValuePair<string!, object?> attribute) -> void
+OpenTelemetry.Logs.LogRecordAttributeList.Count.get -> int
+OpenTelemetry.Logs.LogRecordAttributeList.Enumerator
+OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.Current.get -> System.Collections.Generic.KeyValuePair<string!, object?>
+OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.Dispose() -> void
+OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.Enumerator() -> void
+OpenTelemetry.Logs.LogRecordAttributeList.Enumerator.MoveNext() -> bool
+OpenTelemetry.Logs.LogRecordAttributeList.GetEnumerator() -> OpenTelemetry.Logs.LogRecordAttributeList.Enumerator
+OpenTelemetry.Logs.LogRecordAttributeList.LogRecordAttributeList() -> void
+OpenTelemetry.Logs.LogRecordAttributeList.this[int index].get -> System.Collections.Generic.KeyValuePair<string!, object?>
+OpenTelemetry.Logs.LogRecordAttributeList.this[int index].set -> void
+OpenTelemetry.Logs.LogRecordAttributeList.this[string! key].set -> void
 OpenTelemetry.Logs.LogRecordData
 OpenTelemetry.Logs.LogRecordData.CategoryName.get -> string?
 OpenTelemetry.Logs.LogRecordData.CategoryName.set -> void
@@ -48,5 +48,5 @@ OpenTelemetry.Logs.LogRecordData.TraceState.get -> string?
 OpenTelemetry.Logs.LogRecordData.TraceState.set -> void
 OpenTelemetry.Logs.LogRecordPool
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.CreateEmitter() -> OpenTelemetry.Logs.LogEmitter!
-static OpenTelemetry.Logs.LogRecordAttributes.CreateFromEnumerable(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>! attributes) -> OpenTelemetry.Logs.LogRecordAttributes
+static OpenTelemetry.Logs.LogRecordAttributeList.CreateFromEnumerable(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>! attributes) -> OpenTelemetry.Logs.LogRecordAttributeList
 static OpenTelemetry.Logs.LogRecordPool.Resize(int size) -> void

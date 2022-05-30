@@ -74,7 +74,7 @@ public class WeatherForecastController : ControllerBase
                 LogLevel = LogLevel.Information,
                 Message = "WeatherForecasts generated.",
             },
-            new LogRecordAttributes()
+            new LogRecordAttributeList()
             {
                 ["count"] = forecast.Length,
             });

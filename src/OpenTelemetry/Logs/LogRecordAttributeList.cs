@@ -1,4 +1,4 @@
-// <copyright file="LogRecordAttributes.cs" company="OpenTelemetry Authors">
+// <copyright file="LogRecordAttributeList.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,7 @@ namespace OpenTelemetry.Logs
     /// <summary>
     /// Stores attributes to be added to a log message.
     /// </summary>
-    public struct LogRecordAttributes : IReadOnlyList<KeyValuePair<string, object?>>
+    public struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
     {
         private const int OverflowAdditionalCapacity = 8;
         private KeyValuePair<string, object?> attribute1;
@@ -120,15 +120,15 @@ namespace OpenTelemetry.Logs
         }
 
         /// <summary>
-        /// Create a <see cref="LogRecordAttributes"/> collection from an enumerable.
+        /// Create a <see cref="LogRecordAttributeList"/> collection from an enumerable.
         /// </summary>
         /// <param name="attributes">Source attributes.</param>
-        /// <returns><see cref="LogRecordAttributes"/>.</returns>
-        public static LogRecordAttributes CreateFromEnumerable(IEnumerable<KeyValuePair<string, object?>> attributes)
+        /// <returns><see cref="LogRecordAttributeList"/>.</returns>
+        public static LogRecordAttributeList CreateFromEnumerable(IEnumerable<KeyValuePair<string, object?>> attributes)
         {
             Guard.ThrowIfNull(attributes);
 
-            LogRecordAttributes logRecordAttributes = default;
+            LogRecordAttributeList logRecordAttributes = default;
             logRecordAttributes.overflowAttributes = new(attributes);
             logRecordAttributes.count = logRecordAttributes.overflowAttributes.Count;
             return logRecordAttributes;
@@ -183,7 +183,7 @@ namespace OpenTelemetry.Logs
         }
 
         /// <summary>
-        /// Returns an enumerator that iterates through the <see cref="LogRecordAttributes"/>.
+        /// Returns an enumerator that iterates through the <see cref="LogRecordAttributeList"/>.
         /// </summary>
         /// <returns><see cref="Enumerator"/>.</returns>
         public readonly Enumerator GetEnumerator()
@@ -285,14 +285,14 @@ namespace OpenTelemetry.Logs
         }
 
         /// <summary>
-        /// Enumerates the elements of a <see cref="LogRecordAttributes"/>.
+        /// Enumerates the elements of a <see cref="LogRecordAttributeList"/>.
         /// </summary>
         public struct Enumerator : IEnumerator<KeyValuePair<string, object?>>, IEnumerator
         {
-            private LogRecordAttributes attributes;
+            private LogRecordAttributeList attributes;
             private int index;
 
-            internal Enumerator(in LogRecordAttributes attributes)
+            internal Enumerator(in LogRecordAttributeList attributes)
             {
                 this.index = -1;
                 this.attributes = attributes;
