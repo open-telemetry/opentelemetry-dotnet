@@ -26,7 +26,7 @@ Add a reference to [Prometheus
 Exporter](../../../src/OpenTelemetry.Exporter.Prometheus/README.md):
 
 ```sh
-dotnet add package OpenTelemetry.Exporter.Prometheus --version 1.2.0-rc2
+dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus
 ```
 
 Now, we are going to make some small tweaks to the example in the
@@ -53,6 +53,24 @@ With `AddPrometheusExporter()`, OpenTelemetry `PrometheusExporter` will export
 data via the endpoint defined by
 [PrometheusExporterOptions.HttpListenerPrefixes](../../../src/OpenTelemetry.Exporter.Prometheus/README.md#httplistenerprefixes),
 which is `http://localhost:9464/` by default.
+
+```mermaid
+graph LR
+
+subgraph SDK
+  MeterProvider
+  MetricReader[BaseExportingMetricReader]
+  PrometheusExporter["PrometheusExporter<br/>(http://localhost:9464/)"]
+end
+
+subgraph API
+  Instrument["Meter(#quot;MyCompany.MyProduct.MyLibrary#quot;, #quot;1.0#quot;)<br/>Counter(#quot;MyFruitCounter#quot;)"]
+end
+
+Instrument --> | Measurements | MeterProvider
+
+MeterProvider --> | Metrics | MetricReader --> | Pull | PrometheusExporter
+```
 
 Also, for our learning purpose, use a while-loop to keep increasing the counter
 value until any key is pressed.
@@ -174,6 +192,21 @@ of increase of myFruitCounter over the past 5 minutes:
 
 ![Grafana
 UI](https://user-images.githubusercontent.com/17327289/151636769-138ecb4f-b44f-477b-88eb-247fc4340252.png)
+
+```mermaid
+graph TD
+
+subgraph Prometheus
+  PrometheusScraper
+  PrometheusDatabase
+end
+
+PrometheusExporter["PrometheusExporter<br/>(listening at #quot;http://localhost:9464/#quot;)"] -->|HTTP GET| PrometheusScraper{{"Prometheus scraper<br/>(polling #quot;http://localhost:9464/metrics#quot; every 10 seconds)"}}
+PrometheusScraper --> PrometheusDatabase[("Prometheus TSDB (time series database)")]
+PrometheusDatabase -->|http://localhost:9090/graph| PrometheusUI["Browser<br/>(Prometheus Dashboard)"]
+PrometheusDatabase -->|http://localhost:9090/api/| Grafana[Grafana Server]
+Grafana -->|http://localhost:3000/dashboard| GrafanaUI["Browser<br/>(Grafana Dashboard)"]
+```
 
 ## Learn more
 

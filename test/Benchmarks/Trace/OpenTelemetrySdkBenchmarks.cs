@@ -21,7 +21,6 @@ using OpenTelemetry.Trace;
 
 namespace Benchmarks.Trace
 {
-    [MemoryDiagnoser]
     public class OpenTelemetrySdkBenchmarks
     {
         private Tracer alwaysSampleTracer;

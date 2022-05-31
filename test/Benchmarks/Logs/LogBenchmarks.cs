@@ -41,7 +41,6 @@ Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
 
 namespace Benchmarks.Logs
 {
-    [MemoryDiagnoser]
     public class LogBenchmarks
     {
         private readonly ILogger loggerWithNoListener;

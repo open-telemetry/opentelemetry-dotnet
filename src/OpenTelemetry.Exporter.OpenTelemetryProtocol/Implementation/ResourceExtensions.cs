@@ -30,10 +30,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             foreach (KeyValuePair<string, object> attribute in resource.Attributes)
             {
-                var oltpAttribute = attribute.ToOtlpAttribute();
-                if (oltpAttribute != null)
+                if (OtlpKeyValueTransformer.Instance.TryTransformTag(attribute, out var result))
                 {
-                    processResource.Attributes.Add(oltpAttribute);
+                    processResource.Attributes.Add(result);
                 }
             }
 

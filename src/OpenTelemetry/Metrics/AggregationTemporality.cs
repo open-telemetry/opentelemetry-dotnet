@@ -14,11 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-
 namespace OpenTelemetry.Metrics
 {
-    [Flags]
     public enum AggregationTemporality : byte
     {
         /// <summary>

@@ -27,7 +27,7 @@ public class WeatherForecastController : ControllerBase
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching",
     };
 
-    private static readonly HttpClient HttpClient = new HttpClient();
+    private static readonly HttpClient HttpClient = new();
 
     private readonly ILogger<WeatherForecastController> logger;
 

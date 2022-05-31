@@ -9,8 +9,8 @@
 
 OpenTelemetry .NET SDK has provided the following built-in metric exporters:
 
-* [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
 * [InMemory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
+* [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
 * [OpenTelemetryProtocol](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
 * [Prometheus](../../../src/OpenTelemetry.Exporter.Prometheus/README.md)
 
@@ -29,8 +29,10 @@ not covered by the built-in exporters:
   done via `OpenTelemetry.SuppressInstrumentationScope`.
 * Exporters receives a batch of `Metric`, and each `Metric`
   can contain 1 or more `MetricPoint`s.
-* Exporters should use `Activity.TagObjects` collection instead of
-  `Activity.Tags` to obtain the full set of attributes (tags).
+  The exporter should perform all actions (e.g. serializing etc.) with
+  the `Metric`s and `MetricsPoint`s in the batch before returning control from
+  `Export`, once the control is returned, the exporter can no longer make any
+  assumptions about the state of the batch or anything inside it.
 * Exporters should use `ParentProvider.GetResource()` to get the `Resource`
   associated with the provider.
 
@@ -56,8 +58,8 @@ class MyExporter : BaseExporter<Metric>
 }
 ```
 
-A demo exporter which simply writes metric name and metric point start time
-, tags to the console is shown [here](./MyExporter.cs).
+A demo exporter which simply writes metric name, metric point start time
+and tags to the console is shown [here](./MyExporter.cs).
 
 Apart from the exporter itself, you should also provide extension methods as
 shown [here](./MyExporterExtensions.cs). This allows users to add the Exporter

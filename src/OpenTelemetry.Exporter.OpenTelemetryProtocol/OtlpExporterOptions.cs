@@ -39,9 +39,6 @@ namespace OpenTelemetry.Exporter
         internal const string TimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TIMEOUT";
         internal const string ProtocolEnvVarName = "OTEL_EXPORTER_OTLP_PROTOCOL";
 
-        internal const string TracesExportPath = "v1/traces";
-        internal const string MetricsExportPath = "v1/metrics";
-
         internal readonly Func<HttpClient> DefaultHttpClientFactory;
 
         private const string DefaultGrpcEndpoint = "http://localhost:4317";
@@ -72,10 +69,9 @@ namespace OpenTelemetry.Exporter
 
             if (EnvironmentVariableHelper.LoadString(ProtocolEnvVarName, out string protocolEnvVar))
             {
-                var protocol = protocolEnvVar.ToOtlpExportProtocol();
-                if (protocol.HasValue)
+                if (OtlpExportProtocolParser.TryParse(protocolEnvVar, out var protocol))
                 {
-                    this.Protocol = protocol.Value;
+                    this.Protocol = protocol;
                 }
                 else
                 {

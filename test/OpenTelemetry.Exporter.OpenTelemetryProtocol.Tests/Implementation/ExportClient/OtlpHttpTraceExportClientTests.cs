@@ -20,7 +20,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
-#if !NET5_0_OR_GREATER
+#if !NET6_0_OR_GREATER
 using System.Threading.Tasks;
 #endif
 using Moq;
@@ -98,7 +98,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var httpRequestContent = Array.Empty<byte>();
 
             httpHandlerMock.Protected()
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
                 .Setup<HttpResponseMessage>("Send", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
                 .Returns((HttpRequestMessage request, CancellationToken token) =>
                 {
@@ -109,7 +109,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     httpRequest = r;
 
                     // We have to capture content as it can't be accessed after request is disposed inside of SendExportRequest method
-                    httpRequestContent = r.Content.ReadAsByteArrayAsync()?.Result;
+                    httpRequestContent = r.Content.ReadAsByteArrayAsync(ct)?.Result;
                 })
 #else
                 .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())

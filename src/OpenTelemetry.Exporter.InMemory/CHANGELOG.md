@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+* Adds new `AddInMemoryExporter` extension method to export `Metric` as new
+  type `MetricSnapshot`.
+  ([#2361](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361))
+
+## 1.3.0-beta.2
+
+Released 2022-May-16
+
+## 1.3.0-beta.1
+
+Released 2022-Apr-15
+
+* Removes .NET Framework 4.6.1. The minimum .NET Framework
+  version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
+
+## 1.2.0-rc5
+
+Released 2022-Apr-12
+
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
 ## 1.2.0-rc3
 
 Released 2022-Mar-04

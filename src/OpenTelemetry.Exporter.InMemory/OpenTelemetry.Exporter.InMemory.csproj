@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
     <Description>In-memory exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags)</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
@@ -12,13 +12,21 @@
     <NoWarn>$(NoWarn),1591</NoWarn>
   </PropertyGroup>
 
+  <!--Do not run ApiCompat as this package was left out from the
+  1.2.0 stable release. This is only temporary, and this package
+  is expected to always version together with core packages.
+  Remove this property once we have released the 1.3.0 stable version
+  of this package. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/3192
+  -->
+  <PropertyGroup>
+    <RunApiCompat>false</RunApiCompat>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PeriodicExportingMetricReaderHelper.cs" Link="Includes\PeriodicExportingMetricReaderHelper.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\ServiceProviderExtensions.cs" Link="Includes\ServiceProviderExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
   </ItemGroup>
 

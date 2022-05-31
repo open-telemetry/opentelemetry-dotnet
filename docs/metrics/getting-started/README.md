@@ -22,7 +22,7 @@ Install the
 package:
 
 ```sh
-dotnet add package --prerelease OpenTelemetry.Exporter.Console
+dotnet add package OpenTelemetry.Exporter.Console
 ```
 
 Update the `Program.cs` file with the code from [Program.cs](./Program.cs):
@@ -47,15 +47,40 @@ What does the above program do?
 
 The program creates a
 [Meter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#meter)
-instance named "MyCompany.MyProduct.MyLibrary" and then creates a
+instance named "MyCompany.MyProduct.MyLibrary".
+
+```csharp
+private static readonly Meter MyMeter = new("MyCompany.MyProduct.MyLibrary", "1.0");
+```
+
+Then it creates a
 [Counter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#counter)
-instrument from it. This counter is used to report several metric measurements.
+instrument from it.
+
+```csharp
+private static readonly Counter<long> MyFruitCounter = MyMeter.CreateCounter<long>("MyFruitCounter");
+```
+
+This counter is used to report several metric measurements.
+
+```csharp
+MyFruitCounter.Add(1, new("name", "apple"), new("color", "red"));
+MyFruitCounter.Add(2, new("name", "lemon"), new("color", "yellow"));
+MyFruitCounter.Add(1, new("name", "lemon"), new("color", "yellow"));
+```
 
 An OpenTelemetry
 [MeterProvider](#meterprovider)
 is configured to subscribe to instruments from the Meter
 `MyCompany.MyProduct.MyLibrary`, and aggregate the measurements in-memory. The
 pre-aggregated metrics are exported to a `ConsoleExporter`.
+
+```csharp
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter("MyCompany.MyProduct.MyLibrary")
+    .AddConsoleExporter()
+    .Build();
+```
 
 ```mermaid
 graph LR
@@ -94,8 +119,8 @@ means is that you can instrument your application by simply depending on
 
 ## Learn more
 
-* If you want to learn about more instruments, refer to [learning
-  more about instruments](../learning-more-instruments/README.md).
-
-* If you want to customize the Sdk, refer to [customizing
-  the SDK](../customizing-the-sdk/README.md).
+* [Getting Started with Prometheus and
+  Grafana](../getting-started-prometheus-grafana/README.md)
+* [Learning more about Instruments](../learning-more-instruments/README.md)
+* [Customizing the OpenTelemetry .NET SDK](../customizing-the-sdk/README.md)
+* [Extending the OpenTelemetry .NET SDK](../extending-the-sdk/README.md)

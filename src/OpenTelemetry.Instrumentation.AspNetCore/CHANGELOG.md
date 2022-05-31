@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+* Added additional metric dimensions.
+  ([3247](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3247))
+
+* Removes net5.0 target as .NET 5.0 is going out
+  of support. The package keeps netstandard2.1 target, so it
+  can still be used with .NET5.0 apps.
+  ([#3147](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3147))
+
+## 1.0.0-rc9.3
+
+Released 2022-Apr-15
+
+## 1.0.0-rc9.2
+
+Released 2022-Apr-12
+
+## 1.0.0-rc9.1
+
+Released 2022-Mar-30
+
 * Fix: Http server span status is now unset for `400`-`499`.
   ([#2904](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2904))
 * Fix: drop direct reference of the `Microsoft.AspNetCore.Http.Features` from
@@ -8,9 +30,7 @@
 * Reduce allocations calculating the http.url tag.
   ([#2947](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2947))
 
-## Unreleased
-
-## 1.0.0-rc10
+## 1.0.0-rc10 (broken. use 1.0.0-rc9.1 and newer)
 
 Released 2022-Mar-04
 
@@ -91,7 +111,7 @@ Released 2020-Nov-5
   [Grpc.AspNetCore](https://www.nuget.org/packages/Grpc.AspNetCore/). This
   option is enabled by default.
   ([#1423](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1423))
-* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor to
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropagator to
   CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator and
   changed from interface to abstract class.
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))

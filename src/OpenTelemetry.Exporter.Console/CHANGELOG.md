@@ -2,10 +2,51 @@
 
 ## Unreleased
 
+* Improve the conversion and formatting of attribute values.
+  The list of data types that must be supported per the
+  [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/common#attribute)
+  is more narrow than what the .NET OpenTelemetry SDK supports. Numeric
+  [built-in value types](https://docs.microsoft.com/dotnet/csharp/language-reference/builtin-types/built-in-types)
+  are supported by converting to a `long` or `double` as appropriate except for
+  numeric types that could cause overflow (`ulong`) or rounding (`decimal`)
+  which are converted to strings. Non-numeric built-in types - `string`,
+  `char`, `bool` are supported. All other types are converted to a `string`.
+  Array values are also supported.
+  ([#3311](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3311))
+* Fix conversion of array-valued attributes. They were previously
+  converted to a string like "System.String[]".
+  ([#3311](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3311))
+
+## 1.3.0-beta.2
+
+Released 2022-May-16
+
+## 1.3.0-beta.1
+
+Released 2022-Apr-15
+
+* Removes .NET Framework 4.6.1. The minimum .NET Framework
+  version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
+
+## 1.2.0
+
+Released 2022-Apr-15
+
+## 1.2.0-rc5
+
+Released 2022-Apr-12
+
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
 * Added StatusCode, StatusDescription support to
   `ConsoleActivityExporter`.
   ([#2929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2929)
    [#3061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3061))
+
+* `AddConsoleExporter` extension method by default sets up exporter
+   to export metrics every 10 seconds.
 
 ## 1.2.0-rc3
 

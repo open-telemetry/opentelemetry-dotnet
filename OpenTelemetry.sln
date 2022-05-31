@@ -159,6 +159,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "metrics", "metrics", "{3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "logs", "logs", "{3862190B-E2C5-418E-AFDC-DB281FB5C705}"
+	ProjectSection(SolutionItems) = preProject
+		docs\logs\getting-started\README.md = docs\logs\getting-started\README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MicroserviceExample", "MicroserviceExample", "{4D492D62-5150-45F9-817F-C99562E364E2}"
 	ProjectSection(SolutionItems) = preProject
@@ -191,8 +194,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.InMemory", "src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj", "{9BCEA68B-50E2-4A3A-93E6-B51AF612BCC1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "extending-the-sdk", "docs\logs\extending-the-sdk\extending-the-sdk.csproj", "{13C10C9A-07E8-43EB-91F5-C2B116FBE0FC}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore.5.0", "test\TestApp.AspNetCore.5.0\TestApp.AspNetCore.5.0.csproj", "{972396A8-E35B-499C-9BA1-765E9B8822E1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "reporting-exceptions", "docs\trace\reporting-exceptions\reporting-exceptions.csproj", "{08D29501-F0A3-468F-B18D-BD1821A72383}"
 EndProject
@@ -227,6 +228,12 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started-prometheus-grafana", "docs\metrics\getting-started-prometheus-grafana\getting-started-prometheus-grafana.csproj", "{41B784AA-3301-4126-AF9F-1D59BD04B0BF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customizing-the-sdk", "docs\logs\customizing-the-sdk\customizing-the-sdk.csproj", "{6C7A1595-36D6-4229-BBB5-5A6B5791791D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Propagators", "src\OpenTelemetry.Extensions.Propagators\OpenTelemetry.Extensions.Propagators.csproj", "{E91B2E40-E428-43B3-8A43-09709F0E69E4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Propagators.Tests", "test\OpenTelemetry.Extensions.Propagators.Tests\OpenTelemetry.Extensions.Propagators.Tests.csproj", "{476D804B-BFEC-4D34-814C-DFFD97109989}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "correlation", "docs\logs\correlation\correlation.csproj", "{9A07D215-90AC-4BAF-BCDB-73D74FD3A5C5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -406,10 +413,6 @@ Global
 		{13C10C9A-07E8-43EB-91F5-C2B116FBE0FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{13C10C9A-07E8-43EB-91F5-C2B116FBE0FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{13C10C9A-07E8-43EB-91F5-C2B116FBE0FC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{972396A8-E35B-499C-9BA1-765E9B8822E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{972396A8-E35B-499C-9BA1-765E9B8822E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{972396A8-E35B-499C-9BA1-765E9B8822E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{972396A8-E35B-499C-9BA1-765E9B8822E1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{08D29501-F0A3-468F-B18D-BD1821A72383}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{08D29501-F0A3-468F-B18D-BD1821A72383}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{08D29501-F0A3-468F-B18D-BD1821A72383}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -478,6 +481,18 @@ Global
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E91B2E40-E428-43B3-8A43-09709F0E69E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E91B2E40-E428-43B3-8A43-09709F0E69E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E91B2E40-E428-43B3-8A43-09709F0E69E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E91B2E40-E428-43B3-8A43-09709F0E69E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{476D804B-BFEC-4D34-814C-DFFD97109989}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{476D804B-BFEC-4D34-814C-DFFD97109989}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{476D804B-BFEC-4D34-814C-DFFD97109989}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{476D804B-BFEC-4D34-814C-DFFD97109989}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A07D215-90AC-4BAF-BCDB-73D74FD3A5C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A07D215-90AC-4BAF-BCDB-73D74FD3A5C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A07D215-90AC-4BAF-BCDB-73D74FD3A5C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A07D215-90AC-4BAF-BCDB-73D74FD3A5C5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -505,7 +520,6 @@ Global
 		{DB942F5A-D571-4DEA-B1A7-B6BE0E24E6ED} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{B3F03725-23A0-4582-9526-F6A7E38F35CC} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 		{13C10C9A-07E8-43EB-91F5-C2B116FBE0FC} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
-		{972396A8-E35B-499C-9BA1-765E9B8822E1} = {77C7929A-2EED-4AA6-8705-B5C443C8AA0F}
 		{08D29501-F0A3-468F-B18D-BD1821A72383} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 		{64E3D8BB-93AB-4571-93F7-ED8D64DFFD06} = {5B7FB835-3FFF-4BC2-99C5-A5B5FAE3C818}
 		{E7F491CC-C37E-4A56-9CA7-8F77F59E0614} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
@@ -516,6 +530,7 @@ Global
 		{1F6CC903-04C9-4E7C-B388-C215C467BFB9} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 		{41B784AA-3301-4126-AF9F-1D59BD04B0BF} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
+		{9A07D215-90AC-4BAF-BCDB-73D74FD3A5C5} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

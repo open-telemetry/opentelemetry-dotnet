@@ -378,6 +378,18 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(40, message);
         }
 
+        [Event(41, Message = "View Configuration ignored for Instrument '{0}', Meter '{1}'. Reason: '{2}'. Measurements from the instrument will use default configuration for Aggregation. Suggested action: '{3}'", Level = EventLevel.Warning)]
+        public void MetricViewIgnored(string instrumentName, string meterName, string reason, string fix)
+        {
+            this.WriteEvent(41, instrumentName, meterName, reason, fix);
+        }
+
+        [Event(42, Message = "Unsupported attribute type '{0}' for '{1}'. Attribute will not be exported.", Level = EventLevel.Warning)]
+        public void UnsupportedAttributeType(string type, string key)
+        {
+            this.WriteEvent(42, type.ToString(), key);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {
@@ -391,6 +403,7 @@ namespace OpenTelemetry.Internal
                 }
 
                 base.Dispose();
+                GC.SuppressFinalize(this);
             }
 
             protected override void OnEventSourceCreated(EventSource eventSource)

@@ -34,7 +34,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 {
     public partial class HttpClientTests
     {
-        public static int Counter;
+        private static int counter;
 
         public static IEnumerable<object[]> TestData => HttpTestData.ReadTestCases();
 
@@ -68,7 +68,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                                {
                                    opt.SetHttpFlavor = tc.SetHttpFlavor;
                                    opt.Enrich = ActivityEnrichment;
-                                   opt.RecordException = tc.RecordException.HasValue ? tc.RecordException.Value : false;
+                                   opt.RecordException = tc.RecordException ?? false;
                                })
                                .AddProcessor(processor.Object)
                                .Build())
@@ -221,7 +221,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
         private static async Task CheckEnrichment(Sampler sampler, int expect, string url)
         {
-            Counter = 0;
+            counter = 0;
             var processor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
                 .SetSampler(sampler)
@@ -233,12 +233,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 using var r = await c.GetAsync(url).ConfigureAwait(false);
             }
 
-            Assert.Equal(expect, Counter);
+            Assert.Equal(expect, counter);
         }
 
         private static void ActivityEnrichmentCounter(Activity activity, string method, object obj)
         {
-            Counter++;
+            counter++;
         }
     }
 }
