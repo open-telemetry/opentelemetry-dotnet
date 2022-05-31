@@ -46,8 +46,8 @@ OpenTelemetry.BatchExportProcessorOptions<T>.ScheduledDelayMilliseconds.set -> v
 OpenTelemetry.BatchLogRecordExportProcessor
 OpenTelemetry.BatchLogRecordExportProcessor.BatchLogRecordExportProcessor(OpenTelemetry.BaseExporter<OpenTelemetry.Logs.LogRecord!>! exporter, int maxQueueSize = 2048, int scheduledDelayMilliseconds = 5000, int exporterTimeoutMilliseconds = 30000, int maxExportBatchSize = 512) -> void
 OpenTelemetry.CompositeProcessor<T>
-~OpenTelemetry.CompositeProcessor<T>.AddProcessor(OpenTelemetry.BaseProcessor<T> processor) -> OpenTelemetry.CompositeProcessor<T>
-~OpenTelemetry.CompositeProcessor<T>.CompositeProcessor(System.Collections.Generic.IEnumerable<OpenTelemetry.BaseProcessor<T>> processors) -> void
+OpenTelemetry.CompositeProcessor<T>.AddProcessor(OpenTelemetry.BaseProcessor<T>! processor) -> OpenTelemetry.CompositeProcessor<T>!
+OpenTelemetry.CompositeProcessor<T>.CompositeProcessor(System.Collections.Generic.IEnumerable<OpenTelemetry.BaseProcessor<T>!>! processors) -> void
 OpenTelemetry.ExportProcessorType
 OpenTelemetry.ExportProcessorType.Batch = 1 -> OpenTelemetry.ExportProcessorType
 OpenTelemetry.ExportProcessorType.Simple = 0 -> OpenTelemetry.ExportProcessorType

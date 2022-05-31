@@ -57,7 +57,7 @@ namespace OpenTelemetry.Logs
 
                 record.ScopeProvider = provider.IncludeScopes ? this.ScopeProvider : null;
                 record.State = provider.ParseStateValues ? null : state;
-                record.StateValues = provider.ParseStateValues ? this.ParseState(record, state) : null;
+                record.StateValues = provider.ParseStateValues ? this.ParseState(record, state, provider.HasBatchProcessor) : null;
 
                 ref LogRecordData data = ref record.Data;
 
@@ -88,7 +88,7 @@ namespace OpenTelemetry.Logs
 
         public IDisposable BeginScope<TState>(TState state) => this.ScopeProvider?.Push(state) ?? NullScope.Instance;
 
-        private IReadOnlyList<KeyValuePair<string, object?>> ParseState<TState>(LogRecord logRecord, TState state)
+        private IReadOnlyList<KeyValuePair<string, object?>> ParseState<TState>(LogRecord logRecord, TState state, bool buffer)
         {
             if (state is LogRecordAttributeList logRecordAttributes)
             {
@@ -97,6 +97,12 @@ namespace OpenTelemetry.Logs
             }
             else if (state is IReadOnlyList<KeyValuePair<string, object?>> stateList)
             {
+                if (!buffer)
+                {
+                    return stateList;
+                }
+
+                // Note: Buffering is needed to fix: https://github.com/open-telemetry/opentelemetry-dotnet/issues/2905
                 var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(stateList.Count);
                 attributeStorage.AddRange(stateList);
                 return attributeStorage;
