@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+* Improve the conversion and formatting of attribute values.
+  The list of data types that must be supported per the
+  [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/common#attribute)
+  is more narrow than what the .NET OpenTelemetry SDK supports. Numeric
+  [built-in value types](https://docs.microsoft.com/dotnet/csharp/language-reference/builtin-types/built-in-types)
+  are supported by converting to a `long` or `double` as appropriate except for
+  numeric types that could cause overflow (`ulong`) or rounding (`decimal`)
+  which are converted to strings. Non-numeric built-in types - `string`,
+  `char`, `bool` are supported. All other types are converted to a `string`.
+  Array values are also supported.
+  ([#3281](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3281))
+* Fix conversion of array-valued resource attributes. They were previously
+  converted to a string like "System.String[]".
+  ([#3281](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3281))
+* Fix exporting of array-valued attributes on an `Activity`. Previously, each
+  item in the array would result in a new tag on an exported `Activity`. Now,
+  array-valued attributes are serialzed to a JSON-array representation.
+  ([#3281](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3281))
+
 ## 1.3.0-beta.2
 
 Released 2022-May-16

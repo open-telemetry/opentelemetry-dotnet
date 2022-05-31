@@ -279,7 +279,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         {
             foreach (var tag in tags)
             {
-                attributes.Add(tag.ToOtlpAttribute());
+                if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+                {
+                    attributes.Add(result);
+                }
             }
         }
 
