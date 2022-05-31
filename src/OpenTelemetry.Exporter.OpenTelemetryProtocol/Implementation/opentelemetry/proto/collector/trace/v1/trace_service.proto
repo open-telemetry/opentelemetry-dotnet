@@ -18,6 +18,7 @@ package opentelemetry.proto.collector.trace.v1;
 
 import "opentelemetry/proto/trace/v1/trace.proto";
 
+option csharp_namespace = "OpenTelemetry.Proto.Collector.Trace.V1";
 option java_multiple_files = true;
 option java_package = "io.opentelemetry.proto.collector.trace.v1";
 option java_outer_classname = "TraceServiceProto";

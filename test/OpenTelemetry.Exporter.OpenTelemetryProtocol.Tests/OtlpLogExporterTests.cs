@@ -26,7 +26,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
-using OtlpLogs = Opentelemetry.Proto.Logs.V1;
+using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {

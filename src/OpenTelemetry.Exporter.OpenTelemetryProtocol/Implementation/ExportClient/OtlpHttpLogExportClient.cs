@@ -24,7 +24,7 @@ using System.Threading;
 #endif
 using System.Threading.Tasks;
 using Google.Protobuf;
-using OtlpCollector = Opentelemetry.Proto.Collector.Logs.V1;
+using OtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
 {
