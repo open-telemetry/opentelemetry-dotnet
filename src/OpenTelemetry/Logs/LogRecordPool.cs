@@ -17,6 +17,7 @@
 #nullable enable
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using OpenTelemetry.Internal;
 
@@ -55,10 +56,13 @@ namespace OpenTelemetry.Logs
             current = new LogRecordPool(size);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static LogRecord Rent() => current.RentCore();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void Return(LogRecord logRecord) => current.ReturnCore(logRecord);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void TrackReference(LogRecord logRecord)
             => Interlocked.Increment(ref logRecord.PoolReferences);
 
@@ -74,6 +78,13 @@ namespace OpenTelemetry.Logs
 
                 return logRecord;
             }
+
+            return this.RentFromSharedPool();
+        }
+
+        private LogRecord RentFromSharedPool()
+        {
+            LogRecord? logRecord;
 
             SpinWait wait = default;
             while (true)
@@ -127,26 +138,30 @@ namespace OpenTelemetry.Logs
             if (threadStaticLogRecord == null)
             {
                 threadStaticLogRecord = logRecord;
+                return;
             }
-            else
+
+            this.ReturnToSharedPool(logRecord);
+        }
+
+        private void ReturnToSharedPool(LogRecord logRecord)
+        {
+            SpinWait wait = default;
+            while (true)
             {
-                SpinWait wait = default;
-                while (true)
+                int sharedPoolIndex = this.sharedPoolCurrentIndex;
+                if (sharedPoolIndex >= this.sharedPoolSize)
                 {
-                    int sharedPoolIndex = this.sharedPoolCurrentIndex;
-                    if (sharedPoolIndex >= this.sharedPoolSize)
-                    {
-                        return;
-                    }
-
-                    if (Interlocked.CompareExchange(ref this.sharedPoolCurrentIndex, sharedPoolIndex + 1, sharedPoolIndex) == sharedPoolIndex)
-                    {
-                        this.sharedPool[sharedPoolIndex + 1] = logRecord;
-                        break;
-                    }
-
-                    wait.SpinOnce();
+                    return;
                 }
+
+                if (Interlocked.CompareExchange(ref this.sharedPoolCurrentIndex, sharedPoolIndex + 1, sharedPoolIndex) == sharedPoolIndex)
+                {
+                    this.sharedPool[sharedPoolIndex + 1] = logRecord;
+                    break;
+                }
+
+                wait.SpinOnce();
             }
         }
 
