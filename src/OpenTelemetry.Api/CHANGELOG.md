@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.3.0-rc.1
+
+Released 2022-May-31
+
 * `B3Propagator` class from `OpenTelemetry.Extensions.Propagators` namespace has
   been deprecated and moved as is to a new `OpenTelemetry.Extensions.Propagators`
   namespace, shipped as part of the `OpenTelemetry.Extensions.Propagators` package.
