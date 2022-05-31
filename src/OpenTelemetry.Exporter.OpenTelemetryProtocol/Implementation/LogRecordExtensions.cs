@@ -65,30 +65,31 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         internal static OtlpLogs.LogRecord ToOtlpLog(this LogRecord logRecord)
         {
             OtlpLogs.LogRecord otlpLogRecord = null;
+            ref LogRecordData data = ref logRecord.GetDataRef();
 
             try
             {
                 otlpLogRecord = new OtlpLogs.LogRecord
                 {
-                    TimeUnixNano = (ulong)logRecord.Timestamp.ToUnixTimeNanoseconds(),
-                    SeverityNumber = GetSeverityNumber(logRecord.LogLevel),
-                    SeverityText = LogLevels[(int)logRecord.LogLevel],
+                    TimeUnixNano = (ulong)data.Timestamp.ToUnixTimeNanoseconds(),
+                    SeverityNumber = GetSeverityNumber(data.LogLevel),
+                    SeverityText = LogLevels[(int)data.LogLevel],
                 };
 
-                if (!string.IsNullOrEmpty(logRecord.CategoryName))
+                if (!string.IsNullOrEmpty(data.CategoryName))
                 {
                     // TODO:
                     // 1. Track the following issue, and map CategoryName to Name
                     // if it makes it to log data model.
                     // https://github.com/open-telemetry/opentelemetry-specification/issues/2398
                     // 2. Confirm if this name for attribute is good.
-                    otlpLogRecord.Attributes.AddStringAttribute("dotnet.ilogger.category", logRecord.CategoryName);
+                    otlpLogRecord.Attributes.AddStringAttribute("dotnet.ilogger.category", data.CategoryName);
                 }
 
                 bool bodyPopulatedFromFormattedMessage = false;
-                if (logRecord.FormattedMessage != null)
+                if (data.Message != null)
                 {
-                    otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = logRecord.FormattedMessage };
+                    otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = data.Message };
                     bodyPopulatedFromFormattedMessage = true;
                 }
 
@@ -110,34 +111,34 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     }
                 }
 
-                if (logRecord.EventId.Id != default)
+                if (data.EventId.Id != default)
                 {
-                    otlpLogRecord.Attributes.AddIntAttribute(nameof(logRecord.EventId.Id), logRecord.EventId.Id);
+                    otlpLogRecord.Attributes.AddIntAttribute(nameof(data.EventId.Id), data.EventId.Id);
                 }
 
-                if (!string.IsNullOrEmpty(logRecord.EventId.Name))
+                if (!string.IsNullOrEmpty(data.EventId.Name))
                 {
-                    otlpLogRecord.Attributes.AddStringAttribute(nameof(logRecord.EventId.Name), logRecord.EventId.Name);
+                    otlpLogRecord.Attributes.AddStringAttribute(nameof(data.EventId.Name), data.EventId.Name);
                 }
 
-                if (logRecord.Exception != null)
+                if (data.Exception != null)
                 {
-                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionType, logRecord.Exception.GetType().Name);
-                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionMessage, logRecord.Exception.Message);
-                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionStacktrace, logRecord.Exception.ToInvariantString());
+                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionType, data.Exception.GetType().Name);
+                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionMessage, data.Exception.Message);
+                    otlpLogRecord.Attributes.AddStringAttribute(SemanticConventions.AttributeExceptionStacktrace, data.Exception.ToInvariantString());
                 }
 
-                if (logRecord.TraceId != default && logRecord.SpanId != default)
+                if (data.TraceId != default && data.SpanId != default)
                 {
                     byte[] traceIdBytes = new byte[16];
                     byte[] spanIdBytes = new byte[8];
 
-                    logRecord.TraceId.CopyTo(traceIdBytes);
-                    logRecord.SpanId.CopyTo(spanIdBytes);
+                    data.TraceId.CopyTo(traceIdBytes);
+                    data.SpanId.CopyTo(spanIdBytes);
 
                     otlpLogRecord.TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes);
                     otlpLogRecord.SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes);
-                    otlpLogRecord.Flags = (uint)logRecord.TraceFlags;
+                    otlpLogRecord.Flags = (uint)data.TraceFlags;
                 }
 
                 int scopeDepth = -1;

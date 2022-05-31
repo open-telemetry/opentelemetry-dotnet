@@ -7,6 +7,7 @@ OpenTelemetry.Logs.LogEmitter
 OpenTelemetry.Logs.LogEmitter.Log(in OpenTelemetry.Logs.LogRecordData data, in OpenTelemetry.Logs.LogRecordAttributeList attributes = default(OpenTelemetry.Logs.LogRecordAttributeList)) -> void
 OpenTelemetry.Logs.LogEmitter.LogEmitter(OpenTelemetry.Logs.OpenTelemetryLoggerProvider! loggerProvider) -> void
 OpenTelemetry.Logs.LogRecord.FormattedMessage.set -> void
+OpenTelemetry.Logs.LogRecord.GetDataRef() -> OpenTelemetry.Logs.LogRecordData
 OpenTelemetry.Logs.LogRecord.State.set -> void
 OpenTelemetry.Logs.LogRecord.StateValues.set -> void
 OpenTelemetry.Logs.LogRecordAttributeList

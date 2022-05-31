@@ -177,6 +177,15 @@ namespace OpenTelemetry.Logs
         }
 
         /// <summary>
+        /// Gets a reference to the <see cref="LogRecordData"/> for the log message.
+        /// </summary>
+        /// <returns><see cref="LogRecordData"/>.</returns>
+        public ref LogRecordData GetDataRef()
+        {
+            return ref this.Data;
+        }
+
+        /// <summary>
         /// Buffers the scopes attached to the log into a list so that they can
         /// be safely processed after the log message lifecycle has ended.
         /// </summary>
