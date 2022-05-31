@@ -185,22 +185,46 @@ namespace OpenTelemetry.Logs
             return ref this.Data;
         }
 
-        /// <summary>
-        /// Buffers the scopes attached to the log into a list so that they can
-        /// be safely processed after the log message lifecycle has ended.
-        /// </summary>
-        internal void BufferLogScopes()
+        internal void Buffer()
         {
-            if (this.ScopeProvider == null || this.BufferedScopes != null)
+            this.BufferLogStateValues();
+            this.BufferLogScopes();
+        }
+
+        /// <summary>
+        /// Buffers the state values attached to the log into a list so that
+        /// they can be safely processed after the log message lifecycle has
+        /// ended.
+        /// </summary>
+        private void BufferLogStateValues()
+        {
+            var stateValues = this.StateValues;
+            if (stateValues == null || stateValues == this.AttributeStorage)
             {
                 return;
             }
 
-            List<object?> scopes = new List<object?>();
+            var attributeStorage = this.AttributeStorage ??= new List<KeyValuePair<string, object?>>(stateValues.Count);
+            attributeStorage.AddRange(stateValues);
+            this.StateValues = attributeStorage;
+        }
 
-            this.ScopeProvider?.ForEachScope(AddScopeToBufferedList, scopes);
+        /// <summary>
+        /// Buffers the scopes attached to the log into a list so that they can
+        /// be safely processed after the log message lifecycle has ended.
+        /// </summary>
+        private void BufferLogScopes()
+        {
+            if (this.ScopeProvider == null)
+            {
+                return;
+            }
 
-            this.BufferedScopes = scopes;
+            List<object?> scopes = this.BufferedScopes ??= new List<object?>(16);
+
+            this.ScopeProvider.ForEachScope(AddScopeToBufferedList, scopes);
+
+            this.ScopeProvider = null;
         }
 
         private readonly struct ScopeForEachState<TState>

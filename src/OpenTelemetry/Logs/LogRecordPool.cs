@@ -122,21 +122,7 @@ namespace OpenTelemetry.Logs
                 return;
             }
 
-            var attributeStorage = logRecord.AttributeStorage;
-            if (attributeStorage != null)
-            {
-                if (attributeStorage.Count > 64)
-                {
-                    // Don't allow the pool to grow unconstained.
-                    logRecord.AttributeStorage = null;
-                }
-                else
-                {
-                    /* List<T>.Clear sets the size to 0 but it maintains the
-                    underlying array. */
-                    attributeStorage.Clear();
-                }
-            }
+            this.Clear(logRecord);
 
             if (threadStaticLogRecord == null)
             {
@@ -160,6 +146,41 @@ namespace OpenTelemetry.Logs
                     }
 
                     wait.SpinOnce();
+                }
+            }
+        }
+
+        private void Clear(LogRecord logRecord)
+        {
+            var attributeStorage = logRecord.AttributeStorage;
+            if (attributeStorage != null)
+            {
+                if (attributeStorage.Count > 64)
+                {
+                    // Don't allow the pool to grow unconstained.
+                    logRecord.AttributeStorage = null;
+                }
+                else
+                {
+                    /* List<T>.Clear sets the size to 0 but it maintains the
+                    underlying array. */
+                    attributeStorage.Clear();
+                }
+            }
+
+            var bufferedScopes = logRecord.BufferedScopes;
+            if (bufferedScopes != null)
+            {
+                if (bufferedScopes.Count > 16)
+                {
+                    // Don't allow the pool to grow unconstained.
+                    logRecord.BufferedScopes = null;
+                }
+                else
+                {
+                    /* List<T>.Clear sets the size to 0 but it maintains the
+                    underlying array. */
+                    bufferedScopes.Clear();
                 }
             }
         }

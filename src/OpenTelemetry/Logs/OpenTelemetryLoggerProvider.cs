@@ -34,7 +34,6 @@ namespace OpenTelemetry.Logs
         internal readonly bool IncludeFormattedMessage;
         internal readonly bool ParseStateValues;
         internal BaseProcessor<LogRecord>? Processor;
-        internal bool HasBatchProcessor;
         internal Resource Resource;
         private readonly Hashtable loggers = new();
         private bool disposed;
@@ -125,11 +124,6 @@ namespace OpenTelemetry.Logs
 
             processor.SetParentProvider(this);
 
-            if (!this.HasBatchProcessor)
-            {
-                this.InspectProcessor(processor);
-            }
-
             if (this.Processor == null)
             {
                 this.Processor = processor;
@@ -167,28 +161,6 @@ namespace OpenTelemetry.Logs
             }
 
             base.Dispose(disposing);
-        }
-
-        private void InspectProcessor(BaseProcessor<LogRecord> processor)
-        {
-            if (processor is BatchExportProcessor<LogRecord>)
-            {
-                this.HasBatchProcessor = true;
-            }
-            else if (processor is CompositeProcessor<LogRecord> compositeProcessor)
-            {
-                var current = compositeProcessor.Head;
-                while (current != null)
-                {
-                    this.InspectProcessor(current.Value);
-                    if (this.HasBatchProcessor)
-                    {
-                        return;
-                    }
-
-                    current = current.Next;
-                }
-            }
         }
     }
 }
