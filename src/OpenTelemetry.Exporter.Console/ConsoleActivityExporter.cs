@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Diagnostics;
 using System.Linq;
 using OpenTelemetry.Resources;
@@ -71,13 +70,10 @@ namespace OpenTelemetry.Exporter
                             continue;
                         }
 
-                        if (tag.Value is not Array array)
+                        if (ConsoleTagTransformer.Instance.TryTransformTag(tag, out var result))
                         {
-                            this.WriteLine($"    {tag.Key}: {tag.Value}");
-                            continue;
+                            this.WriteLine($"    {result}");
                         }
-
-                        this.WriteLine($"    {tag.Key}: [{string.Join(", ", array.Cast<object>())}]");
                     }
                 }
 
@@ -106,7 +102,10 @@ namespace OpenTelemetry.Exporter
                         this.WriteLine($"    {activityEvent.Name} [{activityEvent.Timestamp}]");
                         foreach (var attribute in activityEvent.Tags)
                         {
-                            this.WriteLine($"        {attribute.Key}: {attribute.Value}");
+                            if (ConsoleTagTransformer.Instance.TryTransformTag(attribute, out var result))
+                            {
+                                this.WriteLine($"        {result}");
+                            }
                         }
                     }
                 }
@@ -117,6 +116,13 @@ namespace OpenTelemetry.Exporter
                     foreach (var activityLink in activity.Links)
                     {
                         this.WriteLine($"    {activityLink.Context.TraceId} {activityLink.Context.SpanId}");
+                        foreach (var attribute in activityLink.Tags)
+                        {
+                            if (ConsoleTagTransformer.Instance.TryTransformTag(attribute, out var result))
+                            {
+                                this.WriteLine($"        {result}");
+                            }
+                        }
                     }
                 }
 
@@ -126,7 +132,10 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine("Resource associated with Activity:");
                     foreach (var resourceAttribute in resource.Attributes)
                     {
-                        this.WriteLine($"    {resourceAttribute.Key}: {resourceAttribute.Value}");
+                        if (ConsoleTagTransformer.Instance.TryTransformTag(resourceAttribute, out var result))
+                        {
+                            this.WriteLine($"    {result}");
+                        }
                     }
                 }
 

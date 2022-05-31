@@ -66,13 +66,13 @@ namespace OpenTelemetry.Exporter
                         // Special casing {OriginalFormat}
                         // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
                         // for explanation.
-                        if (logRecord.StateValues[i].Key.Equals("{OriginalFormat}"))
+                        var valueToTransform = logRecord.StateValues[i].Key.Equals("{OriginalValue}")
+                            ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", logRecord.StateValues[i].Value)
+                            : logRecord.StateValues[i];
+
+                        if (ConsoleTagTransformer.Instance.TryTransformTag(valueToTransform, out var result))
                         {
-                            this.WriteLine($"{string.Empty,-4}{"OriginalFormat (a.k.a. Body)",-RightPaddingLength}{logRecord.StateValues[i].Value}");
-                        }
-                        else
-                        {
-                            this.WriteLine($"{string.Empty,-4}{logRecord.StateValues[i].Key,-RightPaddingLength}{logRecord.StateValues[i].Value}");
+                            this.WriteLine($"{string.Empty,-4}{result}");
                         }
                     }
                 }
@@ -104,7 +104,10 @@ namespace OpenTelemetry.Exporter
 
                     foreach (KeyValuePair<string, object> scopeItem in scope)
                     {
-                        exporter.WriteLine($"[Scope.{scopeDepth}]:{scopeItem.Key,-RightPaddingLength}{scopeItem.Value}");
+                        if (ConsoleTagTransformer.Instance.TryTransformTag(scopeItem, out var result))
+                        {
+                            exporter.WriteLine($"[Scope.{scopeDepth}]:{result}");
+                        }
                     }
                 }
 
@@ -114,7 +117,10 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine("\nResource associated with LogRecord:");
                     foreach (var resourceAttribute in resource.Attributes)
                     {
-                        this.WriteLine($"{resourceAttribute.Key}: {resourceAttribute.Value}");
+                        if (ConsoleTagTransformer.Instance.TryTransformTag(resourceAttribute, out var result))
+                        {
+                            this.WriteLine(result);
+                        }
                     }
                 }
 
