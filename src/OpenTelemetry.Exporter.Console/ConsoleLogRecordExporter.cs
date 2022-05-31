@@ -57,14 +57,14 @@ namespace OpenTelemetry.Exporter
                 else if (logRecord.StateValues != null)
                 {
                     this.WriteLine("LogRecord.StateValues (Key:Value):");
-                    foreach (var value in logRecord.StateValues)
+                    for (int i = 0; i < logRecord.StateValues.Count; i++)
                     {
                         // Special casing {OriginalFormat}
                         // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
                         // for explanation.
-                        var valueToTransform = value.Key.Equals("{OriginalValue}")
-                            ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", value.Value)
-                            : value;
+                        var valueToTransform = logRecord.StateValues[i].Key.Equals("{OriginalValue}")
+                            ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", logRecord.StateValues[i].Value)
+                            : logRecord.StateValues[i];
 
                         if (ConsoleTagTransformer.Instance.TryTransformTag(valueToTransform, out var result))
                         {
