@@ -53,10 +53,29 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\TagAndValueTransformer.cs" Link="Includes\TagAndValueTransformer.cs" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <OpenTelemetryProtoVersion>0.18.0</OpenTelemetryProtoVersion>
+    <OpenTelemetryProtoUrl>https://github.com/open-telemetry/opentelemetry-proto/archive/refs/tags/v$(OpenTelemetryProtoVersion).zip</OpenTelemetryProtoUrl>
+    <OpenTelemetryProtoZipFile>opentelemetry-proto-$(OpenTelemetryProtoVersion).zip</OpenTelemetryProtoZipFile>
+    <OpenTelemetryProtoSourceRoot>opentelemetry-proto</OpenTelemetryProtoSourceRoot>
+    <OpenTelemetryProtoSourceDir>$(OpenTelemetryProtoSourceRoot)\opentelemetry-proto-$(OpenTelemetryProtoVersion)</OpenTelemetryProtoSourceDir>
+  </PropertyGroup>
+
   <ItemGroup>
-    <Protobuf Include="**/*.proto" Access="internal">
-      <ProtoRoot>Implementation</ProtoRoot>
+    <Protobuf Include="**/*.proto">
+      <ProtoRoot>$(OpenTelemetryProtoSourceDir)</ProtoRoot>
     </Protobuf>
   </ItemGroup>
+
+  <Target Name="DownloadOpenTelemetryProto" BeforeTargets="DispatchToInnerBuilds">
+    <DownloadFile Condition="!Exists('$(OpenTelemetryProtoZipFile)')"
+      SourceUrl="$(OpenTelemetryProtoUrl)"
+      DestinationFolder="$(MSBuildProjectDirectory)" />
+
+    <Unzip Condition="!Exists('$(OpenTelemetryProtoSourceDir)')"
+      SourceFiles="$(OpenTelemetryProtoZipFile)"
+      DestinationFolder="$(OpenTelemetryProtoSourceRoot)"
+      OverwriteReadOnlyFiles="true" />
+  </Target>
 
 </Project>
