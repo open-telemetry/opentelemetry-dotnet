@@ -32,13 +32,12 @@ namespace OpenTelemetry.Logs
         internal int PoolReferences = int.MaxValue;
         internal LogRecordData Data;
         internal List<KeyValuePair<string, object?>>? AttributeStorage;
+        internal List<object?>? BufferedScopes;
 
         private static readonly Action<object?, List<object?>> AddScopeToBufferedList = (object? scope, List<object?> state) =>
         {
             state.Add(scope);
         };
-
-        private List<object?>? bufferedScopes;
 
         internal LogRecord()
         {
@@ -164,9 +163,9 @@ namespace OpenTelemetry.Logs
 
             var forEachScopeState = new ScopeForEachState<TState>(callback, state);
 
-            if (this.bufferedScopes != null)
+            if (this.BufferedScopes != null)
             {
-                foreach (object? scope in this.bufferedScopes)
+                foreach (object? scope in this.BufferedScopes)
                 {
                     ScopeForEachState<TState>.ForEachScope(scope, forEachScopeState);
                 }
@@ -183,7 +182,7 @@ namespace OpenTelemetry.Logs
         /// </summary>
         internal void BufferLogScopes()
         {
-            if (this.ScopeProvider == null || this.bufferedScopes != null)
+            if (this.ScopeProvider == null || this.BufferedScopes != null)
             {
                 return;
             }
@@ -192,7 +191,7 @@ namespace OpenTelemetry.Logs
 
             this.ScopeProvider?.ForEachScope(AddScopeToBufferedList, scopes);
 
-            this.bufferedScopes = scopes;
+            this.BufferedScopes = scopes;
         }
 
         private readonly struct ScopeForEachState<TState>

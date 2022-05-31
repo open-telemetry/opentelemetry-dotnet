@@ -14,9 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
-using OpenTelemetry.Logs;
 
 namespace OpenTelemetry.Exporter
 {
@@ -24,20 +22,20 @@ namespace OpenTelemetry.Exporter
         where T : class
     {
         private readonly ICollection<T> exportedItems;
-        private readonly Func<Batch<T>, ExportResult> onExport;
-        private readonly bool isLogExporter;
+        private readonly ExportFunc onExport;
 
         public InMemoryExporter(ICollection<T> exportedItems)
         {
             this.exportedItems = exportedItems;
-            this.onExport = (Batch<T> batch) => this.DefaultExport(batch);
-            this.isLogExporter = typeof(T) == typeof(LogRecord);
+            this.onExport = (in Batch<T> batch) => this.DefaultExport(in batch);
         }
 
-        internal InMemoryExporter(Func<Batch<T>, ExportResult> exportFunc)
+        internal InMemoryExporter(ExportFunc exportFunc)
         {
             this.onExport = exportFunc;
         }
+
+        internal delegate ExportResult ExportFunc(in Batch<T> batch);
 
         public override ExportResult Export(in Batch<T> batch) => this.onExport(batch);
 
@@ -50,11 +48,6 @@ namespace OpenTelemetry.Exporter
 
             foreach (var data in batch)
             {
-                if (this.isLogExporter)
-                {
-                    LogRecordPool.TrackReference((LogRecord)(object)data);
-                }
-
                 this.exportedItems.Add(data);
             }
 
