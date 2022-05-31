@@ -26,7 +26,7 @@ namespace OpenTelemetry
 {
     public class CompositeProcessor<T> : BaseProcessor<T>
     {
-        internal readonly DoublyLinkedListNode Head;
+        private readonly DoublyLinkedListNode head;
         private DoublyLinkedListNode tail;
         private bool disposed;
 
@@ -40,8 +40,8 @@ namespace OpenTelemetry
                 throw new ArgumentException($"'{iter}' is null or empty", nameof(iter));
             }
 
-            this.Head = new DoublyLinkedListNode(iter.Current);
-            this.tail = this.Head;
+            this.head = new DoublyLinkedListNode(iter.Current);
+            this.tail = this.head;
 
             while (iter.MoveNext())
             {
@@ -66,7 +66,7 @@ namespace OpenTelemetry
         /// <inheritdoc/>
         public override void OnEnd(T data)
         {
-            for (var cur = this.Head; cur != null; cur = cur.Next)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
                 cur.Value.OnEnd(data);
             }
@@ -75,7 +75,7 @@ namespace OpenTelemetry
         /// <inheritdoc/>
         public override void OnStart(T data)
         {
-            for (var cur = this.Head; cur != null; cur = cur.Next)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
                 cur.Value.OnStart(data);
             }
@@ -89,7 +89,7 @@ namespace OpenTelemetry
                 ? null
                 : Stopwatch.StartNew();
 
-            for (var cur = this.Head; cur != null; cur = cur.Next)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
                 if (sw == null)
                 {
@@ -115,7 +115,7 @@ namespace OpenTelemetry
                 ? null
                 : Stopwatch.StartNew();
 
-            for (var cur = this.Head; cur != null; cur = cur.Next)
+            for (var cur = this.head; cur != null; cur = cur.Next)
             {
                 if (sw == null)
                 {
@@ -140,7 +140,7 @@ namespace OpenTelemetry
             {
                 if (disposing)
                 {
-                    for (var cur = this.Head; cur != null; cur = cur.Next)
+                    for (var cur = this.head; cur != null; cur = cur.Next)
                     {
                         try
                         {
@@ -159,7 +159,7 @@ namespace OpenTelemetry
             base.Dispose(disposing);
         }
 
-        internal sealed class DoublyLinkedListNode
+        private sealed class DoublyLinkedListNode
         {
             public readonly BaseProcessor<T> Value;
 
