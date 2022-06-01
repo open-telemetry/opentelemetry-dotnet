@@ -661,7 +661,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.True(ex is HttpRequestException);
             }
 
-            // We should have two Start events and twos Stop events, both with exceptions.
+            // We should have two Start events and two Stop events, both with exceptions.
             Assert.Equal(4, eventRecords.Records.Count);
             Assert.Equal(2, eventRecords.Records.Count(rec => rec.Key == "Start"));
             Assert.Equal(2, eventRecords.Records.Count(rec => rec.Key == "Stop"));
