@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Implementation of HTTP retries and redirects instrumentation defined in
+  [opentelemetry-specification #2078](https://github.com/open-telemetry/opentelemetry-specification/pull/2078).
+  ([#3072](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3072))
+
 ## 1.0.0-rc9.3
 
 Released 2022-Apr-15
