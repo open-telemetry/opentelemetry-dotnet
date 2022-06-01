@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Text.Json;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation;
@@ -36,5 +37,5 @@ internal sealed class ZipkinTagTransformer : TagTransformer<string>
     protected override string TransformStringTag(string key, string value) => value;
 
     protected override string TransformArrayTag(string key, Array array)
-        => this.TransformStringTag(key, System.Text.Json.JsonSerializer.Serialize(array));
+        => this.TransformStringTag(key, JsonSerializer.Serialize(array));
 }

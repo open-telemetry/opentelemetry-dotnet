@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Text.Json;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Jaeger.Implementation;
@@ -48,5 +49,5 @@ internal sealed class JaegerTagTransformer : TagTransformer<JaegerTag>
     }
 
     protected override JaegerTag TransformArrayTag(string key, Array array)
-        => this.TransformStringTag(key, System.Text.Json.JsonSerializer.Serialize(array));
+        => this.TransformStringTag(key, JsonSerializer.Serialize(array));
 }
