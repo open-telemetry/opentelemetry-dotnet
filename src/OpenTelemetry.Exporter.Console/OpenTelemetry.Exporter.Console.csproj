@@ -19,12 +19,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonPkgVer)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\OpenTelemetrySdkEventSource.cs" Link="Includes\OpenTelemetrySdkEventSource.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PeriodicExportingMetricReaderHelper.cs" Link="Includes\PeriodicExportingMetricReaderHelper.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\ServiceProviderExtensions.cs" Link="Includes\ServiceProviderExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\TagTransformer.cs" Link="Includes\TagTransformer.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\SpanAttributeConstants.cs" Link="Includes\SpanAttributeConstants.cs" />
   </ItemGroup>
