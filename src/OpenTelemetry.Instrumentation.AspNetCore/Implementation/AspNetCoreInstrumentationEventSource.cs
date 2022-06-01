@@ -29,11 +29,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         public static AspNetCoreInstrumentationEventSource Log = new();
 
         [NonEvent]
-        public void RequestFilterException(Exception ex)
+        public void RequestFilterException(string handlerName, Exception ex)
         {
             if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                this.RequestFilterException(ex.ToInvariantString());
+                this.RequestFilterException(handlerName, ex.ToInvariantString());
             }
         }
 
@@ -43,16 +43,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             this.WriteEvent(1, handlerName, eventName);
         }
 
-        [Event(2, Message = "Request is filtered out.", Level = EventLevel.Verbose)]
-        public void RequestIsFilteredOut(string eventName)
+        [Event(2, Message = "Request is filtered out from handler '{0}'.", Level = EventLevel.Verbose)]
+        public void RequestIsFilteredOut(string handlerName, string eventName)
         {
-            this.WriteEvent(2, eventName);
+            this.WriteEvent(2, handlerName, eventName);
         }
 
-        [Event(3, Message = "Filter threw exception. Request will not be collected. Exception {0}.", Level = EventLevel.Error)]
-        public void RequestFilterException(string exception)
+        [Event(3, Message = "Filter from handler '{0}' threw exception. Request will not be collected. Exception {1}.", Level = EventLevel.Error)]
+        public void RequestFilterException(string handlerName, string exception)
         {
-            this.WriteEvent(3, exception);
+            this.WriteEvent(3, handlerName, exception);
         }
 
         [NonEvent]

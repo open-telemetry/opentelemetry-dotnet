@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Internal;
 
@@ -28,23 +29,47 @@ namespace OpenTelemetry.Metrics
         /// Enables the incoming requests automatic data collection for ASP.NET Core.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> being configured.</param>
+        /// <param name="configureAspNetCoreInstrumentationOptions">ASP.NET Core Request configuration options.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddAspNetCoreInstrumentation(
-            this MeterProviderBuilder builder)
+            this MeterProviderBuilder builder,
+            Action<AspNetCoreInstrumentationOptions> configureAspNetCoreInstrumentationOptions = null)
         {
             Guard.ThrowIfNull(builder);
 
-            // TODO: Implement an IDeferredMeterProviderBuilder
-
             // TODO: Handle AspNetCoreInstrumentationOptions
-            //   Filter - makes sense for metric instrumentation
             //   Enrich - do we want a similar kind of functionality for metrics?
             //   RecordException - probably doesn't make sense for metric instrumentation
-            //   EnableGrpcAspNetCoreSupport - this instrumentation will also need to also handle gRPC requests
+            //   EnableGrpcAspNetCoreSupport - this instrumentation will also need to handle gRPC requests
 
-            var instrumentation = new AspNetCoreMetrics();
+            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            {
+                return deferredMeterProviderBuilder.Configure((sp, builder) =>
+                {
+                    AddAspNetCoreInstrumentation(builder, sp.GetOptions<AspNetCoreInstrumentationOptions>(), configureAspNetCoreInstrumentationOptions);
+                });
+            }
+
+            return AddAspNetCoreInstrumentation(builder, new AspNetCoreInstrumentationOptions(), configureAspNetCoreInstrumentationOptions);
+        }
+
+        internal static MeterProviderBuilder AddAspNetCoreInstrumentation(
+            this MeterProviderBuilder builder,
+            AspNetCoreMetrics instrumentation)
+        {
             builder.AddMeter(AspNetCoreMetrics.InstrumentationName);
             return builder.AddInstrumentation(() => instrumentation);
+        }
+
+        private static MeterProviderBuilder AddAspNetCoreInstrumentation(
+            MeterProviderBuilder builder,
+            AspNetCoreInstrumentationOptions options,
+            Action<AspNetCoreInstrumentationOptions> configure = null)
+        {
+            configure?.Invoke(options);
+            return AddAspNetCoreInstrumentation(
+                builder,
+                new AspNetCoreMetrics(options));
         }
     }
 }

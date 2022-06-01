@@ -36,10 +36,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
         /// <summary>
         /// Initializes a new instance of the <see cref="AspNetCoreMetrics"/> class.
         /// </summary>
-        public AspNetCoreMetrics()
+        /// <param name="options">ASP.NET Core Request configuration options.</param>
+        public AspNetCoreMetrics(AspNetCoreInstrumentationOptions options)
         {
             this.meter = new Meter(InstrumentationName, InstrumentationVersion);
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpInMetricsListener("Microsoft.AspNetCore", this.meter), null);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpInMetricsListener("Microsoft.AspNetCore", this.meter, options), null);
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

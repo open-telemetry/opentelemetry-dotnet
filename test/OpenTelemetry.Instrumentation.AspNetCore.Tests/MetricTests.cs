@@ -129,6 +129,45 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(6, attributes.Length);
         }
 
+        /// <summary>
+        /// Verifies that <see cref="AspNetCoreInstrumentationOptions.Filter"/> is respected when collecting
+        /// ASP.NET Core request metrics.
+        /// </summary>
+        /// <returns>A <see cref="Task"/> that represents an asynchronous test operation.</returns>
+        [Fact]
+        public async Task RequestMetricIsFiltered()
+        {
+            var metricItems = new List<Metric>();
+
+            this.meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddAspNetCoreInstrumentation(options =>
+                {
+                    options.Filter =
+                        context => !context.Request.Path.Value.StartsWith("/api/");
+                })
+                .AddInMemoryExporter(metricItems)
+                .Build();
+
+            using (var client = this.factory.CreateClient())
+            {
+                var response = await client.GetAsync("/api/values");
+                response.EnsureSuccessStatusCode();
+            }
+
+            // We need to let End callback execute as it is executed AFTER response was returned.
+            // In unit tests environment there may be a lot of parallel unit tests executed, so
+            // giving some breezing room for the End callback to complete
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            this.meterProvider.Dispose();
+
+            var requestMetrics = metricItems
+                .Where(item => item.Name == "http.server.duration")
+                .ToArray();
+
+            Assert.Empty(requestMetrics);
+        }
+
         public void Dispose()
         {
             this.meterProvider?.Dispose();

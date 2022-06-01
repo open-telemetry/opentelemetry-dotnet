@@ -14,12 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Http;
 #if NETCOREAPP
 using Microsoft.AspNetCore.Routing;
 #endif
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
@@ -29,12 +31,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly PropertyFetcher<HttpContext> stopContextFetcher = new("HttpContext");
         private readonly Meter meter;
         private readonly Histogram<double> httpServerDuration;
+        private readonly AspNetCoreInstrumentationOptions options;
 
-        public HttpInMetricsListener(string name, Meter meter)
+        public HttpInMetricsListener(string name, Meter meter, AspNetCoreInstrumentationOptions options)
             : base(name)
         {
+            Guard.ThrowIfNull(options);
+
             this.meter = meter;
             this.httpServerDuration = meter.CreateHistogram<double>("http.server.duration", "ms", "measures the duration of the inbound HTTP request");
+            this.options = options;
         }
 
         public override void OnStopActivity(Activity activity, object payload)
@@ -43,6 +49,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             if (context == null)
             {
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnStopActivity));
+                return;
+            }
+
+            try
+            {
+                if (this.options.Filter?.Invoke(context) == false)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.RequestIsFilteredOut(nameof(HttpInMetricsListener), activity.OperationName);
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                AspNetCoreInstrumentationEventSource.Log.RequestFilterException(nameof(HttpInMetricsListener), ex);
                 return;
             }
 

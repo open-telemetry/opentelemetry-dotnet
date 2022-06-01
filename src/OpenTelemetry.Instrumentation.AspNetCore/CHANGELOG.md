@@ -10,6 +10,8 @@
   can still be used with .NET5.0 apps.
   ([#3147](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3147))
 
+* Respect `AspNetCoreInstrumentationOptions.Filter` when collecting ASP.NET Core metrics.
+
 ## 1.0.0-rc9.3
 
 Released 2022-Apr-15
