@@ -14,8 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Http;
 #if NETCOREAPP
 using Microsoft.AspNetCore.Routing;
@@ -27,14 +29,23 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     internal class HttpInMetricsListener : ListenerHandler
     {
         private readonly PropertyFetcher<HttpContext> stopContextFetcher = new("HttpContext");
+        private readonly PropertyFetcher<HttpContext> startContextFetcher = new("HttpContext");
         private readonly Meter meter;
         private readonly Histogram<double> httpServerDuration;
+        private readonly ConditionalWeakTable<HttpContext, MetricData> cwt;
 
         public HttpInMetricsListener(string name, Meter meter)
             : base(name)
         {
             this.meter = meter;
             this.httpServerDuration = meter.CreateHistogram<double>("http.server.duration", "ms", "measures the duration of the inbound HTTP request");
+            this.cwt = new ConditionalWeakTable<HttpContext, MetricData>();
+        }
+
+        public override void OnStartActivity(Activity activity, object payload)
+        {
+            HttpContext context = this.startContextFetcher.Fetch(payload);
+            this.cwt.Add(context, new MetricData());
         }
 
         public override void OnStopActivity(Activity activity, object payload)
@@ -45,6 +56,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnStopActivity));
                 return;
             }
+
+            this.cwt.TryGetValue(context, out var metricData);
+
+            var startTime = metricData.StartTime;
+
+            var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+            this.cwt.Remove(context);
 
             // TODO: Prometheus pulls metrics by invoking the /metrics endpoint. Decide if it makes sense to suppress this.
             // Below is just a temporary way of achieving this suppression for metrics (we should consider suppressing traces too).
@@ -108,7 +127,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             };
 
 #endif
-            this.httpServerDuration.Record(activity.Duration.TotalMilliseconds, tags);
+            this.httpServerDuration.Record(duration, tags);
         }
     }
 }
