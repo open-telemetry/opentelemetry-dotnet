@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Implementation of HTTP retries and redirects instrumentation defined in
+* Create spans HTTP retries and redirects according to in
   [opentelemetry-specification #2078](https://github.com/open-telemetry/opentelemetry-specification/pull/2078).
   ([#3072](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3072))
 
