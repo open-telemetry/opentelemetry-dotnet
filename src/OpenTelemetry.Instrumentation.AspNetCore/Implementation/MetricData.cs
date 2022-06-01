@@ -18,7 +18,6 @@ using System;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
-
     internal class MetricData
     {
         internal DateTime StartTime;
