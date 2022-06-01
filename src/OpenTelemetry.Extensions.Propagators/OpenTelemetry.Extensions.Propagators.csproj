@@ -4,6 +4,7 @@
     <TargetFrameworks>net462;netstandard2.0</TargetFrameworks>
     <Description>OpenTelemetry Extensions Propagators</Description>
     <PackageTags>$(PackageTags);distributed-tracing;AspNet;AspNetCore;B3</PackageTags>
+    <MinVerTagPrefix>core-</MinVerTagPrefix>
     <IncludeInstrumentationHelpers>true</IncludeInstrumentationHelpers>
   </PropertyGroup>
 
@@ -11,9 +12,8 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\OpenTelemetryApiEventSource.cs" Link="Includes\OpenTelemetryApiEventSource.cs" />
   </ItemGroup>
 
-  <!--Do not run ApiCompat for net462/net6.0 as this is newly added. There is no existing contract for net462 against which we could compare the implementation.
-  Remove this property once we have released a stable net462/net6.0 version.-->
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net6.0'">
+  <!--Do not run ApiCompat as this package is newly added.-->
+  <PropertyGroup>
     <RunApiCompat>false</RunApiCompat>
   </PropertyGroup>
 
