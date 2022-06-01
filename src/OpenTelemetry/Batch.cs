@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Logs;
 
 namespace OpenTelemetry
 {
@@ -34,7 +35,6 @@ namespace OpenTelemetry
     {
         private readonly T? item;
         private readonly CircularBuffer<T>? circularBuffer;
-        private readonly Action<T>? cleanupAction;
         private readonly T[]? items;
         private readonly long targetCount;
 
@@ -50,7 +50,6 @@ namespace OpenTelemetry
 
             this.item = null;
             this.circularBuffer = null;
-            this.cleanupAction = null;
             this.items = items;
             this.Count = this.targetCount = count;
         }
@@ -61,12 +60,11 @@ namespace OpenTelemetry
 
             this.item = item;
             this.circularBuffer = null;
-            this.cleanupAction = null;
             this.items = null;
             this.Count = this.targetCount = 1;
         }
 
-        internal Batch(CircularBuffer<T> circularBuffer, int maxSize, Action<T>? cleanupAction = null)
+        internal Batch(CircularBuffer<T> circularBuffer, int maxSize)
         {
             Debug.Assert(maxSize > 0, $"{nameof(maxSize)} should be a positive number.");
             Debug.Assert(circularBuffer != null, $"{nameof(circularBuffer)} was null.");
@@ -74,7 +72,6 @@ namespace OpenTelemetry
             this.item = null;
             this.items = null;
             this.circularBuffer = circularBuffer;
-            this.cleanupAction = cleanupAction;
             this.Count = Math.Min(maxSize, circularBuffer!.Count);
             this.targetCount = circularBuffer.RemovedCount + this.Count;
         }
@@ -95,10 +92,11 @@ namespace OpenTelemetry
                 while (this.circularBuffer.RemovedCount < this.targetCount)
                 {
                     T item = this.circularBuffer.Read();
-                    this.cleanupAction?.Invoke(item);
+                    if (typeof(T) == typeof(LogRecord))
+                    {
+                        LogRecordPool.Return((LogRecord)(object)item);
+                    }
                 }
-
-                return;
             }
         }
 
@@ -109,7 +107,7 @@ namespace OpenTelemetry
         public Enumerator GetEnumerator()
         {
             return this.circularBuffer != null
-                ? new Enumerator(this.circularBuffer, this.targetCount, this.cleanupAction)
+                ? new Enumerator(this.circularBuffer, this.targetCount)
                 : this.item != null
                     ? new Enumerator(this.item)
                     /* In the event someone uses default/new Batch() to create Batch we fallback to empty items mode. */
@@ -147,14 +145,17 @@ namespace OpenTelemetry
                 return false;
             };
 
-            private static readonly BatchEnumeratorMoveNextFunc MoveNextCircularBufferWithCleanup = (ref Enumerator enumerator) =>
+            private static readonly BatchEnumeratorMoveNextFunc MoveNextCircularBufferLogRecord = (ref Enumerator enumerator) =>
             {
                 var circularBuffer = enumerator.circularBuffer;
 
                 var currentItem = enumerator.Current;
                 if (currentItem != null)
                 {
-                    enumerator.cleanupAction!(currentItem);
+                    if (typeof(T) == typeof(LogRecord))
+                    {
+                        LogRecordPool.Return((LogRecord)(object)currentItem);
+                    }
                 }
 
                 if (circularBuffer!.RemovedCount < enumerator.targetCount)
@@ -184,7 +185,6 @@ namespace OpenTelemetry
             private readonly CircularBuffer<T>? circularBuffer;
             private readonly T[]? items;
             private readonly BatchEnumeratorMoveNextFunc moveNextFunc;
-            private readonly Action<T>? cleanupAction;
             private long targetCount;
             private int itemIndex;
             [AllowNull]
@@ -197,19 +197,17 @@ namespace OpenTelemetry
                 this.items = null;
                 this.targetCount = -1;
                 this.itemIndex = 0;
-                this.cleanupAction = null;
                 this.moveNextFunc = MoveNextSingleItem;
             }
 
-            internal Enumerator(CircularBuffer<T> circularBuffer, long targetCount, Action<T>? cleanupAction)
+            internal Enumerator(CircularBuffer<T> circularBuffer, long targetCount)
             {
                 this.current = null;
                 this.items = null;
                 this.circularBuffer = circularBuffer;
                 this.targetCount = targetCount;
                 this.itemIndex = 0;
-                this.cleanupAction = cleanupAction;
-                this.moveNextFunc = cleanupAction != null ? MoveNextCircularBufferWithCleanup : MoveNextCircularBuffer;
+                this.moveNextFunc = typeof(T) == typeof(LogRecord) ? MoveNextCircularBufferLogRecord : MoveNextCircularBuffer;
             }
 
             internal Enumerator(T[] items, long targetCount)
@@ -219,7 +217,6 @@ namespace OpenTelemetry
                 this.items = items;
                 this.targetCount = targetCount;
                 this.itemIndex = 0;
-                this.cleanupAction = null;
                 this.moveNextFunc = MoveNextArray;
             }
 
@@ -232,12 +229,12 @@ namespace OpenTelemetry
             /// <inheritdoc/>
             public void Dispose()
             {
-                if (this.cleanupAction != null)
+                if (typeof(T) == typeof(LogRecord))
                 {
                     var currentItem = this.current;
                     if (currentItem != null)
                     {
-                        this.cleanupAction(currentItem);
+                        LogRecordPool.Return((LogRecord)(object)currentItem);
                         this.current = null;
                     }
                 }

@@ -1,8 +1,4 @@
 #nullable enable
-OpenTelemetry.BatchExportProcessor<T>.CleanupAction.get -> System.Action<T!>?
-OpenTelemetry.BatchExportProcessor<T>.CleanupAction.init -> void
-OpenTelemetry.BatchExportProcessor<T>.InitializeAction.get -> System.Action<T!>?
-OpenTelemetry.BatchExportProcessor<T>.InitializeAction.init -> void
 OpenTelemetry.Logs.LogEmitter
 OpenTelemetry.Logs.LogEmitter.Log(in OpenTelemetry.Logs.LogRecordData data, in OpenTelemetry.Logs.LogRecordAttributeList attributes = default(OpenTelemetry.Logs.LogRecordAttributeList)) -> void
 OpenTelemetry.Logs.LogEmitter.LogEmitter(OpenTelemetry.Logs.OpenTelemetryLoggerProvider! loggerProvider) -> void

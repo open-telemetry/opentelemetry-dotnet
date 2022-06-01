@@ -47,8 +47,6 @@ namespace OpenTelemetry
                 exporterTimeoutMilliseconds,
                 maxExportBatchSize)
         {
-            this.InitializeAction = LogRecordPool.TrackReference;
-            this.CleanupAction = LogRecordPool.Return;
         }
 
         /// <inheritdoc/>
@@ -61,7 +59,12 @@ namespace OpenTelemetry
 
             data!.Buffer();
 
-            base.OnEnd(data);
+            LogRecordPool.TrackReference(data);
+
+            if (!this.TryExport(data))
+            {
+                LogRecordPool.Return(data);
+            }
         }
     }
 }

@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using OpenTelemetry.Internal;
 
@@ -95,21 +96,9 @@ namespace OpenTelemetry
         /// </summary>
         internal long ProcessedCount => this.circularBuffer.RemovedCount;
 
-        /// <summary>
-        /// Gets an initialization action to be called before each item is exported.
-        /// </summary>
-        protected Action<T>? InitializeAction { get; init; }
-
-        /// <summary>
-        /// Gets a cleanup action to be called after each item is exported.
-        /// </summary>
-        protected Action<T>? CleanupAction { get; init; }
-
-        /// <inheritdoc/>
-        protected override void OnExport(T data)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool TryExport(T data)
         {
-            this.InitializeAction?.Invoke(data);
-
             if (this.circularBuffer.TryAdd(data, maxSpinCount: 50000))
             {
                 if (this.circularBuffer.Count >= this.maxExportBatchSize)
@@ -123,14 +112,19 @@ namespace OpenTelemetry
                     }
                 }
 
-                return; // enqueue succeeded
+                return true; // enqueue succeeded
             }
-
-            // If item couldn't be added to batch we still call cleanup.
-            this.CleanupAction?.Invoke(data);
 
             // either the queue is full or exceeded the spin limit, drop the item on the floor
             Interlocked.Increment(ref this.droppedCount);
+
+            return false;
+        }
+
+        /// <inheritdoc/>
+        protected override void OnExport(T data)
+        {
+            this.TryExport(data);
         }
 
         /// <inheritdoc/>
@@ -265,8 +259,6 @@ namespace OpenTelemetry
 
         private void ExporterProc()
         {
-            var cleanupAction = this.CleanupAction;
-
             var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
 
             while (true)
@@ -287,7 +279,7 @@ namespace OpenTelemetry
 
                 if (this.circularBuffer.Count > 0)
                 {
-                    using (var batch = new Batch<T>(this.circularBuffer, this.maxExportBatchSize, cleanupAction))
+                    using (var batch = new Batch<T>(this.circularBuffer, this.maxExportBatchSize))
                     {
                         this.exporter.Export(batch);
                     }
