@@ -43,6 +43,23 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
+        public void MeasurementWithNullValuedTag_ShouldWeIgnoreItAndMaybeLog_Or_ShouldWeDropTheTagAndRecordTheMeasurementWithoutIt()
+        {
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var counter = meter.CreateCounter<long>("myCounter");
+            counter.Add(100, new KeyValuePair<string, object>("tagWithNullValue", null));
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Empty(exportedItems);
+        }
+
+        [Fact]
         public void ObserverCallbackTest()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());
