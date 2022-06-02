@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -102,18 +103,15 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(4, jaegerLog.Fields.Count);
+            Assert.Equal(3, jaegerLog.Fields.Count);
             var eventFields = jaegerLog.Fields.ToArray();
             var eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
             eventField = eventFields[1];
             Assert.Equal("string_array", eventField.Key);
-            Assert.Equal("a", eventField.VStr);
+            Assert.Equal(@"[""a"",""b""]", eventField.VStr);
             eventField = eventFields[2];
-            Assert.Equal("string_array", eventField.Key);
-            Assert.Equal("b", eventField.VStr);
-            eventField = eventFields[3];
             Assert.Equal("event", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
 
@@ -167,12 +165,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(4, jaegerLog.Fields.Count);
+            Assert.Equal(3, jaegerLog.Fields.Count);
             var eventFields = jaegerLog.Fields.ToArray();
             var eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
-            eventField = eventFields[3];
+            eventField = eventFields[2];
             Assert.Equal("event", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
 
@@ -298,24 +296,29 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             Assert.Equal(true, tag.VBool);
 
             tag = tags[6];
-            Assert.Equal(JaegerTagType.LONG, tag.VType);
+            Assert.Equal(JaegerTagType.STRING, tag.VType);
             Assert.Equal("int_array", tag.Key);
-            Assert.Equal(1, tag.VLong);
+            Assert.Equal(System.Text.Json.JsonSerializer.Serialize(new[] { 1, 2 }), tag.VStr);
+
+            tag = tags[7];
+            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal("bool_array", tag.Key);
+            Assert.Equal(System.Text.Json.JsonSerializer.Serialize(new[] { true, false }), tag.VStr);
 
             tag = tags[8];
-            Assert.Equal(JaegerTagType.BOOL, tag.VType);
-            Assert.Equal("bool_array", tag.Key);
-            Assert.Equal(true, tag.VBool);
-
-            tag = tags[10];
-            Assert.Equal(JaegerTagType.DOUBLE, tag.VType);
+            Assert.Equal(JaegerTagType.STRING, tag.VType);
             Assert.Equal("double_array", tag.Key);
-            Assert.Equal(1, tag.VDouble);
+            Assert.Equal(System.Text.Json.JsonSerializer.Serialize(new[] { 1, 1.1 }), tag.VStr);
 
-            tag = tags[12];
+            tag = tags[9];
             Assert.Equal(JaegerTagType.STRING, tag.VType);
             Assert.Equal("string_array", tag.Key);
-            Assert.Equal("a", tag.VStr);
+            Assert.Equal(System.Text.Json.JsonSerializer.Serialize(new[] { "a", "b" }), tag.VStr);
+
+            tag = tags[10];
+            Assert.Equal(JaegerTagType.STRING, tag.VType);
+            Assert.Equal("obj_array", tag.Key);
+            Assert.Equal(System.Text.Json.JsonSerializer.Serialize(new[] { 1.ToString(), false.ToString(), new object().ToString(), "string", string.Empty, null }), tag.VStr);
 
             // The second to last tag should be span.kind in this case
             tag = tags[tags.Length - 2];
@@ -332,12 +335,12 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             var logs = jaegerSpan.Logs.ToArray();
             var jaegerLog = logs[0];
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
-            Assert.Equal(4, jaegerLog.Fields.Count);
+            Assert.Equal(3, jaegerLog.Fields.Count);
             var eventFields = jaegerLog.Fields.ToArray();
             var eventField = eventFields[0];
             Assert.Equal("key", eventField.Key);
             Assert.Equal("value", eventField.VStr);
-            eventField = eventFields[3];
+            eventField = eventFields[2];
             Assert.Equal("event", eventField.Key);
             Assert.Equal("Event1", eventField.VStr);
             Assert.Equal(activity.Events.First().Timestamp.ToEpochMicroseconds(), jaegerLog.Timestamp);
@@ -635,6 +638,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
 
             var attributes = new Dictionary<string, object>
             {
+                { "exceptionFromToString", new MyToStringMethodThrowsAnException() },
+                { "exceptionFromToStringInArray", new MyToStringMethodThrowsAnException[] { new MyToStringMethodThrowsAnException() } },
                 { "stringKey", "value" },
                 { "longKey", 1L },
                 { "longKey2", 1 },
@@ -645,6 +650,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
                 { "bool_array", new bool[] { true, false } },
                 { "double_array", new double[] { 1.0, 1.1 } },
                 { "string_array", new string[] { "a", "b" } },
+                { "obj_array", new object[] { 1, false, new object(), "string", string.Empty, null } },
             };
             if (additionalAttributes != null)
             {
@@ -845,6 +851,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation.Tests
             public override string ToString()
             {
                 return this.Name;
+            }
+        }
+
+        private class MyToStringMethodThrowsAnException
+        {
+            public override string ToString()
+            {
+                throw new Exception("Nope.");
             }
         }
     }

@@ -146,17 +146,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Theory]
-        [InlineData("grpc", OtlpExportProtocol.Grpc)]
-        [InlineData("http/protobuf", OtlpExportProtocol.HttpProtobuf)]
-        [InlineData("unsupported", null)]
-        public void ToOtlpExportProtocol_Protocol_MapsToCorrectValue(string protocol, OtlpExportProtocol? expectedExportProtocol)
-        {
-            var exportProtocol = protocol.ToOtlpExportProtocol();
-
-            Assert.Equal(expectedExportProtocol, exportProtocol);
-        }
-
-        [Theory]
         [InlineData("http://test:8888", "http://test:8888/v1/traces")]
         [InlineData("http://test:8888/", "http://test:8888/v1/traces")]
         [InlineData("http://test:8888/v1/traces", "http://test:8888/v1/traces")]
