@@ -384,6 +384,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(41, instrumentName, meterName, reason, fix);
         }
 
+        [Event(42, Message = "Unsupported attribute type '{0}' for '{1}'. Attribute will not be exported.", Level = EventLevel.Warning)]
+        public void UnsupportedAttributeType(string type, string key)
+        {
+            this.WriteEvent(42, type.ToString(), key);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {
