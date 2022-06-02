@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Included `isRemote` check in `PropagateOrIgnoreData` in `TracerProviderSDK` to
+  ensure context propagation in case of a remote parent.
+  ([#3329](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3329))
+
 ## 1.3.0-rc.2
 
 Released 2022-June-1
