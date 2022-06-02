@@ -222,6 +222,38 @@ namespace OpenTelemetry.Trace.Tests
             }
         }
 
+        [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/3315")]
+        public void TracerSdkSetsActivitySamplingResultAsPropagationWhenParentIsRemote()
+        {
+            var testSampler = new TestSampler();
+            using var activitySource = new ActivitySource(ActivitySourceName);
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                    .AddSource(ActivitySourceName)
+                    .SetSampler(testSampler)
+                    .Build();
+
+            testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(SamplingDecision.Drop);
+            };
+
+            ActivityContext ctx = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, isRemote: true);
+
+            using (var activity = activitySource.StartActivity("root", ActivityKind.Server, ctx))
+            {
+                // Even if sampling returns false, for activities with remote parent,
+                // activity is still created with PropagationOnly.
+                Assert.NotNull(activity);
+                Assert.False(activity.IsAllDataRequested);
+                Assert.False(activity.Recorded);
+
+                // This is not a root activity and parent is not remote.
+                // If sampling returns false, no activity is created at all.
+                using var innerActivity = activitySource.StartActivity("inner");
+                Assert.Null(innerActivity);
+            }
+        }
+
         [Fact]
         public void TracerSdkSetsActivitySamplingResultBasedOnSamplingDecision()
         {
