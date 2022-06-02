@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,7 +24,6 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
 using OpenTelemetry.Trace;
 #if NETCOREAPP3_1
 using TestApp.AspNetCore._3._1;
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             string reasonPhrase,
             bool recordException = false)
         {
-            var processor = new Mock<BaseProcessor<Activity>>();
+            var exportedItems = new List<Activity>();
 
             // Arrange
             using (var client = this.factory
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl(statusCode, reasonPhrase));
                         services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation(options => options.RecordException = recordException)
-                        .AddProcessor(processor.Object));
+                        .AddInMemoryExporter(exportedItems));
                     }))
                 .CreateClient())
             {
@@ -94,7 +94,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
                 for (var i = 0; i < 10; i++)
                 {
-                    if (processor.Invocations.Count == 3)
+                    if (exportedItems.Count == 1)
                     {
                         break;
                     }
@@ -106,8 +106,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 }
             }
 
-            Assert.Equal(3, processor.Invocations.Count); // SetParentProvider/Begin/End called
-            var activity = (Activity)processor.Invocations[2].Arguments[0];
+            Assert.Single(exportedItems);
+            var activity = exportedItems[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
@@ -145,7 +145,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             ValidateTagValue(activity, SemanticConventions.AttributeHttpUserAgent, userAgent);
 
             activity.Dispose();
-            processor.Object.Dispose();
         }
 
         private static void ValidateTagValue(Activity activity, string attribute, string expectedValue)
