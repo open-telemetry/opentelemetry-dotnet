@@ -10,5 +10,7 @@ OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetDbSta
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetDbStatementForText.get -> bool
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SetDbStatementForText.set -> void
 OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions.SqlClientInstrumentationOptions() -> void
+OpenTelemetry.Metrics.MeterProviderBuilderExtensions
 OpenTelemetry.Trace.TracerProviderBuilderExtensions
+static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddSqlClientInstrumentation(this OpenTelemetry.Metrics.MeterProviderBuilder builder) -> OpenTelemetry.Metrics.MeterProviderBuilder
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddSqlClientInstrumentation(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Instrumentation.SqlClient.SqlClientInstrumentationOptions> configureSqlClientInstrumentationOptions = null) -> OpenTelemetry.Trace.TracerProviderBuilder

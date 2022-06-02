@@ -1,0 +1,60 @@
+// <copyright file="SqlClientMetricsInstrumentation.cs" company="OpenTelemetry Authors">
+// Copyright The OpenTelemetry Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// </copyright>
+
+#if !NETFRAMEWORK
+using System;
+using System.Diagnostics.Metrics;
+using System.Reflection;
+using OpenTelemetry.Instrumentation.SqlClient.Implementation;
+
+namespace OpenTelemetry.Instrumentation.SqlClient
+{
+    /// <summary>
+    /// SqlClient metrics instrumentation.
+    /// </summary>
+    internal class SqlClientMetricsInstrumentation : IDisposable
+    {
+        internal const string SqlClientDiagnosticListenerName = "SqlClientMetricsDiagnosticListener";
+
+        internal static readonly AssemblyName AssemblyName = typeof(SqlClientDiagnosticListener).Assembly.GetName();
+        internal static readonly string InstrumentationName = AssemblyName.Name;
+        internal static readonly string InstrumentationVersion = AssemblyName.Version.ToString();
+
+        private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
+        private readonly Meter meter;
+
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SqlClientMetricsInstrumentation"/> class.
+        /// </summary>
+        public SqlClientMetricsInstrumentation()
+        {
+            this.meter = new Meter(InstrumentationName, InstrumentationVersion);
+            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(
+               name => new SqlClientMetricsDiagnosticListener(name, this.meter),
+               listener => listener.Name == SqlClientDiagnosticListenerName,
+               null);
+            this.diagnosticSourceSubscriber.Subscribe();
+        }
+
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            this.diagnosticSourceSubscriber?.Dispose();
+        }
+    }
+}
+#endif
