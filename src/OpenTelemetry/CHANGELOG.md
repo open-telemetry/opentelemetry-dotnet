@@ -2,8 +2,9 @@
 
 ## Unreleased
 
-* Included `isRemote` check in `PropagateOrIgnoreData` in `TracerProviderSDK` to
-  ensure context propagation in case of a remote parent.
+* `TracerProviderSDK` modified for spans with remote parent to maintain context
+  propagation. For such spans activity will be created irrespective of
+  SamplingResult.
   ([#3329](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3329))
 
 ## 1.3.0-rc.2

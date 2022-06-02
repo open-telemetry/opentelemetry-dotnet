@@ -399,11 +399,11 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static ActivitySamplingResult PropagateOrIgnoreData(ActivityTraceId traceId, bool isParentRemote)
         {
-            var isRootSpan = traceId == default || isParentRemote;
+            var isRootSpan = traceId == default;
 
-            // If it is the root span select PropagationData so the trace ID is preserved
+            // If it is the root span or the parent is remote select PropagationData so the trace ID is preserved
             // even if no activity of the trace is recorded (sampled per OpenTelemetry parlance).
-            return isRootSpan
+            return (isRootSpan || isParentRemote)
                 ? ActivitySamplingResult.PropagationData
                 : ActivitySamplingResult.None;
         }
