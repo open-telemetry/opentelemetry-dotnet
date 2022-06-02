@@ -2,9 +2,9 @@
 
 ## Unreleased
 
-## 1.3.0-rc.1
+## 1.3.0-rc.2
 
-Released 2022-May-31
+Released 2022-June-1
 
 * Improve the conversion and formatting of attribute values.
   The list of data types that must be supported per the
