@@ -72,7 +72,7 @@ namespace OpenTelemetry.Metrics.Tests
             var tagEnumerator = metricPoint.Tags.GetEnumerator();
             tagEnumerator.MoveNext();
             Assert.Equal("tagWithNullValue", tagEnumerator.Current.Key);
-            Assert.Equal(null, tagEnumerator.Current.Value);
+            Assert.Null(tagEnumerator.Current.Value);
         }
 
         [Fact]
