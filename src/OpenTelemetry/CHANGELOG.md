@@ -2,9 +2,9 @@
 
 ## Unreleased
 
-* `TracerProviderSDK` modified for spans with remote parent to maintain context
-  propagation. For such spans activity will be created irrespective of
-  SamplingResult.
+* `TracerProviderSDK` modified for spans with remote parent. For such spans
+  activity will be created irrespective of SamplingResult, to maintain context
+  propagation.
   ([#3329](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3329))
 
 ## 1.3.0-rc.2
