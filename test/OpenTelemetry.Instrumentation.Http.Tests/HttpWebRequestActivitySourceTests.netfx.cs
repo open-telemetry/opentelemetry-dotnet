@@ -413,22 +413,19 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Theory]
         [InlineData("GET")]
         [InlineData("POST")]
-        public async Task OverwriteTraceParentWhenPresent(string method)
+        public async Task CreateSpansIfTraceParentIsPresent(string method)
         {
             const string traceId = "abcdef0123456789abcdef0123456789";
             const string parentSpanId = "abcdef0123456789";
-            var traceparent = $"00-{traceId}-{parentSpanId}-01";
-            HttpRequestMessage request = null;
             try
             {
                 using var eventRecords = new ActivitySourceRecorder();
 
                 // Send a random Http request to generate some events
                 using (var client = new HttpClient())
+                using (var request = new HttpRequestMessage(HttpMethod.Get, this.BuildRequestUrl()))
                 {
-                    request = new HttpRequestMessage(HttpMethod.Get, this.BuildRequestUrl());
-
-                    request.Headers.Add("traceparent", traceparent);
+                    request.Headers.Add("traceparent", $"00-{traceId}-{parentSpanId}-01");
 
                     if (method == "GET")
                     {
@@ -451,11 +448,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.NotEqual(traceId, activity.TraceId.ToString());
                 Assert.NotEqual(parentSpanId, activity.SpanId.ToString());
                 Assert.NotEqual(parentSpanId, activity.ParentSpanId.ToString());
-                Assert.NotEqual(traceparent, request.Headers.GetValues("traceparent").Single());
             }
             finally
             {
-                request?.Dispose();
                 this.CleanUpActivity();
             }
         }
