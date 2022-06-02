@@ -14,9 +14,6 @@
 
 syntax = "proto3";
 
-// NOTE: This proto is experimental and is subject to change at this point.
-// Please do not use it at the moment.
-
 package opentelemetry.proto.collector.logs.v1;
 
 import "opentelemetry/proto/logs/v1/logs.proto";
