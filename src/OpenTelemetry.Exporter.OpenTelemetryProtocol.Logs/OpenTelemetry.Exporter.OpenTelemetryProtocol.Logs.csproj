@@ -4,6 +4,7 @@
     <TargetFrameworks>netstandard2.1;netstandard2.0;net462</TargetFrameworks>
     <Description>OpenTelemetry protocol exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);OTLP</PackageTags>
+    <MinVerTagPrefix>core-</MinVerTagPrefix>
   </PropertyGroup>
 
   <!--Do not run ApiCompat as this package has never released a stable version.
