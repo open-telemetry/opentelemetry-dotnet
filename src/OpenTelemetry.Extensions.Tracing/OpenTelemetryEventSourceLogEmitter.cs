@@ -169,7 +169,7 @@ namespace OpenTelemetry.Logs
                         // string.Format syntax (eg: "Some message {0} {1}")
                         // into structured log format (eg: "Some message
                         // {propertyName1} {propertyName2}") but it is
-                        // expensive. Probably needs a cahce.
+                        // expensive. Probably needs a cache.
 #if NETSTANDARD2_0
                         rawMessage = rawMessage.Replace($"{{{i}}}", $"{{{name}}}");
 #else
