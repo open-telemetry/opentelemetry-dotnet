@@ -16,9 +16,7 @@
 
 namespace Examples.AspNetCore.Controllers;
 
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using OpenTelemetry.Logs;
 
 [ApiController]
 [Route("[controller]")]
@@ -32,14 +30,10 @@ public class WeatherForecastController : ControllerBase
     private static readonly HttpClient HttpClient = new();
 
     private readonly ILogger<WeatherForecastController> logger;
-    private readonly LogEmitter logEmitter;
 
-    public WeatherForecastController(
-        ILogger<WeatherForecastController> logger,
-        LogEmitter logEmitter)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger)
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        this.logEmitter = logEmitter ?? throw new ArgumentNullException(nameof(logEmitter));
     }
 
     [HttpGet]
@@ -60,24 +54,10 @@ public class WeatherForecastController : ControllerBase
         })
         .ToArray();
 
-        // Log using ILogger API.
         this.logger.LogInformation(
             "WeatherForecasts generated {count}: {forecasts}",
             forecast.Length,
             forecast);
-
-        // Log using LogEmitter API.
-        this.logEmitter.Log(
-            new LogRecordData(Activity.Current)
-            {
-                CategoryName = "WeatherForecasts",
-                LogLevel = LogLevel.Information,
-                Message = "WeatherForecasts generated.",
-            },
-            new LogRecordAttributeList()
-            {
-                ["count"] = forecast.Length,
-            });
 
         return forecast;
     }

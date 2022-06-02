@@ -1,0 +1,5 @@
+#nullable enable
+OpenTelemetry.Logs.OpenTelemetryEventSourceLogEmitter
+OpenTelemetry.Logs.OpenTelemetryEventSourceLogEmitter.OpenTelemetryEventSourceLogEmitter(OpenTelemetry.Logs.OpenTelemetryLoggerProvider! openTelemetryLoggerProvider, string! name, System.Diagnostics.Tracing.EventLevel logLevel = System.Diagnostics.Tracing.EventLevel.LogAlways) -> void
+OpenTelemetry.Logs.OpenTelemetryEventSourceLogEmitter.OpenTelemetryEventSourceLogEmitter(OpenTelemetry.Logs.OpenTelemetryLoggerProvider! openTelemetryLoggerProvider, System.Func<string!, System.Diagnostics.Tracing.EventLevel?>! shouldListenToFunc) -> void
+override OpenTelemetry.Logs.OpenTelemetryEventSourceLogEmitter.Dispose() -> void

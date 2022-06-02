@@ -26,15 +26,11 @@ namespace OpenTelemetry.Logs
     /// <remarks>
     /// Spec reference: <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/logging-library-sdk.md#logemitter">LogEmitter</a>.
     /// </remarks>
-    public sealed class LogEmitter
+    internal sealed class LogEmitter
     {
         private readonly OpenTelemetryLoggerProvider loggerProvider;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LogEmitter"/> class.
-        /// </summary>
-        /// <param name="loggerProvider"><see cref="OpenTelemetryLoggerProvider"/>.</param>
-        public LogEmitter(OpenTelemetryLoggerProvider loggerProvider)
+        internal LogEmitter(OpenTelemetryLoggerProvider loggerProvider)
         {
             Guard.ThrowIfNull(loggerProvider);
 

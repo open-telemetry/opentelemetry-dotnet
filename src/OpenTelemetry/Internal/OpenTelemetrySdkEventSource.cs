@@ -390,6 +390,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(42, type.ToString(), key);
         }
 
+        [Event(43, Message = "ForceFlush invoked for provider '{0}' returned result '{1}'.", Level = EventLevel.Verbose)]
+        public void ForceFlushInvoked(string providerName, bool result)
+        {
+            this.WriteEvent(43, providerName, result);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {

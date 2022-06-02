@@ -80,7 +80,7 @@ namespace OpenTelemetry.Exporter
                 if (logRecord.EventId != default)
                 {
                     this.WriteLine($"{"LogRecord.EventId:",-RightPaddingLength}{logRecord.EventId.Id}");
-                    if (string.IsNullOrEmpty(logRecord.EventId.Name))
+                    if (!string.IsNullOrEmpty(logRecord.EventId.Name))
                     {
                         this.WriteLine($"{"LogRecord.EventName:",-RightPaddingLength}{logRecord.EventId.Name}");
                     }

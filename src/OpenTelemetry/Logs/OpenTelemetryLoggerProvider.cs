@@ -16,7 +16,9 @@
 
 #nullable enable
 
+using System;
 using System.Collections;
+using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
@@ -31,7 +33,6 @@ namespace OpenTelemetry.Logs
     public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISupportExternalScope
     {
         internal readonly bool IncludeScopes;
-        internal readonly bool IncludeFormattedMessage;
         internal readonly bool ParseStateValues;
         internal BaseProcessor<LogRecord>? Processor;
         internal Resource Resource;
@@ -50,7 +51,16 @@ namespace OpenTelemetry.Logs
         /// </summary>
         /// <param name="options"><see cref="OpenTelemetryLoggerOptions"/>.</param>
         public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options)
-            : this(options?.CurrentValue!)
+            : this(options?.CurrentValue ?? throw new ArgumentNullException(nameof(options)))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OpenTelemetryLoggerProvider"/> class.
+        /// </summary>
+        /// <param name="configure"><see cref="OpenTelemetryLoggerOptions"/> configuration callback.</param>
+        public OpenTelemetryLoggerProvider(Action<OpenTelemetryLoggerOptions> configure)
+            : this(BuildOptions(configure))
         {
         }
 
@@ -69,6 +79,11 @@ namespace OpenTelemetry.Logs
                 this.AddProcessor(processor);
             }
         }
+
+        /// <summary>
+        /// Gets a value indicating whether or not formatted messages should be included on log messages.
+        /// </summary>
+        public bool IncludeFormattedMessage { get; }
 
         internal IExternalScopeProvider? ScopeProvider { get; private set; }
 
@@ -113,10 +128,37 @@ namespace OpenTelemetry.Logs
         }
 
         /// <summary>
+        /// Flushes all the processors registered under <see
+        /// cref="OpenTelemetryLoggerProvider"/>, blocks the current thread
+        /// until flush completed, shutdown signaled or timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when force flush succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
+        /// </exception>
+        /// <remarks>
+        /// This function guarantees thread-safety.
+        /// </remarks>
+        public bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
+        {
+            bool result = this.Processor?.ForceFlush(timeoutMilliseconds) ?? true;
+
+            OpenTelemetrySdkEventSource.Log.ForceFlushInvoked(nameof(OpenTelemetryLoggerProvider), result);
+
+            return result;
+        }
+
+        /// <summary>
         /// Create a <see cref="LogEmitter"/>.
         /// </summary>
         /// <returns><see cref="LogEmitter"/>.</returns>
-        public LogEmitter CreateEmitter() => new(this);
+        internal LogEmitter CreateEmitter() => new(this);
 
         internal OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
         {
@@ -161,6 +203,13 @@ namespace OpenTelemetry.Logs
             }
 
             base.Dispose(disposing);
+        }
+
+        private static OpenTelemetryLoggerOptions BuildOptions(Action<OpenTelemetryLoggerOptions>? configure = null)
+        {
+            OpenTelemetryLoggerOptions options = new();
+            configure?.Invoke(options);
+            return options;
         }
     }
 }
