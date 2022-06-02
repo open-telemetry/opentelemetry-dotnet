@@ -1,4 +1,4 @@
-# OpenTelemetry.Extensions.EventSource
+# OpenTelemetry.Extensions.Tracing
 
 This project contains an
 [EventListener](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventlistener)

@@ -239,7 +239,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Tests.Stress.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Serilog", "src\OpenTelemetry.Extensions.Serilog\OpenTelemetry.Extensions.Serilog.csproj", "{F5062ED1-6B59-45FC-8E08-2F5D41A19864}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.EventSource", "src\OpenTelemetry.Extensions.EventSource\OpenTelemetry.Extensions.EventSource.csproj", "{F1C65913-81EC-4297-A666-A66280E3E1B6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Tracing", "src\OpenTelemetry.Extensions.Tracing\OpenTelemetry.Extensions.Tracing.csproj", "{F1C65913-81EC-4297-A666-A66280E3E1B6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.LogEmitter", "examples\LogEmitter\Examples.LogEmitter.csproj", "{CCBBAD69-4A7D-41F8-8697-6E3F043F7BD5}"
 EndProject
