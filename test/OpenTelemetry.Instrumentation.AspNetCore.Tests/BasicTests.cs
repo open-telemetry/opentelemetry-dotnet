@@ -394,7 +394,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 var expectedTraceId = ActivityTraceId.CreateRandom();
                 var expectedParentSpanId = ActivitySpanId.CreateRandom();
                 var expectedTraceState = "rojo=1,congo=2";
-                var activityContext = new ActivityContext(expectedTraceId, expectedParentSpanId, ActivityTraceFlags.Recorded, expectedTraceState);
+                var activityContext = new ActivityContext(expectedTraceId, expectedParentSpanId, ActivityTraceFlags.Recorded, expectedTraceState, true);
                 var expectedBaggage = Baggage.SetBaggage("key1", "value1").SetBaggage("key2", "value2");
                 Sdk.SetDefaultTextMapPropagator(new ExtractOnlyPropagator(activityContext, expectedBaggage));
 

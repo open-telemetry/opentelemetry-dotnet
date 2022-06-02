@@ -101,18 +101,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 #if NET7_0_OR_GREATER
                     Activity newOne;
                     newOne = activity.Source.CreateActivity(ActivityOperationName, ActivityKind.Server, ctx.ActivityContext);
-
-                    // Sampling call resulted in drop
-                    // we still need to create an activity so that the correct context gets propagated
-                    // if we do not create an activity here, the trace will be broken
-                    // as there is no other way to propagate context to the next hop.
-                    if (newOne == null)
-                    {
-                        newOne = new Activity(ActivityOperationName);
-                        newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
-                        ActivityInstrumentationHelper.SetActivitySourceProperty(activity, activity.Source);
-                        ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
-                    }
 #else
                     Activity newOne = new Activity(ActivityOperationName);
                     newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
