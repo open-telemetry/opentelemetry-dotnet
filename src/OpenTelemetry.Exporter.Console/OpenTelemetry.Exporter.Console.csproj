@@ -12,12 +12,6 @@
     <NoWarn>$(NoWarn),1591</NoWarn>
   </PropertyGroup>
 
-  <!--Do not run ApiCompat for net462 as this is newly added. There is no existing contract for net462 against which we could compare the implementation.
-  Remove this property once we have released a stable net462 version.-->
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net462'">
-    <RunApiCompat>false</RunApiCompat>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonPkgVer)" />
   </ItemGroup>

@@ -8,11 +8,6 @@
     <IncludeInstrumentationHelpers>true</IncludeInstrumentationHelpers>
   </PropertyGroup>
 
-  <!--Do not run ApiCompat as this package is newly added.-->
-  <PropertyGroup>
-    <RunApiCompat>false</RunApiCompat>
-  </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
   </ItemGroup>
