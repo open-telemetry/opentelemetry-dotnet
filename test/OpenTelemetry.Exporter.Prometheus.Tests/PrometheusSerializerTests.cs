@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Text;
@@ -380,6 +381,260 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     + "test_histogram_bucket{le='\\+Inf'} 3 \\d+\n"
                     + "test_histogram_sum Nan \\d+\n"
                     + "test_histogram_count 3 \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
+        public void EmptyArrays()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var tags = new KeyValuePair<string, object>[]
+            {
+                new KeyValuePair<string, object>("emptyIntArray", Array.Empty<int>()),
+                new KeyValuePair<string, object>("emptyObjectArray", Array.Empty<object>()),
+            };
+
+            var counter = meter.CreateCounter<double>("test_counter");
+            counter.Add(10, tags);
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_counter counter\n"
+                    + "test_counter{emptyIntArray='\\[\\]',emptyObjectArray='\\[\\]'} 10 \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Theory]
+        [InlineData(sbyte.MaxValue)]
+        [InlineData(byte.MaxValue)]
+        [InlineData(short.MaxValue)]
+        [InlineData(ushort.MaxValue)]
+        [InlineData(int.MaxValue)]
+        [InlineData(uint.MaxValue)]
+        [InlineData(long.MaxValue)]
+        [InlineData(new sbyte[] { 1, 2, 3 })]
+        [InlineData(new byte[] { 1, 2, 3 })]
+        [InlineData(new short[] { 1, 2, 3 })]
+        [InlineData(new ushort[] { 1, 2, 3 })]
+        [InlineData(new int[] { 1, 2, 3 })]
+        [InlineData(new uint[] { 1, 2, 3 })]
+        [InlineData(new long[] { 1, 2, 3 })]
+        public void IntegralTypesSupported(object value)
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var counter = meter.CreateCounter<long>("test_counter");
+            counter.Add(10, new KeyValuePair<string, object>("key", value));
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+
+            var labelString = string.Empty;
+            switch (value)
+            {
+                case Array array:
+                    var expectedArray = new double[array.Length];
+                    for (var i = 0; i < array.Length; i++)
+                    {
+                        expectedArray[i] = Convert.ToInt64(array.GetValue(i));
+                    }
+
+                    labelString = $"{{key='\\[{string.Join(",", expectedArray)}\\]'}}";
+                    break;
+                default:
+                    labelString = $"{{key='{Convert.ToInt64(value)}'}}";
+                    break;
+            }
+
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_counter counter\n"
+                    + $"test_counter{labelString} 10 \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Theory]
+        [InlineData(float.MaxValue)]
+        [InlineData(double.MaxValue)]
+        [InlineData(new float[] { 1, 2, 3 })]
+        [InlineData(new double[] { 1, 2, 3 })]
+        public void FloatingPointTypesSupported(object value)
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var counter = meter.CreateCounter<double>("test_counter");
+            counter.Add(10, new KeyValuePair<string, object>("key", value));
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+
+            var labelString = string.Empty;
+            switch (value)
+            {
+                case Array array:
+                    var expectedArray = new double[array.Length];
+                    for (var i = 0; i < array.Length; i++)
+                    {
+                        expectedArray[i] = Convert.ToDouble(array.GetValue(i));
+                    }
+
+                    labelString = $"{{key='\\[{string.Join(",", expectedArray)}\\]'}}".Replace("+", "\\+");
+                    break;
+                default:
+                    // TODO: Verify if scientific notion is ok for Prometheus
+                    // {key="1.7976931348623157E+308"}
+                    labelString = $"{{key='{Convert.ToDouble(value)}'}}".Replace("+", "\\+");
+                    break;
+            }
+
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_counter counter\n"
+                    + $"test_counter{labelString} 10 \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(new bool[] { true, false, true })]
+        public void BooleanTypeSupported(object value)
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var counter = meter.CreateCounter<long>("test_counter");
+            counter.Add(10, new KeyValuePair<string, object>("key", value));
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+
+            var labelString = string.Empty;
+            switch (value)
+            {
+                case Array array:
+                    var expectedArray = new bool[array.Length];
+                    for (var i = 0; i < array.Length; i++)
+                    {
+                        expectedArray[i] = Convert.ToBoolean(array.GetValue(i));
+                    }
+
+                    labelString = $"{{key='\\[{string.Join(",", expectedArray)}\\]'}}".ToLower();
+                    break;
+                default:
+                    labelString = $"{{key='{Convert.ToBoolean(value)}'}}".ToLower();
+                    break;
+            }
+
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_counter counter\n"
+                    + $"test_counter{labelString} 10 \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Theory]
+        [InlineData(char.MaxValue)]
+        [InlineData("string")]
+        public void StringTypesSupported(object value)
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var counter = meter.CreateCounter<long>("test_counter");
+            counter.Add(10, new KeyValuePair<string, object>("key", value));
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+
+            var labelString = $"{{key='{Convert.ToString(value)}'}}";
+
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_counter counter\n"
+                    + $"test_counter{labelString} 10 \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
+        public void StringArrayTypesSupported()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var charArray = new char[] { 'a', 'b', 'c' };
+            var stringArray = new string[] { "a", "b", "c", string.Empty, null };
+            var tags = new KeyValuePair<string, object>[]
+            {
+                new KeyValuePair<string, object>("charArray", charArray),
+                new KeyValuePair<string, object>("stringArray", stringArray),
+            };
+
+            var counter = meter.CreateCounter<long>("test_counter");
+            counter.Add(10, tags);
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+
+            var labelString = @"{charArray=""\[\\""a\\"",\\""b\\"",\\""c\\""\]"",stringArray=""\[\\""a\\"",\\""b\\"",\\""c\\"",\\""\\"",null\]""}";
+
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_counter counter\n"
+                    + $"test_counter{labelString} 10 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
