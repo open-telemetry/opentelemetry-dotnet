@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* Fix issue where a measurement would be dropped when recording it with a
+  null-valued tag.
+  ([#3325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3325))
+
+## 1.3.0
+
+Released 2022-Jun-03
+
 ## 1.3.0-rc.2
 
 Released 2022-June-1

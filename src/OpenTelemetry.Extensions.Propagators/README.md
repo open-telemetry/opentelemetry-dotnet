@@ -43,6 +43,15 @@ Sdk.SetDefaultTextMapPropagator(new CompositeTextMapPropagator(new TextMapPropag
     }));
 ```
 
+## Troubleshooting
+
+This component uses an
+[EventSource](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventsource)
+with the name "OpenTelemetry.Extensions.Propagators" for its internal logging.
+Please refer to [SDK
+troubleshooting](../OpenTelemetry/README.md#troubleshooting) for instructions on
+seeing these internal logs.
+
 ## References
 
 * [B3 (Zipkin) Context specification](https://github.com/openzipkin/b3-propagation)
