@@ -91,7 +91,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
                         Console.WriteLine("asynclocal duration: " + duration);
 
-                        //this.dbCallDuration.Record(duration, tags);
+                        this.dbCallDuration.Record(duration, tags);
                     }
 
                     break;
