@@ -89,8 +89,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
                         var duration = (DateTime.UtcNow - asyncLocalStartTime.Value).TotalMilliseconds;
 
-                        Console.WriteLine("asynclocal duration: " + duration);
-
                         this.dbCallDuration.Record(duration, tags);
                     }
 
