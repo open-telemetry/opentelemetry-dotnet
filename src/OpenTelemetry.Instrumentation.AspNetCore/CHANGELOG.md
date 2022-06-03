@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.4
+
+Released 2022-Jun-03
+
 * Added additional metric dimensions.
   ([3247](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3247))
 
