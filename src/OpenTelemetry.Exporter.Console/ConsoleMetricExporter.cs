@@ -37,11 +37,12 @@ namespace OpenTelemetry.Exporter
                 this.resource = this.ParentProvider.GetResource();
                 if (this.resource != Resource.Empty)
                 {
+                    this.WriteLine("Resource associated with Metric:");
                     foreach (var resourceAttribute in this.resource.Attributes)
                     {
-                        if (resourceAttribute.Key.Equals("service.name"))
+                        if (ConsoleTagTransformer.Instance.TryTransformTag(resourceAttribute, out var result))
                         {
-                            this.WriteLine("Service.Name=" + resourceAttribute.Value);
+                            this.WriteLine($"    {result}");
                         }
                     }
                 }
