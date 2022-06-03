@@ -27,7 +27,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient
     /// </summary>
     internal class SqlClientMetricsInstrumentation : IDisposable
     {
-        internal const string SqlClientDiagnosticListenerName = "SqlClientMetricsDiagnosticListener";
+        internal const string SqlClientDiagnosticListenerName = "SqlClientDiagnosticListener";
 
         internal static readonly AssemblyName AssemblyName = typeof(SqlClientDiagnosticListener).Assembly.GetName();
         internal static readonly string InstrumentationName = AssemblyName.Name;
@@ -35,7 +35,6 @@ namespace OpenTelemetry.Instrumentation.SqlClient
 
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
         private readonly Meter meter;
-
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlClientMetricsInstrumentation"/> class.
