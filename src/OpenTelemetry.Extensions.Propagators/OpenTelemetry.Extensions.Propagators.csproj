@@ -8,10 +8,6 @@
     <IncludeInstrumentationHelpers>true</IncludeInstrumentationHelpers>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\OpenTelemetryApiEventSource.cs" Link="Includes\OpenTelemetryApiEventSource.cs" />
-  </ItemGroup>
-
   <!--Do not run ApiCompat as this package is newly added.-->
   <PropertyGroup>
     <RunApiCompat>false</RunApiCompat>

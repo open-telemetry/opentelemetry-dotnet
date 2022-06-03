@@ -88,13 +88,13 @@ namespace OpenTelemetry.Extensions.Propagators
 
             if (carrier == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToExtractActivityContext(nameof(B3Propagator), "null carrier");
+                OpenTelemetryPropagatorsEventSource.Log.FailedToExtractActivityContext(nameof(B3Propagator), "null carrier");
                 return context;
             }
 
             if (getter == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToExtractActivityContext(nameof(B3Propagator), "null getter");
+                OpenTelemetryPropagatorsEventSource.Log.FailedToExtractActivityContext(nameof(B3Propagator), "null getter");
                 return context;
             }
 
@@ -113,19 +113,19 @@ namespace OpenTelemetry.Extensions.Propagators
         {
             if (context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(B3Propagator), "invalid context");
+                OpenTelemetryPropagatorsEventSource.Log.FailedToInjectActivityContext(nameof(B3Propagator), "invalid context");
                 return;
             }
 
             if (carrier == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(B3Propagator), "null carrier");
+                OpenTelemetryPropagatorsEventSource.Log.FailedToInjectActivityContext(nameof(B3Propagator), "null carrier");
                 return;
             }
 
             if (setter == null)
             {
-                OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(B3Propagator), "null setter");
+                OpenTelemetryPropagatorsEventSource.Log.FailedToInjectActivityContext(nameof(B3Propagator), "null setter");
                 return;
             }
 
@@ -199,7 +199,7 @@ namespace OpenTelemetry.Extensions.Propagators
             }
             catch (Exception e)
             {
-                OpenTelemetryApiEventSource.Log.ActivityContextExtractException(nameof(B3Propagator), e);
+                OpenTelemetryPropagatorsEventSource.Log.ActivityContextExtractException(nameof(B3Propagator), e);
                 return context;
             }
         }
@@ -259,7 +259,7 @@ namespace OpenTelemetry.Extensions.Propagators
             }
             catch (Exception e)
             {
-                OpenTelemetryApiEventSource.Log.ActivityContextExtractException(nameof(B3Propagator), e);
+                OpenTelemetryPropagatorsEventSource.Log.ActivityContextExtractException(nameof(B3Propagator), e);
                 return context;
             }
         }
