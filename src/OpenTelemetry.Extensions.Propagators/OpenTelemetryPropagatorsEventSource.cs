@@ -43,7 +43,7 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(1, format, exception);
         }
 
-        [Event(1, Message = "Failed to inject activity context in format: '{0}', context: '{1}'.", Level = EventLevel.Warning)]
+        [Event(2, Message = "Failed to inject activity context in format: '{0}', context: '{1}'.", Level = EventLevel.Warning)]
         public void FailedToInjectActivityContext(string format, string error)
         {
             this.WriteEvent(2, format, error);
