@@ -55,7 +55,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                         {
                             if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result))
                             {
-                                if (tagsWritten++ == 1)
+                                if (++tagsWritten == 1)
                                 {
                                     buffer[cursor++] = unchecked((byte)'{');
                                 }
