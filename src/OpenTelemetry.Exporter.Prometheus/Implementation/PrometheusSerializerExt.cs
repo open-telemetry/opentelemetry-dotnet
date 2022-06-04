@@ -155,19 +155,23 @@ namespace OpenTelemetry.Exporter.Prometheus
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
 
-                    if (tags.Count > 0)
+                    var tagsWritten = 0;
+                    foreach (var tag in tags)
                     {
-                        buffer[cursor++] = unchecked((byte)'{');
-
-                        foreach (var tag in tags)
+                        if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result))
                         {
-                            if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result))
+                            if (++tagsWritten == 1)
                             {
-                                cursor = WriteLabel(buffer, cursor, tag.Key, result);
-                                buffer[cursor++] = unchecked((byte)',');
+                                buffer[cursor++] = unchecked((byte)'{');
                             }
-                        }
 
+                            cursor = WriteLabel(buffer, cursor, tag.Key, result);
+                            buffer[cursor++] = unchecked((byte)',');
+                        }
+                    }
+
+                    if (tagsWritten > 0)
+                    {
                         buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
                     }
 
@@ -184,19 +188,23 @@ namespace OpenTelemetry.Exporter.Prometheus
                     cursor = WriteMetricName(buffer, cursor, metric.Name, metric.Unit);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
 
-                    if (tags.Count > 0)
+                    tagsWritten = 0;
+                    foreach (var tag in tags)
                     {
-                        buffer[cursor++] = unchecked((byte)'{');
-
-                        foreach (var tag in tags)
+                        if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result))
                         {
-                            if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result))
+                            if (++tagsWritten == 1)
                             {
-                                cursor = WriteLabel(buffer, cursor, tag.Key, result);
-                                buffer[cursor++] = unchecked((byte)',');
+                                buffer[cursor++] = unchecked((byte)'{');
                             }
-                        }
 
+                            cursor = WriteLabel(buffer, cursor, tag.Key, result);
+                            buffer[cursor++] = unchecked((byte)',');
+                        }
+                    }
+
+                    if (tagsWritten > 0)
+                    {
                         buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
                     }
 

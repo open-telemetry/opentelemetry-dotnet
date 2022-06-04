@@ -417,6 +417,49 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
+        public void NullValueAttributeIsDroppedInHistogram()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var tags = new KeyValuePair<string, object>[]
+            {
+                new KeyValuePair<string, object>("key", null),
+            };
+
+            var counter = meter.CreateHistogram<double>("test_histogram");
+            counter.Record(10, tags);
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_histogram histogram\n"
+                    + "test_histogram_bucket{le='0'} 0 \\d+\n"
+                    + "test_histogram_bucket{le='5'} 0 \\d+\n"
+                    + "test_histogram_bucket{le='10'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='25'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='50'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='75'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='100'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='250'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='500'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='1000'} 1 \\d+\n"
+                    + "test_histogram_bucket{le='\\+Inf'} 1 \\d+\n"
+                    + "test_histogram_sum 10 \\d+\n"
+                    + "test_histogram_count 1 \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
         public void EmptyArrays()
         {
             var buffer = new byte[85000];
