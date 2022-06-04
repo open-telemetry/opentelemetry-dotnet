@@ -50,18 +50,25 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                     if (tags.Count > 0)
                     {
-                        buffer[cursor++] = unchecked((byte)'{');
-
+                        var tagsWritten = 0;
                         foreach (var tag in tags)
                         {
                             if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result))
                             {
+                                if (tagsWritten++ == 1)
+                                {
+                                    buffer[cursor++] = unchecked((byte)'{');
+                                }
+
                                 cursor = WriteLabel(buffer, cursor, tag.Key, result);
                                 buffer[cursor++] = unchecked((byte)',');
                             }
                         }
 
-                        buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
+                        if (tagsWritten > 0)
+                        {
+                            buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
+                        }
                     }
 
                     buffer[cursor++] = unchecked((byte)' ');

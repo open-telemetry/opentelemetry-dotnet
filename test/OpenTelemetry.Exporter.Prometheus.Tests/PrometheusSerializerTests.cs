@@ -386,6 +386,37 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
+        public void NullValueAttributeIsDropped()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var tags = new KeyValuePair<string, object>[]
+            {
+                new KeyValuePair<string, object>("key", null),
+            };
+
+            var counter = meter.CreateCounter<double>("test_counter");
+            counter.Add(10, tags);
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_counter counter\n"
+                    + "test_counter 10 \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
         public void EmptyArrays()
         {
             var buffer = new byte[85000];
