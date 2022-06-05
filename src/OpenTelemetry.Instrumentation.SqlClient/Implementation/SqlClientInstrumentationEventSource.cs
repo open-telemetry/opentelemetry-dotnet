@@ -75,5 +75,20 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
         {
             this.WriteEvent(5, exception);
         }
+
+        [NonEvent]
+        public void FilterException(Exception ex)
+        {
+            if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                this.FilterException(ex.ToInvariantString());
+            }
+        }
+
+        [Event(5, Message = "Filter threw exception. Exception {0}.", Level = EventLevel.Error)]
+        public void FilterException(string exception)
+        {
+            this.WriteEvent(5, exception);
+        }
     }
 }

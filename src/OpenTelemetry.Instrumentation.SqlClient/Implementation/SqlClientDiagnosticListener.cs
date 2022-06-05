@@ -79,6 +79,24 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
 
                         if (activity.IsAllDataRequested)
                         {
+                            try
+                            {
+                                if (this.options.EventFilter(activity, "OnCustom", command) == false)
+                                {
+                                    SqlClientInstrumentationEventSource.Log.FilterException(activity.OperationName);
+                                    activity.IsAllDataRequested = false;
+                                    activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
+                                    return;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                SqlClientInstrumentationEventSource.Log.FilterException(ex);
+                                activity.IsAllDataRequested = false;
+                                activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
+                                return;
+                            }
+
                             _ = this.connectionFetcher.TryFetch(command, out var connection);
                             _ = this.databaseFetcher.TryFetch(connection, out var database);
 
