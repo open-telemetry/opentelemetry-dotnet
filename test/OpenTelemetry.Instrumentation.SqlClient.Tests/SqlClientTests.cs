@@ -308,6 +308,61 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
 
             VerifySamplingParameters(sampler.LatestSamplingParameters);
         }
+
+        [Fact]
+        public void SqlClientShouldNotCollectWhenInstrumentationFilterApplied()
+        {
+            using var sqlConnection = new SqlConnection(TestConnectionString);
+            using var sqlCommand = sqlConnection.CreateCommand();
+
+            var activities = new List<Activity>();
+            using (Sdk.CreateTracerProviderBuilder()
+                    .AddSqlClientInstrumentation(
+                        (opt) =>
+                        {
+                            opt.Filter = (activity, eventName, rawObject) =>
+                            {
+                                if (rawObject is SqlCommand command)
+                                {
+                                    return !(command.CommandType == CommandType.StoredProcedure);
+                                }
+
+                                return true;
+                            };
+                        })
+                    .AddInMemoryExporter(activities)
+                    .Build())
+            {
+                var operationId = Guid.NewGuid();
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+                sqlCommand.CommandText = "SP_GetOrders";
+
+                var beforeExecuteEventData = new
+                {
+                    OperationId = operationId,
+                    Command = sqlCommand,
+                    Timestamp = (long?)1000000L,
+                };
+
+                this.fakeSqlClientDiagnosticSource.Write(
+                    SqlClientDiagnosticListener.SqlDataBeforeExecuteCommand,
+                    beforeExecuteEventData);
+
+                var afterExecuteEventData = new
+                {
+                    OperationId = operationId,
+                    Command = sqlCommand,
+                    Timestamp = 2000000L,
+                };
+
+                this.fakeSqlClientDiagnosticSource.Write(
+                    SqlClientDiagnosticListener.SqlMicrosoftAfterExecuteCommand,
+                    afterExecuteEventData);
+            }
+
+            Assert.Empty(activities);
+        }
+
 #endif
 
         private static void VerifyActivityData(
