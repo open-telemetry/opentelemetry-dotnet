@@ -29,10 +29,10 @@ namespace OpenTelemetry.Logs
     /// </summary>
     public sealed class LogRecord
     {
-        internal int PoolReferences = int.MaxValue;
         internal LogRecordData Data;
         internal List<KeyValuePair<string, object?>>? AttributeStorage;
         internal List<object?>? BufferedScopes;
+        internal int PoolReferenceCount = int.MaxValue;
 
         private static readonly Action<object?, List<object?>> AddScopeToBufferedList = (object? scope, List<object?> state) =>
         {
