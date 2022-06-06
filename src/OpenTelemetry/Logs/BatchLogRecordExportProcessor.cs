@@ -59,11 +59,11 @@ namespace OpenTelemetry
 
             data!.Buffer();
 
-            LogRecordPool.TrackReference(data);
+            LogRecordSharedPool.Current.TrackReference(data);
 
             if (!this.TryExport(data))
             {
-                LogRecordPool.Return(data);
+                LogRecordSharedPool.Current.Return(data);
             }
         }
     }

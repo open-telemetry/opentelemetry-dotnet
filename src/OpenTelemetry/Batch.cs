@@ -94,7 +94,7 @@ namespace OpenTelemetry
                     T item = this.circularBuffer.Read();
                     if (typeof(T) == typeof(LogRecord))
                     {
-                        LogRecordPool.Return((LogRecord)(object)item);
+                        LogRecordSharedPool.Current.Return((LogRecord)(object)item);
                     }
                 }
             }
@@ -154,7 +154,7 @@ namespace OpenTelemetry
                 {
                     if (typeof(T) == typeof(LogRecord))
                     {
-                        LogRecordPool.Return((LogRecord)(object)currentItem);
+                        LogRecordSharedPool.Current.Return((LogRecord)(object)currentItem);
                     }
                 }
 
@@ -234,7 +234,7 @@ namespace OpenTelemetry
                     var currentItem = this.current;
                     if (currentItem != null)
                     {
-                        LogRecordPool.Return((LogRecord)(object)currentItem);
+                        LogRecordSharedPool.Current.Return((LogRecord)(object)currentItem);
                         this.current = null;
                     }
                 }

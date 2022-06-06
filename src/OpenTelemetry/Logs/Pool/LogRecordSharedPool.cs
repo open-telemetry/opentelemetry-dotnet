@@ -1,4 +1,4 @@
-// <copyright file="LogRecordPool.cs" company="OpenTelemetry Authors">
+// <copyright file="LogRecordSharedPool.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,27 +19,23 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
 {
-    /// <summary>
-    /// Manages a pool of <see cref="LogRecord"/> instances.
-    /// </summary>
-    public sealed class LogRecordPool
+    internal sealed class LogRecordSharedPool : ILogRecordPool
     {
         internal const int DefaultMaxPoolSize = 2048;
         internal const int DefaultMaxNumberOfAttributes = 64;
         internal const int DefaultMaxNumberOfScopes = 16;
 
-        internal static LogRecordPool Current = new(DefaultMaxPoolSize);
+        internal static LogRecordSharedPool Current = new(DefaultMaxPoolSize);
 
         internal readonly int Capacity;
         private readonly LogRecord?[] pool;
         private long rentIndex;
         private long returnIndex;
 
-        internal LogRecordPool(int capacity)
+        internal LogRecordSharedPool(int capacity)
         {
             this.Capacity = capacity;
             this.pool = new LogRecord?[capacity];
@@ -47,30 +43,71 @@ namespace OpenTelemetry.Logs
 
         internal int Count => (int)(Interlocked.Read(ref this.returnIndex) - Interlocked.Read(ref this.rentIndex));
 
-        /// <summary>
-        /// Resize the pool.
-        /// </summary>
-        /// <param name="capacity">The maximum number of <see cref="LogRecord"/>s to store in the pool.</param>
-        public static void Resize(int capacity)
+        public LogRecord Rent()
         {
-            Guard.ThrowIfOutOfRange(capacity, min: 1);
+            while (true)
+            {
+                var rentSnapshot = Interlocked.Read(ref this.rentIndex);
+                var returnSnapshot = Interlocked.Read(ref this.returnIndex);
 
-            Current = new LogRecordPool(capacity);
+                if (rentSnapshot >= returnSnapshot)
+                {
+                    break; // buffer is empty
+                }
+
+                if (Interlocked.CompareExchange(ref this.rentIndex, rentSnapshot + 1, rentSnapshot) == rentSnapshot)
+                {
+                    var logRecord = Interlocked.Exchange(ref this.pool[rentSnapshot % this.Capacity], null);
+                    if (logRecord == null && !this.TryRentCoreRare(rentSnapshot, out logRecord))
+                    {
+                        continue;
+                    }
+
+                    logRecord.PoolReferenceCount = 1;
+                    return logRecord;
+                }
+            }
+
+            return new LogRecord()
+            {
+                PoolReferenceCount = 1,
+            };
+        }
+
+        public void Return(LogRecord logRecord)
+        {
+            if (Interlocked.Decrement(ref logRecord.PoolReferenceCount) != 0)
+            {
+                return;
+            }
+
+            Clear(logRecord);
+
+            while (true)
+            {
+                var rentSnapshot = Interlocked.Read(ref this.rentIndex);
+                var returnSnapshot = Interlocked.Read(ref this.returnIndex);
+
+                if (returnSnapshot - rentSnapshot >= this.Capacity)
+                {
+                    return; // buffer is full
+                }
+
+                if (Interlocked.CompareExchange(ref this.returnIndex, returnSnapshot + 1, returnSnapshot) == returnSnapshot)
+                {
+                    this.pool[returnSnapshot % this.Capacity] = logRecord;
+                    return;
+                }
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static LogRecord Rent() => Current.RentCore();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void Return(LogRecord logRecord) => Current.ReturnCore(logRecord);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void TrackReference(LogRecord logRecord)
+        public void TrackReference(LogRecord logRecord)
         {
             Interlocked.Increment(ref logRecord.PoolReferenceCount);
         }
 
-        private void Clear(LogRecord logRecord)
+        internal static void Clear(LogRecord logRecord)
         {
             var attributeStorage = logRecord.AttributeStorage;
             if (attributeStorage != null)
@@ -105,37 +142,6 @@ namespace OpenTelemetry.Logs
             }
         }
 
-        private LogRecord RentCore()
-        {
-            while (true)
-            {
-                var rentSnapshot = Interlocked.Read(ref this.rentIndex);
-                var returnSnapshot = Interlocked.Read(ref this.returnIndex);
-
-                if (rentSnapshot >= returnSnapshot)
-                {
-                    break; // buffer is empty
-                }
-
-                if (Interlocked.CompareExchange(ref this.rentIndex, rentSnapshot + 1, rentSnapshot) == rentSnapshot)
-                {
-                    var logRecord = Interlocked.Exchange(ref this.pool[rentSnapshot % this.Capacity], null);
-                    if (logRecord == null && !this.TryRentCoreRare(rentSnapshot, out logRecord))
-                    {
-                        continue;
-                    }
-
-                    logRecord.PoolReferenceCount = 1;
-                    return logRecord;
-                }
-            }
-
-            return new LogRecord()
-            {
-                PoolReferenceCount = 1,
-            };
-        }
-
         private bool TryRentCoreRare(long rentSnapshot, [NotNullWhen(true)] out LogRecord? logRecord)
         {
             SpinWait wait = default;
@@ -162,33 +168,6 @@ namespace OpenTelemetry.Logs
                 {
                     // Rare case where the write was still working when the read came in
                     return true;
-                }
-            }
-        }
-
-        private void ReturnCore(LogRecord logRecord)
-        {
-            if (Interlocked.Decrement(ref logRecord.PoolReferenceCount) != 0)
-            {
-                return;
-            }
-
-            this.Clear(logRecord);
-
-            while (true)
-            {
-                var rentSnapshot = Interlocked.Read(ref this.rentIndex);
-                var returnSnapshot = Interlocked.Read(ref this.returnIndex);
-
-                if (returnSnapshot - rentSnapshot >= this.Capacity)
-                {
-                    return; // buffer is full
-                }
-
-                if (Interlocked.CompareExchange(ref this.returnIndex, returnSnapshot + 1, returnSnapshot) == returnSnapshot)
-                {
-                    this.pool[returnSnapshot % this.Capacity] = logRecord;
-                    return;
                 }
             }
         }

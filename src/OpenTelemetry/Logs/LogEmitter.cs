@@ -48,7 +48,9 @@ namespace OpenTelemetry.Logs
             var processor = provider.Processor;
             if (processor != null)
             {
-                var logRecord = LogRecordPool.Rent();
+                var pool = provider.LogRecordPool;
+
+                var logRecord = pool.Rent();
 
                 logRecord.Data = data;
 
@@ -65,7 +67,7 @@ namespace OpenTelemetry.Logs
 
                 // Attempt to return the LogRecord to the pool. This will no-op
                 // if a batch exporter has added a reference.
-                LogRecordPool.Return(logRecord);
+                pool.Return(logRecord);
             }
         }
     }

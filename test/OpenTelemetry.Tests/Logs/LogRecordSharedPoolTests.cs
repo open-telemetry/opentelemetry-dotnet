@@ -1,4 +1,4 @@
-// <copyright file="LogRecordPoolTests.cs" company="OpenTelemetry Authors">
+// <copyright file="LogRecordSharedPoolTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,29 +19,28 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using OpenTelemetry.Logs;
 using Xunit;
 
-namespace OpenTelemetry.Tests.Logs
+namespace OpenTelemetry.Logs.Tests
 {
-    public sealed class LogRecordPoolTests
+    public sealed class LogRecordSharedPoolTests
     {
         [Fact]
         public void ResizeTests()
         {
-            LogRecordPool.Resize(LogRecordPool.DefaultMaxPoolSize);
-            Assert.NotNull(LogRecordPool.Current);
-            Assert.Equal(LogRecordPool.DefaultMaxPoolSize, LogRecordPool.Current.Capacity);
+            LogRecordPool.Resize(LogRecordSharedPool.DefaultMaxPoolSize);
+            Assert.NotNull(LogRecordSharedPool.Current);
+            Assert.Equal(LogRecordSharedPool.DefaultMaxPoolSize, LogRecordSharedPool.Current.Capacity);
 
             Assert.Throws<ArgumentOutOfRangeException>(() => LogRecordPool.Resize(0));
 
-            var beforePool = LogRecordPool.Current;
+            var beforePool = LogRecordSharedPool.Current;
 
             LogRecordPool.Resize(1);
 
-            Assert.NotNull(LogRecordPool.Current);
-            Assert.Equal(1, LogRecordPool.Current.Capacity);
-            Assert.NotEqual(beforePool, LogRecordPool.Current);
+            Assert.NotNull(LogRecordSharedPool.Current);
+            Assert.Equal(1, LogRecordSharedPool.Current.Capacity);
+            Assert.NotEqual(beforePool, LogRecordSharedPool.Current);
         }
 
         [Fact]
@@ -49,46 +48,48 @@ namespace OpenTelemetry.Tests.Logs
         {
             LogRecordPool.Resize(2);
 
-            var logRecord1 = LogRecordPool.Rent();
+            var pool = LogRecordSharedPool.Current;
+
+            var logRecord1 = pool.Rent();
             Assert.NotNull(logRecord1);
 
-            var logRecord2 = LogRecordPool.Rent();
+            var logRecord2 = pool.Rent();
             Assert.NotNull(logRecord1);
 
-            LogRecordPool.Return(logRecord1);
+            pool.Return(logRecord1);
 
-            Assert.Equal(1, LogRecordPool.Current.Count);
+            Assert.Equal(1, pool.Count);
 
             // Note: This is ignored because logRecord manually created has PoolReferenceCount = int.MaxValue.
             LogRecord manualRecord = new();
             Assert.Equal(int.MaxValue, manualRecord.PoolReferenceCount);
-            LogRecordPool.Return(manualRecord);
+            pool.Return(manualRecord);
 
-            Assert.Equal(1, LogRecordPool.Current.Count);
+            Assert.Equal(1, pool.Count);
 
-            LogRecordPool.Return(logRecord2);
+            pool.Return(logRecord2);
 
-            Assert.Equal(2, LogRecordPool.Current.Count);
+            Assert.Equal(2, pool.Count);
 
-            logRecord1 = LogRecordPool.Rent();
+            logRecord1 = pool.Rent();
             Assert.NotNull(logRecord1);
-            Assert.Equal(1, LogRecordPool.Current.Count);
+            Assert.Equal(1, pool.Count);
 
-            logRecord2 = LogRecordPool.Rent();
+            logRecord2 = pool.Rent();
             Assert.NotNull(logRecord2);
-            Assert.Equal(0, LogRecordPool.Current.Count);
+            Assert.Equal(0, pool.Count);
 
-            var logRecord3 = LogRecordPool.Rent();
-            var logRecord4 = LogRecordPool.Rent();
+            var logRecord3 = pool.Rent();
+            var logRecord4 = pool.Rent();
             Assert.NotNull(logRecord3);
             Assert.NotNull(logRecord4);
 
-            LogRecordPool.Return(logRecord1);
-            LogRecordPool.Return(logRecord2);
-            LogRecordPool.Return(logRecord3);
-            LogRecordPool.Return(logRecord4); // <- Discarded due to pool size of 2
+            pool.Return(logRecord1);
+            pool.Return(logRecord2);
+            pool.Return(logRecord3);
+            pool.Return(logRecord4); // <- Discarded due to pool size of 2
 
-            Assert.Equal(2, LogRecordPool.Current.Count);
+            Assert.Equal(2, pool.Count);
         }
 
         [Fact]
@@ -96,36 +97,40 @@ namespace OpenTelemetry.Tests.Logs
         {
             LogRecordPool.Resize(2);
 
-            var logRecord1 = LogRecordPool.Rent();
+            var pool = LogRecordSharedPool.Current;
+
+            var logRecord1 = pool.Rent();
             Assert.NotNull(logRecord1);
 
             Assert.Equal(1, logRecord1.PoolReferenceCount);
 
-            LogRecordPool.TrackReference(logRecord1);
+            pool.TrackReference(logRecord1);
 
             Assert.Equal(2, logRecord1.PoolReferenceCount);
 
-            LogRecordPool.Return(logRecord1);
+            pool.Return(logRecord1);
 
             Assert.Equal(1, logRecord1.PoolReferenceCount);
 
-            LogRecordPool.Return(logRecord1);
+            pool.Return(logRecord1);
 
-            Assert.Equal(1, LogRecordPool.Current.Count);
+            Assert.Equal(1, pool.Count);
             Assert.Equal(0, logRecord1.PoolReferenceCount);
 
-            LogRecordPool.Return(logRecord1);
+            pool.Return(logRecord1);
 
             Assert.Equal(-1, logRecord1.PoolReferenceCount);
-            Assert.Equal(1, LogRecordPool.Current.Count); // Record was not returned because PoolReferences was negative.
+            Assert.Equal(1, pool.Count); // Record was not returned because PoolReferences was negative.
         }
 
         [Fact]
         public void ClearTests()
         {
-            LogRecordPool.Resize(LogRecordPool.DefaultMaxPoolSize);
+            LogRecordPool.Resize(LogRecordSharedPool.DefaultMaxPoolSize);
 
-            var logRecord1 = LogRecordPool.Rent();
+            var pool = LogRecordSharedPool.Current;
+
+            var logRecord1 = pool.Rent();
             logRecord1.AttributeStorage = new List<KeyValuePair<string, object?>>(16)
             {
                 new KeyValuePair<string, object?>("key1", "value1"),
@@ -133,29 +138,29 @@ namespace OpenTelemetry.Tests.Logs
             };
             logRecord1.BufferedScopes = new List<object?>(8) { null, null };
 
-            LogRecordPool.Return(logRecord1);
+            pool.Return(logRecord1);
 
             Assert.Empty(logRecord1.AttributeStorage);
             Assert.Equal(16, logRecord1.AttributeStorage.Capacity);
             Assert.Empty(logRecord1.BufferedScopes);
             Assert.Equal(8, logRecord1.BufferedScopes.Capacity);
 
-            logRecord1 = LogRecordPool.Rent();
+            logRecord1 = pool.Rent();
 
             Assert.NotNull(logRecord1.AttributeStorage);
             Assert.NotNull(logRecord1.BufferedScopes);
 
-            for (int i = 0; i <= LogRecordPool.DefaultMaxNumberOfAttributes; i++)
+            for (int i = 0; i <= LogRecordSharedPool.DefaultMaxNumberOfAttributes; i++)
             {
                 logRecord1.AttributeStorage!.Add(new KeyValuePair<string, object?>("key", "value"));
             }
 
-            for (int i = 0; i <= LogRecordPool.DefaultMaxNumberOfScopes; i++)
+            for (int i = 0; i <= LogRecordSharedPool.DefaultMaxNumberOfScopes; i++)
             {
                 logRecord1.BufferedScopes!.Add(null);
             }
 
-            LogRecordPool.Return(logRecord1);
+            pool.Return(logRecord1);
 
             Assert.Null(logRecord1.AttributeStorage);
             Assert.Null(logRecord1.BufferedScopes);
@@ -166,13 +171,15 @@ namespace OpenTelemetry.Tests.Logs
         [InlineData(true)]
         public async Task ExportTest(bool warmup)
         {
-            LogRecordPool.Resize(LogRecordPool.DefaultMaxPoolSize);
+            LogRecordPool.Resize(LogRecordSharedPool.DefaultMaxPoolSize);
+
+            var pool = LogRecordSharedPool.Current;
 
             if (warmup)
             {
-                for (int i = 0; i < LogRecordPool.DefaultMaxPoolSize; i++)
+                for (int i = 0; i < LogRecordSharedPool.DefaultMaxPoolSize; i++)
                 {
-                    LogRecordPool.Return(new LogRecord { PoolReferenceCount = 1 });
+                    pool.Return(new LogRecord { PoolReferenceCount = 1 });
                 }
             }
 
@@ -190,12 +197,12 @@ namespace OpenTelemetry.Tests.Logs
 
                     for (int i = 0; i < 1000; i++)
                     {
-                        var logRecord = LogRecordPool.Rent();
+                        var logRecord = pool.Rent();
 
                         processor.OnEnd(logRecord);
 
                         // This should no-op mostly.
-                        LogRecordPool.Return(logRecord);
+                        pool.Return(logRecord);
 
                         await Task.Delay(random.Next(0, 20)).ConfigureAwait(false);
                     }
@@ -208,10 +215,10 @@ namespace OpenTelemetry.Tests.Logs
 
             if (warmup)
             {
-                Assert.Equal(LogRecordPool.DefaultMaxPoolSize, LogRecordPool.Current.Count);
+                Assert.Equal(LogRecordSharedPool.DefaultMaxPoolSize, pool.Count);
             }
 
-            Assert.True(LogRecordPool.Current.Count <= LogRecordPool.DefaultMaxPoolSize);
+            Assert.True(pool.Count <= LogRecordSharedPool.DefaultMaxPoolSize);
         }
 
         [Fact]
@@ -234,7 +241,9 @@ namespace OpenTelemetry.Tests.Logs
              * have more natural back-off time.
              */
 
-            LogRecordPool.Resize(LogRecordPool.DefaultMaxPoolSize);
+            LogRecordPool.Resize(LogRecordSharedPool.DefaultMaxPoolSize);
+
+            var pool = LogRecordSharedPool.Current;
 
             List<Task> tasks = new();
 
@@ -246,16 +255,16 @@ namespace OpenTelemetry.Tests.Logs
 
                     for (int i = 0; i < 100_000; i++)
                     {
-                        var logRecord = LogRecordPool.Rent();
+                        var logRecord = pool.Rent();
 
-                        LogRecordPool.Return(logRecord);
+                        pool.Return(logRecord);
                     }
                 }));
             }
 
             await Task.WhenAll(tasks).ConfigureAwait(false);
 
-            Assert.True(LogRecordPool.Current.Count <= LogRecordPool.DefaultMaxPoolSize);
+            Assert.True(pool.Count <= LogRecordSharedPool.DefaultMaxPoolSize);
         }
 
         private sealed class NoopExporter : BaseExporter<LogRecord>
