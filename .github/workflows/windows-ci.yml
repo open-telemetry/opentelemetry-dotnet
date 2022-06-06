@@ -2,11 +2,11 @@ name: Windows
 
 on:
   push:
-    branches: [ main, metrics ]
+    branches: [ main ]
     paths-ignore:
     - '**.md'
   pull_request:
-    branches: [ main, metrics ]
+    branches: [ main ]
     paths-ignore:
     - '**.md'
 
