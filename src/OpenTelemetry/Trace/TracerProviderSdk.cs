@@ -397,13 +397,13 @@ namespace OpenTelemetry.Trace
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ActivitySamplingResult PropagateOrIgnoreData(in ActivityContext context)
+        private static ActivitySamplingResult PropagateOrIgnoreData(in ActivityContext parentContext)
         {
-            var isRootSpan = context.TraceId == default;
+            var isRootSpan = parentContext.TraceId == default;
 
             // If it is the root span or the parent is remote select PropagationData so the trace ID is preserved
             // even if no activity of the trace is recorded (sampled per OpenTelemetry parlance).
-            return (isRootSpan || context.IsRemote)
+            return (isRootSpan || parentContext.IsRemote)
                 ? ActivitySamplingResult.PropagationData
                 : ActivitySamplingResult.None;
         }
