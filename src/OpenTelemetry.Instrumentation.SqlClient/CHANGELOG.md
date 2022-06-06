@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.4
+
+Released 2022-Jun-03
+
 ## 1.0.0-rc9.3
 
 Released 2022-Apr-15
