@@ -222,7 +222,7 @@ namespace OpenTelemetry.Trace.Tests
             }
         }
 
-        [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/3315")]
+        [Fact]
         public void TracerSdkSetsActivitySamplingResultAsPropagationWhenParentIsRemote()
         {
             var testSampler = new TestSampler();

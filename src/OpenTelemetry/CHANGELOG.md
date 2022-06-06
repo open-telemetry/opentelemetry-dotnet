@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* `TracerProviderSDK` modified for spans with remote parent. For such spans
+  activity will be created irrespective of SamplingResult, to maintain context
+  propagation.
+  ([#3329](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3329))
+
 * Fix issue where a measurement would be dropped when recording it with a
   null-valued tag.
   ([#3325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3325))
