@@ -385,8 +385,10 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
 
-        [Fact]
-        public void NullValueAttributeIsDropped()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        public void NullOrEmptyValuedAttributesAreDropped(object value)
         {
             var buffer = new byte[85000];
             var metrics = new List<Metric>();
@@ -399,7 +401,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             var tags = new KeyValuePair<string, object>[]
             {
-                new KeyValuePair<string, object>("key", null),
+                new KeyValuePair<string, object>("key", value),
             };
 
             var counter = meter.CreateCounter<double>("test_counter");
@@ -416,8 +418,10 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
 
-        [Fact]
-        public void NullValueAttributeIsDroppedInHistogram()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        public void NullValueAttributeIsDroppedInHistogram(string value)
         {
             var buffer = new byte[85000];
             var metrics = new List<Metric>();
@@ -430,7 +434,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             var tags = new KeyValuePair<string, object>[]
             {
-                new KeyValuePair<string, object>("key", null),
+                new KeyValuePair<string, object>("key", value),
             };
 
             var counter = meter.CreateHistogram<double>("test_histogram");

@@ -53,7 +53,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                         var tagsWritten = 0;
                         foreach (var tag in tags)
                         {
-                            if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result))
+                            if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result) && result != string.Empty)
                             {
                                 if (++tagsWritten == 1)
                                 {
@@ -123,7 +123,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                         foreach (var tag in tags)
                         {
-                            if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result))
+                            if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result) && result != string.Empty)
                             {
                                 cursor = WriteLabel(buffer, cursor, tag.Key, result);
                                 buffer[cursor++] = unchecked((byte)',');
@@ -158,7 +158,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     var tagsWritten = 0;
                     foreach (var tag in tags)
                     {
-                        if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result))
+                        if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result) && result != string.Empty)
                         {
                             if (++tagsWritten == 1)
                             {
@@ -191,7 +191,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                     tagsWritten = 0;
                     foreach (var tag in tags)
                     {
-                        if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result))
+                        if (PrometheusTagTransformer.Instance.TryTransformTag(tag, out var result) && result != string.Empty)
                         {
                             if (++tagsWritten == 1)
                             {
