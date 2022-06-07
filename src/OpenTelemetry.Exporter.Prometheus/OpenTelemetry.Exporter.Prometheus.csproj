@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>netcoreapp3.1;net462</TargetFrameworks>
+    <TargetFrameworks>net6.0;net462</TargetFrameworks>
     <Description>Prometheus exporter for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);prometheus;metrics</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
@@ -27,7 +27,7 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 

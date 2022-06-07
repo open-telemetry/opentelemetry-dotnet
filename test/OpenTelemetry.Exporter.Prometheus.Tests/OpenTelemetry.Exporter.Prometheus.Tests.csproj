@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Description>Unit test project for Prometheus Exporter for OpenTelemetry</Description>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>net6.0;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net6.0</TargetFrameworks>
     <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
 
     <IsPackable>false</IsPackable>
@@ -27,10 +27,6 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="6.0.0" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="3.1.0" />
   </ItemGroup>
 
   <ItemGroup>
