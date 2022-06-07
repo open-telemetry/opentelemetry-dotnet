@@ -57,20 +57,20 @@ namespace OpenTelemetry.Internal
         {
             get
             {
-                var tailSnapshot = Interlocked.Read(ref this.tail);
-                return (int)(Interlocked.Read(ref this.head) - tailSnapshot);
+                var tailSnapshot = Volatile.Read(ref this.tail);
+                return (int)(Volatile.Read(ref this.head) - tailSnapshot);
             }
         }
 
         /// <summary>
         /// Gets the number of items added to the <see cref="CircularBuffer{T}"/>.
         /// </summary>
-        public long AddedCount => Interlocked.Read(ref this.head);
+        public long AddedCount => Volatile.Read(ref this.head);
 
         /// <summary>
         /// Gets the number of items removed from the <see cref="CircularBuffer{T}"/>.
         /// </summary>
-        public long RemovedCount => Interlocked.Read(ref this.tail);
+        public long RemovedCount => Volatile.Read(ref this.tail);
 
         /// <summary>
         /// Adds the specified item to the buffer.
@@ -86,8 +86,8 @@ namespace OpenTelemetry.Internal
 
             while (true)
             {
-                var tailSnapshot = Interlocked.Read(ref this.tail);
-                var headSnapshot = Interlocked.Read(ref this.head);
+                var tailSnapshot = Volatile.Read(ref this.tail);
+                var headSnapshot = Volatile.Read(ref this.head);
 
                 if (headSnapshot - tailSnapshot >= this.Capacity)
                 {
@@ -129,8 +129,8 @@ namespace OpenTelemetry.Internal
 
             while (true)
             {
-                var tailSnapshot = Interlocked.Read(ref this.tail);
-                var headSnapshot = Interlocked.Read(ref this.head);
+                var tailSnapshot = Volatile.Read(ref this.tail);
+                var headSnapshot = Volatile.Read(ref this.head);
 
                 if (headSnapshot - tailSnapshot >= this.Capacity)
                 {
@@ -166,7 +166,7 @@ namespace OpenTelemetry.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Read()
         {
-            var index = (int)(Interlocked.Read(ref this.tail) % this.Capacity);
+            var index = (int)(Volatile.Read(ref this.tail) % this.Capacity);
             while (true)
             {
                 var previous = Interlocked.Exchange(ref this.trait[index], null);
