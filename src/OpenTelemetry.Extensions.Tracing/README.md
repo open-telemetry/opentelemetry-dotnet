@@ -9,7 +9,7 @@ into to OpenTelemetry logs.
 ## Usage Example
 
 ```csharp
-// Step 1: Configure OpenTelemetryLoggerProvider... 
+// Step 1: Configure OpenTelemetryLoggerProvider...
 var resourceBuilder = ResourceBuilder.CreateDefault().AddService("MyService");
 
 using var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options =>

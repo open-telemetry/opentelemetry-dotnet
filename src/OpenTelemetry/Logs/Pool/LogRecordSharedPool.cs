@@ -95,6 +95,11 @@ namespace OpenTelemetry.Logs
 
                 if (Interlocked.CompareExchange(ref this.returnIndex, returnSnapshot + 1, returnSnapshot) == returnSnapshot)
                 {
+                    // If many threads are hammering rent/return it is possible
+                    // for two threads to write to the same index. In that case
+                    // only one of the logRecords will make it back into the
+                    // pool. Anything lost in the race will collected by the GC
+                    // and the pool will issue new instances as needed
                     this.pool[returnSnapshot % this.Capacity] = logRecord;
                     return;
                 }
