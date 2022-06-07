@@ -29,20 +29,26 @@ using var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options 
         .AddConsoleExporter();
 });
 
+// Creates an OpenTelemetryEventSourceLogEmitter for routing EventSources with
+// names matching OpenTelemetry* into logs
 using var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEmitter(
     openTelemetryLoggerProvider,
     (name) => name.StartsWith("OpenTelemetry") ? EventLevel.LogAlways : null);
 
+// Configue Serilog global logger
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.OpenTelemetry(openTelemetryLoggerProvider)
+    .WriteTo.OpenTelemetry(openTelemetryLoggerProvider) // <- Register OpenTelemetry Serilog sink
     .CreateLogger();
 
+// Note: Serilog ForContext API is used to set "CategoryName" on log messages
 ILogger programLogger = Log.Logger.ForContext<Program>();
 
 programLogger.Information("Application started {Greeting} {Location}", "Hello", "World");
 
 programLogger.Information("Message {Array}", new string[] { "value1", "value2" });
 
+// Note: ForceFlush is only called here to demo
+// OpenTelemetryEventSourceLogEmitter converting SDK events into log messages
 openTelemetryLoggerProvider.ForceFlush();
 
 Console.WriteLine("Press ENTER to exit...");
