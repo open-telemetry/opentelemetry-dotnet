@@ -1,4 +1,3 @@
-OpenTelemetry.Logs.LogRecord.CategoryName.get -> string?
 OpenTelemetry.Logs.LogRecord.GetDataRef() -> OpenTelemetry.Logs.LogRecordData
 OpenTelemetry.Logs.LogRecordData
 OpenTelemetry.Logs.LogRecordData.CategoryName.get -> string?
