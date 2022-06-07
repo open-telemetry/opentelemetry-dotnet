@@ -26,6 +26,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\Common.props = build\Common.props
 		build\debug.snk = build\debug.snk
 		build\docfx.cmd = build\docfx.cmd
+		build\docker-compose.net6.0.yml = build\docker-compose.net6.0.yml
 		build\docker-compose.netcoreapp3.1.yml = build\docker-compose.netcoreapp3.1.yml
 		build\finalize-publicapi.ps1 = build\finalize-publicapi.ps1
 		build\opentelemetry-icon-color.png = build\opentelemetry-icon-color.png
