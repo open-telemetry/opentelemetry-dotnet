@@ -35,7 +35,7 @@ using var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEm
     openTelemetryLoggerProvider,
     (name) => name.StartsWith("OpenTelemetry") ? EventLevel.LogAlways : null);
 
-// Configue Serilog global logger
+// Configure Serilog global logger
 Log.Logger = new LoggerConfiguration()
     .WriteTo.OpenTelemetry(openTelemetryLoggerProvider) // <- Register OpenTelemetry Serilog sink
     .CreateLogger();
