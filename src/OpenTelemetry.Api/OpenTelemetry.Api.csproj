@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
     <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
@@ -7,12 +7,6 @@
 
     <NoWarn>$(NoWarn),CS0618</NoWarn>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
-  </PropertyGroup>
-
-  <!--Do not run ApiCompat for net462 as this is newly added. There is no existing contract for net462 against which we could compare the implementation.
-  Remove this property once we have released a stable net462 version.-->
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net462'">
-    <RunApiCompat>false</RunApiCompat>
   </PropertyGroup>
 
   <ItemGroup>

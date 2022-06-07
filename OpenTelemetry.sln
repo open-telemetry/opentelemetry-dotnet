@@ -26,6 +26,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\Common.props = build\Common.props
 		build\debug.snk = build\debug.snk
 		build\docfx.cmd = build\docfx.cmd
+		build\docker-compose.net6.0.yml = build\docker-compose.net6.0.yml
 		build\docker-compose.netcoreapp3.1.yml = build\docker-compose.netcoreapp3.1.yml
 		build\finalize-publicapi.ps1 = build\finalize-publicapi.ps1
 		build\opentelemetry-icon-color.png = build\opentelemetry-icon-color.png
@@ -50,10 +51,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "testdata", "testdata", "{77C7929A-2EED-4AA6-8705-B5C443C8AA0F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore.3.1", "test\TestApp.AspNetCore.3.1\TestApp.AspNetCore.3.1.csproj", "{F2F81E76-6A0E-466B-B673-EBBF1A9ED075}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.StackExchangeRedis", "src\OpenTelemetry.Instrumentation.StackExchangeRedis\OpenTelemetry.Instrumentation.StackExchangeRedis.csproj", "{6B681D72-D68A-44CC-8C75-53B9A322E6EC}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.StackExchangeRedis.Tests", "test\OpenTelemetry.Instrumentation.StackExchangeRedis.Tests\OpenTelemetry.Instrumentation.StackExchangeRedis.Tests.csproj", "{CA98AF29-0852-4ADD-A66B-7E96266EE7B7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{E359BB2B-9AEC-497D-B321-7DF2450C3B8E}"
 EndProject
@@ -102,12 +99,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\code-coverage.yml = .github\workflows\code-coverage.yml
 		.github\workflows\codeql-analysis.yml = .github\workflows\codeql-analysis.yml
 		.github\workflows\docfx.yml = .github\workflows\docfx.yml
+		.github\workflows\dotnet-format-md.yml = .github\workflows\dotnet-format-md.yml
 		.github\workflows\dotnet-format.yml = .github\workflows\dotnet-format.yml
+		.github\workflows\integration-md.yml = .github\workflows\integration-md.yml
 		.github\workflows\integration.yml = .github\workflows\integration.yml
+		.github\workflows\linux-ci-md.yml = .github\workflows\linux-ci-md.yml
 		.github\workflows\linux-ci.yml = .github\workflows\linux-ci.yml
 		.github\workflows\markdownlint.yml = .github\workflows\markdownlint.yml
 		.github\workflows\publish-packages-1.0.yml = .github\workflows\publish-packages-1.0.yml
 		.github\workflows\sanitycheck.yml = .github\workflows\sanitycheck.yml
+		.github\workflows\windows-ci-md.yml = .github\workflows\windows-ci-md.yml
 		.github\workflows\windows-ci.yml = .github\workflows\windows-ci.yml
 	EndProjectSection
 EndProject
@@ -277,14 +278,6 @@ Global
 		{F2F81E76-6A0E-466B-B673-EBBF1A9ED075}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F2F81E76-6A0E-466B-B673-EBBF1A9ED075}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F2F81E76-6A0E-466B-B673-EBBF1A9ED075}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6B681D72-D68A-44CC-8C75-53B9A322E6EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6B681D72-D68A-44CC-8C75-53B9A322E6EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6B681D72-D68A-44CC-8C75-53B9A322E6EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6B681D72-D68A-44CC-8C75-53B9A322E6EC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CA98AF29-0852-4ADD-A66B-7E96266EE7B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CA98AF29-0852-4ADD-A66B-7E96266EE7B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CA98AF29-0852-4ADD-A66B-7E96266EE7B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CA98AF29-0852-4ADD-A66B-7E96266EE7B7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8D47E3CF-9AE3-42FE-9084-FEB72D9AD769}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8D47E3CF-9AE3-42FE-9084-FEB72D9AD769}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8D47E3CF-9AE3-42FE-9084-FEB72D9AD769}.Release|Any CPU.ActiveCfg = Release|Any CPU
