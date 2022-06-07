@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -26,7 +29,7 @@ namespace OpenTelemetry.Internal
     internal class CircularBuffer<T>
         where T : class
     {
-        private readonly T[] trait;
+        private readonly T?[] trait;
         private long head;
         private long tail;
 
@@ -54,20 +57,20 @@ namespace OpenTelemetry.Internal
         {
             get
             {
-                var tailSnapshot = this.tail;
-                return (int)(this.head - tailSnapshot);
+                var tailSnapshot = Interlocked.Read(ref this.tail);
+                return (int)(Interlocked.Read(ref this.head) - tailSnapshot);
             }
         }
 
         /// <summary>
         /// Gets the number of items added to the <see cref="CircularBuffer{T}"/>.
         /// </summary>
-        public long AddedCount => this.head;
+        public long AddedCount => Interlocked.Read(ref this.head);
 
         /// <summary>
         /// Gets the number of items removed from the <see cref="CircularBuffer{T}"/>.
         /// </summary>
-        public long RemovedCount => this.tail;
+        public long RemovedCount => Interlocked.Read(ref this.tail);
 
         /// <summary>
         /// Adds the specified item to the buffer.
@@ -83,22 +86,23 @@ namespace OpenTelemetry.Internal
 
             while (true)
             {
-                var tailSnapshot = this.tail;
-                var headSnapshot = this.head;
+                var tailSnapshot = Interlocked.Read(ref this.tail);
+                var headSnapshot = Interlocked.Read(ref this.head);
 
                 if (headSnapshot - tailSnapshot >= this.Capacity)
                 {
                     return false; // buffer is full
                 }
 
-                var head = Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot);
-                if (head != headSnapshot)
+                if (Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot) != headSnapshot)
                 {
                     continue;
                 }
 
-                var index = (int)(head % this.Capacity);
-                this.trait[index] = value;
+                var previous = Interlocked.Exchange(ref this.trait[headSnapshot % this.Capacity], value);
+
+                Debug.Assert(previous == null, "Race: Another thread wrote to index.");
+
                 return true;
             }
         }
@@ -125,16 +129,15 @@ namespace OpenTelemetry.Internal
 
             while (true)
             {
-                var tailSnapshot = this.tail;
-                var headSnapshot = this.head;
+                var tailSnapshot = Interlocked.Read(ref this.tail);
+                var headSnapshot = Interlocked.Read(ref this.head);
 
                 if (headSnapshot - tailSnapshot >= this.Capacity)
                 {
                     return false; // buffer is full
                 }
 
-                var head = Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot);
-                if (head != headSnapshot)
+                if (Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot) != headSnapshot)
                 {
                     if (spinCountDown-- == 0)
                     {
@@ -144,8 +147,10 @@ namespace OpenTelemetry.Internal
                     continue;
                 }
 
-                var index = (int)(head % this.Capacity);
-                this.trait[index] = value;
+                var previous = Interlocked.Exchange(ref this.trait[headSnapshot % this.Capacity], value);
+
+                Debug.Assert(previous == null, "Race: Another thread wrote to index.");
+
                 return true;
             }
         }
@@ -161,19 +166,18 @@ namespace OpenTelemetry.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Read()
         {
-            var index = (int)(this.tail % this.Capacity);
+            var index = (int)(Interlocked.Read(ref this.tail) % this.Capacity);
             while (true)
             {
-                var value = this.trait[index];
-                if (value == null)
+                var previous = Interlocked.Exchange(ref this.trait[index], null);
+                if (previous == null)
                 {
                     // If we got here it means a writer isn't done.
                     continue;
                 }
 
-                this.trait[index] = null;
-                this.tail++;
-                return value;
+                Interlocked.Increment(ref this.tail);
+                return previous;
             }
         }
     }
