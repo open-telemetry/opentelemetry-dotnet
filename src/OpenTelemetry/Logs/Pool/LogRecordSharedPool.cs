@@ -41,14 +41,14 @@ namespace OpenTelemetry.Logs
             this.pool = new LogRecord?[capacity];
         }
 
-        internal int Count => (int)(Interlocked.Read(ref this.returnIndex) - Interlocked.Read(ref this.rentIndex));
+        internal int Count => (int)(Volatile.Read(ref this.returnIndex) - Volatile.Read(ref this.rentIndex));
 
         public LogRecord Rent()
         {
             while (true)
             {
-                var rentSnapshot = Interlocked.Read(ref this.rentIndex);
-                var returnSnapshot = Interlocked.Read(ref this.returnIndex);
+                var rentSnapshot = Volatile.Read(ref this.rentIndex);
+                var returnSnapshot = Volatile.Read(ref this.returnIndex);
 
                 if (rentSnapshot >= returnSnapshot)
                 {
@@ -85,8 +85,8 @@ namespace OpenTelemetry.Logs
 
             while (true)
             {
-                var rentSnapshot = Interlocked.Read(ref this.rentIndex);
-                var returnSnapshot = Interlocked.Read(ref this.returnIndex);
+                var rentSnapshot = Volatile.Read(ref this.rentIndex);
+                var returnSnapshot = Volatile.Read(ref this.returnIndex);
 
                 if (returnSnapshot - rentSnapshot >= this.Capacity)
                 {
