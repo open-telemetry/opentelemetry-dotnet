@@ -52,13 +52,13 @@ public class JaegerPropagator : TextMapPropagator
 
         if (carrier == null)
         {
-            OpenTelemetryApiEventSource.Log.FailedToExtractActivityContext(nameof(JaegerPropagator), "null carrier");
+            OpenTelemetryPropagatorsEventSource.Log.FailedToExtractActivityContext(nameof(JaegerPropagator), "null carrier");
             return context;
         }
 
         if (getter == null)
         {
-            OpenTelemetryApiEventSource.Log.FailedToExtractActivityContext(nameof(JaegerPropagator), "null getter");
+            OpenTelemetryPropagatorsEventSource.Log.FailedToExtractActivityContext(nameof(JaegerPropagator), "null getter");
             return context;
         }
 
@@ -85,7 +85,7 @@ public class JaegerPropagator : TextMapPropagator
         }
         catch (Exception ex)
         {
-            OpenTelemetryApiEventSource.Log.ActivityContextExtractException(nameof(JaegerPropagator), ex);
+            OpenTelemetryPropagatorsEventSource.Log.ActivityContextExtractException(nameof(JaegerPropagator), ex);
         }
 
         return context;
@@ -101,19 +101,19 @@ public class JaegerPropagator : TextMapPropagator
 
         if (context.ActivityContext.TraceId == default || context.ActivityContext.SpanId == default)
         {
-            OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(JaegerPropagator), "Invalid context");
+            OpenTelemetryPropagatorsEventSource.Log.FailedToInjectActivityContext(nameof(JaegerPropagator), "Invalid context");
             return;
         }
 
         if (carrier == null)
         {
-            OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(JaegerPropagator), "null carrier");
+            OpenTelemetryPropagatorsEventSource.Log.FailedToInjectActivityContext(nameof(JaegerPropagator), "null carrier");
             return;
         }
 
         if (setter == null)
         {
-            OpenTelemetryApiEventSource.Log.FailedToInjectActivityContext(nameof(JaegerPropagator), "null setter");
+            OpenTelemetryPropagatorsEventSource.Log.FailedToInjectActivityContext(nameof(JaegerPropagator), "null setter");
             return;
         }
 
