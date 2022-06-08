@@ -41,7 +41,7 @@ namespace OpenTelemetry.Tests.InMemoryExporter
     public class InMemoryExporterMetricsExtensionsTests
     {
         [Fact]
-        public async Task Verify_DeferredMeterProviderBuilder_WithMetric()
+        public async Task DeferredMeterProviderBuilder_WithMetric()
         {
             var meterName = Utils.GetCurrentMethodName();
             var exportedItems = new List<Metric>();
