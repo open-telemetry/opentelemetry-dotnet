@@ -28,7 +28,6 @@ namespace OpenTelemetry.Trace
     {
         internal int ShutdownCount;
 
-        private readonly List<object> instrumentations = new();
         private readonly ActivityListener listener;
         private readonly Sampler sampler;
         private readonly Action<Activity> getRequestedDataAction;
@@ -69,7 +68,7 @@ namespace OpenTelemetry.Trace
             {
                 foreach (var instrumentationFactory in instrumentationFactories)
                 {
-                    this.instrumentations.Add(instrumentationFactory.Factory());
+                    this.Instrumentations.Add(instrumentationFactory.Factory());
                 }
             }
 
@@ -255,8 +254,6 @@ namespace OpenTelemetry.Trace
 
         internal Resource Resource { get; }
 
-        internal List<object> Instrumentations => this.instrumentations;
-
         internal BaseProcessor<Activity> Processor => this.processor;
 
         internal Sampler Sampler => this.sampler;
@@ -314,14 +311,12 @@ namespace OpenTelemetry.Trace
         {
             // TO DO Put OnShutdown logic in a task to run within the user provider timeOutMilliseconds
             bool? result;
-            if (this.instrumentations != null)
+            if (this.Instrumentations != null)
             {
-                foreach (var item in this.instrumentations)
+                while (this.Instrumentations.TryTake(out var item))
                 {
                     (item as IDisposable)?.Dispose();
                 }
-
-                this.instrumentations.Clear();
             }
 
             result = this.processor?.Shutdown(timeoutMilliseconds);
@@ -335,14 +330,12 @@ namespace OpenTelemetry.Trace
             {
                 if (disposing)
                 {
-                    if (this.instrumentations != null)
+                    if (this.Instrumentations != null)
                     {
-                        foreach (var item in this.instrumentations)
+                        while (this.Instrumentations.TryTake(out var item))
                         {
                             (item as IDisposable)?.Dispose();
                         }
-
-                        this.instrumentations.Clear();
                     }
 
                     (this.sampler as IDisposable)?.Dispose();

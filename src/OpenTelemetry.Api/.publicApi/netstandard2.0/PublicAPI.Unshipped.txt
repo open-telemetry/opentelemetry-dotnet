@@ -1,0 +1,1 @@
+OpenTelemetry.Trace.TracerProvider.AddInstrumentation(object instrumentation) -> OpenTelemetry.Trace.TracerProvider

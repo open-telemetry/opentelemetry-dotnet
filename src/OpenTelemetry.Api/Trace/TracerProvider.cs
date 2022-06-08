@@ -14,7 +14,10 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
@@ -23,6 +26,8 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public class TracerProvider : BaseProvider
     {
+        private readonly ConcurrentBag<object> instrumentations = new();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="TracerProvider"/> class.
         /// </summary>
@@ -34,6 +39,11 @@ namespace OpenTelemetry.Trace
         /// Gets the default Tracer.
         /// </summary>
         public static TracerProvider Default { get; } = new TracerProvider();
+
+        /// <summary>
+        /// Gets the registered instrumentation instances.
+        /// </summary>
+        internal ConcurrentBag<object> Instrumentations => this.instrumentations;
 
         /// <summary>
         /// Gets a tracer with given name and version.
@@ -49,6 +59,20 @@ namespace OpenTelemetry.Trace
             }
 
             return new Tracer(new ActivitySource(name, version));
+        }
+
+        /// <summary>
+        /// Tracks the instrumentation instance and disposes if is <see cref="IDisposable">IDisposable</see>.
+        /// </summary>
+        /// <param name="instrumentation">Instrumentation instance.</param>
+        /// <returns>TracerProvider instance.</returns>
+        public TracerProvider AddInstrumentation(object instrumentation)
+        {
+            Guard.ThrowIfNull(instrumentation);
+
+            this.instrumentations.Add(instrumentation);
+
+            return this;
         }
     }
 }
