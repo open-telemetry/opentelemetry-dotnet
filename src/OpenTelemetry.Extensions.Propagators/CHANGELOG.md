@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Added JaegerPropagator ([1881](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1881))
+
 ## 1.3.0
 
 Released 2022-Jun-03
@@ -15,5 +17,3 @@ Released 2022-June-1
 
 * Initial release. This has been ported as is from
 [OpenTelemetry.Api](../OpenTelemetry.Api/README.md) package.
-
-* Added JaegerPropagator ([1881](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1881))
