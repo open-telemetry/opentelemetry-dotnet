@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-* Added JaegerPropagator ([1881](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1881))
+* Add `JaegerPropagator`.
+  ([1881](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1881))
 
 ## 1.3.0
 
