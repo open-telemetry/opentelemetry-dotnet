@@ -14,14 +14,6 @@ on:
     - '**.md'
 
 jobs:
-  redis-test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        version: [netcoreapp3.1,net6.0]
-    steps:
-      - run: 'echo "No build required"'
-
   sql-test:
     runs-on: ubuntu-latest
     strategy:
