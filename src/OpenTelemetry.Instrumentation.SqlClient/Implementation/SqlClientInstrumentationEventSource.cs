@@ -85,10 +85,10 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
             }
         }
 
-        [Event(5, Message = "Filter threw exception. Exception {0}.", Level = EventLevel.Error)]
+        [Event(6, Message = "Filter threw exception. Exception {0}.", Level = EventLevel.Error)]
         public void FilterException(string exception)
         {
-            this.WriteEvent(5, exception);
+            this.WriteEvent(6, exception);
         }
     }
 }
