@@ -167,6 +167,42 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                 skipMetrics: true);
         }
 
+        [Fact]
+        public Task PrometheusExporterMiddlewareIntegration_MapEndpoint()
+        {
+            return RunPrometheusExporterMiddlewareIntegrationTest(
+                "/metrics",
+                app => app.UseRouting().UseEndpoints(builder => builder.MapPrometheusScrapingEndpoint()),
+                services => services.AddRouting());
+        }
+
+        [Fact]
+        public Task PrometheusExporterMiddlewareIntegration_MapEndpoint_WithPathOverride()
+        {
+            return RunPrometheusExporterMiddlewareIntegrationTest(
+                "/metrics_path",
+                app => app.UseRouting().UseEndpoints(builder => builder.MapPrometheusScrapingEndpoint("metrics_path")),
+                services => services.AddRouting());
+        }
+
+        [Fact]
+        public async Task PrometheusExporterMiddlewareIntegration_MapEndpoint_WithMeterProvider()
+        {
+            using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(MeterName)
+                .AddPrometheusExporter()
+                .Build();
+
+            await RunPrometheusExporterMiddlewareIntegrationTest(
+                "/metrics",
+                app => app.UseRouting().UseEndpoints(builder => builder.MapPrometheusScrapingEndpoint(
+                    path: null,
+                    meterProvider: meterProvider,
+                    configureBranchedPipeline: null)),
+                services => services.AddRouting(),
+                registerMeterProvider: false).ConfigureAwait(false);
+        }
+
         private static async Task RunPrometheusExporterMiddlewareIntegrationTest(
             string path,
             Action<IApplicationBuilder> configure,
