@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* `TracerProviderSDK` modified for spans with remote parent. For such spans
+  activity will be created irrespective of SamplingResult, to maintain context
+  propagation.
+  ([#3329](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3329))
+
 * Fix issue where a measurement would be dropped when recording it with a
   null-valued tag.
   ([#3325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3325))
@@ -17,7 +22,7 @@ Released 2022-June-1
 * Fix null reference exception when a metric view does not match an instrument.
   ([#3285](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3285))
 * Swallow `ObjectDisposedException` in `BatchExportProcessor` and
-* `PeriodicExportingMetricReader`.
+  `PeriodicExportingMetricReader`.
   ([#3291](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3291))
 
 ## 1.3.0-beta.2
