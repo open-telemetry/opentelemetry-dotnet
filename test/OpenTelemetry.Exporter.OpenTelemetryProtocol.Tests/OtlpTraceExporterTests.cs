@@ -163,6 +163,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             processor.Shutdown();
 
+            Assert.Equal(10, exportedItems.Count);
             var batch = new Batch<Activity>(exportedItems.ToArray(), exportedItems.Count);
             RunTest(batch);
 
