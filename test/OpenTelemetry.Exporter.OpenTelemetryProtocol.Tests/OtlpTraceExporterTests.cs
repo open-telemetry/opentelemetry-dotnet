@@ -184,7 +184,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     Assert.Contains(otlpResource.Attributes, (kvp) => kvp.Key == ResourceSemanticConventions.AttributeServiceName && kvp.Value.ToString().Contains("unknown_service:"));
                 }
 
-                foreach (var scope in request.ResourceSpans.First().ScopeSpans)
+                var scopeSpans = request.ResourceSpans.First().ScopeSpans;
+                Assert.Equal(2, scopeSpans.Count);
+                foreach (var scope in scopeSpans)
                 {
                     Assert.Equal(numOfSpans / 2, scope.Spans.Count);
                     Assert.NotNull(scope.Scope);
