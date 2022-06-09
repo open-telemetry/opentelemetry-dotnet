@@ -16,7 +16,9 @@
 
 #nullable enable
 
+#if DEBUG
 using System.Diagnostics;
+#endif
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -26,7 +28,7 @@ namespace OpenTelemetry.Internal
     /// Lock-free implementation of single-reader multi-writer circular buffer.
     /// </summary>
     /// <typeparam name="T">The type of the underlying value.</typeparam>
-    internal class CircularBuffer<T>
+    internal sealed class CircularBuffer<T>
         where T : class
     {
         private readonly T?[] trait;
@@ -99,9 +101,13 @@ namespace OpenTelemetry.Internal
                     continue;
                 }
 
+#if DEBUG
                 var previous = Interlocked.Exchange(ref this.trait[headSnapshot % this.Capacity], value);
 
                 Debug.Assert(previous == null, "Race: Another thread wrote to index.");
+#else
+                Volatile.Write(ref this.trait[headSnapshot % this.Capacity], value);
+#endif
 
                 return true;
             }
@@ -147,10 +153,13 @@ namespace OpenTelemetry.Internal
                     continue;
                 }
 
+#if DEBUG
                 var previous = Interlocked.Exchange(ref this.trait[headSnapshot % this.Capacity], value);
 
                 Debug.Assert(previous == null, "Race: Another thread wrote to index.");
-
+#else
+                Volatile.Write(ref this.trait[headSnapshot % this.Capacity], value);
+#endif
                 return true;
             }
         }
@@ -166,7 +175,8 @@ namespace OpenTelemetry.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Read()
         {
-            var index = (int)(Volatile.Read(ref this.tail) % this.Capacity);
+            var tail = Volatile.Read(ref this.tail);
+            var index = (int)(tail % this.Capacity);
             while (true)
             {
                 var previous = Interlocked.Exchange(ref this.trait[index], null);
@@ -176,7 +186,7 @@ namespace OpenTelemetry.Internal
                     continue;
                 }
 
-                Interlocked.Increment(ref this.tail);
+                Volatile.Write(ref this.tail, tail + 1);
                 return previous;
             }
         }
