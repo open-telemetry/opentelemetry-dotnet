@@ -103,7 +103,7 @@ namespace OpenTelemetry.Metrics
 
             Debug.Assert(current != null, "Bucket root was null.");
 
-            while (current != null)
+            do
             {
                 if (value <= current.LowerBoundExclusive)
                 {
@@ -118,6 +118,7 @@ namespace OpenTelemetry.Metrics
                     return current.Index;
                 }
             }
+            while (current != null);
 
             return this.ExplicitBounds.Length;
         }
