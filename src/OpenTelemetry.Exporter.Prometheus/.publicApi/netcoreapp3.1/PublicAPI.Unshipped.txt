@@ -1,4 +1,5 @@
 Microsoft.AspNetCore.Builder.PrometheusExporterApplicationBuilderExtensions
+Microsoft.AspNetCore.Builder.PrometheusExporterEndpointRouteBuilderExtensions
 OpenTelemetry.Exporter.PrometheusExporter
 OpenTelemetry.Exporter.PrometheusExporter.Collect.get -> System.Func<int, bool>
 OpenTelemetry.Exporter.PrometheusExporter.Collect.set -> void
@@ -21,3 +22,6 @@ static Microsoft.AspNetCore.Builder.PrometheusExporterApplicationBuilderExtensio
 static Microsoft.AspNetCore.Builder.PrometheusExporterApplicationBuilderExtensions.UseOpenTelemetryPrometheusScrapingEndpoint(this Microsoft.AspNetCore.Builder.IApplicationBuilder app, string path) -> Microsoft.AspNetCore.Builder.IApplicationBuilder
 static Microsoft.AspNetCore.Builder.PrometheusExporterApplicationBuilderExtensions.UseOpenTelemetryPrometheusScrapingEndpoint(this Microsoft.AspNetCore.Builder.IApplicationBuilder app, System.Func<Microsoft.AspNetCore.Http.HttpContext, bool> predicate) -> Microsoft.AspNetCore.Builder.IApplicationBuilder
 static OpenTelemetry.Metrics.PrometheusExporterMeterProviderBuilderExtensions.AddPrometheusExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Action<OpenTelemetry.Exporter.PrometheusExporterOptions> configure = null) -> OpenTelemetry.Metrics.MeterProviderBuilder
+static Microsoft.AspNetCore.Builder.PrometheusExporterEndpointRouteBuilderExtensions.MapPrometheusScrapingEndpoint(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints) -> Microsoft.AspNetCore.Builder.IEndpointConventionBuilder
+static Microsoft.AspNetCore.Builder.PrometheusExporterEndpointRouteBuilderExtensions.MapPrometheusScrapingEndpoint(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string path) -> Microsoft.AspNetCore.Builder.IEndpointConventionBuilder
+static Microsoft.AspNetCore.Builder.PrometheusExporterEndpointRouteBuilderExtensions.MapPrometheusScrapingEndpoint(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string path = null, OpenTelemetry.Metrics.MeterProvider meterProvider = null, System.Action<Microsoft.AspNetCore.Builder.IApplicationBuilder> configureBranchedPipeline = null) -> Microsoft.AspNetCore.Builder.IEndpointConventionBuilder
