@@ -140,15 +140,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 resourceBuilder.AddService("service-name", "ns1");
             }
 
+            var exportedItems = new List<Activity>();
             var builder = Sdk.CreateTracerProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddSource(sources[0].Name)
-                .AddSource(sources[1].Name);
+                .AddSource(sources[1].Name)
+                .AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems)));
 
             using var openTelemetrySdk = builder.Build();
 
-            var exportedItems = new List<Activity>();
-            var processor = new BatchActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems));
             const int numOfSpans = 10;
             bool isEven;
             for (var i = 0; i < numOfSpans; i++)
@@ -160,8 +160,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
                 using Activity activity = source.StartActivity($"span-{i}", activityKind, parentContext: default, activityTags);
             }
-
-            processor.Shutdown();
 
             Assert.Equal(10, exportedItems.Count);
             var batch = new Batch<Activity>(exportedItems.ToArray(), exportedItems.Count);
