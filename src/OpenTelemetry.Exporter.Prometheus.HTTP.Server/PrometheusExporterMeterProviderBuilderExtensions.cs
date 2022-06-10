@@ -23,17 +23,23 @@ namespace OpenTelemetry.Metrics
 {
     public static class PrometheusExporterMeterProviderBuilderExtensions
     {
+        /// <summary>
+        /// Adds <see cref="PrometheusExporterHttpServer"/> to the <see cref="MeterProviderBuilder"/>.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
+        /// <param name="configure">Exporter configuration options.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddMyPrometheusExporter(this MeterProviderBuilder builder, Action<PrometheusExporterHttpServerOptions> configure = null)
         {
             Guard.ThrowIfNull(builder);
 
-            //if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
-            //{
-            //    return deferredMeterProviderBuilder.Configure((sp, builder) =>
-            //    {
-            //        AddMyPrometheusExporter(builder, sp.GetOptions<PrometheusExporterHttpServerOptions>(), configure);
-            //    });
-            //}
+            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            {
+                return deferredMeterProviderBuilder.Configure((sp, builder) =>
+                {
+                    AddMyPrometheusExporter(builder, sp.GetOptions<PrometheusExporterHttpServerOptions>(), configure);
+                });
+            }
 
             return AddMyPrometheusExporter(builder, new PrometheusExporterHttpServerOptions(), configure);
         }
