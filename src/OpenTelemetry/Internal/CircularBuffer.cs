@@ -16,9 +16,6 @@
 
 #nullable enable
 
-#if DEBUG
-using System.Diagnostics;
-#endif
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -101,13 +98,7 @@ namespace OpenTelemetry.Internal
                     continue;
                 }
 
-#if DEBUG
-                var previous = Interlocked.Exchange(ref this.trait[headSnapshot % this.Capacity], value);
-
-                Debug.Assert(previous == null, "Race: Another thread wrote to index.");
-#else
                 Volatile.Write(ref this.trait[headSnapshot % this.Capacity], value);
-#endif
 
                 return true;
             }
@@ -153,13 +144,8 @@ namespace OpenTelemetry.Internal
                     continue;
                 }
 
-#if DEBUG
-                var previous = Interlocked.Exchange(ref this.trait[headSnapshot % this.Capacity], value);
-
-                Debug.Assert(previous == null, "Race: Another thread wrote to index.");
-#else
                 Volatile.Write(ref this.trait[headSnapshot % this.Capacity], value);
-#endif
+
                 return true;
             }
         }
