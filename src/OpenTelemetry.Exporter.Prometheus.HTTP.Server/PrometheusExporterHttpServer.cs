@@ -69,6 +69,14 @@ namespace OpenTelemetry.Exporter.Prometheus.HTTP.Server
             set => this.funcCollect = value;
         }
 
+        public Func<Batch<Metric>, ExportResult> OnExport
+        {
+            get => this.funcExport;
+            set => this.funcExport = value;
+        }
+
+        internal PrometheusCollectionManager CollectionManager { get; }
+
         /// <summary>
         /// Start Http Server.
         /// </summary>
@@ -110,14 +118,6 @@ namespace OpenTelemetry.Exporter.Prometheus.HTTP.Server
         {
             return this.OnExport(metrics);
         }
-
-        internal Func<Batch<Metric>, ExportResult> OnExport
-        {
-            get => this.funcExport;
-            set => this.funcExport = value;
-        }
-
-        internal PrometheusCollectionManager CollectionManager { get; }
 
         protected override void Dispose(bool disposing)
         {

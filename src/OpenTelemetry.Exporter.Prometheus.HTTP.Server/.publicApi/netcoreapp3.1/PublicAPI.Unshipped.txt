@@ -1,0 +1,7 @@
+OpenTelemetry.Exporter.Prometheus.HTTP.Server.PrometheusExporterHttpServer
+OpenTelemetry.Exporter.Prometheus.HTTP.Server.PrometheusExporterHttpServer.OnExport.get -> System.Func<OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric>, OpenTelemetry.ExportResult>
+OpenTelemetry.Exporter.Prometheus.HTTP.Server.PrometheusExporterHttpServer.OnExport.set -> void
+OpenTelemetry.Exporter.Prometheus.HTTP.Server.PrometheusExporterHttpServer.PrometheusExporterHttpServer(OpenTelemetry.Exporter.PrometheusExporterHttpServerOptions options) -> void
+OpenTelemetry.Exporter.Prometheus.HTTP.Server.PrometheusExporterHttpServer.Start(System.Threading.CancellationToken token = default(System.Threading.CancellationToken)) -> void
+OpenTelemetry.Exporter.Prometheus.HTTP.Server.PrometheusExporterHttpServer.Stop() -> void
+override OpenTelemetry.Exporter.Prometheus.HTTP.Server.PrometheusExporterHttpServer.Export(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric> metrics) -> OpenTelemetry.ExportResult
