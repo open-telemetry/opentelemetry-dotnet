@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using OpenTelemetry.Exporter.Prometheus.HTTP.Server;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter
