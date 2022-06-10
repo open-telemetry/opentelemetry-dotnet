@@ -25,6 +25,7 @@ namespace OpenTelemetry.Exporter
     /// </summary>
     public class PrometheusExporterHttpServerOptions
     {
+        internal const string DefaultScrapeEndpointPath = "/metrics";
         private IReadOnlyCollection<string> httpListenerPrefixes = new string[] { "http://localhost:9464/" };
 
 #if NETCOREAPP3_1_OR_GREATER
@@ -66,5 +67,10 @@ namespace OpenTelemetry.Exporter
                 this.httpListenerPrefixes = value;
             }
         }
+
+        /// <summary>
+        /// Gets or sets the path to use for the scraping endpoint. Default value: /metrics.
+        /// </summary>
+        public string ScrapeEndpointPath { get; set; } = DefaultScrapeEndpointPath;
     }
 }

@@ -236,7 +236,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Pr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "correlation", "docs\logs\correlation\correlation.csproj", "{9A07D215-90AC-4BAF-BCDB-73D74FD3A5C5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.Prometheus.HTTP.Server", "src\OpenTelemetry.Exporter.Prometheus.HTTP.Server\OpenTelemetry.Exporter.Prometheus.HTTP.Server.csproj", "{D6F23649-C3F8-4477-8854-0B37C6FE28E9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus.HTTP.Server", "src\OpenTelemetry.Exporter.Prometheus.HTTP.Server\OpenTelemetry.Exporter.Prometheus.HTTP.Server.csproj", "{D6F23649-C3F8-4477-8854-0B37C6FE28E9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.Prometheus.Shared", "src\OpenTelemetry.Exporter.Prometheus.Shared\OpenTelemetry.Exporter.Prometheus.Shared.csproj", "{0F6DDABA-85F9-4BE6-857A-4F612B146173}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -492,6 +494,10 @@ Global
 		{D6F23649-C3F8-4477-8854-0B37C6FE28E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D6F23649-C3F8-4477-8854-0B37C6FE28E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D6F23649-C3F8-4477-8854-0B37C6FE28E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0F6DDABA-85F9-4BE6-857A-4F612B146173}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F6DDABA-85F9-4BE6-857A-4F612B146173}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F6DDABA-85F9-4BE6-857A-4F612B146173}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F6DDABA-85F9-4BE6-857A-4F612B146173}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
