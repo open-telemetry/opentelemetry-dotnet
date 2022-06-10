@@ -12,4 +12,5 @@ OpenTelemetry.Exporter.PrometheusExporterHttpServerOptions.ScrapeEndpointPath.ge
 OpenTelemetry.Exporter.PrometheusExporterHttpServerOptions.ScrapeEndpointPath.set -> void
 OpenTelemetry.Exporter.PrometheusExporterHttpServerOptions.StartHttpListener.get -> bool
 OpenTelemetry.Exporter.PrometheusExporterHttpServerOptions.StartHttpListener.set -> void
+OpenTelemetry.Metrics.PrometheusExporterMeterProviderBuilderExtensions
 override OpenTelemetry.Exporter.Prometheus.HTTP.Server.PrometheusExporterHttpServer.Export(in OpenTelemetry.Batch<OpenTelemetry.Metrics.Metric> metrics) -> OpenTelemetry.ExportResult
