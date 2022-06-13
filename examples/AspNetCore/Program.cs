@@ -45,7 +45,7 @@ Action<ResourceBuilder> configureResources = r => r.AddService(
 builder.Services.AddOpenTelemetryTracing(options =>
 {
     options
-        .ConfigureResources(configureResources)
+        .ConfigureResource(configureResources)
         .SetSampler(new AlwaysOnSampler())
         .AddHttpClientInstrumentation()
         .AddAspNetCoreInstrumentation();
@@ -89,7 +89,7 @@ builder.Logging.ClearProviders();
 
 builder.Logging.AddOpenTelemetry(options =>
 {
-    options.ConfigureResources(configureResources);
+    options.ConfigureResource(configureResources);
     var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
     switch (logExporter)
     {
@@ -115,7 +115,7 @@ builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
 // Metrics
 builder.Services.AddOpenTelemetryMetrics(options =>
 {
-    options.ConfigureResources(configureResources)
+    options.ConfigureResource(configureResources)
         .AddHttpClientInstrumentation()
         .AddAspNetCoreInstrumentation();
 

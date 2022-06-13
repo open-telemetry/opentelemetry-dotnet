@@ -51,7 +51,7 @@ namespace Examples.Console
             // and use InMemory exporter.
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
-                    .ConfigureResources(r => r.AddService("inmemory-test"))
+                    .ConfigureResource(r => r.AddService("inmemory-test"))
                     .AddInMemoryExporter(exportedItems)
                     .Build();
 

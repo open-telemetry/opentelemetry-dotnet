@@ -34,7 +34,7 @@ namespace Examples.Console
 
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation()
-                .ConfigureResources(r => r.AddService("http-service-example"))
+                .ConfigureResource(r => r.AddService("http-service-example"))
                 .AddSource("http-client-test")
                 .AddConsoleExporter()
                 .Build();

@@ -255,7 +255,7 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .ConfigureResources(r => r.AddService("MyServiceName"))
+    .ConfigureResource(r => r.AddService("MyServiceName"))
     .Build();
 ```
 
