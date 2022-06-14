@@ -9,7 +9,7 @@ WORKDIR /w3c
 RUN apt-get update && apt-get install -y git
 RUN git clone https://github.com/w3c/trace-context.git
 
-FROM mcr.microsoft.com/dotnet/sdk:7.0-focal AS build
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 ARG PUBLISH_CONFIGURATION=Release
 ARG PUBLISH_FRAMEWORK=net7.0
 WORKDIR /repo
