@@ -444,10 +444,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
                 var activity = eventRecords.Records.Last().Value;
                 Assert.Equal(ActivityKind.Client, activity.Kind);
-                Assert.NotEqual(default, activity.Context.SpanId);
                 Assert.NotEqual(traceId, activity.TraceId.ToString());
-                Assert.NotEqual(parentSpanId, activity.SpanId.ToString());
-                Assert.NotEqual(parentSpanId, activity.ParentSpanId.ToString());
+                Assert.NotEqual(default, activity.SpanId.ToString());
+                Assert.Equal(default, activity.ParentSpanId);
             }
             finally
             {
