@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.3.0
+
+Released 2022-Jun-03
+
+## 1.3.0-rc.2
+
+Released 2022-June-1
+
 * Improve the conversion and formatting of attribute values.
   The list of data types that must be supported per the
   [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/common#attribute)

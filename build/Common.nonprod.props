@@ -47,7 +47,6 @@
     <NewtonsoftJsonPkgVer>[12.0.2,13.0)</NewtonsoftJsonPkgVer>
     <MoqPkgVer>[4.14.5,5.0)</MoqPkgVer>
     <RabbitMQClientPkgVer>[6.1.0,7.0)</RabbitMQClientPkgVer>
-    <StackExchangeRedisPkgVer>[2.1.58,3.0)</StackExchangeRedisPkgVer>
     <SwashbuckleAspNetCorePkgVer>[6.2.3]</SwashbuckleAspNetCorePkgVer>
     <XUnitRunnerVisualStudioPkgVer>[2.4.3,3.0)</XUnitRunnerVisualStudioPkgVer>
     <XUnitPkgVer>[2.4.1,3.0)</XUnitPkgVer>

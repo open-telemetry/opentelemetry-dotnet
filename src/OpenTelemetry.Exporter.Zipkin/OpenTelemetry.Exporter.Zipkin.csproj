@@ -7,12 +7,6 @@
     <MinVerTagPrefix>core-</MinVerTagPrefix>
   </PropertyGroup>
 
-  <!--Do not run ApiCompat for net462/net6.0 as this is newly added. There is no existing contract for net462 against which we could compare the implementation.
-  Remove this property once we have released a stable net462/net6.0 version.-->
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net6.0'">
-    <RunApiCompat>false</RunApiCompat>
-  </PropertyGroup>
-
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\SemanticConventions.cs" Link="Includes\SemanticConventions.cs" />

@@ -83,8 +83,8 @@ may be used as a reference.
 
 The [inspiration of the OpenTelemetry
 project](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/overview.md#instrumentation-libraries)
-is to make every library observable out of the box by having
-them call OpenTelemetry API directly. However, many libraries will not have such
+is to make every library observable out of the box by having them call
+OpenTelemetry API directly. However, many libraries will not have such
 integration, and as such there is a need for a separate library which would
 inject such calls, using mechanisms such as wrapping interfaces, subscribing to
 library-specific callbacks, or translating existing telemetry into OpenTelemetry
@@ -103,11 +103,11 @@ the following instrumentation libraries. The individual docs for them describes
 the library they instrument, and steps for enabling them.
 
 * [ASP.NET](../../../src/OpenTelemetry.Instrumentation.AspNet/README.md)
-* [ASP.NET Core](../../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
-* [gRPC client](../../../src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
+* [ASP.NET
+  Core](../../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
+* [gRPC
+  client](../../../src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
 * [HTTP clients](../../../src/OpenTelemetry.Instrumentation.Http/README.md)
-* [Redis
-  client](../../../src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
 * [SQL client](../../../src/OpenTelemetry.Instrumentation.SqlClient/README.md)
 
 More community contributed instrumentations are available in [OpenTelemetry .NET
@@ -135,13 +135,9 @@ modify to emit activities directly.*
 Writing an instrumentation library typically involves 3 steps.
 
 1. First step involves "hijacking" into the target library. The exact mechanism
-   of this depends on the target library itself. For example, StackExchangeRedis
-   library allows hooks into the library, and the [StackExchangeRedis
-   instrumentation
-   library](../../../src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
-   in this case, leverages them. Another example is System.Data.SqlClient for
-   .NET Framework, which publishes events using `EventSource`. The [SqlClient
-   instrumentation
+   of this depends on the target library itself. For example,
+   System.Data.SqlClient for .NET Framework, which publishes events using
+   `EventSource`. The [SqlClient instrumentation
    library](../../../src/OpenTelemetry.Instrumentation.SqlClient/Implementation/SqlEventSourceListener.netfx.cs),
    in this case subscribes to the `EventSource` callbacks.
 
@@ -151,20 +147,19 @@ Writing an instrumentation library typically involves 3 steps.
    target instrumented library. Irrespective of the actual mechanism used in
    first step, this should be uniform across all instrumentation libraries. The
    `ActivitySource` must be created using the name and version of the
-   instrumentation library (eg:
-   "OpenTelemetry.Instrumentation.StackExchangeRedis") and *not* the
-   instrumented library (eg: "StackExchange.Redis")
-      1. [Context Propagation](../../../src/OpenTelemetry.Api/README.md#context-propagation):
-      If your library initiates out of process requests or
-      accepts them, the library needs to
-      [inject the `PropagationContext`](../../../examples/MicroserviceExample/Utils/Messaging/MessageSender.cs)
-      to outgoing requests and
-      [extract the context](../../../examples/MicroserviceExample/Utils/Messaging/MessageReceiver.cs)
-      and hydrate the Activity/Baggage upon receiving incoming requests.
-      This is only required if you're using your own protocol to
-      communicate over the wire.
-      (i.e. If you're using an already instrumented HttpClient or GrpcClient,
-      this is already provided to you and **do not require**
+   instrumentation library (eg: "OpenTelemetry.Instrumentation.Http") and *not*
+   the instrumented library (eg: "System.Net.Http")
+      1. [Context
+      Propagation](../../../src/OpenTelemetry.Api/README.md#context-propagation):
+      If your library initiates out of process requests or accepts them, the
+      library needs to [inject the
+      `PropagationContext`](../../../examples/MicroserviceExample/Utils/Messaging/MessageSender.cs)
+      to outgoing requests and [extract the
+      context](../../../examples/MicroserviceExample/Utils/Messaging/MessageReceiver.cs)
+      and hydrate the Activity/Baggage upon receiving incoming requests. This is
+      only required if you're using your own protocol to communicate over the
+      wire. (i.e. If you're using an already instrumented HttpClient or
+      GrpcClient, this is already provided to you and **do not require**
       injecting/extracting `PropagationContext` explicitly again.)
 
 3. Third step is an optional step, and involves providing extension methods on
@@ -179,8 +174,8 @@ Writing an instrumentation library typically involves 3 steps.
        extension method on `TracerProviderBuilder`. Inside this extension
        method, it should call the `AddInstrumentation` method, and `AddSource`
        method to enable its ActivitySource for the provider. An example
-       instrumentation using this approach is [StackExchangeRedis
-       instrumentation](../../../src/OpenTelemetry.Instrumentation.StackExchangeRedis/TracerProviderBuilderExtensions.cs)
+       instrumentation using this approach is [SqlClient
+       instrumentation](../../../src/OpenTelemetry.Instrumentation.SqlClient/TracerProviderBuilderExtensions.cs)
 
     2. If the instrumentation library does not requires any state management
        tied to that of `TracerProvider`, then providing `TracerProviderBuilder`
@@ -326,16 +321,16 @@ A demo sampler is shown [here](./MySampler.cs).
 
 ## Resource Detector
 
-OpenTelemetry .NET SDK provides a resource detector for detecting
-resource information from the `OTEL_RESOURCE_ATTRIBUTES` and
-`OTEL_SERVICE_NAME` environment variables.
+OpenTelemetry .NET SDK provides a resource detector for detecting resource
+information from the `OTEL_RESOURCE_ATTRIBUTES` and `OTEL_SERVICE_NAME`
+environment variables.
 
 Custom resource detectors can be implemented:
 
 * ResourceDetectors should inherit from
-  `OpenTelemetry.Resources.IResourceDetector`, (which belongs
-  to the [OpenTelemetry](../../../src/OpenTelemetry/README.md)
-  package), and implement the `Detect` method.
+  `OpenTelemetry.Resources.IResourceDetector`, (which belongs to the
+  [OpenTelemetry](../../../src/OpenTelemetry/README.md) package), and implement
+  the `Detect` method.
 
 A demo ResourceDetector is shown [here](./MyResourceDetector.cs).
 
