@@ -42,7 +42,11 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"{"LogRecord.TraceFlags:",-RightPaddingLength}{logRecord.TraceFlags}");
                 }
 
-                this.WriteLine($"{"LogRecord.CategoryName:",-RightPaddingLength}{logRecord.CategoryName}");
+                if (logRecord.CategoryName != null)
+                {
+                    this.WriteLine($"{"LogRecord.CategoryName:",-RightPaddingLength}{logRecord.CategoryName}");
+                }
+
                 this.WriteLine($"{"LogRecord.LogLevel:",-RightPaddingLength}{logRecord.LogLevel}");
 
                 if (logRecord.FormattedMessage != null)
@@ -76,13 +80,13 @@ namespace OpenTelemetry.Exporter
                 if (logRecord.EventId != default)
                 {
                     this.WriteLine($"{"LogRecord.EventId:",-RightPaddingLength}{logRecord.EventId.Id}");
-                    if (string.IsNullOrEmpty(logRecord.EventId.Name))
+                    if (!string.IsNullOrEmpty(logRecord.EventId.Name))
                     {
                         this.WriteLine($"{"LogRecord.EventName:",-RightPaddingLength}{logRecord.EventId.Name}");
                     }
                 }
 
-                if (logRecord.Exception is { })
+                if (logRecord.Exception != null)
                 {
                     this.WriteLine($"{"LogRecord.Exception:",-RightPaddingLength}{logRecord.Exception?.Message}");
                 }
