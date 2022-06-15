@@ -18,15 +18,14 @@ using System;
 using System.Diagnostics;
 using OpenTelemetry;
 
-internal class MyFilteringProcessor : BaseProcessor<Activity>
+internal class MyFilteringProcessor : CompositeProcessor<Activity>
 {
     private readonly Func<Activity, bool> filter;
-    private readonly BaseProcessor<Activity> processor;
 
     public MyFilteringProcessor(BaseProcessor<Activity> processor, Func<Activity, bool> filter)
+        : base(new[] { processor })
     {
         this.filter = filter ?? throw new ArgumentNullException(nameof(filter));
-        this.processor = processor ?? throw new ArgumentNullException(nameof(processor));
     }
 
     public override void OnEnd(Activity activity)
@@ -35,7 +34,7 @@ internal class MyFilteringProcessor : BaseProcessor<Activity>
         // only if the Filter returns true.
         if (this.filter(activity))
         {
-            this.processor.OnEnd(activity);
+            base.OnEnd(activity);
         }
     }
 }
