@@ -101,7 +101,7 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
-        public void CompositeActivityProcessor_ForwardsParentProviderl()
+        public void CompositeActivityProcessor_ForwardsParentProvider()
         {
             using TracerProvider provider = new TestProvider();
 
@@ -110,11 +110,13 @@ namespace OpenTelemetry.Trace.Tests
 
             using var processor = new CompositeProcessor<Activity>(new[] { p1, p2 });
 
+            Assert.Null(processor.ParentProvider);
             Assert.Null(p1.ParentProvider);
             Assert.Null(p2.ParentProvider);
 
             processor.SetParentProvider(provider);
 
+            Assert.Equal(provider, processor.ParentProvider);
             Assert.Equal(provider, p1.ParentProvider);
             Assert.Equal(provider, p2.ParentProvider);
         }
