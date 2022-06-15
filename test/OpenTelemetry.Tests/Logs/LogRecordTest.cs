@@ -746,15 +746,14 @@ namespace OpenTelemetry.Logs.Tests
 
         private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions> configure = null)
         {
-            exportedItems = new List<LogRecord>();
-            var exporter = new InMemoryExporter<LogRecord>(exportedItems);
-            var processor = new TestLogRecordProcessor(exporter);
+            var items = exportedItems = new List<LogRecord>();
+
             return LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
                 {
                     configure?.Invoke(options);
-                    options.AddProcessor(processor);
+                    options.AddInMemoryExporter(items);
                 });
                 builder.AddFilter(typeof(LogRecordTest).FullName, LogLevel.Trace);
             });
@@ -840,21 +839,6 @@ namespace OpenTelemetry.Logs.Tests
         private class CustomState
         {
             public string Property { get; set; }
-        }
-
-        private class TestLogRecordProcessor : SimpleExportProcessor<LogRecord>
-        {
-            public TestLogRecordProcessor(BaseExporter<LogRecord> exporter)
-                : base(exporter)
-            {
-            }
-
-            public override void OnEnd(LogRecord data)
-            {
-                data.BufferLogScopes();
-
-                base.OnEnd(data);
-            }
         }
     }
 }
