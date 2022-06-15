@@ -67,14 +67,13 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void ForceFlushTest()
         {
-            OpenTelemetryLoggerProvider provider = new();
+            using OpenTelemetryLoggerProvider provider = new();
+
             Assert.True(provider.ForceFlush());
-            provider.Dispose();
 
             List<LogRecord> exportedItems = new();
 
-            provider = new(options => options
-                .AddProcessor(new BatchLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems))));
+            provider.AddProcessor(new BatchLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems)));
 
             var logger = provider.CreateLogger("TestLogger");
 
@@ -85,8 +84,6 @@ namespace OpenTelemetry.Logs.Tests
             Assert.True(provider.ForceFlush());
 
             Assert.Single(exportedItems);
-
-            provider.Dispose();
         }
     }
 }
