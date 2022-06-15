@@ -128,11 +128,13 @@ namespace OpenTelemetry.Logs
             }
             else
             {
-                this.Processor = new CompositeProcessor<LogRecord>(new[]
+                var newCompositeProcessor = new CompositeProcessor<LogRecord>(new[]
                 {
                     this.Processor,
-                    processor,
                 });
+                newCompositeProcessor.SetParentProvider(this);
+                newCompositeProcessor.AddProcessor(processor);
+                this.Processor = newCompositeProcessor;
             }
 
             return this;

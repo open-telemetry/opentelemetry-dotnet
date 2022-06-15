@@ -700,9 +700,11 @@ namespace OpenTelemetry.Trace.Tests
 
             // AddLegacyOperationName chained to TracerProviderBuilder
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .AddProcessor(testActivityProcessor)
-                        .AddLegacySource(operationNameForLegacyActivity)
-                        .Build();
+                .AddProcessor(testActivityProcessor)
+                .AddLegacySource(operationNameForLegacyActivity)
+                .Build();
+
+            Assert.Equal(tracerProvider, testActivityProcessor.ParentProvider);
 
             Activity activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
@@ -735,6 +737,12 @@ namespace OpenTelemetry.Trace.Tests
                 };
 
             tracerProvider.AddProcessor(testActivityProcessorNew);
+
+            var sdkProvider = (TracerProviderSdk)tracerProvider;
+
+            Assert.True(sdkProvider.Processor is CompositeProcessor<Activity>);
+            Assert.Equal(tracerProvider, sdkProvider.Processor.ParentProvider);
+            Assert.Equal(tracerProvider, testActivityProcessorNew.ParentProvider);
 
             Activity activityNew = new Activity(operationNameForLegacyActivity); // Create a new Activity with the same operation name
             activityNew.Start();
