@@ -16,6 +16,7 @@
 
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 using Xunit;
 
@@ -66,38 +67,26 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void ForceFlushTest()
         {
-            using OpenTelemetryLoggerProvider provider1 = new();
-            Assert.True(provider1.ForceFlush());
+            OpenTelemetryLoggerProvider provider = new();
+            Assert.True(provider.ForceFlush());
+            provider.Dispose();
 
-            var exporter = new TestExporter();
+            List<LogRecord> exportedItems = new();
 
-            using OpenTelemetryLoggerProvider provider2 = new(options => options
-                .AddProcessor(new BatchLogRecordExportProcessor(exporter)));
+            provider = new(options => options
+                .AddProcessor(new BatchLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems))));
 
-            var logger = provider2.CreateLogger("TestLogger");
+            var logger = provider.CreateLogger("TestLogger");
 
             logger.LogInformation("hello world");
 
-            Assert.Empty(exporter.ExportedItems);
+            Assert.Empty(exportedItems);
 
-            Assert.True(provider2.ForceFlush());
+            Assert.True(provider.ForceFlush());
 
-            Assert.Single(exporter.ExportedItems);
-        }
+            Assert.Single(exportedItems);
 
-        private sealed class TestExporter : BaseExporter<LogRecord>
-        {
-            public List<LogRecord> ExportedItems { get; } = new();
-
-            public override ExportResult Export(in Batch<LogRecord> batch)
-            {
-                foreach (LogRecord logRecord in batch)
-                {
-                    this.ExportedItems.Add(logRecord);
-                }
-
-                return ExportResult.Success;
-            }
+            provider.Dispose();
         }
     }
 }
