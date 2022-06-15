@@ -79,6 +79,16 @@ namespace OpenTelemetry
             }
         }
 
+        internal override void SetParentProvider(BaseProvider parentProvider)
+        {
+            base.SetParentProvider(parentProvider);
+
+            for (var cur = this.head; cur != null; cur = cur.Next)
+            {
+                cur.Value.SetParentProvider(parentProvider);
+            }
+        }
+
         /// <inheritdoc/>
         protected override bool OnForceFlush(int timeoutMilliseconds)
         {
