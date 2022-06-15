@@ -11,6 +11,9 @@
   null-valued tag.
   ([#3325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3325))
 
+* Added `ForceFlush` and helper ctors on `OpenTelemetryLoggerProvider`
+  ([#3364](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3364))
+
 ## 1.3.0
 
 Released 2022-Jun-03
