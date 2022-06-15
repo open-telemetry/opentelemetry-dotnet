@@ -16,10 +16,20 @@ jobs:
 
     strategy:
       matrix:
-        version: [net6.0]
+        version: [net6.0, net7.0]
 
     steps:
     - uses: actions/checkout@v3
+
+    - uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0.x'
+
+    - uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '7.0.x'
+        include-prerelease: true
+
 
     - name: Install dependencies
       run: dotnet restore
