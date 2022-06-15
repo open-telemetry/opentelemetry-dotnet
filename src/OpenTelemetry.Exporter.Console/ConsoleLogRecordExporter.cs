@@ -86,7 +86,7 @@ namespace OpenTelemetry.Exporter
                     }
                 }
 
-                if (logRecord.Exception is { })
+                if (logRecord.Exception != null)
                 {
                     this.WriteLine($"{"LogRecord.Exception:",-RightPaddingLength}{logRecord.Exception?.Message}");
                 }

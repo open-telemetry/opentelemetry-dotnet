@@ -747,6 +747,7 @@ namespace OpenTelemetry.Logs.Tests
         private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions> configure = null)
         {
             var items = exportedItems = new List<LogRecord>();
+
             return LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
