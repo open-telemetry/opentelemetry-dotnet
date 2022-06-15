@@ -145,7 +145,7 @@ namespace OpenTelemetry.Metrics
             configureMetricReader?.Invoke(metricReaderOptions);
 
             var metricExporter = new InMemoryExporter<Metric>(
-                exportFunc: metricBatch => ExportMetricSnapshot(metricBatch, exportedItems));
+                exportFunc: (in Batch<Metric> metricBatch) => ExportMetricSnapshot(in metricBatch, exportedItems));
 
             var metricReader = PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
                 metricExporter,
