@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Buffer scopes when exporting `LogRecord`
+* `InMemoryExporter` will now buffer scopes when exporting `LogRecord`
   ([#3360](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3360))
 
 ## 1.3.0
