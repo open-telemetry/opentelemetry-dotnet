@@ -14,10 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry
@@ -29,9 +32,9 @@ namespace OpenTelemetry
     public readonly struct Batch<T> : IDisposable
         where T : class
     {
-        private readonly T item;
-        private readonly CircularBuffer<T> circularBuffer;
-        private readonly T[] items;
+        private readonly T? item;
+        private readonly CircularBuffer<T>? circularBuffer;
+        private readonly T[]? items;
         private readonly long targetCount;
 
         /// <summary>
@@ -68,7 +71,7 @@ namespace OpenTelemetry
             this.item = null;
             this.items = null;
             this.circularBuffer = circularBuffer;
-            this.Count = Math.Min(maxSize, circularBuffer.Count);
+            this.Count = Math.Min(maxSize, circularBuffer!.Count);
             this.targetCount = circularBuffer.RemovedCount + this.Count;
         }
 
@@ -115,7 +118,7 @@ namespace OpenTelemetry
             {
                 if (enumerator.targetCount >= 0)
                 {
-                    enumerator.Current = null;
+                    enumerator.current = null;
                     return false;
                 }
 
@@ -127,13 +130,13 @@ namespace OpenTelemetry
             {
                 var circularBuffer = enumerator.circularBuffer;
 
-                if (circularBuffer.RemovedCount < enumerator.targetCount)
+                if (circularBuffer!.RemovedCount < enumerator.targetCount)
                 {
-                    enumerator.Current = circularBuffer.Read();
+                    enumerator.current = circularBuffer.Read();
                     return true;
                 }
 
-                enumerator.Current = null;
+                enumerator.current = null;
                 return false;
             };
 
@@ -143,23 +146,25 @@ namespace OpenTelemetry
 
                 if (enumerator.itemIndex < enumerator.targetCount)
                 {
-                    enumerator.Current = items[enumerator.itemIndex++];
+                    enumerator.current = items![enumerator.itemIndex++];
                     return true;
                 }
 
-                enumerator.Current = null;
+                enumerator.current = null;
                 return false;
             };
 
-            private readonly CircularBuffer<T> circularBuffer;
-            private readonly T[] items;
+            private readonly CircularBuffer<T>? circularBuffer;
+            private readonly T[]? items;
             private readonly BatchEnumeratorMoveNextFunc moveNextFunc;
             private long targetCount;
             private int itemIndex;
+            [AllowNull]
+            private T current;
 
             internal Enumerator(T item)
             {
-                this.Current = item;
+                this.current = item;
                 this.circularBuffer = null;
                 this.items = null;
                 this.targetCount = -1;
@@ -169,7 +174,7 @@ namespace OpenTelemetry
 
             internal Enumerator(CircularBuffer<T> circularBuffer, long targetCount)
             {
-                this.Current = null;
+                this.current = null;
                 this.items = null;
                 this.circularBuffer = circularBuffer;
                 this.targetCount = targetCount;
@@ -179,7 +184,7 @@ namespace OpenTelemetry
 
             internal Enumerator(T[] items, long targetCount)
             {
-                this.Current = null;
+                this.current = null;
                 this.circularBuffer = null;
                 this.items = items;
                 this.targetCount = targetCount;
@@ -188,10 +193,10 @@ namespace OpenTelemetry
             }
 
             /// <inheritdoc/>
-            public T Current { get; private set; }
+            public readonly T Current => this.current;
 
             /// <inheritdoc/>
-            object IEnumerator.Current => this.Current;
+            readonly object? IEnumerator.Current => this.current;
 
             /// <inheritdoc/>
             public void Dispose()
@@ -205,7 +210,7 @@ namespace OpenTelemetry
             }
 
             /// <inheritdoc/>
-            public void Reset()
+            public readonly void Reset()
                 => throw new NotSupportedException();
         }
     }
