@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
 namespace System.Runtime.CompilerServices
 {
     // This enabled "init" keyword in net462 + netstandard2.0 targets.
