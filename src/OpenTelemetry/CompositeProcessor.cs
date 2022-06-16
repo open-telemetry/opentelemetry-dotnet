@@ -85,7 +85,7 @@ namespace OpenTelemetry
         {
             base.SetParentProvider(parentProvider);
 
-            for (var cur = this.head; cur != null; cur = cur.Next)
+            for (var cur = this.Head; cur != null; cur = cur.Next)
             {
                 cur.Value.SetParentProvider(parentProvider);
             }
