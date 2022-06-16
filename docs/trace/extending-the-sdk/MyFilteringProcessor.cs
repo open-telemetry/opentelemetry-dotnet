@@ -17,8 +17,20 @@
 using System;
 using System.Diagnostics;
 using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
-internal class MyFilteringProcessor : CompositeProcessor<Activity>
+/// <summary>
+/// A custom processor for filtering <see cref="Activity"/> instances.
+/// </summary>
+/// <remarks>
+/// Note: <see cref="CompositeProcessor{T}"/> is used as the base class because
+/// the SDK needs to understand that <c>MyFilteringProcessor</c> wraps an inner
+/// processor. Without that understanding some features such as <see
+/// cref="Resource"/> would unavailable because the SDK has to push state about
+/// the parent <see cref="TracerProvider"/> to all processors in the chain.
+/// </remarks>
+internal sealed class MyFilteringProcessor : CompositeProcessor<Activity>
 {
     private readonly Func<Activity, bool> filter;
 
