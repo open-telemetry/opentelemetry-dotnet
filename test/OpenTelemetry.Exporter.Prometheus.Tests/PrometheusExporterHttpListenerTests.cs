@@ -20,27 +20,16 @@ using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using OpenTelemetry.Exporter.Prometheus.HttpListener;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
-    public class PrometheusExporterHttpServerTests
+    public class PrometheusExporterHttpListenerTests
     {
         private readonly string meterName = Utils.GetCurrentMethodName();
-
-        [Fact]
-        public async Task PrometheusExporterHttpServerIntegration()
-        {
-            await this.RunPrometheusExporterHttpServerIntegrationTest();
-        }
-
-        [Fact]
-        public async Task PrometheusExporterHttpServerIntegration_NoMetrics()
-        {
-            await this.RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
-        }
 
         [Theory]
         [InlineData("http://example.com")]
@@ -50,11 +39,11 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         public void ServerEndpointSanityCheckPositiveTest(params string[] uris)
         {
             using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddPrometheusExporter(opt =>
-                {
-                    opt.HttpListenerPrefixes = uris;
-                })
+                .AddPrometheusExporter()
                 .Build();
+
+            using var listener = new PrometheusHttpListener(meterProvider, o => o.HttpListenerPrefixes = uris);
+            listener.Start();
         }
 
         [Theory]
@@ -67,11 +56,11 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             try
             {
                 using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                    .AddPrometheusExporter(opt =>
-                    {
-                        opt.HttpListenerPrefixes = uris;
-                    })
+                    .AddPrometheusExporter()
                     .Build();
+
+                using var listener = new PrometheusHttpListener(meterProvider, o => o.HttpListenerPrefixes = uris);
+                listener.Start();
             }
             catch (Exception ex)
             {
@@ -87,57 +76,50 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             }
         }
 
+        [Fact]
+        public async Task PrometheusExporterHttpServerIntegration()
+        {
+            await this.RunPrometheusExporterHttpServerIntegrationTest();
+        }
+
+        [Fact]
+        public async Task PrometheusExporterHttpServerIntegration_NoMetrics()
+        {
+            await this.RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
+        }
+
         private async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false)
         {
             Random random = new Random();
+            int retryAttempts = 5;
             int port = 0;
-            int retryCount = 5;
-            MeterProvider provider;
             string address = null;
+
+            MeterProvider provider;
+            PrometheusHttpListener listener;
 
             using var meter = new Meter(this.meterName);
 
-            while (true)
+            provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddPrometheusExporter()
+                .Build();
+
+            while (retryAttempts-- != 0)
             {
+                port = random.Next(2000, 5000);
+                address = $"http://localhost:{port}/";
+
+                listener = new PrometheusHttpListener(provider, o =>
+                    o.HttpListenerPrefixes = new string[] { address });
+
                 try
                 {
-                    port = random.Next(2000, 5000);
-                    provider = Sdk.CreateMeterProviderBuilder()
-                        .AddMeter(meter.Name)
-                        .AddPrometheusExporter(o =>
-                        {
-#if NETFRAMEWORK
-                            bool expectedDefaultState = true;
-#else
-                            bool expectedDefaultState = false;
-#endif
-                            if (o.StartHttpListener != expectedDefaultState)
-                            {
-                                throw new InvalidOperationException("StartHttpListener value is unexpected.");
-                            }
-
-                            if (!o.StartHttpListener)
-                            {
-                                o.StartHttpListener = true;
-                            }
-
-                            address = $"http://localhost:{port}/";
-                            o.HttpListenerPrefixes = new string[] { address };
-                        })
-                        .Build();
-                    break;
+                    listener.Start();
                 }
                 catch (Exception ex)
                 {
-                    if (ex.Message != PrometheusExporter.HttpListenerStartFailureExceptionMessage)
-                    {
-                        throw;
-                    }
-
-                    if (retryCount-- <= 0)
-                    {
-                        throw new InvalidOperationException("HttpListener could not be started.");
-                    }
+                    throw new Exception(ex.Message);
                 }
             }
 
@@ -155,7 +137,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             }
 
             using HttpClient client = new HttpClient();
-
             using var response = await client.GetAsync($"{address}metrics").ConfigureAwait(false);
 
             if (!skipMetrics)

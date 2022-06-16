@@ -1,0 +1,6 @@
+OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListener
+OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListener.Dispose() -> void
+OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListener.PrometheusHttpListener(OpenTelemetry.Metrics.MeterProvider meterProvider, System.Action<OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListenerOptions> configure = null) -> void
+OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListener.Start(System.Threading.CancellationToken token = default(System.Threading.CancellationToken)) -> void
+OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListener.Stop() -> void
+OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListenerOptions

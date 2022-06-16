@@ -224,10 +224,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                                 .AddPrometheusExporter(o =>
                                 {
                                     configureOptions?.Invoke(o);
-                                    if (o.StartHttpListener)
-                                    {
-                                        throw new InvalidOperationException("StartHttpListener should be false on .NET Core 3.1+.");
-                                    }
                                 }));
                        }
 

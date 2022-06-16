@@ -1,4 +1,4 @@
-// <copyright file="PrometheusExporterHttpServer.cs" company="OpenTelemetry Authors">
+// <copyright file="PrometheusHttpListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,33 +19,41 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Exporter.Prometheus
+namespace OpenTelemetry.Exporter.Prometheus.HttpListener
 {
-    /// <summary>
-    /// An HTTP listener used to expose Prometheus metrics.
-    /// </summary>
-    internal sealed class PrometheusExporterHttpServer : IDisposable
+    public sealed class PrometheusHttpListener : IDisposable
     {
         private readonly PrometheusExporter exporter;
-        private readonly HttpListener httpListener = new();
+        private readonly System.Net.HttpListener httpListener = new();
         private readonly object syncObject = new();
 
         private CancellationTokenSource tokenSource;
         private Task workerThread;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PrometheusExporterHttpServer"/> class.
+        /// Initializes a new instance of the <see cref="PrometheusHttpListener"/> class.
         /// </summary>
-        /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
-        public PrometheusExporterHttpServer(PrometheusExporter exporter)
+        /// <param name="meterProvider"><see cref="MeterProvider"/> class.</param>
+        /// <param name="configure"><see cref="PrometheusHttpListenerOptions"/> Configure listener specific options.</param>
+        public PrometheusHttpListener(MeterProvider meterProvider, Action<PrometheusHttpListenerOptions> configure = null)
         {
-            Guard.ThrowIfNull(exporter);
+            Guard.ThrowIfNull(meterProvider);
+
+            if (!meterProvider.TryFindExporter(out PrometheusExporter exporter))
+            {
+                throw new ArgumentException("A PrometheusExporter could not be found configured on the provided MeterProvider.");
+            }
 
             this.exporter = exporter;
-            if ((exporter.Options.HttpListenerPrefixes?.Count ?? 0) <= 0)
+
+            var prometheusHttpListenerOptions = new PrometheusHttpListenerOptions();
+            configure?.Invoke(prometheusHttpListenerOptions);
+
+            if ((prometheusHttpListenerOptions.HttpListenerPrefixes?.Count ?? 0) <= 0)
             {
-                throw new ArgumentException("No HttpListenerPrefixes were specified on PrometheusExporterOptions.");
+                throw new ArgumentException("No HttpListenerPrefixes were specified on PrometheusHttpListenerOptions.");
             }
 
             string path = exporter.Options.ScrapeEndpointPath ?? PrometheusExporterOptions.DefaultScrapeEndpointPath;
@@ -59,14 +67,14 @@ namespace OpenTelemetry.Exporter.Prometheus
                 path = $"{path}/";
             }
 
-            foreach (string prefix in exporter.Options.HttpListenerPrefixes)
+            foreach (string prefix in prometheusHttpListenerOptions.HttpListenerPrefixes)
             {
                 this.httpListener.Prefixes.Add($"{prefix.TrimEnd('/')}{path}");
             }
         }
 
         /// <summary>
-        /// Start Http Server.
+        /// Start the http Listener.
         /// </summary>
         /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the HTTP server.</param>
         public void Start(CancellationToken token = default)
@@ -88,7 +96,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
         /// <summary>
-        /// Stop exporter.
+        /// Stop the http listener.
         /// </summary>
         public void Stop()
         {
@@ -105,7 +113,6 @@ namespace OpenTelemetry.Exporter.Prometheus
             }
         }
 
-        /// <inheritdoc/>
         public void Dispose()
         {
             if (this.httpListener != null && this.httpListener.IsListening)
