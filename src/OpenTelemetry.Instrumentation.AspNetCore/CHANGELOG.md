@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Tracing instrumentation to populate 'http.flavor' tag.
+
 ## 1.0.0-rc9.4
 
 Released 2022-Jun-03
