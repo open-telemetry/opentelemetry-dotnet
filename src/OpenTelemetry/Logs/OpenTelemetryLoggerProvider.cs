@@ -16,7 +16,9 @@
 
 #nullable enable
 
+using System;
 using System.Collections;
+using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
@@ -51,6 +53,23 @@ namespace OpenTelemetry.Logs
         /// <param name="options"><see cref="OpenTelemetryLoggerOptions"/>.</param>
         public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options)
             : this(options?.CurrentValue!)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OpenTelemetryLoggerProvider"/> class.
+        /// </summary>
+        /// <param name="configure"><see cref="OpenTelemetryLoggerOptions"/> configuration callback.</param>
+        public OpenTelemetryLoggerProvider(Action<OpenTelemetryLoggerOptions> configure)
+            : this(BuildOptions(configure ?? throw new ArgumentNullException(nameof(configure))))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OpenTelemetryLoggerProvider"/> class.
+        /// </summary>
+        public OpenTelemetryLoggerProvider()
+            : this(BuildOptions(configure: null))
         {
         }
 
@@ -112,6 +131,29 @@ namespace OpenTelemetry.Logs
             return logger;
         }
 
+        /// <summary>
+        /// Flushes all the processors registered under <see
+        /// cref="OpenTelemetryLoggerProvider"/>, blocks the current thread
+        /// until flush completed, shutdown signaled or timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when force flush succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
+        /// </exception>
+        /// <remarks>
+        /// This function guarantees thread-safety.
+        /// </remarks>
+        public bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
+        {
+            return this.Processor?.ForceFlush(timeoutMilliseconds) ?? true;
+        }
+
         internal OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
         {
             Guard.ThrowIfNull(processor);
@@ -157,6 +199,13 @@ namespace OpenTelemetry.Logs
             }
 
             base.Dispose(disposing);
+        }
+
+        private static OpenTelemetryLoggerOptions BuildOptions(Action<OpenTelemetryLoggerOptions>? configure)
+        {
+            OpenTelemetryLoggerOptions options = new();
+            configure?.Invoke(options);
+            return options;
         }
     }
 }
