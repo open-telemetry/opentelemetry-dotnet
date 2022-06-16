@@ -61,7 +61,15 @@ namespace OpenTelemetry.Logs
         /// </summary>
         /// <param name="configure"><see cref="OpenTelemetryLoggerOptions"/> configuration callback.</param>
         public OpenTelemetryLoggerProvider(Action<OpenTelemetryLoggerOptions> configure)
-            : this(BuildOptions(configure))
+            : this(BuildOptions(configure ?? throw new ArgumentNullException(nameof(configure))))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OpenTelemetryLoggerProvider"/> class.
+        /// </summary>
+        public OpenTelemetryLoggerProvider()
+            : this(BuildOptions(configure: null))
         {
         }
 
@@ -150,11 +158,7 @@ namespace OpenTelemetry.Logs
         /// </remarks>
         public bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
         {
-            bool result = this.Processor?.ForceFlush(timeoutMilliseconds) ?? true;
-
-            OpenTelemetrySdkEventSource.Log.ForceFlushInvoked(nameof(OpenTelemetryLoggerProvider), result);
-
-            return result;
+            return this.Processor?.ForceFlush(timeoutMilliseconds) ?? true;
         }
 
         /// <summary>
@@ -184,11 +188,13 @@ namespace OpenTelemetry.Logs
             }
             else
             {
-                this.Processor = new CompositeProcessor<LogRecord>(new[]
+                var newCompositeProcessor = new CompositeProcessor<LogRecord>(new[]
                 {
                     this.Processor,
-                    processor,
                 });
+                newCompositeProcessor.SetParentProvider(this);
+                newCompositeProcessor.AddProcessor(processor);
+                this.Processor = newCompositeProcessor;
             }
 
             return this;
@@ -236,7 +242,7 @@ namespace OpenTelemetry.Logs
             base.Dispose(disposing);
         }
 
-        private static OpenTelemetryLoggerOptions BuildOptions(Action<OpenTelemetryLoggerOptions>? configure = null)
+        private static OpenTelemetryLoggerOptions BuildOptions(Action<OpenTelemetryLoggerOptions>? configure)
         {
             OpenTelemetryLoggerOptions options = new();
             configure?.Invoke(options);

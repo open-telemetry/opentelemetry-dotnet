@@ -25,5 +25,6 @@ OpenTelemetry.Logs.LogRecordData.TraceState.set -> void
 OpenTelemetry.Logs.LogRecordPool
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.ForceFlush(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.IncludeFormattedMessage.get -> bool
+OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider() -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider(System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>! configure) -> void
 static OpenTelemetry.Logs.LogRecordPool.Resize(int capacity) -> void
