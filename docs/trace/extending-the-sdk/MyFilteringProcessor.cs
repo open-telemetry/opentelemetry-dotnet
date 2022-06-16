@@ -27,8 +27,9 @@ using OpenTelemetry.Trace;
 /// Note: <see cref="CompositeProcessor{T}"/> is used as the base class because
 /// the SDK needs to understand that <c>MyFilteringProcessor</c> wraps an inner
 /// processor. Without that understanding some features such as <see
-/// cref="Resource"/> would unavailable because the SDK has to push state about
-/// the parent <see cref="TracerProvider"/> to all processors in the chain.
+/// cref="Resource"/> would unavailable because the SDK needs to push state
+/// about the parent <see cref="TracerProvider"/> to all processors in the
+/// chain.
 /// </remarks>
 internal sealed class MyFilteringProcessor : CompositeProcessor<Activity>
 {
