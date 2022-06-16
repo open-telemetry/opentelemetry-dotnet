@@ -201,7 +201,7 @@ namespace OpenTelemetry.Logs
             base.Dispose(disposing);
         }
 
-        private static OpenTelemetryLoggerOptions BuildOptions(Action<OpenTelemetryLoggerOptions>? configure = null)
+        private static OpenTelemetryLoggerOptions BuildOptions(Action<OpenTelemetryLoggerOptions>? configure)
         {
             OpenTelemetryLoggerOptions options = new();
             configure?.Invoke(options);
