@@ -19,7 +19,6 @@ using System;
 using System.Diagnostics;
 using System.Net;
 using OpenTelemetry.Instrumentation.Http.Implementation;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http
 {
