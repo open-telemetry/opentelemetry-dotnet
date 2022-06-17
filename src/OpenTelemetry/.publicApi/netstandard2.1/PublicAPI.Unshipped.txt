@@ -1,0 +1,3 @@
+OpenTelemetry.Logs.OpenTelemetryLoggerProvider.ForceFlush(int timeoutMilliseconds = -1) -> bool
+OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider() -> void
+OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider(System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>! configure) -> void
