@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using OpenTelemetry.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Resources;
@@ -219,10 +220,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Fact]
         public void SpanLimitsTest()
         {
-            Environment.SetEnvironmentVariable("OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT", "4");
-            Environment.SetEnvironmentVariable("OTEL_ATTRIBUTE_COUNT_LIMIT", "1");
-            Environment.SetEnvironmentVariable("OTEL_SPAN_EVENT_COUNT_LIMIT", "1");
-            Environment.SetEnvironmentVariable("OTEL_SPAN_LINK_COUNT_LIMIT", "1");
+            SdkConfiguration.Instance.AttributeValueLengthLimit = 4;
+            SdkConfiguration.Instance.AttributeCountLimit = 1;
+            SdkConfiguration.Instance.SpanEventCountLimit = 1;
+            SdkConfiguration.Instance.SpanLinkCountLimit = 1;
 
             var tags = new ActivityTagsCollection()
             {
