@@ -1,10 +1,10 @@
 #nullable enable
-~abstract OpenTelemetry.BaseExporter<T>.Export(in OpenTelemetry.Batch<T> batch) -> OpenTelemetry.ExportResult
-~abstract OpenTelemetry.BaseExportProcessor<T>.OnExport(T data) -> void
-~OpenTelemetry.BaseExporter<T>
-~OpenTelemetry.BaseExporter<T>.ParentProvider.get -> OpenTelemetry.BaseProvider
-~OpenTelemetry.BaseExportProcessor<T>
-~OpenTelemetry.BaseExportProcessor<T>.BaseExportProcessor(OpenTelemetry.BaseExporter<T> exporter) -> void
+abstract OpenTelemetry.BaseExporter<T>.Export(in OpenTelemetry.Batch<T!> batch) -> OpenTelemetry.ExportResult
+abstract OpenTelemetry.BaseExportProcessor<T>.OnExport(T! data) -> void
+OpenTelemetry.BaseExporter<T>
+OpenTelemetry.BaseExporter<T>.ParentProvider.get -> OpenTelemetry.BaseProvider?
+OpenTelemetry.BaseExportProcessor<T>
+OpenTelemetry.BaseExportProcessor<T>.BaseExportProcessor(OpenTelemetry.BaseExporter<T!>! exporter) -> void
 OpenTelemetry.BaseProcessor<T>.ParentProvider.get -> OpenTelemetry.BaseProvider?
 OpenTelemetry.Batch<T>
 OpenTelemetry.Batch<T>.Batch(T![]! items, int count) -> void
@@ -60,7 +60,7 @@ OpenTelemetry.SimpleExportProcessor<T>.SimpleExportProcessor(OpenTelemetry.BaseE
 ~OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes) -> void
 ~OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation(string instrumentationName, string instrumentationVersion, System.Func<object> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
 ~OpenTelemetry.Trace.TracerProviderBuilderBase.Build() -> OpenTelemetry.Trace.TracerProvider
-~override OpenTelemetry.BaseExportProcessor<T>.OnEnd(T data) -> void
+override OpenTelemetry.BaseExportProcessor<T>.OnEnd(T! data) -> void
 ~override OpenTelemetry.BatchActivityExportProcessor.OnEnd(System.Diagnostics.Activity data) -> void
 override OpenTelemetry.BatchExportProcessor<T>.OnExport(T! data) -> void
 ~override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Metrics.MeterProviderBuilder
@@ -71,8 +71,8 @@ override OpenTelemetry.SimpleExportProcessor<T>.OnExport(T! data) -> void
 ~override OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
 ~override OpenTelemetry.Trace.TracerProviderBuilderBase.AddLegacySource(string operationName) -> OpenTelemetry.Trace.TracerProviderBuilder
 ~override OpenTelemetry.Trace.TracerProviderBuilderBase.AddSource(params string[] names) -> OpenTelemetry.Trace.TracerProviderBuilder
-~override sealed OpenTelemetry.BaseExportProcessor<T>.OnStart(T data) -> void
-~readonly OpenTelemetry.BaseExportProcessor<T>.exporter -> OpenTelemetry.BaseExporter<T>
+override sealed OpenTelemetry.BaseExportProcessor<T>.OnStart(T! data) -> void
+readonly OpenTelemetry.BaseExportProcessor<T>.exporter -> OpenTelemetry.BaseExporter<T!>!
 ~readonly OpenTelemetry.Metrics.BaseExportingMetricReader.exporter -> OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric>
 ~static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddReader(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, OpenTelemetry.Metrics.MetricReader reader) -> OpenTelemetry.Metrics.MeterProviderBuilder
 ~static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddView(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, string instrumentName, OpenTelemetry.Metrics.MetricStreamConfiguration metricStreamConfiguration) -> OpenTelemetry.Metrics.MeterProviderBuilder
