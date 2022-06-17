@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Metrics instrumentation to correctly populate 'http.flavor' tag.
+  ([3373](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3373))
+
 * Tracing instrumentation to populate 'http.flavor' tag.
   ([3372](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3372))
 
