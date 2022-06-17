@@ -1,4 +1,6 @@
 OpenTelemetry.Exporter.PrometheusExporter
+OpenTelemetry.Exporter.PrometheusExporter.Collect.get -> System.Func<int, bool>
+OpenTelemetry.Exporter.PrometheusExporter.Collect.set -> void
 OpenTelemetry.Exporter.PrometheusExporter.PrometheusExporter(OpenTelemetry.Exporter.PrometheusExporterOptions options) -> void
 OpenTelemetry.Exporter.PrometheusExporterOptions
 OpenTelemetry.Exporter.PrometheusExporterOptions.PrometheusExporterOptions() -> void
