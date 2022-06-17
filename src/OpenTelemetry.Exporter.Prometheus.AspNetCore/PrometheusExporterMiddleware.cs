@@ -22,7 +22,7 @@ using Microsoft.AspNetCore.Http;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Exporter.Prometheus
+namespace OpenTelemetry.Exporter.Prometheus.AspNetCore
 {
     /// <summary>
     /// ASP.NET Core middleware for exposing a Prometheus metrics scraping endpoint.
