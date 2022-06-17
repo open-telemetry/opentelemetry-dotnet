@@ -96,7 +96,7 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Gets the log category name.
         /// </summary>
-        public string CategoryName { get; }
+        public string? CategoryName { get; }
 
         /// <summary>
         /// Gets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
