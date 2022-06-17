@@ -21,6 +21,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Exporter.Prometheus.HttpListener;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Tests.Stress;
@@ -87,11 +88,13 @@ public partial class Program
             .AddMeter(meter.Name)
             .AddPrometheusExporter(options =>
             {
-                options.StartHttpListener = true;
-                options.HttpListenerPrefixes = new string[] { $"http://localhost:{prometheusPort}/" };
                 options.ScrapeResponseCacheDurationMilliseconds = 0;
             })
             .Build() : null;
+
+        using var listener = new PrometheusHttpListener(meterProvider, opt =>
+            opt.HttpListenerPrefixes = new string[] { $"http://localhost:{prometheusPort}/" });
+        listener.Start();
 
         var statistics = new long[concurrency];
         var watchForTotal = Stopwatch.StartNew();

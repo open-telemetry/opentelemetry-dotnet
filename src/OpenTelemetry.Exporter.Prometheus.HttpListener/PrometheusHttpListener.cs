@@ -31,6 +31,7 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
 
         private CancellationTokenSource tokenSource;
         private Task workerThread;
+        private bool disposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PrometheusHttpListener"/> class.
@@ -41,12 +42,11 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
         {
             Guard.ThrowIfNull(meterProvider);
 
+            // Find the exporter that was registered on the meterProvider.
             if (!meterProvider.TryFindExporter(out PrometheusExporter exporter))
             {
                 throw new ArgumentException("A PrometheusExporter could not be found configured on the provided MeterProvider.");
             }
-
-            this.exporter = exporter;
 
             var prometheusHttpListenerOptions = new PrometheusHttpListenerOptions();
             configure?.Invoke(prometheusHttpListenerOptions);
@@ -56,7 +56,8 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
                 throw new ArgumentException("No HttpListenerPrefixes were specified on PrometheusHttpListenerOptions.");
             }
 
-            string path = exporter.Options.ScrapeEndpointPath ?? PrometheusExporterOptions.DefaultScrapeEndpointPath;
+            this.exporter = exporter;
+            string path = this.exporter.Options.ScrapeEndpointPath ?? PrometheusExporterOptions.DefaultScrapeEndpointPath;
             if (!path.StartsWith("/"))
             {
                 path = $"/{path}";
@@ -115,10 +116,21 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
 
         public void Dispose()
         {
-            if (this.httpListener != null && this.httpListener.IsListening)
+            this.Dispose(true);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!this.disposed)
             {
-                this.Stop();
-                this.httpListener.Close();
+                if (disposing && this.httpListener != null && this.httpListener.IsListening)
+                {
+                    this.Stop();
+                    this.httpListener.Close();
+                    this?.Dispose();
+                }
+
+                this.disposed = true;
             }
         }
 
