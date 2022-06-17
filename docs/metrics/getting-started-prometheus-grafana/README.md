@@ -46,7 +46,16 @@ And replace the below line:
 with
 
 ```csharp
-.AddPrometheusExporter(options => { options.StartHttpListener = true; })
+.AddPrometheusExporter()
+```
+
+After the meterProvider is successfully built, create a PrometheusHttpListener
+that takes in the meterProvider when constructed and passed in the listener options for configuration.
+call .Start() to start the listener.
+
+```csharp
+using var listener = new PrometheusHttpListener(meterProvider);
+listener.Start();
 ```
 
 With `AddPrometheusExporter()`, OpenTelemetry `PrometheusExporter` will export
@@ -60,7 +69,9 @@ graph LR
 subgraph SDK
   MeterProvider
   MetricReader[BaseExportingMetricReader]
-  PrometheusExporter["PrometheusExporter<br/>(http://localhost:9464/)"]
+  subgraph PrometheusHttpListener
+    PrometheusExporter["PrometheusExporter<br/>(http://localhost:9464/)"]
+  end
 end
 
 subgraph API

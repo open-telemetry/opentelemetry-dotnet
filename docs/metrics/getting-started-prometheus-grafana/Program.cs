@@ -18,6 +18,7 @@ using System;
 using System.Diagnostics.Metrics;
 using System.Threading;
 using OpenTelemetry;
+using OpenTelemetry.Exporter.Prometheus.HttpListener;
 using OpenTelemetry.Metrics;
 
 namespace GettingStartedPrometheusGrafana;
@@ -31,8 +32,11 @@ public class Program
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter("MyCompany.MyProduct.MyLibrary")
-            .AddPrometheusExporter(options => { options.StartHttpListener = true; })
+            .AddPrometheusExporter()
             .Build();
+
+        using var listener = new PrometheusHttpListener(meterProvider);
+        listener.Start();
 
         Console.WriteLine("Press any key to exit");
         while (!Console.KeyAvailable)
