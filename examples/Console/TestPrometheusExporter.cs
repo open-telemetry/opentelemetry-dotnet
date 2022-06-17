@@ -21,6 +21,7 @@ using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry;
+using OpenTelemetry.Exporter.Prometheus.HttpListener;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -53,11 +54,12 @@ internal class TestPrometheusExporter
             .AddMeter(MyMeter2.Name)
             .AddPrometheusExporter(options =>
             {
-                options.StartHttpListener = true;
-                options.HttpListenerPrefixes = new string[] { $"http://localhost:{port}/" };
                 options.ScrapeResponseCacheDurationMilliseconds = 0;
             })
             .Build();
+
+        using var listener = new PrometheusHttpListener(meterProvider, o => o.HttpListenerPrefixes = new string[] { $"http://localhost:{port}/" });
+        listener.Start();
 
         var process = Process.GetCurrentProcess();
         MyMeter.CreateObservableCounter("thread.cpu_time", () => GetThreadCpuTime(process), "ms");
