@@ -77,7 +77,7 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
         /// <summary>
         /// Start the http Listener.
         /// </summary>
-        /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the HTTP server.</param>
+        /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the HTTP listener.</param>
         public void Start(CancellationToken token = default)
         {
             lock (this.syncObject)

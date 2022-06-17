@@ -11,10 +11,17 @@
 
 ### Step 1: Install Package
 
-```shell
-dotnet add package OpenTelemetry.Exporter.Prometheus
-```
+Depending on the hosting mechanism you will be using:
 
+Install
+```shell
+dotnet add package OpenTelemetry.Exporter.Prometheus.AspNetCore
+```
+or
+
+```shell
+dotnet add package OpenTelemetry.Exporter.Prometheus.HttpListener
+```
 ### Step 2: Configure OpenTelemetry MeterProvider
 
 * When using OpenTelemetry.Extensions.Hosting package on .NET Core 3.1+:
@@ -72,12 +79,6 @@ dotnet add package OpenTelemetry.Exporter.Prometheus
     }
     ```
 
-* On .NET Framework an HTTP listener is automatically started which will respond
-  to scraping requests. See the [Configuration](#configuration) section for
-  details on the settings available. This may also be turned on in .NET Core (it
-  is OFF by default) when the ASP.NET Core pipeline is not available for
-  middleware registration.
-
 ## Configuration
 
 The `PrometheusExporter` can be configured using the `PrometheusExporterOptions`
@@ -85,24 +86,23 @@ properties. Refer to
 [`TestPrometheusExporter.cs`](../../examples/Console/TestPrometheusExporter.cs)
 for example use.
 
-### StartHttpListener
+### HttpListener
 
-Set to `true` to start an HTTP listener which will respond to Prometheus scrape
-requests using the [HttpListenerPrefixes](#httplistenerprefixes) and
-[ScrapeEndpointPath](#scrapeendpointpath) options.
+Configure `HttpListener` with the already constructed meterProvider instance and
+passed in `PrometheusHttpListenerOptions` for configuration.
+Use `listener.Start()` to allow the listener to start receiving
+incoming requests.
 
-Defaults:
+```csharp
+this.listener = new PrometheusHttpListener(
+    this.meterProvider,
+    o => o.HttpListenerPrefixes = new string[] { "http://localhost:9464/metrics" });
+this.listener.Start();
+```
 
-* On .NET Framework this is `true` by default.
+#### HttpListenerPrefixes
 
-* On .NET Core 3.1+ this is `false` by default. Users running ASP.NET Core
-  should use the `UseOpenTelemetryPrometheusScrapingEndpoint` extension to
-  register the scraping middleware instead of using the listener.
-
-### HttpListenerPrefixes
-
-Defines the prefixes which will be used by the listener when `StartHttpListener`
-is `true`. The default value is `["http://localhost:9464/"]`. You may specify
+Defines the prefixes which will be used by the listener. The default value is `["http://localhost:9464/"]`. You may specify
 multiple endpoints.
 
 For details see:
