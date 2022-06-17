@@ -217,6 +217,50 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Fact]
+        public void SpanLimitsTest()
+        {
+            Environment.SetEnvironmentVariable("OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT", "4");
+            Environment.SetEnvironmentVariable("OTEL_ATTRIBUTE_COUNT_LIMIT", "1");
+            Environment.SetEnvironmentVariable("OTEL_SPAN_EVENT_COUNT_LIMIT", "1");
+            Environment.SetEnvironmentVariable("OTEL_SPAN_LINK_COUNT_LIMIT", "1");
+
+            var tags = new ActivityTagsCollection()
+            {
+                new KeyValuePair<string, object>("TruncatedTag", "12345"),
+                new KeyValuePair<string, object>("OneTagTooMany", 1),
+            };
+
+            var links = new[]
+            {
+                new ActivityLink(default, tags),
+                new ActivityLink(default, tags),
+            };
+
+            using var activitySource = new ActivitySource(nameof(this.SpanLimitsTest));
+            using var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), tags, links);
+
+            var event1 = new ActivityEvent("Event", DateTime.UtcNow, tags);
+            var event2 = new ActivityEvent("OneEventTooMany", DateTime.Now, tags);
+
+            activity.AddEvent(event1);
+            activity.AddEvent(event2);
+
+            var otlpSpan = activity.ToOtlpSpan();
+
+            Assert.NotNull(otlpSpan);
+            Assert.Single(otlpSpan.Attributes);
+            Assert.Equal("1234", otlpSpan.Attributes.First().Value.StringValue);
+
+            Assert.Single(otlpSpan.Events);
+            Assert.Single(otlpSpan.Events.First().Attributes);
+            Assert.Equal("1234", otlpSpan.Events.First().Attributes.First().Value.StringValue);
+
+            Assert.Single(otlpSpan.Links);
+            Assert.Single(otlpSpan.Links.First().Attributes);
+            Assert.Equal("1234", otlpSpan.Links.First().Attributes.First().Value.StringValue);
+        }
+
+        [Fact]
         public void ToOtlpSpanTest()
         {
             using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));

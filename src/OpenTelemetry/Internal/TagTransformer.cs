@@ -21,7 +21,7 @@ namespace OpenTelemetry.Internal;
 
 internal abstract class TagTransformer<T>
 {
-    public bool TryTransformTag(KeyValuePair<string, object> tag, out T result)
+    public bool TryTransformTag(KeyValuePair<string, object> tag, out T result, int? maxLength = null)
     {
         if (tag.Value == null)
         {
@@ -33,7 +33,13 @@ internal abstract class TagTransformer<T>
         {
             case char:
             case string:
-                result = this.TransformStringTag(tag.Key, Convert.ToString(tag.Value));
+                var value = Convert.ToString(tag.Value);
+                if (maxLength.HasValue)
+                {
+                    value = value?.Length > maxLength ? value.Substring(0, maxLength.Value) : value;
+                }
+
+                result = this.TransformStringTag(tag.Key, value);
                 break;
             case bool b:
                 result = this.TransformBooleanTag(tag.Key, b);
