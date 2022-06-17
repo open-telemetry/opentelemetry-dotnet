@@ -5,7 +5,7 @@
 ~OpenTelemetry.BaseExporter<T>.ParentProvider.get -> OpenTelemetry.BaseProvider
 ~OpenTelemetry.BaseExportProcessor<T>
 ~OpenTelemetry.BaseExportProcessor<T>.BaseExportProcessor(OpenTelemetry.BaseExporter<T> exporter) -> void
-~OpenTelemetry.BaseProcessor<T>.ParentProvider.get -> OpenTelemetry.BaseProvider
+OpenTelemetry.BaseProcessor<T>.ParentProvider.get -> OpenTelemetry.BaseProvider?
 ~OpenTelemetry.Batch<T>
 ~OpenTelemetry.Batch<T>.Batch(T[] items, int count) -> void
 ~OpenTelemetry.Batch<T>.Enumerator.Current.get -> T

@@ -390,6 +390,12 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(42, type.ToString(), key);
         }
 
+        [Event(43, Message = "ForceFlush invoked for processor type '{0}' returned result '{1}'.", Level = EventLevel.Verbose)]
+        public void ProcessorForceFlushInvoked(string processorType, bool result)
+        {
+            this.WriteEvent(43, processorType, result);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {
