@@ -22,6 +22,7 @@ using System.Web.Mvc;
 using System.Web.Routing;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.Prometheus.HttpListener;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -32,7 +33,8 @@ namespace Examples.AspNet
 #pragma warning restore SA1649 // File name should match first type name
     {
         private IDisposable tracerProvider;
-        private IDisposable meterProvider;
+        private MeterProvider meterProvider;
+        private PrometheusHttpListener listener;
 
         protected void Application_Start()
         {
@@ -78,23 +80,27 @@ namespace Examples.AspNet
             switch (ConfigurationManager.AppSettings["UseMetricsExporter"].ToLowerInvariant())
             {
                 case "otlp":
-                    meterBuilder.AddOtlpExporter(otlpOptions =>
+                    this.meterProvider = meterBuilder.AddOtlpExporter(otlpOptions =>
                     {
                         otlpOptions.Endpoint = new Uri(ConfigurationManager.AppSettings["OtlpEndpoint"]);
-                    });
+                    })
+                    .Build();
                     break;
                 case "prometheus":
-                    meterBuilder.AddPrometheusExporter();
+                    this.meterProvider = meterBuilder.AddPrometheusExporter().Build();
+                    this.listener = new PrometheusHttpListener(
+                        this.meterProvider,
+                        o => o.HttpListenerPrefixes = new string[] { "http://localhost:9464/metrics" });
+                    this.listener.Start();
                     break;
                 default:
-                    meterBuilder.AddConsoleExporter((exporterOptions, metricReaderOptions) =>
+                    this.meterProvider = meterBuilder.AddConsoleExporter((exporterOptions, metricReaderOptions) =>
                     {
                         exporterOptions.Targets = ConsoleExporterOutputTargets.Debug;
-                    });
+                    })
+                    .Build();
                     break;
             }
-
-            this.meterProvider = meterBuilder.Build();
 
             GlobalConfiguration.Configure(WebApiConfig.Register);
 

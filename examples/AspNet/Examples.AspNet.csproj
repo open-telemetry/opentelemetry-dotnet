@@ -1,4 +1,4 @@
-<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
@@ -117,6 +117,10 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj">
       <Project>{52158a12-e7ef-45a1-859f-06f9b17410cb}</Project>
       <Name>OpenTelemetry.Exporter.Prometheus</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\OpenTelemetry.Exporter.Prometheus.HttpListener.csproj">
+      <Project>{2006398c-aef0-4ce2-990f-f76933e3542f}</Project>
+      <Name>OpenTelemetry.Exporter.Prometheus.HttpListener</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
