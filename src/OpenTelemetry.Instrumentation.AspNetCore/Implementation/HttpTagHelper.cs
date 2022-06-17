@@ -15,6 +15,7 @@
 // </copyright>
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
@@ -23,32 +24,27 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     /// </summary>
     internal static class HttpTagHelper
     {
-        private static readonly ConcurrentDictionary<string, string> ProtocolVersionToStringCache = new();
-
-        private static readonly Func<string, string> ConvertProtocolToFlavorStringRef = ConvertProtocolToFlavorString;
+        private static readonly Dictionary<string, string> ProtocolToFlavorTag = new Dictionary<string, string>
+        {
+            { "HTTP/2", "2.0" },
+            { "HTTP/3", "3.0" },
+            { "HTTP/1.1", "1.1" },
+        };
 
         /// <summary>
         /// Gets the OpenTelemetry standard version tag value for a span based on its protocol/>.
         /// </summary>
         /// <param name="protocol">.</param>
         /// <returns>Span flavor value.</returns>
-        public static string GetFlavorTagValueFromProtocol(string protocol) => ProtocolVersionToStringCache.GetOrAdd(protocol, ConvertProtocolToFlavorStringRef);
-
-        private static string ConvertProtocolToFlavorString(string protocol)
+        public static string GetFlavorTagValueFromProtocol(string protocol)
         {
-            switch (protocol)
+            if (ProtocolToFlavorTag.TryGetValue(protocol, out var flavorTag))
             {
-                case "HTTP/2":
-                    return "2.0";
-
-                case "HTTP/3":
-                    return "3.0";
-
-                case "HTTP/1.1":
-                    return "1.1";
-
-                default:
-                    return protocol;
+                return flavorTag;
+            }
+            else
+            {
+                return protocol;
             }
         }
     }
