@@ -15,6 +15,9 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace OpenTelemetry.Internal.Tests
@@ -108,6 +111,67 @@ namespace OpenTelemetry.Internal.Tests
             Assert.Equal(2, circularBuffer.AddedCount);
             Assert.Equal(1, circularBuffer.RemovedCount);
             Assert.Equal(1, circularBuffer.Count);
+        }
+
+        [Fact]
+        public async Task CpuPressureTest()
+        {
+            if (Environment.ProcessorCount < 2)
+            {
+                return;
+            }
+
+            var circularBuffer = new CircularBuffer<string>(2048);
+
+            List<Task> tasks = new();
+
+            int numberOfItemsPerWorker = 100_000;
+
+            for (int i = 0; i < Environment.ProcessorCount; i++)
+            {
+                int tid = i;
+
+                tasks.Add(Task.Run(async () =>
+                {
+                    await Task.Delay(2000).ConfigureAwait(false);
+
+                    if (tid == 0)
+                    {
+                        for (int i = 0; i < numberOfItemsPerWorker * (Environment.ProcessorCount - 1); i++)
+                        {
+                            SpinWait wait = default;
+                            while (true)
+                            {
+                                if (circularBuffer.Count > 0)
+                                {
+                                    circularBuffer.Read();
+                                    break;
+                                }
+
+                                wait.SpinOnce();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < numberOfItemsPerWorker; i++)
+                        {
+                            SpinWait wait = default;
+                            while (true)
+                            {
+                                if (circularBuffer.Add("item"))
+                                {
+                                    break;
+                                }
+
+                                wait.SpinOnce();
+                            }
+                        }
+                    }
+                }));
+            }
+
+            await Task.WhenAll(tasks).ConfigureAwait(false);
         }
     }
 }

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Tracing instrumentation to populate 'http.flavor' tag.
+  ([3372](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3372))
+
 ## 1.0.0-rc9.4
 
 Released 2022-Jun-03
