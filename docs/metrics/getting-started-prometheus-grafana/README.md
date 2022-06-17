@@ -50,7 +50,8 @@ with
 ```
 
 After the meterProvider is successfully built, create a PrometheusHttpListener
-that takes in the meterProvider when constructed and passed in the listener options for configuration.
+that takes in the meterProvider when constructed and passed in
+the listener options for configuration.
 call .Start() to start the listener.
 
 ```csharp
