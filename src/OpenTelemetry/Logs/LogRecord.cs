@@ -30,15 +30,21 @@ namespace OpenTelemetry.Logs
     public sealed class LogRecord
     {
         internal LogRecordData Data;
+        internal List<KeyValuePair<string, object?>>? AttributeStorage;
+        internal List<object?>? BufferedScopes;
+        internal int PoolReferenceCount = int.MaxValue;
 
         private static readonly Action<object?, List<object?>> AddScopeToBufferedList = (object? scope, List<object?> state) =>
         {
             state.Add(scope);
         };
 
-        private List<object?>? bufferedScopes;
+        internal LogRecord()
+        {
+        }
 
         // Note: Some users are calling this with reflection. Try not to change the signature to be nice.
+        [Obsolete("Call LogRecordPool.Rent instead.")]
         internal LogRecord(
             IExternalScopeProvider? scopeProvider,
             DateTime timestamp,
@@ -191,9 +197,9 @@ namespace OpenTelemetry.Logs
 
             var forEachScopeState = new ScopeForEachState<TState>(callback, state);
 
-            if (this.bufferedScopes != null)
+            if (this.BufferedScopes != null)
             {
-                foreach (object? scope in this.bufferedScopes)
+                foreach (object? scope in this.BufferedScopes)
                 {
                     ScopeForEachState<TState>.ForEachScope(scope, forEachScopeState);
                 }
@@ -213,22 +219,46 @@ namespace OpenTelemetry.Logs
             return ref this.Data;
         }
 
-        /// <summary>
-        /// Buffers the scopes attached to the log into a list so that they can
-        /// be safely processed after the log message lifecycle has ended.
-        /// </summary>
-        internal void BufferLogScopes()
+        internal void Buffer()
         {
-            if (this.ScopeProvider == null || this.bufferedScopes != null)
+            this.BufferLogStateValues();
+            this.BufferLogScopes();
+        }
+
+        /// <summary>
+        /// Buffers the state values attached to the log into a list so that
+        /// they can be safely processed after the log message lifecycle has
+        /// ended.
+        /// </summary>
+        private void BufferLogStateValues()
+        {
+            var stateValues = this.StateValues;
+            if (stateValues == null || stateValues == this.AttributeStorage)
             {
                 return;
             }
 
-            List<object?> scopes = new List<object?>();
+            var attributeStorage = this.AttributeStorage ??= new List<KeyValuePair<string, object?>>(stateValues.Count);
+            attributeStorage.AddRange(stateValues);
+            this.StateValues = attributeStorage;
+        }
 
-            this.ScopeProvider?.ForEachScope(AddScopeToBufferedList, scopes);
+        /// <summary>
+        /// Buffers the scopes attached to the log into a list so that they can
+        /// be safely processed after the log message lifecycle has ended.
+        /// </summary>
+        private void BufferLogScopes()
+        {
+            if (this.ScopeProvider == null)
+            {
+                return;
+            }
 
-            this.bufferedScopes = scopes;
+            List<object?> scopes = this.BufferedScopes ??= new List<object?>(16);
+
+            this.ScopeProvider.ForEachScope(AddScopeToBufferedList, scopes);
+
+            this.ScopeProvider = null;
         }
 
         private readonly struct ScopeForEachState<TState>
