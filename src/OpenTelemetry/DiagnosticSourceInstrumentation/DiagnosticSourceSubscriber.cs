@@ -60,7 +60,7 @@ namespace OpenTelemetry.Instrumentation
 
         public void OnNext(DiagnosticListener value)
         {
-            if ((Interlocked.Read(ref this.disposed) == 0) &&
+            if ((Volatile.Read(ref this.disposed) == 0) &&
                 this.diagnosticSourceFilter(value))
             {
                 var handler = this.handlerFactory(value.Name);

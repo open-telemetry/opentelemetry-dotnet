@@ -403,21 +403,21 @@ namespace OpenTelemetry.Metrics
                     {
                         if (outputDelta)
                         {
-                            long initValue = Interlocked.Read(ref this.runningValue.AsLong);
+                            long initValue = Volatile.Read(ref this.runningValue.AsLong);
                             this.snapshotValue.AsLong = initValue - this.deltaLastValue.AsLong;
                             this.deltaLastValue.AsLong = initValue;
                             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                             // Check again if value got updated, if yes reset status.
                             // This ensures no Updates get Lost.
-                            if (initValue != Interlocked.Read(ref this.runningValue.AsLong))
+                            if (initValue != Volatile.Read(ref this.runningValue.AsLong))
                             {
                                 this.MetricPointStatus = MetricPointStatus.CollectPending;
                             }
                         }
                         else
                         {
-                            this.snapshotValue.AsLong = Interlocked.Read(ref this.runningValue.AsLong);
+                            this.snapshotValue.AsLong = Volatile.Read(ref this.runningValue.AsLong);
                         }
 
                         break;
@@ -460,12 +460,12 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.LongGauge:
                     {
-                        this.snapshotValue.AsLong = Interlocked.Read(ref this.runningValue.AsLong);
+                        this.snapshotValue.AsLong = Volatile.Read(ref this.runningValue.AsLong);
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                         // Check again if value got updated, if yes reset status.
                         // This ensures no Updates get Lost.
-                        if (this.snapshotValue.AsLong != Interlocked.Read(ref this.runningValue.AsLong))
+                        if (this.snapshotValue.AsLong != Volatile.Read(ref this.runningValue.AsLong))
                         {
                             this.MetricPointStatus = MetricPointStatus.CollectPending;
                         }
