@@ -14,14 +14,17 @@
 Depending on the hosting mechanism you will be using:
 
 Install
+
 ```shell
 dotnet add package OpenTelemetry.Exporter.Prometheus.AspNetCore
 ```
+
 or
 
 ```shell
 dotnet add package OpenTelemetry.Exporter.Prometheus.HttpListener
 ```
+
 ### Step 2: Configure OpenTelemetry MeterProvider
 
 * When using OpenTelemetry.Extensions.Hosting package on .NET Core 3.1+:
@@ -90,8 +93,7 @@ for example use.
 
 Configure `HttpListener` with the already constructed meterProvider instance and
 passed in `PrometheusHttpListenerOptions` for configuration.
-Use `listener.Start()` to allow the listener to start receiving
-incoming requests.
+Use `listener.Start()` to allow the listener to start receiving incoming requests.
 
 ```csharp
 this.listener = new PrometheusHttpListener(
@@ -102,8 +104,8 @@ this.listener.Start();
 
 #### HttpListenerPrefixes
 
-Defines the prefixes which will be used by the listener. The default value is `["http://localhost:9464/"]`. You may specify
-multiple endpoints.
+Defines the prefixes which will be used by the listener. The default value is `["http://localhost:9464/"]`.
+You may specify multiple endpoints.
 
 For details see:
 [HttpListenerPrefixCollection.Add(String)](https://docs.microsoft.com/dotnet/api/system.net.httplistenerprefixcollection.add)
