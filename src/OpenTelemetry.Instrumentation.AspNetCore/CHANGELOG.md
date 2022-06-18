@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* Metrics instrumentation to correctly populate 'http.flavor' tag.
+  (1.1 instead of HTTP/1.1 etc.)
+  ([3379](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3379))
+
+* Tracing instrumentation to populate 'http.flavor' tag.
+  ([3372](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3372))
+
 ## 1.0.0-rc9.4
 
 Released 2022-Jun-03

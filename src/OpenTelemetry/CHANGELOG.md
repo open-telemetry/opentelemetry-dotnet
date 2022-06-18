@@ -11,6 +11,17 @@
   null-valued tag.
   ([#3325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3325))
 
+* `CompositeProcessor` will now ensure `ParentProvider` is set on its children
+  ([#3368](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3368))
+
+* Added `ForceFlush` and helper ctors on `OpenTelemetryLoggerProvider`
+  ([#3364](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3364))
+
+* `Timestamp`, `TraceId`, `SpanId`, `TraceFlags`, `TraceState`, `CategoryName`,
+  `LogLevel`, `EventId`, & `Exception` properties on `LogRecord` now expose
+  `set` methods
+  ([#3378](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3378))
+
 ## 1.3.0
 
 Released 2022-Jun-03

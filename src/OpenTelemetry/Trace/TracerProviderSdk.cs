@@ -277,11 +277,13 @@ namespace OpenTelemetry.Trace
             }
             else
             {
-                this.processor = new CompositeProcessor<Activity>(new[]
+                var newCompositeProcessor = new CompositeProcessor<Activity>(new[]
                 {
                     this.processor,
-                    processor,
                 });
+                newCompositeProcessor.SetParentProvider(this);
+                newCompositeProcessor.AddProcessor(processor);
+                this.processor = newCompositeProcessor;
             }
 
             return this;
