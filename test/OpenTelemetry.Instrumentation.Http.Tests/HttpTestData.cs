@@ -74,8 +74,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             public bool? SpanStatusHasDescription { get; set; }
 
             public Dictionary<string, string> SpanAttributes { get; set; }
-
-            public bool SetHttpFlavor { get; set; }
         }
     }
 }
