@@ -39,6 +39,11 @@ dotnet add package OpenTelemetry.Exporter.Prometheus
 
 ### Step 3: Configure Prometheus Scraping Endpoint
 
+Currently OpenTelemetry.Exporter.Prometheus contains two hosting mechanisms for scraping endpoint:
+
+PrometheusExporterMiddleware (ASP.NET Core) - Allow you to query metrics using .net middelware
+PrometheusExporterHttpServer (HttpListener) - Runs HTTPListener using Http.sys
+
 * On .NET Core 3.1+ register Prometheus scraping middleware using the
   `UseOpenTelemetryPrometheusScrapingEndpoint` extension:
 
@@ -77,6 +82,22 @@ dotnet add package OpenTelemetry.Exporter.Prometheus
   details on the settings available. This may also be turned on in .NET Core (it
   is OFF by default) when the ASP.NET Core pipeline is not available for
   middleware registration.
+  
+  ```csharp
+  services.AddOpenTelemetryMetrics(builder =>
+  {
+    builder.AddPrometheusExporter(options => // <- Registers HttpListener
+    {
+       options.StartHttpListener = true;
+       options.HttpListenerPrefixes = new string[] { $"http://localhost:9464/" };
+       options.ScrapeResponseCacheDurationMilliseconds = 0;
+    });
+
+    builder.AddAspNetCoreInstrumentation();
+
+    builder.AddRuntimeMetrics(serviceCollection);
+  });
+  ```
 
 ## Configuration
 
