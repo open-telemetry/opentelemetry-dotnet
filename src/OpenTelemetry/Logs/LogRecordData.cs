@@ -25,7 +25,7 @@ namespace OpenTelemetry.Logs
     /// <summary>
     /// Stores details about a log message.
     /// </summary>
-    public struct LogRecordData
+    internal struct LogRecordData
     {
         internal DateTime TimestampBacking = DateTime.UtcNow;
 
@@ -58,6 +58,11 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Gets or sets the log timestamp.
         /// </summary>
+        /// <remarks>
+        /// Note: If <see cref="Timestamp"/> is set to a value with <see
+        /// cref="DateTimeKind.Local"/> it will be automatically converted to
+        /// UTC using <see cref="DateTime.ToUniversalTime"/>.
+        /// </remarks>
         public DateTime Timestamp
         {
             readonly get => this.TimestampBacking;
