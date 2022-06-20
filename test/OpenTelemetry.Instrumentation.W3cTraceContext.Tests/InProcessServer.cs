@@ -30,7 +30,7 @@ using TestApp.AspNetCore._5._0;
 using TestApp.AspNetCore._6._0;
 #endif
 #if NET7_0
-using TestApp.AspNetCore._6._0;
+using TestApp.AspNetCore._7._0;
 #endif
 using Xunit.Abstractions;
 
