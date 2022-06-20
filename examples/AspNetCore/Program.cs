@@ -38,14 +38,14 @@ var serviceName = tracingExporter switch
     _ => "AspNetCoreExampleService",
 };
 
-Action<ResourceBuilder> configureResources = r => r.AddService(
+Action<ResourceBuilder> configureResource = r => r.AddService(
     serviceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName);
 
 // Traces
 builder.Services.AddOpenTelemetryTracing(options =>
 {
     options
-        .ConfigureResource(configureResources)
+        .ConfigureResource(configureResource)
         .SetSampler(new AlwaysOnSampler())
         .AddHttpClientInstrumentation()
         .AddAspNetCoreInstrumentation();
@@ -89,7 +89,7 @@ builder.Logging.ClearProviders();
 
 builder.Logging.AddOpenTelemetry(options =>
 {
-    options.ConfigureResource(configureResources);
+    options.ConfigureResource(configureResource);
     var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
     switch (logExporter)
     {
@@ -115,7 +115,7 @@ builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
 // Metrics
 builder.Services.AddOpenTelemetryMetrics(options =>
 {
-    options.ConfigureResource(configureResources)
+    options.ConfigureResource(configureResource)
         .AddHttpClientInstrumentation()
         .AddAspNetCoreInstrumentation();
 
