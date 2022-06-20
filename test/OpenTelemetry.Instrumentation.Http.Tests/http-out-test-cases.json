@@ -1,4 +1,4 @@
-﻿[
+[
   {
     "name": "Successful GET call to localhost",
     "method": "GET",
@@ -9,6 +9,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": 200,
       "http.url": "http://{host}:{port}/"
     }
@@ -23,6 +24,7 @@
     "spanAttributes": {
       "http.method": "POST",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": 200,
       "http.url": "http://{host}:{port}/"
     }
@@ -38,6 +40,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": 200,
       "http.url": "http://{host}:{port}/path/to/resource/"
     }
@@ -53,6 +56,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": 200,
       "http.url": "http://{host}:{port}/path/to/resource#fragment"
     }
@@ -68,6 +72,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": 200,
       "http.url": "http://{host}:{port}/path/to/resource#fragment"
     }
@@ -84,6 +89,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com",
+      "http.flavor": "2.0",
       "http.url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/"
     }
   },
@@ -99,6 +105,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com",
+      "http.flavor": "2.0",
       "http.url": "https://sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com/"
     }
   },
@@ -113,6 +120,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": 200,
       "http.url": "http://{host}:{port}/"
     }
@@ -128,6 +136,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": 200,
       "http.url": "http://{host}:{port}/"
     }
@@ -143,6 +152,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": "399",
       "http.url": "http://{host}:{port}/"
     }
@@ -158,6 +168,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": "400",
       "http.url": "http://{host}:{port}/"
     }
@@ -173,6 +184,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": "401",
       "http.url": "http://{host}:{port}/"
     }
@@ -188,6 +200,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": "403",
       "http.url": "http://{host}:{port}/"
     }
@@ -203,6 +216,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": "404",
       "http.url": "http://{host}:{port}/"
     }
@@ -218,6 +232,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": "429",
       "http.url": "http://{host}:{port}/"
     }
@@ -233,6 +248,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": "501",
       "http.url": "http://{host}:{port}/"
     }
@@ -248,6 +264,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": "503",
       "http.url": "http://{host}:{port}/"
     }
@@ -263,6 +280,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": "504",
       "http.url": "http://{host}:{port}/"
     }
@@ -278,6 +296,7 @@
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
+      "http.flavor": "2.0",
       "http.status_code": "600",
       "http.url": "http://{host}:{port}/"
     }
@@ -290,7 +309,6 @@
     "spanName": "HTTP GET",
     "spanStatus": "UNSET",
     "responseExpected": true,
-    "setHttpFlavor": true,
     "spanAttributes": {
       "http.method": "GET",
       "http.host": "{host}:{port}",
