@@ -50,7 +50,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 .AddProcessor(activityProcessor.Object)
                 .AddHttpClientInstrumentation(options =>
                 {
-                    options.SetHttpFlavor = tc.SetHttpFlavor;
                     options.Enrich = ActivityEnrichment;
                     options.RecordException = tc.RecordException.HasValue ? tc.RecordException.Value : false;
                 })

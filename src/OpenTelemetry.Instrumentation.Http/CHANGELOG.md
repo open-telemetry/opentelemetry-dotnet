@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* [Breaking] Removes `SetHttpFlavor` option. "http.flavor" is
+  now always automatically populated.
+  To remove this tag, set "http.flavor" to null using `ActivityProcessor`.
+  ([#3380](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3380))
+
 ## 1.0.0-rc9.4
 
 Released 2022-Jun-03
