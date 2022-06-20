@@ -25,9 +25,33 @@ namespace OpenTelemetry.Instrumentation.AspNetCore
     {
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
+        private readonly Func<string, object, object, bool> isEnabled = (activityName, obj1, obj2) =>
+        {
+            if (activityName.Equals("Microsoft.AspNetCore.Hosting.HttpRequestIn"))
+            {
+                return false;
+            }
+
+            return true;
+        };
+
         public AspNetCoreInstrumentation(HttpInListener httpInListener)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(httpInListener, null);
+            // For .NET7.0 activity will be created using activitySource.
+            // https://github.com/dotnet/aspnetcore/blob/main/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L327
+            // However, in case when activity creation returns null (due to sampling)
+            // the framework will fall back to creating activity anyways due to active diagnostic source listener
+            // To prevent this, isEnabled is implemented which will return false always
+            // so that the sampler's decision is respected.
+            if (HttpInListener.IsNet7OrGreater)
+            {
+                this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(httpInListener, this.isEnabled);
+            }
+            else
+            {
+                this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(httpInListener, null);
+            }
+
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

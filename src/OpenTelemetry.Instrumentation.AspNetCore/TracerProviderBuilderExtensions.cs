@@ -53,8 +53,16 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             AspNetCoreInstrumentation instrumentation)
         {
-            builder.AddSource(HttpInListener.ActivitySourceName);
-            builder.AddLegacySource(HttpInListener.ActivityOperationName); // for the activities created by AspNetCore
+            if (HttpInListener.IsNet7OrGreater)
+            {
+                builder.AddSource(HttpInListener.FrameworkActivitySourceName);
+            }
+            else
+            {
+                builder.AddSource(HttpInListener.ActivitySourceName);
+                builder.AddLegacySource(HttpInListener.ActivityOperationName); // for the activities created by AspNetCore
+            }
+
             return builder.AddInstrumentation(() => instrumentation);
         }
 

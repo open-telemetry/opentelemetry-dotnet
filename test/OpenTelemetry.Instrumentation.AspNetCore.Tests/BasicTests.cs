@@ -348,7 +348,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 var expectedTraceId = ActivityTraceId.CreateRandom();
                 var expectedParentSpanId = ActivitySpanId.CreateRandom();
                 var expectedTraceState = "rojo=1,congo=2";
-                var activityContext = new ActivityContext(expectedTraceId, expectedParentSpanId, ActivityTraceFlags.Recorded, expectedTraceState);
+                var activityContext = new ActivityContext(expectedTraceId, expectedParentSpanId, ActivityTraceFlags.Recorded, expectedTraceState, true);
                 var expectedBaggage = Baggage.SetBaggage("key1", "value1").SetBaggage("key2", "value2");
                 Sdk.SetDefaultTextMapPropagator(new ExtractOnlyPropagator(activityContext, expectedBaggage));
 
@@ -575,8 +575,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         private static void ValidateAspNetCoreActivity(Activity activityToValidate, string expectedHttpPath)
         {
             Assert.Equal(ActivityKind.Server, activityToValidate.Kind);
+#if NET7_0_OR_GREATER
+            Assert.Equal(HttpInListener.FrameworkActivitySourceName, activityToValidate.Source.Name);
+            Assert.Empty(activityToValidate.Source.Version);
+#else
             Assert.Equal(HttpInListener.ActivitySourceName, activityToValidate.Source.Name);
             Assert.Equal(HttpInListener.Version.ToString(), activityToValidate.Source.Version);
+#endif
             Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SemanticConventions.AttributeHttpTarget) as string);
         }
 
