@@ -143,14 +143,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 // see the spec https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/http.md
 
-                if (request.Host.Port is null or 80 or 443)
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpHost, request.Host.Host);
-                }
-                else
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpHost, request.Host.Host + ":" + request.Host.Port);
-                }
+                activity.SetTag(SemanticConventions.AttributeHttpHost, request.Host.Value);
+                //if (request.Host.Port is null or 80 or 443)
+                //{
+                //    activity.SetTag(SemanticConventions.AttributeHttpHost, request.Host.Host);
+                //}
+                //else
+                //{
+                //    activity.SetTag(SemanticConventions.AttributeHttpHost, request.Host.Host + ":" + request.Host.Port);
+                //}
 
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
                 activity.SetTag(SemanticConventions.AttributeHttpScheme, request.Scheme);
