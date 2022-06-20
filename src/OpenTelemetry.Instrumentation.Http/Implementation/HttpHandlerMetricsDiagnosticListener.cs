@@ -52,6 +52,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
                     new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode),
                     new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)),
+                    new KeyValuePair<string, object>(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri)),
                 };
 
                 this.httpClientDuration.Record(activity.Duration.TotalMilliseconds, tags);

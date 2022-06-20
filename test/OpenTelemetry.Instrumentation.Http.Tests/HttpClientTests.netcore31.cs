@@ -170,11 +170,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
                 var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, tc.ResponseCode == 0 ? 200 : tc.ResponseCode);
                 var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "2.0");
+                var url = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpUrl, normalizedAttributesTestCase["http.url"]);
                 Assert.Contains(method, attributes);
                 Assert.Contains(scheme, attributes);
                 Assert.Contains(statusCode, attributes);
                 Assert.Contains(flavor, attributes);
-                Assert.Equal(4, attributes.Length);
+                Assert.Contains(url, attributes);
+                Assert.Equal(5, attributes.Length);
             }
             else
             {
