@@ -9,6 +9,9 @@
 * Tracing instrumentation to populate 'http.flavor' tag.
   ([3372](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3372))
 
+* Tracing instrumentation to populate 'http.schema' tag.
+([3392](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3392))
+
 ## 1.0.0-rc9.4
 
 Released 2022-Jun-03
