@@ -104,7 +104,7 @@ namespace OpenTelemetry.Logs.Tests
 
             Assert.Equal(1, logRecord1.PoolReferenceCount);
 
-            pool.TrackReference(logRecord1);
+            logRecord1.AddReference();
 
             Assert.Equal(2, logRecord1.PoolReferenceCount);
 

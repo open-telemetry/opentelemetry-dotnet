@@ -17,7 +17,6 @@
 #nullable enable
 
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace OpenTelemetry.Logs
@@ -63,20 +62,19 @@ namespace OpenTelemetry.Logs
                         continue;
                     }
 
-                    logRecord.PoolReferenceCount = 1;
+                    logRecord.ResetReferenceCount();
                     return logRecord;
                 }
             }
 
-            return new LogRecord()
-            {
-                PoolReferenceCount = 1,
-            };
+            var newLogRecord = new LogRecord();
+            newLogRecord.ResetReferenceCount();
+            return newLogRecord;
         }
 
         public void Return(LogRecord logRecord)
         {
-            if (Interlocked.Decrement(ref logRecord.PoolReferenceCount) != 0)
+            if (logRecord.RemoveReference() != 0)
             {
                 return;
             }
@@ -104,12 +102,6 @@ namespace OpenTelemetry.Logs
                     return;
                 }
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void TrackReference(LogRecord logRecord)
-        {
-            Interlocked.Increment(ref logRecord.PoolReferenceCount);
         }
 
         internal static void Clear(LogRecord logRecord)

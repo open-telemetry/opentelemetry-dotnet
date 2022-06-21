@@ -19,6 +19,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 
@@ -217,6 +219,24 @@ namespace OpenTelemetry.Logs
         internal ref LogRecordData GetDataRef()
         {
             return ref this.Data;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void ResetReferenceCount()
+        {
+            this.PoolReferenceCount = 1;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void AddReference()
+        {
+            Interlocked.Increment(ref this.PoolReferenceCount);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal int RemoveReference()
+        {
+            return Interlocked.Decrement(ref this.PoolReferenceCount);
         }
 
         internal void Buffer()
