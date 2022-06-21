@@ -225,6 +225,19 @@ namespace OpenTelemetry.Logs
             this.BufferLogScopes();
         }
 
+        internal LogRecord Copy()
+        {
+            this.Buffer();
+
+            return new()
+            {
+                Data = this.Data,
+                State = this.State,
+                StateValues = this.StateValues == null ? null : new List<KeyValuePair<string, object?>>(this.StateValues),
+                BufferedScopes = this.BufferedScopes == null ? null : new List<object?>(this.BufferedScopes),
+            };
+        }
+
         /// <summary>
         /// Buffers the state values attached to the log into a list so that
         /// they can be safely processed after the log message lifecycle has
