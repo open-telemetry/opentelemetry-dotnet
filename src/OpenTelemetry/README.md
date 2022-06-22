@@ -79,7 +79,7 @@ Once built, changes to its configuration is not allowed, with the exception of
 adding more processors. In most cases, a single `TracerProvider` is created at
 the application startup, and is disposed when application shuts down.
 
-// TODO: Add Asp.Net Core, Asp.Net notes showing where this code should go.
+// TODO: Add Asp.Net Core notes showing where this code should go.
 
 The snippet below shows how to build a basic `TracerProvider`. This will create
 a provider with default configuration, and is not particularly useful. The

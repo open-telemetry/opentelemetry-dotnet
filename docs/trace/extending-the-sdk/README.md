@@ -102,7 +102,6 @@ The [OpenTelemetry .NET Github repo](../../../README.md#getting-started) ships
 the following instrumentation libraries. The individual docs for them describes
 the library they instrument, and steps for enabling them.
 
-* [ASP.NET](../../../src/OpenTelemetry.Instrumentation.AspNet/README.md)
 * [ASP.NET
   Core](../../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
 * [gRPC
@@ -200,8 +199,7 @@ activities does not by default runs through the sampler, and will have their
 `Kind` set to internal and they'll have empty ActivitySource name associated
 with it.
 
-Some common examples of such libraries include
-[ASP.NET](../../../src/OpenTelemetry.Instrumentation.AspNet/README.md), [ASP.NET
+Some common examples of such libraries include [ASP.NET
 Core](../../../src/OpenTelemetry.Instrumentation.AspNetCore/README.md), [HTTP
 client .NET Core](../../../src/OpenTelemetry.Instrumentation.Http/README.md) .
 Instrumentation libraries for these are already provided in this repo. The
