@@ -78,7 +78,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             {
                 tags = new TagList
                 {
-                    { SemanticConventions.AttributeHttpFlavor, context.Request.Protocol },
+                    { SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol) },
                     { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
                     { SemanticConventions.AttributeHttpMethod, context.Request.Method },
                     { SemanticConventions.AttributeHttpHost, host },
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             {
                 tags = new TagList
                 {
-                    { SemanticConventions.AttributeHttpFlavor, context.Request.Protocol },
+                    { SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol) },
                     { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
                     { SemanticConventions.AttributeHttpMethod, context.Request.Method },
                     { SemanticConventions.AttributeHttpHost, host },
