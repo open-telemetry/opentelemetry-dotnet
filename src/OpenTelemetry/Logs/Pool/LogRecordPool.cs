@@ -51,8 +51,8 @@ namespace OpenTelemetry.Logs
                 }
                 else
                 {
-                    /* List<T>.Clear sets the size to 0 but it maintains the
-                    underlying array. */
+                    /* List<T>.Clear sets the count/size to 0 but it maintains the
+                    underlying array (capacity). */
                     attributeStorage.Clear();
                 }
             }
@@ -67,8 +67,8 @@ namespace OpenTelemetry.Logs
                 }
                 else
                 {
-                    /* List<T>.Clear sets the size to 0 but it maintains the
-                    underlying array. */
+                    /* List<T>.Clear sets the count/size to 0 but it maintains the
+                    underlying array (capacity). */
                     bufferedScopes.Clear();
                 }
             }
