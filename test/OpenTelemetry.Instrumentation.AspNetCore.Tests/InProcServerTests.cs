@@ -77,7 +77,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(200, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
         }
 
-        public async void DisposeAsync()
+        public async void Dispose()
         {
             this.tracerProvider.Dispose();
             this.client.Dispose();
