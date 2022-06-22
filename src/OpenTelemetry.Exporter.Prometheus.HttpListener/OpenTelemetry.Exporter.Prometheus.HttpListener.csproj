@@ -19,8 +19,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />  
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\PrometheusCollectionManager.cs" Link="Includes/PrometheusCollectionManager.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\PrometheusExporter.cs" Link="Includes/PrometheusExporter.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\PrometheusExporterEventSource.cs" Link="Includes/PrometheusExporterEventSource.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\PrometheusExporterMeterProviderBuilderExtensions.cs" Link="Includes/PrometheusExporterMeterProviderBuilderExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\PrometheusExporterOptions.cs" Link="Includes/PrometheusExporterOptions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\PrometheusSerializer.cs" Link="Includes/PrometheusSerializer.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\PrometheusSerializerExt.cs" Link="Includes/PrometheusSerializerExt.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
