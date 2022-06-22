@@ -25,6 +25,9 @@ namespace OpenTelemetry.Logs
     /// </summary>
     public static class LogRecordPool
     {
+        internal const int DefaultMaxNumberOfAttributes = 64;
+        internal const int DefaultMaxNumberOfScopes = 16;
+
         /// <summary>
         /// Resize the pool.
         /// </summary>
@@ -34,6 +37,41 @@ namespace OpenTelemetry.Logs
             Guard.ThrowIfOutOfRange(capacity, min: 1);
 
             LogRecordSharedPool.Current = new(capacity);
+        }
+
+        internal static void Clear(LogRecord logRecord)
+        {
+            var attributeStorage = logRecord.AttributeStorage;
+            if (attributeStorage != null)
+            {
+                if (attributeStorage.Count > DefaultMaxNumberOfAttributes)
+                {
+                    // Don't allow the pool to grow unconstained.
+                    logRecord.AttributeStorage = null;
+                }
+                else
+                {
+                    /* List<T>.Clear sets the size to 0 but it maintains the
+                    underlying array. */
+                    attributeStorage.Clear();
+                }
+            }
+
+            var bufferedScopes = logRecord.BufferedScopes;
+            if (bufferedScopes != null)
+            {
+                if (bufferedScopes.Count > DefaultMaxNumberOfScopes)
+                {
+                    // Don't allow the pool to grow unconstained.
+                    logRecord.BufferedScopes = null;
+                }
+                else
+                {
+                    /* List<T>.Clear sets the size to 0 but it maintains the
+                    underlying array. */
+                    bufferedScopes.Clear();
+                }
+            }
         }
     }
 }

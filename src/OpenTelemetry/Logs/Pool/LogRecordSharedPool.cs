@@ -24,8 +24,6 @@ namespace OpenTelemetry.Logs
     internal sealed class LogRecordSharedPool : ILogRecordPool
     {
         internal const int DefaultMaxPoolSize = 2048;
-        internal const int DefaultMaxNumberOfAttributes = 64;
-        internal const int DefaultMaxNumberOfScopes = 16;
 
         internal static LogRecordSharedPool Current = new(DefaultMaxPoolSize);
 
@@ -79,7 +77,7 @@ namespace OpenTelemetry.Logs
                 return;
             }
 
-            Clear(logRecord);
+            LogRecordPool.Clear(logRecord);
 
             while (true)
             {
@@ -100,41 +98,6 @@ namespace OpenTelemetry.Logs
                     // and the pool will issue new instances as needed
                     this.pool[returnSnapshot % this.Capacity] = logRecord;
                     return;
-                }
-            }
-        }
-
-        internal static void Clear(LogRecord logRecord)
-        {
-            var attributeStorage = logRecord.AttributeStorage;
-            if (attributeStorage != null)
-            {
-                if (attributeStorage.Count > DefaultMaxNumberOfAttributes)
-                {
-                    // Don't allow the pool to grow unconstained.
-                    logRecord.AttributeStorage = null;
-                }
-                else
-                {
-                    /* List<T>.Clear sets the size to 0 but it maintains the
-                    underlying array. */
-                    attributeStorage.Clear();
-                }
-            }
-
-            var bufferedScopes = logRecord.BufferedScopes;
-            if (bufferedScopes != null)
-            {
-                if (bufferedScopes.Count > DefaultMaxNumberOfScopes)
-                {
-                    // Don't allow the pool to grow unconstained.
-                    logRecord.BufferedScopes = null;
-                }
-                else
-                {
-                    /* List<T>.Clear sets the size to 0 but it maintains the
-                    underlying array. */
-                    bufferedScopes.Clear();
                 }
             }
         }

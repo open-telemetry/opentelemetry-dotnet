@@ -47,7 +47,7 @@ namespace OpenTelemetry.Logs
         {
             if (Storage == null)
             {
-                LogRecordSharedPool.Clear(logRecord);
+                LogRecordPool.Clear(logRecord);
                 Storage = logRecord;
             }
         }

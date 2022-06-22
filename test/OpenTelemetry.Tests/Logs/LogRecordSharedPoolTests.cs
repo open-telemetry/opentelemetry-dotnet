@@ -150,12 +150,12 @@ namespace OpenTelemetry.Logs.Tests
             Assert.NotNull(logRecord1.AttributeStorage);
             Assert.NotNull(logRecord1.BufferedScopes);
 
-            for (int i = 0; i <= LogRecordSharedPool.DefaultMaxNumberOfAttributes; i++)
+            for (int i = 0; i <= LogRecordPool.DefaultMaxNumberOfAttributes; i++)
             {
                 logRecord1.AttributeStorage!.Add(new KeyValuePair<string, object?>("key", "value"));
             }
 
-            for (int i = 0; i <= LogRecordSharedPool.DefaultMaxNumberOfScopes; i++)
+            for (int i = 0; i <= LogRecordPool.DefaultMaxNumberOfScopes; i++)
             {
                 logRecord1.BufferedScopes!.Add(null);
             }
