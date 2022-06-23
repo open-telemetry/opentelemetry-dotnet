@@ -25,7 +25,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Exporter.Prometheus.Tests
+namespace OpenTelemetry.Exporter.Prometheus.Shared.Tests
 {
     public class PrometheusExporterHttpListenerTests
     {

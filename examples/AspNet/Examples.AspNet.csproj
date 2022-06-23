@@ -116,7 +116,7 @@
     </ProjectReference>
     <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.Prometheus.Shared\OpenTelemetry.Exporter.Prometheus.Shared.csproj">
       <Project>{52158a12-e7ef-45a1-859f-06f9b17410cb}</Project>
-      <Name>OpenTelemetry.Exporter.Prometheus</Name>
+      <Name>OpenTelemetry.Exporter.Prometheus.Shared</Name>
     </ProjectReference>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\OpenTelemetry.Exporter.Prometheus.HttpListener.csproj">
       <Project>{2006398c-aef0-4ce2-990f-f76933e3542f}</Project>
