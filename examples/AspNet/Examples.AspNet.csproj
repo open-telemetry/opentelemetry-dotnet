@@ -114,7 +114,7 @@
       <Project>{a38ac295-2745-4b85-8b6b-dca864cedd5b}</Project>
       <Name>OpenTelemetry.Exporter.OpenTelemetryProtocol</Name>
     </ProjectReference>
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj">
+    <ProjectReference Include="..\..\src\OpenTelemetry.Exporter.Prometheus.Shared\OpenTelemetry.Exporter.Prometheus.Shared.csproj">
       <Project>{52158a12-e7ef-45a1-859f-06f9b17410cb}</Project>
       <Name>OpenTelemetry.Exporter.Prometheus</Name>
     </ProjectReference>

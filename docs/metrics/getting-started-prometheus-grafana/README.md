@@ -23,7 +23,7 @@ dotnet run
 ```
 
 Add a reference to [Prometheus
-Exporter](../../../src/OpenTelemetry.Exporter.Prometheus/README.md):
+Exporter](../../../src/OpenTelemetry.Exporter.Prometheus.Shared/README.md):
 
 ```sh
 dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus
@@ -61,7 +61,7 @@ listener.Start();
 
 With `AddPrometheusExporter()`, OpenTelemetry `PrometheusExporter` will export
 data via the endpoint defined by
-[PrometheusExporterOptions.HttpListenerPrefixes](../../../src/OpenTelemetry.Exporter.Prometheus/README.md#httplistenerprefixes),
+[PrometheusExporterOptions.HttpListenerPrefixes](../../../src/OpenTelemetry.Exporter.Prometheus.Shared/README.md#httplistenerprefixes),
 which is `http://localhost:9464/` by default.
 
 ```mermaid
