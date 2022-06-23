@@ -136,7 +136,7 @@ internal abstract class TagTransformer<T>
     {
         string[] stringArray;
 
-        if (array is string[] arrayAsStringArray && !arrayAsStringArray.Any(s => s?.Length > maxStringValueLength))
+        if (array is string[] arrayAsStringArray && (!maxStringValueLength.HasValue || !arrayAsStringArray.Any(s => s?.Length > maxStringValueLength)))
         {
             stringArray = arrayAsStringArray;
         }
