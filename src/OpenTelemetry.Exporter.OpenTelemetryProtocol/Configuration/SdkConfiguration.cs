@@ -23,17 +23,12 @@ internal class SdkConfiguration
     private int? eventAttributeCountLimit;
     private int? linkAttributeCountLimit;
 
-    static SdkConfiguration()
-    {
-        Instance = new SdkConfiguration();
-        EnvironmentVariableConfiguration.InitializeDefaultConfigurationFromEnvironment(Instance);
-    }
-
     private SdkConfiguration()
     {
+        EnvironmentVariableConfiguration.InitializeDefaultConfigurationFromEnvironment(this);
     }
 
-    public static SdkConfiguration Instance { get; }
+    public static SdkConfiguration Instance { get; private set; } = new SdkConfiguration();
 
     public int? AttributeValueLengthLimit { get; set; }
 
@@ -65,5 +60,10 @@ internal class SdkConfiguration
     {
         get => this.linkAttributeCountLimit ?? this.SpanAttributeCountLimit;
         set => this.linkAttributeCountLimit = value;
+    }
+
+    internal static void Reset()
+    {
+        Instance = new SdkConfiguration();
     }
 }

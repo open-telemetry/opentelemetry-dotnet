@@ -19,8 +19,21 @@ using Xunit;
 
 namespace OpenTelemetry.Configuration.Tests
 {
-    public class SdkConfigurationTests
+    [Collection("xUnitCollectionPreventingTestsThatDependOnSdkConfigurationFromRunningInParallel")]
+    public class SdkConfigurationTests : IDisposable
     {
+        public SdkConfigurationTests()
+        {
+            ClearEnvVars();
+            SdkConfiguration.Reset();
+        }
+
+        public void Dispose()
+        {
+            ClearEnvVars();
+            SdkConfiguration.Reset();
+        }
+
         [Fact]
         public void SdkConfigurationDefaults()
         {
@@ -39,8 +52,6 @@ namespace OpenTelemetry.Configuration.Tests
         [Fact]
         public void SdkConfigurationIsInitializedFromEnvironment()
         {
-            // TODO: This is probably problematic. Setting these here could
-            // may impact other tests that are running concurrently.
             Environment.SetEnvironmentVariable("OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT", "10");
             Environment.SetEnvironmentVariable("OTEL_ATTRIBUTE_COUNT_LIMIT", "10");
             Environment.SetEnvironmentVariable("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT", "20");
@@ -50,6 +61,7 @@ namespace OpenTelemetry.Configuration.Tests
             Environment.SetEnvironmentVariable("OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT", "30");
             Environment.SetEnvironmentVariable("OTEL_LINK_ATTRIBUTE_COUNT_LIMIT", "30");
 
+            SdkConfiguration.Reset();
             var config = SdkConfiguration.Instance;
 
             Assert.Equal(10, config.AttributeValueLengthLimit);
@@ -104,6 +116,18 @@ namespace OpenTelemetry.Configuration.Tests
             Assert.Equal(20, config.SpanAttributeCountLimit);
             Assert.Equal(30, config.EventAttributeCountLimit);
             Assert.Equal(40, config.LinkAttributeCountLimit);
+        }
+
+        private static void ClearEnvVars()
+        {
+            Environment.SetEnvironmentVariable("OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT", null);
+            Environment.SetEnvironmentVariable("OTEL_ATTRIBUTE_COUNT_LIMIT", null);
+            Environment.SetEnvironmentVariable("OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT", null);
+            Environment.SetEnvironmentVariable("OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT", null);
+            Environment.SetEnvironmentVariable("OTEL_SPAN_EVENT_COUNT_LIMIT", null);
+            Environment.SetEnvironmentVariable("OTEL_SPAN_LINK_COUNT_LIMIT", null);
+            Environment.SetEnvironmentVariable("OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT", null);
+            Environment.SetEnvironmentVariable("OTEL_LINK_ATTRIBUTE_COUNT_LIMIT", null);
         }
     }
 }

@@ -35,6 +35,7 @@ using Status = OpenTelemetry.Trace.Status;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
+    [Collection("xUnitCollectionPreventingTestsThatDependOnSdkConfigurationFromRunningInParallel")]
     public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
     {
         static OtlpTraceExporterTests()
@@ -283,6 +284,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     }
                 }
             }
+
+            SdkConfiguration.Reset();
         }
 
         [Fact]
