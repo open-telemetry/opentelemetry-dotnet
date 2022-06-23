@@ -175,25 +175,25 @@ namespace OpenTelemetry.Internal.Tests
         public class CallerArgumentExpressionAttributeTests
         {
 #if !NETCOREAPP3_0_OR_GREATER
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("paramName")]
-        public static void Ctor_ParameterName_Roundtrip(string value)
-        {
-            var caea = new CallerArgumentExpressionAttribute(value);
-            Assert.Equal(value, caea.ParameterName);
-        }
+            [Theory]
+            [InlineData(null)]
+            [InlineData("")]
+            [InlineData("paramName")]
+            public static void Ctor_ParameterName_Roundtrip(string value)
+            {
+                var caea = new CallerArgumentExpressionAttribute(value);
+                Assert.Equal(value, caea.ParameterName);
+            }
 
-        [Fact]
-        public static void BasicTest()
-        {
-            Assert.Equal("\"hello\"", GetValue("hello"));
-            Assert.Equal("3 + 2", GetValue(3 + 2));
-            Assert.Equal("new object()", GetValue(new object()));
-        }
+            [Fact]
+            public static void BasicTest()
+            {
+                Assert.Equal("\"hello\"", GetValue("hello"));
+                Assert.Equal("3 + 2", GetValue(3 + 2));
+                Assert.Equal("new object()", GetValue(new object()));
+            }
 
-        private static string GetValue(object argument, [CallerArgumentExpression("argument")] string expr = null) => expr;
+            private static string GetValue(object argument, [CallerArgumentExpression("argument")] string expr = null) => expr;
 #endif
         }
     }
