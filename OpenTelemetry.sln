@@ -237,9 +237,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Pr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "correlation", "docs\logs\correlation\correlation.csproj", "{9A07D215-90AC-4BAF-BCDB-73D74FD3A5C5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.Prometheus.HttpListener", "src\OpenTelemetry.Exporter.Prometheus.HttpListener\OpenTelemetry.Exporter.Prometheus.HttpListener.csproj", "{2006398C-AEF0-4CE2-990F-F76933E3542F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus.HttpListener", "src\OpenTelemetry.Exporter.Prometheus.HttpListener\OpenTelemetry.Exporter.Prometheus.HttpListener.csproj", "{2006398C-AEF0-4CE2-990F-F76933E3542F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.Prometheus.AspNetCore", "src\OpenTelemetry.Exporter.Prometheus.AspNetCore\OpenTelemetry.Exporter.Prometheus.AspNetCore.csproj", "{1AAF7405-7B82-4C84-9DA8-B0065F575DAE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus.AspNetCore", "src\OpenTelemetry.Exporter.Prometheus.AspNetCore\OpenTelemetry.Exporter.Prometheus.AspNetCore.csproj", "{1AAF7405-7B82-4C84-9DA8-B0065F575DAE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Exporter.Prometheus.HttpListener.Tests", "test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests.csproj", "{50FA54EE-626C-45BA-AB85-6D62E02A77AB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -499,6 +501,10 @@ Global
 		{1AAF7405-7B82-4C84-9DA8-B0065F575DAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1AAF7405-7B82-4C84-9DA8-B0065F575DAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1AAF7405-7B82-4C84-9DA8-B0065F575DAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{50FA54EE-626C-45BA-AB85-6D62E02A77AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50FA54EE-626C-45BA-AB85-6D62E02A77AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50FA54EE-626C-45BA-AB85-6D62E02A77AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{50FA54EE-626C-45BA-AB85-6D62E02A77AB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
