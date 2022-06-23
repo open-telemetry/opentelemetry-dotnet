@@ -147,24 +147,27 @@ namespace OpenTelemetry
 
             private static readonly BatchEnumeratorMoveNextFunc MoveNextCircularBufferLogRecord = (ref Enumerator enumerator) =>
             {
-                var circularBuffer = enumerator.circularBuffer;
-
-                var currentItem = enumerator.Current;
-                if (currentItem != null)
+                // Note: This type check here is to give the JIT a hint it can
+                // remove all of this code when T != LogRecord
+                if (typeof(T) == typeof(LogRecord))
                 {
-                    if (typeof(T) == typeof(LogRecord))
+                    var circularBuffer = enumerator.circularBuffer;
+
+                    var currentItem = enumerator.Current;
+                    if (currentItem != null)
                     {
                         LogRecordSharedPool.Current.Return((LogRecord)(object)currentItem);
                     }
+
+                    if (circularBuffer!.RemovedCount < enumerator.targetCount)
+                    {
+                        enumerator.current = circularBuffer.Read();
+                        return true;
+                    }
+
+                    enumerator.current = null;
                 }
 
-                if (circularBuffer!.RemovedCount < enumerator.targetCount)
-                {
-                    enumerator.current = circularBuffer.Read();
-                    return true;
-                }
-
-                enumerator.current = null;
                 return false;
             };
 
