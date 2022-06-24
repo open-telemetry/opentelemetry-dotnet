@@ -17,7 +17,6 @@
 using System;
 using System.Diagnostics;
 using System.Net.Http;
-using System.Net.Sockets;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -194,20 +193,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 if (exc is HttpRequestException)
                 {
-                    if (exc.InnerException is SocketException exception)
-                    {
-                        switch (exception.SocketErrorCode)
-                        {
-                            case SocketError.HostNotFound:
-                                activity.SetStatus(Status.Error.WithDescription(exc.Message));
-                                return;
-                        }
-                    }
-
-                    if (exc.InnerException != null)
-                    {
-                        activity.SetStatus(Status.Error.WithDescription(exc.Message));
-                    }
+                    activity.SetStatus(Status.Error.WithDescription(exc.Message));
                 }
 
                 try
