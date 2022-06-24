@@ -200,11 +200,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                         {
                             case SocketError.HostNotFound:
                                 activity.SetStatus(Status.Error.WithDescription(exc.Message));
-                                return;
+                                break;
                         }
                     }
-
-                    if (exc.InnerException != null)
+                    else if (exc.InnerException != null)
                     {
                         activity.SetStatus(Status.Error.WithDescription(exc.Message));
                     }
