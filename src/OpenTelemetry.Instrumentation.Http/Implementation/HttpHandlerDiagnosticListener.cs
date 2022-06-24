@@ -192,21 +192,9 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     activity.RecordException(exc);
                 }
 
-                if (exc is HttpRequestException && exc.InnerException != null)
+                if (exc is HttpRequestException)
                 {
-                    if (exc.InnerException is SocketException exception)
-                    {
-                        switch (exception.SocketErrorCode)
-                        {
-                            case SocketError.HostNotFound:
-                                activity.SetStatus(Status.Error.WithDescription(exc.Message));
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        activity.SetStatus(Status.Error.WithDescription(exc.Message));
-                    }
+                    activity.SetStatus(Status.Error.WithDescription(exc.Message));
                 }
 
                 try
