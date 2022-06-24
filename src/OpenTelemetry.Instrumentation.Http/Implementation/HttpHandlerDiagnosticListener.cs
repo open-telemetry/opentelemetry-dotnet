@@ -192,7 +192,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     activity.RecordException(exc);
                 }
 
-                if (exc is HttpRequestException)
+                if (exc is HttpRequestException && exc.InnerException != null)
                 {
                     if (exc.InnerException is SocketException exception)
                     {
@@ -203,7 +203,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                                 break;
                         }
                     }
-                    else if (exc.InnerException != null)
+                    else
                     {
                         activity.SetStatus(Status.Error.WithDescription(exc.Message));
                     }
