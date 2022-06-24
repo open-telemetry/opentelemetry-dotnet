@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>netcoreapp3.1;net462</TargetFrameworks>
-    <Description>Prometheus exporter for OpenTelemetry .NET</Description>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <Description>Prometheus exporter HttpListener for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);prometheus;metrics</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
   </PropertyGroup>
@@ -32,10 +32,6 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.Shared\PrometheusSerializerExt.cs" Link="Includes/PrometheusSerializerExt.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\Guard.cs" Link="Includes\Guard.cs" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>
