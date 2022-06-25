@@ -112,13 +112,16 @@ builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
 });
 
 // Metrics
+
+var metricsExporter = builder.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
+
 builder.Services.AddOpenTelemetryMetrics(options =>
 {
     options.SetResourceBuilder(resourceBuilder)
+        .AddRuntimeMetrics()
         .AddHttpClientInstrumentation()
         .AddAspNetCoreInstrumentation();
 
-    var metricsExporter = builder.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
     switch (metricsExporter)
     {
         case "prometheus":
@@ -159,9 +162,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-var metricsExporter = builder.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
-
-if (metricsExporter == "prometheus")
+if (metricsExporter.Equals("prometheus", StringComparison.OrdinalIgnoreCase))
 {
     app.UseOpenTelemetryPrometheusScrapingEndpoint();
 }
