@@ -35,7 +35,9 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     internal class HttpInListener : ListenerHandler
     {
         internal const string ActivityOperationName = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
-        internal static readonly bool IsNet7OrGreater = typeof(HttpRequest).Assembly.GetName().Version.Major >= 7;
+        internal static readonly bool IsNet7OrGreater;
+
+        // https://github.com/dotnet/aspnetcore/blob/main/src/Hosting/Hosting/src/WebHostBuilder.cs#L291
         internal static readonly string FrameworkActivitySourceName = "Microsoft.AspNetCore";
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
@@ -51,6 +53,18 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new("AttributeRouteInfo");
         private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new("Template");
         private readonly AspNetCoreInstrumentationOptions options;
+
+        static HttpInListener()
+        {
+            try
+            {
+                IsNet7OrGreater = typeof(HttpRequest).Assembly.GetName().Version.Major >= 7;
+            }
+            catch (Exception)
+            {
+                IsNet7OrGreater = false;
+            }
+        }
 
         public HttpInListener(AspNetCoreInstrumentationOptions options)
             : base(DiagnosticSourceName)
