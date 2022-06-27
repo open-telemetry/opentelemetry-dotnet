@@ -66,7 +66,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation((opt) =>
                                {
-                                   opt.SetHttpFlavor = tc.SetHttpFlavor;
                                    opt.Enrich = ActivityEnrichment;
                                    opt.RecordException = tc.RecordException ?? false;
                                })
@@ -202,6 +201,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
       ""http.method"": ""GET"",
       ""http.host"": ""{host}:{port}"",
       ""http.status_code"": ""399"",
+      ""http.flavor"": ""2.0"",
       ""http.url"": ""http://{host}:{port}/""
     }
   }

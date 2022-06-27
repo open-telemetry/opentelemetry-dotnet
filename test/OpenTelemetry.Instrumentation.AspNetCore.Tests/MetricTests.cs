@@ -120,7 +120,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, "GET");
             var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
             var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, "200");
-            var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "HTTP/1.1");
+            var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "1.1");
             var host = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpHost, "localhost");
             var target = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpTarget, "api/Values");
             Assert.Contains(method, attributes);
