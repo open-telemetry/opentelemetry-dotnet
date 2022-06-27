@@ -27,7 +27,7 @@
 
 * Add `ConfigureResourceBuilder` which can replace SetResourceBuilder more
   succinctly in most cases and has greater flexibility (applies to
-  TracerProvicerBuilder, MeterProviderBuilder, OpenTelemetryLoggingOptions).
+  TracerProviderBuilder, MeterProviderBuilder, OpenTelemetryLoggingOptions).
   ([#3307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3307))
 
 ## 1.3.0
