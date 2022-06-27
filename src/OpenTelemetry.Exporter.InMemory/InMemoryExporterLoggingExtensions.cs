@@ -27,7 +27,27 @@ namespace OpenTelemetry.Logs
             Guard.ThrowIfNull(loggerOptions);
             Guard.ThrowIfNull(exportedItems);
 
-            return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems)));
+            var logExporter = new InMemoryExporter<LogRecord>(
+                exportFunc: (in Batch<LogRecord> batch) => ExportLogRecord(in batch, exportedItems));
+
+            return loggerOptions.AddProcessor(new SimpleLogRecordExportProcessor(logExporter));
+        }
+
+        private static ExportResult ExportLogRecord(in Batch<LogRecord> batch, ICollection<LogRecord> exportedItems)
+        {
+            if (exportedItems == null)
+            {
+                return ExportResult.Failure;
+            }
+
+            foreach (var log in batch)
+            {
+                log.BufferLogScopes();
+
+                exportedItems.Add(log);
+            }
+
+            return ExportResult.Success;
         }
     }
 }

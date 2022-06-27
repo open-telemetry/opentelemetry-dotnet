@@ -14,7 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Exporter
@@ -23,18 +22,20 @@ namespace OpenTelemetry.Exporter
         where T : class
     {
         private readonly ICollection<T> exportedItems;
-        private readonly Func<Batch<T>, ExportResult> onExport;
+        private readonly ExportFunc onExport;
 
         public InMemoryExporter(ICollection<T> exportedItems)
         {
             this.exportedItems = exportedItems;
-            this.onExport = (Batch<T> batch) => this.DefaultExport(batch);
+            this.onExport = this.DefaultExport;
         }
 
-        internal InMemoryExporter(Func<Batch<T>, ExportResult> exportFunc)
+        internal InMemoryExporter(ExportFunc exportFunc)
         {
             this.onExport = exportFunc;
         }
+
+        internal delegate ExportResult ExportFunc(in Batch<T> batch);
 
         public override ExportResult Export(in Batch<T> batch) => this.onExport(batch);
 
