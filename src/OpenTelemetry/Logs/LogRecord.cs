@@ -287,7 +287,7 @@ namespace OpenTelemetry.Logs
                 return;
             }
 
-            List<object?> scopes = this.BufferedScopes ??= new List<object?>(LogRecordPool.DefaultMaxNumberOfScopes);
+            List<object?> scopes = this.BufferedScopes ??= new List<object?>(LogRecordPoolHelper.DefaultMaxNumberOfScopes);
 
             this.ScopeProvider.ForEachScope(AddScopeToBufferedList, scopes);
 

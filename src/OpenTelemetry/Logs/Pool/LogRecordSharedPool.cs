@@ -18,27 +18,37 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
 {
     internal sealed class LogRecordSharedPool : ILogRecordPool
     {
-        internal const int DefaultMaxPoolSize = 2048;
+        public const int DefaultMaxPoolSize = 2048;
 
-        internal static LogRecordSharedPool Current = new(DefaultMaxPoolSize);
+        public static LogRecordSharedPool Current = new(DefaultMaxPoolSize);
 
-        internal readonly int Capacity;
+        public readonly int Capacity;
         private readonly LogRecord?[] pool;
         private long rentIndex;
         private long returnIndex;
 
-        internal LogRecordSharedPool(int capacity)
+        public LogRecordSharedPool(int capacity)
         {
             this.Capacity = capacity;
             this.pool = new LogRecord?[capacity];
         }
 
-        internal int Count => (int)(Volatile.Read(ref this.returnIndex) - Volatile.Read(ref this.rentIndex));
+        public int Count => (int)(Volatile.Read(ref this.returnIndex) - Volatile.Read(ref this.rentIndex));
+
+        // Note: It might make sense to expose this (somehow) in the future.
+        // Ideal config is shared pool capacity == max batch size.
+        public static void Resize(int capacity)
+        {
+            Guard.ThrowIfOutOfRange(capacity, min: 1);
+
+            Current = new(capacity);
+        }
 
         public LogRecord Rent()
         {
@@ -77,7 +87,7 @@ namespace OpenTelemetry.Logs
                 return;
             }
 
-            LogRecordPool.Clear(logRecord);
+            LogRecordPoolHelper.Clear(logRecord);
 
             while (true)
             {

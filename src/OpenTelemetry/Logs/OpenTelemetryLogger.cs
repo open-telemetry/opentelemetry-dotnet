@@ -111,7 +111,7 @@ namespace OpenTelemetry.Logs
             }
             else
             {
-                var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(LogRecordPool.DefaultMaxNumberOfAttributes);
+                var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(LogRecordPoolHelper.DefaultMaxNumberOfAttributes);
                 attributeStorage.Add(new KeyValuePair<string, object?>(string.Empty, state));
                 return attributeStorage;
             }

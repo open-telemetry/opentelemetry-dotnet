@@ -23,7 +23,7 @@ namespace OpenTelemetry.Logs
     internal sealed class LogRecordThreadStaticPool : ILogRecordPool
     {
         [ThreadStatic]
-        internal static LogRecord? Storage;
+        public static LogRecord? Storage;
 
         private LogRecordThreadStaticPool()
         {
@@ -47,7 +47,7 @@ namespace OpenTelemetry.Logs
         {
             if (Storage == null)
             {
-                LogRecordPool.Clear(logRecord);
+                LogRecordPoolHelper.Clear(logRecord);
                 Storage = logRecord;
             }
         }
