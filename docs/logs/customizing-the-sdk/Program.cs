@@ -30,7 +30,7 @@ public class Program
             builder.AddOpenTelemetry(options =>
             {
                 options.IncludeScopes = true;
-                options.ConfigureResource(r => r.AddService(serviceName: "MyService", serviceVersion: "1.0.0"));
+                options.ConfigureResourceBuilder(r => r.AddService(serviceName: "MyService", serviceVersion: "1.0.0"));
                 options.AddConsoleExporter();
             });
         });

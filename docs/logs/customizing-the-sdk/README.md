@@ -52,16 +52,16 @@ var loggerFactory = LoggerFactory.Create(builder =>
 
 For more information on Processors, please review [Extending the SDK](../extending-the-sdk/README.md#processor)
 
-### ConfigureResource
+### ConfigureResourceBuilder
 
 [Resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md)
 is the immutable representation of the entity producing the telemetry.
 If no `Resource` is explicitly configured, the default is to use a resource
 indicating this [Telemetry
 SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk).
-The `ConfigureResource` method on `OpenTelemetryLoggerOptions` can be used to
-configure the `ResourceBuilder`. It is not possible to change the resources
-*after* creating the `LoggerFactory`.
+The `ConfigureResourceBuilder` method on `OpenTelemetryLoggerOptions` can be
+used to configure the `ResourceBuilder`. It is not possible to change the
+resources *after* creating the `LoggerFactory`.
 
 The snippet below shows configuring the `ResourceBuilder` of the provider.
 
@@ -70,7 +70,7 @@ var loggerFactory = LoggerFactory.Create(builder =>
 {
     builder.AddOpenTelemetry(options =>
     {
-        options.ConfigureResource(r => r.AddService(
+        options.ConfigureResourceBuilder(r => r.AddService(
             serviceName: "MyService",
             serviceVersion: "1.0.0"
             ));

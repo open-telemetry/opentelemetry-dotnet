@@ -31,7 +31,7 @@ namespace Examples.Console
             // and use Console exporter.
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource("MyCompany.MyProduct.MyWebServer")
-                    .ConfigureResource(r => r.AddService("MyServiceName"))
+                    .ConfigureResourceBuilder(r => r.AddService("MyServiceName"))
                     .AddConsoleExporter()
                     .Build();
 

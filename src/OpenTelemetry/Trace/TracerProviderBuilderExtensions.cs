@@ -62,7 +62,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
         /// this provider is built from. Overwrites currently set ResourceBuilder.
-        /// You should usually use <see cref="ConfigureResource(TracerProviderBuilder, Action{ResourceBuilder})"/> instead
+        /// You should usually use <see cref="ConfigureResourceBuilder(TracerProviderBuilder, Action{ResourceBuilder})"/> instead
         /// (call <see cref="ResourceBuilder.Clear"/> if desired).
         /// </summary>
         /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
@@ -85,7 +85,7 @@ namespace OpenTelemetry.Trace
         /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
         /// <param name="configure">An action which modifies the provided <see cref="ResourceBuilder"/> in-place.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder ConfigureResource(this TracerProviderBuilder tracerProviderBuilder, Action<ResourceBuilder> configure)
+        public static TracerProviderBuilder ConfigureResourceBuilder(this TracerProviderBuilder tracerProviderBuilder, Action<ResourceBuilder> configure)
         {
             Guard.ThrowIfNull(tracerProviderBuilder, nameof(tracerProviderBuilder));
             Guard.ThrowIfNull(configure, nameof(configure));

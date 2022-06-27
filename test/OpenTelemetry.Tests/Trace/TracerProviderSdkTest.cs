@@ -1076,7 +1076,7 @@ namespace OpenTelemetry.Trace.Tests
             var tracerProvider = useConfigure ?
                 Sdk.CreateTracerProviderBuilder().SetResourceBuilder(
                     ResourceBuilder.CreateDefault().AddTelemetrySdk()).Build() :
-                Sdk.CreateTracerProviderBuilder().ConfigureResource(r => r.AddTelemetrySdk()).Build();
+                Sdk.CreateTracerProviderBuilder().ConfigureResourceBuilder(r => r.AddTelemetrySdk()).Build();
             var resource = tracerProvider.GetResource();
             var attributes = resource.Attributes;
 
