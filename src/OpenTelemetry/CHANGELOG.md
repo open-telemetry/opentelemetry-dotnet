@@ -22,6 +22,9 @@
   `set` methods
   ([#3378](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3378))
 
+* Handle possible exception when initializing the default service name.
+  ([#3405](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3405))
+
 ## 1.3.0
 
 Released 2022-Jun-03
