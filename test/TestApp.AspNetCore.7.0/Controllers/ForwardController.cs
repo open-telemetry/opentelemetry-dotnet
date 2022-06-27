@@ -13,13 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
-namespace TestApp.AspNetCore._3._1.Controllers
+#pragma warning disable SA1300 // Element should begin with upper-case letter
+namespace TestApp.AspNetCore._7._0.Controllers
+#pragma warning restore SA1300 // Element should begin with upper-case letter
 {
     [Route("api/[controller]")]
     public class ForwardController : Controller
