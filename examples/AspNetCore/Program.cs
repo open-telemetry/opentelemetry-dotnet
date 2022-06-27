@@ -24,27 +24,28 @@ using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var serviceName = "AspNetCoreExampleService";
-
 // OpenTelemetry
 var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
 
 // Switch between Zipkin/Jaeger/OTLP by setting UseExporter in appsettings.json.
 var tracingExporter = builder.Configuration.GetValue<string>("UseTracingExporter").ToLowerInvariant();
 
-var resourceBuilder = tracingExporter switch
+var serviceName = tracingExporter switch
 {
-    "jaeger" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Jaeger:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
-    "zipkin" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Zipkin:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
-    "otlp" => ResourceBuilder.CreateDefault().AddService(builder.Configuration.GetValue<string>("Otlp:ServiceName"), serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
-    _ => ResourceBuilder.CreateDefault().AddService(serviceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName),
+    "jaeger" => builder.Configuration.GetValue<string>("Jaeger:ServiceName"),
+    "zipkin" => builder.Configuration.GetValue<string>("Zipkin:ServiceName"),
+    "otlp" => builder.Configuration.GetValue<string>("Otlp:ServiceName"),
+    _ => "AspNetCoreExampleService",
 };
+
+Action<ResourceBuilder> configureResource = r => r.AddService(
+    serviceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName);
 
 // Traces
 builder.Services.AddOpenTelemetryTracing(options =>
 {
     options
-        .SetResourceBuilder(resourceBuilder)
+        .ConfigureResource(configureResource)
         .SetSampler(new AlwaysOnSampler())
         .AddHttpClientInstrumentation()
         .AddAspNetCoreInstrumentation();
@@ -88,7 +89,7 @@ builder.Logging.ClearProviders();
 
 builder.Logging.AddOpenTelemetry(options =>
 {
-    options.SetResourceBuilder(resourceBuilder);
+    options.ConfigureResource(configureResource);
     var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
     switch (logExporter)
     {
@@ -114,7 +115,7 @@ builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
 // Metrics
 builder.Services.AddOpenTelemetryMetrics(options =>
 {
-    options.SetResourceBuilder(resourceBuilder)
+    options.ConfigureResource(configureResource)
         .AddHttpClientInstrumentation()
         .AddAspNetCoreInstrumentation();
 
