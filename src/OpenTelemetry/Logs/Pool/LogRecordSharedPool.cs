@@ -105,7 +105,12 @@ namespace OpenTelemetry.Logs
                     // for two threads to write to the same index. In that case
                     // only one of the logRecords will make it back into the
                     // pool. Anything lost in the race will collected by the GC
-                    // and the pool will issue new instances as needed
+                    // and the pool will issue new instances as needed. This
+                    // could be abated by an Interlocked.CompareExchange here
+                    // but for the general use case of an exporter returning
+                    // records one-by-one, better to keep this fast and not pay
+                    // for Interlocked.CompareExchange. The race is more
+                    // theoretical.
                     this.pool[returnSnapshot % this.Capacity] = logRecord;
                     return;
                 }
