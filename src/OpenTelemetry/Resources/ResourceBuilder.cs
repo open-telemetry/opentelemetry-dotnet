@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources
@@ -26,17 +27,34 @@ namespace OpenTelemetry.Resources
     {
         private readonly List<Resource> resources = new();
 
+        static ResourceBuilder()
+        {
+            var defaultServiceName = "unknown_service";
+
+            try
+            {
+                var processName = Process.GetCurrentProcess().ProcessName;
+                if (!string.IsNullOrWhiteSpace(processName))
+                {
+                    defaultServiceName = $"{defaultServiceName}:{processName}";
+                }
+            }
+            catch
+            {
+                // GetCurrentProcess can throw PlatformNotSupportedException
+            }
+
+            DefaultResource = new Resource(new Dictionary<string, object>
+            {
+                [ResourceSemanticConventions.AttributeServiceName] = defaultServiceName,
+            });
+        }
+
         private ResourceBuilder()
         {
         }
 
-        private static Resource DefaultResource { get; } = new Resource(new Dictionary<string, object>
-        {
-            [ResourceSemanticConventions.AttributeServiceName] = "unknown_service"
-                + (string.IsNullOrWhiteSpace(System.Diagnostics.Process.GetCurrentProcess().ProcessName)
-                ? string.Empty :
-                ":" + System.Diagnostics.Process.GetCurrentProcess().ProcessName),
-        });
+        private static Resource DefaultResource { get; }
 
         /// <summary>
         /// Creates a <see cref="ResourceBuilder"/> instance with Default
