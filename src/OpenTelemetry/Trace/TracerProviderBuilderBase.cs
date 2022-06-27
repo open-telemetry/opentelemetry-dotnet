@@ -38,6 +38,20 @@ namespace OpenTelemetry.Trace
         {
         }
 
+        /// <summary>
+        /// Gets or sets the <see cref="ResourceBuilder"/> from which the Resource associated with
+        /// this provider is built from. Setting this overwrites currently set ResourceBuilder.
+        /// </summary>
+        internal ResourceBuilder ResourceBuilder
+        {
+            get => this.resourceBuilder;
+            set
+            {
+                Guard.ThrowIfNull(value);
+                this.resourceBuilder = value;
+            }
+        }
+
         /// <inheritdoc />
         public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(
             Func<TInstrumentation> instrumentationFactory)
@@ -132,20 +146,6 @@ namespace OpenTelemetry.Trace
             Guard.ThrowIfNull(sampler);
 
             this.sampler = sampler;
-            return this;
-        }
-
-        /// <summary>
-        /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
-        /// this provider is built from. Overwrites currently set ResourceBuilder.
-        /// </summary>
-        /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        internal TracerProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
-        {
-            Guard.ThrowIfNull(resourceBuilder);
-
-            this.resourceBuilder = resourceBuilder;
             return this;
         }
 
