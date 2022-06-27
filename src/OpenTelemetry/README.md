@@ -238,12 +238,12 @@ is the immutable representation of the entity producing the telemetry. If no
 `Resource` is explicitly configured, the default is to use a resource indicating
 this [Telemetry
 SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk).
-The `ConfigureResourceBuilder` method on `TracerProviderBuilder` can be used to set a
-configure the resource on the provider. When the provider is built, it automatically
-builds the final `Resource` from the configured `ResourceBuilder`. As with
-samplers, there can only be a single `Resource` associated with a provider.
-It is not possible to change the resource builder *after* the provider is
-built, by calling the `Build()` method on the `TracerProviderBuilder`.
+The `ConfigureResourceBuilder` method on `TracerProviderBuilder` can be used to
+set a configure the resource on the provider. When the provider is built, it
+automatically builds the final `Resource` from the configured `ResourceBuilder`.
+As with samplers, there can only be a single `Resource` associated with a
+provider. It is not possible to change the resource builder *after* the provider
+is built, by calling the `Build()` method on the `TracerProviderBuilder`.
 `ResourceBuilder` offers various methods to construct resource comprising
 of multiple attributes from various sources.
 
