@@ -572,8 +572,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         private static void ValidateAspNetCoreActivity(Activity activityToValidate, string expectedHttpPath)
         {
             Assert.Equal(ActivityKind.Server, activityToValidate.Kind);
-            Assert.Equal(HttpInListener.ActivitySourceName, activityToValidate.Source.Name);
-            Assert.Equal(HttpInListener.Version.ToString(), activityToValidate.Source.Version);
+            Assert.Equal(InstrumentationInfo.ActivitySourceName, activityToValidate.Source.Name);
+            Assert.Equal(InstrumentationInfo.Version.ToString(), activityToValidate.Source.Version);
             Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SemanticConventions.AttributeHttpTarget) as string);
         }
 
