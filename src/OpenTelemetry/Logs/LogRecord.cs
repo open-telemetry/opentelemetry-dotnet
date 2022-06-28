@@ -247,7 +247,9 @@ namespace OpenTelemetry.Logs
 
         internal LogRecord Copy()
         {
-            this.Buffer();
+            // Note: We only buffer scopes here because state values are copied
+            // directly below.
+            this.BufferLogScopes();
 
             return new()
             {
