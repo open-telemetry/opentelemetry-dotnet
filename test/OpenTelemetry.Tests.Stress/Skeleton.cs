@@ -27,18 +27,11 @@ namespace OpenTelemetry.Tests.Stress;
 
 public partial class Program
 {
-    private static readonly Meter StressMeter = new("OpenTelemetry.Tests.Stress");
     private static volatile bool bContinue = true;
     private static volatile string output = "Test results not available yet.";
 
     static Program()
     {
-        var process = Process.GetCurrentProcess();
-        StressMeter.CreateObservableGauge("Process.NonpagedSystemMemorySize64", () => process.NonpagedSystemMemorySize64);
-        StressMeter.CreateObservableGauge("Process.PagedSystemMemorySize64", () => process.PagedSystemMemorySize64);
-        StressMeter.CreateObservableGauge("Process.PagedMemorySize64", () => process.PagedMemorySize64);
-        StressMeter.CreateObservableGauge("Process.WorkingSet64", () => process.WorkingSet64);
-        StressMeter.CreateObservableGauge("Process.VirtualMemorySize64", () => process.VirtualMemorySize64);
     }
 
     public static void Stress(int concurrency = 0, int prometheusPort = 0)
@@ -83,8 +76,8 @@ public partial class Program
         }
 
         using var meterProvider = prometheusPort != 0 ? Sdk.CreateMeterProviderBuilder()
-            .AddMeter(StressMeter.Name)
             .AddMeter(meter.Name)
+            .AddRuntimeMetrics()
             .AddPrometheusExporter(options =>
             {
                 options.StartHttpListener = true;

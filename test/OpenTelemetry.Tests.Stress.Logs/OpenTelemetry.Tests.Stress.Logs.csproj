@@ -10,6 +10,7 @@
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests.Stress\Skeleton.cs" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="[6.0.0,)" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="$(RuntimeInstrumentationPkgVer)" />
   </ItemGroup>
 
   <ItemGroup>
