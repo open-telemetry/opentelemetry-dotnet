@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+* Added `IEndpointRouteBuilder` extension methods to help with Prometheus
+  middleware configuration on ASP.NET Core
+  ([#3295](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3295))
+
+## 1.3.0-rc.2
+
+Released 2022-June-1
+
+## 1.3.0-beta.2
+
+Released 2022-May-16
+
 ## 1.3.0-beta.1
 
 Released 2022-Apr-15

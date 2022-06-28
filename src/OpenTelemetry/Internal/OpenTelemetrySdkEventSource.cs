@@ -384,6 +384,18 @@ namespace OpenTelemetry.Internal
             this.WriteEvent(41, instrumentName, meterName, reason, fix);
         }
 
+        [Event(42, Message = "Unsupported attribute type '{0}' for '{1}'. Attribute will not be exported.", Level = EventLevel.Warning)]
+        public void UnsupportedAttributeType(string type, string key)
+        {
+            this.WriteEvent(42, type.ToString(), key);
+        }
+
+        [Event(43, Message = "ForceFlush invoked for processor type '{0}' returned result '{1}'.", Level = EventLevel.Verbose)]
+        public void ProcessorForceFlushInvoked(string processorType, bool result)
+        {
+            this.WriteEvent(43, processorType, result);
+        }
+
 #if DEBUG
         public class OpenTelemetryEventListener : EventListener
         {

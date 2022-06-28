@@ -53,11 +53,9 @@ Here are the most commonly used components:
 Here are the [instrumentation
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library):
 
-* [ASP.NET](./src/OpenTelemetry.Instrumentation.AspNet/README.md)
 * [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
 * [Grpc.Net.Client](./src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
 * [HTTP clients](./src/OpenTelemetry.Instrumentation.Http/README.md)
-* [Redis client](./src/OpenTelemetry.Instrumentation.StackExchangeRedis/README.md)
 * [SQL client](./src/OpenTelemetry.Instrumentation.SqlClient/README.md)
 
 Here are the [exporter

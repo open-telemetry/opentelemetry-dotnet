@@ -121,14 +121,6 @@ namespace OpenTelemetry.Exporter
                 _ => throw new NotSupportedException($"Protocol {options.Protocol} is not supported."),
             };
 
-        public static OtlpExportProtocol? ToOtlpExportProtocol(this string protocol) =>
-            protocol.Trim() switch
-            {
-                "grpc" => OtlpExportProtocol.Grpc,
-                "http/protobuf" => OtlpExportProtocol.HttpProtobuf,
-                _ => null,
-            };
-
         public static void TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)
         {
             if (serviceProvider != null

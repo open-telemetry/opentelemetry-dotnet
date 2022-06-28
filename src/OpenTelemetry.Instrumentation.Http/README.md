@@ -3,19 +3,32 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Instrumentation.Http.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.Http)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Instrumentation.Http.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.Http)
 
-This is an
-[Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library),
+This is an [Instrumentation
+Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library),
 which instruments
 [System.Net.Http.HttpClient](https://docs.microsoft.com/dotnet/api/system.net.http.httpclient)
 and
 [System.Net.HttpWebRequest](https://docs.microsoft.com/dotnet/api/system.net.httpwebrequest)
-and collects telemetry about outgoing HTTP requests.
+and collects metrics and traces about outgoing HTTP requests.
+
+**Note: This component is based on the OpenTelemetry semantic conventions for
+[metrics](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/metrics/semantic_conventions)
+and
+[traces](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions).
+These conventions are
+[Experimental](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/document-status.md),
+and hence, this package is a [pre-release](../../VERSIONING.md#pre-releases).
+Until a [stable
+version](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/telemetry-stability.md)
+is released, there can be breaking changes. You can track the progress from
+[milestones](https://github.com/open-telemetry/opentelemetry-dotnet/milestone/23).**
 
 ## Steps to enable OpenTelemetry.Instrumentation.Http
 
 ### Step 1: Install Package
 
-Add a reference to the [`OpenTelemetry.Instrumentation.Http`](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.Http)
+Add a reference to the
+[`OpenTelemetry.Instrumentation.Http`](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.Http)
 package. Also, add any other instrumentations & exporters you will need.
 
 ```shell
@@ -26,9 +39,9 @@ dotnet add package OpenTelemetry.Instrumentation.Http
 
 HTTP instrumentation must be enabled at application startup.
 
-The following example demonstrates adding HTTP instrumentation to a
-console application. This example also sets up the OpenTelemetry Console
-exporter, which requires adding the package
+The following example demonstrates adding HTTP instrumentation to a console
+application. This example also sets up the OpenTelemetry Console exporter, which
+requires adding the package
 [`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
 to the application.
 
@@ -47,12 +60,13 @@ public class Program
 }
 ```
 
-For an ASP.NET Core application, adding instrumentation is typically done in
-the `ConfigureServices` of your `Startup` class. Refer to documentation for
+For an ASP.NET Core application, adding instrumentation is typically done in the
+`ConfigureServices` of your `Startup` class. Refer to documentation for
 [OpenTelemetry.Instrumentation.AspNetCore](../OpenTelemetry.Instrumentation.AspNetCore/README.md).
 
 For an ASP.NET application, adding instrumentation is typically done in the
-`Global.asax.cs`. Refer to documentation for [OpenTelemetry.Instrumentation.AspNet](../OpenTelemetry.Instrumentation.AspNet/README.md).
+`Global.asax.cs`. Refer to the documentation for
+[OpenTelemetry.Instrumentation.AspNet](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/main/src/OpenTelemetry.Instrumentation.AspNet/README.md).
 
 ## Advanced configuration
 
@@ -68,9 +82,9 @@ is used.
 ### SetHttpFlavor
 
 By default, this instrumentation does not add the `http.flavor` attribute. The
-`http.flavor` attribute specifies the kind of HTTP protocol used
-(e.g., `1.1` for HTTP 1.1). The `SetHttpFlavor` option can be used to include
-the `http.flavor` attribute.
+`http.flavor` attribute specifies the kind of HTTP protocol used (e.g., `1.1`
+for HTTP 1.1). The `SetHttpFlavor` option can be used to include the
+`http.flavor` attribute.
 
 The following example shows how to use `SetHttpFlavor`.
 
@@ -92,8 +106,7 @@ the condition for allowable requests. The Filter receives the request object -
 representing the outgoing request and does not collect telemetry about the
 request if the Filter returns false or throws exception.
 
-The following code snippet shows how to use `Filter` to only allow GET
-requests.
+The following code snippet shows how to use `Filter` to only allow GET requests.
 
 ```csharp
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -130,8 +143,7 @@ For event name "OnStartActivity", the actual object will be
 For event name "OnStopActivity", the actual object will be
 `HttpResponseMessage`.
 
-For event name "OnException", the actual object will be
-`Exception`.
+For event name "OnException", the actual object will be `Exception`.
 
 Example:
 
@@ -168,14 +180,11 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 #### HttpWebRequestInstrumentationOptions
 
-For event name "OnStartActivity", the actual object will be
-`HttpWebRequest`.
+For event name "OnStartActivity", the actual object will be `HttpWebRequest`.
 
-For event name "OnStopActivity", the actual object will be
-`HttpWebResponse`.
+For event name "OnStopActivity", the actual object will be `HttpWebResponse`.
 
-For event name "OnException", the actual object will be
-`Exception`.
+For event name "OnException", the actual object will be `Exception`.
 
 Example:
 
@@ -210,10 +219,10 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
     }).Build();
 ```
 
-[Processor](../../docs/trace/extending-the-sdk/README.md#processor),
-is the general extensibility point to add additional properties to any
-activity. The `Enrich` option is specific to this instrumentation, and is
-provided to get access to raw request, response, and exception objects.
+[Processor](../../docs/trace/extending-the-sdk/README.md#processor), is the
+general extensibility point to add additional properties to any activity. The
+`Enrich` option is specific to this instrumentation, and is provided to get
+access to raw request, response, and exception objects.
 
 ### RecordException
 
