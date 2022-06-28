@@ -32,6 +32,9 @@ namespace OpenTelemetry.Trace
         /// <param name="provider"><see cref="TracerProvider"/> being configured.</param>
         /// <param name="configureAspNetCoreInstrumentationOptions">ASP.NET Core Request configuration options.</param>
         /// <returns>The instance of <see cref="TracerProvider"/> to chain the calls.</returns>
+        /// <remarks>
+        /// This method is required for auto-instrumentation.
+        /// </remarks>
         public static TracerProvider AddAspNetCoreInstrumentation(
             this TracerProvider provider,
             Action<AspNetCoreInstrumentationOptions> configureAspNetCoreInstrumentationOptions = null)
@@ -41,22 +44,14 @@ namespace OpenTelemetry.Trace
             return AddAspNetCoreInstrumentation(provider, new AspNetCoreInstrumentationOptions(), configureAspNetCoreInstrumentationOptions);
         }
 
-        internal static TracerProvider AddAspNetCoreInstrumentation(
-            this TracerProvider provider,
-            AspNetCoreInstrumentation instrumentation)
-        {
-            return provider.AddInstrumentation(() => instrumentation);
-        }
-
         private static TracerProvider AddAspNetCoreInstrumentation(
             TracerProvider provider,
             AspNetCoreInstrumentationOptions options,
             Action<AspNetCoreInstrumentationOptions> configure = null)
         {
             configure?.Invoke(options);
-            return AddAspNetCoreInstrumentation(
-                provider,
-                new AspNetCoreInstrumentation(new HttpInListener(options)));
+
+            return provider.AddInstrumentation(() => new AspNetCoreInstrumentation(new HttpInListener(options)));
         }
     }
 }

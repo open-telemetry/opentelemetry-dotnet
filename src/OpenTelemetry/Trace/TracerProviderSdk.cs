@@ -311,12 +311,9 @@ namespace OpenTelemetry.Trace
         {
             // TO DO Put OnShutdown logic in a task to run within the user provider timeOutMilliseconds
             bool? result;
-            if (this.Instrumentations != null)
+            while (this.Instrumentations.TryTake(out var item))
             {
-                while (this.Instrumentations.TryTake(out var item))
-                {
-                    (item as IDisposable)?.Dispose();
-                }
+                (item as IDisposable)?.Dispose();
             }
 
             result = this.processor?.Shutdown(timeoutMilliseconds);
@@ -330,12 +327,9 @@ namespace OpenTelemetry.Trace
             {
                 if (disposing)
                 {
-                    if (this.Instrumentations != null)
+                    while (this.Instrumentations.TryTake(out var item))
                     {
-                        while (this.Instrumentations.TryTake(out var item))
-                        {
-                            (item as IDisposable)?.Dispose();
-                        }
+                        (item as IDisposable)?.Dispose();
                     }
 
                     (this.sampler as IDisposable)?.Dispose();

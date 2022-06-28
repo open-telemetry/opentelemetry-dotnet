@@ -55,6 +55,9 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
         /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
+        /// <remarks>
+        /// This method is required for auto-instrumentation.
+        /// </remarks>
         public static TracerProviderBuilder AddAspNetCoreSources(this TracerProviderBuilder builder)
         {
             builder.AddSource(InstrumentationInfo.ActivitySourceName);
