@@ -49,31 +49,12 @@ namespace OpenTelemetry.Trace
             return AddAspNetCoreInstrumentation(builder, new AspNetCoreInstrumentationOptions(), configureAspNetCoreInstrumentationOptions);
         }
 
-        /// <summary>
-        /// Adds ASP.NET Core sources to instrumentation list.
-        /// ASP.NET Core instrumentation must be added externally when ready to instrument.
-        /// </summary>
-        /// <param name="builder"><see cref="TracerProviderBuilder"/> being configured.</param>
-        /// <returns>The instance of <see cref="TracerProviderBuilder"/> to chain the calls.</returns>
-        /// <remarks>
-        /// This method is required for auto-instrumentation.
-        /// </remarks>
-        public static TracerProviderBuilder AddAspNetCoreSources(this TracerProviderBuilder builder)
-        {
-            // Important: Do NOT reference external libraries such as ASP.NET framework.
-            // It will trigger assembly load and break auto-instrumentation.
-
-            builder.AddSource(InstrumentationInfo.ActivitySourceName);
-            builder.AddLegacySource(InstrumentationInfo.ActivityOperationName); // for the activities created by AspNetCore
-
-            return builder;
-        }
-
         internal static TracerProviderBuilder AddAspNetCoreInstrumentation(
             this TracerProviderBuilder builder,
             AspNetCoreInstrumentation instrumentation)
         {
-            builder.AddAspNetCoreSources();
+            builder.AddSource(HttpInListener.ActivitySourceName);
+            builder.AddLegacySource(HttpInListener.ActivityOperationName); // for the activities created by AspNetCore
             return builder.AddInstrumentation(() => instrumentation);
         }
 

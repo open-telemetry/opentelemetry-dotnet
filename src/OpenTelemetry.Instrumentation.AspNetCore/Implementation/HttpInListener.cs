@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 #if !NETSTANDARD2_0
 using System.Runtime.CompilerServices;
 #endif
@@ -33,7 +34,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInListener : ListenerHandler
     {
-        internal static readonly ActivitySource ActivitySource = new(InstrumentationInfo.ActivitySourceName, InstrumentationInfo.Version.ToString());
+        internal const string ActivityOperationName = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
+        internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
+        internal static readonly string ActivitySourceName = AssemblyName.Name;
+        internal static readonly Version Version = AssemblyName.Version;
+        internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
         private const string DiagnosticSourceName = "Microsoft.AspNetCore";
         private const string UnknownHostName = "UNKNOWN-HOST";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
@@ -91,7 +96,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
                     // Asp.Net Core.
-                    Activity newOne = new Activity(InstrumentationInfo.ActivityOperationName);
+                    Activity newOne = new Activity(ActivityOperationName);
                     newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
                     newOne.TraceStateString = ctx.ActivityContext.TraceState;
 
