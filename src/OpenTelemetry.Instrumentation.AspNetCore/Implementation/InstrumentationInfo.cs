@@ -14,6 +14,9 @@
 // limitations under the License.
 // </copyright>
 
+// Important: Do NOT reference external libraries such as ASP.NET framework.
+// It will trigger assembly load and break auto-instrumentation.
+
 using System;
 using System.Reflection;
 

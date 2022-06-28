@@ -60,6 +60,9 @@ namespace OpenTelemetry.Trace
         /// </remarks>
         public static TracerProviderBuilder AddAspNetCoreSources(this TracerProviderBuilder builder)
         {
+            // Important: Do NOT reference external libraries such as ASP.NET framework.
+            // It will trigger assembly load and break auto-instrumentation.
+
             builder.AddSource(InstrumentationInfo.ActivitySourceName);
             builder.AddLegacySource(InstrumentationInfo.ActivityOperationName); // for the activities created by AspNetCore
 
