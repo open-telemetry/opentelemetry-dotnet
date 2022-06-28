@@ -287,7 +287,14 @@ namespace OpenTelemetry.Logs
             }
 
             var attributeStorage = this.AttributeStorage ??= new List<KeyValuePair<string, object?>>(stateValues.Count);
+
+            // Note: AddRange here will copy all of the KeyValuePairs from
+            // stateValues to AttributeStorage. This "captures" the state and
+            // fixes issues where the values are generated at enumeration time
+            // like
+            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2905.
             attributeStorage.AddRange(stateValues);
+
             this.StateValues = attributeStorage;
         }
 
