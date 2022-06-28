@@ -239,10 +239,23 @@ namespace OpenTelemetry.Logs
             return Interlocked.Decrement(ref this.PoolReferenceCount);
         }
 
+        // Note: Typically called when LogRecords are added into a batch so they
+        // can be safely processed outside of the log call chain.
         internal void Buffer()
         {
+            // Note: State values are buffered because some states are not safe
+            // to access outside of the log call chain. See:
+            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2905
             this.BufferLogStateValues();
+
             this.BufferLogScopes();
+
+            // Note: There is no buffering of "State" only "StateValues". We
+            // don't inspect "object State" at all. It is undefined what
+            // exporters will do with "State". Some might ignore it, some might
+            // attempt to access it as a list. That is potentially dangerous.
+            // TODO: Investigate what to do here. Should we obsolete State and
+            // just use the StateValues design?
         }
 
         internal LogRecord Copy()
