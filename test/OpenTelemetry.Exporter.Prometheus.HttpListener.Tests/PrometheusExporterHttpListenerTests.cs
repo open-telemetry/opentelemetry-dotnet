@@ -20,12 +20,11 @@ using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using OpenTelemetry.Exporter.Prometheus.HttpListener;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Exporter.Prometheus.Shared.Tests
+namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Tests
 {
     public class PrometheusExporterHttpListenerTests
     {
