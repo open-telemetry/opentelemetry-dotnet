@@ -38,11 +38,8 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Tests
         public void ServerEndpointSanityCheckPositiveTest(params string[] uris)
         {
             using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddPrometheusExporter()
+                .AddPrometheusHttpListener()
                 .Build();
-
-            using var listener = new PrometheusHttpListener(meterProvider, o => o.HttpListenerPrefixes = uris);
-            listener.Start();
         }
 
         [Theory]
@@ -55,11 +52,8 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Tests
             try
             {
                 using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                    .AddPrometheusExporter()
+                    .AddPrometheusHttpListener(null, listenerOptions => listenerOptions.HttpListenerPrefixes = uris)
                     .Build();
-
-                using var listener = new PrometheusHttpListener(meterProvider, o => o.HttpListenerPrefixes = uris);
-                listener.Start();
             }
             catch (Exception ex)
             {
@@ -95,31 +89,17 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Tests
             string address = null;
 
             MeterProvider provider;
-            PrometheusHttpListener listener;
-
             using var meter = new Meter(this.meterName);
-
-            provider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter.Name)
-                .AddPrometheusExporter()
-                .Build();
 
             while (retryAttempts-- != 0)
             {
                 port = random.Next(2000, 5000);
                 address = $"http://localhost:{port}/";
 
-                listener = new PrometheusHttpListener(provider, o =>
-                    o.HttpListenerPrefixes = new string[] { address });
-
-                try
-                {
-                    listener.Start();
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception(ex.Message);
-                }
+                provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddPrometheusHttpListener(null, listenerOptions => listenerOptions.HttpListenerPrefixes = new string[] { address })
+                .Build();
             }
 
             var tags = new KeyValuePair<string, object>[]

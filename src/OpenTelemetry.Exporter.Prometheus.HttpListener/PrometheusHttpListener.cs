@@ -19,7 +19,6 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus.HttpListener
 {
@@ -36,22 +35,13 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
         /// <summary>
         /// Initializes a new instance of the <see cref="PrometheusHttpListener"/> class.
         /// </summary>
-        /// <param name="meterProvider"><see cref="MeterProvider"/> class.</param>
-        /// <param name="configure"><see cref="PrometheusHttpListenerOptions"/> Configure listener specific options.</param>
-        public PrometheusHttpListener(MeterProvider meterProvider, Action<PrometheusHttpListenerOptions> configure = null)
+        /// <param name="exporter"><see cref="PrometheusExporter"/>The exporter instance.</param>
+        /// <param name="options"><see cref="PrometheusHttpListenerOptions"/>The configured HttpListener options.</param>
+        public PrometheusHttpListener(PrometheusExporter exporter, PrometheusHttpListenerOptions options)
         {
-            Guard.ThrowIfNull(meterProvider);
+            Guard.ThrowIfNull(exporter);
 
-            // Find the exporter that was registered on the meterProvider.
-            if (!meterProvider.TryFindExporter(out PrometheusExporter exporter))
-            {
-                throw new ArgumentException("A PrometheusExporter could not be found configured on the provided MeterProvider.");
-            }
-
-            var prometheusHttpListenerOptions = new PrometheusHttpListenerOptions();
-            configure?.Invoke(prometheusHttpListenerOptions);
-
-            if ((prometheusHttpListenerOptions.HttpListenerPrefixes?.Count ?? 0) <= 0)
+            if ((options.HttpListenerPrefixes?.Count ?? 0) <= 0)
             {
                 throw new ArgumentException("No HttpListenerPrefixes were specified on PrometheusHttpListenerOptions.");
             }
@@ -68,14 +58,14 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
                 path = $"{path}/";
             }
 
-            foreach (string prefix in prometheusHttpListenerOptions.HttpListenerPrefixes)
+            foreach (string prefix in options.HttpListenerPrefixes)
             {
                 this.httpListener.Prefixes.Add($"{prefix.TrimEnd('/')}{path}");
             }
         }
 
         /// <summary>
-        /// Start the http Listener.
+        /// Start the HttpListener.
         /// </summary>
         /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the HTTP listener.</param>
         public void Start(CancellationToken token = default)
@@ -97,7 +87,7 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
         }
 
         /// <summary>
-        /// Stop the http listener.
+        /// Stop the HttpListener.
         /// </summary>
         public void Stop()
         {
@@ -127,7 +117,7 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
                 {
                     this.Stop();
                     this.httpListener.Close();
-                    this?.Dispose();
+                    this.Dispose();
                 }
 
                 this.disposed = true;

@@ -87,11 +87,9 @@ namespace Examples.AspNet
                     .Build();
                     break;
                 case "prometheus":
-                    this.meterProvider = meterBuilder.AddPrometheusExporter().Build();
-                    this.listener = new PrometheusHttpListener(
-                        this.meterProvider,
-                        o => o.HttpListenerPrefixes = new string[] { "http://localhost:9464/metrics" });
-                    this.listener.Start();
+                    this.meterProvider = meterBuilder
+                        .AddPrometheusExporter(null, listenerOptions => listenerOptions.HttpListenerPrefixes = new string[] { "http://localhost:9464/metrics" })
+                        .Build();
                     break;
                 default:
                     this.meterProvider = meterBuilder.AddConsoleExporter((exporterOptions, metricReaderOptions) =>

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>netcoreapp3.1;net6.0</TargetFrameworks>
+    <TargetFrameworks>net462</TargetFrameworks>
     <Description>Prometheus exporter HttpListener for OpenTelemetry .NET</Description>
     <PackageTags>$(PackageTags);prometheus;metrics</PackageTags>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
@@ -26,7 +26,6 @@
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.Shared\PrometheusCollectionManager.cs" Link="Includes/PrometheusCollectionManager.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.Shared\PrometheusExporter.cs" Link="Includes/PrometheusExporter.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.Shared\PrometheusExporterEventSource.cs" Link="Includes/PrometheusExporterEventSource.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.Shared\PrometheusExporterMeterProviderBuilderExtensions.cs" Link="Includes/PrometheusExporterMeterProviderBuilderExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.Shared\PrometheusExporterOptions.cs" Link="Includes/PrometheusExporterOptions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.Shared\PrometheusSerializer.cs" Link="Includes/PrometheusSerializer.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.Shared\PrometheusSerializerExt.cs" Link="Includes/PrometheusSerializerExt.cs" />

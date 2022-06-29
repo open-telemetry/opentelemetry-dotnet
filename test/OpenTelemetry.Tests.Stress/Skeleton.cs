@@ -86,15 +86,16 @@ public partial class Program
         using var meterProvider = prometheusPort != 0 ? Sdk.CreateMeterProviderBuilder()
             .AddMeter(StressMeter.Name)
             .AddMeter(meter.Name)
-            .AddPrometheusExporter(options =>
+            .AddPrometheusHttpListener(
+            exporterOptions =>
             {
-                options.ScrapeResponseCacheDurationMilliseconds = 0;
+                exporterOptions.ScrapeResponseCacheDurationMilliseconds = 0;
+            },
+            listenerOptions =>
+            {
+                listenerOptions.HttpListenerPrefixes = new string[] { $"http://localhost:{prometheusPort}/" };
             })
             .Build() : null;
-
-        using var listener = new PrometheusHttpListener(meterProvider, opt =>
-            opt.HttpListenerPrefixes = new string[] { $"http://localhost:{prometheusPort}/" });
-        listener.Start();
 
         var statistics = new long[concurrency];
         var watchForTotal = Stopwatch.StartNew();

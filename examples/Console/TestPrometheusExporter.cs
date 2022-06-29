@@ -52,14 +52,16 @@ internal class TestPrometheusExporter
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(MyMeter.Name)
             .AddMeter(MyMeter2.Name)
-            .AddPrometheusExporter(options =>
+            .AddPrometheusHttpListener(
+                exporterOptions =>
             {
-                options.ScrapeResponseCacheDurationMilliseconds = 0;
+                exporterOptions.ScrapeResponseCacheDurationMilliseconds = 0;
+            },
+                listenerOptions =>
+            {
+                listenerOptions.HttpListenerPrefixes = new string[] { $"http://localhost:{port}/" };
             })
             .Build();
-
-        using var listener = new PrometheusHttpListener(meterProvider, o => o.HttpListenerPrefixes = new string[] { $"http://localhost:{port}/" });
-        listener.Start();
 
         var process = Process.GetCurrentProcess();
         MyMeter.CreateObservableCounter("thread.cpu_time", () => GetThreadCpuTime(process), "ms");
