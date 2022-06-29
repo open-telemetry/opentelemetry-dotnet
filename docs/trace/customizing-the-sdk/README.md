@@ -15,9 +15,9 @@ processors, etc. Naturally, almost all the customizations must be done on the
 
 Building a `TracerProvider` is done using `TracerProviderBuilder` which must be
 obtained by calling `Sdk.CreateTracerProviderBuilder()`. `TracerProviderBuilder`
-exposes various methods which configures the provider it is going to build. These
-includes methods like `SetSampler`, `AddProcessor` etc, and are explained in
-subsequent sections of this document. Once configuration is done, calling
+exposes various methods which configures the provider it is going to build.
+These includes methods like `SetSampler`, `AddProcessor` etc, and are explained
+in subsequent sections of this document. Once configuration is done, calling
 `Build()` on the `TracerProviderBuilder` builds the `TracerProvider` instance.
 Once built, changes to its configuration is not allowed, with the exception of
 adding more processors. In most cases, a single `TracerProvider` is created at
@@ -38,9 +38,10 @@ In a typical application, a single `TracerProvider` is created at application
 startup and disposed at application shutdown. It is important to ensure that the
 provider is not disposed too early. Actual mechanism depends on the application
 type. For example, in a typical ASP.NET application, `TracerProvider` is created
-in `Application_Start`, and disposed in `Application_End` (both methods part of
-Global.asax.cs file) as shown [here](../../../examples/AspNet/Global.asax.cs). In
-a typical ASP.NET Core application, `TracerProvider` lifetime is managed by
+in `Application_Start`, and disposed in `Application_End` (both methods are a
+part of the Global.asax.cs file) as shown
+[here](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/main/examples/AspNet/Global.asax.cs).
+In a typical ASP.NET Core application, `TracerProvider` lifetime is managed by
 leveraging the built-in Dependency Injection container as shown
 [here](../../../examples/AspNetCore/Program.cs).
 
@@ -98,13 +99,12 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 See [Program.cs](./Program.cs) for complete example.
 
-**Note**
-A common mistake while configuring `TracerProvider` is forgetting to add
-all `ActivitySources` to the provider. It is recommended to leverage the
+**Note** A common mistake while configuring `TracerProvider` is forgetting to
+add all `ActivitySources` to the provider. It is recommended to leverage the
 wild card subscription model where it makes sense. For example, if your
-application is expecting to enable tracing from a number of libraries
-from a company "Abc", the you can use `AddSource("Abc.*")` to enable
-all sources whose name starts with "Abc.".
+application is expecting to enable tracing from a number of libraries from a
+company "Abc", the you can use `AddSource("Abc.*")` to enable all sources whose
+name starts with "Abc.".
 
 ### Instrumentation
 
@@ -124,5 +124,5 @@ all sources whose name starts with "Abc.".
 
 ## Context Propagation
 
-// TODO: OpenTelemetry Sdk contents about Context.
-// TODO: Links to built-in instrumentations doing Propagation.
+// TODO: OpenTelemetry Sdk contents about Context. // TODO: Links to built-in
+instrumentations doing Propagation.

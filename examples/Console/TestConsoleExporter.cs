@@ -39,7 +39,7 @@ namespace Examples.Console
             // and use Console exporter.
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
-                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("console-test"))
+                    .ConfigureResource(res => res.AddService("console-test"))
                     .AddProcessor(new MyProcessor()) // This must be added before ConsoleExporter
                     .AddConsoleExporter()
                     .Build();
