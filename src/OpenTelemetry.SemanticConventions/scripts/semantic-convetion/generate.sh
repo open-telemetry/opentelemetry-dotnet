@@ -4,9 +4,9 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT_DIR="${SCRIPT_DIR}/../../"
 
 # freeze the spec & generator tools versions to make SemanticAttributes generation reproducible
-SPEC_VERSION=v1.7.0
+SPEC_VERSION=v1.12.0
 SCHEMA_URL=https://opentelemetry.io/schemas/$SPEC_VERSION
-GENERATOR_VERSION=0.8.0
+GENERATOR_VERSION=0.11.0
 
 cd ${SCRIPT_DIR}
 
@@ -30,7 +30,9 @@ docker run --rm \
   --output /output/TraceSemanticConventions.cs \
   -Dclass=TraceSemanticConventions \
   -DschemaUrl=$SCHEMA_URL \
-  -Dpkg=OpenTelemetry.Trace
+  -Dpkg=OpenTelemetry.Trace \
+  -Jtrim_blocks=True \
+  -Jlstrip_blocks=True
 
 docker run --rm \
   -v ${SCRIPT_DIR}/opentelemetry-specification/semantic_conventions/resource:/source \
@@ -42,9 +44,6 @@ docker run --rm \
   --output /output/ResourceSemanticConventions.cs \
   -Dclass=ResourceSemanticConventions \
   -DschemaUrl=$SCHEMA_URL \
-  -Dpkg=OpenTelemetry.Resources
-
-cd ${ROOT_DIR}
-
-echo "Running dotnet-format on the generated files"
-dotnet format --severity warn
+  -Dpkg=OpenTelemetry.Resources \
+  -Jtrim_blocks=True \
+  -Jlstrip_blocks=True
