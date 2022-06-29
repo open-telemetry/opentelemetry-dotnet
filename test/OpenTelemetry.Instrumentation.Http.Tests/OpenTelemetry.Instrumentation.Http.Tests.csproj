@@ -1,8 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry HTTP instrumentations</Description>
-    <TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
-    <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net461</TargetFrameworks>
+    <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
+    <TargetFrameworks>net6.0;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,7 +11,6 @@
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestHttpServer.cs" Link="TestHttpServer.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="EventSourceTestHelper.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestEventListener.cs" Link="TestEventListener.cs" />
-    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestExporter.cs" Link="TestExporter.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\InMemoryEventListener.cs" Link="InMemoryEventListener.cs" />
   </ItemGroup>
 

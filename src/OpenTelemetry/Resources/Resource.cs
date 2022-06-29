@@ -35,7 +35,7 @@ namespace OpenTelemetry.Resources
         /// Initializes a new instance of the <see cref="Resource"/> class.
         /// </summary>
         /// <param name="attributes">An <see cref="IEnumerable{T}"/> of attributes that describe the resource.</param>
-        internal Resource(IEnumerable<KeyValuePair<string, object>> attributes)
+        public Resource(IEnumerable<KeyValuePair<string, object>> attributes)
         {
             if (attributes == null)
             {
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Resources
             {
                 foreach (var attribute in other.Attributes)
                 {
-                    if (!newAttributes.TryGetValue(attribute.Key, out var value))
+                    if (!newAttributes.TryGetValue(attribute.Key, out _))
                     {
                         newAttributes[attribute.Key] = attribute.Value;
                     }
@@ -81,7 +81,7 @@ namespace OpenTelemetry.Resources
 
             foreach (var attribute in this.Attributes)
             {
-                if (!newAttributes.TryGetValue(attribute.Key, out var value))
+                if (!newAttributes.TryGetValue(attribute.Key, out _))
                 {
                     newAttributes[attribute.Key] = attribute.Value;
                 }
@@ -109,7 +109,7 @@ namespace OpenTelemetry.Resources
 
         private static object SanitizeValue(object value, string keyName)
         {
-            Guard.ThrowIfNull(keyName, nameof(keyName));
+            Guard.ThrowIfNull(keyName);
 
             return value switch
             {

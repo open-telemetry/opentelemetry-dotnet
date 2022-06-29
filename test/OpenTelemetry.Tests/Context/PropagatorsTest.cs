@@ -15,11 +15,9 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Context.Propagation.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Context.Tests
+namespace OpenTelemetry.Context.Propagation.Tests
 {
     public class PropagatorsTest : IDisposable
     {
@@ -46,6 +44,7 @@ namespace OpenTelemetry.Context.Tests
         public void Dispose()
         {
             Propagators.Reset();
+            GC.SuppressFinalize(this);
         }
     }
 }

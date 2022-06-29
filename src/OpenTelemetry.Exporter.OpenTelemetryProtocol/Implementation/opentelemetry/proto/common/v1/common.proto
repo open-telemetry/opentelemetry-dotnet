@@ -19,7 +19,7 @@ package opentelemetry.proto.common.v1;
 option java_multiple_files = true;
 option java_package = "io.opentelemetry.proto.common.v1";
 option java_outer_classname = "CommonProto";
-option go_package = "github.com/open-telemetry/opentelemetry-proto/gen/go/common/v1";
+option go_package = "go.opentelemetry.io/proto/otlp/common/v1";
 
 // AnyValue is used to represent any type of attribute value. AnyValue may contain a
 // primitive value such as a string or integer or it may contain an arbitrary nested
@@ -53,6 +53,8 @@ message ArrayValue {
 message KeyValueList {
   // A collection of key/value pairs of key-value pairs. The list may be empty (may
   // contain 0 elements).
+  // The keys MUST be unique (it is not allowed to have more than one
+  // value with the same key).
   repeated KeyValue values = 1;
 }
 
@@ -63,19 +65,23 @@ message KeyValue {
   AnyValue value = 2;
 }
 
-// StringKeyValue is a pair of key/value strings. This is the simpler (and faster) version
-// of KeyValue that only supports string values.
-message StringKeyValue {
+// InstrumentationLibrary is a message representing the instrumentation library information
+// such as the fully qualified name and version.
+// InstrumentationLibrary is wire-compatible with InstrumentationScope for binary
+// Protobuf format.
+// This message is deprecated and will be removed on June 15, 2022.
+message InstrumentationLibrary {
   option deprecated = true;
 
-  string key = 1;
-  string value = 2;
+  // An empty instrumentation library name means the name is unknown.
+  string name = 1;
+  string version = 2;
 }
 
-// InstrumentationLibrary is a message representing the instrumentation library information
+// InstrumentationScope is a message representing the instrumentation scope information
 // such as the fully qualified name and version. 
-message InstrumentationLibrary {
-  // An empty instrumentation library name means the name is unknown. 
+message InstrumentationScope {
+  // An empty instrumentation scope name means the name is unknown.
   string name = 1;
   string version = 2;
 }

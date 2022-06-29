@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,13 +24,9 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
 using OpenTelemetry.Trace;
 #if NETCOREAPP3_1
 using TestApp.AspNetCore._3._1;
-#endif
-#if NET5_0
-using TestApp.AspNetCore._5._0;
 #endif
 #if NET6_0
 using TestApp.AspNetCore._6._0;
@@ -49,18 +46,19 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Theory]
-        [InlineData("/api/values", "user-agent", 503, "503")]
-        [InlineData("/api/values", null, 503, null)]
-        [InlineData("/api/exception", null, 503, null)]
-        [InlineData("/api/exception", null, 503, null, true)]
+        [InlineData("/api/values", null, "user-agent", 503, "503")]
+        [InlineData("/api/values", "?query=1", null, 503, null)]
+        [InlineData("/api/exception", null, null, 503, null)]
+        [InlineData("/api/exception", null, null, 503, null, true)]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan(
             string urlPath,
+            string query,
             string userAgent,
             int statusCode,
             string reasonPhrase,
             bool recordException = false)
         {
-            var processor = new Mock<BaseProcessor<Activity>>();
+            var exportedItems = new List<Activity>();
 
             // Arrange
             using (var client = this.factory
@@ -69,7 +67,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     {
                         services.AddSingleton<CallbackMiddleware.CallbackMiddlewareImpl>(new TestCallbackMiddlewareImpl(statusCode, reasonPhrase));
                         services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation(options => options.RecordException = recordException)
-                        .AddProcessor(processor.Object));
+                        .AddInMemoryExporter(exportedItems));
                     }))
                 .CreateClient())
             {
@@ -81,7 +79,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     }
 
                     // Act
-                    var response = await client.GetAsync(urlPath);
+                    var path = urlPath;
+                    if (query != null)
+                    {
+                        path += query;
+                    }
+
+                    var response = await client.GetAsync(path);
                 }
                 catch (Exception)
                 {
@@ -90,7 +94,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
                 for (var i = 0; i < 10; i++)
                 {
-                    if (processor.Invocations.Count == 3)
+                    if (exportedItems.Count == 1)
                     {
                         break;
                     }
@@ -102,14 +106,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 }
             }
 
-            Assert.Equal(3, processor.Invocations.Count); // SetParentProvider/Begin/End called
-            var activity = (Activity)processor.Invocations[2].Arguments[0];
+            Assert.Single(exportedItems);
+            var activity = exportedItems[0];
 
             Assert.Equal(ActivityKind.Server, activity.Kind);
             Assert.Equal("localhost", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
             Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
+            Assert.Equal("1.1", activity.GetTagValue(SemanticConventions.AttributeHttpFlavor));
+            Assert.Equal("http", activity.GetTagValue(SemanticConventions.AttributeHttpScheme));
             Assert.Equal(urlPath, activity.GetTagValue(SemanticConventions.AttributeHttpTarget));
-            Assert.Equal($"http://localhost{urlPath}", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
+            Assert.Equal($"http://localhost{urlPath}{query}", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
             Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
 
             if (statusCode == 503)
@@ -138,13 +144,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 Assert.Equal("exception", activity.Events.First().Name);
             }
 
-            this.ValidateTagValue(activity, SemanticConventions.AttributeHttpUserAgent, userAgent);
+            ValidateTagValue(activity, SemanticConventions.AttributeHttpUserAgent, userAgent);
 
             activity.Dispose();
-            processor.Object.Dispose();
         }
 
-        private void ValidateTagValue(Activity activity, string attribute, string expectedValue)
+        private static void ValidateTagValue(Activity activity, string attribute, string expectedValue)
         {
             if (string.IsNullOrEmpty(expectedValue))
             {

@@ -34,7 +34,7 @@ namespace OpenTelemetry.Metrics
 
         public CompositeMetricReader(IEnumerable<MetricReader> readers)
         {
-            Guard.ThrowIfNull(readers, nameof(readers));
+            Guard.ThrowIfNull(readers);
 
             using var iter = readers.GetEnumerator();
             if (!iter.MoveNext())
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Metrics
 
         public CompositeMetricReader AddReader(MetricReader reader)
         {
-            Guard.ThrowIfNull(reader, nameof(reader));
+            Guard.ThrowIfNull(reader);
 
             var node = new DoublyLinkedListNode(reader)
             {
@@ -67,7 +67,7 @@ namespace OpenTelemetry.Metrics
             return this;
         }
 
-        public Enumerator GetEnumerator() => new Enumerator(this.head);
+        public Enumerator GetEnumerator() => new(this.head);
 
         /// <inheritdoc/>
         internal override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
@@ -141,10 +141,9 @@ namespace OpenTelemetry.Metrics
                         {
                             cur.Value?.Dispose();
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
-                            // TODO: which event source do we use?
-                            // OpenTelemetrySdkEventSource.Log.SpanProcessorException(nameof(this.Dispose), ex);
+                            OpenTelemetrySdkEventSource.Log.MetricReaderException(nameof(this.Dispose), ex);
                         }
                     }
                 }

@@ -20,10 +20,23 @@ namespace OpenTelemetry.Metrics
 {
     internal readonly struct Tags : IEquatable<Tags>
     {
+        private readonly int hashCode;
+
         public Tags(string[] keys, object[] values)
         {
             this.Keys = keys;
             this.Values = values;
+
+            unchecked
+            {
+                var hash = 17;
+                for (int i = 0; i < this.Keys.Length; i++)
+                {
+                    hash = (hash * 31) + this.Keys[i].GetHashCode() + this.Values[i]?.GetHashCode() ?? 0;
+                }
+
+                this.hashCode = hash;
+            }
         }
 
         public readonly string[] Keys { get; }
@@ -34,7 +47,7 @@ namespace OpenTelemetry.Metrics
 
         public static bool operator !=(Tags tag1, Tags tag2) => !tag1.Equals(tag2);
 
-        public readonly override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
             return obj is Tags other && this.Equals(other);
         }
@@ -78,19 +91,6 @@ namespace OpenTelemetry.Metrics
             return true;
         }
 
-        public readonly override int GetHashCode()
-        {
-            int hash = 17;
-
-            unchecked
-            {
-                for (int i = 0; i < this.Keys.Length; i++)
-                {
-                    hash = (hash * 31) + this.Keys[i].GetHashCode() + this.Values[i].GetHashCode();
-                }
-            }
-
-            return hash;
-        }
+        public override readonly int GetHashCode() => this.hashCode;
     }
 }

@@ -35,9 +35,6 @@ using OpenTelemetry.Trace;
 #if NETCOREAPP3_1
 using TestApp.AspNetCore._3._1;
 #endif
-#if NET5_0
-using TestApp.AspNetCore._5._0;
-#endif
 #if NET6_0
 using TestApp.AspNetCore._6._0;
 #endif
@@ -67,12 +64,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [Fact]
         public async Task StatusIsUnsetOn200Response()
         {
-            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            var exportedItems = new List<Activity>();
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddAspNetCoreInstrumentation()
-                    .AddProcessor(activityProcessor.Object)
+                    .AddInMemoryExporter(exportedItems)
                     .Build();
             }
 
@@ -88,14 +85,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                WaitForProcessorInvocations(activityProcessor, 3);
+                WaitForActivityExport(exportedItems, 1);
             }
 
-            Assert.Equal(3, activityProcessor.Invocations.Count); // begin and end was called
-
-            // we should only call Processor.OnEnd for the "/api/values" request
-            Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
-            var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
+            Assert.Single(exportedItems);
+            var activity = exportedItems[0];
 
             Assert.Equal(200, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
 
@@ -110,8 +104,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [InlineData(false)]
         public async Task SuccessfulTemplateControllerCallGeneratesASpan(bool shouldEnrich)
         {
-            var activityProcessor = new Mock<BaseProcessor<Activity>>();
-            activityProcessor.Setup(x => x.OnStart(It.IsAny<Activity>())).Callback<Activity>(c => c.SetTag("enriched", "no"));
+            var exportedItems = new List<Activity>();
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -122,7 +115,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                             options.Enrich = ActivityEnrichment;
                         }
                     })
-                    .AddProcessor(activityProcessor.Object)
+                    .AddInMemoryExporter(exportedItems)
                     .Build();
             }
 
@@ -138,14 +131,16 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                WaitForProcessorInvocations(activityProcessor, 3);
+                WaitForActivityExport(exportedItems, 1);
             }
 
-            Assert.Equal(3, activityProcessor.Invocations.Count); // begin and end was called
-            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
+            Assert.Single(exportedItems);
+            var activity = exportedItems[0];
 
-            Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched"));
-            Assert.Equal(shouldEnrich ? "yes" : "no", activity.Tags.Where(tag => tag.Key == "enriched").FirstOrDefault().Value);
+            if (shouldEnrich)
+            {
+                Assert.NotEmpty(activity.Tags.Where(tag => tag.Key == "enriched" && tag.Value == "yes"));
+            }
 
             ValidateAspNetCoreActivity(activity, "/api/values");
         }
@@ -153,8 +148,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [Fact]
         public async Task SuccessfulTemplateControllerCallUsesParentContext()
         {
-            var activityProcessor = new Mock<BaseProcessor<Activity>>();
-
+            var exportedItems = new List<Activity>();
             var expectedTraceId = ActivityTraceId.CreateRandom();
             var expectedSpanId = ActivitySpanId.CreateRandom();
 
@@ -164,7 +158,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     builder.ConfigureTestServices(services =>
                     {
                         this.tracerProvider = Sdk.CreateTracerProviderBuilder().AddAspNetCoreInstrumentation()
-                        .AddProcessor(activityProcessor.Object)
+                        .AddInMemoryExporter(exportedItems)
                         .Build();
                     })))
             {
@@ -178,18 +172,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Assert
                 response.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                WaitForProcessorInvocations(activityProcessor, 3);
+                WaitForActivityExport(exportedItems, 1);
             }
 
-            // List of invocations
-            // 1. SetParentProvider for TracerProviderSdk
-            // 2. OnStart for the activity created by AspNetCore with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
-            // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the first tag that is added is (IsCreatedByInstrumentation, bool.TrueString)
-            // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the first tag that is added is (IsCreatedByInstrumentation, bool.TrueString)
-
-            // we should only call Processor.OnEnd once for the sibling activity
-            Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
-            var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
+            Assert.Single(exportedItems);
+            var activity = exportedItems[0];
 
             Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", activity.OperationName);
             Assert.Equal("api/Values/{id}", activity.DisplayName);
@@ -205,8 +192,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         {
             try
             {
-                var activityProcessor = new Mock<BaseProcessor<Activity>>();
-
+                var exportedItems = new List<Activity>();
                 var expectedTraceId = ActivityTraceId.CreateRandom();
                 var expectedSpanId = ActivitySpanId.CreateRandom();
 
@@ -227,7 +213,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                             Sdk.SetDefaultTextMapPropagator(propagator.Object);
                             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                                 .AddAspNetCoreInstrumentation()
-                                .AddProcessor(activityProcessor.Object)
+                                .AddInMemoryExporter(exportedItems)
                                 .Build();
                         })))
                 {
@@ -235,32 +221,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     var response = await client.GetAsync("/api/values/2");
                     response.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                    WaitForProcessorInvocations(activityProcessor, 4);
+                    WaitForActivityExport(exportedItems, 1);
                 }
 
-                // List of invocations on the processor
-                // 1. SetParentProvider for TracerProviderSdk
-                // 2. OnStart for the activity created by AspNetCore with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
-                // 3. OnStart for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the first tag that is added is (IsCreatedByInstrumentation, bool.TrueString)
-                // 4. OnEnd for the sibling activity created by the instrumentation library with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn and the first tag that is added is (IsCreatedByInstrumentation, bool.TrueString)
-                Assert.Equal(4, activityProcessor.Invocations.Count);
+                Assert.Single(exportedItems);
+                var activity = exportedItems[0];
 
-                var startedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnStart");
-                var stoppedActivities = activityProcessor.Invocations.Where(invo => invo.Method.Name == "OnEnd");
-                Assert.Equal(2, startedActivities.Count());
-                Assert.Single(stoppedActivities);
-
-                // The activity created by the framework and the sibling activity are both sent to Processor.OnStart
-                Assert.Equal(2, startedActivities.Count(item =>
-                {
-                    var startedActivity = item.Arguments[0] as Activity;
-                    return startedActivity.OperationName == HttpInListener.ActivityOperationName;
-                }));
-
-                // we should only call Processor.OnEnd once for the sibling activity
-                Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
-
-                var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
                 Assert.True(activity.Duration != TimeSpan.Zero);
                 Assert.Equal("api/Values/{id}", activity.DisplayName);
 
@@ -282,13 +248,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [Fact]
         public async Task RequestNotCollectedWhenFilterIsApplied()
         {
-            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            var exportedItems = new List<Activity>();
 
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddAspNetCoreInstrumentation((opt) => opt.Filter = (ctx) => ctx.Request.Path != "/api/values/2")
-                    .AddProcessor(activityProcessor.Object)
+                    .AddInMemoryExporter(exportedItems)
                     .Build();
             }
 
@@ -307,18 +273,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 response1.EnsureSuccessStatusCode(); // Status Code 200-299
                 response2.EnsureSuccessStatusCode(); // Status Code 200-299
 
-                WaitForProcessorInvocations(activityProcessor, 4);
+                WaitForActivityExport(exportedItems, 1);
             }
 
-            // 1. SetParentProvider for TracerProviderSdk
-            // 2. OnStart for the activity created by AspNetCore for "/api/values" with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
-            // 3. OnEnd for the activity created by AspNetCore for "/api/values" with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
-            // 4. OnStart for the activity created by AspNetCore for "/api/values/2" with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
-            Assert.Equal(4, activityProcessor.Invocations.Count);
-
-            // we should only call Processor.OnEnd for the "/api/values" request
-            Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
-            var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
+            Assert.Single(exportedItems);
+            var activity = exportedItems[0];
 
             ValidateAspNetCoreActivity(activity, "/api/values");
         }
@@ -326,7 +285,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         [Fact]
         public async Task RequestNotCollectedWhenFilterThrowException()
         {
-            var activityProcessor = new Mock<BaseProcessor<Activity>>();
+            var exportedItems = new List<Activity>();
 
             void ConfigureTestServices(IServiceCollection services)
             {
@@ -342,7 +301,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                             return true;
                         }
                     })
-                    .AddProcessor(activityProcessor.Object)
+                    .AddInMemoryExporter(exportedItems)
                     .Build();
             }
 
@@ -364,22 +323,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 3));
                 }
 
-                WaitForProcessorInvocations(activityProcessor, 3);
+                WaitForActivityExport(exportedItems, 1);
             }
 
             // As InstrumentationFilter threw, we continue as if the
             // InstrumentationFilter did not exist.
 
-            // List of invocations on the processor
-            // 1. SetParentProvider for TracerProviderSdk
-            // 2. OnStart for the activity created by AspNetCore for "/api/values" with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
-            // 3. OnEnd for the activity created by AspNetCore for "/api/values" with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
-            // 4. OnStart for the activity created by AspNetCore for "/api/values/2" with the OperationName: Microsoft.AspNetCore.Hosting.HttpRequestIn
-
-            // we should only call Processor.OnEnd for the "/api/values" request
-            Assert.Single(activityProcessor.Invocations, invo => invo.Method.Name == "OnEnd");
-            var activity = activityProcessor.Invocations.FirstOrDefault(invo => invo.Method.Name == "OnEnd").Arguments[0] as Activity;
-
+            Assert.Single(exportedItems);
+            var activity = exportedItems[0];
             ValidateAspNetCoreActivity(activity, "/api/values");
         }
 
@@ -399,40 +350,38 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 Sdk.SetDefaultTextMapPropagator(new ExtractOnlyPropagator(activityContext, expectedBaggage));
 
                 // Arrange
-                using (var testFactory = this.factory
+                using var testFactory = this.factory
                     .WithWebHostBuilder(builder =>
                         builder.ConfigureTestServices(services =>
                         {
                             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                            .SetSampler(new TestSampler(samplingDecision))
-                            .AddAspNetCoreInstrumentation()
-                            .Build();
-                        })))
-                {
-                    using var client = testFactory.CreateClient();
+                                .SetSampler(new TestSampler(samplingDecision))
+                                .AddAspNetCoreInstrumentation()
+                                .Build();
+                        }));
+                using var client = testFactory.CreateClient();
 
-                    // Test TraceContext Propagation
-                    var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
-                    var response = await client.SendAsync(request);
-                    var childActivityTraceContext = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+                // Test TraceContext Propagation
+                var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
+                var response = await client.SendAsync(request);
+                var childActivityTraceContext = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
-                    response.EnsureSuccessStatusCode();
+                response.EnsureSuccessStatusCode();
 
-                    Assert.Equal(expectedTraceId.ToString(), childActivityTraceContext["TraceId"]);
-                    Assert.Equal(expectedTraceState, childActivityTraceContext["TraceState"]);
-                    Assert.NotEqual(expectedParentSpanId.ToString(), childActivityTraceContext["ParentSpanId"]); // there is a new activity created in instrumentation therefore the ParentSpanId is different that what is provided in the headers
+                Assert.Equal(expectedTraceId.ToString(), childActivityTraceContext["TraceId"]);
+                Assert.Equal(expectedTraceState, childActivityTraceContext["TraceState"]);
+                Assert.NotEqual(expectedParentSpanId.ToString(), childActivityTraceContext["ParentSpanId"]); // there is a new activity created in instrumentation therefore the ParentSpanId is different that what is provided in the headers
 
-                    // Test Baggage Context Propagation
-                    request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
+                // Test Baggage Context Propagation
+                request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
 
-                    response = await client.SendAsync(request);
-                    var childActivityBaggageContext = JsonConvert.DeserializeObject<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+                response = await client.SendAsync(request);
+                var childActivityBaggageContext = JsonConvert.DeserializeObject<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
-                    response.EnsureSuccessStatusCode();
+                response.EnsureSuccessStatusCode();
 
-                    Assert.Single(childActivityBaggageContext, item => item.Key == "key1" && item.Value == "value1");
-                    Assert.Single(childActivityBaggageContext, item => item.Key == "key2" && item.Value == "value2");
-                }
+                Assert.Single(childActivityBaggageContext, item => item.Key == "key1" && item.Value == "value1");
+                Assert.Single(childActivityBaggageContext, item => item.Key == "key2" && item.Value == "value2");
             }
             finally
             {
@@ -458,50 +407,48 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
                 // Arrange
                 bool isFilterCalled = false;
-                using (var testFactory = this.factory
+                using var testFactory = this.factory
                     .WithWebHostBuilder(builder =>
                         builder.ConfigureTestServices(services =>
                         {
                             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                            .AddAspNetCoreInstrumentation(options =>
-                            {
-                                options.Filter = context =>
+                                .AddAspNetCoreInstrumentation(options =>
                                 {
-                                    isFilterCalled = true;
-                                    return false;
-                                };
-                            })
-                            .Build();
-                        })))
-                {
-                    using var client = testFactory.CreateClient();
+                                    options.Filter = context =>
+                                    {
+                                        isFilterCalled = true;
+                                        return false;
+                                    };
+                                })
+                                .Build();
+                        }));
+                using var client = testFactory.CreateClient();
 
-                    // Test TraceContext Propagation
-                    var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
-                    var response = await client.SendAsync(request);
+                // Test TraceContext Propagation
+                var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
+                var response = await client.SendAsync(request);
 
-                    // Ensure that filter was called
-                    Assert.True(isFilterCalled);
+                // Ensure that filter was called
+                Assert.True(isFilterCalled);
 
-                    var childActivityTraceContext = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+                var childActivityTraceContext = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
-                    response.EnsureSuccessStatusCode();
+                response.EnsureSuccessStatusCode();
 
-                    Assert.Equal(expectedTraceId.ToString(), childActivityTraceContext["TraceId"]);
-                    Assert.Equal(expectedTraceState, childActivityTraceContext["TraceState"]);
-                    Assert.NotEqual(expectedParentSpanId.ToString(), childActivityTraceContext["ParentSpanId"]); // there is a new activity created in instrumentation therefore the ParentSpanId is different that what is provided in the headers
+                Assert.Equal(expectedTraceId.ToString(), childActivityTraceContext["TraceId"]);
+                Assert.Equal(expectedTraceState, childActivityTraceContext["TraceState"]);
+                Assert.NotEqual(expectedParentSpanId.ToString(), childActivityTraceContext["ParentSpanId"]); // there is a new activity created in instrumentation therefore the ParentSpanId is different that what is provided in the headers
 
-                    // Test Baggage Context Propagation
-                    request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
+                // Test Baggage Context Propagation
+                request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
 
-                    response = await client.SendAsync(request);
-                    var childActivityBaggageContext = JsonConvert.DeserializeObject<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+                response = await client.SendAsync(request);
+                var childActivityBaggageContext = JsonConvert.DeserializeObject<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
-                    response.EnsureSuccessStatusCode();
+                response.EnsureSuccessStatusCode();
 
-                    Assert.Single(childActivityBaggageContext, item => item.Key == "key1" && item.Value == "value1");
-                    Assert.Single(childActivityBaggageContext, item => item.Key == "key2" && item.Value == "value2");
-                }
+                Assert.Single(childActivityBaggageContext, item => item.Key == "key1" && item.Value == "value1");
+                Assert.Single(childActivityBaggageContext, item => item.Key == "key2" && item.Value == "value2");
             }
             finally
             {
@@ -608,7 +555,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             this.tracerProvider?.Dispose();
         }
 
-        private static void WaitForProcessorInvocations(Mock<BaseProcessor<Activity>> activityProcessor, int invocationCount)
+        private static void WaitForActivityExport(List<Activity> exportedItems, int count)
         {
             // We need to let End callback execute as it is executed AFTER response was returned.
             // In unit tests environment there may be a lot of parallel unit tests executed, so
@@ -617,7 +564,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 () =>
                 {
                     Thread.Sleep(10);
-                    return activityProcessor.Invocations.Count >= invocationCount;
+                    return exportedItems.Count >= count;
                 },
                 TimeSpan.FromSeconds(1)));
         }

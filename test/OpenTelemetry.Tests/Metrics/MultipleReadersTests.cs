@@ -16,7 +16,6 @@
 
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -25,25 +24,15 @@ namespace OpenTelemetry.Metrics.Tests
     public class MultipleReadersTests
     {
         [Theory]
-        [InlineData(AggregationTemporality.Delta, false)]
-        [InlineData(AggregationTemporality.Delta, true)]
-        [InlineData(AggregationTemporality.Cumulative, false)]
-        [InlineData(AggregationTemporality.Cumulative, true)]
-        public void SdkSupportsMultipleReaders(AggregationTemporality aggregationTemporality, bool hasViews)
+        [InlineData(MetricReaderTemporalityPreference.Delta, false)]
+        [InlineData(MetricReaderTemporalityPreference.Delta, true)]
+        [InlineData(MetricReaderTemporalityPreference.Cumulative, false)]
+        [InlineData(MetricReaderTemporalityPreference.Cumulative, true)]
+        public void SdkSupportsMultipleReaders(MetricReaderTemporalityPreference aggregationTemporality, bool hasViews)
         {
             var exportedItems1 = new List<Metric>();
-            using var deltaExporter1 = new InMemoryExporter<Metric>(exportedItems1);
-            using var deltaReader1 = new BaseExportingMetricReader(deltaExporter1)
-            {
-                Temporality = AggregationTemporality.Delta,
-            };
-
             var exportedItems2 = new List<Metric>();
-            using var deltaExporter2 = new InMemoryExporter<Metric>(exportedItems2);
-            using var deltaReader2 = new BaseExportingMetricReader(deltaExporter2)
-            {
-                Temporality = aggregationTemporality,
-            };
+
             using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{aggregationTemporality}.{hasViews}");
 
             var counter = meter.CreateCounter<long>("counter");
@@ -53,14 +42,27 @@ namespace OpenTelemetry.Metrics.Tests
             long GetValue() => values[index++];
             var gauge = meter.CreateObservableGauge("gauge", () => GetValue());
 
+            int indexSum = 0;
+            var valuesSum = new long[] { 1000, 1200, 1300, 1400 };
+            long GetSum() => valuesSum[indexSum++];
+            var observableCounter = meter.CreateObservableCounter("obs-counter", () => GetSum());
+
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
-                .AddReader(deltaReader1)
-                .AddReader(deltaReader2);
+                .AddInMemoryExporter(exportedItems1, metricReaderOptions =>
+                {
+                    metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
+                })
+                .AddInMemoryExporter(exportedItems2, metricReaderOptions =>
+                {
+                    metricReaderOptions.TemporalityPreference = aggregationTemporality;
+                });
 
             if (hasViews)
             {
                 meterProviderBuilder.AddView("counter", "renamedCounter");
+                meterProviderBuilder.AddView("gauge", "renamedGauge");
+                meterProviderBuilder.AddView("obs-counter", "renamedObservableCounter");
             }
 
             using var meterProvider = meterProviderBuilder.Build();
@@ -69,16 +71,50 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush();
 
-            Assert.Equal(2, exportedItems1.Count);
-            Assert.Equal(2, exportedItems2.Count);
+            Assert.Equal(3, exportedItems1.Count);
+            Assert.Equal(3, exportedItems2.Count);
+
+            if (hasViews)
+            {
+                Assert.Equal("renamedCounter", exportedItems1[0].Name);
+                Assert.Equal("renamedCounter", exportedItems2[0].Name);
+
+                Assert.Equal("renamedGauge", exportedItems1[1].Name);
+                Assert.Equal("renamedGauge", exportedItems2[1].Name);
+
+                Assert.Equal("renamedObservableCounter", exportedItems1[2].Name);
+                Assert.Equal("renamedObservableCounter", exportedItems2[2].Name);
+            }
+            else
+            {
+                Assert.Equal("counter", exportedItems1[0].Name);
+                Assert.Equal("counter", exportedItems2[0].Name);
+
+                Assert.Equal("gauge", exportedItems1[1].Name);
+                Assert.Equal("gauge", exportedItems2[1].Name);
+
+                Assert.Equal("obs-counter", exportedItems1[2].Name);
+                Assert.Equal("obs-counter", exportedItems2[2].Name);
+            }
 
             // Check value exported for Counter
-            this.AssertLongSumValueForMetric(exportedItems1[0], 10);
-            this.AssertLongSumValueForMetric(exportedItems2[0], 10);
+            AssertLongSumValueForMetric(exportedItems1[0], 10);
+            AssertLongSumValueForMetric(exportedItems2[0], 10);
 
             // Check value exported for Gauge
-            this.AssertLongSumValueForMetric(exportedItems1[1], 100);
-            this.AssertLongSumValueForMetric(exportedItems2[1], 200);
+            AssertLongSumValueForMetric(exportedItems1[1], 100);
+            AssertLongSumValueForMetric(exportedItems2[1], 200);
+
+            // Check value exported for ObservableCounter
+            AssertLongSumValueForMetric(exportedItems1[2], 1000);
+            if (aggregationTemporality == MetricReaderTemporalityPreference.Delta)
+            {
+                AssertLongSumValueForMetric(exportedItems2[2], 1200);
+            }
+            else
+            {
+                AssertLongSumValueForMetric(exportedItems2[2], 1200);
+            }
 
             exportedItems1.Clear();
             exportedItems2.Clear();
@@ -87,26 +123,82 @@ namespace OpenTelemetry.Metrics.Tests
 
             meterProvider.ForceFlush();
 
-            Assert.Equal(2, exportedItems1.Count);
-            Assert.Equal(2, exportedItems2.Count);
+            Assert.Equal(3, exportedItems1.Count);
+            Assert.Equal(3, exportedItems2.Count);
 
             // Check value exported for Counter
-            this.AssertLongSumValueForMetric(exportedItems1[0], 15);
-            if (aggregationTemporality == AggregationTemporality.Delta)
+            AssertLongSumValueForMetric(exportedItems1[0], 15);
+            if (aggregationTemporality == MetricReaderTemporalityPreference.Delta)
             {
-                this.AssertLongSumValueForMetric(exportedItems2[0], 15);
+                AssertLongSumValueForMetric(exportedItems2[0], 15);
             }
             else
             {
-                this.AssertLongSumValueForMetric(exportedItems2[0], 25);
+                AssertLongSumValueForMetric(exportedItems2[0], 25);
             }
 
             // Check value exported for Gauge
-            this.AssertLongSumValueForMetric(exportedItems1[1], 300);
-            this.AssertLongSumValueForMetric(exportedItems2[1], 400);
+            AssertLongSumValueForMetric(exportedItems1[1], 300);
+            AssertLongSumValueForMetric(exportedItems2[1], 400);
+
+            // Check value exported for ObservableCounter
+            AssertLongSumValueForMetric(exportedItems1[2], 300);
+            if (aggregationTemporality == MetricReaderTemporalityPreference.Delta)
+            {
+                AssertLongSumValueForMetric(exportedItems2[2], 200);
+            }
+            else
+            {
+                AssertLongSumValueForMetric(exportedItems2[2], 1400);
+            }
         }
 
-        private void AssertLongSumValueForMetric(Metric metric, long value)
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void ObservableInstrumentCallbacksInvokedForEachReaders(bool hasViews)
+        {
+            var exportedItems1 = new List<Metric>();
+            var exportedItems2 = new List<Metric>();
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{hasViews}");
+            int callbackInvocationCount = 0;
+            var gauge = meter.CreateObservableGauge("gauge", () =>
+            {
+                callbackInvocationCount++;
+                return 10 * callbackInvocationCount;
+            });
+
+            var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems1)
+                .AddInMemoryExporter(exportedItems2);
+
+            if (hasViews)
+            {
+                meterProviderBuilder.AddView("gauge", "renamedGauge");
+            }
+
+            using var meterProvider = meterProviderBuilder.Build();
+            meterProvider.ForceFlush();
+
+            // VALIDATE
+            Assert.Equal(2, callbackInvocationCount);
+            Assert.Single(exportedItems1);
+            Assert.Single(exportedItems2);
+
+            if (hasViews)
+            {
+                Assert.Equal("renamedGauge", exportedItems1[0].Name);
+                Assert.Equal("renamedGauge", exportedItems2[0].Name);
+            }
+            else
+            {
+                Assert.Equal("gauge", exportedItems1[0].Name);
+                Assert.Equal("gauge", exportedItems2[0].Name);
+            }
+        }
+
+        private static void AssertLongSumValueForMetric(Metric metric, long value)
         {
             var metricPoints = metric.GetMetricPoints();
             var metricPointsEnumerator = metricPoints.GetEnumerator();

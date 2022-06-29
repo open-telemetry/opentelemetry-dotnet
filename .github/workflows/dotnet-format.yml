@@ -2,12 +2,12 @@ name: dotnet format
 
 on:
   push:
-    branches: [ main, metrics ]
+    branches: [ main ]
     paths:
     - '**.cs'
     - '.editorconfig'
   pull_request:
-    branches: [ main, metrics ]
+    branches: [ main ]
     paths:
     - '**.cs'
     - '.editorconfig'
@@ -18,12 +18,12 @@ jobs:
 
     steps:
     - name: check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
-    - name: Setup .NET Core 3.1
-      uses: actions/setup-dotnet@v1
+    - name: Setup .NET Core 6.0
+      uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: 3.1.x
+        dotnet-version: 6.0.x
 
     - name: Install format tool
       run: dotnet tool install -g dotnet-format

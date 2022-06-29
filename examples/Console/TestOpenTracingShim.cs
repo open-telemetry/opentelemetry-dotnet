@@ -31,7 +31,7 @@ namespace Examples.Console
             // and use Console exporter.
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource("MyCompany.MyProduct.MyWebServer")
-                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyServiceName"))
+                    .ConfigureResource(r => r.AddService("MyServiceName"))
                     .AddConsoleExporter()
                     .Build();
 
@@ -53,10 +53,8 @@ namespace Examples.Console
                 parentScope.Span.SetOperationName("parent span new name");
 
                 // The child scope will automatically use parentScope as its parent.
-                using (IScope childScope = tracer.BuildSpan("Child").StartActive(finishSpanOnDispose: true))
-                {
-                    childScope.Span.SetTag("Child Tag", "Child Tag Value").SetTag("ch", "value").SetTag("more", "attributes");
-                }
+                using IScope childScope = tracer.BuildSpan("Child").StartActive(finishSpanOnDispose: true);
+                childScope.Span.SetTag("Child Tag", "Child Tag Value").SetTag("ch", "value").SetTag("more", "attributes");
             }
 
             System.Console.WriteLine("Press Enter key to exit.");

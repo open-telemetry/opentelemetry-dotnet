@@ -37,11 +37,12 @@ namespace OpenTelemetry.Exporter
                 this.resource = this.ParentProvider.GetResource();
                 if (this.resource != Resource.Empty)
                 {
+                    this.WriteLine("Resource associated with Metric:");
                     foreach (var resourceAttribute in this.resource.Attributes)
                     {
-                        if (resourceAttribute.Key.Equals("service.name"))
+                        if (ConsoleTagTransformer.Instance.TryTransformTag(resourceAttribute, out var result))
                         {
-                            this.WriteLine("Service.Name" + resourceAttribute.Value);
+                            this.WriteLine($"    {result}");
                         }
                     }
                 }
@@ -62,13 +63,13 @@ namespace OpenTelemetry.Exporter
                     msg.Append($", Unit: {metric.Unit}");
                 }
 
-                if (!string.IsNullOrEmpty(metric.Meter.Name))
+                if (!string.IsNullOrEmpty(metric.MeterName))
                 {
-                    msg.Append($", Meter: {metric.Meter.Name}");
+                    msg.Append($", Meter: {metric.MeterName}");
 
-                    if (!string.IsNullOrEmpty(metric.Meter.Version))
+                    if (!string.IsNullOrEmpty(metric.MeterVersion))
                     {
-                        msg.Append($"/{metric.Meter.Version}");
+                        msg.Append($"/{metric.MeterVersion}");
                     }
                 }
 
@@ -80,10 +81,11 @@ namespace OpenTelemetry.Exporter
                     StringBuilder tagsBuilder = new StringBuilder();
                     foreach (var tag in metricPoint.Tags)
                     {
-                        tagsBuilder.Append(tag.Key);
-                        tagsBuilder.Append(':');
-                        tagsBuilder.Append(tag.Value);
-                        tagsBuilder.Append(' ');
+                        if (ConsoleTagTransformer.Instance.TryTransformTag(tag, out var result))
+                        {
+                            tagsBuilder.Append(result);
+                            tagsBuilder.Append(' ');
+                        }
                     }
 
                     var tags = tagsBuilder.ToString().TrimEnd();

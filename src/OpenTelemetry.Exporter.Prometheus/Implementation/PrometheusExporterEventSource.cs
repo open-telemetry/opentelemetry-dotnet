@@ -26,7 +26,7 @@ namespace OpenTelemetry.Exporter.Prometheus
     [EventSource(Name = "OpenTelemetry-Exporter-Prometheus")]
     internal sealed class PrometheusExporterEventSource : EventSource
     {
-        public static PrometheusExporterEventSource Log = new PrometheusExporterEventSource();
+        public static PrometheusExporterEventSource Log = new();
 
         [NonEvent]
         public void FailedExport(Exception ex)
@@ -71,6 +71,12 @@ namespace OpenTelemetry.Exporter.Prometheus
         public void FailedShutdown(string exception)
         {
             this.WriteEvent(3, exception);
+        }
+
+        [Event(4, Message = "No metrics are available for export.", Level = EventLevel.Warning)]
+        public void NoMetrics()
+        {
+            this.WriteEvent(4);
         }
     }
 }

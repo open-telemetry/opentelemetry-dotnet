@@ -55,7 +55,7 @@ This repo ships an OpenTelemetry
 which provides the ability to enrich logs emitted with `ILogger` with
 `ActivityContext`, and export them to multiple destinations, similar to tracing.
 `ILogger` based API will become the OpenTelemetry .NET implementation of
-OpenTelemetry logging
+OpenTelemetry logging.
 
 ## Getting started with Tracing
 
@@ -79,7 +79,7 @@ Once built, changes to its configuration is not allowed, with the exception of
 adding more processors. In most cases, a single `TracerProvider` is created at
 the application startup, and is disposed when application shuts down.
 
-// TODO: Add Asp.Net Core, Asp.Net notes showing where this code should go.
+// TODO: Add Asp.Net Core notes showing where this code should go.
 
 The snippet below shows how to build a basic `TracerProvider`. This will create
 a provider with default configuration, and is not particularly useful. The
@@ -120,7 +120,7 @@ provider to start collecting traces from them.
 
 `AddSource` method on `TracerProviderBuilder` can be used to add a
 `ActivitySource` to the provider. Multiple `AddSource` can be called to add more
-than one source. It also supports wild-card subscription model as well.
+than one source. It also supports wildcard subscription model as well.
 
 Similar to `Sampler` and `Resource`, it is not possible to add sources *after*
 the provider is built, by calling the `Build()` method on the
@@ -206,14 +206,12 @@ purposes, the SDK provides the following built-in processors:
   The following environment variables can be used to override the default
   values of the `BatchExportActivityProcessorOptions`.
 
-  <!-- markdownlint-disable MD013 -->
   | Environment variable             | `BatchExportActivityProcessorOptions` property |
   | -------------------------------- | ---------------------------------------------- |
   | `OTEL_BSP_SCHEDULE_DELAY`        | `ScheduledDelayMilliseconds`                   |
   | `OTEL_BSP_EXPORT_TIMEOUT`        | `ExporterTimeoutMilliseconds`                  |
   | `OTEL_BSP_MAX_QUEUE_SIZE`        | `MaxQueueSize`                                 |
   | `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` | `MaxExportBatchSizeEnvVarKey`                  |
-  <!-- markdownlint-enable MD013 -->
 
   `FormatException` is thrown in case of an invalid value for any of the
   supported environment variables.
@@ -240,15 +238,14 @@ is the immutable representation of the entity producing the telemetry. If no
 `Resource` is explicitly configured, the default is to use a resource indicating
 this [Telemetry
 SDK](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#telemetry-sdk).
-`SetResourceBuilder` method on `TracerProviderBuilder` can be used to set a
-`ResourceBuilder` on the provider. When the provider is built, it automatically
+The `ConfigureResource` method on `TracerProviderBuilder` can be used to set a
+configure the resource on the provider. When the provider is built, it automatically
 builds the final `Resource` from the configured `ResourceBuilder`. As with
-samplers, there can only be a single `Resource` associated with a provider. If
-multiple `SetResourceBuilder` is called, the last one wins. Also, it is not
-possible to change the resource builder *after* the provider is built, by
-calling the `Build()` method on the `TracerProviderBuilder`. `ResourceBuilder`
-offers various methods to construct resource comprising of multiple attributes
-from various sources.
+samplers, there can only be a single `Resource` associated with a provider.
+It is not possible to change the resource builder *after* the provider is
+built, by calling the `Build()` method on the `TracerProviderBuilder`.
+`ResourceBuilder` offers various methods to construct resource comprising
+of multiple attributes from various sources.
 
 The snippet below shows configuring a custom `ResourceBuilder` to the provider.
 
@@ -258,19 +255,17 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyServiceName"))
+    .ConfigureResource(r => r.AddService("MyServiceName"))
     .Build();
 ```
 
 It is also possible to configure the `Resource` by using following
 environmental variables:
 
-<!-- markdownlint-disable MD013 -->
 | Environment variable       | Description                                        |
 | -------------------------- | -------------------------------------------------- |
 | `OTEL_RESOURCE_ATTRIBUTES` | Key-value pairs to be used as resource attributes. See the [Resource SDK specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable) for more details. |
 | `OTEL_SERVICE_NAME`        | Sets the value of the `service.name` resource attribute. If `service.name` is also provided in `OTEL_RESOURCE_ATTRIBUTES`, then `OTEL_SERVICE_NAME` takes precedence. |
-<!-- markdownlint-enable MD013 -->
 
 ### Sampler
 
@@ -325,17 +320,29 @@ Sdk.SetDefaultTextMapPropagator(new MyCustomPropagator());
 
 All the components shipped from this repo uses
 [EventSource](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventsource)
-for its internal logging. While it is possible to view these logs using tools
-such as `PerfView`, this SDK also ships a "self-diagnostics feature", which
-helps troubleshooting. When enabled, internal events generated by OpenTelemetry
-(i.e EventSources whose name starts with "OpenTelemetry-") will be written to a
-log file.
+for its internal logging. The name of the `EventSource` used by OpenTelemetry
+SDK is "OpenTelemetry-Sdk". To know the `EventSource` names used by other
+components, refer to the individual readme files.
+
+While it is possible to view these logs using tools such as
+[PerfView](https://github.com/microsoft/perfview),
+[dotnet-trace](https://docs.microsoft.com/dotnet/core/diagnostics/dotnet-trace)
+etc., this SDK also ships a [self-diagnostics](#self-diagnostics) feature, which
+helps troubleshooting.
+
+## Self-diagnostics
+
+OpenTelemetry SDK ships with built-in self-diagnostics feature. This feature,
+when enabled, will listen to internal logs generated by all OpenTelemetry
+components (i.e EventSources whose name starts with "OpenTelemetry-") and writes
+them to a log file.
 
 The self-diagnostics feature can be enabled/changed/disabled while the process
-is running. The SDK will attempt to read the configuration file every `10` seconds
-in non-exclusive read-only mode. The SDK will create or overwrite a file
-with new logs according to the configuration. This file will not exceed the
-configured max size and will be overwritten in a circular way.
+is running (without restarting the process). The SDK will attempt to read the
+configuration file every `10` seconds in non-exclusive read-only mode. The SDK
+will create or overwrite a file with new logs according to the configuration.
+This file will not exceed the configured max size and will be overwritten in a
+circular way.
 
 To enable self-diagnostics, go to the
 [current working directory](https://en.wikipedia.org/wiki/Working_directory) of

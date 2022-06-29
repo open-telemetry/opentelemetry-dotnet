@@ -48,7 +48,7 @@ namespace OpenTelemetry.Exporter
         /// <param name="client">Http client to use to upload telemetry.</param>
         public ZipkinExporter(ZipkinExporterOptions options, HttpClient client = null)
         {
-            Guard.ThrowIfNull(options, nameof(options));
+            Guard.ThrowIfNull(options);
 
             this.options = options;
             this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0) ? ZipkinExporterOptions.DefaultMaxPayloadSizeInBytes : options.MaxPayloadSizeInBytes.Value;
@@ -60,16 +60,16 @@ namespace OpenTelemetry.Exporter
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Activity> batch)
         {
-            if (this.LocalEndpoint == null)
-            {
-                this.SetLocalEndpointFromResource(this.ParentProvider.GetResource());
-            }
-
             // Prevent Zipkin's HTTP operations from being instrumented.
             using var scope = SuppressInstrumentationScope.Begin();
 
             try
             {
+                if (this.LocalEndpoint == null)
+                {
+                    this.SetLocalEndpointFromResource(this.ParentProvider.GetResource());
+                }
+
                 var requestUri = this.options.Endpoint;
 
                 using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
@@ -77,7 +77,7 @@ namespace OpenTelemetry.Exporter
                     Content = new JsonContent(this, batch),
                 };
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
                 using var response = this.httpClient.Send(request, CancellationToken.None);
 #else
                 using var response = this.httpClient.SendAsync(request, CancellationToken.None).GetAwaiter().GetResult();
@@ -189,7 +189,7 @@ namespace OpenTelemetry.Exporter
 
         private sealed class JsonContent : HttpContent
         {
-            private static readonly MediaTypeHeaderValue JsonHeader = new MediaTypeHeaderValue("application/json")
+            private static readonly MediaTypeHeaderValue JsonHeader = new("application/json")
             {
                 CharSet = "utf-8",
             };
@@ -206,7 +206,7 @@ namespace OpenTelemetry.Exporter
                 this.Headers.ContentType = JsonHeader;
             }
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
             protected override void SerializeToStream(Stream stream, TransportContext context, CancellationToken cancellationToken)
             {
                 this.SerializeToStreamInternal(stream);

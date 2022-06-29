@@ -17,14 +17,18 @@
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 
+namespace GettingStarted;
+
 public class Program
 {
     public static void Main()
     {
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.AddOpenTelemetry(options => options
-                .AddConsoleExporter());
+            builder.AddOpenTelemetry(options =>
+            {
+                options.AddConsoleExporter();
+            });
         });
 
         var logger = loggerFactory.CreateLogger<Program>();

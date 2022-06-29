@@ -24,17 +24,17 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// The operation completed successfully.
         /// </summary>
-        public static readonly Status Ok = new Status(StatusCode.Ok);
+        public static readonly Status Ok = new(StatusCode.Ok);
 
         /// <summary>
         /// The default status.
         /// </summary>
-        public static readonly Status Unset = new Status(StatusCode.Unset);
+        public static readonly Status Unset = new(StatusCode.Unset);
 
         /// <summary>
         /// The operation contains an error.
         /// </summary>
-        public static readonly Status Error = new Status(StatusCode.Error);
+        public static readonly Status Error = new(StatusCode.Error);
 
         internal Status(StatusCode statusCode, string description = null)
         {
@@ -91,7 +91,7 @@ namespace OpenTelemetry.Trace
         /// <inheritdoc/>
         public override bool Equals(object obj)
         {
-            if (!(obj is Status))
+            if (obj is not Status)
             {
                 return false;
             }

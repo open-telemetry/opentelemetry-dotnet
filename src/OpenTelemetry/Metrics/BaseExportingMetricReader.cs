@@ -21,27 +21,31 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// MetricReader implementation which exports metrics to the configured
+    /// MetricExporter upon <see cref="MetricReader.Collect(int)"/>.
+    /// </summary>
     public class BaseExportingMetricReader : MetricReader
     {
         protected readonly BaseExporter<Metric> exporter;
         private readonly ExportModes supportedExportModes = ExportModes.Push | ExportModes.Pull;
+        private readonly string exportCalledMessage;
+        private readonly string exportSucceededMessage;
+        private readonly string exportFailedMessage;
         private bool disposed;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BaseExportingMetricReader"/> class.
+        /// </summary>
+        /// <param name="exporter">Exporter instance to export Metrics to.</param>
         public BaseExportingMetricReader(BaseExporter<Metric> exporter)
         {
-            Guard.ThrowIfNull(exporter, nameof(exporter));
+            Guard.ThrowIfNull(exporter);
 
             this.exporter = exporter;
 
             var exportorType = exporter.GetType();
-            var attributes = exportorType.GetCustomAttributes(typeof(AggregationTemporalityAttribute), true);
-            if (attributes.Length > 0)
-            {
-                var attr = (AggregationTemporalityAttribute)attributes[attributes.Length - 1];
-                this.Temporality = attr.Temporality;
-            }
-
-            attributes = exportorType.GetCustomAttributes(typeof(ExportModesAttribute), true);
+            var attributes = exportorType.GetCustomAttributes(typeof(ExportModesAttribute), true);
             if (attributes.Length > 0)
             {
                 var attr = (ExportModesAttribute)attributes[attributes.Length - 1];
@@ -65,6 +69,10 @@ namespace OpenTelemetry.Metrics
                     };
                 }
             }
+
+            this.exportCalledMessage = $"{nameof(BaseExportingMetricReader)} calling {this.Exporter}.{nameof(this.Exporter.Export)} method.";
+            this.exportSucceededMessage = $"{this.Exporter}.{nameof(this.Exporter.Export)} succeeded.";
+            this.exportFailedMessage = $"{this.Exporter}.{nameof(this.Exporter.Export)} failed.";
         }
 
         internal BaseExporter<Metric> Exporter => this.exporter;
@@ -83,7 +91,18 @@ namespace OpenTelemetry.Metrics
             // TODO: Do we need to consider timeout here?
             try
             {
-                return this.exporter.Export(metrics) == ExportResult.Success;
+                OpenTelemetrySdkEventSource.Log.MetricReaderEvent(this.exportCalledMessage);
+                var result = this.exporter.Export(metrics);
+                if (result == ExportResult.Success)
+                {
+                    OpenTelemetrySdkEventSource.Log.MetricReaderEvent(this.exportSucceededMessage);
+                    return true;
+                }
+                else
+                {
+                    OpenTelemetrySdkEventSource.Log.MetricReaderEvent(this.exportFailedMessage);
+                    return false;
+                }
             }
             catch (Exception ex)
             {

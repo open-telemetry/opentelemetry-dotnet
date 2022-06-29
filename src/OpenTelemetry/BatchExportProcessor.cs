@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -38,9 +40,9 @@ namespace OpenTelemetry
         private readonly int exporterTimeoutMilliseconds;
         private readonly int maxExportBatchSize;
         private readonly Thread exporterThread;
-        private readonly AutoResetEvent exportTrigger = new AutoResetEvent(false);
-        private readonly ManualResetEvent dataExportedNotification = new ManualResetEvent(false);
-        private readonly ManualResetEvent shutdownTrigger = new ManualResetEvent(false);
+        private readonly AutoResetEvent exportTrigger = new(false);
+        private readonly ManualResetEvent dataExportedNotification = new(false);
+        private readonly ManualResetEvent shutdownTrigger = new(false);
         private long shutdownDrainTarget = long.MaxValue;
         private long droppedCount;
         private bool disposed;
@@ -61,10 +63,10 @@ namespace OpenTelemetry
             int maxExportBatchSize = DefaultMaxExportBatchSize)
             : base(exporter)
         {
-            Guard.ThrowIfOutOfRange(maxQueueSize, nameof(maxQueueSize), min: 1);
-            Guard.ThrowIfOutOfRange(maxExportBatchSize, nameof(maxExportBatchSize), min: 1, max: maxQueueSize, maxName: nameof(maxQueueSize));
-            Guard.ThrowIfOutOfRange(scheduledDelayMilliseconds, nameof(scheduledDelayMilliseconds), min: 1);
-            Guard.ThrowIfOutOfRange(exporterTimeoutMilliseconds, nameof(exporterTimeoutMilliseconds), min: 0);
+            Guard.ThrowIfOutOfRange(maxQueueSize, min: 1);
+            Guard.ThrowIfOutOfRange(maxExportBatchSize, min: 1, max: maxQueueSize, maxName: nameof(maxQueueSize));
+            Guard.ThrowIfOutOfRange(scheduledDelayMilliseconds, min: 1);
+            Guard.ThrowIfOutOfRange(exporterTimeoutMilliseconds, min: 0);
 
             this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
@@ -100,7 +102,13 @@ namespace OpenTelemetry
             {
                 if (this.circularBuffer.Count >= this.maxExportBatchSize)
                 {
-                    this.exportTrigger.Set();
+                    try
+                    {
+                        this.exportTrigger.Set();
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                    }
                 }
 
                 return; // enqueue succeeded
@@ -121,7 +129,14 @@ namespace OpenTelemetry
                 return true; // nothing to flush
             }
 
-            this.exportTrigger.Set();
+            try
+            {
+                this.exportTrigger.Set();
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
 
             if (timeoutMilliseconds == 0)
             {
@@ -186,7 +201,15 @@ namespace OpenTelemetry
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
             this.shutdownDrainTarget = this.circularBuffer.AddedCount;
-            this.shutdownTrigger.Set();
+
+            try
+            {
+                this.shutdownTrigger.Set();
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
 
             OpenTelemetrySdkEventSource.Log.DroppedExportProcessorItems(this.GetType().Name, this.exporter.GetType().Name, this.droppedCount);
 

@@ -25,15 +25,16 @@ using OpenTelemetry.Resources;
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
-    /// Build MeterProvider with Resource, Readers, and Instrumentation.
+    /// Build MeterProvider with Instrumentations, Meters,
+    /// Resource, Readers, and Views.
     /// </summary>
     public abstract class MeterProviderBuilderBase : MeterProviderBuilder
     {
         internal const int MaxMetricsDefault = 1000;
         internal const int MaxMetricPointsPerMetricDefault = 2000;
-        private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
-        private readonly List<string> meterSources = new List<string>();
-        private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs = new List<Func<Instrument, MetricStreamConfiguration>>();
+        private readonly List<InstrumentationFactory> instrumentationFactories = new();
+        private readonly List<string> meterSources = new();
+        private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs = new();
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
         private int maxMetricStreams = MaxMetricsDefault;
         private int maxMetricPointsPerMetricStream = MaxMetricPointsPerMetricDefault;
@@ -44,10 +45,20 @@ namespace OpenTelemetry.Metrics
 
         internal List<MetricReader> MetricReaders { get; } = new List<MetricReader>();
 
+        internal ResourceBuilder ResourceBuilder
+        {
+            get => this.resourceBuilder;
+            set
+            {
+                Debug.Assert(value != null, $"{nameof(this.ResourceBuilder)} must not be set to null");
+                this.resourceBuilder = value;
+            }
+        }
+
         /// <inheritdoc />
         public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
         {
-            Guard.ThrowIfNull(instrumentationFactory, nameof(instrumentationFactory));
+            Guard.ThrowIfNull(instrumentationFactory);
 
             this.instrumentationFactories.Add(
                 new InstrumentationFactory(
@@ -61,11 +72,11 @@ namespace OpenTelemetry.Metrics
         /// <inheritdoc />
         public override MeterProviderBuilder AddMeter(params string[] names)
         {
-            Guard.ThrowIfNull(names, nameof(names));
+            Guard.ThrowIfNull(names);
 
             foreach (var name in names)
             {
-                Guard.ThrowIfNullOrWhitespace(name, nameof(name));
+                Guard.ThrowIfNullOrWhitespace(name);
 
                 this.meterSources.Add(name);
             }
@@ -81,7 +92,12 @@ namespace OpenTelemetry.Metrics
 
         internal MeterProviderBuilder AddView(string instrumentName, string name)
         {
-            return this.AddView(instrumentName, new MetricStreamConfiguration() { Name = name });
+            return this.AddView(
+                instrumentName,
+                new MetricStreamConfiguration
+                {
+                    Name = name,
+                });
         }
 
         internal MeterProviderBuilder AddView(string instrumentName, MetricStreamConfiguration metricStreamConfiguration)
@@ -117,14 +133,6 @@ namespace OpenTelemetry.Metrics
             Guard.ThrowIfOutOfRange(maxMetricPointsPerMetricStream, min: 1);
 
             this.maxMetricPointsPerMetricStream = maxMetricPointsPerMetricStream;
-            return this;
-        }
-
-        internal MeterProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
-        {
-            Debug.Assert(resourceBuilder != null, $"{nameof(resourceBuilder)} must not be null");
-
-            this.resourceBuilder = resourceBuilder;
             return this;
         }
 

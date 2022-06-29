@@ -1,2 +1,0 @@
-OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions
-static OpenTelemetry.Metrics.InMemoryExporterMetricsExtensions.AddInMemoryExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Collections.Generic.ICollection<OpenTelemetry.Metrics.Metric> exportedItems) -> OpenTelemetry.Metrics.MeterProviderBuilder

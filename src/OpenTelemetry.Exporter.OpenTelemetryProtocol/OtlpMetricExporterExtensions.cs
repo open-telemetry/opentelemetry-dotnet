@@ -25,13 +25,49 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public static class OtlpMetricExporterExtensions
     {
+        private const int DefaultExportIntervalMilliseconds = 60000;
+        private const int DefaultExportTimeoutMilliseconds = 30000;
+
+        /// <summary>
+        /// Adds <see cref="OtlpMetricExporter"/> to the <see cref="MeterProviderBuilder"/> using default options.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
+        public static MeterProviderBuilder AddOtlpExporter(this MeterProviderBuilder builder)
+        {
+            return AddOtlpExporter(builder, options => { });
+        }
+
         /// <summary>
         /// Adds <see cref="OtlpMetricExporter"/> to the <see cref="MeterProviderBuilder"/>.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
-        /// <param name="configure">Exporter configuration options.</param>
+        /// <param name="configureExporter">Exporter configuration options.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
-        public static MeterProviderBuilder AddOtlpExporter(this MeterProviderBuilder builder, Action<OtlpExporterOptions> configure = null)
+        public static MeterProviderBuilder AddOtlpExporter(this MeterProviderBuilder builder, Action<OtlpExporterOptions> configureExporter)
+        {
+            Guard.ThrowIfNull(builder);
+
+            if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
+            {
+                return deferredMeterProviderBuilder.Configure((sp, builder) =>
+                {
+                    AddOtlpExporter(builder, sp.GetOptions<OtlpExporterOptions>(), sp.GetOptions<MetricReaderOptions>(), configureExporter, null, sp);
+                });
+            }
+
+            return AddOtlpExporter(builder, new OtlpExporterOptions(), new MetricReaderOptions(), configureExporter, null, serviceProvider: null);
+        }
+
+        /// <summary>
+        /// Adds <see cref="OtlpMetricExporter"/> to the <see cref="MeterProviderBuilder"/>.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/> builder to use.</param>
+        /// <param name="configureExporterAndMetricReader">Exporter and <see cref="MetricReader"/> configuration options.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
+        public static MeterProviderBuilder AddOtlpExporter(
+            this MeterProviderBuilder builder,
+            Action<OtlpExporterOptions, MetricReaderOptions> configureExporterAndMetricReader)
         {
             Guard.ThrowIfNull(builder, nameof(builder));
 
@@ -39,34 +75,46 @@ namespace OpenTelemetry.Metrics
             {
                 return deferredMeterProviderBuilder.Configure((sp, builder) =>
                 {
-                    AddOtlpExporter(builder, sp.GetOptions<OtlpExporterOptions>(), configure, sp);
+                    AddOtlpExporter(builder, sp.GetOptions<OtlpExporterOptions>(), sp.GetOptions<MetricReaderOptions>(), null, configureExporterAndMetricReader, sp);
                 });
             }
 
-            return AddOtlpExporter(builder, new OtlpExporterOptions(), configure, serviceProvider: null);
+            return AddOtlpExporter(builder, new OtlpExporterOptions(), new MetricReaderOptions(), null, configureExporterAndMetricReader, serviceProvider: null);
         }
 
-        private static MeterProviderBuilder AddOtlpExporter(
+        internal static MeterProviderBuilder AddOtlpExporter(
             MeterProviderBuilder builder,
-            OtlpExporterOptions options,
-            Action<OtlpExporterOptions> configure,
-            IServiceProvider serviceProvider)
+            OtlpExporterOptions exporterOptions,
+            MetricReaderOptions metricReaderOptions,
+            Action<OtlpExporterOptions> configureExporter,
+            Action<OtlpExporterOptions, MetricReaderOptions> configureExporterAndMetricReader,
+            IServiceProvider serviceProvider,
+            Func<BaseExporter<Metric>, BaseExporter<Metric>> configureExporterInstance = null)
         {
-            var initialEndpoint = options.Endpoint;
+            if (configureExporterAndMetricReader != null)
+            {
+                configureExporterAndMetricReader.Invoke(exporterOptions, metricReaderOptions);
+            }
+            else
+            {
+                configureExporter?.Invoke(exporterOptions);
+            }
 
-            configure?.Invoke(options);
+            exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
 
-            options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
+            BaseExporter<Metric> metricExporter = new OtlpMetricExporter(exporterOptions);
 
-            options.AppendExportPath(initialEndpoint, OtlpExporterOptions.MetricsExportPath);
+            if (configureExporterInstance != null)
+            {
+                metricExporter = configureExporterInstance(metricExporter);
+            }
 
-            var metricExporter = new OtlpMetricExporter(options);
+            var metricReader = PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
+                metricExporter,
+                metricReaderOptions,
+                DefaultExportIntervalMilliseconds,
+                DefaultExportTimeoutMilliseconds);
 
-            var metricReader = options.MetricReaderType == MetricReaderType.Manual
-                ? new BaseExportingMetricReader(metricExporter)
-                : new PeriodicExportingMetricReader(metricExporter, options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds);
-
-            metricReader.Temporality = options.AggregationTemporality;
             return builder.AddReader(metricReader);
         }
     }

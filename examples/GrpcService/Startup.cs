@@ -45,7 +45,7 @@ namespace Examples.GrpcService
             {
                 case "jaeger":
                     services.AddOpenTelemetryTracing((builder) => builder
-                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(this.Configuration.GetValue<string>("Jaeger:ServiceName")))
+                        .ConfigureResource(r => r.AddService(this.Configuration.GetValue<string>("Jaeger:ServiceName")))
                         .AddAspNetCoreInstrumentation()
                         .AddJaegerExporter(jaegerOptions =>
                         {

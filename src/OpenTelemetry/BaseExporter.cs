@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Threading;
 using OpenTelemetry.Internal;
@@ -48,7 +50,7 @@ namespace OpenTelemetry
         /// <summary>
         /// Gets the parent <see cref="BaseProvider"/>.
         /// </summary>
-        public BaseProvider ParentProvider { get; internal set; }
+        public BaseProvider? ParentProvider { get; internal set; }
 
         /// <summary>
         /// Exports a batch of telemetry objects.
@@ -76,7 +78,7 @@ namespace OpenTelemetry
         /// </remarks>
         public bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
         {
-            Guard.ThrowIfInvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
+            Guard.ThrowIfInvalidTimeout(timeoutMilliseconds);
 
             try
             {
@@ -109,7 +111,7 @@ namespace OpenTelemetry
         /// </remarks>
         public bool Shutdown(int timeoutMilliseconds = Timeout.Infinite)
         {
-            Guard.ThrowIfInvalidTimeout(timeoutMilliseconds, nameof(timeoutMilliseconds));
+            Guard.ThrowIfInvalidTimeout(timeoutMilliseconds);
 
             if (Interlocked.Increment(ref this.shutdownCount) > 1)
             {

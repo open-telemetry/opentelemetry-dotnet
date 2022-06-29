@@ -27,15 +27,10 @@ jobs:
         branches: [main]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # fetching all
         ref: ${{ matrix.branches }}
-
-    - uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '6.0.x'
-        include-prerelease: true
 
     - name: Install dependencies
       run: dotnet restore
@@ -47,7 +42,7 @@ jobs:
       run: dotnet pack OpenTelemetry.proj --configuration Release --no-build
 
     - name: Publish Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.os }}-packages
         path: '**/bin/**/*.*nupkg'

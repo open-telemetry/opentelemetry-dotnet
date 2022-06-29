@@ -40,19 +40,18 @@ Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical c
 
 namespace Benchmarks.Metrics
 {
-    [MemoryDiagnoser]
     public class MetricCollectBenchmarks
     {
+        private readonly string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
+
+        // TODO: Confirm if this needs to be thread-safe
+        private readonly Random random = new();
         private Counter<double> counter;
         private MeterProvider provider;
         private Meter meter;
         private CancellationTokenSource token;
         private BaseExportingMetricReader reader;
         private Task writeMetricTask;
-        private string[] dimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
-
-        // TODO: Confirm if this needs to be thread-safe
-        private Random random = new Random();
 
         [Params(false, true)]
         public bool UseWithRef { get; set; }
@@ -88,7 +87,7 @@ namespace Benchmarks.Metrics
 
             this.reader = new BaseExportingMetricReader(metricExporter)
             {
-                Temporality = AggregationTemporality.Cumulative,
+                TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
             };
 
             this.meter = new Meter(Utils.GetCurrentMethodName());

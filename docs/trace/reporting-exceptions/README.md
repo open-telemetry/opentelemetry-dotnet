@@ -48,12 +48,12 @@ using (var activity = MyActivitySource.StartActivity("Foo"))
     }
     catch (SomeException ex)
     {
-        activity?.SetStatus(Status.Error);
+        activity?.SetStatus(ActivityStatusCode.Error);
         DoSomething();
     }
     catch (Exception ex)
     {
-        activity?.SetStatus(Status.Error);
+        activity?.SetStatus(ActivityStatusCode.Error);
         throw;
     }
 }
@@ -95,7 +95,7 @@ using (var activity = MyActivitySource.StartActivity("Foo"))
     }
     catch (SomeException ex)
     {
-        activity?.SetStatus(Status.Error.WithDescription(ex.message));
+        activity?.SetStatus(ActivityStatusCode.Error, ex.message);
     }
 }
 ```
@@ -119,7 +119,7 @@ using (var activity = MyActivitySource.StartActivity("Foo"))
     }
     catch (SomeException ex)
     {
-        activity?.SetStatus(Status.Error.WithDescription(ex.message));
+        activity?.SetStatus(ActivityStatusCode.Error, ex.message);
         activity?.RecordException(ex);
     }
 }
@@ -136,7 +136,7 @@ will depend on the presence of a debugger:
 * If a debugger is attached, the debugger will be notified that an unhandled
   exception happened.
 * In case a postmortem debugger is configured, the postmortem debugger will be
-  activited and normally it will collect a crash dump.
+  activated and normally it will collect a crash dump.
 
 It might be useful to automatically capture the unhandled exceptions, travel
 through the unfinished activities and export them for troubleshooting. Here goes
@@ -145,7 +145,6 @@ one possible way of doing this:
 **WARNING:** Use `AppDomain.UnhandledException` with caution. A throw in the
 handler puts the process into an unrecoverable state.
 
-<!-- markdownlint-disable MD013 -->
 ```csharp
 using System;
 using System.Diagnostics;
@@ -191,4 +190,3 @@ public class Program
     }
 }
 ```
-<!-- markdownlint-enable MD013 -->

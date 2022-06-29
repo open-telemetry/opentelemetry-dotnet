@@ -21,18 +21,17 @@ using OpenTelemetry.Trace;
 
 namespace Benchmarks.Trace
 {
-    [MemoryDiagnoser]
     public class TraceBenchmarks
     {
-        private readonly ActivitySource sourceWithNoListener = new ActivitySource("Benchmark.NoListener");
-        private readonly ActivitySource sourceWithPropagationDataListner = new ActivitySource("Benchmark.PropagationDataListner");
-        private readonly ActivitySource sourceWithAllDataListner = new ActivitySource("Benchmark.AllDataListner");
-        private readonly ActivitySource sourceWithAllDataAndRecordedListner = new ActivitySource("Benchmark.AllDataAndRecordedListner");
-        private readonly ActivitySource sourceWithOneProcessor = new ActivitySource("Benchmark.OneProcessor");
-        private readonly ActivitySource sourceWithTwoProcessors = new ActivitySource("Benchmark.TwoProcessors");
-        private readonly ActivitySource sourceWithThreeProcessors = new ActivitySource("Benchmark.ThreeProcessors");
-        private readonly ActivitySource sourceWithOneLegacyActivityOperationNameSubscription = new ActivitySource("Benchmark.OneInstrumentation");
-        private readonly ActivitySource sourceWithTwoLegacyActivityOperationNameSubscriptions = new ActivitySource("Benchmark.TwoInstrumentations");
+        private readonly ActivitySource sourceWithNoListener = new("Benchmark.NoListener");
+        private readonly ActivitySource sourceWithPropagationDataListner = new("Benchmark.PropagationDataListner");
+        private readonly ActivitySource sourceWithAllDataListner = new("Benchmark.AllDataListner");
+        private readonly ActivitySource sourceWithAllDataAndRecordedListner = new("Benchmark.AllDataAndRecordedListner");
+        private readonly ActivitySource sourceWithOneProcessor = new("Benchmark.OneProcessor");
+        private readonly ActivitySource sourceWithTwoProcessors = new("Benchmark.TwoProcessors");
+        private readonly ActivitySource sourceWithThreeProcessors = new("Benchmark.ThreeProcessors");
+        private readonly ActivitySource sourceWithOneLegacyActivityOperationNameSubscription = new("Benchmark.OneInstrumentation");
+        private readonly ActivitySource sourceWithTwoLegacyActivityOperationNameSubscriptions = new("Benchmark.TwoInstrumentations");
 
         public TraceBenchmarks()
         {
@@ -114,93 +113,71 @@ namespace Benchmarks.Trace
         [Benchmark]
         public void NoListener()
         {
-            using (var activity = this.sourceWithNoListener.StartActivity("Benchmark"))
-            {
-                // this activity won't be created as there is no listener
-            }
+            // this activity won't be created as there is no listener
+            using var activity = this.sourceWithNoListener.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void PropagationDataListner()
         {
-            using (var activity = this.sourceWithPropagationDataListner.StartActivity("Benchmark"))
-            {
-                // this activity will be created and feed into an ActivityListener that simply drops everything on the floor
-            }
+            // this activity will be created and feed into an ActivityListener that simply drops everything on the floor
+            using var activity = this.sourceWithPropagationDataListner.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void AllDataListner()
         {
-            using (var activity = this.sourceWithAllDataListner.StartActivity("Benchmark"))
-            {
-                // this activity will be created and feed into an ActivityListener that simply drops everything on the floor
-            }
+            // this activity will be created and feed into an ActivityListener that simply drops everything on the floor
+            using var activity = this.sourceWithAllDataListner.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void AllDataAndRecordedListner()
         {
-            using (var activity = this.sourceWithAllDataAndRecordedListner.StartActivity("Benchmark"))
-            {
-                // this activity will be created and feed into an ActivityListener that simply drops everything on the floor
-            }
+            // this activity will be created and feed into an ActivityListener that simply drops everything on the floor
+            using var activity = this.sourceWithAllDataAndRecordedListner.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void OneProcessor()
         {
-            using (var activity = this.sourceWithOneProcessor.StartActivity("Benchmark"))
-            {
-            }
+            using var activity = this.sourceWithOneProcessor.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void TwoProcessors()
         {
-            using (var activity = this.sourceWithTwoProcessors.StartActivity("Benchmark"))
-            {
-            }
+            using var activity = this.sourceWithTwoProcessors.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void ThreeProcessors()
         {
-            using (var activity = this.sourceWithThreeProcessors.StartActivity("Benchmark"))
-            {
-            }
+            using var activity = this.sourceWithThreeProcessors.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void OneInstrumentation()
         {
-            using (var activity = this.sourceWithOneLegacyActivityOperationNameSubscription.StartActivity("Benchmark"))
-            {
-            }
+            using var activity = this.sourceWithOneLegacyActivityOperationNameSubscription.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void TwoInstrumentations()
         {
-            using (var activity = this.sourceWithTwoLegacyActivityOperationNameSubscriptions.StartActivity("Benchmark"))
-            {
-            }
+            using var activity = this.sourceWithTwoLegacyActivityOperationNameSubscriptions.StartActivity("Benchmark");
         }
 
         [Benchmark]
         public void LegacyActivity_ExactMatchMode()
         {
-            using (var activity = new Activity("ExactMatch.OperationName1").Start())
-            {
-            }
+            using var activity = new Activity("ExactMatch.OperationName1").Start();
         }
 
         [Benchmark]
         public void LegacyActivity_WildcardMatchMode()
         {
-            using (var activity = new Activity("WildcardMatch.OperationName1").Start())
-            {
-            }
+            using var activity = new Activity("WildcardMatch.OperationName1").Start();
         }
 
         internal class DummyActivityProcessor : BaseProcessor<Activity>

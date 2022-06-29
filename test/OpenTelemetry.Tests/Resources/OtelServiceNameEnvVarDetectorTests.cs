@@ -30,15 +30,12 @@ namespace OpenTelemetry.Resources.Tests
         public void Dispose()
         {
             Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, null);
+            GC.SuppressFinalize(this);
         }
 
         [Fact]
         public void OtelServiceNameEnvVar_EnvVarKey()
         {
-            // Act
-            var resource = new OtelServiceNameEnvVarDetector().Detect();
-
-            // Assert
             Assert.Equal("OTEL_SERVICE_NAME", OtelServiceNameEnvVarDetector.EnvVarKey);
         }
 

@@ -26,7 +26,6 @@ using OpenTelemetry.Trace;
 
 namespace Benchmarks.Instrumentation
 {
-    [MemoryDiagnoser]
     public class InstrumentedHttpClientBenchmark
     {
         private const string ActivityName = "incoming request";
@@ -53,7 +52,7 @@ namespace Benchmarks.Instrumentation
 
             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddHttpClientInstrumentation()
-                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(ServiceName))
+                .ConfigureResource(r => r.AddService(ServiceName))
                 .AddSource(SourceName)
                 .Build();
 

@@ -23,7 +23,6 @@ using OpenTelemetry.Instrumentation;
 namespace Benchmarks.Instrumentation
 {
     [InProcess]
-    [MemoryDiagnoser]
     public class DiagnosticSourceSubscriberBenchmark
     {
         [Params(1, 2)]
@@ -34,8 +33,8 @@ namespace Benchmarks.Instrumentation
 
         private const string SourceName = "MySource";
 
-        private readonly DiagnosticListener listener = new DiagnosticListener(SourceName);
-        private readonly List<DiagnosticSourceSubscriber> subscribers = new List<DiagnosticSourceSubscriber>();
+        private readonly DiagnosticListener listener = new(SourceName);
+        private readonly List<DiagnosticSourceSubscriber> subscribers = new();
         private readonly Func<string, object, object, bool> isEnabledFilter = (name, arg1, arg2) => ((EventPayload)arg1).Data == "Data";
 
         [GlobalSetup]

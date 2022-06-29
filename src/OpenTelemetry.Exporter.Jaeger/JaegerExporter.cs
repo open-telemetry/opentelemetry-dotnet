@@ -50,7 +50,7 @@ namespace OpenTelemetry.Exporter
 
         internal JaegerExporter(JaegerExporterOptions options, TProtocolFactory protocolFactory = null, IJaegerClient client = null)
         {
-            Guard.ThrowIfNull(options, nameof(options));
+            Guard.ThrowIfNull(options);
 
             this.maxPayloadSizeInBytes = (!options.MaxPayloadSizeInBytes.HasValue || options.MaxPayloadSizeInBytes <= 0)
                 ? JaegerExporterOptions.DefaultMaxPayloadSizeInBytes
@@ -122,7 +122,7 @@ namespace OpenTelemetry.Exporter
 
         internal void SetResourceAndInitializeBatch(Resource resource)
         {
-            Guard.ThrowIfNull(resource, nameof(resource));
+            Guard.ThrowIfNull(resource);
 
             var process = this.Process;
 
@@ -145,12 +145,15 @@ namespace OpenTelemetry.Exporter
                     }
                 }
 
-                if (process.Tags == null)
+                if (JaegerTagTransformer.Instance.TryTransformTag(label, out var result))
                 {
-                    process.Tags = new Dictionary<string, JaegerTag>();
-                }
+                    if (process.Tags == null)
+                    {
+                        process.Tags = new Dictionary<string, JaegerTag>();
+                    }
 
-                process.Tags[key] = label.ToJaegerTag();
+                    process.Tags[key] = result;
+                }
             }
 
             if (serviceName != null)

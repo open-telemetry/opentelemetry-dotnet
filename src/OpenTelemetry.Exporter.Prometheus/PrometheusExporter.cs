@@ -23,13 +23,11 @@ namespace OpenTelemetry.Exporter
     /// <summary>
     /// Exporter of OpenTelemetry metrics to Prometheus.
     /// </summary>
-    [AggregationTemporality(AggregationTemporality.Cumulative)]
     [ExportModes(ExportModes.Pull)]
     public class PrometheusExporter : BaseExporter<Metric>, IPullMetricExporter
     {
         internal const string HttpListenerStartFailureExceptionMessage = "PrometheusExporter http listener could not be started.";
         internal readonly PrometheusExporterOptions Options;
-        internal Batch<Metric> Metrics; // TODO: this is no longer needed, we can remove it later
         private readonly PrometheusExporterHttpServer metricsHttpServer;
         private Func<int, bool> funcCollect;
         private Func<Batch<Metric>, ExportResult> funcExport;

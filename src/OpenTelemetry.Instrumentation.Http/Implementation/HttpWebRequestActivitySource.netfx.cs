@@ -99,10 +99,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
                 activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-                if (Options.SetHttpFlavor)
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
-                }
+                activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.ProtocolVersion));
 
                 try
                 {
@@ -122,7 +119,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
 
-                activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode));
+                activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode));
 
                 try
                 {
@@ -150,7 +147,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
 
-                    status = SpanHelper.ResolveSpanStatusForHttpStatusCode((int)response.StatusCode);
+                    status = SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode);
                 }
                 else
                 {

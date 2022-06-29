@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -22,23 +24,23 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
 {
-    internal class OpenTelemetryLogger : ILogger
+    internal sealed class OpenTelemetryLogger : ILogger
     {
         private readonly string categoryName;
         private readonly OpenTelemetryLoggerProvider provider;
 
         internal OpenTelemetryLogger(string categoryName, OpenTelemetryLoggerProvider provider)
         {
-            Guard.ThrowIfNull(categoryName, nameof(categoryName));
-            Guard.ThrowIfNull(provider, nameof(provider));
+            Guard.ThrowIfNull(categoryName);
+            Guard.ThrowIfNull(provider);
 
             this.categoryName = categoryName;
             this.provider = provider;
         }
 
-        internal IExternalScopeProvider ScopeProvider { get; set; }
+        internal IExternalScopeProvider? ScopeProvider { get; set; }
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
             if (!this.IsEnabled(logLevel)
                 || Sdk.SuppressInstrumentation)
@@ -46,21 +48,20 @@ namespace OpenTelemetry.Logs
                 return;
             }
 
-            var processor = this.provider.Processor;
+            var provider = this.provider;
+            var processor = provider.Processor;
             if (processor != null)
             {
-                var options = this.provider.Options;
-
                 var record = new LogRecord(
-                    options.IncludeScopes ? this.ScopeProvider : null,
+                    provider.IncludeScopes ? this.ScopeProvider : null,
                     DateTime.UtcNow,
                     this.categoryName,
                     logLevel,
                     eventId,
-                    options.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
-                    options.ParseStateValues ? null : state,
+                    provider.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
+                    provider.ParseStateValues ? null : state,
                     exception,
-                    options.ParseStateValues ? this.ParseState(state) : null);
+                    provider.ParseStateValues ? this.ParseState(state) : null);
 
                 processor.OnEnd(record);
 
@@ -74,24 +75,33 @@ namespace OpenTelemetry.Logs
             return logLevel != LogLevel.None;
         }
 
-        public IDisposable BeginScope<TState>(TState state) => this.ScopeProvider?.Push(state) ?? null;
+        public IDisposable BeginScope<TState>(TState state) => this.ScopeProvider?.Push(state) ?? NullScope.Instance;
 
-        private IReadOnlyList<KeyValuePair<string, object>> ParseState<TState>(TState state)
+        private IReadOnlyList<KeyValuePair<string, object?>> ParseState<TState>(TState state)
         {
-            if (state is IReadOnlyList<KeyValuePair<string, object>> stateList)
+            if (state is IReadOnlyList<KeyValuePair<string, object?>> stateList)
             {
                 return stateList;
             }
-            else if (state is IEnumerable<KeyValuePair<string, object>> stateValues)
+            else if (state is IEnumerable<KeyValuePair<string, object?>> stateValues)
             {
-                return new List<KeyValuePair<string, object>>(stateValues);
+                return new List<KeyValuePair<string, object?>>(stateValues);
             }
             else
             {
-                return new List<KeyValuePair<string, object>>
+                return new List<KeyValuePair<string, object?>>
                 {
-                    new KeyValuePair<string, object>(string.Empty, state),
+                    new KeyValuePair<string, object?>(string.Empty, state),
                 };
+            }
+        }
+
+        private sealed class NullScope : IDisposable
+        {
+            public static NullScope Instance { get; } = new();
+
+            public void Dispose()
+            {
             }
         }
     }

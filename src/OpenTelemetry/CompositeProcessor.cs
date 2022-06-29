@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -30,7 +32,7 @@ namespace OpenTelemetry
 
         public CompositeProcessor(IEnumerable<BaseProcessor<T>> processors)
         {
-            Guard.ThrowIfNull(processors, nameof(processors));
+            Guard.ThrowIfNull(processors);
 
             using var iter = processors.GetEnumerator();
             if (!iter.MoveNext())
@@ -49,7 +51,7 @@ namespace OpenTelemetry
 
         public CompositeProcessor<T> AddProcessor(BaseProcessor<T> processor)
         {
-            Guard.ThrowIfNull(processor, nameof(processor));
+            Guard.ThrowIfNull(processor);
 
             var node = new DoublyLinkedListNode(processor)
             {
@@ -76,6 +78,16 @@ namespace OpenTelemetry
             for (var cur = this.head; cur != null; cur = cur.Next)
             {
                 cur.Value.OnStart(data);
+            }
+        }
+
+        internal override void SetParentProvider(BaseProvider parentProvider)
+        {
+            base.SetParentProvider(parentProvider);
+
+            for (var cur = this.head; cur != null; cur = cur.Next)
+            {
+                cur.Value.SetParentProvider(parentProvider);
             }
         }
 
@@ -166,9 +178,9 @@ namespace OpenTelemetry
                 this.Value = value;
             }
 
-            public DoublyLinkedListNode Previous { get; set; }
+            public DoublyLinkedListNode? Previous { get; set; }
 
-            public DoublyLinkedListNode Next { get; set; }
+            public DoublyLinkedListNode? Next { get; set; }
         }
     }
 }

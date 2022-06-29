@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics
         /// <returns>The instance of <see cref="MeterProviderBuilder"/> to chain the calls.</returns>
         public static MeterProviderBuilder AddPrometheusExporter(this MeterProviderBuilder builder, Action<PrometheusExporterOptions> configure = null)
         {
-            Guard.ThrowIfNull(builder, nameof(builder));
+            Guard.ThrowIfNull(builder);
 
             if (builder is IDeferredMeterProviderBuilder deferredMeterProviderBuilder)
             {
@@ -49,6 +49,7 @@ namespace OpenTelemetry.Metrics
 
             var exporter = new PrometheusExporter(options);
             var reader = new BaseExportingMetricReader(exporter);
+            reader.TemporalityPreference = MetricReaderTemporalityPreference.Cumulative;
 
             return builder.AddReader(reader);
         }

@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources
@@ -24,19 +25,36 @@ namespace OpenTelemetry.Resources
     /// </summary>
     public class ResourceBuilder
     {
-        private readonly List<Resource> resources = new List<Resource>();
+        private readonly List<Resource> resources = new();
+
+        static ResourceBuilder()
+        {
+            var defaultServiceName = "unknown_service";
+
+            try
+            {
+                var processName = Process.GetCurrentProcess().ProcessName;
+                if (!string.IsNullOrWhiteSpace(processName))
+                {
+                    defaultServiceName = $"{defaultServiceName}:{processName}";
+                }
+            }
+            catch
+            {
+                // GetCurrentProcess can throw PlatformNotSupportedException
+            }
+
+            DefaultResource = new Resource(new Dictionary<string, object>
+            {
+                [ResourceSemanticConventions.AttributeServiceName] = defaultServiceName,
+            });
+        }
 
         private ResourceBuilder()
         {
         }
 
-        private static Resource DefaultResource { get; } = new Resource(new Dictionary<string, object>
-        {
-            [ResourceSemanticConventions.AttributeServiceName] = "unknown_service"
-                + (string.IsNullOrWhiteSpace(System.Diagnostics.Process.GetCurrentProcess().ProcessName)
-                ? string.Empty :
-                ":" + System.Diagnostics.Process.GetCurrentProcess().ProcessName),
-        });
+        private static Resource DefaultResource { get; }
 
         /// <summary>
         /// Creates a <see cref="ResourceBuilder"/> instance with Default
@@ -57,7 +75,7 @@ namespace OpenTelemetry.Resources
         /// </summary>
         /// <returns>Created <see cref="ResourceBuilder"/>.</returns>
         public static ResourceBuilder CreateEmpty()
-            => new ResourceBuilder();
+            => new();
 
         /// <summary>
         /// Clears the <see cref="Resource"/>s added to the builder.
@@ -86,11 +104,9 @@ namespace OpenTelemetry.Resources
             return finalResource;
         }
 
-        // Internal until spec is finalized.
-        // https://github.com/open-telemetry/oteps/blob/master/text/0111-auto-resource-detection.md
-        internal ResourceBuilder AddDetector(IResourceDetector resourceDetector)
+        public ResourceBuilder AddDetector(IResourceDetector resourceDetector)
         {
-            Guard.ThrowIfNull(resourceDetector, nameof(resourceDetector));
+            Guard.ThrowIfNull(resourceDetector);
 
             Resource resource = resourceDetector.Detect();
 
@@ -104,7 +120,7 @@ namespace OpenTelemetry.Resources
 
         internal ResourceBuilder AddResource(Resource resource)
         {
-            Guard.ThrowIfNull(resource, nameof(resource));
+            Guard.ThrowIfNull(resource);
 
             this.resources.Add(resource);
 

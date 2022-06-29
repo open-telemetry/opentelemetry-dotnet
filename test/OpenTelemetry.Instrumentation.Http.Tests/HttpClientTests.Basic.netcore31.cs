@@ -18,10 +18,8 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 using Moq;
-using OpenTelemetry.Context;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Http.Implementation;
 using OpenTelemetry.Tests;
@@ -134,7 +132,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task HttpClientInstrumentationInjectsHeadersAsync_CustomFormat(bool shouldEnrich)
         {
             var propagator = new Mock<TextMapPropagator>();
-            propagator.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+            propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
                 .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
                 {
                     action(message, "custom_traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
@@ -201,7 +199,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             try
             {
                 var propagator = new Mock<TextMapPropagator>();
-                propagator.Setup(m => m.Inject<HttpRequestMessage>(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
+                propagator.Setup(m => m.Inject(It.IsAny<PropagationContext>(), It.IsAny<HttpRequestMessage>(), It.IsAny<Action<HttpRequestMessage, string, string>>()))
                     .Callback<PropagationContext, HttpRequestMessage, Action<HttpRequestMessage, string, string>>((context, message, action) =>
                     {
                         action(message, "custom_traceparent", $"00/{context.ActivityContext.TraceId}/{context.ActivityContext.SpanId}/01");
@@ -325,11 +323,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                                .Build())
             {
                 using var c = new HttpClient();
-                using (var inMemoryEventListener = new InMemoryEventListener(HttpInstrumentationEventSource.Log))
-                {
-                    await c.GetAsync(this.url);
-                    Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
-                }
+                using var inMemoryEventListener = new InMemoryEventListener(HttpInstrumentationEventSource.Log);
+                await c.GetAsync(this.url);
+                Assert.Single(inMemoryEventListener.Events.Where((e) => e.EventId == 4));
             }
 
             Assert.Equal(4, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose/OnStart called.
@@ -410,6 +406,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             this.serverLifeTime?.Dispose();
             Activity.Current = null;
+            GC.SuppressFinalize(this);
         }
 
         private static void ActivityEnrichmentSetTag(Activity activity, string method, object obj)

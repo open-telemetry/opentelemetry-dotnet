@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using OpenTelemetry.Internal;
 
@@ -26,7 +28,7 @@ namespace OpenTelemetry
     public abstract class SimpleExportProcessor<T> : BaseExportProcessor<T>
         where T : class
     {
-        private readonly object syncObject = new object();
+        private readonly object syncObject = new();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SimpleExportProcessor{T}"/> class.

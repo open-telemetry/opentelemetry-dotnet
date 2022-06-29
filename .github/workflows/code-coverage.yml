@@ -2,18 +2,17 @@ name: Code Coverage
 
 on:
   push:
-    branches: [ main, metrics ]
+    branches: [ main ]
     paths-ignore:
     - '**.md'
   pull_request:
-    branches: [ main, metrics ]
+    branches: [ main ]
     paths-ignore:
     - '**.md'
 
 jobs:
   build-test-report:
     runs-on: ${{ matrix.os }}
-    # https://github.com/actions/setup-dotnet/issues/122
 
     strategy:
       fail-fast: false
@@ -21,17 +20,11 @@ jobs:
         os: [windows-latest]
     env:
       OS: ${{ matrix.os }}
-      DOTNET_MULTILEVEL_LOOKUP: 1
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # fetching all
-
-    - uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '6.0.x'
-        include-prerelease: true
 
     - name: Install dependencies
       run: dotnet restore
@@ -55,7 +48,7 @@ jobs:
     - name: Merging test results
       run: reportgenerator -reports:TestResults/**/*.xml -targetdir:TestResults -reporttypes:Cobertura -assemblyFilters:"-microsoft.data.sqlclient*;-grpc.core*;-opentracing*"
 
-    - uses: codecov/codecov-action@v1.0.12
+    - uses: codecov/codecov-action@v3.1.0
       with:
         file: TestResults/Cobertura.xml
         env_vars: OS

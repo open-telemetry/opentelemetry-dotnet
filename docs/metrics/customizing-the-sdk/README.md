@@ -35,11 +35,12 @@ In a typical application, a single `MeterProvider` is created at application
 startup and disposed at application shutdown. It is important to ensure that the
 provider is not disposed too early. Actual mechanism depends on the application
 type. For example, in a typical ASP.NET application, `MeterProvider` is created
-in `Application_Start`, and disposed in `Application_End` (both methods part of
-Global.asax.cs file) as shown [here](../../../examples/AspNet/Global.asax.cs). In
-a typical ASP.NET Core application, `MeterProvider` lifetime is managed by
+in `Application_Start`, and disposed in `Application_End` (both methods are a
+part of the Global.asax.cs file) as shown
+[here](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/main/examples/AspNet/Global.asax.cs).
+In a typical ASP.NET Core application, `MeterProvider` lifetime is managed by
 leveraging the built-in Dependency Injection container as shown
-[here](../../../examples/AspNetCore/Startup.cs).
+[here](../../../examples/AspNetCore/Program.cs).
 
 ## MeterProvider configuration
 
@@ -241,7 +242,6 @@ are then aggregated using the custom boundaries provided instead of the the
 default boundaries. This requires the use of
 `ExplicitBucketHistogramConfiguration`.
 
-<!-- markdownlint-disable MD013 -->
 ```csharp
     // Change Histogram boundaries to count measurements under the following buckets:
     // (-inf, 10]
@@ -258,7 +258,6 @@ default boundaries. This requires the use of
         instrumentName: "MyHistogram",
         new ExplicitBucketHistogramConfiguration { Boundaries = new double[] { } })
 ```
-<!-- markdownlint-enable MD013 -->
 
 ```csharp
     // Advanced selection criteria and config via Func<Instrument, MetricStreamConfiguration>
@@ -297,7 +296,7 @@ allowed to be `1`. This means that the SDK would export measurements from only
 one `MetricStream`. The very first instrument that is published
 (`MyFruitCounter` in this case) will create a `MetricStream` and the SDK will
 thereby reach the maximum `MetricStream` limit of `1`. The measurements from any
-susequent instruments added will be dropped.
+subsequent instruments added will be dropped.
 
 ```csharp
 using System.Diagnostics.Metrics;
@@ -343,7 +342,6 @@ There are two total `MetricStream`s created one for each of these instruments.
 SDK will limit the maximum number of distinct key/value combinations for each of
 these `MetricStream`s to `3`.
 
-<!-- markdownlint-disable MD013 -->
 ```csharp
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
@@ -397,7 +395,6 @@ AnotherFruitCounter.Add(2, new("name", "banana"), new("color", "green")); // Not
 AnotherFruitCounter.Add(5, new("name", "banana"), new("color", "yellow")); // Exported
 AnotherFruitCounter.Add(4, new("name", "mango"), new("color", "yellow")); // Not exported
 ```
-<!-- markdownlint-enable MD013 -->
 
 **NOTE:** The above limit is *per* metric stream, and applies to all the metric
 streams. There is no ability to apply different limits for each instrument at

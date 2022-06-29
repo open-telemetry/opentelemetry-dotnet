@@ -46,7 +46,7 @@ namespace OpenTelemetry.Instrumentation
         /// <returns>Property fetched.</returns>
         public T Fetch(object obj)
         {
-            Guard.ThrowIfNull(obj, nameof(obj));
+            Guard.ThrowIfNull(obj);
 
             if (!this.TryFetch(obj, out T value, true))
             {
@@ -135,10 +135,7 @@ namespace OpenTelemetry.Instrumentation
                         return true;
                     }
 
-                    if (this.innerFetcher == null)
-                    {
-                        this.innerFetcher = Create(obj.GetType().GetTypeInfo(), this.propertyName);
-                    }
+                    this.innerFetcher ??= Create(obj.GetType().GetTypeInfo(), this.propertyName);
 
                     return this.innerFetcher.TryFetch(obj, out value);
                 }

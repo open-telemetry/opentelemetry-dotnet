@@ -28,8 +28,8 @@ namespace OpenTelemetry.Exporter.Prometheus
     internal sealed class PrometheusExporterHttpServer : IDisposable
     {
         private readonly PrometheusExporter exporter;
-        private readonly HttpListener httpListener = new HttpListener();
-        private readonly object syncObject = new object();
+        private readonly HttpListener httpListener = new();
+        private readonly object syncObject = new();
 
         private CancellationTokenSource tokenSource;
         private Task workerThread;
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
         public PrometheusExporterHttpServer(PrometheusExporter exporter)
         {
-            Guard.ThrowIfNull(exporter, nameof(exporter));
+            Guard.ThrowIfNull(exporter);
 
             this.exporter = exporter;
             if ((exporter.Options.HttpListenerPrefixes?.Count ?? 0) <= 0)
@@ -66,7 +66,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
         /// <summary>
-        /// Start exporter.
+        /// Start Http Server.
         /// </summary>
         /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the HTTP server.</param>
         public void Start(CancellationToken token = default)
@@ -156,10 +156,10 @@ namespace OpenTelemetry.Exporter.Prometheus
                 var collectionResponse = await this.exporter.CollectionManager.EnterCollect().ConfigureAwait(false);
                 try
                 {
+                    context.Response.Headers.Add("Server", string.Empty);
                     if (collectionResponse.View.Count > 0)
                     {
                         context.Response.StatusCode = 200;
-                        context.Response.Headers.Add("Server", string.Empty);
                         context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
                         context.Response.ContentType = "text/plain; charset=utf-8; version=0.0.4";
 
@@ -167,7 +167,9 @@ namespace OpenTelemetry.Exporter.Prometheus
                     }
                     else
                     {
-                        throw new InvalidOperationException("Collection failure.");
+                        // It's not expected to have no metrics to collect, but it's not necessarily a failure, either.
+                        context.Response.StatusCode = 204;
+                        PrometheusExporterEventSource.Log.NoMetrics();
                     }
                 }
                 finally

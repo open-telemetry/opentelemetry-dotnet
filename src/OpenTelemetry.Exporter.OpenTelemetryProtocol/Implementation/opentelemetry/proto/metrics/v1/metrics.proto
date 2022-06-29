@@ -22,7 +22,7 @@ import "opentelemetry/proto/resource/v1/resource.proto";
 option java_multiple_files = true;
 option java_package = "io.opentelemetry.proto.metrics.v1";
 option java_outer_classname = "MetricsProto";
-option go_package = "github.com/open-telemetry/opentelemetry-proto/gen/go/metrics/v1";
+option go_package = "go.opentelemetry.io/proto/otlp/metrics/v1";
 
 // MetricsData represents the metrics data that can be stored in a persistent
 // storage, OR can be embedded by other protocols that transfer OTLP metrics
@@ -43,23 +43,70 @@ message MetricsData {
   repeated ResourceMetrics resource_metrics = 1;
 }
 
-// A collection of InstrumentationLibraryMetrics from a Resource.
+// A collection of ScopeMetrics from a Resource.
 message ResourceMetrics {
   // The resource for the metrics in this message.
   // If this field is not set then no resource info is known.
   opentelemetry.proto.resource.v1.Resource resource = 1;
 
   // A list of metrics that originate from a resource.
-  repeated InstrumentationLibraryMetrics instrumentation_library_metrics = 2;
+  repeated ScopeMetrics scope_metrics = 2;
+
+  // A list of InstrumentationLibraryMetrics that originate from a resource.
+  // This field is deprecated and will be removed after grace period expires on June 15, 2022.
+  //
+  // During the grace period the following rules SHOULD be followed:
+  //
+  // For Binary Protobufs
+  // ====================
+  // Binary Protobuf senders SHOULD NOT set instrumentation_library_metrics. Instead
+  // scope_metrics SHOULD be set.
+  //
+  // Binary Protobuf receivers SHOULD check if instrumentation_library_metrics is set
+  // and scope_metrics is not set then the value in instrumentation_library_metrics
+  // SHOULD be used instead by converting InstrumentationLibraryMetrics into ScopeMetrics.
+  // If scope_metrics is set then instrumentation_library_metrics SHOULD be ignored.
+  //
+  // For JSON
+  // ========
+  // JSON senders that set instrumentation_library_metrics field MAY also set
+  // scope_metrics to carry the same metrics, essentially double-publishing the same data.
+  // Such double-publishing MAY be controlled by a user-settable option.
+  // If double-publishing is not used then the senders SHOULD set scope_metrics and
+  // SHOULD NOT set instrumentation_library_metrics.
+  //
+  // JSON receivers SHOULD check if instrumentation_library_metrics is set and
+  // scope_metrics is not set then the value in instrumentation_library_metrics
+  // SHOULD be used instead by converting InstrumentationLibraryMetrics into ScopeMetrics.
+  // If scope_metrics is set then instrumentation_library_metrics field SHOULD be ignored.
+  repeated InstrumentationLibraryMetrics instrumentation_library_metrics = 1000 [deprecated = true];
 
   // This schema_url applies to the data in the "resource" field. It does not apply
-  // to the data in the "instrumentation_library_metrics" field which have their own
-  // schema_url field.
+  // to the data in the "scope_metrics" field which have their own schema_url field.
+  string schema_url = 3;
+}
+
+// A collection of Metrics produced by an Scope.
+message ScopeMetrics {
+  // The instrumentation scope information for the metrics in this message.
+  // Semantically when InstrumentationScope isn't set, it is equivalent with
+  // an empty instrumentation scope name (unknown).
+  opentelemetry.proto.common.v1.InstrumentationScope scope = 1;
+
+  // A list of metrics that originate from an instrumentation library.
+  repeated Metric metrics = 2;
+
+  // This schema_url applies to all metrics in the "metrics" field.
   string schema_url = 3;
 }
 
 // A collection of Metrics produced by an InstrumentationLibrary.
+// InstrumentationLibraryMetrics is wire-compatible with ScopeMetrics for binary
+// Protobuf format.
+// This message is deprecated and will be removed on June 15, 2022.
 message InstrumentationLibraryMetrics {
+  option deprecated = true;
+
   // The instrumentation library information for the metrics in this message.
   // Semantically when InstrumentationLibrary isn't set, it is equivalent with
   // an empty instrumentation library name (unknown).
@@ -158,6 +205,8 @@ message InstrumentationLibraryMetrics {
 // when the start time is truly unknown, setting StartTimeUnixNano is
 // strongly encouraged.
 message Metric {
+  reserved 4, 6, 8;
+
   // name of the metric, including its DNS name prefix. It must be unique.
   string name = 1;
 
@@ -172,28 +221,8 @@ message Metric {
   // reported value type for the data points, as well as the relatationship to
   // the time interval over which they are reported.
   oneof data {
-    // IntGauge and IntSum are deprecated and will be removed soon.
-    // 1. Old senders and receivers that are not aware of this change will
-    // continue using the `int_gauge` and `int_sum` fields.
-    // 2. New senders, which are aware of this change MUST send only `gauge`
-    // and `sum` fields.
-    // 3. New receivers, which are aware of this change MUST convert these into
-    // `gauge` and `sum` by using the provided as_int field in the oneof values.
-    // This field will be removed in ~3 months, on July 1, 2021.
-    IntGauge int_gauge = 4 [deprecated = true];
     Gauge gauge = 5;
-    // This field will be removed in ~3 months, on July 1, 2021.
-    IntSum int_sum = 6 [deprecated = true];
     Sum sum = 7;
-
-    // IntHistogram is deprecated and will be removed soon.
-    // 1. Old senders and receivers that are not aware of this change will
-    // continue using the `int_histogram` field.
-    // 2. New senders, which are aware of this change MUST send only `histogram`.
-    // 3. New receivers, which are aware of this change MUST convert this into
-    // `histogram` by simply converting all int64 values into float.
-    // This field will be removed in ~3 months, on July 1, 2021.
-    IntHistogram int_histogram = 8 [deprecated = true];
     Histogram histogram = 9;
     ExponentialHistogram exponential_histogram = 10;
     Summary summary = 11;
@@ -348,19 +377,13 @@ enum DataPointFlags {
 // NumberDataPoint is a single data point in a timeseries that describes the
 // time-varying scalar value of a metric.
 message NumberDataPoint {
+  reserved 1;
+
   // The set of key/value pairs that uniquely identify the timeseries from
   // where this point belongs. The list may be empty (may contain 0 elements).
+  // Attribute keys MUST be unique (it is not allowed to have more than one
+  // attribute with the same key).
   repeated opentelemetry.proto.common.v1.KeyValue attributes = 7;
-
-  // Labels is deprecated and will be removed soon.
-  // 1. Old senders and receivers that are not aware of this change will
-  // continue using the `labels` field.
-  // 2. New senders, which are aware of this change MUST send only `attributes`.
-  // 3. New receivers, which are aware of this change MUST convert this into
-  // `labels` by simply converting all int64 values into float.
-  //
-  // This field will be removed in ~3 months, on July 1, 2021.
-  repeated opentelemetry.proto.common.v1.StringKeyValue labels = 1 [deprecated = true];
 
   // StartTimeUnixNano is optional but strongly encouraged, see the
   // the detailed comments above Metric.
@@ -402,19 +425,13 @@ message NumberDataPoint {
 // "explicit_bounds" and "bucket_counts" must be omitted and only "count" and
 // "sum" are known.
 message HistogramDataPoint {
+  reserved 1;
+
   // The set of key/value pairs that uniquely identify the timeseries from
   // where this point belongs. The list may be empty (may contain 0 elements).
+  // Attribute keys MUST be unique (it is not allowed to have more than one
+  // attribute with the same key).
   repeated opentelemetry.proto.common.v1.KeyValue attributes = 9;
-
-  // Labels is deprecated and will be removed soon.
-  // 1. Old senders and receivers that are not aware of this change will
-  // continue using the `labels` field.
-  // 2. New senders, which are aware of this change MUST send only `attributes`.
-  // 3. New receivers, which are aware of this change MUST convert this into
-  // `labels` by simply converting all int64 values into float.
-  //
-  // This field will be removed in ~3 months, on July 1, 2021.
-  repeated opentelemetry.proto.common.v1.StringKeyValue labels = 1 [deprecated = true];
 
   // StartTimeUnixNano is optional but strongly encouraged, see the
   // the detailed comments above Metric.
@@ -442,7 +459,7 @@ message HistogramDataPoint {
   // Negative events *can* be recorded, but sum should not be filled out when
   // doing so.  This is specifically to enforce compatibility w/ OpenMetrics,
   // see: https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#histogram
-  double sum = 5;
+  optional double sum = 5;
 
   // bucket_counts is an optional field contains the count values of histogram
   // for each bucket.
@@ -475,6 +492,12 @@ message HistogramDataPoint {
   // Flags that apply to this specific data point.  See DataPointFlags
   // for the available flags and their meaning.
   uint32 flags = 10;
+
+  // min is the minimum value over (start_time, end_time].
+  optional double min = 11;
+
+  // max is the maximum value over (start_time, end_time].
+  optional double max = 12;
 }
 
 // ExponentialHistogramDataPoint is a single data point in a timeseries that describes the
@@ -485,6 +508,8 @@ message HistogramDataPoint {
 message ExponentialHistogramDataPoint {
   // The set of key/value pairs that uniquely identify the timeseries from
   // where this point belongs. The list may be empty (may contain 0 elements).
+  // Attribute keys MUST be unique (it is not allowed to have more than one
+  // attribute with the same key).
   repeated opentelemetry.proto.common.v1.KeyValue attributes = 1;
 
   // StartTimeUnixNano is optional but strongly encouraged, see the
@@ -513,7 +538,7 @@ message ExponentialHistogramDataPoint {
   // Negative events *can* be recorded, but sum should not be filled out when
   // doing so.  This is specifically to enforce compatibility w/ OpenMetrics,
   // see: https://github.com/OpenObservability/OpenMetrics/blob/main/specification/OpenMetrics.md#histogram
-  double sum = 5;
+  optional double sum = 5;
   
   // scale describes the resolution of the histogram.  Boundaries are
   // located at powers of the base, where:
@@ -575,24 +600,24 @@ message ExponentialHistogramDataPoint {
   // (Optional) List of exemplars collected from
   // measurements that were used to form the data point
   repeated Exemplar exemplars = 11;
+
+  // min is the minimum value over (start_time, end_time].
+  optional double min = 12;
+
+  // max is the maximum value over (start_time, end_time].
+  optional double max = 13;
 }
 
 // SummaryDataPoint is a single data point in a timeseries that describes the
 // time-varying values of a Summary metric.
 message SummaryDataPoint {
+  reserved 1;
+
   // The set of key/value pairs that uniquely identify the timeseries from
   // where this point belongs. The list may be empty (may contain 0 elements).
+  // Attribute keys MUST be unique (it is not allowed to have more than one
+  // attribute with the same key).
   repeated opentelemetry.proto.common.v1.KeyValue attributes = 7;
-
-  // Labels is deprecated and will be removed soon.
-  // 1. Old senders and receivers that are not aware of this change will
-  // continue using the `labels` field.
-  // 2. New senders, which are aware of this change MUST send only `attributes`.
-  // 3. New receivers, which are aware of this change MUST convert this into
-  // `labels` by simply converting all int64 values into float.
-  //
-  // This field will be removed in ~3 months, on July 1, 2021.
-  repeated opentelemetry.proto.common.v1.StringKeyValue labels = 1 [deprecated = true];
 
   // StartTimeUnixNano is optional but strongly encouraged, see the
   // the detailed comments above Metric.
@@ -653,21 +678,12 @@ message SummaryDataPoint {
 // was recorded, for example the span and trace ID of the active span when the
 // exemplar was recorded.
 message Exemplar {
+  reserved 1;
+
   // The set of key/value pairs that were filtered out by the aggregator, but
   // recorded alongside the original measurement. Only key/value pairs that were
   // filtered out by the aggregator should be included
   repeated opentelemetry.proto.common.v1.KeyValue filtered_attributes = 7;
-
-  // Labels is deprecated and will be removed soon.
-  // 1. Old senders and receivers that are not aware of this change will
-  // continue using the `filtered_labels` field.
-  // 2. New senders, which are aware of this change MUST send only
-  // `filtered_attributes`.
-  // 3. New receivers, which are aware of this change MUST convert this into
-  // `filtered_labels` by simply converting all int64 values into float.
-  //
-  // This field will be removed in ~3 months, on July 1, 2021.
-  repeated opentelemetry.proto.common.v1.StringKeyValue filtered_labels = 1 [deprecated = true];
 
   // time_unix_nano is the exact time when this exemplar was recorded
   //
@@ -682,159 +698,6 @@ message Exemplar {
     double as_double = 3;
     sfixed64 as_int = 6;
   }
-
-  // (Optional) Span ID of the exemplar trace.
-  // span_id may be missing if the measurement is not recorded inside a trace
-  // or if the trace is not sampled.
-  bytes span_id = 4;
-
-  // (Optional) Trace ID of the exemplar trace.
-  // trace_id may be missing if the measurement is not recorded inside a trace
-  // or if the trace is not sampled.
-  bytes trace_id = 5;
-}
-
-//
-// Move deprecated messages below this line
-//
-
-// IntDataPoint is deprecated. Use integer value in NumberDataPoint.
-message IntDataPoint {
-  option deprecated = true;
-
-  // The set of labels that uniquely identify this timeseries.
-  repeated opentelemetry.proto.common.v1.StringKeyValue labels = 1;
-
-  // StartTimeUnixNano is optional but strongly encouraged, see the
-  // the detailed comments above Metric.
-  //
-  // Value is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January
-  // 1970.
-  fixed64 start_time_unix_nano = 2;
-
-  // TimeUnixNano is required, see the detailed comments above Metric.
-  //
-  // Value is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January
-  // 1970.
-  fixed64 time_unix_nano = 3;
-
-  // value itself.
-  sfixed64 value = 4;
-
-  // (Optional) List of exemplars collected from
-  // measurements that were used to form the data point
-  repeated IntExemplar exemplars = 5;
-}
-
-// IntGauge is deprecated.  Use Gauge with an integer value in NumberDataPoint.
-message IntGauge {
-  option deprecated = true;
-
-  repeated IntDataPoint data_points = 1;
-}
-
-// IntSum is deprecated.  Use Sum with an integer value in NumberDataPoint.
-message IntSum {
-  option deprecated = true;
-
-  repeated IntDataPoint data_points = 1;
-
-  // aggregation_temporality describes if the aggregator reports delta changes
-  // since last report time, or cumulative changes since a fixed start time.
-  AggregationTemporality aggregation_temporality = 2;
-
-  // If "true" means that the sum is monotonic.
-  bool is_monotonic = 3;
-}
-
-// IntHistogramDataPoint is deprecated; use HistogramDataPoint.
-message IntHistogramDataPoint {
-  option deprecated = true;
-
-  // The set of labels that uniquely identify this timeseries.
-  repeated opentelemetry.proto.common.v1.StringKeyValue labels = 1;
-
-  // StartTimeUnixNano is optional but strongly encouraged, see the
-  // the detailed comments above Metric.
-  //
-  // Value is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January
-  // 1970.
-  fixed64 start_time_unix_nano = 2;
-
-  // TimeUnixNano is required, see the detailed comments above Metric.
-  //
-  // Value is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January
-  // 1970.
-  fixed64 time_unix_nano = 3;
-
-  // count is the number of values in the population. Must be non-negative. This
-  // value must be equal to the sum of the "count" fields in buckets if a
-  // histogram is provided.
-  fixed64 count = 4;
-
-  // sum of the values in the population. If count is zero then this field
-  // must be zero. This value must be equal to the sum of the "sum" fields in
-  // buckets if a histogram is provided.
-  sfixed64 sum = 5;
-
-  // bucket_counts is an optional field contains the count values of histogram
-  // for each bucket.
-  //
-  // The sum of the bucket_counts must equal the value in the count field.
-  //
-  // The number of elements in bucket_counts array must be by one greater than
-  // the number of elements in explicit_bounds array.
-  repeated fixed64 bucket_counts = 6;
-
-  // explicit_bounds specifies buckets with explicitly defined bounds for values.
-  //
-  // The boundaries for bucket at index i are:
-  //
-  // (-infinity, explicit_bounds[i]] for i == 0
-  // (explicit_bounds[i-1], explicit_bounds[i]] for 0 < i < size(explicit_bounds)
-  // (explicit_bounds[i-1], +infinity) for i == size(explicit_bounds)
-  //
-  // The values in the explicit_bounds array must be strictly increasing.
-  //
-  // Histogram buckets are inclusive of their upper boundary, except the last
-  // bucket where the boundary is at infinity. This format is intentionally
-  // compatible with the OpenMetrics histogram definition.
-  repeated double explicit_bounds = 7;
-
-  // (Optional) List of exemplars collected from
-  // measurements that were used to form the data point
-  repeated IntExemplar exemplars = 8;
-}
-
-// IntHistogram is deprecated, replaced by Histogram points using double-
-// valued exemplars.
-message IntHistogram {
-  option deprecated = true;
-
-  repeated IntHistogramDataPoint data_points = 1;
-
-  // aggregation_temporality describes if the aggregator reports delta changes
-  // since last report time, or cumulative changes since a fixed start time.
-  AggregationTemporality aggregation_temporality = 2;
-}
-
-// IntExemplar is deprecated. Use Exemplar with as_int for value
-message IntExemplar {
-  option deprecated = true;
-
-  // The set of labels that were filtered out by the aggregator, but recorded
-  // alongside the original measurement. Only labels that were filtered out
-  // by the aggregator should be included
-  repeated opentelemetry.proto.common.v1.StringKeyValue filtered_labels = 1;
-
-  // time_unix_nano is the exact time when this exemplar was recorded
-  //
-  // Value is UNIX Epoch time in nanoseconds since 00:00:00 UTC on 1 January
-  // 1970.
-  fixed64 time_unix_nano = 2;
-
-  // Numerical int value of the measurement that was recorded.
-  sfixed64 value = 3;
 
   // (Optional) Span ID of the exemplar trace.
   // span_id may be missing if the measurement is not recorded inside a trace
