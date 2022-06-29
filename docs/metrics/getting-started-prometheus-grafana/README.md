@@ -23,7 +23,7 @@ dotnet run
 ```
 
 Add a reference to [Prometheus
-Exporter](../../../src/OpenTelemetry.Exporter.Prometheus.Shared/README.md):
+Exporter HttpListener](../../../src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md):
 
 ```sh
 dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus
@@ -46,17 +46,7 @@ And replace the below line:
 with
 
 ```csharp
-.AddPrometheusExporter()
-```
-
-After the meterProvider is successfully built, create a PrometheusHttpListener
-that takes in the meterProvider when constructed and passed in
-the listener options for configuration.
-call .Start() to start the listener.
-
-```csharp
-using var listener = new PrometheusHttpListener(meterProvider);
-listener.Start();
+.AddPrometheusHttpListener()
 ```
 
 With `AddPrometheusExporter()`, OpenTelemetry `PrometheusExporter` will export
