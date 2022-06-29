@@ -1,4 +1,4 @@
- Prometheus Exporter HttpListener for OpenTelemetry .NET
+# Prometheus Exporter HttpListener for OpenTelemetry .NET
 
 ## Prerequisite
 

@@ -1,4 +1,4 @@
- Prometheus Exporter AspNetCore for OpenTelemetry .NET
+# Prometheus Exporter AspNetCore for OpenTelemetry .NET
 
 ## Prerequisite
 
