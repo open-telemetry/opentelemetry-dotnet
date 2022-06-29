@@ -45,6 +45,16 @@ namespace OpenTelemetry.Metrics
 
         internal List<MetricReader> MetricReaders { get; } = new List<MetricReader>();
 
+        internal ResourceBuilder ResourceBuilder
+        {
+            get => this.resourceBuilder;
+            set
+            {
+                Debug.Assert(value != null, $"{nameof(this.ResourceBuilder)} must not be set to null");
+                this.resourceBuilder = value;
+            }
+        }
+
         /// <inheritdoc />
         public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
         {
@@ -123,14 +133,6 @@ namespace OpenTelemetry.Metrics
             Guard.ThrowIfOutOfRange(maxMetricPointsPerMetricStream, min: 1);
 
             this.maxMetricPointsPerMetricStream = maxMetricPointsPerMetricStream;
-            return this;
-        }
-
-        internal MeterProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
-        {
-            Debug.Assert(resourceBuilder != null, $"{nameof(resourceBuilder)} must not be null");
-
-            this.resourceBuilder = resourceBuilder;
             return this;
         }
 
