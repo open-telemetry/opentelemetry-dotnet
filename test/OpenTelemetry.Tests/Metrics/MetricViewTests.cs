@@ -1202,7 +1202,8 @@ namespace OpenTelemetry.Metrics.Tests
         [Fact]
         public void GetHistogramMinThrows()
         {
-            var histogramPoint = new MetricPoint(AggregationType.HistogramMinMax, DateTime.Now, null, null, new double[] { 0 });
+            AggregatorStore aggregatorStore = new("test", AggregationType.HistogramMinMax, AggregationTemporality.Cumulative, 1024, Metric.DefaultHistogramBounds);
+            var histogramPoint = new MetricPoint(aggregatorStore, AggregationType.HistogramMinMax, null, null, new double[] { 0 });
 
             var ex = Assert.Throws<InvalidOperationException>(() => histogramPoint.GetHistogramMin());
             Assert.Equal("No values have been recorded yet.", ex.Message);

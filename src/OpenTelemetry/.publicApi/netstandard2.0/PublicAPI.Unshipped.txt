@@ -19,5 +19,4 @@ OpenTelemetry.Metrics.MetricPoint.GetHistogramMax() -> double
 OpenTelemetry.Metrics.MetricPoint.GetHistogramMin() -> double
 OpenTelemetry.Metrics.MetricType.HistogramWithMinMax = 80 -> OpenTelemetry.Metrics.MetricType
 ~static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder> configure) -> OpenTelemetry.Metrics.MeterProviderBuilder
-~static OpenTelemetry.Metrics.MetricTypeExtensions.IsHistogramWithMinMax(this OpenTelemetry.Metrics.MetricType self) -> bool
 ~static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
