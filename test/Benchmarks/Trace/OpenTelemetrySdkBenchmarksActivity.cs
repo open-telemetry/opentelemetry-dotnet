@@ -22,11 +22,10 @@ using OpenTelemetry.Trace;
 
 namespace Benchmarks.Trace
 {
-    [MemoryDiagnoser]
     public class OpenTelemetrySdkBenchmarksActivity
     {
-        private readonly ActivitySource benchmarkSource = new ActivitySource("Benchmark");
-        private readonly ActivityContext parentCtx = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
+        private readonly ActivitySource benchmarkSource = new("Benchmark");
+        private readonly ActivityContext parentCtx = new(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None);
         private readonly string parentId = $"00-{ActivityTraceId.CreateRandom()}.{ActivitySpanId.CreateRandom()}.00";
         private TracerProvider tracerProvider;
 

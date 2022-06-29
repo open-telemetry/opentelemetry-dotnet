@@ -16,17 +16,21 @@
 
 using System.Diagnostics;
 using OpenTelemetry;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+
+namespace ExtendingTheSdk;
 
 public class Program
 {
-    private static readonly ActivitySource DemoSource = new ActivitySource("OTel.Demo");
+    private static readonly ActivitySource DemoSource = new("OTel.Demo");
 
     public static void Main()
     {
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new MySampler())
             .AddSource("OTel.Demo")
+            .SetResourceBuilder(ResourceBuilder.CreateEmpty().AddDetector(new MyResourceDetector()))
             .AddProcessor(new MyProcessor("ProcessorA"))
             .AddProcessor(new MyProcessor("ProcessorB"))
             .AddProcessor(new SimpleActivityExportProcessor(new MyExporter("ExporterX")))

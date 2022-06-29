@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "editorconfig.editorconfig",
+    "davidanson.vscode-markdownlint",
+    "ms-dotnettools.csharp",
+    "streetsidesoftware.code-spell-checker"
+  ]
+}

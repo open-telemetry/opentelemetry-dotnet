@@ -39,9 +39,6 @@ namespace OpenTelemetry.Exporter
         internal const string TimeoutEnvVarName = "OTEL_EXPORTER_OTLP_TIMEOUT";
         internal const string ProtocolEnvVarName = "OTEL_EXPORTER_OTLP_PROTOCOL";
 
-        internal const string TracesExportPath = "v1/traces";
-        internal const string MetricsExportPath = "v1/metrics";
-
         internal readonly Func<HttpClient> DefaultHttpClientFactory;
 
         private const string DefaultGrpcEndpoint = "http://localhost:4317";
@@ -72,14 +69,13 @@ namespace OpenTelemetry.Exporter
 
             if (EnvironmentVariableHelper.LoadString(ProtocolEnvVarName, out string protocolEnvVar))
             {
-                var protocol = protocolEnvVar.ToOtlpExportProtocol();
-                if (protocol.HasValue)
+                if (OtlpExportProtocolParser.TryParse(protocolEnvVar, out var protocol))
                 {
-                    this.Protocol = protocol.Value;
+                    this.Protocol = protocol;
                 }
                 else
                 {
-                    throw new FormatException($"{ProtocolEnvVarName} environment variable has an invalid value: '${protocolEnvVar}'");
+                    throw new FormatException($"{ProtocolEnvVarName} environment variable has an invalid value: '{protocolEnvVar}'");
                 }
             }
 
@@ -145,22 +141,6 @@ namespace OpenTelemetry.Exporter
         /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
         /// </summary>
         public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; } = new BatchExportActivityProcessorOptions();
-
-        /// <summary>
-        /// Gets or sets the <see cref="MetricReaderType" /> to use. Defaults to <c>MetricReaderType.Periodic</c>.
-        /// </summary>
-        public MetricReaderType MetricReaderType { get; set; } = MetricReaderType.Periodic;
-
-        /// <summary>
-        /// Gets or sets the <see cref="PeriodicExportingMetricReaderOptions" /> options. Ignored unless <c>MetricReaderType</c> is <c>Periodic</c>.
-        /// </summary>
-        public PeriodicExportingMetricReaderOptions PeriodicExportingMetricReaderOptions { get; set; } = new PeriodicExportingMetricReaderOptions();
-
-        /// <summary>
-        /// Gets or sets the AggregationTemporality used for Histogram
-        /// and Sum metrics.
-        /// </summary>
-        public AggregationTemporality AggregationTemporality { get; set; } = AggregationTemporality.Cumulative;
 
         /// <summary>
         /// Gets or sets the factory function called to create the <see

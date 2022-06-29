@@ -17,6 +17,8 @@
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 
+namespace SourceGeneration;
+
 public class Program
 {
     public static void Main()

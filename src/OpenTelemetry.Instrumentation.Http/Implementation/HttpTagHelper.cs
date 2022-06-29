@@ -24,11 +24,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     /// </summary>
     internal static class HttpTagHelper
     {
-        private static readonly ConcurrentDictionary<string, string> MethodOperationNameCache = new ConcurrentDictionary<string, string>();
-        private static readonly ConcurrentDictionary<HttpMethod, string> HttpMethodOperationNameCache = new ConcurrentDictionary<HttpMethod, string>();
-        private static readonly ConcurrentDictionary<HttpMethod, string> HttpMethodNameCache = new ConcurrentDictionary<HttpMethod, string>();
-        private static readonly ConcurrentDictionary<string, ConcurrentDictionary<int, string>> HostAndPortToStringCache = new ConcurrentDictionary<string, ConcurrentDictionary<int, string>>();
-        private static readonly ConcurrentDictionary<Version, string> ProtocolVersionToStringCache = new ConcurrentDictionary<Version, string>();
+        private static readonly ConcurrentDictionary<string, string> MethodOperationNameCache = new();
+        private static readonly ConcurrentDictionary<HttpMethod, string> HttpMethodOperationNameCache = new();
+        private static readonly ConcurrentDictionary<HttpMethod, string> HttpMethodNameCache = new();
+        private static readonly ConcurrentDictionary<string, ConcurrentDictionary<int, string>> HostAndPortToStringCache = new();
+        private static readonly ConcurrentDictionary<Version, string> ProtocolVersionToStringCache = new();
 
         private static readonly Func<string, string> ConvertMethodToOperationNameRef = ConvertMethodToOperationName;
         private static readonly Func<HttpMethod, string> ConvertHttpMethodToOperationNameRef = ConvertHttpMethodToOperationName;

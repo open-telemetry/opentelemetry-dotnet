@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+#if !NETFRAMEWORK
 using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -26,7 +27,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
     public class GrpcServer<TService> : IDisposable
         where TService : class
     {
-        private static readonly Random GlobalRandom = new Random();
+        private static readonly Random GlobalRandom = new();
 
         private readonly IHost host;
 
@@ -62,6 +63,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         {
             this.host.StopAsync(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
             this.host.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         private IHost CreateServer()
@@ -100,3 +102,4 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         }
     }
 }
+#endif

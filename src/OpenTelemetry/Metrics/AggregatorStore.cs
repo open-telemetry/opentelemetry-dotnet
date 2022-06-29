@@ -25,14 +25,14 @@ namespace OpenTelemetry.Metrics
 {
     internal sealed class AggregatorStore
     {
-        private readonly object lockZeroTags = new object();
+        private static readonly string MetricPointCapHitFixMessage = "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use Views to drop unwanted tags. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.";
+        private readonly object lockZeroTags = new();
         private readonly HashSet<string> tagKeysInteresting;
         private readonly int tagsKeysInterestingCount;
 
         private readonly ConcurrentDictionary<Tags, int> tagsToMetricPointIndexDictionary =
-            new ConcurrentDictionary<Tags, int>();
+            new();
 
-        private readonly AggregationTemporality temporality;
         private readonly string name;
         private readonly string metricPointCapHitMessage;
         private readonly bool outputDelta;
@@ -47,8 +47,6 @@ namespace OpenTelemetry.Metrics
         private int batchSize = 0;
         private int metricCapHitMessageLogged;
         private bool zeroTagMetricPointInitialized;
-        private DateTimeOffset startTimeExclusive;
-        private DateTimeOffset endTimeInclusive;
 
         internal AggregatorStore(
             string name,
@@ -64,10 +62,9 @@ namespace OpenTelemetry.Metrics
             this.metricPoints = new MetricPoint[maxMetricPoints];
             this.currentMetricPointBatch = new int[maxMetricPoints];
             this.aggType = aggType;
-            this.temporality = temporality;
-            this.outputDelta = temporality == AggregationTemporality.Delta ? true : false;
+            this.outputDelta = temporality == AggregationTemporality.Delta;
             this.histogramBounds = histogramBounds;
-            this.startTimeExclusive = DateTimeOffset.UtcNow;
+            this.StartTimeExclusive = DateTimeOffset.UtcNow;
             if (tagKeysInteresting == null)
             {
                 this.updateLongCallback = this.UpdateLong;
@@ -87,6 +84,10 @@ namespace OpenTelemetry.Metrics
 
         private delegate void UpdateDoubleDelegate(double value, ReadOnlySpan<KeyValuePair<string, object>> tags);
 
+        internal DateTimeOffset StartTimeExclusive { get; private set; }
+
+        internal DateTimeOffset EndTimeInclusive { get; private set; }
+
         internal void Update(long value, ReadOnlySpan<KeyValuePair<string, object>> tags)
         {
             this.updateLongCallback(value, tags);
@@ -101,7 +102,7 @@ namespace OpenTelemetry.Metrics
         {
             this.batchSize = 0;
             var indexSnapshot = Math.Min(this.metricPointIndex, this.maxMetricPoints - 1);
-            if (this.temporality == AggregationTemporality.Delta)
+            if (this.outputDelta)
             {
                 this.SnapshotDelta(indexSnapshot);
             }
@@ -110,7 +111,7 @@ namespace OpenTelemetry.Metrics
                 this.SnapshotCumulative(indexSnapshot);
             }
 
-            this.endTimeInclusive = DateTimeOffset.UtcNow;
+            this.EndTimeInclusive = DateTimeOffset.UtcNow;
             return this.batchSize;
         }
 
@@ -124,14 +125,14 @@ namespace OpenTelemetry.Metrics
                     continue;
                 }
 
-                metricPoint.TakeSnapshot(this.outputDelta);
+                metricPoint.TakeSnapshot(outputDelta: true);
                 this.currentMetricPointBatch[this.batchSize] = i;
                 this.batchSize++;
             }
 
-            if (this.endTimeInclusive != default)
+            if (this.EndTimeInclusive != default)
             {
-                this.startTimeExclusive = this.endTimeInclusive;
+                this.StartTimeExclusive = this.EndTimeInclusive;
             }
         }
 
@@ -140,21 +141,19 @@ namespace OpenTelemetry.Metrics
             for (int i = 0; i <= indexSnapshot; i++)
             {
                 ref var metricPoint = ref this.metricPoints[i];
-                if (metricPoint.StartTime == default)
+                if (!metricPoint.IsInitialized)
                 {
                     continue;
                 }
 
-                metricPoint.TakeSnapshot(this.outputDelta);
+                metricPoint.TakeSnapshot(outputDelta: false);
                 this.currentMetricPointBatch[this.batchSize] = i;
                 this.batchSize++;
             }
         }
 
         internal MetricPointsAccessor GetMetricPoints()
-        {
-            return new MetricPointsAccessor(this.metricPoints, this.currentMetricPointBatch, this.batchSize, this.startTimeExclusive, this.endTimeInclusive);
-        }
+            => new(this.metricPoints, this.currentMetricPointBatch, this.batchSize);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void InitializeZeroTagPointIfNotInitialized()
@@ -165,8 +164,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (!this.zeroTagMetricPointInitialized)
                     {
-                        var dt = DateTimeOffset.UtcNow;
-                        this.metricPoints[0] = new MetricPoint(this.aggType, dt, null, null, this.histogramBounds);
+                        this.metricPoints[0] = new MetricPoint(this, this.aggType, null, null, this.histogramBounds);
                         this.zeroTagMetricPointInitialized = true;
                     }
                 }
@@ -183,28 +181,32 @@ namespace OpenTelemetry.Metrics
                 if (length > 1)
                 {
                     // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                    // Create a new array for the sorted Tag keys.
-                    var sortedTagKeys = new string[length];
-                    tagKeys.CopyTo(sortedTagKeys, 0);
+                    // Create or obtain new arrays to temporarily hold the sorted tag Keys and Values
+                    var storage = ThreadStaticStorage.GetStorage();
+                    storage.CloneKeysAndValues(tagKeys, tagValues, length, out var tempSortedTagKeys, out var tempSortedTagValues);
 
-                    // Create a new array for the sorted Tag values.
-                    var sortedTagValues = new object[length];
-                    tagValues.CopyTo(sortedTagValues, 0);
+                    Array.Sort(tempSortedTagKeys, tempSortedTagValues);
 
-                    Array.Sort(sortedTagKeys, sortedTagValues);
-
-                    var sortedTags = new Tags(sortedTagKeys, sortedTagValues);
+                    var sortedTags = new Tags(tempSortedTagKeys, tempSortedTagValues);
 
                     if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
                     {
-                        // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                        // Note: We are using storage from ThreadStatic for both the input order of tags and the sorted order of tags,
+                        // so we need to make a deep copy for Dictionary storage.
                         var givenKeys = new string[length];
                         tagKeys.CopyTo(givenKeys, 0);
 
                         var givenValues = new object[length];
                         tagValues.CopyTo(givenValues, 0);
 
+                        var sortedTagKeys = new string[length];
+                        tempSortedTagKeys.CopyTo(sortedTagKeys, 0);
+
+                        var sortedTagValues = new object[length];
+                        tempSortedTagValues.CopyTo(sortedTagValues, 0);
+
                         givenTags = new Tags(givenKeys, givenValues);
+                        sortedTags = new Tags(sortedTagKeys, sortedTagValues);
 
                         aggregatorIndex = this.metricPointIndex;
                         if (aggregatorIndex >= this.maxMetricPoints)
@@ -232,8 +234,7 @@ namespace OpenTelemetry.Metrics
                                 }
 
                                 ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                                var dt = DateTimeOffset.UtcNow;
-                                metricPoint = new MetricPoint(this.aggType, dt, sortedTags.Keys, sortedTags.Values, this.histogramBounds);
+                                metricPoint = new MetricPoint(this, this.aggType, sortedTags.Keys, sortedTags.Values, this.histogramBounds);
 
                                 // Add to dictionary *after* initializing MetricPoint
                                 // as other threads can start writing to the
@@ -283,8 +284,7 @@ namespace OpenTelemetry.Metrics
                             }
 
                             ref var metricPoint = ref this.metricPoints[aggregatorIndex];
-                            var dt = DateTimeOffset.UtcNow;
-                            metricPoint = new MetricPoint(this.aggType, dt, givenTags.Keys, givenTags.Values, this.histogramBounds);
+                            metricPoint = new MetricPoint(this, this.aggType, givenTags.Keys, givenTags.Values, this.histogramBounds);
 
                             // Add to dictionary *after* initializing MetricPoint
                             // as other threads can start writing to the
@@ -309,7 +309,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
                     {
-                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.");
+                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
                     }
 
                     return;
@@ -332,7 +332,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
                     {
-                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.");
+                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
                     }
 
                     return;
@@ -355,7 +355,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
                     {
-                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.");
+                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
                     }
 
                     return;
@@ -378,7 +378,7 @@ namespace OpenTelemetry.Metrics
                 {
                     if (Interlocked.CompareExchange(ref this.metricCapHitMessageLogged, 1, 0) == 0)
                     {
-                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, "Modify instrumentation to reduce the number of unique key/value pair combinations. Or use MeterProviderBuilder.SetMaxMetricPointsPerMetricStream to set higher limit.");
+                        OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, this.metricPointCapHitMessage, MetricPointCapHitFixMessage);
                     }
 
                     return;

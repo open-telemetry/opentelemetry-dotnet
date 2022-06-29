@@ -29,7 +29,6 @@ using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implem
 
 namespace Benchmarks.Exporter
 {
-    [MemoryDiagnoser]
     public class OtlpHttpExporterBenchmarks
     {
         private readonly byte[] buffer = new byte[1024 * 1024];

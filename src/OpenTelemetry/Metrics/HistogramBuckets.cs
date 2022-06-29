@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+using System;
+
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
@@ -36,6 +38,8 @@ namespace OpenTelemetry.Metrics
         internal double RunningMax = double.NegativeInfinity;
         internal double SnapshotMax;
 
+        internal int IsCriticalSectionOccupied = 0;
+
         internal HistogramBuckets(double[] explicitBounds)
         {
             this.ExplicitBounds = explicitBounds;
@@ -46,6 +50,16 @@ namespace OpenTelemetry.Metrics
         internal object LockObject => this.SnapshotBucketCounts;
 
         public Enumerator GetEnumerator() => new(this);
+
+        internal HistogramBuckets Copy()
+        {
+            HistogramBuckets copy = new HistogramBuckets(this.ExplicitBounds);
+
+            Array.Copy(this.SnapshotBucketCounts, copy.SnapshotBucketCounts, this.SnapshotBucketCounts.Length);
+            copy.SnapshotSum = this.SnapshotSum;
+
+            return copy;
+        }
 
         /// <summary>
         /// Enumerates the elements of a <see cref="HistogramBuckets"/>.

@@ -31,7 +31,6 @@ using OtlpCollector = OpenTelemetryProtocol::Opentelemetry.Proto.Collector.Trace
 
 namespace Benchmarks.Exporter
 {
-    [MemoryDiagnoser]
     public class OtlpGrpcExporterBenchmarks
     {
         private OtlpTraceExporter exporter;

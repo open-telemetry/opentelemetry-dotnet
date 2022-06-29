@@ -23,7 +23,7 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 {
     internal sealed class JaegerHttpClient : IJaegerClient
     {
-        private static readonly MediaTypeHeaderValue ContentTypeHeader = new MediaTypeHeaderValue("application/vnd.apache.thrift.binary");
+        private static readonly MediaTypeHeaderValue ContentTypeHeader = new("application/vnd.apache.thrift.binary");
 
         private readonly Uri endpoint;
         private readonly HttpClient httpClient;
@@ -36,8 +36,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
 
             this.endpoint = endpoint;
             this.httpClient = httpClient;
-
-            this.httpClient.BaseAddress = this.endpoint;
         }
 
         public bool Connected => true;
@@ -67,14 +65,14 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
             // Prevent Jaeger's HTTP operations from being instrumented.
             using var scope = SuppressInstrumentationScope.Begin();
 
-            using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "/api/traces");
+            using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, this.endpoint);
 
             request.Content = new ByteArrayContent(buffer, offset, count)
             {
                 Headers = { ContentType = ContentTypeHeader },
             };
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
             using HttpResponseMessage response = this.httpClient.Send(request);
 #else
             using HttpResponseMessage response = this.httpClient.SendAsync(request).GetAwaiter().GetResult();

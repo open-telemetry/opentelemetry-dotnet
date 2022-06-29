@@ -14,9 +14,6 @@
 
 syntax = "proto3";
 
-// NOTE: This proto is experimental and is subject to change at this point.
-// Please do not use it at the moment.
-
 package opentelemetry.proto.collector.logs.v1;
 
 import "opentelemetry/proto/logs/v1/logs.proto";
@@ -24,7 +21,7 @@ import "opentelemetry/proto/logs/v1/logs.proto";
 option java_multiple_files = true;
 option java_package = "io.opentelemetry.proto.collector.logs.v1";
 option java_outer_classname = "LogsServiceProto";
-option go_package = "github.com/open-telemetry/opentelemetry-proto/gen/go/collector/logs/v1";
+option go_package = "go.opentelemetry.io/proto/otlp/collector/logs/v1";
 
 // Service that can be used to push logs between one Application instrumented with
 // OpenTelemetry and an collector, or between an collector and a central collector (in this

@@ -69,10 +69,10 @@ namespace OpenTelemetry.Exporter
 
             var request = new OtlpCollector.ExportTraceServiceRequest();
 
-            request.AddBatch(this.ProcessResource, activityBatch);
-
             try
             {
+                request.AddBatch(this.ProcessResource, activityBatch);
+
                 if (!this.exportClient.SendExportRequest(request))
                 {
                     return ExportResult.Failure;
@@ -81,7 +81,6 @@ namespace OpenTelemetry.Exporter
             catch (Exception ex)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
-
                 return ExportResult.Failure;
             }
             finally

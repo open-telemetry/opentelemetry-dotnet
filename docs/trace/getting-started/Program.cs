@@ -18,15 +18,16 @@ using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
+namespace GettingStarted;
+
 public class Program
 {
-    private static readonly ActivitySource MyActivitySource = new ActivitySource(
+    private static readonly ActivitySource MyActivitySource = new(
         "MyCompany.MyProduct.MyLibrary");
 
     public static void Main()
     {
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .SetSampler(new AlwaysOnSampler())
             .AddSource("MyCompany.MyProduct.MyLibrary")
             .AddConsoleExporter()
             .Build();
@@ -36,6 +37,7 @@ public class Program
             activity?.SetTag("foo", 1);
             activity?.SetTag("bar", "Hello, World!");
             activity?.SetTag("baz", new int[] { 1, 2, 3 });
+            activity?.SetStatus(ActivityStatusCode.Ok);
         }
     }
 }

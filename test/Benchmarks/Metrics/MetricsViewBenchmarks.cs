@@ -20,7 +20,6 @@ using System.Diagnostics.Metrics;
 using System.Threading;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
@@ -41,10 +40,9 @@ Intel Core i7-8650U CPU 1.90GHz (Kaby Lake R), 1 CPU, 8 logical and 4 physical c
 
 namespace Benchmarks.Metrics
 {
-    [MemoryDiagnoser]
     public class MetricsViewBenchmarks
     {
-        private static readonly ThreadLocal<Random> ThreadLocalRandom = new ThreadLocal<Random>(() => new Random());
+        private static readonly ThreadLocal<Random> ThreadLocalRandom = new(() => new Random());
         private static readonly string[] DimensionValues = new string[] { "DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10" };
         private static readonly int DimensionsValuesLength = DimensionValues.Length;
         private List<Metric> metrics;
@@ -89,7 +87,7 @@ namespace Benchmarks.Metrics
             {
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(this.meter.Name)
-                    .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(this.metrics)))
+                    .AddInMemoryExporter(this.metrics)
                     .Build();
             }
             else if (this.ViewConfig == ViewConfiguration.ViewNoInstrSelect)
@@ -97,7 +95,7 @@ namespace Benchmarks.Metrics
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(this.meter.Name)
                     .AddView("nomatch", new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
-                    .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(this.metrics)))
+                    .AddInMemoryExporter(this.metrics)
                     .Build();
             }
             else if (this.ViewConfig == ViewConfiguration.ViewSelectsInstr)
@@ -105,7 +103,7 @@ namespace Benchmarks.Metrics
                 this.provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(this.meter.Name)
                     .AddView(this.counter.Name, new MetricStreamConfiguration() { TagKeys = new string[] { "DimName1", "DimName2", "DimName3" } })
-                    .AddReader(new BaseExportingMetricReader(new InMemoryExporter<Metric>(this.metrics)))
+                    .AddInMemoryExporter(this.metrics)
                     .Build();
             }
         }

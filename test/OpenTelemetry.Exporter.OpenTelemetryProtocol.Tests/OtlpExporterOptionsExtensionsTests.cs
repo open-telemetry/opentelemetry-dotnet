@@ -33,8 +33,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData("key1=value1;key2=value2", new string[] { "key1" }, new string[] { "value1;key2=value2" })] // semicolon is not treated as a delimeter (https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables)
         public void GetMetadataFromHeadersWorksCorrectFormat(string headers, string[] keys, string[] values)
         {
-            var options = new OtlpExporterOptions();
-            options.Headers = headers;
+            var options = new OtlpExporterOptions
+            {
+                Headers = headers,
+            };
             var metadata = options.GetMetadataFromHeaders();
 
             Assert.Equal(keys.Length, metadata.Count);
@@ -52,8 +54,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             try
             {
-                var options = new OtlpExporterOptions();
-                options.Headers = headers;
+                var options = new OtlpExporterOptions
+                {
+                    Headers = headers,
+                };
                 var metadata = options.GetMetadataFromHeaders();
             }
             catch (Exception ex)
@@ -142,17 +146,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Theory]
-        [InlineData("grpc", OtlpExportProtocol.Grpc)]
-        [InlineData("http/protobuf", OtlpExportProtocol.HttpProtobuf)]
-        [InlineData("unsupported", null)]
-        public void ToOtlpExportProtocol_Protocol_MapsToCorrectValue(string protocol, OtlpExportProtocol? expectedExportProtocol)
-        {
-            var exportProtocol = protocol.ToOtlpExportProtocol();
-
-            Assert.Equal(expectedExportProtocol, exportProtocol);
-        }
-
-        [Theory]
         [InlineData("http://test:8888", "http://test:8888/v1/traces")]
         [InlineData("http://test:8888/", "http://test:8888/v1/traces")]
         [InlineData("http://test:8888/v1/traces", "http://test:8888/v1/traces")]
@@ -161,71 +154,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         {
             var uri = new Uri(inputUri, UriKind.Absolute);
 
-            var resultUri = uri.AppendPathIfNotPresent(OtlpExporterOptions.TracesExportPath);
+            var resultUri = uri.AppendPathIfNotPresent("v1/traces");
 
             Assert.Equal(expectedUri, resultUri.AbsoluteUri);
-        }
-
-        [Fact]
-        public void AppendExportPath_EndpointNotSet_EnvironmentVariableNotDefined_NotAppended()
-        {
-            ClearEndpointEnvVar();
-
-            var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
-
-            options.AppendExportPath("test/path");
-
-            Assert.Equal("http://localhost:4318/", options.Endpoint.AbsoluteUri);
-        }
-
-        [Fact]
-        public void AppendExportPath_EndpointNotSet_EnvironmentVariableDefined_Appended()
-        {
-            Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
-
-            var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
-
-            options.AppendExportPath("test/path");
-
-            Assert.Equal("http://test:8888/test/path", options.Endpoint.AbsoluteUri);
-
-            ClearEndpointEnvVar();
-        }
-
-        [Fact]
-        public void AppendExportPath_EndpointSetEqualToEnvironmentVariable_EnvironmentVariableDefined_NotAppended()
-        {
-            Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, "http://test:8888");
-
-            var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
-            options.Endpoint = new Uri("http://test:8888");
-
-            options.AppendExportPath("test/path");
-
-            Assert.Equal("http://test:8888/", options.Endpoint.AbsoluteUri);
-
-            ClearEndpointEnvVar();
-        }
-
-        [Theory]
-        [InlineData("http://localhost:4317/")]
-        [InlineData("http://test:8888/")]
-        public void AppendExportPath_EndpointSet_EnvironmentVariableNotDefined_NotAppended(string endpoint)
-        {
-            ClearEndpointEnvVar();
-
-            var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
-            var originalEndpoint = options.Endpoint;
-            options.Endpoint = new Uri(endpoint);
-
-            options.AppendExportPath("test/path");
-
-            Assert.Equal(endpoint, options.Endpoint.AbsoluteUri);
-        }
-
-        private static void ClearEndpointEnvVar()
-        {
-            Environment.SetEnvironmentVariable(OtlpExporterOptions.EndpointEnvVarName, null);
         }
     }
 }

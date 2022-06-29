@@ -18,6 +18,8 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 
+namespace ExtendingTheSdk;
+
 public class Program
 {
     public static void Main()
@@ -26,7 +28,8 @@ public class Program
             builder.AddOpenTelemetry(options =>
             {
                 options.IncludeScopes = true;
-                options.AddProcessor(new MyProcessor("ProcessorA"))
+                options.AddProcessor(new MyRedactionProcessor())
+                       .AddProcessor(new MyProcessor("ProcessorA"))
                        .AddProcessor(new MyProcessor("ProcessorB"))
                        .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
                        .AddMyExporter();
@@ -37,8 +40,8 @@ public class Program
         // unstructured log
         logger.LogInformation("Hello, World!");
 
-        // unstructured log with string interpolation
-        logger.LogInformation($"Hello from potato {0.99}.");
+        // String interpolation, as in the below line, results in unstructured logging, and is not recommended
+        // logger.LogInformation($"Hello from potato {0.99}.");
 
         // structured log with template
         logger.LogInformation("Hello from {name} {price}.", "tomato", 2.99);
@@ -62,6 +65,9 @@ public class Program
         {
             logger.LogError("{name} is broken.", "refrigerator");
         }
+
+        // message will be redacted by MyRedactionProcessor
+        logger.LogInformation("OpenTelemetry {sensitiveString}.", "<secret>");
     }
 
     internal struct Food

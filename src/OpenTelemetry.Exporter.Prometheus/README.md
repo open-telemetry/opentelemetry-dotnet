@@ -45,8 +45,26 @@ dotnet add package OpenTelemetry.Exporter.Prometheus
     ```csharp
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
-        app.UseRouting();
         app.UseOpenTelemetryPrometheusScrapingEndpoint();
+        app.UseRouting();
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+        });
+    }
+    ```
+
+    Overloads of the `UseOpenTelemetryPrometheusScrapingEndpoint` extension are
+    provided to change the path or for more advanced configuration a predicate
+    function can be used:
+
+    ```csharp
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        app.UseOpenTelemetryPrometheusScrapingEndpoint(
+            context => context.Request.Path == "/internal/metrics"
+                && context.Connection.LocalPort == 5067);
+        app.UseRouting();
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();
@@ -109,7 +127,7 @@ This component uses an
 [EventSource](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventsource)
 with the name "OpenTelemetry-Exporter-Prometheus" for its internal logging.
 Please refer to [SDK
-troubleshooting](../opentelemetry/README.md#troubleshooting) for instructions on
+troubleshooting](../OpenTelemetry/README.md#troubleshooting) for instructions on
 seeing these internal logs.
 
 ## References

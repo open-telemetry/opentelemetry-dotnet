@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -25,7 +27,7 @@ namespace OpenTelemetry.Logs
     /// </summary>
     public readonly struct LogRecordScope
     {
-        internal LogRecordScope(object scope)
+        internal LogRecordScope(object? scope)
         {
             this.Scope = scope;
         }
@@ -33,38 +35,42 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Gets the raw scope value.
         /// </summary>
-        public object Scope { get; }
+        public object? Scope { get; }
 
         /// <summary>
         /// Gets an <see cref="IEnumerator"/> for looping over the inner values
         /// of the scope.
         /// </summary>
         /// <returns><see cref="Enumerator"/>.</returns>
-        public Enumerator GetEnumerator() => new Enumerator(this.Scope);
+        public Enumerator GetEnumerator() => new(this.Scope);
 
         /// <summary>
         /// LogRecordScope enumerator.
         /// </summary>
-        public struct Enumerator : IEnumerator<KeyValuePair<string, object>>
+        public struct Enumerator : IEnumerator<KeyValuePair<string, object?>>
         {
-            private readonly IReadOnlyList<KeyValuePair<string, object>> scope;
+            private readonly IReadOnlyList<KeyValuePair<string, object?>> scope;
             private int position;
 
-            public Enumerator(object scope)
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Enumerator"/> struct.
+            /// </summary>
+            /// <param name="scope">Scope.</param>
+            public Enumerator(object? scope)
             {
-                if (scope is IReadOnlyList<KeyValuePair<string, object>> scopeList)
+                if (scope is IReadOnlyList<KeyValuePair<string, object?>> scopeList)
                 {
                     this.scope = scopeList;
                 }
-                else if (scope is IEnumerable<KeyValuePair<string, object>> scopeEnumerable)
+                else if (scope is IEnumerable<KeyValuePair<string, object?>> scopeEnumerable)
                 {
-                    this.scope = new List<KeyValuePair<string, object>>(scopeEnumerable);
+                    this.scope = new List<KeyValuePair<string, object?>>(scopeEnumerable);
                 }
                 else
                 {
-                    this.scope = new List<KeyValuePair<string, object>>
+                    this.scope = new List<KeyValuePair<string, object?>>
                     {
-                        new KeyValuePair<string, object>(string.Empty, scope),
+                        new KeyValuePair<string, object?>(string.Empty, scope),
                     };
                 }
 
@@ -72,10 +78,12 @@ namespace OpenTelemetry.Logs
                 this.Current = default;
             }
 
-            public KeyValuePair<string, object> Current { get; private set; }
+            /// <inheritdoc/>
+            public KeyValuePair<string, object?> Current { get; private set; }
 
             object IEnumerator.Current => this.Current;
 
+            /// <inheritdoc/>
             public bool MoveNext()
             {
                 if (this.position < this.scope.Count)
@@ -87,10 +95,12 @@ namespace OpenTelemetry.Logs
                 return false;
             }
 
+            /// <inheritdoc/>
             public void Dispose()
             {
             }
 
+            /// <inheritdoc/>
             public void Reset()
                 => throw new NotSupportedException();
         }

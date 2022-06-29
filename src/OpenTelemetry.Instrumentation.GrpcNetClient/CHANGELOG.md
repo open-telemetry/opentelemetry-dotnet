@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.4
+
+Released 2022-Jun-03
+
+* Add `netstandard2.0` target enabling the Grpc.Net.Client instrumentation to
+  be consumed by .NET Framework applications.
+  ([#3105](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3105))
+
+## 1.0.0-rc9.3
+
+Released 2022-Apr-15
+
+## 1.0.0-rc9.2
+
+Released 2022-Apr-12
+
+## 1.0.0-rc9.1
+
+Released 2022-Mar-30
+
+## 1.0.0-rc10 (broken. use 1.0.0-rc9.1 and newer)
+
+Released 2022-Mar-04
+
 ## 1.0.0-rc9
 
 Released 2022-Feb-02

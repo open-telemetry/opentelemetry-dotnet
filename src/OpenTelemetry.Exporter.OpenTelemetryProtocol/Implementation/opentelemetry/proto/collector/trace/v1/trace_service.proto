@@ -21,7 +21,7 @@ import "opentelemetry/proto/trace/v1/trace.proto";
 option java_multiple_files = true;
 option java_package = "io.opentelemetry.proto.collector.trace.v1";
 option java_outer_classname = "TraceServiceProto";
-option go_package = "github.com/open-telemetry/opentelemetry-proto/gen/go/collector/trace/v1";
+option go_package = "go.opentelemetry.io/proto/otlp/collector/trace/v1";
 
 // Service that can be used to push spans between one Application instrumented with
 // OpenTelemetry and a collector, or between a collector and a central collector (in this

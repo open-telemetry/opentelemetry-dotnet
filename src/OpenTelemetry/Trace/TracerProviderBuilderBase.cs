@@ -27,15 +27,29 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public abstract class TracerProviderBuilderBase : TracerProviderBuilder
     {
-        private readonly List<InstrumentationFactory> instrumentationFactories = new List<InstrumentationFactory>();
-        private readonly List<BaseProcessor<Activity>> processors = new List<BaseProcessor<Activity>>();
-        private readonly List<string> sources = new List<string>();
-        private readonly HashSet<string> legacyActivityOperationNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly List<InstrumentationFactory> instrumentationFactories = new();
+        private readonly List<BaseProcessor<Activity>> processors = new();
+        private readonly List<string> sources = new();
+        private readonly HashSet<string> legacyActivityOperationNames = new(StringComparer.OrdinalIgnoreCase);
         private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
         private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
 
         protected TracerProviderBuilderBase()
         {
+        }
+
+        /// <summary>
+        /// Gets or sets the <see cref="ResourceBuilder"/> from which the Resource associated with
+        /// this provider is built from. Setting this overwrites currently set ResourceBuilder.
+        /// </summary>
+        internal ResourceBuilder ResourceBuilder
+        {
+            get => this.resourceBuilder;
+            set
+            {
+                Guard.ThrowIfNull(value);
+                this.resourceBuilder = value;
+            }
         }
 
         /// <inheritdoc />
@@ -132,20 +146,6 @@ namespace OpenTelemetry.Trace
             Guard.ThrowIfNull(sampler);
 
             this.sampler = sampler;
-            return this;
-        }
-
-        /// <summary>
-        /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
-        /// this provider is built from. Overwrites currently set ResourceBuilder.
-        /// </summary>
-        /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
-        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        internal TracerProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
-        {
-            Guard.ThrowIfNull(resourceBuilder);
-
-            this.resourceBuilder = resourceBuilder;
             return this;
         }
 

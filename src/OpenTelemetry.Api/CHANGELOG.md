@@ -2,6 +2,46 @@
 
 ## Unreleased
 
+## 1.3.0
+
+Released 2022-Jun-03
+
+## 1.3.0-rc.2
+
+Released 2022-June-1
+
+* `B3Propagator` class from `OpenTelemetry.Extensions.Propagators` namespace has
+  been deprecated and moved as is to a new `OpenTelemetry.Extensions.Propagators`
+  namespace, shipped as part of the `OpenTelemetry.Extensions.Propagators` package.
+  It will be removed in the next major release, see issue [#3259](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3259)
+
+## 1.3.0-beta.2
+
+Released 2022-May-16
+
+## 1.3.0-beta.1
+
+Released 2022-Apr-15
+
+* Removes .NET Framework 4.6.1. The minimum .NET Framework
+  version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
+
+## 1.2.0
+
+Released 2022-Apr-15
+
+## 1.2.0-rc5
+
+Released 2022-Apr-12
+
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
+## 1.2.0-rc3
+
+Released 2022-Mar-04
+
 * Improved wildcard support for `AddSource`, `AddMeter` to cover `?` (which
  matches exactly one character).
  ([#2875](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2875))
@@ -162,7 +202,7 @@ Released 2020-Nov-5
   ([#1413](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1413))
 * Moving grpc status and helper to grpc project
   ([#1422](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1422))
-* Renamed TextMapPropagator to TraceContextPropagator, CompositePropapagor to
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropagator to
   CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator and
   changed from interface to abstract class.
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))

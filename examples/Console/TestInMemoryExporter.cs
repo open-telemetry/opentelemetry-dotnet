@@ -51,21 +51,19 @@ namespace Examples.Console
             // and use InMemory exporter.
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
-                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("inmemory-test"))
+                    .ConfigureResource(r => r.AddService("inmemory-test"))
                     .AddInMemoryExporter(exportedItems)
                     .Build();
 
             // The above line is required only in applications
             // which decide to use OpenTelemetry.
-            using (var sample = new InstrumentationWithActivitySource())
-            {
-                sample.Start();
+            using var sample = new InstrumentationWithActivitySource();
+            sample.Start();
 
-                System.Console.WriteLine("Traces are being created and exported " +
-                    "to the collection passed in the background. " +
-                    "Press ENTER to stop.");
-                System.Console.ReadLine();
-            }
+            System.Console.WriteLine("Traces are being created and exported " +
+                "to the collection passed in the background. " +
+                "Press ENTER to stop.");
+            System.Console.ReadLine();
         }
     }
 }

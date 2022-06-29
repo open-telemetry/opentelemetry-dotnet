@@ -6,19 +6,13 @@
 The Jaeger exporter converts OpenTelemetry traces into the Jaeger model
 following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/jaeger.md).
 
-The exporter communicates to a Jaeger Agent through the thrift protocol on
+The exporter communicates to a Jaeger Agent through the Thrift protocol on
 the Compact Thrift API port, and as such only supports Thrift over UDP.
 
-## Supported .NET Versions
+## Getting Started
 
-This package supports all the officially supported versions of [.NET
-Core](https://dotnet.microsoft.com/download/dotnet-core).
-
-For .NET Framework, versions 4.6.1 and above are supported.
-
-## Prerequisite
-
-* [Get Jaeger](https://www.jaegertracing.io/docs/1.13/getting-started/)
+Refer to the [Getting Started with
+Jaeger](../../docs/trace/getting-started-jaeger/README.md) tutorial.
 
 ## Installation
 
@@ -64,10 +58,10 @@ properties:
 
 * `Protocol`: The protocol to use. The default value is `UdpCompactThrift`.
 
-  | Protocol       | Description                                           |
-  |----------------|-------------------------------------------------------|
-  |UdpCompactThrift| Apache Thrift compact over UDP to a Jaeger Agent.     |
-  |HttpBinaryThrift| Apache Thrift binary over HTTP to a Jaeger Collector. |
+  | Protocol         | Description                                           |
+  |------------------|-------------------------------------------------------|
+  |`UdpCompactThrift`| Apache Thrift compact over UDP to a Jaeger Agent.     |
+  |`HttpBinaryThrift`| Apache Thrift binary over HTTP to a Jaeger Collector. |
 
 See the [`TestJaegerExporter.cs`](../../examples/Console/TestJaegerExporter.cs)
 for an example of how to use the exporter.
@@ -75,14 +69,15 @@ for an example of how to use the exporter.
 ## Environment Variables
 
 The following environment variables can be used to override the default
-values of the `JaegerExporterOptions`.
+values of the `JaegerExporterOptions`
+(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#jaeger-exporter)).
 
-| Environment variable               | `JaegerExporterOptions` property |
-| ---------------------------------- | -------------------------------- |
-| `OTEL_EXPORTER_JAEGER_AGENT_HOST`  | `AgentHost`                      |
-| `OTEL_EXPORTER_JAEGER_AGENT_PORT`  | `AgentPort`                      |
-| `OTEL_EXPORTER_JAEGER_ENDPOINT`    | `Endpoint`                       |
-| `OTEL_EXPORTER_JAEGER_PROTOCOL`    | `Protocol`                       |
+| Environment variable              | `JaegerExporterOptions` property                          |
+|-----------------------------------|-----------------------------------------------------------|
+| `OTEL_EXPORTER_JAEGER_AGENT_HOST` | `AgentHost`                                               |
+| `OTEL_EXPORTER_JAEGER_AGENT_PORT` | `AgentPort`                                               |
+| `OTEL_EXPORTER_JAEGER_ENDPOINT`   | `Endpoint`                                                |
+| `OTEL_EXPORTER_JAEGER_PROTOCOL`   | `Protocol` (`udp/thrift.compact` or `http/thrift.binary`) |
 
 `FormatException` is thrown in case of an invalid value for any of the
 supported environment variables.
@@ -128,7 +123,7 @@ export requests.
 This component uses an
 [EventSource](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventsource)
 with the name "OpenTelemetry-Exporter-Jaeger" for its internal logging. Please
-refer to [SDK troubleshooting](../opentelemetry/README.md#troubleshooting) for
+refer to [SDK troubleshooting](../OpenTelemetry/README.md#troubleshooting) for
 instructions on seeing these internal logs.
 
 ## References

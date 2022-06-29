@@ -24,13 +24,13 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 {
     internal class HttpHandlerMetricsDiagnosticListener : ListenerHandler
     {
-        private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new PropertyFetcher<HttpResponseMessage>("Response");
+        private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
         private readonly Histogram<double> httpClientDuration;
 
         public HttpHandlerMetricsDiagnosticListener(string name, Meter meter)
             : base(name)
         {
-            this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "milliseconds", "measure the duration of the outbound HTTP request");
+            this.httpClientDuration = meter.CreateHistogram<double>("http.client.duration", "ms", "measures the duration of the outbound HTTP request");
         }
 
         public override void OnStopActivity(Activity activity, object payload)

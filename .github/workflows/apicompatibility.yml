@@ -2,24 +2,19 @@ name: API Compatibility
 
 on:
   pull_request:
-    branches: [ main, metrics ]
+    branches: [ main ]
     paths-ignore:
     - '**.md'
 
 jobs:
   build-test:
     runs-on: windows-latest
-    # https://github.com/actions/setup-dotnet/issues/122
     env:
       CheckAPICompatibility: true
-      DOTNET_MULTILEVEL_LOOKUP: 1
     steps:
-    - uses: actions/checkout@v2
-
-    - uses: actions/setup-dotnet@v1
+    - uses: actions/checkout@v3
       with:
-        dotnet-version: '6.0.x'
-        include-prerelease: true
+        fetch-depth: 0 # fetching all
 
     - name: Install dependencies
       run: dotnet restore

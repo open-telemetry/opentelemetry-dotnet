@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
@@ -25,20 +26,24 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
     /// <typeparam name="TRequest">Type of export request.</typeparam>
     internal abstract class BaseOtlpHttpExportClient<TRequest> : IExportClient<TRequest>
     {
-        protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient)
+        protected BaseOtlpHttpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
         {
             Guard.ThrowIfNull(options);
             Guard.ThrowIfNull(httpClient);
+            Guard.ThrowIfNull(signalPath);
             Guard.ThrowIfInvalidTimeout(options.TimeoutMilliseconds);
 
-            this.Options = options;
+            Uri exporterEndpoint = !options.ProgrammaticallyModifiedEndpoint
+                ? options.Endpoint.AppendPathIfNotPresent(signalPath)
+                : options.Endpoint;
+            this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
             this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
             this.HttpClient = httpClient;
         }
 
-        internal OtlpExporterOptions Options { get; }
-
         internal HttpClient HttpClient { get; }
+
+        internal Uri Endpoint { get; set; }
 
         internal IReadOnlyDictionary<string, string> Headers { get; }
 
@@ -55,7 +60,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             }
             catch (HttpRequestException ex)
             {
-                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Options.Endpoint, ex);
+                OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
 
                 return false;
             }
@@ -70,11 +75,24 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             return true;
         }
 
-        protected abstract HttpRequestMessage CreateHttpRequest(TRequest request);
+        protected abstract HttpContent CreateHttpContent(TRequest exportRequest);
+
+        protected HttpRequestMessage CreateHttpRequest(TRequest exportRequest)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, this.Endpoint);
+            foreach (var header in this.Headers)
+            {
+                request.Headers.Add(header.Key, header.Value);
+            }
+
+            request.Content = this.CreateHttpContent(exportRequest);
+
+            return request;
+        }
 
         protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
             return this.HttpClient.Send(request, cancellationToken);
 #else
             return this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();

@@ -16,11 +16,8 @@
 
 using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.Net.Http;
-using System.Net.Sockets;
 using System.Reflection;
-using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OpenTelemetry.Context.Propagation;
@@ -33,35 +30,19 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         internal static readonly AssemblyName AssemblyName = typeof(HttpHandlerDiagnosticListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
-        internal static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
+        internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
 
-        private static readonly Regex CoreAppMajorVersionCheckRegex = new Regex("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex CoreAppMajorVersionCheckRegex = new("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new PropertyFetcher<HttpRequestMessage>("Request");
-        private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new PropertyFetcher<HttpResponseMessage>("Response");
-        private readonly PropertyFetcher<Exception> stopExceptionFetcher = new PropertyFetcher<Exception>("Exception");
-        private readonly PropertyFetcher<TaskStatus> stopRequestStatusFetcher = new PropertyFetcher<TaskStatus>("RequestTaskStatus");
-        private readonly bool httpClientSupportsW3C;
+        private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new("Request");
+        private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
+        private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
+        private readonly PropertyFetcher<TaskStatus> stopRequestStatusFetcher = new("RequestTaskStatus");
         private readonly HttpClientInstrumentationOptions options;
 
         public HttpHandlerDiagnosticListener(HttpClientInstrumentationOptions options)
             : base("HttpHandlerDiagnosticListener")
         {
-            var framework = Assembly
-                .GetEntryAssembly()?
-                .GetCustomAttribute<TargetFrameworkAttribute>()?
-                .FrameworkName;
-
-            // Depending on the .NET version/flavor this will look like
-            // '.NETCoreApp,Version=v3.0', '.NETCoreApp,Version = v2.2' or '.NETFramework,Version = v4.7.1'
-
-            if (framework != null)
-            {
-                var match = CoreAppMajorVersionCheckRegex.Match(framework);
-
-                this.httpClientSupportsW3C = match.Success && int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture) >= 3;
-            }
-
             this.options = options;
         }
 
@@ -98,7 +79,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
             // Propagate context irrespective of sampling decision
             var textMapPropagator = Propagators.DefaultTextMapPropagator;
-            if (!(this.httpClientSupportsW3C && textMapPropagator is TraceContextPropagator))
+            if (textMapPropagator is not TraceContextPropagator)
             {
                 textMapPropagator.Inject(new PropagationContext(activity.Context, Baggage.Current), request, HttpRequestMessageContextPropagation.HeaderValueSetter);
             }
@@ -133,10 +114,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
                 activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-                if (this.options.SetHttpFlavor)
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
-                }
+                activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
 
                 try
                 {
@@ -215,20 +193,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 if (exc is HttpRequestException)
                 {
-                    if (exc.InnerException is SocketException exception)
-                    {
-                        switch (exception.SocketErrorCode)
-                        {
-                            case SocketError.HostNotFound:
-                                activity.SetStatus(Status.Error.WithDescription(exc.Message));
-                                return;
-                        }
-                    }
-
-                    if (exc.InnerException != null)
-                    {
-                        activity.SetStatus(Status.Error.WithDescription(exc.Message));
-                    }
+                    activity.SetStatus(Status.Error.WithDescription(exc.Message));
                 }
 
                 try

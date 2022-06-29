@@ -2,6 +2,79 @@
 
 ## Unreleased
 
+## 1.3.0
+
+Released 2022-Jun-03
+
+## 1.3.0-rc.2
+
+Released 2022-June-1
+
+* Improve the conversion and formatting of attribute values.
+  The list of data types that must be supported per the
+  [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/common#attribute)
+  is more narrow than what the .NET OpenTelemetry SDK supports. Numeric
+  [built-in value types](https://docs.microsoft.com/dotnet/csharp/language-reference/builtin-types/built-in-types)
+  are supported by converting to a `long` or `double` as appropriate except for
+  numeric types that could cause overflow (`ulong`) or rounding (`decimal`)
+  which are converted to strings. Non-numeric built-in types - `string`,
+  `char`, `bool` are supported. All other types are converted to a `string`.
+  Array values are also supported.
+  ([#3281](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3281))
+* Fix conversion of array-valued resource attributes. They were previously
+  converted to a string like "System.String[]".
+  ([#3281](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3281))
+* Fix exporting of array-valued attributes on an `Activity`. Previously, each
+  item in the array would result in a new tag on an exported `Activity`. Now,
+  array-valued attributes are serialzed to a JSON-array representation.
+  ([#3281](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3281))
+
+## 1.3.0-beta.2
+
+Released 2022-May-16
+
+* Removes net5.0 target and replaced with net6.0
+  as .NET 5.0 is going out of support.
+  The package keeps netstandard2.0 target, so it
+  can still be used with .NET5.0 apps.
+  ([#3147](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3147))
+
+## 1.3.0-beta.1
+
+Released 2022-Apr-15
+
+* Removes .NET Framework 4.6.1. The minimum .NET Framework
+  version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
+
+## 1.2.0
+
+Released 2022-Apr-15
+
+## 1.2.0-rc5
+
+Released 2022-Apr-12
+
+## 1.2.0-rc4
+
+Released 2022-Mar-30
+
+* Added support for Activity Status and StatusDescription which were
+  added to Activity from `System.Diagnostics.DiagnosticSource` version 6.0.
+  Prior to version 6.0, setting the status of an Activity was provided by the
+  .NET OpenTelemetry API via the `Activity.SetStatus` extension method in the
+  `OpenTelemetry.Trace` namespace. Internally, this extension method added the
+  status as tags on the Activity: `otel.status_code` and `otel.status_description`.
+  Therefore, to maintain backward compatibility, the exporter falls back to using
+  these tags to infer status.
+ ([#3003](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3003))
+
+## 1.2.0-rc3
+
+Released 2022-Mar-04
+
+* Modified Export method to catch all exceptions.
+  ([#2935](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2935))
+
 ## 1.2.0-rc2
 
 Released 2022-Feb-02
@@ -40,7 +113,7 @@ Released 2021-Sep-13
   `BatchExportActivityProcessorOptions` which supports field value overriding
   using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
   `OTEL_BSP_MAX_QUEUE_SIZE`, `OTEL_BSP_MAX_EXPORT_BATCH_SIZE`
-  envionmental variables as defined in the
+  environmental variables as defined in the
   [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.5.0/specification/sdk-environment-variables.md#batch-span-processor).
   ([#2219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2219))
 

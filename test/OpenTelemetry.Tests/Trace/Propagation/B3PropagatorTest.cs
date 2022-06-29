@@ -42,8 +42,8 @@ namespace OpenTelemetry.Context.Propagation.Tests
                 return new string[] { v };
             };
 
-        private readonly B3Propagator b3propagator = new B3Propagator();
-        private readonly B3Propagator b3PropagatorSingleHeader = new B3Propagator(true);
+        private readonly B3Propagator b3propagator = new();
+        private readonly B3Propagator b3PropagatorSingleHeader = new(true);
 
         private readonly ITestOutputHelper output;
 
@@ -367,12 +367,12 @@ namespace OpenTelemetry.Context.Propagation.Tests
         [Fact]
         public void Fields_list()
         {
-            this.ContainsExactly(
+            ContainsExactly(
                 this.b3propagator.Fields,
                 new List<string> { B3Propagator.XB3TraceId, B3Propagator.XB3SpanId, B3Propagator.XB3ParentSpanId, B3Propagator.XB3Sampled, B3Propagator.XB3Flags });
         }
 
-        private void ContainsExactly(ISet<string> list, List<string> items)
+        private static void ContainsExactly(ISet<string> list, List<string> items)
         {
             Assert.Equal(items.Count, list.Count);
             foreach (var item in items)

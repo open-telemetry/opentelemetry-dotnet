@@ -23,7 +23,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
     [EventSource(Name = "OpenTelemetry-Exporter-OpenTelemetryProtocol")]
     internal class OpenTelemetryProtocolExporterEventSource : EventSource
     {
-        public static readonly OpenTelemetryProtocolExporterEventSource Log = new OpenTelemetryProtocolExporterEventSource();
+        public static readonly OpenTelemetryProtocolExporterEventSource Log = new();
 
         [NonEvent]
         public void FailedToReachCollector(Uri collectorUri, Exception ex)
@@ -74,10 +74,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             this.WriteEvent(8, protocol);
         }
 
-        [Event(9, Message = "Could not translate LogRecord from class '{0}' and method '{1}', log will not be exported.", Level = EventLevel.Informational)]
-        public void CouldNotTranslateLogRecord(string className, string methodName)
+        [Event(9, Message = "Could not translate LogRecord due to Exception: '{0}'. Log will not be exported.", Level = EventLevel.Warning)]
+        public void CouldNotTranslateLogRecord(string exceptionMessage)
         {
-            this.WriteEvent(9, className, methodName);
+            this.WriteEvent(9, exceptionMessage);
         }
     }
 }

@@ -23,12 +23,13 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
     {
         public JaegerExporterOptionsTests()
         {
-            this.ClearEnvVars();
+            ClearEnvVars();
         }
 
         public void Dispose()
         {
-            this.ClearEnvVars();
+            ClearEnvVars();
+            GC.SuppressFinalize(this);
         }
 
         [Fact]
@@ -40,24 +41,32 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             Assert.Equal(6831, options.AgentPort);
             Assert.Equal(4096, options.MaxPayloadSizeInBytes);
             Assert.Equal(ExportProcessorType.Batch, options.ExportProcessorType);
+            Assert.Equal(JaegerExportProtocol.UdpCompactThrift, options.Protocol);
+            Assert.Equal(JaegerExporterOptions.DefaultJaegerEndpoint, options.Endpoint.ToString());
         }
 
         [Fact]
         public void JaegerExporterOptions_EnvironmentVariableOverride()
         {
-            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentHostEnvVarKey, "jeager-host");
+            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentHostEnvVarKey, "jaeger-host");
             Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentPortEnvVarKey, "123");
+            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelProtocolEnvVarKey, "http/thrift.binary");
+            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelEndpointEnvVarKey, "http://custom-endpoint:12345");
 
             var options = new JaegerExporterOptions();
 
-            Assert.Equal("jeager-host", options.AgentHost);
+            Assert.Equal("jaeger-host", options.AgentHost);
             Assert.Equal(123, options.AgentPort);
+            Assert.Equal(JaegerExportProtocol.HttpBinaryThrift, options.Protocol);
+            Assert.Equal(new Uri("http://custom-endpoint:12345"), options.Endpoint);
         }
 
-        [Fact]
-        public void JaegerExporterOptions_InvalidPortEnvironmentVariableOverride()
+        [Theory]
+        [InlineData(JaegerExporterOptions.OTelAgentPortEnvVarKey)]
+        [InlineData(JaegerExporterOptions.OTelProtocolEnvVarKey)]
+        public void JaegerExporterOptions_InvalidEnvironmentVariableOverride(string envVar)
         {
-            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentPortEnvVarKey, "invalid");
+            Environment.SetEnvironmentVariable(envVar, "invalid");
 
             Assert.Throws<FormatException>(() => new JaegerExporterOptions());
         }
@@ -78,14 +87,18 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
         [Fact]
         public void JaegerExporterOptions_EnvironmentVariableNames()
         {
+            Assert.Equal("OTEL_EXPORTER_JAEGER_PROTOCOL", JaegerExporterOptions.OTelProtocolEnvVarKey);
             Assert.Equal("OTEL_EXPORTER_JAEGER_AGENT_HOST", JaegerExporterOptions.OTelAgentHostEnvVarKey);
             Assert.Equal("OTEL_EXPORTER_JAEGER_AGENT_PORT", JaegerExporterOptions.OTelAgentPortEnvVarKey);
+            Assert.Equal("OTEL_EXPORTER_JAEGER_ENDPOINT", JaegerExporterOptions.OTelEndpointEnvVarKey);
         }
 
-        private void ClearEnvVars()
+        private static void ClearEnvVars()
         {
+            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelProtocolEnvVarKey, null);
             Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentHostEnvVarKey, null);
             Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelAgentPortEnvVarKey, null);
+            Environment.SetEnvironmentVariable(JaegerExporterOptions.OTelEndpointEnvVarKey, null);
         }
     }
 }

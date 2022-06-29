@@ -60,7 +60,7 @@ This exporter allows easy configuration of `ZipkinExporterOptions` from
 dependency injection container, when used in conjunction with
 [`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md).
 
-See the [Startup](../../examples/AspNetCore/Startup.cs) class of the ASP.NET
+See the [Startup](../../examples/AspNetCore/Program.cs) class of the ASP.NET
 Core application for example use.
 
 ### Configuration using Environment Variables
@@ -112,7 +112,7 @@ export requests.
 This component uses an
 [EventSource](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventsource)
 with the name "OpenTelemetry-Exporter-Zipkin" for its internal logging. Please
-refer to [SDK troubleshooting](../opentelemetry/README.md#troubleshooting) for
+refer to [SDK troubleshooting](../OpenTelemetry/README.md#troubleshooting) for
 instructions on seeing these internal logs.
 
 ## References

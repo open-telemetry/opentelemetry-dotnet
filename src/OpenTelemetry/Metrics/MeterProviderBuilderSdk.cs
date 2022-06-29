@@ -20,7 +20,7 @@ namespace OpenTelemetry.Metrics
 {
     internal class MeterProviderBuilderSdk : MeterProviderBuilderBase
     {
-        private static readonly Regex InstrumentNameRegex = new Regex(
+        private static readonly Regex InstrumentNameRegex = new(
             @"^[a-zA-Z][-.\w]{0,62}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         /// <summary>

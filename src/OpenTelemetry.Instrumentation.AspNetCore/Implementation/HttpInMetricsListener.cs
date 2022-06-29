@@ -14,20 +14,21 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Http;
+#if NETCOREAPP
+using Microsoft.AspNetCore.Routing;
+#endif
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInMetricsListener : ListenerHandler
     {
-        private readonly PropertyFetcher<HttpContext> stopContextFetcher = new PropertyFetcher<HttpContext>("HttpContext");
+        private readonly PropertyFetcher<HttpContext> stopContextFetcher = new("HttpContext");
         private readonly Meter meter;
-
-        private Histogram<double> httpServerDuration;
+        private readonly Histogram<double> httpServerDuration;
 
         public HttpInMetricsListener(string name, Meter meter)
             : base(name)
@@ -53,16 +54,60 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
+            string host;
+
+            if (context.Request.Host.Port is null or 80 or 443)
+            {
+                host = context.Request.Host.Host;
+            }
+            else
+            {
+                host = context.Request.Host.Host + ":" + context.Request.Host.Port;
+            }
+
+            TagList tags;
+
+            // We need following directive as
+            // RouteEndpoint is not available in netstandard2.0 and netstandard2.1
+#if NETCOREAPP
+            var target = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
+
             // TODO: This is just a minimal set of attributes. See the spec for additional attributes:
             // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#http-server
-            var tags = new KeyValuePair<string, object>[]
+            if (!string.IsNullOrEmpty(target))
             {
-                new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, context.Request.Method),
-                new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, context.Request.Scheme),
-                new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode),
-                new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, context.Request.Protocol),
+                tags = new TagList
+                {
+                    { SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol) },
+                    { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
+                    { SemanticConventions.AttributeHttpMethod, context.Request.Method },
+                    { SemanticConventions.AttributeHttpHost, host },
+                    { SemanticConventions.AttributeHttpTarget, target },
+                    { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString() },
+                };
+            }
+            else
+            {
+                tags = new TagList
+                {
+                    { SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(context.Request.Protocol) },
+                    { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
+                    { SemanticConventions.AttributeHttpMethod, context.Request.Method },
+                    { SemanticConventions.AttributeHttpHost, host },
+                    { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString() },
+                };
+            }
+#else
+            tags = new TagList
+            {
+                { SemanticConventions.AttributeHttpFlavor, context.Request.Protocol },
+                { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
+                { SemanticConventions.AttributeHttpMethod, context.Request.Method },
+                { SemanticConventions.AttributeHttpHost, host },
+                { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString() },
             };
 
+#endif
             this.httpServerDuration.Record(activity.Duration.TotalMilliseconds, tags);
         }
     }

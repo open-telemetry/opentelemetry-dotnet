@@ -44,20 +44,20 @@ You can contribute to this project from a Windows, macOS or Linux machine.
 On all platforms, the minimum requirements are:
 
 * Git client and command line tools.
-* .NET Core 3.1+
+* .NET 6.0+
 
 ### Linux or MacOS
 
 * Visual Studio 2022+ for Mac or Visual Studio Code
 
 Mono might be required by your IDE but is not required by this project. This is
-because unit tests targeting .NET Framework (i.e: `net461`) are disabled outside
+because unit tests targeting .NET Framework (i.e: `net462`) are disabled outside
 of Windows.
 
 ### Windows
 
 * Visual Studio 2022+ or Visual Studio Code
-* .NET Framework 4.6.1+
+* .NET Framework 4.6.2+
 
 ### Public API
 
@@ -76,14 +76,12 @@ helper methods.
    in each framework that you target.
 * Add the following lines to your csproj:
 
-<!-- markdownlint-disable MD013 -->
 ```xml
 <ItemGroup>
   <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Shipped.txt" />
   <AdditionalFiles Include=".publicApi\$(TargetFramework)\PublicAPI.Unshipped.txt" />
 </ItemGroup>
 ```
-<!-- markdownlint-enable MD013 -->
 
 * Use
    [IntelliSense](https://docs.microsoft.com/visualstudio/ide/using-intellisense)
@@ -112,14 +110,6 @@ Add your fork as an origin:
 
 ```sh
 git remote add fork https://github.com/YOUR_GITHUB_USERNAME/opentelemetry-dotnet.git
-```
-
-By default your work will be targeting the `main` branch. If you want to work on
-the experimental metrics feature, please switch to the `metrics` feature branch:
-
-```sh
-# only do this when you want to work on the experimental metrics feature
-git checkout metrics
 ```
 
 Run tests:
@@ -174,8 +164,8 @@ A PR is considered to be **ready to merge** when:
 * Urgent fix can take exception as long as it has been actively communicated.
 
 Any Maintainer can merge the PR once it is **ready to merge**. Note, that some
-PR may not be merged immediately if repo is being in process of a major release
-and the new feature doesn't fit it.
+PRs may not be merged immediately if the repo is in the process of a release and
+the maintainers decided to defer the PR to the next release train.
 
 If a PR has been stuck (e.g. there are lots of debates and people couldn't agree
 on each other), the owner should try to get people aligned by:
@@ -221,6 +211,6 @@ This project includes a [`.editorconfig`](./.editorconfig) file which is
 supported by all the IDEs/editor mentioned above. It works with the IDE/editor
 only and does not affect the actual build of the project.
 
-This repository also includes stylecop ruleset files under the `./build` folder.
+This repository also includes StyleCop ruleset files under the `./build` folder.
 These files are used to configure the _StyleCop.Analyzers_ which runs during
 build. Breaking the rules will result in a build failure.
