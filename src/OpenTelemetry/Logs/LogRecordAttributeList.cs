@@ -200,6 +200,7 @@ namespace OpenTelemetry.Logs
             int count = this.count;
             if (count <= 0)
             {
+                logRecord.StateValues = null;
                 return;
             }
 
