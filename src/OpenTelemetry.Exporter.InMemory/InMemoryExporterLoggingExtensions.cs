@@ -42,17 +42,7 @@ namespace OpenTelemetry.Logs
 
             foreach (var log in batch)
             {
-                log.Buffer();
-
-                LogRecord copy = new()
-                {
-                    Data = log.Data,
-                    State = log.State,
-                    StateValues = log.StateValues == null ? null : new List<KeyValuePair<string, object>>(log.StateValues),
-                    BufferedScopes = log.BufferedScopes == null ? null : new List<object>(log.BufferedScopes),
-                };
-
-                exportedItems.Add(copy);
+                exportedItems.Add(log.Copy());
             }
 
             return ExportResult.Success;

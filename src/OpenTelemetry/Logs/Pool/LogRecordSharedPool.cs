@@ -17,31 +17,38 @@
 #nullable enable
 
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using System.Threading;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs
 {
     internal sealed class LogRecordSharedPool : ILogRecordPool
     {
-        internal const int DefaultMaxPoolSize = 2048;
-        internal const int DefaultMaxNumberOfAttributes = 64;
-        internal const int DefaultMaxNumberOfScopes = 16;
+        public const int DefaultMaxPoolSize = 2048;
 
-        internal static LogRecordSharedPool Current = new(DefaultMaxPoolSize);
+        public static LogRecordSharedPool Current = new(DefaultMaxPoolSize);
 
-        internal readonly int Capacity;
+        public readonly int Capacity;
         private readonly LogRecord?[] pool;
         private long rentIndex;
         private long returnIndex;
 
-        internal LogRecordSharedPool(int capacity)
+        public LogRecordSharedPool(int capacity)
         {
             this.Capacity = capacity;
             this.pool = new LogRecord?[capacity];
         }
 
-        internal int Count => (int)(Volatile.Read(ref this.returnIndex) - Volatile.Read(ref this.rentIndex));
+        public int Count => (int)(Volatile.Read(ref this.returnIndex) - Volatile.Read(ref this.rentIndex));
+
+        // Note: It might make sense to expose this (somehow) in the future.
+        // Ideal config is shared pool capacity == max batch size.
+        public static void Resize(int capacity)
+        {
+            Guard.ThrowIfOutOfRange(capacity, min: 1);
+
+            Current = new(capacity);
+        }
 
         public LogRecord Rent()
         {
@@ -63,25 +70,24 @@ namespace OpenTelemetry.Logs
                         continue;
                     }
 
-                    logRecord.PoolReferenceCount = 1;
+                    logRecord.ResetReferenceCount();
                     return logRecord;
                 }
             }
 
-            return new LogRecord()
-            {
-                PoolReferenceCount = 1,
-            };
+            var newLogRecord = new LogRecord();
+            newLogRecord.ResetReferenceCount();
+            return newLogRecord;
         }
 
         public void Return(LogRecord logRecord)
         {
-            if (Interlocked.Decrement(ref logRecord.PoolReferenceCount) != 0)
+            if (logRecord.RemoveReference() != 0)
             {
                 return;
             }
 
-            Clear(logRecord);
+            LogRecordPoolHelper.Clear(logRecord);
 
             while (true)
             {
@@ -99,50 +105,14 @@ namespace OpenTelemetry.Logs
                     // for two threads to write to the same index. In that case
                     // only one of the logRecords will make it back into the
                     // pool. Anything lost in the race will collected by the GC
-                    // and the pool will issue new instances as needed
+                    // and the pool will issue new instances as needed. This
+                    // could be abated by an Interlocked.CompareExchange here
+                    // but for the general use case of an exporter returning
+                    // records one-by-one, better to keep this fast and not pay
+                    // for Interlocked.CompareExchange. The race is more
+                    // theoretical.
                     this.pool[returnSnapshot % this.Capacity] = logRecord;
                     return;
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void TrackReference(LogRecord logRecord)
-        {
-            Interlocked.Increment(ref logRecord.PoolReferenceCount);
-        }
-
-        internal static void Clear(LogRecord logRecord)
-        {
-            var attributeStorage = logRecord.AttributeStorage;
-            if (attributeStorage != null)
-            {
-                if (attributeStorage.Count > DefaultMaxNumberOfAttributes)
-                {
-                    // Don't allow the pool to grow unconstained.
-                    logRecord.AttributeStorage = null;
-                }
-                else
-                {
-                    /* List<T>.Clear sets the size to 0 but it maintains the
-                    underlying array. */
-                    attributeStorage.Clear();
-                }
-            }
-
-            var bufferedScopes = logRecord.BufferedScopes;
-            if (bufferedScopes != null)
-            {
-                if (bufferedScopes.Count > DefaultMaxNumberOfScopes)
-                {
-                    // Don't allow the pool to grow unconstained.
-                    logRecord.BufferedScopes = null;
-                }
-                else
-                {
-                    /* List<T>.Clear sets the size to 0 but it maintains the
-                    underlying array. */
-                    bufferedScopes.Clear();
                 }
             }
         }

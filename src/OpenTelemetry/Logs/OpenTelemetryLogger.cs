@@ -59,7 +59,7 @@ namespace OpenTelemetry.Logs
 
                 record.ScopeProvider = provider.IncludeScopes ? this.ScopeProvider : null;
                 record.State = provider.ParseStateValues ? null : state;
-                record.StateValues = provider.ParseStateValues ? this.ParseState(record, state) : null;
+                record.StateValues = provider.ParseStateValues ? ParseState(record, state) : null;
 
                 ref LogRecordData data = ref record.Data;
 
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Logs
 
         public IDisposable BeginScope<TState>(TState state) => this.ScopeProvider?.Push(state) ?? NullScope.Instance;
 
-        private IReadOnlyList<KeyValuePair<string, object?>> ParseState<TState>(LogRecord logRecord, TState state)
+        private static IReadOnlyList<KeyValuePair<string, object?>> ParseState<TState>(LogRecord logRecord, TState state)
         {
             /* TODO: Enable this if/when LogRecordAttributeList becomes public.
             if (state is LogRecordAttributeList logRecordAttributes)
@@ -118,7 +118,7 @@ namespace OpenTelemetry.Logs
             }
             else
             {
-                var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(8);
+                var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(LogRecordPoolHelper.DefaultMaxNumberOfAttributes);
                 attributeStorage.Add(new KeyValuePair<string, object?>(string.Empty, state));
                 return attributeStorage;
             }

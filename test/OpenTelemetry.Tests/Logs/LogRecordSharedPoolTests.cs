@@ -28,15 +28,15 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void ResizeTests()
         {
-            LogRecordPool.Resize(LogRecordSharedPool.DefaultMaxPoolSize);
+            LogRecordSharedPool.Resize(LogRecordSharedPool.DefaultMaxPoolSize);
             Assert.NotNull(LogRecordSharedPool.Current);
             Assert.Equal(LogRecordSharedPool.DefaultMaxPoolSize, LogRecordSharedPool.Current.Capacity);
 
-            Assert.Throws<ArgumentOutOfRangeException>(() => LogRecordPool.Resize(0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => LogRecordSharedPool.Resize(0));
 
             var beforePool = LogRecordSharedPool.Current;
 
-            LogRecordPool.Resize(1);
+            LogRecordSharedPool.Resize(1);
 
             Assert.NotNull(LogRecordSharedPool.Current);
             Assert.Equal(1, LogRecordSharedPool.Current.Capacity);
@@ -46,7 +46,7 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void RentReturnTests()
         {
-            LogRecordPool.Resize(2);
+            LogRecordSharedPool.Resize(2);
 
             var pool = LogRecordSharedPool.Current;
 
@@ -95,7 +95,7 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void TrackReferenceTests()
         {
-            LogRecordPool.Resize(2);
+            LogRecordSharedPool.Resize(2);
 
             var pool = LogRecordSharedPool.Current;
 
@@ -104,7 +104,7 @@ namespace OpenTelemetry.Logs.Tests
 
             Assert.Equal(1, logRecord1.PoolReferenceCount);
 
-            pool.TrackReference(logRecord1);
+            logRecord1.AddReference();
 
             Assert.Equal(2, logRecord1.PoolReferenceCount);
 
@@ -126,7 +126,7 @@ namespace OpenTelemetry.Logs.Tests
         [Fact]
         public void ClearTests()
         {
-            LogRecordPool.Resize(LogRecordSharedPool.DefaultMaxPoolSize);
+            LogRecordSharedPool.Resize(LogRecordSharedPool.DefaultMaxPoolSize);
 
             var pool = LogRecordSharedPool.Current;
 
@@ -150,12 +150,12 @@ namespace OpenTelemetry.Logs.Tests
             Assert.NotNull(logRecord1.AttributeStorage);
             Assert.NotNull(logRecord1.BufferedScopes);
 
-            for (int i = 0; i <= LogRecordSharedPool.DefaultMaxNumberOfAttributes; i++)
+            for (int i = 0; i <= LogRecordPoolHelper.DefaultMaxNumberOfAttributes; i++)
             {
                 logRecord1.AttributeStorage!.Add(new KeyValuePair<string, object?>("key", "value"));
             }
 
-            for (int i = 0; i <= LogRecordSharedPool.DefaultMaxNumberOfScopes; i++)
+            for (int i = 0; i <= LogRecordPoolHelper.DefaultMaxNumberOfScopes; i++)
             {
                 logRecord1.BufferedScopes!.Add(null);
             }
@@ -171,7 +171,7 @@ namespace OpenTelemetry.Logs.Tests
         [InlineData(true)]
         public async Task ExportTest(bool warmup)
         {
-            LogRecordPool.Resize(LogRecordSharedPool.DefaultMaxPoolSize);
+            LogRecordSharedPool.Resize(LogRecordSharedPool.DefaultMaxPoolSize);
 
             var pool = LogRecordSharedPool.Current;
 
@@ -241,7 +241,7 @@ namespace OpenTelemetry.Logs.Tests
              * have more natural back-off time.
              */
 
-            LogRecordPool.Resize(LogRecordSharedPool.DefaultMaxPoolSize);
+            LogRecordSharedPool.Resize(LogRecordSharedPool.DefaultMaxPoolSize);
 
             var pool = LogRecordSharedPool.Current;
 
