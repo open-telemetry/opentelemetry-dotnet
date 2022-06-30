@@ -77,7 +77,7 @@ public partial class Program
 
         using var meterProvider = prometheusPort != 0 ? Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
-            .AddRuntimeMetrics()
+            .AddRuntimeInstrumentation()
             .AddPrometheusExporter(options =>
             {
                 options.StartHttpListener = true;
