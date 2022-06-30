@@ -111,5 +111,67 @@ namespace OpenTelemetry.Logs.Tests
 
             Assert.Null(logRecord.StateValues);
         }
+
+        [Fact]
+        public void LogEmitterLocalToUtcTimestampTest()
+        {
+            var exportedItems = new List<LogRecord>();
+
+            using var provider = new OpenTelemetryLoggerProvider(options =>
+            {
+                options.AddInMemoryExporter(exportedItems);
+            });
+
+            var logEmitter = provider.CreateEmitter();
+
+            DateTime timestamp = DateTime.SpecifyKind(
+                new DateTime(2022, 6, 30, 16, 0, 0),
+                DateTimeKind.Local);
+
+            logEmitter.Log(new()
+            {
+                Timestamp = timestamp,
+            });
+
+            Assert.Single(exportedItems);
+
+            var logRecord = exportedItems[0];
+
+            Assert.NotNull(logRecord);
+
+            Assert.Equal(timestamp.ToUniversalTime(), logRecord.Timestamp);
+            Assert.Equal(DateTimeKind.Utc, logRecord.Timestamp.Kind);
+        }
+
+        [Fact]
+        public void LogEmitterUnspecifiedTimestampTest()
+        {
+            var exportedItems = new List<LogRecord>();
+
+            using var provider = new OpenTelemetryLoggerProvider(options =>
+            {
+                options.AddInMemoryExporter(exportedItems);
+            });
+
+            var logEmitter = provider.CreateEmitter();
+
+            DateTime timestamp = DateTime.SpecifyKind(
+                new DateTime(2022, 6, 30, 16, 0, 0),
+                DateTimeKind.Unspecified);
+
+            logEmitter.Log(new()
+            {
+                Timestamp = timestamp,
+            });
+
+            Assert.Single(exportedItems);
+
+            var logRecord = exportedItems[0];
+
+            Assert.NotNull(logRecord);
+
+            Assert.Equal(timestamp, logRecord.Timestamp);
+            Assert.Equal(DateTimeKind.Unspecified, logRecord.Timestamp.Kind);
+        }
     }
 }
