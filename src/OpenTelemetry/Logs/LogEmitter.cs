@@ -56,14 +56,7 @@ namespace OpenTelemetry.Logs
 
                 attributes.ApplyToLogRecord(logRecord);
 
-                if (provider.IncludeScopes)
-                {
-                    logRecord.ScopeProvider = provider.ScopeProvider;
-                }
-
                 processor.OnEnd(logRecord);
-
-                logRecord.ScopeProvider = null;
 
                 // Attempt to return the LogRecord to the pool. This will no-op
                 // if a batch exporter has added a reference.
