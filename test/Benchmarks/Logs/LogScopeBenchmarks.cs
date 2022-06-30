@@ -56,6 +56,7 @@ namespace Benchmarks.Logs
                     new KeyValuePair<string, object>("item5", "value5"),
                 }));
 
+#pragma warning disable CS0618 // Type or member is obsolete
             this.logRecord = new LogRecord(
                 this.scopeProvider,
                 DateTime.UtcNow,
@@ -66,6 +67,7 @@ namespace Benchmarks.Logs
                 null,
                 null,
                 null);
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         [Benchmark]
