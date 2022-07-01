@@ -38,6 +38,7 @@ namespace OpenTelemetry.Logs
         internal BaseProcessor<LogRecord>? Processor;
         internal Resource Resource;
         private readonly Hashtable loggers = new();
+        private ILogRecordPool? threadStaticPool = LogRecordThreadStaticPool.Instance;
         private bool disposed;
 
         static OpenTelemetryLoggerProvider()
@@ -52,7 +53,7 @@ namespace OpenTelemetry.Logs
         /// </summary>
         /// <param name="options"><see cref="OpenTelemetryLoggerOptions"/>.</param>
         public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options)
-            : this(options?.CurrentValue!)
+            : this(options?.CurrentValue ?? throw new ArgumentNullException(nameof(options)))
         {
         }
 
@@ -90,6 +91,8 @@ namespace OpenTelemetry.Logs
         }
 
         internal IExternalScopeProvider? ScopeProvider { get; private set; }
+
+        internal ILogRecordPool LogRecordPool => this.threadStaticPool ?? LogRecordSharedPool.Current;
 
         /// <inheritdoc/>
         void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)
@@ -160,6 +163,11 @@ namespace OpenTelemetry.Logs
 
             processor.SetParentProvider(this);
 
+            if (this.threadStaticPool != null && this.ContainsBatchProcessor(processor))
+            {
+                this.threadStaticPool = null;
+            }
+
             if (this.Processor == null)
             {
                 this.Processor = processor;
@@ -180,6 +188,29 @@ namespace OpenTelemetry.Logs
             }
 
             return this;
+        }
+
+        internal bool ContainsBatchProcessor(BaseProcessor<LogRecord> processor)
+        {
+            if (processor is BatchExportProcessor<LogRecord>)
+            {
+                return true;
+            }
+            else if (processor is CompositeProcessor<LogRecord> compositeProcessor)
+            {
+                var current = compositeProcessor.Head;
+                while (current != null)
+                {
+                    if (this.ContainsBatchProcessor(current.Value))
+                    {
+                        return true;
+                    }
+
+                    current = current.Next;
+                }
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>
