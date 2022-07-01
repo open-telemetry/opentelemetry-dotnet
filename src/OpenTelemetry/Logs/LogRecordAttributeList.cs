@@ -31,6 +31,7 @@ namespace OpenTelemetry.Logs
     internal struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
     {
         internal const int OverflowAdditionalCapacity = 8;
+        internal List<KeyValuePair<string, object?>>? OverflowAttributes;
         private KeyValuePair<string, object?> attribute1;
         private KeyValuePair<string, object?> attribute2;
         private KeyValuePair<string, object?> attribute3;
@@ -39,7 +40,6 @@ namespace OpenTelemetry.Logs
         private KeyValuePair<string, object?> attribute6;
         private KeyValuePair<string, object?> attribute7;
         private KeyValuePair<string, object?> attribute8;
-        internal List<KeyValuePair<string, object?>>? overflowAttributes;
         private int count;
 
         /// <inheritdoc/>
@@ -50,10 +50,10 @@ namespace OpenTelemetry.Logs
         {
             readonly get
             {
-                if (this.overflowAttributes is not null)
+                if (this.OverflowAttributes is not null)
                 {
-                    Debug.Assert(index < this.overflowAttributes.Count, "Invalid index accessed.");
-                    return this.overflowAttributes[index];
+                    Debug.Assert(index < this.OverflowAttributes.Count, "Invalid index accessed.");
+                    return this.OverflowAttributes[index];
                 }
 
                 if ((uint)index >= (uint)this.count)
@@ -77,10 +77,10 @@ namespace OpenTelemetry.Logs
 
             set
             {
-                if (this.overflowAttributes is not null)
+                if (this.OverflowAttributes is not null)
                 {
-                    Debug.Assert(index < this.overflowAttributes.Count, "Invalid index accessed.");
-                    this.overflowAttributes[index] = value;
+                    Debug.Assert(index < this.OverflowAttributes.Count, "Invalid index accessed.");
+                    this.OverflowAttributes[index] = value;
                     return;
                 }
 
@@ -129,8 +129,8 @@ namespace OpenTelemetry.Logs
             Guard.ThrowIfNull(attributes);
 
             LogRecordAttributeList logRecordAttributes = default;
-            logRecordAttributes.overflowAttributes = new(attributes);
-            logRecordAttributes.count = logRecordAttributes.overflowAttributes.Count;
+            logRecordAttributes.OverflowAttributes = new(attributes);
+            logRecordAttributes.count = logRecordAttributes.OverflowAttributes.Count;
             return logRecordAttributes;
         }
 
@@ -148,9 +148,9 @@ namespace OpenTelemetry.Logs
         /// <param name="attribute">Attribute.</param>
         public void Add(KeyValuePair<string, object?> attribute)
         {
-            if (this.overflowAttributes is not null)
+            if (this.OverflowAttributes is not null)
             {
-                this.overflowAttributes.Add(attribute);
+                this.OverflowAttributes.Add(attribute);
                 this.count++;
                 return;
             }
@@ -168,14 +168,14 @@ namespace OpenTelemetry.Logs
                 case 6: this.attribute7 = attribute; break;
                 case 7: this.attribute8 = attribute; break;
                 case 8:
-                    Debug.Assert(this.overflowAttributes is null, "Overflow attributes already created.");
+                    Debug.Assert(this.OverflowAttributes is null, "Overflow attributes already created.");
                     this.MoveAttributesToTheOverflowList();
-                    Debug.Assert(this.overflowAttributes is not null, "Overflow attributes creation failure.");
-                    this.overflowAttributes.Add(attribute);
+                    Debug.Assert(this.OverflowAttributes is not null, "Overflow attributes creation failure.");
+                    this.OverflowAttributes!.Add(attribute);
                     break;
                 default:
                     // We shouldn't come here.
-                    Debug.Assert(this.overflowAttributes is null, "Unreachable code executed.");
+                    Debug.Assert(this.OverflowAttributes is null, "Unreachable code executed.");
                     return;
             }
 
@@ -204,7 +204,7 @@ namespace OpenTelemetry.Logs
                 return;
             }
 
-            var overflowAttributes = this.overflowAttributes;
+            var overflowAttributes = this.OverflowAttributes;
             if (overflowAttributes != null)
             {
                 // An allocation has already occurred, just use the buffer.
@@ -272,7 +272,7 @@ namespace OpenTelemetry.Logs
 
         private void MoveAttributesToTheOverflowList()
         {
-            this.overflowAttributes = new(16)
+            this.OverflowAttributes = new(16)
             {
                 { this.attribute1 },
                 { this.attribute2 },

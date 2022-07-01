@@ -56,11 +56,11 @@ namespace OpenTelemetry.Logs.Tests
 
             if (attributes.Count <= LogRecordAttributeList.OverflowAdditionalCapacity)
             {
-                Assert.Null(attributes.overflowAttributes);
+                Assert.Null(attributes.OverflowAttributes);
             }
             else
             {
-                Assert.NotNull(attributes.overflowAttributes);
+                Assert.NotNull(attributes.OverflowAttributes);
             }
         }
 
