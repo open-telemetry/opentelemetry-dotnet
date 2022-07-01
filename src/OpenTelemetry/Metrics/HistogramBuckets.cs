@@ -187,7 +187,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        private class Bucket
+        private sealed class Bucket
         {
             public double UpperBoundInclusive { get; set; }
 
