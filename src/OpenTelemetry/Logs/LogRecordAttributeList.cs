@@ -30,7 +30,7 @@ namespace OpenTelemetry.Logs
     /// </summary>
     internal struct LogRecordAttributeList : IReadOnlyList<KeyValuePair<string, object?>>
     {
-        private const int OverflowAdditionalCapacity = 8;
+        internal const int OverflowAdditionalCapacity = 8;
         private KeyValuePair<string, object?> attribute1;
         private KeyValuePair<string, object?> attribute2;
         private KeyValuePair<string, object?> attribute3;
@@ -39,7 +39,7 @@ namespace OpenTelemetry.Logs
         private KeyValuePair<string, object?> attribute6;
         private KeyValuePair<string, object?> attribute7;
         private KeyValuePair<string, object?> attribute8;
-        private List<KeyValuePair<string, object?>>? overflowAttributes;
+        internal List<KeyValuePair<string, object?>>? overflowAttributes;
         private int count;
 
         /// <inheritdoc/>
@@ -171,7 +171,7 @@ namespace OpenTelemetry.Logs
                     Debug.Assert(this.overflowAttributes is null, "Overflow attributes already created.");
                     this.MoveAttributesToTheOverflowList();
                     Debug.Assert(this.overflowAttributes is not null, "Overflow attributes creation failure.");
-                    this.overflowAttributes![8] = attribute;
+                    this.overflowAttributes.Add(attribute);
                     break;
                 default:
                     // We shouldn't come here.
