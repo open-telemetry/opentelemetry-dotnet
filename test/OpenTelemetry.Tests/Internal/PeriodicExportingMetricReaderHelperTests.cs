@@ -58,6 +58,7 @@ namespace OpenTelemetry.Internal.Tests
         [Fact]
         public void CreatePeriodicExportingMetricReader_ExportIntervalMilliseconds_FromOptions()
         {
+            Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderHelper.OTelMetricExportIntervalEnvVarKey, "88888"); // should be ignored, as value set via options has higher priority
             var value = 123;
             var reader = CreatePeriodicExportingMetricReader(new()
             {
@@ -73,6 +74,7 @@ namespace OpenTelemetry.Internal.Tests
         [Fact]
         public void CreatePeriodicExportingMetricReader_ExportTimeoutMilliseconds_FromOptions()
         {
+            Environment.SetEnvironmentVariable(PeriodicExportingMetricReaderHelper.OTelMetricExportTimeoutEnvVarKey, "99999"); // should be ignored, as value set via options has higher priority
             var value = 456;
             var reader = CreatePeriodicExportingMetricReader(new()
             {
