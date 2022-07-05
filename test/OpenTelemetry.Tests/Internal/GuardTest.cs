@@ -169,12 +169,12 @@ namespace OpenTelemetry.Internal.Tests
             public string Bar { get; set; }
         }
 
+#if !NETCOREAPP3_0_OR_GREATER
         /// <summary>
         /// Borrowed from: <see href="https://github.com/dotnet/runtime/blob/main/src/libraries/System.Runtime/tests/System/Runtime/CompilerServices/CallerArgumentExpressionAttributeTests.cs"/>.
         /// </summary>
         public class CallerArgumentExpressionAttributeTests
         {
-#if !NETCOREAPP3_0_OR_GREATER
             [Theory]
             [InlineData(null)]
             [InlineData("")]
@@ -194,7 +194,7 @@ namespace OpenTelemetry.Internal.Tests
             }
 
             private static string GetValue(object argument, [CallerArgumentExpression("argument")] string expr = null) => expr;
-#endif
         }
+#endif
     }
 }
