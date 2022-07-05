@@ -26,6 +26,7 @@ public partial class Program
 {
     private const int ArraySize = 49;
     private const int MaxValue = 1000;
+    private const int MaxValue = int.MaxValue;
 
     private static readonly Meter TestMeter = new(Utils.GetCurrentMethodName());
     private static readonly string[] DimensionValues = new string[ArraySize];
@@ -44,7 +45,7 @@ public partial class Program
         var bounds = new double[ArraySize];
         for (int i = 0; i < bounds.Length; i++)
         {
-            bounds[i] = i * MaxValue / bounds.Length;
+            bounds[i] = i * (MaxValue / bounds.Length);
         }
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
