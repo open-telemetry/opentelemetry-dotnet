@@ -22,7 +22,7 @@
       Please sort alphabetically.
       Refer to https://docs.microsoft.com/nuget/concepts/package-versioning for semver syntax.
     -->
-    <MinVerPkgVer>[2.3.0,3.0)</MinVerPkgVer>
+    <MinVerPkgVer>[4.1.0,5.0)</MinVerPkgVer>
     <GoogleProtobufPkgVer>[3.19.4,4.0)</GoogleProtobufPkgVer>
     <GrpcPkgVer>[2.44.0,3.0)</GrpcPkgVer>
     <GrpcNetClientPkgVer>[2.43.0,3.0)</GrpcNetClientPkgVer>
