@@ -65,7 +65,7 @@ namespace OpenTelemetry.Metrics
                     {
                         Index = median,
                         UpperBoundInclusive = values[median],
-                        LowerBoundExclusive = median > 0 ? values[median - 1] : double.MinValue,
+                        LowerBoundExclusive = median > 0 ? values[median - 1] : double.NegativeInfinity,
                         Left = ConstructBalancedTree(values, min, median),
                         Right = ConstructBalancedTree(values, median + 1, max),
                     };
