@@ -87,7 +87,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             // By this time, samplers have already run and
             // activity.IsAllDataRequested populated accordingly.
 
-            if (Sdk.SuppressInstrumentation || (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name)))
+            if (Sdk.SuppressInstrumentation)
             {
                 return;
             }
@@ -203,11 +203,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         public override void OnStopActivity(Activity activity, object payload)
         {
-            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
-            {
-                return;
-            }
-
             if (activity.IsAllDataRequested)
             {
                 _ = this.stopContextFetcher.TryFetch(payload, out HttpContext context);
@@ -275,11 +270,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         public override void OnCustom(string name, Activity activity, object payload)
         {
-            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
-            {
-                return;
-            }
-
             if (name == "Microsoft.AspNetCore.Mvc.BeforeAction")
             {
                 if (activity.IsAllDataRequested)
@@ -309,11 +299,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         public override void OnException(Activity activity, object payload)
         {
-            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
-            {
-                return;
-            }
-
             if (activity.IsAllDataRequested)
             {
                 if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)

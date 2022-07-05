@@ -53,6 +53,9 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             AspNetCoreInstrumentation instrumentation)
         {
+            // For .NET7.0 onwards activity will be created using activitySource.
+            // https://github.com/dotnet/aspnetcore/blob/main/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L327
+            // For .NET6.0 and below, we will continue to use legacy way.
             if (HttpInListener.IsNet7OrGreater)
             {
                 builder.AddSource(HttpInListener.FrameworkActivitySourceName);
