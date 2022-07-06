@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="$(RuntimeInstrumentationPkgVer)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj" />
   </ItemGroup>
 </Project>

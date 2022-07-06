@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using OpenTelemetry.Internal;
 
@@ -95,8 +96,8 @@ namespace OpenTelemetry
         /// </summary>
         internal long ProcessedCount => this.circularBuffer.RemovedCount;
 
-        /// <inheritdoc/>
-        protected override void OnExport(T data)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool TryExport(T data)
         {
             if (this.circularBuffer.TryAdd(data, maxSpinCount: 50000))
             {
@@ -111,11 +112,19 @@ namespace OpenTelemetry
                     }
                 }
 
-                return; // enqueue succeeded
+                return true; // enqueue succeeded
             }
 
             // either the queue is full or exceeded the spin limit, drop the item on the floor
             Interlocked.Increment(ref this.droppedCount);
+
+            return false;
+        }
+
+        /// <inheritdoc/>
+        protected override void OnExport(T data)
+        {
+            this.TryExport(data);
         }
 
         /// <inheritdoc/>

@@ -30,6 +30,9 @@
   TracerProviderBuilder, MeterProviderBuilder, OpenTelemetryLoggingOptions).
   ([#3307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3307))
 
+* `LogRecord` instances are now reused to reduce memory pressure
+  ([#3385](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3385))
+
 ## 1.3.0
 
 Released 2022-Jun-03
