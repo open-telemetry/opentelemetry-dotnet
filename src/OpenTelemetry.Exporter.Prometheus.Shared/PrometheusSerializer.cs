@@ -21,7 +21,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
-namespace OpenTelemetry.Exporter.Prometheus
+namespace OpenTelemetry.Exporter.Prometheus.Shared
 {
     /// <summary>
     /// Basic PrometheusSerializer which has no OpenTelemetry dependency.
