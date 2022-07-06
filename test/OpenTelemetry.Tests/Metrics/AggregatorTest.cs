@@ -105,6 +105,34 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
+        public void HistogramBinaryBucketTest()
+        {
+            // Arrange
+            var boundaries = new double[HistogramBuckets.DefaultHistogramCountForBinarySearch];
+            for (var i = 0; i < boundaries.Length; i++)
+            {
+                boundaries[i] = i;
+            }
+
+            var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.Histogram, null, null, boundaries);
+
+            // Act
+            histogramPoint.Update(-1);
+            for (var i = 0.5; i < boundaries.Length; i++)
+            {
+                histogramPoint.Update(i);
+            }
+
+            histogramPoint.TakeSnapshot(true);
+
+            // Assert
+            foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
+            {
+                Assert.Equal(1, histogramMeasurement.BucketCount);
+            }
+        }
+
+        [Fact]
         public void HistogramWithOnlySumCount()
         {
             var boundaries = Array.Empty<double>();
