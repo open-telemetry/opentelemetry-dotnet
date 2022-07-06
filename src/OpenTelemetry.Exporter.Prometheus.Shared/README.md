@@ -1,4 +1,4 @@
- # Prometheus Exporter for OpenTelemetry .NET
+# Prometheus Exporter for OpenTelemetry .NET
 
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.Prometheus.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Prometheus)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.Prometheus.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Prometheus)
