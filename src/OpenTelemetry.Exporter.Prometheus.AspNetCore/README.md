@@ -38,7 +38,7 @@ dotnet add package OpenTelemetry.Exporter.Prometheus.AspNetCore
 
 ### Step 3: Configure Prometheus Scraping Endpoint
 
-* On .NET Core 3.1+ register Prometheus scraping middleware using the
+* Register Prometheus scraping middleware using the
   `UseOpenTelemetryPrometheusScrapingEndpoint` extension:
 
     ```csharp
