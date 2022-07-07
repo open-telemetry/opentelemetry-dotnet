@@ -80,8 +80,8 @@ for example use.
 
 ### ScrapeEndpointPath
 
-Defines the path for the Prometheus scrape endpoint for
-either the HTTP listener or the middleware registered by
+Defines the path for the Prometheus scrape endpoint for the middleware
+registered by
 `UseOpenTelemetryPrometheusScrapingEndpoint`. Default value: `"/metrics"`.
 
 ### ScrapeResponseCacheDurationMilliseconds
