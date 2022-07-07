@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
@@ -69,12 +70,24 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Record Exception.
+        /// Adds an activity event containing information from the specified exception.
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <param name="ex">Exception to be recorded.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void RecordException(this Activity activity, Exception ex)
+        {
+            activity?.RecordException(ex, null);
+        }
+
+        /// <summary>
+        /// Adds an activity event containing information from the specified exception and additional tags.
+        /// </summary>
+        /// <param name="activity">Activity instance.</param>
+        /// <param name="ex">Exception to be recorded.</param>
+        /// <param name="tags">Additional tags to record on the event.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RecordException(this Activity activity, Exception ex, IEnumerable<KeyValuePair<string, object>> tags)
         {
             if (ex == null)
             {
@@ -90,6 +103,14 @@ namespace OpenTelemetry.Trace
             if (!string.IsNullOrWhiteSpace(ex.Message))
             {
                 tagsCollection.Add(SemanticConventions.AttributeExceptionMessage, ex.Message);
+            }
+
+            if (tags != null)
+            {
+                foreach (var tag in tags)
+                {
+                    tagsCollection[tag.Key] = tag.Value;
+                }
             }
 
             activity?.AddEvent(new ActivityEvent(SemanticConventions.AttributeExceptionEventName, default, tagsCollection));
