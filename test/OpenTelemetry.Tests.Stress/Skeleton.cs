@@ -78,12 +78,13 @@ public partial class Program
         using var meterProvider = prometheusPort != 0 ? Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
             .AddRuntimeInstrumentation()
-            .AddPrometheusExporter(options =>
+            .AddPrometheusHttpListener(
+            exporterOptions =>
             {
-                options.StartHttpListener = true;
-                options.HttpListenerPrefixes = new string[] { $"http://localhost:{prometheusPort}/" };
-                options.ScrapeResponseCacheDurationMilliseconds = 0;
-            })
+                exporterOptions.ScrapeResponseCacheDurationMilliseconds = 0;
+            },
+            listenerOptions =>
+            listenerOptions.Prefixes = new string[] { $"http://localhost:{prometheusPort}/", })
             .Build() : null;
 
         var statistics = new long[concurrency];

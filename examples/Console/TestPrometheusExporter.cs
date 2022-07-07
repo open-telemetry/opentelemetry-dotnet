@@ -48,15 +48,17 @@ internal class TestPrometheusExporter
               - targets: ["localhost:9464"]
         */
 
+        Action<OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListenerOptions> configureListenerOptions = listenerOptions =>
+                    listenerOptions.Prefixes = new string[] { $"http://localhost:{port}/" };
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(MyMeter.Name)
             .AddMeter(MyMeter2.Name)
-            .AddPrometheusExporter(options =>
+            .AddPrometheusHttpListener(
+                exporterOptions =>
             {
-                options.StartHttpListener = true;
-                options.HttpListenerPrefixes = new string[] { $"http://localhost:{port}/" };
-                options.ScrapeResponseCacheDurationMilliseconds = 0;
-            })
+                exporterOptions.ScrapeResponseCacheDurationMilliseconds = 0;
+            },
+                configureListenerOptions: configureListenerOptions)
             .Build();
 
         var process = Process.GetCurrentProcess();

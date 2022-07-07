@@ -27,9 +27,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />  
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
-  
   <ItemGroup>
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.Shared\PrometheusCollectionManager.cs" Link="Includes/PrometheusCollectionManager.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.Shared\PrometheusExporter.cs" Link="Includes/PrometheusExporter.cs" />
