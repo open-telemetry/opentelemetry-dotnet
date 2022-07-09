@@ -2,9 +2,11 @@
 
 ## Unreleased
 
-* Added `IEndpointRouteBuilder` extension methods to help with Prometheus
-  middleware configuration on ASP.NET Core
-  ([#3295](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3295))
+* Split up Prometheus projects based on its hosting mechanism, HttpListener and AspNetCore,
+into their own projects and assemblies. The shared code for both hosting mechanism
+now lives in the `OpenTelemetry.Exporter.Prometheus.Shared` project and will not
+be released.
+([#3430](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3430))
 
 ## 1.3.0-rc.2
 
