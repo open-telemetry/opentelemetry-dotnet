@@ -78,7 +78,7 @@ namespace OpenTelemetry.Metrics
             configureListenerOptions?.Invoke(listenerOptions);
             var listener = new PrometheusHttpListener(exporter, listenerOptions);
 
-            const string HttpListenerStartFailureExceptionMessage = "PrometheusExporter http listener could not be started.";
+            const string HttpListenerStartFailureExceptionMessage = "PrometheusExporter HttpListener could not be started.";
             try
             {
                 listener.Start();

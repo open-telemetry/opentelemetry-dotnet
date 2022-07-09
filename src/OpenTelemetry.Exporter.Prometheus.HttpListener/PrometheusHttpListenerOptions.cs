@@ -28,8 +28,8 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
         private IReadOnlyCollection<string> prefixes = new string[] { "http://localhost:9464/" };
 
         /// <summary>
-        /// Gets or sets the prefixes to use for the http listener. Default
-        /// value: http://localhost:9464/.
+        /// Gets or sets the prefixes to use for the http listener.
+        /// Default value: http://localhost:9464/.
         /// </summary>
         public IReadOnlyCollection<string> Prefixes
         {
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
                         (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)))
                     {
                         throw new ArgumentException(
-                            "Prometheus server path should be a valid URI with http/https scheme.",
+                            "Prometheus HttpListener prefix path should be a valid URI with http/https scheme.",
                             nameof(this.prefixes));
                     }
                 }
