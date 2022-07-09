@@ -20,6 +20,9 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// Extension methods to simplify registering a PrometheusExporter.
+    /// </summary>
     public static class PrometheusExporterMeterProviderBuilderExtensions
     {
         /// <summary>

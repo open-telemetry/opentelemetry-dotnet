@@ -25,18 +25,12 @@ For example:
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .AddMeter(MyMeter.Name)
     .AddPrometheusHttpListener(
-        exporterOptions =>
-    {
-        exporterOptions.ScrapeResponseCacheDurationMilliseconds = 0;
-    },
-        listenerOptions =>
-    {
-        listenerOptions.HttpListenerPrefixes = new string[] { "http://localhost:9464/" };
-    })
+        exporterOptions => exporterOptions.ScrapeResponseCacheDurationMilliseconds = 0,
+        listenerOptions => listenerOptions.Prefixes = new string[] { "http://localhost:9464/" })
     .Build();
 ```
 
-#### HttpListenerPrefixes
+#### Prefixes
 
 Defines the prefixes which will be used by the listener. The default value is `["http://localhost:9464/"]`.
 You may specify multiple endpoints.

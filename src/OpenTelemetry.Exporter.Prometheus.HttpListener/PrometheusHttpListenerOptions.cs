@@ -20,6 +20,9 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Prometheus.HttpListener
 {
+    /// <summary>
+    /// <see cref="PrometheusHttpListener"/> options.
+    /// </summary>
     public class PrometheusHttpListenerOptions
     {
         private IReadOnlyCollection<string> prefixes = new string[] { "http://localhost:9464/" };

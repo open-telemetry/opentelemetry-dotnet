@@ -23,7 +23,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Prometheus.HttpListener
 {
-    public sealed class PrometheusHttpListener : IDisposable
+    internal sealed class PrometheusHttpListener : IDisposable
     {
         private readonly PrometheusExporter exporter;
         private readonly System.Net.HttpListener httpListener = new();
@@ -31,7 +31,6 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
 
         private CancellationTokenSource tokenSource;
         private Task workerThread;
-        private bool disposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PrometheusHttpListener"/> class.
@@ -88,7 +87,7 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
         }
 
         /// <summary>
-        /// Stop the HttpListener.
+        /// Gracefully stop the PrometheusHttpListener.
         /// </summary>
         public void Stop()
         {
@@ -105,23 +104,14 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
             }
         }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
-            this.Dispose(true);
-        }
+            this.Stop();
 
-        private void Dispose(bool disposing)
-        {
-            if (!this.disposed)
+            if (this.httpListener != null && this.httpListener.IsListening)
             {
-                if (disposing && this.httpListener != null && this.httpListener.IsListening)
-                {
-                    this.Stop();
-                    this.httpListener.Close();
-                    this.Dispose();
-                }
-
-                this.disposed = true;
+                this.httpListener.Close();
             }
         }
 

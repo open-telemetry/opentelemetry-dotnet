@@ -21,8 +21,18 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// Extension methods to simplify registering a PrometheusHttpListener.
+    /// </summary>
     public static class PrometheusExporterHttpListenerMeterProviderBuilderExtensions
     {
+        /// <summary>
+        /// Adds Prometheus exporter to MeterProviderBuilder.
+        /// </summary>
+        /// <param name="builder"><see cref="MeterProviderBuilder"/>builder to use.</param>
+        /// <param name="configureExporterOptions">Exporter configuration options.</param>
+        /// <param name="configureListenerOptions">HttpListener options.</param>
+        /// <returns>The instance of <see cref="MeterProviderBuilder"/>to chain calls.</returns>
         public static MeterProviderBuilder AddPrometheusHttpListener(
             this MeterProviderBuilder builder,
             Action<PrometheusExporterOptions> configureExporterOptions = null,

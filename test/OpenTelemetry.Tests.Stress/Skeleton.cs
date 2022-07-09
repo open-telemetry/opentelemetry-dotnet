@@ -79,12 +79,8 @@ public partial class Program
             .AddMeter(meter.Name)
             .AddRuntimeInstrumentation()
             .AddPrometheusHttpListener(
-            exporterOptions =>
-            {
-                exporterOptions.ScrapeResponseCacheDurationMilliseconds = 0;
-            },
-            listenerOptions =>
-            listenerOptions.Prefixes = new string[] { $"http://localhost:{prometheusPort}/", })
+                exporterOptions => exporterOptions.ScrapeResponseCacheDurationMilliseconds = 0,
+                listenerOptions => listenerOptions.Prefixes = new string[] { $"http://localhost:{prometheusPort}/" })
             .Build() : null;
 
         var statistics = new long[concurrency];

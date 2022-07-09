@@ -1,8 +1,3 @@
-OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListener
-OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListener.Dispose() -> void
-OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListener.PrometheusHttpListener(OpenTelemetry.Exporter.PrometheusExporter exporter, OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListenerOptions options) -> void
-OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListener.Start(System.Threading.CancellationToken token = default(System.Threading.CancellationToken)) -> void
-OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListener.Stop() -> void
 OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListenerOptions
 OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListenerOptions.Prefixes.get -> System.Collections.Generic.IReadOnlyCollection<string>
 OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListenerOptions.Prefixes.set -> void

@@ -41,6 +41,9 @@ namespace OpenTelemetry.Exporter
             this.CollectionManager = new PrometheusCollectionManager(this);
         }
 
+        /// <summary>
+        /// Gets or sets the Collect delegate.
+        /// </summary>
         public Func<int, bool> Collect
         {
             get => this.funcCollect;
@@ -55,6 +58,7 @@ namespace OpenTelemetry.Exporter
 
         internal PrometheusCollectionManager CollectionManager { get; }
 
+        /// <inheritdoc/>
         public override ExportResult Export(in Batch<Metric> metrics)
         {
             return this.OnExport(metrics);

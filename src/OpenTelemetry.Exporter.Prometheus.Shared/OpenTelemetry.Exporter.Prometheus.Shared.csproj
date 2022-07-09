@@ -6,12 +6,11 @@
     <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
     <Description>Prometheus exporter shared code for both Prometheus exporter HttpListener and Prometheus Exporter AspNetCore</Description>
     <PackageTags>$(PackageTags);prometheus;metrics</PackageTags>
-    <MinVerTagPrefix>core-</MinVerTagPrefix>
   </PropertyGroup>
 
-  <PropertyGroup>
+  <!--<PropertyGroup>
     <NoWarn>$(NoWarn),1591</NoWarn>
-  </PropertyGroup>
+  </PropertyGroup>-->
   <!--Do not run ApiCompat as this package has never released a stable version.
   Remove this property once we have released a stable version.-->
   <PropertyGroup>

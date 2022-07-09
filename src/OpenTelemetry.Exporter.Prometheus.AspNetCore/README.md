@@ -31,9 +31,10 @@ dotnet add package OpenTelemetry.Exporter.Prometheus.AspNetCore
     register the Prometheus exporter.
 
     ```csharp
-    using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    var meterProvider = Sdk.CreateMeterProviderBuilder()
         .AddPrometheusExporter()
         .Build();
+    builder.Services.AddSingleton(meterProvider);
     ```
 
 ### Step 3: Configure Prometheus Scraping Endpoint
@@ -74,9 +75,7 @@ dotnet add package OpenTelemetry.Exporter.Prometheus.AspNetCore
 ## Configuration
 
 The `PrometheusExporter` can be configured using the `PrometheusExporterOptions`
-properties. Refer to
-[`TestPrometheusExporter.cs`](../../examples/Console/TestPrometheusExporter.cs)
-for example use.
+properties.
 
 ### ScrapeEndpointPath
 
