@@ -30,7 +30,7 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .Build();
 ```
 
-#### Prefixes
+### Prefixes
 
 Defines the prefixes which will be used by the listener. The default value is `["http://localhost:9464/"]`.
 You may specify multiple endpoints.
