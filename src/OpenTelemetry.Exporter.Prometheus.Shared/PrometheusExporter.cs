@@ -56,12 +56,25 @@ namespace OpenTelemetry.Exporter
             set => this.funcExport = value;
         }
 
+        internal Action OnDispose { get; set; }
+
         internal PrometheusCollectionManager CollectionManager { get; }
 
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Metric> metrics)
         {
             return this.OnExport(metrics);
+        }
+
+        /// <inheritdoc/>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.OnDispose?.Invoke();
+            }
+
+            base.Dispose(disposing);
         }
     }
 }

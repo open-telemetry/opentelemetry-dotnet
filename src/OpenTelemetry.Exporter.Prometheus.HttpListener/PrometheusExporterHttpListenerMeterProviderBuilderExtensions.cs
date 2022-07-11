@@ -69,22 +69,32 @@ namespace OpenTelemetry.Metrics
             Action<PrometheusHttpListenerOptions> configureListenerOptions = null)
         {
             configureExporterOptions?.Invoke(exporterOptions);
+            configureListenerOptions?.Invoke(listenerOptions);
+
             var exporter = new PrometheusExporter(exporterOptions);
+
             var reader = new BaseExportingMetricReader(exporter)
             {
                 TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
             };
 
-            configureListenerOptions?.Invoke(listenerOptions);
-            var listener = new PrometheusHttpListener(exporter, listenerOptions);
-
             const string HttpListenerStartFailureExceptionMessage = "PrometheusExporter HttpListener could not be started.";
             try
             {
+                var listener = new PrometheusHttpListener(exporter, listenerOptions);
+                exporter.OnDispose = () => listener.Dispose();
                 listener.Start();
             }
             catch (Exception ex)
             {
+                try
+                {
+                    reader.Dispose();
+                }
+                catch
+                {
+                }
+
                 throw new InvalidOperationException(HttpListenerStartFailureExceptionMessage, ex);
             }
 
