@@ -19,10 +19,10 @@ var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options =>
 Log.Logger = new LoggerConfiguration()
     .WriteTo.OpenTelemetry(openTelemetryLoggerProvider, disposeProvider: true)
     .CreateLogger();
-```
 
-// Step 3: When application is shutdown flush all log messages...
+// Step 3: When application is shutdown flush all log messages and dispose provider...
 Log.CloseAndFlush();
+```
 
 ## References
 
