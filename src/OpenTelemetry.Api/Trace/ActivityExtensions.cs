@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
@@ -77,7 +76,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void RecordException(this Activity activity, Exception ex)
         {
-            activity?.RecordException(ex, null);
+            activity?.RecordException(ex, default);
         }
 
         /// <summary>
@@ -87,7 +86,7 @@ namespace OpenTelemetry.Trace
         /// <param name="ex">Exception to be recorded.</param>
         /// <param name="tags">Additional tags to record on the event.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void RecordException(this Activity activity, Exception ex, IEnumerable<KeyValuePair<string, object>> tags)
+        public static void RecordException(this Activity activity, Exception ex, in TagList tags)
         {
             if (ex == null)
             {
@@ -105,12 +104,9 @@ namespace OpenTelemetry.Trace
                 tagsCollection.Add(SemanticConventions.AttributeExceptionMessage, ex.Message);
             }
 
-            if (tags != null)
+            foreach (var tag in tags)
             {
-                foreach (var tag in tags)
-                {
-                    tagsCollection[tag.Key] = tag.Value;
-                }
+                tagsCollection[tag.Key] = tag.Value;
             }
 
             activity?.AddEvent(new ActivityEvent(SemanticConventions.AttributeExceptionEventName, default, tagsCollection));

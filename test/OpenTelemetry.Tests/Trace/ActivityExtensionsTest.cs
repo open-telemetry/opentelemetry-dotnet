@@ -159,7 +159,7 @@ namespace OpenTelemetry.Trace.Tests
             var exception = new ArgumentNullException(message, new Exception(message));
             var activity = new Activity("test-activity");
 
-            var tags = new Dictionary<string, object>
+            var tags = new TagList
             {
                 { "key1", "value1" },
                 { "key2", "value2" },
