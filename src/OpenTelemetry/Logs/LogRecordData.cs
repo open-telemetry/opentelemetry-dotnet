@@ -32,12 +32,20 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Initializes a new instance of the <see cref="LogRecordData"/> struct.
         /// </summary>
+        public LogRecordData()
+            : this(activity: null)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LogRecordData"/> struct.
+        /// </summary>
         /// <remarks>
         /// Note: The <see cref="Timestamp"/> property is initialized to <see
         /// cref="DateTime.UtcNow"/> automatically.
         /// </remarks>
         /// <param name="activity">Optional <see cref="Activity"/> used to populate context fields.</param>
-        public LogRecordData(Activity? activity = null)
+        public LogRecordData(Activity? activity)
         {
             if (activity != null)
             {

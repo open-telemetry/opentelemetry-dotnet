@@ -157,6 +157,12 @@ namespace OpenTelemetry.Logs
             return this.Processor?.ForceFlush(timeoutMilliseconds) ?? true;
         }
 
+        /// <summary>
+        /// Create a <see cref="LogEmitter"/>.
+        /// </summary>
+        /// <returns><see cref="LogEmitter"/>.</returns>
+        internal LogEmitter CreateEmitter() => new(this);
+
         internal OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
         {
             Guard.ThrowIfNull(processor);
