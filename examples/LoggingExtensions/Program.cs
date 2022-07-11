@@ -20,7 +20,9 @@ using Serilog;
 
 var resourceBuilder = ResourceBuilder.CreateDefault().AddService("Examples.LogEmitter");
 
-using var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options =>
+// Note: It is important that OpenTelemetryLoggerProvider is disposed when the
+// app is shutdown. In this example we allow Serilog to do that by calling CloseAndFlush.
+var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options =>
 {
     options.IncludeFormattedMessage = true;
     options
@@ -30,7 +32,7 @@ using var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options 
 
 // Configure Serilog global logger
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.OpenTelemetry(openTelemetryLoggerProvider) // <- Register OpenTelemetry Serilog sink
+    .WriteTo.OpenTelemetry(openTelemetryLoggerProvider, disposeProvider: true) // <- Register OpenTelemetry Serilog sink
     .CreateLogger();
 
 // Note: Serilog ForContext API is used to set "CategoryName" on log messages
@@ -43,3 +45,7 @@ programLogger.Information("Message {Array}", new string[] { "value1", "value2" }
 Console.WriteLine("Press ENTER to exit...");
 
 Console.ReadLine();
+
+// Note: For Serilog this call flushes all logs and disposes
+// OpenTelemetryLoggerProvider.
+Log.CloseAndFlush();

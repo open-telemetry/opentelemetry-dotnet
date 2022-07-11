@@ -29,17 +29,26 @@ namespace Serilog
         /// Adds a sink to Serilog <see cref="LoggerConfiguration"/> which will
         /// write to OpenTelemetry.
         /// </summary>
-        /// <param name="loggerConfiguration"><see cref="LoggerSinkConfiguration"/>.</param>
-        /// <param name="openTelemetryLoggerProvider"><see cref="OpenTelemetryLoggerProvider"/>.</param>
+        /// <param name="loggerConfiguration"><see
+        /// cref="LoggerSinkConfiguration"/>.</param>
+        /// <param name="openTelemetryLoggerProvider"><see
+        /// cref="OpenTelemetryLoggerProvider"/>.</param>
+        /// <param name="disposeProvider">Controls whether or not the supplied
+        /// <paramref name="openTelemetryLoggerProvider"/> will be disposed when
+        /// the logger is disposed. Default value: <see
+        /// langword="true"/>.</param>
         /// <returns>Supplied <see cref="LoggerConfiguration"/> for chaining calls.</returns>
         public static LoggerConfiguration OpenTelemetry(
             this LoggerSinkConfiguration loggerConfiguration,
-            OpenTelemetryLoggerProvider openTelemetryLoggerProvider)
+            OpenTelemetryLoggerProvider openTelemetryLoggerProvider,
+            bool disposeProvider = true)
         {
             Guard.ThrowIfNull(loggerConfiguration);
             Guard.ThrowIfNull(openTelemetryLoggerProvider);
 
-            return loggerConfiguration.Sink(new OpenTelemetrySerilogSink(openTelemetryLoggerProvider));
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            return loggerConfiguration.Sink(new OpenTelemetrySerilogSink(openTelemetryLoggerProvider, disposeProvider));
+#pragma warning restore CA2000 // Dispose objects before losing scope
         }
     }
 }

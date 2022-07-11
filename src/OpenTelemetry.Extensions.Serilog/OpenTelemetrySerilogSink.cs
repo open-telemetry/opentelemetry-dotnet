@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
@@ -22,22 +23,32 @@ using Serilog.Events;
 
 namespace OpenTelemetry.Logs
 {
-    internal sealed class OpenTelemetrySerilogSink : ILogEventSink
+    internal sealed class OpenTelemetrySerilogSink : ILogEventSink, IDisposable
     {
+        private readonly OpenTelemetryLoggerProvider openTelemetryLoggerProvider;
         private readonly bool includeFormattedMessage;
         private readonly LogEmitter logEmitter;
+        private readonly bool disposeProvider;
 
-        public OpenTelemetrySerilogSink(OpenTelemetryLoggerProvider openTelemetryLoggerProvider)
+        public OpenTelemetrySerilogSink(OpenTelemetryLoggerProvider openTelemetryLoggerProvider, bool disposeProvider)
         {
+            Debug.Assert(openTelemetryLoggerProvider != null);
+
+            this.openTelemetryLoggerProvider = openTelemetryLoggerProvider!;
+            this.disposeProvider = disposeProvider;
+
+            var logEmitter = this.openTelemetryLoggerProvider.CreateEmitter();
+            Debug.Assert(logEmitter != null);
+
+            this.logEmitter = logEmitter!;
+
             // TODO: This project can only access IncludeFormattedMessage
             // because it can see SDK internals. At some point this is likely
             // not to be the case. Need to figure out where to put
             // IncludeFormattedMessage so that extensions can see it. Ideas:
             // Make it public on OpenTelemetryLoggerProvider or expose it on
             // LogEmitter instance.
-            this.includeFormattedMessage = openTelemetryLoggerProvider.IncludeFormattedMessage;
-
-            this.logEmitter = openTelemetryLoggerProvider.CreateEmitter();
+            this.includeFormattedMessage = this.openTelemetryLoggerProvider.IncludeFormattedMessage;
         }
 
         public void Emit(LogEvent logEvent)
@@ -86,6 +97,14 @@ namespace OpenTelemetry.Logs
             }
 
             this.logEmitter.Log(in data, in attributes);
+        }
+
+        public void Dispose()
+        {
+            if (this.disposeProvider)
+            {
+                this.openTelemetryLoggerProvider.Dispose();
+            }
         }
     }
 }

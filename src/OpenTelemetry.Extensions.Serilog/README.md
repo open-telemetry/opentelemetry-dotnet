@@ -8,20 +8,21 @@ writing log messages to OpenTelemetry.
 
 ```csharp
 // Step 1: Configure OpenTelemetryLoggerProvider...
-var resourceBuilder = ResourceBuilder.CreateDefault().AddService("MyService");
-
-using var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options =>
+var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options =>
 {
     options
-        .SetResourceBuilder(resourceBuilder)
+        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyService"))
         .AddConsoleExporter();
 });
 
 // Step 2: Register OpenTelemetry sink with Serilog...
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.OpenTelemetry(openTelemetryLoggerProvider)
+    .WriteTo.OpenTelemetry(openTelemetryLoggerProvider, disposeProvider: true)
     .CreateLogger();
 ```
+
+// Step 3: When application is shutdown flush all log messages...
+Log.CloseAndFlush();
 
 ## References
 
