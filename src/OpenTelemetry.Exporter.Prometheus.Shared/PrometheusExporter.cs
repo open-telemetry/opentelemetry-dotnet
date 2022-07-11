@@ -35,7 +35,7 @@ namespace OpenTelemetry.Exporter
         /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
         /// </summary>
         /// <param name="options">Options for the exporter.</param>
-        internal PrometheusExporter(PrometheusExporterOptions options)
+        public PrometheusExporter(PrometheusExporterOptions options)
         {
             this.Options = options;
             this.CollectionManager = new PrometheusCollectionManager(this);
