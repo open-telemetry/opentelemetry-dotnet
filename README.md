@@ -110,13 +110,13 @@ If you have trouble accessing the doc, please get in touch on
 * [Alan West](https://github.com/alanwest), New Relic
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
+* [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
 [Approvers](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver)
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
 * [Reiley Yang](https://github.com/reyang), Microsoft
 * [Robert Paj&#x105;k](https://github.com/pellared), Splunk
-* [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
 [Emeritus
 Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/main/community-membership.md#emeritus-maintainerapprovertriager):
