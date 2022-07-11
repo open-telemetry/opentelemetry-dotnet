@@ -26,7 +26,7 @@ namespace OpenTelemetry.Metrics
     // Note: Does not implement IEnumerable<> to prevent accidental boxing.
     public class HistogramBuckets
     {
-        internal const int DefaultHistogramCountForBinarySearch = 50;
+        internal const int DefaultBoundaryCountForBinarySearch = 50;
 
         internal readonly double[] ExplicitBounds;
 
@@ -40,7 +40,7 @@ namespace OpenTelemetry.Metrics
 
         internal int IsCriticalSectionOccupied = 0;
 
-        private readonly Bucket root;
+        private readonly BucketLookupNode bucketLookupTreeRoot;
 
         private readonly Func<double, int> findHistogramBucketIndex;
 
@@ -48,12 +48,12 @@ namespace OpenTelemetry.Metrics
         {
             this.ExplicitBounds = explicitBounds;
             this.findHistogramBucketIndex = this.FindBucketIndexLinear;
-            if (explicitBounds != null && explicitBounds.Length >= DefaultHistogramCountForBinarySearch)
+            if (explicitBounds != null && explicitBounds.Length >= DefaultBoundaryCountForBinarySearch)
             {
-                this.root = ConstructBalancedTree(explicitBounds, 0, explicitBounds.Length);
+                this.bucketLookupTreeRoot = ConstructBalancedBST(explicitBounds, 0, explicitBounds.Length);
                 this.findHistogramBucketIndex = this.FindBucketIndexBinary;
 
-                static Bucket ConstructBalancedTree(double[] values, int min, int max)
+                static BucketLookupNode ConstructBalancedBST(double[] values, int min, int max)
                 {
                     if (min == max)
                     {
@@ -61,13 +61,13 @@ namespace OpenTelemetry.Metrics
                     }
 
                     int median = min + ((max - min) / 2);
-                    return new Bucket
+                    return new BucketLookupNode
                     {
                         Index = median,
                         UpperBoundInclusive = values[median],
                         LowerBoundExclusive = median > 0 ? values[median - 1] : double.NegativeInfinity,
-                        Left = ConstructBalancedTree(values, min, median),
-                        Right = ConstructBalancedTree(values, median + 1, max),
+                        Left = ConstructBalancedBST(values, min, median),
+                        Right = ConstructBalancedBST(values, median + 1, max),
                     };
                 }
             }
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal int FindBucketIndexBinary(double value)
         {
-            Bucket current = this.root;
+            BucketLookupNode current = this.bucketLookupTreeRoot;
 
             Debug.Assert(current != null, "Bucket root was null.");
 
@@ -187,7 +187,7 @@ namespace OpenTelemetry.Metrics
             }
         }
 
-        private sealed class Bucket
+        private sealed class BucketLookupNode
         {
             public double UpperBoundInclusive { get; set; }
 
@@ -195,9 +195,9 @@ namespace OpenTelemetry.Metrics
 
             public int Index { get; set; }
 
-            public Bucket Left { get; set; }
+            public BucketLookupNode Left { get; set; }
 
-            public Bucket Right { get; set; }
+            public BucketLookupNode Right { get; set; }
         }
     }
 }

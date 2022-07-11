@@ -108,7 +108,8 @@ namespace OpenTelemetry.Metrics.Tests
         public void HistogramBinaryBucketTest()
         {
             // Arrange
-            var boundaries = new double[HistogramBuckets.DefaultHistogramCountForBinarySearch];
+            // Bounds = (-Inf, 0] (0, 1], ... (49, +Inf)
+            var boundaries = new double[HistogramBuckets.DefaultBoundaryCountForBinarySearch];
             for (var i = 0; i < boundaries.Length; i++)
             {
                 boundaries[i] = i;
@@ -118,6 +119,8 @@ namespace OpenTelemetry.Metrics.Tests
 
             // Act
             histogramPoint.Update(-1);
+            histogramPoint.Update(boundaries[0]);
+            histogramPoint.Update(boundaries[boundaries.Length - 1]);
             for (var i = 0.5; i < boundaries.Length; i++)
             {
                 histogramPoint.Update(i);
@@ -126,9 +129,18 @@ namespace OpenTelemetry.Metrics.Tests
             histogramPoint.TakeSnapshot(true);
 
             // Assert
+            var index = 0;
             foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
             {
-                Assert.Equal(1, histogramMeasurement.BucketCount);
+                var expectedCount = 1;
+
+                if (index == 0 || index == boundaries.Length - 1)
+                {
+                    expectedCount = 2;
+                }
+
+                Assert.Equal(expectedCount, histogramMeasurement.BucketCount);
+                index++;
             }
         }
 

@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Use binary search for histograms with a large amount of buckets.
+* Use binary search for histograms with 50 or more supplied boundaries.
   ([#3252](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3252))
 
 * `TracerProviderSDK` modified for spans with remote parent. For such spans
