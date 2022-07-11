@@ -32,13 +32,13 @@ namespace OpenTelemetry.Logs
 
         public OpenTelemetrySerilogSink(OpenTelemetryLoggerProvider openTelemetryLoggerProvider, bool disposeProvider)
         {
-            Debug.Assert(openTelemetryLoggerProvider != null);
+            Debug.Assert(openTelemetryLoggerProvider != null, "openTelemetryLoggerProvider was null");
 
             this.openTelemetryLoggerProvider = openTelemetryLoggerProvider!;
             this.disposeProvider = disposeProvider;
 
             var logEmitter = this.openTelemetryLoggerProvider.CreateEmitter();
-            Debug.Assert(logEmitter != null);
+            Debug.Assert(logEmitter != null, "logEmitter was null");
 
             this.logEmitter = logEmitter!;
 
