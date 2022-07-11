@@ -92,6 +92,13 @@ namespace OpenTelemetry.Logs
 
         private static IReadOnlyList<KeyValuePair<string, object?>> ParseState<TState>(LogRecord logRecord, TState state)
         {
+            /* TODO: Enable this if/when LogRecordAttributeList becomes public.
+            if (state is LogRecordAttributeList logRecordAttributes)
+            {
+                logRecordAttributes.ApplyToLogRecord(logRecord);
+                return logRecord.AttributeStorage!;
+            }
+            else*/
             if (state is IReadOnlyList<KeyValuePair<string, object?>> stateList)
             {
                 return stateList;
