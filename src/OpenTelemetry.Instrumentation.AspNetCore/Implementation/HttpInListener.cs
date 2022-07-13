@@ -115,8 +115,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 #if NET7_0_OR_GREATER
                     // For NET7.0 onwards activity is created using ActivitySource so,
                     // we will use the source of the activity to create the new one.
-                    Activity newOne;
-                    newOne = activity.Source.CreateActivity(ActivityOperationName, ActivityKind.Server, ctx.ActivityContext);
+                    Activity newOne = activity.Source.CreateActivity(ActivityOperationName, ActivityKind.Server, ctx.ActivityContext);
 #else
                     Activity newOne = new Activity(ActivityOperationName);
                     newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
