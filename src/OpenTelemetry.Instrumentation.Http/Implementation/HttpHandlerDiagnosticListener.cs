@@ -74,6 +74,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             // By this time, samplers have already run and
             // activity.IsAllDataRequested populated accordingly.
 
+            // For .NET7.0 or higher versions, activity is created using activity source
+            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
+            // To prevent processing such activities we first check the source name to confirm if it was created using
+            // activity source or not.
             if (Sdk.SuppressInstrumentation || (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name)))
             {
                 return;
@@ -148,6 +152,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public override void OnStopActivity(Activity activity, object payload)
         {
+            // For .NET7.0 or higher versions, activity is created using activity source
+            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
+            // To prevent processing such activities we first check the source name to confirm if it was created using
+            // activity source or not.
             if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
             {
                 return;
@@ -202,6 +210,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public override void OnException(Activity activity, object payload)
         {
+            // For .NET7.0 or higher versions, activity is created using activity source
+            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
+            // To prevent processing such activities we first check the source name to confirm if it was created using
+            // activity source or not.
             if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
             {
                 return;
