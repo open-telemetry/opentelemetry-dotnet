@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
-<PropertyGroup>
-  <TargetFrameworks>netstandard2.0</TargetFrameworks>
-</PropertyGroup>
-<ItemGroup>
-  <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\OpenTelemetry.Exporter.Prometheus.HttpListener.csproj" />
-</ItemGroup>
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\OpenTelemetry.Exporter.Prometheus.HttpListener.csproj" />
+  </ItemGroup>
 </Project>
