@@ -88,7 +88,7 @@ namespace OpenTelemetry.Trace
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void RecordException(this Activity activity, Exception ex, in TagList tags)
         {
-            if (ex == null)
+            if (ex == null || activity == null)
             {
                 return;
             }
