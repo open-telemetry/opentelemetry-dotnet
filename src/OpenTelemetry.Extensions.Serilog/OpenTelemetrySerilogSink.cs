@@ -96,7 +96,7 @@ namespace OpenTelemetry.Logs
                 }
             }
 
-            this.logEmitter.Log(in data, in attributes);
+            this.logEmitter.Emit(in data, in attributes);
         }
 
         public void Dispose()
