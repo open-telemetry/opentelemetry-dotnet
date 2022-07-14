@@ -80,18 +80,43 @@ namespace OpenTelemetry.Logs
                 else if (property.Value is SequenceValue sequenceValue)
                 {
                     IReadOnlyList<LogEventPropertyValue> elements = sequenceValue.Elements;
-                    if (elements.Count > 0 && elements[0] is ScalarValue)
+                    if (elements.Count > 0)
                     {
-                        object[] values = new object[elements.Count];
+                        // Note: The goal here is to build a typed array (eg
+                        // int[]) if all the element types match otherwise
+                        // fallback to object[]
+
+                        Type? elementType = null;
+                        Array? values = null;
+
                         for (int i = 0; i < elements.Count; i++)
                         {
                             if (elements[i] is ScalarValue value)
                             {
-                                values[i] = value.Value;
+                                Type currentElementType = value.Value?.GetType() ?? typeof(object);
+
+                                if (values == null)
+                                {
+                                    elementType = currentElementType;
+                                    values = Array.CreateInstance(elementType, elements.Count);
+                                }
+                                else if (!elementType!.IsAssignableFrom(currentElementType))
+                                {
+                                    // Array with mixed types detected
+                                    object[] newValues = new object[elements.Count];
+                                    values.CopyTo(newValues, 0);
+                                    values = newValues;
+                                    elementType = typeof(object);
+                                }
+
+                                values.SetValue(value.Value, i);
                             }
                         }
 
-                        attributes.Add(property.Key, values);
+                        if (values != null)
+                        {
+                            attributes.Add(property.Key, values);
+                        }
                     }
                 }
             }
