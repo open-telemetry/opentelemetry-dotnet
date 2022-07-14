@@ -197,11 +197,11 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
 
             LogRecord logRecord = exportedItems[0];
 
-            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "data" && intArray.SequenceEqual((int[]?)kvp.Value));
+            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "data" && kvp.Value is int[] typedArray && intArray.SequenceEqual(typedArray));
 
             logRecord = exportedItems[1];
 
-            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "data" && mixedArray.SequenceEqual((object[]?)kvp.Value));
+            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "data" && kvp.Value is object?[] typedArray && mixedArray.SequenceEqual(typedArray));
         }
 
         [Fact]
