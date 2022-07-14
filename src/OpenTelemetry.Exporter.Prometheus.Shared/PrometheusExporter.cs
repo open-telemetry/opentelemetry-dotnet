@@ -24,7 +24,7 @@ namespace OpenTelemetry.Exporter
     /// Exporter of OpenTelemetry metrics to Prometheus.
     /// </summary>
     [ExportModes(ExportModes.Pull)]
-    public class PrometheusExporter : BaseExporter<Metric>, IPullMetricExporter
+    internal class PrometheusExporter : BaseExporter<Metric>, IPullMetricExporter
     {
         internal const string HttpListenerStartFailureExceptionMessage = "PrometheusExporter http listener could not be started.";
         internal readonly PrometheusExporterOptions Options;
