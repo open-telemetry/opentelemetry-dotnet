@@ -42,7 +42,7 @@ internal static class WildcardHelper
         var convertedPattern = string.Join(
             "|",
             from p in patterns select "(?:" + ReplacePatterns(p) + ')');
-        return new Regex('^' + convertedPattern + '$', RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        return new Regex("^(?:" + convertedPattern + ")$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     }
 
     private static string ReplacePatterns(string pattern)
