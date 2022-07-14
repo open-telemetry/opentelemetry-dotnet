@@ -41,17 +41,7 @@ internal static class WildcardHelper
 
         var convertedPattern = string.Join(
             "|",
-            from p in patterns select "(?:" + ReplacePatterns(p) + ')');
+            from p in patterns select "(?:" + Regex.Escape(p).Replace("\\*", ".*").Replace("\\?", ".") + ')');
         return new Regex("^(?:" + convertedPattern + ")$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-    }
-
-    private static string ReplacePatterns(string pattern)
-    {
-        if (pattern.EndsWith("*") || pattern.EndsWith("?"))
-        {
-            return Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".");
-        }
-
-        return $"{pattern}$";
     }
 }
