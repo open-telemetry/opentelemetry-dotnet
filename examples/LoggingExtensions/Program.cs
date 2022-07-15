@@ -42,10 +42,6 @@ programLogger.Information("Application started {Greeting} {Location}", "Hello", 
 
 programLogger.Information("Message {Array}", new string[] { "value1", "value2" });
 
-Console.WriteLine("Press ENTER to exit...");
-
-Console.ReadLine();
-
 // Note: For Serilog this call flushes all logs and disposes
 // OpenTelemetryLoggerProvider.
 Log.CloseAndFlush();
