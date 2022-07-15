@@ -37,8 +37,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         internal const string ActivityOperationName = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
         internal static readonly bool IsNet7OrGreater;
 
+#if NET7_0_OR_GREATER
         // https://github.com/dotnet/aspnetcore/blob/bf3352f2422bf16fa3ca49021f0e31961ce525eb/src/Hosting/Hosting/src/WebHostBuilder.cs#L291
-        internal static readonly string FrameworkActivitySourceName = "Microsoft.AspNetCore";
+        internal static readonly string AspNetCoreActivitySourceName = "Microsoft.AspNetCore";
+#endif
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
@@ -53,18 +55,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new("AttributeRouteInfo");
         private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new("Template");
         private readonly AspNetCoreInstrumentationOptions options;
-
-        static HttpInListener()
-        {
-            try
-            {
-                IsNet7OrGreater = typeof(HttpRequest).Assembly.GetName().Version.Major >= 7;
-            }
-            catch (Exception)
-            {
-                IsNet7OrGreater = false;
-            }
-        }
 
         public HttpInListener(AspNetCoreInstrumentationOptions options)
             : base(DiagnosticSourceName)
@@ -157,11 +147,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     return;
                 }
 
-                if (!IsNet7OrGreater)
-                {
-                    ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
-                    ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
-                }
+#if !NET7_0_OR_GREATER
+                ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+                ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
+#endif
 
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;

@@ -576,7 +576,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         {
             Assert.Equal(ActivityKind.Server, activityToValidate.Kind);
 #if NET7_0_OR_GREATER
-            Assert.Equal(HttpInListener.FrameworkActivitySourceName, activityToValidate.Source.Name);
+            Assert.Equal(HttpInListener.AspNetCoreActivitySourceName, activityToValidate.Source.Name);
             Assert.Empty(activityToValidate.Source.Version);
 #else
             Assert.Equal(HttpInListener.ActivitySourceName, activityToValidate.Source.Name);
