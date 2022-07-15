@@ -60,6 +60,8 @@ namespace OpenTelemetry.Trace
             // https://github.com/dotnet/aspnetcore/blob/bf3352f2422bf16fa3ca49021f0e31961ce525eb/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L327
             // For .NET6.0 and below, we will continue to use legacy way.
 #if NET7_0_OR_GREATER
+            // TODO: Check with .NET team to see if this can be prevented
+            // as this allows user to override the ActivitySource.
             var activitySourceService = serviceProvider?.GetService<ActivitySource>();
             if (activitySourceService != null)
             {
