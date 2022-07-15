@@ -15,8 +15,10 @@
 // </copyright>
 
 using System;
+#if NET7_0_OR_GREATER
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+#endif
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Internal;
@@ -73,8 +75,8 @@ namespace OpenTelemetry.Trace
                 builder.AddSource(HttpInListener.AspNetCoreActivitySourceName);
             }
 #else
-                builder.AddSource(HttpInListener.ActivitySourceName);
-                builder.AddLegacySource(HttpInListener.ActivityOperationName); // for the activities created by AspNetCore
+            builder.AddSource(HttpInListener.ActivitySourceName);
+            builder.AddLegacySource(HttpInListener.ActivityOperationName); // for the activities created by AspNetCore
 #endif
 
             return builder.AddInstrumentation(() => instrumentation);
