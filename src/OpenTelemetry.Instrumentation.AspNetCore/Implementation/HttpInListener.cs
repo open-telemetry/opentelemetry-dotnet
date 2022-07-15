@@ -38,7 +38,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         internal static readonly bool IsNet7OrGreater;
 
 #if NET7_0_OR_GREATER
-        // https://github.com/dotnet/aspnetcore/blob/bf3352f2422bf16fa3ca49021f0e31961ce525eb/src/Hosting/Hosting/src/WebHostBuilder.cs#L291
+        // https://github.com/dotnet/aspnetcore/blob/8d6554e655b64da75b71e0e20d6db54a3ba8d2fb/src/Hosting/Hosting/src/GenericHost/GenericWebHostBuilder.cs#L85
         internal static readonly string AspNetCoreActivitySourceName = "Microsoft.AspNetCore";
 #endif
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
