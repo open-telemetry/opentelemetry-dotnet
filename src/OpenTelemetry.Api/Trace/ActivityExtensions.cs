@@ -109,7 +109,7 @@ namespace OpenTelemetry.Trace
                 tagsCollection[tag.Key] = tag.Value;
             }
 
-            activity?.AddEvent(new ActivityEvent(SemanticConventions.AttributeExceptionEventName, default, tagsCollection));
+            activity.AddEvent(new ActivityEvent(SemanticConventions.AttributeExceptionEventName, default, tagsCollection));
         }
     }
 }
