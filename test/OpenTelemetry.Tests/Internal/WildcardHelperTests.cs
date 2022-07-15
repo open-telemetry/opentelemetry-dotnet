@@ -26,6 +26,9 @@ namespace OpenTelemetry.Internal.Tests
         [InlineData(new[] { "a" }, "a.b", false)]
         [InlineData(new[] { "a", "x.*" }, "x.y", true)]
         [InlineData(new[] { "a", "x.*" }, "a.b", false)]
+        [InlineData(new[] { "a", "x", "y" }, "abbbt", false)]
+        [InlineData(new[] { "a", "x", "y" }, "ccxccc", false)]
+        [InlineData(new[] { "a", "x", "y" }, "wecgy", false)]
         public void WildcardRegex_ShouldMatch(string[] patterns, string matchWith, bool isMatch)
         {
             var regex = WildcardHelper.GetWildcardRegex(patterns);
