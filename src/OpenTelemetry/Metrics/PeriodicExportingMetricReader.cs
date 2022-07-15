@@ -32,7 +32,7 @@ namespace OpenTelemetry.Metrics
         internal const int DefaultExportTimeoutMilliseconds = 30000;
 
         internal readonly int ExportIntervalMilliseconds;
-        private readonly int exportTimeoutMilliseconds;
+        internal readonly int ExportTimeoutMilliseconds;
         private readonly Thread exporterThread;
         private readonly AutoResetEvent exportTrigger = new(false);
         private readonly ManualResetEvent shutdownTrigger = new(false);
@@ -60,7 +60,7 @@ namespace OpenTelemetry.Metrics
             }
 
             this.ExportIntervalMilliseconds = exportIntervalMilliseconds;
-            this.exportTimeoutMilliseconds = exportTimeoutMilliseconds;
+            this.ExportTimeoutMilliseconds = exportTimeoutMilliseconds;
 
             this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
             {
@@ -141,15 +141,15 @@ namespace OpenTelemetry.Metrics
                 {
                     case 0: // export
                         OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because Export was triggered.");
-                        this.Collect(this.exportTimeoutMilliseconds);
+                        this.Collect(this.ExportTimeoutMilliseconds);
                         break;
                     case 1: // shutdown
                         OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because Shutdown was triggered.");
-                        this.Collect(this.exportTimeoutMilliseconds); // TODO: do we want to use the shutdown timeout here?
+                        this.Collect(this.ExportTimeoutMilliseconds); // TODO: do we want to use the shutdown timeout here?
                         return;
                     case WaitHandle.WaitTimeout: // timer
                         OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because the export interval has elapsed.");
-                        this.Collect(this.exportTimeoutMilliseconds);
+                        this.Collect(this.ExportTimeoutMilliseconds);
                         break;
                 }
             }
