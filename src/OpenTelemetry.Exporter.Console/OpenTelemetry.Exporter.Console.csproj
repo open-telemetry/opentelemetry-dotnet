@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\EnvironmentVariableHelper.cs" Link="Includes\EnvironmentVariableHelper.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\OpenTelemetrySdkEventSource.cs" Link="Includes\OpenTelemetrySdkEventSource.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\PeriodicExportingMetricReaderHelper.cs" Link="Includes\PeriodicExportingMetricReaderHelper.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry\Internal\ServiceProviderExtensions.cs" Link="Includes\ServiceProviderExtensions.cs" />
