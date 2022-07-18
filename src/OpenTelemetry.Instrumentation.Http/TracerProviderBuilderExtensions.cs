@@ -80,7 +80,7 @@ namespace OpenTelemetry.Trace
         {
             if (HttpHandlerDiagnosticListener.IsNet7OrGreater)
             {
-                builder.AddSource(HttpHandlerDiagnosticListener.FrameworkActivitySourceName);
+                builder.AddSource(HttpHandlerDiagnosticListener.HttpClientActivitySourceName);
             }
             else
             {
