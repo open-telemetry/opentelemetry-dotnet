@@ -42,7 +42,7 @@ namespace OpenTelemetry.Logs
         /// </summary>
         /// <param name="data"><see cref="LogRecordData"/>.</param>
         /// <param name="attributes"><see cref="LogRecordAttributeList"/>.</param>
-        public void Log(in LogRecordData data, in LogRecordAttributeList attributes = default)
+        public void Emit(in LogRecordData data, in LogRecordAttributeList attributes = default)
         {
             var provider = this.loggerProvider;
             var processor = provider.Processor;
