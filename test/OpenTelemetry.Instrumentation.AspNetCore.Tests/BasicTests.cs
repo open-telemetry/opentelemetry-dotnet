@@ -553,6 +553,47 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(shouldEnrichBeCalled, enrichCalled);
         }
 
+#if NET7_0_OR_GREATER
+        [Fact]
+        public async Task UserRegisteredActivitySourceIsUsedForActivityCreationByAspNetCore()
+        {
+            var exportedItems = new List<Activity>();
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                services.AddOpenTelemetryTracing(options =>
+                {
+                    options.AddAspNetCoreInstrumentation()
+                    .AddInMemoryExporter(exportedItems);
+                });
+
+                // Register ActivitySource here so that it will be used
+                // by ASP.NET Core to create activities
+                // https://github.com/dotnet/aspnetcore/blob/0e5cbf447d329a1e7d69932c3decd1c70a00fbba/src/Hosting/Hosting/src/Internal/WebHost.cs#L152
+                services.AddSingleton(sp => new ActivitySource("UserRegisteredActivitySource"));
+            }
+
+            // Arrange
+            using (var client = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices))
+                .CreateClient())
+            {
+                // Act
+                var response = await client.GetAsync("/api/values");
+
+                // Assert
+                response.EnsureSuccessStatusCode(); // Status Code 200-299
+
+                WaitForActivityExport(exportedItems, 1);
+            }
+
+            Assert.Single(exportedItems);
+            var activity = exportedItems[0];
+
+            Assert.Equal("UserRegisteredActivitySource", activity.Source.Name);
+        }
+#endif
+
         public void Dispose()
         {
             this.tracerProvider?.Dispose();
