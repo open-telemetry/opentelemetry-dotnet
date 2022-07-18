@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Adds support for limiting the length and count of attributes exported from
+  the OTLP exporter. These
+  [Attribute Limits](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#attribute-limits)
+  are configured via the environment variables defined in the specification.
+  ([#3376](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3376))
+
 ## 1.3.0
 
 Released 2022-Jun-03
