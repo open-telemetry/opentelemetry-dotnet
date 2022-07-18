@@ -128,7 +128,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             foreach (var kv in normalizedAttributesTestCase)
             {
-                Assert.Contains(activity.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.InvariantCultureIgnoreCase));
+                Assert.Contains(activity.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.OrdinalIgnoreCase));
             }
 
             if (tc.RecordException.HasValue && tc.RecordException.Value)

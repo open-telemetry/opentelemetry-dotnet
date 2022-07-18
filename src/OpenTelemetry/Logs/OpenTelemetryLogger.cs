@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
@@ -52,20 +53,32 @@ namespace OpenTelemetry.Logs
             var processor = provider.Processor;
             if (processor != null)
             {
-                var record = new LogRecord(
-                    provider.IncludeScopes ? this.ScopeProvider : null,
-                    DateTime.UtcNow,
-                    this.categoryName,
-                    logLevel,
-                    eventId,
-                    provider.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null,
-                    provider.ParseStateValues ? null : state,
-                    exception,
-                    provider.ParseStateValues ? this.ParseState(state) : null);
+                var pool = provider.LogRecordPool;
+
+                var record = pool.Rent();
+
+                record.ScopeProvider = provider.IncludeScopes ? this.ScopeProvider : null;
+                record.State = provider.ParseStateValues ? null : state;
+                record.StateValues = provider.ParseStateValues ? ParseState(record, state) : null;
+
+                ref LogRecordData data = ref record.Data;
+
+                data.TimestampBacking = DateTime.UtcNow;
+                data.CategoryName = this.categoryName;
+                data.LogLevel = logLevel;
+                data.EventId = eventId;
+                data.Message = provider.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null;
+                data.Exception = exception;
+
+                LogRecordData.SetActivityContext(ref data, Activity.Current);
 
                 processor.OnEnd(record);
 
                 record.ScopeProvider = null;
+
+                // Attempt to return the LogRecord to the pool. This will no-op
+                // if a batch exporter has added a reference.
+                pool.Return(record);
             }
         }
 
@@ -77,22 +90,37 @@ namespace OpenTelemetry.Logs
 
         public IDisposable BeginScope<TState>(TState state) => this.ScopeProvider?.Push(state) ?? NullScope.Instance;
 
-        private IReadOnlyList<KeyValuePair<string, object?>> ParseState<TState>(TState state)
+        private static IReadOnlyList<KeyValuePair<string, object?>> ParseState<TState>(LogRecord logRecord, TState state)
         {
+            /* TODO: Enable this if/when LogRecordAttributeList becomes public.
+            if (state is LogRecordAttributeList logRecordAttributes)
+            {
+                logRecordAttributes.ApplyToLogRecord(logRecord);
+                return logRecord.AttributeStorage!;
+            }
+            else*/
             if (state is IReadOnlyList<KeyValuePair<string, object?>> stateList)
             {
                 return stateList;
             }
             else if (state is IEnumerable<KeyValuePair<string, object?>> stateValues)
             {
-                return new List<KeyValuePair<string, object?>>(stateValues);
+                var attributeStorage = logRecord.AttributeStorage;
+                if (attributeStorage == null)
+                {
+                    return logRecord.AttributeStorage = new List<KeyValuePair<string, object?>>(stateValues);
+                }
+                else
+                {
+                    attributeStorage.AddRange(stateValues);
+                    return attributeStorage;
+                }
             }
             else
             {
-                return new List<KeyValuePair<string, object?>>
-                {
-                    new KeyValuePair<string, object?>(string.Empty, state),
-                };
+                var attributeStorage = logRecord.AttributeStorage ??= new List<KeyValuePair<string, object?>>(LogRecordPoolHelper.DefaultMaxNumberOfAttributes);
+                attributeStorage.Add(new KeyValuePair<string, object?>(string.Empty, state));
+                return attributeStorage;
             }
         }
 

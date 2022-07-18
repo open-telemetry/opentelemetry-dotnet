@@ -153,8 +153,7 @@ required only for the following scenarios:
    [Propagators](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/context/api-propagators.md),
    to inject and extract context data. Some of the most common libraries
    requiring this include
-   [HttpClient](../OpenTelemetry.Instrumentation.Http/README.md),
-   [ASP.NET](../OpenTelemetry.Instrumentation.AspNet/README.md), [ASP.NET
+   [HttpClient](../OpenTelemetry.Instrumentation.Http/README.md), [ASP.NET
    Core](../OpenTelemetry.Instrumentation.AspNetCore/README.md). This repo
    already provides instrumentation for these common libraries. If your library
    is not built on top of these, and want to leverage propagators, follow the
@@ -394,8 +393,8 @@ OpenTelemetry defines a concept called
 [Status](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status)
 to be associated with `Activity`. Starting with [DiagnosticSource
 6.0](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/6.0.0),
-`SetStatus` API on `Activity` can be used to set the status and description
-as shown below:
+`SetStatus` API on `Activity` can be used to set the status and description as
+shown below:
 
 ```csharp
 activity?.SetStatus(ActivityStatusCode.Ok);
@@ -467,16 +466,16 @@ runtime itself, as part of the
 package. This means, users can instrument their applications/libraries to emit
 metrics by simply using the `System.Diagnostics.DiagnosticSource` package. This
 package can be used in applications targeting any of the officially supported
-versions of [.NET](https://dotnet.microsoft.com/download/dotnet) and
-[.NET Framework](https://dotnet.microsoft.com/download/dotnet-framework) (an
-older Windows-based .NET implementation).
+versions of [.NET](https://dotnet.microsoft.com/download/dotnet) and [.NET
+Framework](https://dotnet.microsoft.com/download/dotnet-framework) (an older
+Windows-based .NET implementation).
 
 ## Instrumenting a library/application with .NET Metrics API
 
 ### Basic metric usage
 
-1. Install the `System.Diagnostics.DiagnosticSource` package version
-   `6.0.0` or above to your application or library.
+1. Install the `System.Diagnostics.DiagnosticSource` package version `6.0.0` or
+   above to your application or library.
 
     ```xml
     <ItemGroup>
@@ -496,9 +495,8 @@ older Windows-based .NET implementation).
 
     The above requires import of the `System.Diagnostics.Metrics` namespace.
 
-    **Note:**
-    It is important to note that `Meter` instances are created by using its
-    constructor, and *not* by calling a `GetMeter` method on the
+    **Note:** It is important to note that `Meter` instances are created by
+    using its constructor, and *not* by calling a `GetMeter` method on the
     `MeterProvider`. This is an important distinction from the [OpenTelemetry
     specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#get-a-meter),
     where `Meter`s are obtained from `MeterProvider`.
@@ -528,8 +526,7 @@ describes more kinds of instruments.
 
 This component uses an
 [EventSource](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventsource)
-with the name "OpenTelemetry-Api" for its internal logging.
-Please refer to [SDK
+with the name "OpenTelemetry-Api" for its internal logging. Please refer to [SDK
 troubleshooting](../OpenTelemetry/README.md#troubleshooting) for instructions on
 seeing these internal logs.
 

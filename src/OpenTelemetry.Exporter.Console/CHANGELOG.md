@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* The `MetricReaderOptions` defaults can be overridden using
+  `OTEL_METRIC_EXPORT_INTERVAL` and `OTEL_METRIC_EXPORT_TIMEOUT`
+  environmental variables as defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.12.0/specification/sdk-environment-variables.md#periodic-exporting-metricreader).
+  ([#3424](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3424))
+
 ## 1.3.0
 
 Released 2022-Jun-03
