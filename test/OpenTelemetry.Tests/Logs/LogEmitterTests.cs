@@ -38,7 +38,7 @@ namespace OpenTelemetry.Logs.Tests
 
             Exception ex = new InvalidOperationException();
 
-            logEmitter.Log(
+            logEmitter.Emit(
                 new()
                 {
                     CategoryName = "LogEmitter",
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Logs.Tests
             activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
             activity.TraceStateString = "key1=value1";
 
-            logEmitter.Log(new(activity));
+            logEmitter.Emit(new(activity));
 
             Assert.Single(exportedItems);
 
@@ -128,7 +128,7 @@ namespace OpenTelemetry.Logs.Tests
                 new DateTime(2022, 6, 30, 16, 0, 0),
                 DateTimeKind.Local);
 
-            logEmitter.Log(new()
+            logEmitter.Emit(new()
             {
                 Timestamp = timestamp,
             });
@@ -159,7 +159,7 @@ namespace OpenTelemetry.Logs.Tests
                 new DateTime(2022, 6, 30, 16, 0, 0),
                 DateTimeKind.Unspecified);
 
-            logEmitter.Log(new()
+            logEmitter.Emit(new()
             {
                 Timestamp = timestamp,
             });
