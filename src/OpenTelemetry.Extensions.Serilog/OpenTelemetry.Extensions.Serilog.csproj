@@ -3,6 +3,7 @@
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <Description>Extensions to enable OpenTelemetry logging when using the Serilog library</Description>
+    <PackageTags>$(PackageTags);serilog;logging</PackageTags>
     <Nullable>enable</Nullable>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <AnalysisLevel>latest</AnalysisLevel>
@@ -17,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Serilog" Version="2.8.0" />
+    <PackageReference Include="Serilog" Version="$(SerilogPkgVer)" />
   </ItemGroup>
 
 </Project>
