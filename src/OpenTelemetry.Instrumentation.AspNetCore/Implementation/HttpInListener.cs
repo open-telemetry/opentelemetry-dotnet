@@ -35,8 +35,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     internal class HttpInListener : ListenerHandler
     {
         internal const string ActivityOperationName = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
-        internal static readonly bool IsNet7OrGreater;
-
 #if NET7_0_OR_GREATER
         // https://github.com/dotnet/aspnetcore/blob/8d6554e655b64da75b71e0e20d6db54a3ba8d2fb/src/Hosting/Hosting/src/GenericHost/GenericWebHostBuilder.cs#L85
         internal static readonly string AspNetCoreActivitySourceName = "Microsoft.AspNetCore";
