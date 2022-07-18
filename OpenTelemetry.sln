@@ -235,6 +235,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Tr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.LoggingExtensions", "examples\LoggingExtensions\Examples.LoggingExtensions.csproj", "{CCBBAD69-4A7D-41F8-8697-6E3F043F7BD5}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Serilog.Tests", "test\OpenTelemetry.Extensions.Serilog.Tests\OpenTelemetry.Extensions.Serilog.Tests.csproj", "{C470DC46-8DE6-4668-BD25-ADF851F6E1E2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -481,6 +483,10 @@ Global
 		{CCBBAD69-4A7D-41F8-8697-6E3F043F7BD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CCBBAD69-4A7D-41F8-8697-6E3F043F7BD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CCBBAD69-4A7D-41F8-8697-6E3F043F7BD5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C470DC46-8DE6-4668-BD25-ADF851F6E1E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C470DC46-8DE6-4668-BD25-ADF851F6E1E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C470DC46-8DE6-4668-BD25-ADF851F6E1E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C470DC46-8DE6-4668-BD25-ADF851F6E1E2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

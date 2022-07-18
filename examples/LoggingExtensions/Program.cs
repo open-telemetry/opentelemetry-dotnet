@@ -14,11 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics.Tracing;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using Serilog;
 
-var resourceBuilder = ResourceBuilder.CreateDefault().AddService("Examples.LogEmitter");
+var resourceBuilder = ResourceBuilder.CreateDefault().AddService("Examples.LoggingExtensions");
 
 // Note: It is important that OpenTelemetryLoggerProvider is disposed when the
 // app is shutdown. In this example we allow Serilog to do that by calling CloseAndFlush.
@@ -29,6 +30,12 @@ var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options =>
         .SetResourceBuilder(resourceBuilder)
         .AddConsoleExporter();
 });
+
+// Creates an OpenTelemetryEventSourceLogEmitter for routing EventSources with
+// names matching OpenTelemetry* into logs
+using var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEmitter(
+    openTelemetryLoggerProvider,
+    (name) => name.StartsWith("OpenTelemetry") ? EventLevel.LogAlways : null);
 
 // Configure Serilog global logger
 Log.Logger = new LoggerConfiguration()

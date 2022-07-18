@@ -188,7 +188,7 @@ namespace OpenTelemetry.Logs
 
             data.Message = rawMessage;
 
-            this.logEmitter.Log(in data, in attributes);
+            this.logEmitter.Emit(in data, in attributes);
         }
 #pragma warning restore CA1062 // Validate arguments of public methods
 
