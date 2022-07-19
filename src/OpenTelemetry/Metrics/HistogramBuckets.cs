@@ -34,13 +34,11 @@ namespace OpenTelemetry.Metrics
 
         internal double SnapshotSum;
 
-        internal int IsCriticalSectionOccupied = 0;
-
         internal HistogramBuckets(double[] explicitBounds)
         {
             this.ExplicitBounds = explicitBounds;
             this.RunningBucketCounts = explicitBounds != null ? new long[explicitBounds.Length + 1] : null;
-            this.SnapshotBucketCounts = explicitBounds != null ? new long[explicitBounds.Length + 1] : new long[0];
+            this.SnapshotBucketCounts = explicitBounds != null ? new long[explicitBounds.Length + 1] : Array.Empty<long>();
         }
 
         internal object LockObject => this.SnapshotBucketCounts;

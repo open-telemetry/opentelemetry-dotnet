@@ -261,9 +261,14 @@ namespace OpenTelemetry.Metrics
                     }
 
                 case AggregationType.Histogram:
+                    {
+                        this.UpdateHistogram((double)number);
+                        break;
+                    }
+
                 case AggregationType.HistogramSumCount:
                     {
-                        this.Update((double)number);
+                        this.UpdateHistogramSumCount((double)number);
                         break;
                     }
             }
@@ -324,58 +329,13 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        int i;
-                        for (i = 0; i < this.histogramBuckets.ExplicitBounds.Length; i++)
-                        {
-                            // Upper bound is inclusive
-                            if (number <= this.histogramBuckets.ExplicitBounds[i])
-                            {
-                                break;
-                            }
-                        }
-
-                        var sw = default(SpinWait);
-                        while (true)
-                        {
-                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
-                            {
-                                unchecked
-                                {
-                                    this.runningValue.AsLong++;
-                                    this.histogramBuckets.RunningSum += number;
-                                    this.histogramBuckets.RunningBucketCounts[i]++;
-                                }
-
-                                this.histogramBuckets.IsCriticalSectionOccupied = 0;
-                                break;
-                            }
-
-                            sw.SpinOnce();
-                        }
-
+                        this.UpdateHistogram(number);
                         break;
                     }
 
                 case AggregationType.HistogramSumCount:
                     {
-                        var sw = default(SpinWait);
-                        while (true)
-                        {
-                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
-                            {
-                                unchecked
-                                {
-                                    this.runningValue.AsLong++;
-                                    this.histogramBuckets.RunningSum += number;
-                                }
-
-                                this.histogramBuckets.IsCriticalSectionOccupied = 0;
-                                break;
-                            }
-
-                            sw.SpinOnce();
-                        }
-
+                        this.UpdateHistogramSumCount(number);
                         break;
                     }
             }
@@ -401,9 +361,10 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.LongSumIncomingDelta:
                 case AggregationType.LongSumIncomingCumulative:
                     {
+                        long initValue = Volatile.Read(ref this.runningValue.AsLong);
+
                         if (outputDelta)
                         {
-                            long initValue = Volatile.Read(ref this.runningValue.AsLong);
                             this.snapshotValue.AsLong = initValue - this.deltaLastValue.AsLong;
                             this.deltaLastValue.AsLong = initValue;
                             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
@@ -417,7 +378,7 @@ namespace OpenTelemetry.Metrics
                         }
                         else
                         {
-                            this.snapshotValue.AsLong = Volatile.Read(ref this.runningValue.AsLong);
+                            this.snapshotValue.AsLong = initValue;
                         }
 
                         break;
@@ -426,33 +387,24 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.DoubleSumIncomingDelta:
                 case AggregationType.DoubleSumIncomingCumulative:
                     {
+                        double initValue = Volatile.Read(ref this.runningValue.AsDouble);
+
                         if (outputDelta)
                         {
-                            // TODO:
-                            // Is this thread-safe way to read double?
-                            // As long as the value is not -ve infinity,
-                            // the exchange (to 0.0) will never occur,
-                            // but we get the original value atomically.
-                            double initValue = Interlocked.CompareExchange(ref this.runningValue.AsDouble, 0.0, double.NegativeInfinity);
                             this.snapshotValue.AsDouble = initValue - this.deltaLastValue.AsDouble;
                             this.deltaLastValue.AsDouble = initValue;
                             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                             // Check again if value got updated, if yes reset status.
                             // This ensures no Updates get Lost.
-                            if (initValue != Interlocked.CompareExchange(ref this.runningValue.AsDouble, 0.0, double.NegativeInfinity))
+                            if (initValue != Volatile.Read(ref this.runningValue.AsDouble))
                             {
                                 this.MetricPointStatus = MetricPointStatus.CollectPending;
                             }
                         }
                         else
                         {
-                            // TODO:
-                            // Is this thread-safe way to read double?
-                            // As long as the value is not -ve infinity,
-                            // the exchange (to 0.0) will never occur,
-                            // but we get the original value atomically.
-                            this.snapshotValue.AsDouble = Interlocked.CompareExchange(ref this.runningValue.AsDouble, 0.0, double.NegativeInfinity);
+                            this.snapshotValue.AsDouble = initValue;
                         }
 
                         break;
@@ -460,12 +412,14 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.LongGauge:
                     {
-                        this.snapshotValue.AsLong = Volatile.Read(ref this.runningValue.AsLong);
+                        long initValue = Volatile.Read(ref this.runningValue.AsLong);
+
+                        this.snapshotValue.AsLong = initValue;
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                         // Check again if value got updated, if yes reset status.
                         // This ensures no Updates get Lost.
-                        if (this.snapshotValue.AsLong != Volatile.Read(ref this.runningValue.AsLong))
+                        if (initValue != Volatile.Read(ref this.runningValue.AsLong))
                         {
                             this.MetricPointStatus = MetricPointStatus.CollectPending;
                         }
@@ -475,17 +429,14 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.DoubleGauge:
                     {
-                        // TODO:
-                        // Is this thread-safe way to read double?
-                        // As long as the value is not -ve infinity,
-                        // the exchange (to 0.0) will never occur,
-                        // but we get the original value atomically.
-                        this.snapshotValue.AsDouble = Interlocked.CompareExchange(ref this.runningValue.AsDouble, 0.0, double.NegativeInfinity);
+                        double initValue = Volatile.Read(ref this.runningValue.AsDouble);
+
+                        this.snapshotValue.AsDouble = initValue;
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                         // Check again if value got updated, if yes reset status.
                         // This ensures no Updates get Lost.
-                        if (this.snapshotValue.AsDouble != Interlocked.CompareExchange(ref this.runningValue.AsDouble, 0.0, double.NegativeInfinity))
+                        if (initValue != Volatile.Read(ref this.runningValue.AsDouble))
                         {
                             this.MetricPointStatus = MetricPointStatus.CollectPending;
                         }
@@ -544,6 +495,41 @@ namespace OpenTelemetry.Metrics
         private readonly void ThrowNotSupportedMetricTypeException(string methodName)
         {
             throw new NotSupportedException($"{methodName} is not supported for this metric type.");
+        }
+
+        private void UpdateHistogram(double number)
+        {
+            int i;
+            for (i = 0; i < this.histogramBuckets.ExplicitBounds.Length; i++)
+            {
+                // Upper bound is inclusive
+                if (number <= this.histogramBuckets.ExplicitBounds[i])
+                {
+                    break;
+                }
+            }
+
+            lock (this.histogramBuckets.LockObject)
+            {
+                unchecked
+                {
+                    this.runningValue.AsLong++;
+                    this.histogramBuckets.RunningSum += number;
+                    this.histogramBuckets.RunningBucketCounts[i]++;
+                }
+            }
+        }
+
+        private void UpdateHistogramSumCount(double number)
+        {
+            lock (this.histogramBuckets.LockObject)
+            {
+                unchecked
+                {
+                    this.runningValue.AsLong++;
+                    this.histogramBuckets.RunningSum += number;
+                }
+            }
         }
     }
 }
