@@ -3,8 +3,8 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Instrumentation.SqlClient.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Instrumentation.SqlClient.svg)](https://www.nuget.org/packages/OpenTelemetry.Instrumentation.SqlClient)
 
-This is an
-[Instrumentation Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library),
+This is an [Instrumentation
+Library](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library),
 which instruments
 [Microsoft.Data.SqlClient](https://www.nuget.org/packages/Microsoft.Data.SqlClient)
 and
@@ -37,9 +37,9 @@ dotnet add package OpenTelemetry.Instrumentation.SqlClient
 
 SqlClient instrumentation must be enabled at application startup.
 
-The following example demonstrates adding SqlClient instrumentation to a
-console application. This example also sets up the OpenTelemetry Console
-exporter, which requires adding the package
+The following example demonstrates adding SqlClient instrumentation to a console
+application. This example also sets up the OpenTelemetry Console exporter, which
+requires adding the package
 [`OpenTelemetry.Exporter.Console`](../OpenTelemetry.Exporter.Console/README.md)
 to the application.
 
@@ -58,12 +58,13 @@ public class Program
 }
 ```
 
-For an ASP.NET Core application, adding instrumentation is typically done in
-the `ConfigureServices` of your `Startup` class. Refer to documentation for
+For an ASP.NET Core application, adding instrumentation is typically done in the
+`ConfigureServices` of your `Startup` class. Refer to documentation for
 [OpenTelemetry.Instrumentation.AspNetCore](../OpenTelemetry.Instrumentation.AspNetCore/README.md).
 
 For an ASP.NET application, adding instrumentation is typically done in the
-`Global.asax.cs`. Refer to documentation for [OpenTelemetry.Instrumentation.AspNet](../OpenTelemetry.Instrumentation.AspNet/README.md).
+`Global.asax.cs`. Refer to the documentation for
+[OpenTelemetry.Instrumentation.AspNet](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/main/src/OpenTelemetry.Instrumentation.AspNet/README.md).
 
 ## Advanced configuration
 
@@ -72,8 +73,9 @@ This instrumentation can be configured to change the default behavior by using
 
 ### Capturing 'db.statement'
 
-The `SqlClientInstrumentationOptions` class exposes several properties that can be
-used to configure how the [`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
+The `SqlClientInstrumentationOptions` class exposes several properties that can
+be used to configure how the
+[`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
 attribute is captured upon execution of a query.
 
 #### .NET Core - SetDbStatementForStoredProcedure and SetDbStatementForText
@@ -88,7 +90,8 @@ attribute to the stored procedure command name.
 
 `SetDbStatementForText` is _false_ by default (to prevent accidental capture of
 sensitive data that might be part of the SQL statement text). When set to
-`true`, the instrumentation will set [`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
+`true`, the instrumentation will set
+[`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
 attribute to the text of the SQL command being executed.
 
 To disable capturing stored procedure commands use configuration like below.
@@ -118,8 +121,8 @@ For .NET Framework, `SetDbStatementForStoredProcedure` and
 `SetDbStatementForText` are not available. Instead, a single `SetDbStatement`
 property should be used to control whether this instrumentation should set the
 [`db.statement`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md#call-level-attributes)
-attribute to the text of the `SqlCommand` being executed. This could either be
-a name of a stored procedure or a full text of a `CommandType.Text` query.
+attribute to the text of the `SqlCommand` being executed. This could either be a
+name of a stored procedure or a full text of a `CommandType.Text` query.
 
 On .NET Framework, unlike .NET Core, the instrumentation capabilities for both
 [`Microsoft.Data.SqlClient`](https://www.nuget.org/packages/Microsoft.Data.SqlClient/)
@@ -133,8 +136,8 @@ and `System.Data.SqlClient` are limited:
   query text.
 
 Since `CommandType.Text` might contain sensitive data, all SQL capturing is
-_disabled_ by default to protect against accidentally sending full query text
-to a telemetry backend. If you are only using stored procedures or have no
+_disabled_ by default to protect against accidentally sending full query text to
+a telemetry backend. If you are only using stored procedures or have no
 sensitive data in your `sqlCommand.CommandText`, you can enable SQL capturing
 using the options like below:
 
@@ -169,11 +172,11 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 ## Enrich
 
-This option, available on .NET Core only, allows one to enrich the activity
-with additional information from the raw `SqlCommand` object. The `Enrich`
-action is called only when `activity.IsAllDataRequested` is `true`. It contains
-the activity itself (which can be enriched), the name of the event, and the
-actual raw object.
+This option, available on .NET Core only, allows one to enrich the activity with
+additional information from the raw `SqlCommand` object. The `Enrich` action is
+called only when `activity.IsAllDataRequested` is `true`. It contains the
+activity itself (which can be enriched), the name of the event, and the actual
+raw object.
 
 Currently there is only one event name reported, "OnCustom". The actual object
 is `Microsoft.Data.SqlClient.SqlCommand` for `Microsoft.Data.SqlClient` and
@@ -197,15 +200,16 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-[Processor](../../docs/trace/extending-the-sdk/README.md#processor),
-is the general extensibility point to add additional properties to any activity.
-The `Enrich` option is specific to this instrumentation, and is provided to
-get access to `SqlCommand` object.
+[Processor](../../docs/trace/extending-the-sdk/README.md#processor), is the
+general extensibility point to add additional properties to any activity. The
+`Enrich` option is specific to this instrumentation, and is provided to get
+access to `SqlCommand` object.
 
 ### RecordException
 
-This option, available on .NET Core only, can be set to instruct the instrumentation
-to record SqlExceptions as Activity [events](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md).
+This option, available on .NET Core only, can be set to instruct the
+instrumentation to record SqlExceptions as Activity
+[events](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/exceptions.md).
 
 The default value is `false` and can be changed by the code like below.
 
@@ -221,4 +225,5 @@ using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 * [OpenTelemetry Project](https://opentelemetry.io/)
 
-* [OpenTelemetry semantic conventions for database calls](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md)
+* [OpenTelemetry semantic conventions for database
+  calls](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md)

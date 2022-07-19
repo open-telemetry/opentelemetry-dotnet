@@ -5,7 +5,6 @@
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == ''">net6.0;netcoreapp3.1</TargetFrameworks>
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == '' AND $(OS) == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) != ''">$(TARGET_FRAMEWORK)</TargetFrameworks>
-    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
