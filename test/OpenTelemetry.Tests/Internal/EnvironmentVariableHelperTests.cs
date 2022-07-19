@@ -60,6 +60,8 @@ namespace OpenTelemetry.Internal.Tests
         [InlineData("TRUE", true)]
         [InlineData("false", false)]
         [InlineData("FALSE", false)]
+        [InlineData(" true ", true)]
+        [InlineData(" false ", false)]
         public void LoadBoolean(string value, bool expectedValue)
         {
             Environment.SetEnvironmentVariable(EnvVar, value);
@@ -82,6 +84,8 @@ namespace OpenTelemetry.Internal.Tests
         [Theory]
         [InlineData("something")] // non true/false
         [InlineData(" ")] // whitespaces
+        [InlineData("0")] // 0
+        [InlineData("1")] // 1
         public void LoadBoolean_Invalid(string value)
         {
             Environment.SetEnvironmentVariable(EnvVar, value);
