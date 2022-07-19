@@ -111,5 +111,33 @@ namespace OpenTelemetry.Internal
 
             return true;
         }
+
+        /// <summary>
+        /// Reads an environment variable and parses it as a <see cref="bool" />.
+        /// </summary>
+        /// <param name="envVarKey">The name of the environment variable.</param>
+        /// <param name="result">The parsed value of the environment variable.</param>
+        /// <returns>
+        /// Returns <c>true</c> when a non-empty value was read; otherwise, <c>false</c>.
+        /// </returns>
+        /// <exception cref="FormatException">
+        /// Thrown when failed to parse the non-empty value.
+        /// </exception>
+        public static bool LoadBoolean(string envVarKey, out bool result)
+        {
+            result = default;
+
+            if (!LoadString(envVarKey, out string value))
+            {
+                return false;
+            }
+
+            if (!bool.TryParse(value, out result))
+            {
+                throw new FormatException($"{envVarKey} environment variable has an invalid value: '${value}'");
+            }
+
+            return true;
+        }
     }
 }
