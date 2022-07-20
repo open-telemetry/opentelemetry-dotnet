@@ -40,5 +40,22 @@ public class Program
         {
             MyHistogram.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
         }
+
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(-0.25));
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(-0.5));
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(-0));
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(-1));
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(-2));
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(-4));
+
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(0.25));
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(0.5));
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(0));
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(1));
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(2));
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(4));
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(double.PositiveInfinity));
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(double.NegativeInfinity));
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(double.NaN));
     }
 }

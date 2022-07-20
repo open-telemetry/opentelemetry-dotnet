@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#pragma warning disable RS0016 // public API
+
 namespace OpenTelemetry.Metrics
 {
     /// <summary>
@@ -30,3 +32,5 @@ namespace OpenTelemetry.Metrics
         public int MaxSize { get; set; } = 160;
     }
 }
+
+#pragma warning restore RS0016 // public API
