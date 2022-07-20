@@ -40,13 +40,13 @@ namespace OpenTelemetry.Configuration.Tests
             var config = SdkConfiguration.Instance;
 
             Assert.Null(config.AttributeValueLengthLimit);
-            Assert.Equal(128, config.AttributeCountLimit);
+            Assert.Null(config.AttributeCountLimit);
             Assert.Null(config.SpanAttributeValueLengthLimit);
-            Assert.Equal(128, config.SpanAttributeCountLimit);
-            Assert.Equal(128, config.SpanEventCountLimit);
-            Assert.Equal(128, config.SpanLinkCountLimit);
-            Assert.Equal(128, config.EventAttributeCountLimit);
-            Assert.Equal(128, config.LinkAttributeCountLimit);
+            Assert.Null(config.SpanAttributeCountLimit);
+            Assert.Null(config.SpanEventCountLimit);
+            Assert.Null(config.SpanLinkCountLimit);
+            Assert.Null(config.EventAttributeCountLimit);
+            Assert.Null(config.LinkAttributeCountLimit);
         }
 
         [Fact]

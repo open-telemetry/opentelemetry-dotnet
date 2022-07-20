@@ -32,7 +32,7 @@ internal class SdkConfiguration
 
     public int? AttributeValueLengthLimit { get; set; }
 
-    public int? AttributeCountLimit { get; set; } = 128;
+    public int? AttributeCountLimit { get; set; }
 
     public int? SpanAttributeValueLengthLimit
     {
@@ -46,9 +46,9 @@ internal class SdkConfiguration
         set => this.spanAttributeCountLimit = value;
     }
 
-    public int? SpanEventCountLimit { get; set; } = 128;
+    public int? SpanEventCountLimit { get; set; }
 
-    public int? SpanLinkCountLimit { get; set; } = 128;
+    public int? SpanLinkCountLimit { get; set; }
 
     public int? EventAttributeCountLimit
     {
