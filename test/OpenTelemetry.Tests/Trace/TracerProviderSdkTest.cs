@@ -419,7 +419,7 @@ namespace OpenTelemetry.Trace.Tests
                 (a) =>
                 {
                     Assert.False(Sdk.SuppressInstrumentation);
-                    Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
+                    Assert.True(a.IsAllDataRequested); // If Processor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
@@ -476,7 +476,7 @@ namespace OpenTelemetry.Trace.Tests
                 {
                     Assert.True(samplerCalled);
                     Assert.False(Sdk.SuppressInstrumentation);
-                    Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
+                    Assert.True(a.IsAllDataRequested); // If Processor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
@@ -537,7 +537,7 @@ namespace OpenTelemetry.Trace.Tests
                 {
                     Assert.True(samplerCalled);
                     Assert.False(Sdk.SuppressInstrumentation);
-                    Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
+                    Assert.True(a.IsAllDataRequested); // If Processor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
@@ -586,7 +586,7 @@ namespace OpenTelemetry.Trace.Tests
                 (a) =>
                 {
                     Assert.False(Sdk.SuppressInstrumentation);
-                    Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
+                    Assert.True(a.IsAllDataRequested); // If Processor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
@@ -635,7 +635,7 @@ namespace OpenTelemetry.Trace.Tests
                 (a) =>
                 {
                     Assert.False(Sdk.SuppressInstrumentation);
-                    Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
+                    Assert.True(a.IsAllDataRequested); // If Processor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
@@ -684,7 +684,7 @@ namespace OpenTelemetry.Trace.Tests
                 (a) =>
                 {
                     Assert.False(Sdk.SuppressInstrumentation);
-                    Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
+                    Assert.True(a.IsAllDataRequested); // If Processor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
@@ -724,7 +724,7 @@ namespace OpenTelemetry.Trace.Tests
                 (a) =>
                 {
                     Assert.False(Sdk.SuppressInstrumentation);
-                    Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
+                    Assert.True(a.IsAllDataRequested); // If Processor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalledNew = true;
                 };
 
@@ -1126,7 +1126,7 @@ namespace OpenTelemetry.Trace.Tests
                 {
                     Assert.Contains(a.OperationName, sampledActivities);
                     Assert.False(Sdk.SuppressInstrumentation);
-                    Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
+                    Assert.True(a.IsAllDataRequested); // If Processor.OnStart is called, activity's IsAllDataRequested is set to true
                     onStartProcessedActivities.Add(a.OperationName);
                 };
 
