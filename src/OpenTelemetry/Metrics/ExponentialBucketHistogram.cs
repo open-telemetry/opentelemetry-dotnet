@@ -14,9 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#pragma warning disable RS0016 // public API
-#pragma warning disable SA1310 // Field name should not contain an underscore
-
 #if NET6_0_OR_GREATER
 
 using System;
@@ -32,7 +29,7 @@ namespace OpenTelemetry.Metrics
     /// identified by <c>Bucket[i] = ( base ^ i, base ^ (i + 1) ]</c>, where <c>i</c>
     /// is an integer.
     /// </summary>
-    public class ExponentialBucketHistogram
+    internal class ExponentialBucketHistogram
     {
         private static readonly double Log2E = Math.Log2(Math.E); // 1 / Math.Log(2)
 
@@ -81,8 +78,8 @@ namespace OpenTelemetry.Metrics
 
             if (this.Scale > 0)
             {
-                // due to precision issue, the values that are close to the bucket boundaries
-                // should be closely examined to avoid off-by-one
+                // TODO: due to precision issue, the values that are close to the bucket
+                // boundaries should be closely examined to avoid off-by-one.
                 return (int)Math.Ceiling(Math.Log(value) * this.scalingFactor) - 1;
             }
             else
@@ -93,7 +90,7 @@ namespace OpenTelemetry.Metrics
 
                 if (exp == 0)
                 {
-                    // TODO: benchmark and see if this should be changed to a lookup table
+                    // TODO: benchmark and see if this should be changed to a lookup table.
                     fraction--;
 
                     for (int i = IEEE754Double.FRACTION_BITS - 1; i >= 0; i--)
@@ -117,10 +114,12 @@ namespace OpenTelemetry.Metrics
 
         public sealed class IEEE754Double
         {
+#pragma warning disable SA1310 // Field name should not contain an underscore
             internal const int EXPONENT_BIAS = 1023;
             internal const long EXPONENT_MASK = 0x7FF0000000000000L;
             internal const int FRACTION_BITS = 52;
             internal const long FRACTION_MASK = 0xFFFFFFFFFFFFFL;
+#pragma warning restore SA1310 // Field name should not contain an underscore
 
             public static string ToString(double value)
             {
@@ -132,6 +131,3 @@ namespace OpenTelemetry.Metrics
 }
 
 #endif
-
-#pragma warning restore SA1310 // Field name should not contain an underscore
-#pragma warning restore RS0016 // public API
