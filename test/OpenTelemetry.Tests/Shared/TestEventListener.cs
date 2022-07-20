@@ -90,7 +90,7 @@ namespace OpenTelemetry.Tests
         /// <param name="eventSource">The event source that was created.</param>
         protected override void OnEventSourceCreated(EventSource eventSource)
         {
-            // Check for null because this method is called by the base class constror before we can initialize it
+            // Check for null because this method is called by the base class constructor before we can initialize it
             Action<EventSource> callback = this.OnOnEventSourceCreated;
             callback?.Invoke(eventSource);
         }
