@@ -58,6 +58,9 @@ public class Program
         Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(double.NegativeInfinity));
         Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(double.NaN));
         Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(double.Epsilon));
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(double.Epsilon * 2));
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(double.Epsilon * 3));
+        Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(double.Epsilon * 4));
         Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(2.2250738585072009E-308));
         Console.WriteLine(ExponentialBucketHistogram.IEEE754Double.ToString(2.2250738585072014E-308));
     }
