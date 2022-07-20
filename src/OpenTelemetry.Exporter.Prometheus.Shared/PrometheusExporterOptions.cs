@@ -17,7 +17,13 @@
 using System;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter
+#if PROMETHEUS_ASPNETCORE
+namespace OpenTelemetry.Exporter.Prometheus.AspNetCore
+#elif PROMETHEUS_ASPNETCORE_HTTPLISTENER
+namespace OpenTelemetry.Exporter.Prometheus.HttpListener
+#else
+namespace OpenTelemetry.Exporter.Prometheus.Shared
+#endif
 {
     /// <summary>
     /// <see cref="PrometheusExporter"/> options.

@@ -25,7 +25,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Exporter.Prometheus.Shared.Tests
+namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
 {
     public sealed class PrometheusCollectionManagerTests
     {

@@ -14,6 +14,10 @@
     <RunApiCompat>false</RunApiCompat>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);PROMETHEUS_ASPNETCORE_HTTPLISTENER</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
