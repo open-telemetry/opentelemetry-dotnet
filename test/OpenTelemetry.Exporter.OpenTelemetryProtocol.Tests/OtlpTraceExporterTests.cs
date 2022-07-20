@@ -375,7 +375,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Theory]
-        [InlineData(StatusCode.Unset, "Unset", "Description will be ingored if status is Unset.")]
+        [InlineData(StatusCode.Unset, "Unset", "Description will be ignored if status is Unset.")]
         [InlineData(StatusCode.Ok, "Ok", "Description must only be used with the Error StatusCode.")]
         [InlineData(StatusCode.Error, "Error", "Error description.")]
         public void ToOtlpSpanStatusTagTest(StatusCode expectedStatusCode, string statusCodeTagValue, string statusDescription)
