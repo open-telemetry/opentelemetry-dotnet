@@ -94,6 +94,8 @@ namespace OpenTelemetry.Metrics
                 if (exp == 0)
                 {
                     // TODO: benchmark and see if this should be changed to a lookup table
+                    fraction--;
+
                     for (int i = IEEE754Double.FRACTION_BITS - 1; i >= 0; i--)
                     {
                         if ((fraction >> i) != 0)
@@ -104,15 +106,12 @@ namespace OpenTelemetry.Metrics
                         exp--;
                     }
                 }
-
-                exp -= IEEE754Double.EXPONENT_BIAS;
-
-                if (fraction == 0)
+                else if (fraction == 0)
                 {
                     exp--;
                 }
 
-                return exp >> -this.Scale;
+                return (exp - IEEE754Double.EXPONENT_BIAS) >> -this.Scale;
             }
         }
 

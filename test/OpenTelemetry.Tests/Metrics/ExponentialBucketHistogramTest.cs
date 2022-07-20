@@ -42,17 +42,17 @@ namespace OpenTelemetry.Metrics.Tests
 
             var histogram_scale0 = new ExponentialBucketHistogram(0);
 
-            Assert.Equal(-1074, histogram_scale0.MapToIndex(double.Epsilon));
+            Assert.Equal(-1075, histogram_scale0.MapToIndex(double.Epsilon));
 
-            Assert.Equal(-1073, histogram_scale0.MapToIndex(double.Epsilon * 2));
+            Assert.Equal(-1074, histogram_scale0.MapToIndex(double.Epsilon * 2));
 
-            Assert.Equal(-1072, histogram_scale0.MapToIndex(double.Epsilon * 3));
-            Assert.Equal(-1072, histogram_scale0.MapToIndex(double.Epsilon * 4));
+            Assert.Equal(-1073, histogram_scale0.MapToIndex(double.Epsilon * 3));
+            Assert.Equal(-1073, histogram_scale0.MapToIndex(double.Epsilon * 4));
 
-            Assert.Equal(-1071, histogram_scale0.MapToIndex(double.Epsilon * 5));
-            Assert.Equal(-1071, histogram_scale0.MapToIndex(double.Epsilon * 6));
-            Assert.Equal(-1071, histogram_scale0.MapToIndex(double.Epsilon * 7));
-            Assert.Equal(-1071, histogram_scale0.MapToIndex(double.Epsilon * 8));
+            Assert.Equal(-1072, histogram_scale0.MapToIndex(double.Epsilon * 5));
+            Assert.Equal(-1072, histogram_scale0.MapToIndex(double.Epsilon * 6));
+            Assert.Equal(-1072, histogram_scale0.MapToIndex(double.Epsilon * 7));
+            Assert.Equal(-1072, histogram_scale0.MapToIndex(double.Epsilon * 8));
 
             Assert.Equal(-1023, histogram_scale0.MapToIndex(2.2250738585072009E-308));
             Assert.Equal(-1023, histogram_scale0.MapToIndex(2.2250738585072014E-308));
