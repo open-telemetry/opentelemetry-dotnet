@@ -42,6 +42,11 @@ namespace OpenTelemetry.Metrics.Tests
 
             var histogram_scale0 = new ExponentialBucketHistogram(0);
 
+            Assert.Equal(-1074, histogram_scale0.MapToIndex(double.Epsilon));
+
+            Assert.Equal(-1023, histogram_scale0.MapToIndex(2.2250738585072009E-308));
+            Assert.Equal(-1023, histogram_scale0.MapToIndex(2.2250738585072014E-308));
+
             Assert.Equal(-3, histogram_scale0.MapToIndex(0.25));
 
             Assert.Equal(-2, histogram_scale0.MapToIndex(0.375));

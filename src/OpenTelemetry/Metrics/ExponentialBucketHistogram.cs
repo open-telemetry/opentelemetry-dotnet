@@ -34,7 +34,7 @@ namespace OpenTelemetry.Metrics
     /// </summary>
     public class ExponentialBucketHistogram
     {
-        internal static readonly double Log2E = Math.Log2(Math.E); // 1 / Math.Log(2)
+        private static readonly double Log2E = Math.Log2(Math.E); // 1 / Math.Log(2)
 
         private int scale;
         private double scalingFactor; // 2 ^ scale / log(2)
@@ -73,8 +73,9 @@ namespace OpenTelemetry.Metrics
 
         public int MapToIndex(double value)
         {
-            Debug.Assert(double.IsNormal(value), "IEEE-754 subnormal values are not allowed, consider rounding the value to the smallest normal value.");
             Debug.Assert(value != 0, "IEEE-754 zero values should be handled by ZeroCount.");
+
+            // TODO: handle +Inf, -Inf, NaN
 
             value = Math.Abs(value);
 
@@ -87,24 +88,31 @@ namespace OpenTelemetry.Metrics
             else
             {
                 var bits = BitConverter.DoubleToInt64Bits(value);
-                var exponent = (int)((bits & IEEE754Double.EXPONENT_MASK) >> IEEE754Double.FRACTION_BITS);
+                var exp = (int)((bits & IEEE754Double.EXPONENT_MASK) >> IEEE754Double.FRACTION_BITS);
+                var fraction = bits & IEEE754Double.FRACTION_MASK;
 
-                if (exponent == 0)
+                if (exp == 0)
                 {
-                    // TODO: handle subnormal values
-                    // exponent -=
+                    // TODO: benchmark and see if this should be changed to a lookup table
+                    for (int i = IEEE754Double.FRACTION_BITS - 1; i >= 0; i--)
+                    {
+                        if ((fraction >> i) != 0)
+                        {
+                            break;
+                        }
+
+                        exp--;
+                    }
                 }
 
-                exponent -= IEEE754Double.EXPONENT_BIAS;
+                exp -= IEEE754Double.EXPONENT_BIAS;
 
-                if ((bits & IEEE754Double.FRACTION_MASK) == 0)
+                if (fraction == 0)
                 {
-                    return (exponent - 1) >> -this.Scale;
+                    exp--;
                 }
-                else
-                {
-                    return exponent >> -this.Scale;
-                }
+
+                return exp >> -this.Scale;
             }
         }
 
