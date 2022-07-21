@@ -53,5 +53,7 @@ programLogger.Information("Message {Array}", new string[] { "value1", "value2" }
 // Note: For Serilog this call flushes all logs
 Log.CloseAndFlush();
 
-// Manually dispose OpenTelemetryLoggerProvider since it is being shared
+// Manually dispose OpenTelemetryLoggerProvider since it is being shared. This
+// causes a log message to be written to the OpenTelemetry-Sdk EventSource which
+// OpenTelemetryEventSourceLogEmitter will capture.
 openTelemetryLoggerProvider.Dispose();
