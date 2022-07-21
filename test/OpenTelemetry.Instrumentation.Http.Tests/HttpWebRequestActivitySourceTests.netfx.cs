@@ -413,10 +413,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Theory]
         [InlineData("GET")]
         [InlineData("POST")]
-        public async Task CreateSpansIfTraceParentIsPresent(string method)
+        public async Task DoNotInjectTraceParentWhenPresent(string method)
         {
-            const string traceId = "abcdef0123456789abcdef0123456789";
-            const string parentSpanId = "abcdef0123456789";
             try
             {
                 using var eventRecords = new ActivitySourceRecorder();
@@ -425,7 +423,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 using (var client = new HttpClient())
                 using (var request = new HttpRequestMessage(HttpMethod.Get, this.BuildRequestUrl()))
                 {
-                    request.Headers.Add("traceparent", $"00-{traceId}-{parentSpanId}-01");
+                    request.Headers.Add("traceparent", "00-abcdef0123456789abcdef0123456789-abcdef0123456789-01");
 
                     if (method == "GET")
                     {
@@ -440,13 +438,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     (await client.SendAsync(request)).Dispose();
                 }
 
-                Assert.Equal(2, eventRecords.Records.Count);
-
-                var activity = eventRecords.Records.Last().Value;
-                Assert.Equal(ActivityKind.Client, activity.Kind);
-                Assert.NotEqual(traceId, activity.TraceId.ToString());
-                Assert.NotEqual(default, activity.SpanId.ToString());
-                Assert.Equal(default, activity.ParentSpanId);
+                // No events are sent.
+                Assert.Empty(eventRecords.Records);
             }
             finally
             {
@@ -498,20 +491,19 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [InlineData("POST")]
         public async Task TestRedirectedRequest(string method)
         {
-            const int redirectCount = 10;
             using var eventRecords = new ActivitySourceRecorder();
 
             using (var client = new HttpClient())
             {
                 using HttpResponseMessage response = method == "GET"
-                    ? await client.GetAsync(this.BuildRequestUrl(queryString: $"redirects={redirectCount}"))
-                    : await client.PostAsync(this.BuildRequestUrl(queryString: $"redirects={redirectCount}"), new StringContent("hello world"));
+                    ? await client.GetAsync(this.BuildRequestUrl(queryString: "redirects=10"))
+                    : await client.PostAsync(this.BuildRequestUrl(queryString: "redirects=10"), new StringContent("hello world"));
             }
 
-            // We should have exactly one Start and one Stop event per try
-            Assert.Equal(2 * (redirectCount + 1), eventRecords.Records.Count());
-            Assert.Equal(redirectCount + 1, eventRecords.Records.Count(rec => rec.Key == "Start"));
-            Assert.Equal(redirectCount + 1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
+            // We should have exactly one Start and one Stop event
+            Assert.Equal(2, eventRecords.Records.Count());
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
         }
 
         /// <summary>
@@ -643,7 +635,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public async Task TestSecureTransportRetryFailureRequest(string method)
         {
             // This test sends an https request to an endpoint only set up for http.
-            // It should retry. What we want to test for is 4 start, 1 exception event
+            // It should retry. What we want to test for is 1 start, 1 exception event even
+            // though multiple are actually sent.
 
             string url = this.BuildRequestUrl(useHttps: true);
 
@@ -660,24 +653,15 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Assert.True(ex is HttpRequestException);
             }
 
-            // We should have two Start events and two Stop events, both with exceptions.
-            Assert.Equal(4, eventRecords.Records.Count);
-            Assert.Equal(2, eventRecords.Records.Count(rec => rec.Key == "Start"));
-            Assert.Equal(2, eventRecords.Records.Count(rec => rec.Key == "Stop"));
+            // We should have one Start event and one Stop event with an exception.
+            Assert.Equal(2, eventRecords.Records.Count());
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(1, eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             Activity activity = AssertFirstEventWasStart(eventRecords);
             VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
 
-            activity = AssertFirstEventWasStart(eventRecords);
-            VerifyActivityStartTags(this.hostNameAndPort, method, url, activity);
-
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
-            Assert.Equal("Stop", exceptionEvent.Key);
-
-            Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
-            Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
-
-            Assert.True(eventRecords.Records.TryDequeue(out exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
 
             Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
@@ -718,10 +702,9 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using var eventRecords = new ActivitySourceRecorder();
 
             Dictionary<Uri, Tuple<WebRequest, WebResponse>> requestData = new Dictionary<Uri, Tuple<WebRequest, WebResponse>>();
-            const int redirectCount = 3;
             for (int i = 0; i < 10; i++)
             {
-                Uri uriWithRedirect = new Uri(this.BuildRequestUrl(queryString: $"q={i}&redirects={redirectCount}"));
+                Uri uriWithRedirect = new Uri(this.BuildRequestUrl(queryString: $"q={i}&redirects=3"));
 
                 requestData[uriWithRedirect] = null;
             }
@@ -751,8 +734,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             // exactly 1 Start event per request and exactly 1 Stop event per response (if request succeeded)
             var successfulTasks = tasks.Where(t => t.Value.Status == TaskStatus.RanToCompletion);
 
-            Assert.Equal((redirectCount + 1) * tasks.Count, eventRecords.Records.Count(rec => rec.Key == "Start"));
-            Assert.Equal((redirectCount + 1) * successfulTasks.Count(), eventRecords.Records.Count(rec => rec.Key == "Stop"));
+            Assert.Equal(tasks.Count, eventRecords.Records.Count(rec => rec.Key == "Start"));
+            Assert.Equal(successfulTasks.Count(), eventRecords.Records.Count(rec => rec.Key == "Stop"));
 
             // Check to make sure: We have a WebRequest and a WebResponse for each successful request
             foreach (var pair in eventRecords.Records)

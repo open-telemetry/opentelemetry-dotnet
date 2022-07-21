@@ -40,7 +40,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         public const string ActivityName = ActivitySourceName + ".HttpRequestOut";
 
         internal static readonly Func<HttpWebRequest, string, IEnumerable<string>> HttpWebRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
-        internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Set(name, value);
+        internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Add(name, value);
 
         internal static HttpWebRequestInstrumentationOptions Options = new HttpWebRequestInstrumentationOptions();
 
@@ -196,6 +196,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private static void InstrumentRequest(HttpWebRequest request, ActivityContext activityContext)
             => Propagators.DefaultTextMapPropagator.Inject(new PropagationContext(activityContext, Baggage.Current), request, HttpWebRequestHeaderValuesSetter);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsRequestInstrumented(HttpWebRequest request)
+            => Propagators.DefaultTextMapPropagator.Extract(default, request, HttpWebRequestHeaderValuesGetter) != default;
+
         private static void ProcessRequest(HttpWebRequest request)
         {
             if (!WebRequestActivitySource.HasListeners() || !Options.EventFilter(request))
@@ -206,6 +210,13 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 // downstream services to continue from parent context, if any.
                 // Eg: Parent could be the Asp.Net activity.
                 InstrumentRequest(request, Activity.Current?.Context ?? default);
+                return;
+            }
+
+            if (IsRequestInstrumented(request))
+            {
+                // This request was instrumented by previous
+                // ProcessRequest, such is the case with redirect responses where the same request is sent again.
                 return;
             }
 

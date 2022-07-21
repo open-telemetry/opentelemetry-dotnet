@@ -196,11 +196,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         }
 
         [Fact]
-        public async Task HttpWebRequestInstrumentationWorksIfAlreadyInstrumented()
+        public async Task HttpWebRequestInstrumentationBacksOffIfAlreadyInstrumented()
         {
-            const string traceId = "0123456789abcdef0123456789abcdef";
-            const string parentSpanId = "0123456789abcdef";
-
             var activityProcessor = new Mock<BaseProcessor<Activity>>();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(activityProcessor.Object)
@@ -213,19 +210,12 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                 Method = new HttpMethod("GET"),
             };
 
-            request.Headers.Add("traceparent", $"00-{traceId}-{parentSpanId}-01");
+            request.Headers.Add("traceparent", "00-0123456789abcdef0123456789abcdef-0123456789abcdef-01");
 
             using var c = new HttpClient();
             await c.SendAsync(request);
 
-            Assert.Equal(3, activityProcessor.Invocations.Count);  // SetParentProvider/Begin/End called
-            var activity = (Activity)activityProcessor.Invocations[2].Arguments[0];
-
-            Assert.Equal(ActivityKind.Client, activity.Kind);
-            Assert.NotEqual(default, activity.Context.SpanId);
-            Assert.NotEqual(traceId, activity.TraceId.ToString());
-            Assert.NotEqual(parentSpanId, activity.SpanId.ToString());
-            Assert.NotEqual(parentSpanId, activity.ParentSpanId.ToString());
+            Assert.Equal(1, activityProcessor.Invocations.Count);
         }
 
         [Fact]
