@@ -26,8 +26,8 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// Represents an exponential bucket histogram with base = 2 ^ (2 ^ (-scale)).
     /// An exponential bucket histogram has infinite number of buckets, which are
-    /// identified by <c>Bucket[i] = ( base ^ i, base ^ (i + 1) ]</c>, where <c>i</c>
-    /// is an integer.
+    /// identified by <c>Bucket[index] = ( base ^ index, base ^ (index + 1) ]</c>,
+    /// where <c>index</c> is an integer.
     /// </summary>
     internal class ExponentialBucketHistogram
     {
@@ -68,13 +68,22 @@ namespace OpenTelemetry.Metrics
                 + "}";
         }
 
+        /// <summary>
+        /// Maps a finite positive IEEE 754 double-precision floating-point
+        /// number to <c>Bucket[index] = ( base ^ index, base ^ (index + 1) ]</c>,
+        /// where <c>index</c> is an integer.
+        /// </summary>
+        /// <param name="value">
+        /// The value to be bucketized. Must be a finite positive number.
+        /// </param>
+        /// <returns>
+        /// Returns the index of the bucket.
+        /// </returns>
         public int MapToIndex(double value)
         {
+            Debug.Assert(double.IsFinite(value), "IEEE-754 +Inf, -Inf and NaN should be filtered out before calling this method.");
             Debug.Assert(value != 0, "IEEE-754 zero values should be handled by ZeroCount.");
-
-            // TODO: handle +Inf, -Inf, NaN
-
-            value = Math.Abs(value);
+            Debug.Assert(!double.IsNegative(value), "IEEE-754 negative values should be normalized before calling this method.");
 
             if (this.Scale > 0)
             {
@@ -125,6 +134,11 @@ namespace OpenTelemetry.Metrics
             {
                 var repr = Convert.ToString(BitConverter.DoubleToInt64Bits(value), 2);
                 return new string('0', 64 - repr.Length) + repr + ":" + "(" + value + ")";
+            }
+
+            public static double FromString(string value)
+            {
+                return BitConverter.Int64BitsToDouble(Convert.ToInt64(value, 2));
             }
         }
     }
