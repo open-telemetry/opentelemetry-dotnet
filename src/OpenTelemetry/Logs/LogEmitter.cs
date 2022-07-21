@@ -44,10 +44,17 @@ namespace OpenTelemetry.Logs
         /// <param name="attributes"><see cref="LogRecordAttributeList"/>.</param>
         public void Emit(in LogRecordData data, in LogRecordAttributeList attributes = default)
         {
+            if (Sdk.SuppressInstrumentation)
+            {
+                return;
+            }
+
             var provider = this.loggerProvider;
             var processor = provider.Processor;
             if (processor != null)
             {
+                using var scope = SuppressInstrumentationScope.Begin();
+
                 var pool = provider.LogRecordPool;
 
                 var logRecord = pool.Rent();

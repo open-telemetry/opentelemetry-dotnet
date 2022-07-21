@@ -53,6 +53,8 @@ namespace OpenTelemetry.Logs
             var processor = provider.Processor;
             if (processor != null)
             {
+                using var scope = SuppressInstrumentationScope.Begin();
+
                 var pool = provider.LogRecordPool;
 
                 var record = pool.Rent();

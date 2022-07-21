@@ -173,5 +173,37 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(timestamp, logRecord.Timestamp);
             Assert.Equal(DateTimeKind.Unspecified, logRecord.Timestamp.Kind);
         }
+
+        [Fact]
+        public void CircularLogTest()
+        {
+            var options = new OpenTelemetryLoggerOptions();
+
+            using var provider1 = new OpenTelemetryLoggerProvider(options);
+
+            var emitter1 = provider1.CreateEmitter();
+            var emitter2 = provider1.CreateEmitter();
+
+            provider1.AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()
+            {
+                Emitter = emitter1,
+            }));
+
+            emitter2.Emit(default);
+        }
+
+        private sealed class NoopExporter : BaseExporter<LogRecord>
+        {
+            public LogEmitter Emitter { get; set; }
+
+            public override ExportResult Export(in Batch<LogRecord> batch)
+            {
+                var result = ExportResult.Success;
+
+                this.Emitter?.Emit(default);
+
+                return result;
+            }
+        }
     }
 }

@@ -138,11 +138,35 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(LogRecordSharedPool.Current, provider3.LogRecordPool);
         }
 
+        [Fact]
+        public void CircularLogTest()
+        {
+            var options = new OpenTelemetryLoggerOptions();
+
+            using var provider1 = new OpenTelemetryLoggerProvider(options);
+
+            var logger1 = provider1.CreateLogger("Logger1");
+            var logger2 = provider1.CreateLogger("Logger2");
+
+            provider1.AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()
+            {
+                Logger = logger2,
+            }));
+
+            logger1.LogInformation("Hello world");
+        }
+
         private sealed class NoopExporter : BaseExporter<LogRecord>
         {
+            public ILogger Logger { get; set; }
+
             public override ExportResult Export(in Batch<LogRecord> batch)
             {
-                return ExportResult.Success;
+                var result = ExportResult.Success;
+
+                this.Logger?.LogInformation("Export triggered");
+
+                return result;
             }
         }
     }
