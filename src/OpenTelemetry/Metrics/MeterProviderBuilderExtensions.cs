@@ -137,7 +137,7 @@ namespace OpenTelemetry.Metrics
         /// Sets the maximum number of Metric streams supported by the MeterProvider.
         /// When no Views are configured, every instrument will result in one metric stream,
         /// so this control the numbers of instruments supported.
-        /// When Views are configued, a single instrument can result in multiple metric streams,
+        /// When Views are configured, a single instrument can result in multiple metric streams,
         /// so this control the number of streams.
         /// </summary>
         /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
@@ -183,6 +183,8 @@ namespace OpenTelemetry.Metrics
         /// <summary>
         /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
         /// this provider is built from. Overwrites currently set ResourceBuilder.
+        /// You should usually use <see cref="ConfigureResource(MeterProviderBuilder, Action{ResourceBuilder})"/> instead
+        /// (call <see cref="ResourceBuilder.Clear"/> if desired).
         /// </summary>
         /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
         /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
@@ -191,7 +193,27 @@ namespace OpenTelemetry.Metrics
         {
             if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
             {
-                meterProviderBuilderBase.SetResourceBuilder(resourceBuilder);
+                meterProviderBuilderBase.ResourceBuilder = resourceBuilder;
+            }
+
+            return meterProviderBuilder;
+        }
+
+        /// <summary>
+        /// Modify the <see cref="ResourceBuilder"/> from which the Resource associated with
+        /// this provider is built from in-place.
+        /// </summary>
+        /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>
+        /// <param name="configure">An action which modifies the provided <see cref="ResourceBuilder"/> in-place.</param>
+        /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
+        public static MeterProviderBuilder ConfigureResource(this MeterProviderBuilder meterProviderBuilder, Action<ResourceBuilder> configure)
+        {
+            Guard.ThrowIfNull(meterProviderBuilder, nameof(meterProviderBuilder));
+            Guard.ThrowIfNull(configure, nameof(configure));
+
+            if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
+            {
+                configure(meterProviderBuilderBase.ResourceBuilder);
             }
 
             return meterProviderBuilder;

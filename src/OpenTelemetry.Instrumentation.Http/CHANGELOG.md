@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+* Added `http.scheme` tag to tracing instrumentation.
+  ([#3464](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3464))
+
+* [Breaking] Removes `SetHttpFlavor` option. "http.flavor" is
+  now always automatically populated.
+  To remove this tag, set "http.flavor" to null using `ActivityProcessor`.
+  ([#3380](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3380))
+
+* Fix `Enrich` not getting invoked when SocketException due to HostNotFound
+  occurs.
+  ([#3407](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3407))
+
 * Create spans for HTTP retries and redirects according to
   [opentelemetry-specification #2078](https://github.com/open-telemetry/opentelemetry-specification/pull/2078).
   ([#3072](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3072))

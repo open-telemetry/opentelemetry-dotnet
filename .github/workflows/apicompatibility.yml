@@ -13,6 +13,8 @@ jobs:
       CheckAPICompatibility: true
     steps:
     - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # fetching all
 
     - name: Install dependencies
       run: dotnet restore

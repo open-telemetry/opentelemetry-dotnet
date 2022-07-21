@@ -11,6 +11,26 @@
   null-valued tag.
   ([#3325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3325))
 
+* `CompositeProcessor` will now ensure `ParentProvider` is set on its children
+  ([#3368](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3368))
+
+* Added `ForceFlush` and helper ctors on `OpenTelemetryLoggerProvider`
+  ([#3364](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3364))
+
+* `Timestamp`, `TraceId`, `SpanId`, `TraceFlags`, `TraceState`, `CategoryName`,
+  `LogLevel`, `EventId`, & `Exception` properties on `LogRecord` now expose
+  `set` methods
+  ([#3378](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3378))
+
+* Handle possible exception when initializing the default service name.
+  ([#3405](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3405))
+
+* `LogRecord` instances are now reused to reduce memory pressure
+  ([#3385](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3385))
+
+* Fix exact match of activity source name when `wildcard` is used.
+  ([#3446](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3446))
+
 ## 1.3.0
 
 Released 2022-Jun-03
@@ -24,6 +44,10 @@ Released 2022-June-1
 * Swallow `ObjectDisposedException` in `BatchExportProcessor` and
   `PeriodicExportingMetricReader`.
   ([#3291](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3291))
+* Add `ConfigureResource` which can replace SetResourceBuilder more succinctly
+  in most cases and has greater flexibility (applies to
+  TracerProvicerBuilder, MeterProviderBuilder, OpenTelemetryLoggingOptions).
+  ([#3307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3307))
 
 ## 1.3.0-beta.2
 
