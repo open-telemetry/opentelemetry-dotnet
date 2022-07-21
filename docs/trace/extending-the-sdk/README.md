@@ -174,7 +174,10 @@ Writing an instrumentation library typically involves 3 steps.
        method, it should call the `AddInstrumentation` method, and `AddSource`
        method to enable its ActivitySource for the provider. An example
        instrumentation using this approach is [SqlClient
-       instrumentation](../../../src/OpenTelemetry.Instrumentation.SqlClient/TracerProviderBuilderExtensions.cs)
+       instrumentation](../../../src/OpenTelemetry.Instrumentation.SqlClient/TracerProviderBuilderExtensions.cs).
+       **CAUTION**: The instrumentation libraries requiring state management
+       are usually hard to auto-instrument. Therefore, they take the risk of not
+       being supported by [OpenTelemetry .NET Automatic Instrumentation](https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation).
 
     2. If the instrumentation library does not requires any state management
        tied to that of `TracerProvider`, then providing `TracerProviderBuilder`

@@ -7,6 +7,7 @@
     "spanStatus": "UNSET",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -22,6 +23,7 @@
     "spanStatus": "UNSET",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "POST",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -38,6 +40,7 @@
     "spanStatus": "UNSET",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -54,6 +57,7 @@
     "spanStatus": "UNSET",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -70,6 +74,7 @@
     "spanStatus": "UNSET",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -87,6 +92,7 @@
     "responseExpected": false,
     "recordException": false,
     "spanAttributes": {
+      "http.scheme": "https",
       "http.method": "GET",
       "http.host": "sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com",
       "http.flavor": "2.0",
@@ -103,6 +109,7 @@
     "responseExpected": false,
     "recordException": true,
     "spanAttributes": {
+      "http.scheme": "https",
       "http.method": "GET",
       "http.host": "sdlfaldfjalkdfjlkajdflkajlsdjf.sdlkjafsdjfalfadslkf.com",
       "http.flavor": "2.0",
@@ -118,6 +125,7 @@
     "spanStatus": "UNSET",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -134,6 +142,7 @@
     "spanStatus": "UNSET",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -150,6 +159,7 @@
     "spanStatus": "UNSET",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -166,6 +176,7 @@
     "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -182,6 +193,7 @@
     "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -198,6 +210,7 @@
     "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -214,6 +227,7 @@
     "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -230,6 +244,7 @@
     "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -246,6 +261,7 @@
     "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -262,6 +278,7 @@
     "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -278,6 +295,7 @@
     "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -294,6 +312,7 @@
     "spanStatus": "ERROR",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
@@ -310,6 +329,7 @@
     "spanStatus": "UNSET",
     "responseExpected": true,
     "spanAttributes": {
+      "http.scheme": "http",
       "http.method": "GET",
       "http.host": "{host}:{port}",
       "http.flavor": "2.0",
