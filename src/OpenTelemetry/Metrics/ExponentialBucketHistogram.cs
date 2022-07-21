@@ -38,8 +38,11 @@ internal class ExponentialBucketHistogram
     public ExponentialBucketHistogram(int scale, int maxBuckets = 160)
     {
         Guard.ThrowIfOutOfRange(scale, min: -20, max: 20); // TODO: calculate the actual range
+        Guard.ThrowIfOutOfRange(maxBuckets, min: 1);
 
         this.Scale = scale;
+        this.PositiveBuckets = new CircularBufferBuckets(maxBuckets);
+        this.NegativeBuckets = new CircularBufferBuckets(maxBuckets);
     }
 
     internal int Scale
@@ -53,7 +56,11 @@ internal class ExponentialBucketHistogram
         }
     }
 
+    internal CircularBufferBuckets PositiveBuckets { get; }
+
     internal long ZeroCount { get; private set; }
+
+    internal CircularBufferBuckets NegativeBuckets { get; }
 
     /// <inheritdoc/>
     public override string ToString()
@@ -114,6 +121,33 @@ internal class ExponentialBucketHistogram
             }
 
             return (exp - IEEE754Double.EXPONENT_BIAS) >> -this.Scale;
+        }
+    }
+
+    public void Record(double value)
+    {
+#if NETCOREAPP3_1_OR_GREATER
+        if (!double.IsFinite(value))
+#else
+        if (double.IsInfinity(value) || double.IsNaN(value))
+#endif
+        {
+            return;
+        }
+
+        var c = value.CompareTo(0);
+
+        if (c > 0)
+        {
+            this.PositiveBuckets.TryIncrement(this.MapToIndex(value));
+        }
+        else if (c < 0)
+        {
+            this.NegativeBuckets.TryIncrement(this.MapToIndex(-value));
+        }
+        else // c == 0
+        {
+            this.ZeroCount++;
         }
     }
 

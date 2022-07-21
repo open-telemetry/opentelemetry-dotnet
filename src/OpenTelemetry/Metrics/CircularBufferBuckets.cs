@@ -71,6 +71,7 @@ internal class CircularBufferBuckets
     /// <remarks>
     /// The "index" value can be positive, zero or negative.
     /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryIncrement(int index)
     {
         if (this.trait == null)
