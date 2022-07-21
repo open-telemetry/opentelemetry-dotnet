@@ -12,7 +12,7 @@ into OpenTelemetry logs.
 ## Installation
 
 ```shell
-dotnet add package OpenTelemetry.Extensions.EventSource
+dotnet add package OpenTelemetry.Extensions.EventSource --prerelease
 ```
 
 ## Usage Example
