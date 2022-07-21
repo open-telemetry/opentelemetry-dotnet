@@ -1,18 +1,18 @@
-# OpenTelemetry.Extensions.Tracing
+# OpenTelemetry.Extensions.EventSource
 
-[![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Extensions.Tracing.svg)](https://www.nuget.org/packages/OpenTelemetry.Extensions.Tracing)
-[![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Extensions.Tracing.svg)](https://www.nuget.org/packages/OpenTelemetry.Extensions.Tracing)
+[![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Extensions.EventSource.svg)](https://www.nuget.org/packages/OpenTelemetry.Extensions.EventSource)
+[![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Extensions.EventSource.svg)](https://www.nuget.org/packages/OpenTelemetry.Extensions.EventSource)
 
 This project contains an
 [EventListener](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventlistener)
 which can be used to translate events written to an
 [EventSource](https://docs.microsoft.com/dotnet/api/system.diagnostics.tracing.eventsource)
-into to OpenTelemetry logs.
+into OpenTelemetry logs.
 
 ## Installation
 
 ```shell
-dotnet add package OpenTelemetry.Extensions.Tracing
+dotnet add package OpenTelemetry.Extensions.EventSource
 ```
 
 ## Usage Example
