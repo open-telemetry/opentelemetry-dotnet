@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Diagnostics.Tracing;
+using Examples.LoggingExtensions;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using Serilog;
@@ -29,11 +30,11 @@ var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options =>
         .AddConsoleExporter();
 });
 
-// Creates an OpenTelemetryEventSourceLogEmitter for routing EventSources with
-// names matching OpenTelemetry* into logs
+// Creates an OpenTelemetryEventSourceLogEmitter for routing ExampleEventSource
+// events into logs
 using var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEmitter(
     openTelemetryLoggerProvider, // <- Events will be written to openTelemetryLoggerProvider
-    (name) => name.StartsWith("OpenTelemetry") ? EventLevel.LogAlways : null,
+    (name) => name == ExampleEventSource.EventSourceName ? EventLevel.Informational : null,
     disposeProvider: false); // <- Do not dispose the provider with OpenTelemetryEventSourceLogEmitter since in this case it is shared with Serilog
 
 // Configure Serilog global logger
@@ -43,17 +44,15 @@ Log.Logger = new LoggerConfiguration()
         disposeProvider: false) // <- Do not dispose the provider with Serilog since in this case it is shared with OpenTelemetryEventSourceLogEmitter
     .CreateLogger();
 
+ExampleEventSource.Log.ExampleEvent("Startup complete");
+
 // Note: Serilog ForContext API is used to set "CategoryName" on log messages
 ILogger programLogger = Log.Logger.ForContext<Program>();
 
 programLogger.Information("Application started {Greeting} {Location}", "Hello", "World");
 
-programLogger.Information("Message {Array}", new string[] { "value1", "value2" });
-
 // Note: For Serilog this call flushes all logs
 Log.CloseAndFlush();
 
-// Manually dispose OpenTelemetryLoggerProvider since it is being shared. This
-// causes a log message to be written to the OpenTelemetry-Sdk EventSource which
-// OpenTelemetryEventSourceLogEmitter will capture.
+// Manually dispose OpenTelemetryLoggerProvider since it is being shared
 openTelemetryLoggerProvider.Dispose();
