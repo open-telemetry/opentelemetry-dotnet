@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
@@ -102,6 +103,46 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             Assert.NotNull(logRecord.StateValues);
             Assert.Single(logRecord.StateValues);
             Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "greeting" && (string?)kvp.Value == "World");
+
+            Assert.Equal(default, logRecord.TraceId);
+            Assert.Equal(default, logRecord.SpanId);
+            Assert.Null(logRecord.TraceState);
+            Assert.Equal(ActivityTraceFlags.None, logRecord.TraceFlags);
+        }
+
+        [Fact]
+        public void SerilogBasicLogWithActivityTest()
+        {
+            using var activity = new Activity("Test");
+            activity.Start();
+
+            List<LogRecord> exportedItems = new();
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options =>
+            {
+                options.AddInMemoryExporter(exportedItems);
+            });
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.OpenTelemetry(openTelemetryLoggerProvider, disposeProvider: true)
+                .CreateLogger();
+
+            Log.Logger.Information("Hello {greeting}", "World");
+
+            Log.CloseAndFlush();
+
+            Assert.Single(exportedItems);
+
+            var logRecord = exportedItems[0];
+
+            Assert.NotEqual(default, logRecord.TraceId);
+
+            Assert.Equal(activity.TraceId, logRecord.TraceId);
+            Assert.Equal(activity.SpanId, logRecord.SpanId);
+            Assert.Equal(activity.TraceStateString, logRecord.TraceState);
+            Assert.Equal(activity.ActivityTraceFlags, logRecord.TraceFlags);
         }
 
         [Fact]
