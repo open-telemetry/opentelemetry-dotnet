@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Fix issue where when an application has an ExceptionFilter, the exception data
+  wouldn't be collected.
+  (TODO)
+
 * `TracerProviderSDK` modified for spans with remote parent. For such spans
   activity will be created irrespective of SamplingResult, to maintain context
   propagation.
