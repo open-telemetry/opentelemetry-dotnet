@@ -198,6 +198,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
     ""spanStatus"": ""UNSET"",
     ""spanKind"": ""Client"",
     ""spanAttributes"": {
+      ""http.scheme"": ""http"",
       ""http.method"": ""GET"",
       ""http.host"": ""{host}:{port}"",
       ""http.status_code"": ""399"",
