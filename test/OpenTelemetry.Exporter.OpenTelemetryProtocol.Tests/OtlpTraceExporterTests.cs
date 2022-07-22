@@ -223,7 +223,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         public void SpanLimitsTest()
         {
             SdkConfiguration.Instance.AttributeValueLengthLimit = 4;
-            SdkConfiguration.Instance.AttributeCountLimit = 2;
+            SdkConfiguration.Instance.AttributeCountLimit = 3;
             SdkConfiguration.Instance.SpanEventCountLimit = 1;
             SdkConfiguration.Instance.SpanLinkCountLimit = 1;
 
@@ -231,6 +231,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             {
                 new KeyValuePair<string, object>("TruncatedTag", "12345"),
                 new KeyValuePair<string, object>("TruncatedStringArray", new string[] { "12345", "1234", string.Empty, null }),
+                new KeyValuePair<string, object>("TruncatedObjectTag", new object()),
                 new KeyValuePair<string, object>("OneTagTooMany", 1),
             };
 
@@ -252,19 +253,22 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             var otlpSpan = activity.ToOtlpSpan();
 
             Assert.NotNull(otlpSpan);
-            Assert.Equal(2, otlpSpan.Attributes.Count);
+            Assert.Equal(3, otlpSpan.Attributes.Count);
             Assert.Equal("1234", otlpSpan.Attributes[0].Value.StringValue);
             ArrayValueAsserts(otlpSpan.Attributes[1].Value.ArrayValue.Values);
+            Assert.Equal(new object().ToString().Substring(0, 4), otlpSpan.Attributes[2].Value.StringValue);
 
             Assert.Single(otlpSpan.Events);
-            Assert.Equal(2, otlpSpan.Events[0].Attributes.Count);
+            Assert.Equal(3, otlpSpan.Events[0].Attributes.Count);
             Assert.Equal("1234", otlpSpan.Events[0].Attributes[0].Value.StringValue);
             ArrayValueAsserts(otlpSpan.Events[0].Attributes[1].Value.ArrayValue.Values);
+            Assert.Equal(new object().ToString().Substring(0, 4), otlpSpan.Events[0].Attributes[2].Value.StringValue);
 
             Assert.Single(otlpSpan.Links);
-            Assert.Equal(2, otlpSpan.Links[0].Attributes.Count);
+            Assert.Equal(3, otlpSpan.Links[0].Attributes.Count);
             Assert.Equal("1234", otlpSpan.Links[0].Attributes[0].Value.StringValue);
             ArrayValueAsserts(otlpSpan.Links[0].Attributes[1].Value.ArrayValue.Values);
+            Assert.Equal(new object().ToString().Substring(0, 4), otlpSpan.Links[0].Attributes[2].Value.StringValue);
 
             void ArrayValueAsserts(RepeatedField<OtlpCommon.AnyValue> values)
             {

@@ -78,7 +78,7 @@ internal abstract class TagTransformer<T>
             default:
                 try
                 {
-                    result = this.TransformStringTag(tag.Key, tag.Value.ToString());
+                    result = this.TransformStringTag(tag.Key, TruncateString(tag.Value.ToString(), maxLength));
                 }
                 catch
                 {
