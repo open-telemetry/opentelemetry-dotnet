@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Added `http.scheme` tag to tracing instrumentation.
+  ([#3464](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3464))
+
 * [Breaking] Removes `SetHttpFlavor` option. "http.flavor" is
   now always automatically populated.
   To remove this tag, set "http.flavor" to null using `ActivityProcessor`.
