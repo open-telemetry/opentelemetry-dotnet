@@ -26,42 +26,52 @@ namespace OpenTelemetry.Tests
         public void Verify_ForceFlush_HandlesException()
         {
             // By default, ForceFlush should return true.
-            var testExporter = new TestProcessor();
-            Assert.True(testExporter.ForceFlush());
+            var testProcessor = new TestProcessor();
+            Assert.True(testProcessor.ForceFlush());
 
             // BaseExporter should catch any exceptions and return false.
-            var exceptionTestExporter = new ExceptionTestProcessor();
-            Assert.False(exceptionTestExporter.ForceFlush());
+            var exceptionTestProcessor = new ExceptionTestProcessor();
+            Assert.False(exceptionTestProcessor.ForceFlush());
         }
 
         [Fact]
         public void Verify_Shutdown_HandlesSecond()
         {
             // By default, Shutdown should return true.
-            var testExporter = new TestProcessor();
-            Assert.True(testExporter.Shutdown());
+            var testProcessor = new TestProcessor();
+            Assert.True(testProcessor.Shutdown());
 
             // A second Shutdown should return false.
-            Assert.False(testExporter.Shutdown());
+            Assert.False(testProcessor.Shutdown());
         }
 
         [Fact]
         public void Verify_Shutdown_HandlesException()
         {
             // BaseExporter should catch any exceptions and return false.
-            var exceptionTestExporter = new ExceptionTestProcessor();
-            Assert.False(exceptionTestExporter.Shutdown());
+            var exceptionTestProcessor = new ExceptionTestProcessor();
+            Assert.False(exceptionTestProcessor.Shutdown());
+        }
+
+        [Fact]
+        public void NoOp()
+        {
+            var testProcessor = new TestProcessor();
+
+            // These two methods are no-op, but account for 7% of the test coverage.
+            testProcessor.OnStart(new object());
+            testProcessor.OnEnd(new object());
         }
 
         /// <summary>
-        /// This Exporter will be used to test the default behavior of <see cref="BaseProcessor{T}"/>.
+        /// This Processor will be used to test the default behavior of <see cref="BaseProcessor{T}"/>.
         /// </summary>
         public class TestProcessor : BaseProcessor<object>
         {
         }
 
         /// <summary>
-        /// This Exporter overrides the <see cref="OnForceFlush(int)"/> and <see cref="OnShutdown(int)"/>
+        /// This Processor overrides the <see cref="OnForceFlush(int)"/> and <see cref="OnShutdown(int)"/>
         /// methods to throw an exception. This will test that exceptions are caught and handled by
         /// the <see cref="BaseProcessor{T}"/>.
         /// </summary>
