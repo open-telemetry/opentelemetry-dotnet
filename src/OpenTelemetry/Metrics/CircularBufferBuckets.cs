@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Runtime.CompilerServices;
-
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -65,35 +64,42 @@ internal class CircularBufferBuckets
     /// </summary>
     /// <param name="index">The index of the bucket.</param>
     /// <returns>
-    /// Returns <c>true</c> if the increment attempt succeeded;
-    /// <c>false</c> if the underlying buffer is running out of capacity.
+    /// Returns <c>0</c> if the increment attempt succeeded;
+    /// Returns a positive integer <c>Math.Ceiling(log_2(X))</c> if the
+    /// underlying buffer is running out of capacity, and the buffer has to
+    /// increase to <c>X * Capacity</c> at minimum.
     /// </returns>
     /// <remarks>
     /// The "index" value can be positive, zero or negative.
     /// </remarks>
-    public bool TryIncrement(int index)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int TryIncrement(int index)
     {
+        var capacity = this.Capacity;
+
         if (this.trait == null)
         {
-            this.trait = new long[this.Capacity];
+            this.trait = new long[capacity];
 
             this.begin = index;
             this.end = index;
         }
         else if (index > this.end)
         {
-            if (index - this.begin >= this.Capacity)
+            var diff = index - this.begin;
+            if (diff >= capacity)
             {
-                return false;
+                return CalculateScaleReduction(diff + 1, capacity);
             }
 
             this.end = index;
         }
         else if (index < this.begin)
         {
-            if (this.end - index >= this.Capacity)
+            var diff = this.end - index;
+            if (diff >= this.Capacity)
             {
-                return false;
+                return CalculateScaleReduction(diff + 1, capacity);
             }
 
             this.begin = index;
@@ -101,7 +107,20 @@ internal class CircularBufferBuckets
 
         this.trait[this.ModuloIndex(index)] += 1;
 
-        return true;
+        return 0;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        int CalculateScaleReduction(int size, int capacity)
+        {
+            var shift = MathHelper.LeadingZero32(capacity) - MathHelper.LeadingZero32(size);
+
+            if (size > (capacity << shift))
+            {
+                shift++;
+            }
+
+            return shift;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
