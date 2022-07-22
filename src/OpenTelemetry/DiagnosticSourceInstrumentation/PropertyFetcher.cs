@@ -71,12 +71,30 @@ namespace OpenTelemetry.Instrumentation
                 return false;
             }
 
+            object cur = obj;
             if (this.innerFetcher == null)
             {
-                this.innerFetcher = PropertyFetch.Create(obj.GetType().GetTypeInfo(), this.propertyName);
+                if (this.propertyName.Contains("."))
+                {
+                    var parts = this.propertyName.Split('.');
+                    for (var i = 0; i < parts.Length; i++)
+                    {
+                        this.innerFetcher = PropertyFetch.Create(cur.GetType().GetTypeInfo(), parts[i]);
+                        if (i == parts.Length - 1)
+                        {
+                            break;
+                        }
+
+                        cur = cur.GetType().GetProperty(parts[i]).GetValue(cur);
+                    }
+                }
+                else
+                {
+                    this.innerFetcher = PropertyFetch.Create(obj.GetType().GetTypeInfo(), this.propertyName);
+                }
             }
 
-            return this.innerFetcher.TryFetch(obj, out value);
+            return this.innerFetcher.TryFetch(cur, out value);
         }
 
         // see https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/System/Diagnostics/DiagnosticSourceEventSource.cs
