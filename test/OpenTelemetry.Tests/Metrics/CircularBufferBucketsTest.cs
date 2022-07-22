@@ -93,6 +93,19 @@ public class CircularBufferBucketsTest
     }
 
     [Fact]
+    public void IntegerOverflow()
+    {
+        var buckets = new CircularBufferBuckets(1);
+
+        Assert.Equal(0, buckets.TryIncrement(int.MaxValue));
+        Assert.Equal(31, buckets.TryIncrement(1));
+        Assert.Equal(31, buckets.TryIncrement(0));
+        Assert.Equal(32, buckets.TryIncrement(-1));
+        Assert.Equal(32, buckets.TryIncrement(int.MinValue + 1));
+        Assert.Equal(32, buckets.TryIncrement(int.MinValue));
+    }
+
+    [Fact]
     public void IndexOperations()
     {
         var buckets = new CircularBufferBuckets(5);
