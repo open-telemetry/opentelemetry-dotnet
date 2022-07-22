@@ -19,7 +19,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.Globalization;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 using Xunit;
@@ -309,11 +308,6 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
 
                 base.Dispose(disposing);
             }
-        }
-
-        private sealed class ComplexType
-        {
-            public override string ToString() => "ComplexTypeToString";
         }
 
         [EventSource(Name = "OpenTelemetry.Extensions.EventSource.Tests")]
