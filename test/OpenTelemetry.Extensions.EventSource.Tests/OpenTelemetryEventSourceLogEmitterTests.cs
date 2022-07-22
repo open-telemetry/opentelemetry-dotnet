@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.Globalization;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 using Xunit;
@@ -236,6 +237,63 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "arg2" && (int?)kvp.Value == 18);
         }
 
+        [Theory(Skip = "Not runnable in CI, see note.")]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void OpenTelemetryEventSourceLogEmitterActivityIdTest(bool enableTplListener)
+        {
+            /*
+             * Note:
+             *
+             * To enable Activity ID the 'System.Threading.Tasks.TplEventSource'
+             * source must be enabled see:
+             * https://docs.microsoft.com/en-us/dotnet/core/diagnostics/eventsource-activity-ids#tracking-work-using-an-activity-id
+             *
+             * Once enabled, it cannot be turned off:
+             * https://github.com/dotnet/runtime/blob/0fbdb1ed6e076829e4693a61ae5d11c4cb23e7ee/src/libraries/System.Private.CoreLib/src/System/Diagnostics/Tracing/ActivityTracker.cs#L208
+             *
+             * That behavior makes testing it difficult.
+             */
+            using var tplListener = enableTplListener ? new TplEventSourceListener() : null;
+
+            List<LogRecord> exportedItems = new();
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            var openTelemetryLoggerProvider = new WrappedOpenTelemetryLoggerProvider(options =>
+            {
+                options.AddInMemoryExporter(exportedItems);
+            });
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+            using (var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEmitter(
+                openTelemetryLoggerProvider,
+                (name) => name == "OpenTelemetry.Extensions.EventSource.Tests" ? EventLevel.LogAlways : null))
+            {
+                TestEventSource.Log.WorkStart();
+
+                TestEventSource.Log.SubworkStart();
+
+                TestEventSource.Log.SubworkStop();
+
+                TestEventSource.Log.WorkStop();
+            }
+
+            Assert.Equal(4, exportedItems.Count);
+
+            var logRecord = exportedItems[1];
+
+            if (enableTplListener)
+            {
+                Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "event_source.activity_id");
+                Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "event_source.related_activity_id");
+            }
+            else
+            {
+                Assert.DoesNotContain(logRecord.StateValues, kvp => kvp.Key == "event_source.activity_id");
+                Assert.DoesNotContain(logRecord.StateValues, kvp => kvp.Key == "event_source.related_activity_id");
+            }
+        }
+
         private sealed class WrappedOpenTelemetryLoggerProvider : OpenTelemetryLoggerProvider
         {
             public WrappedOpenTelemetryLoggerProvider(Action<OpenTelemetryLoggerOptions> configure)
@@ -280,6 +338,59 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             public void ComplexEvent(string arg1, int arg2)
             {
                 this.WriteEvent(ComplexEventId, arg1, arg2);
+            }
+
+            [Event(3, Level = EventLevel.Verbose)]
+            public void WorkStart()
+            {
+                this.WriteEvent(3);
+            }
+
+            [Event(4, Level = EventLevel.Verbose)]
+            public void WorkStop()
+            {
+                this.WriteEvent(4);
+            }
+
+            [Event(5, Level = EventLevel.Verbose)]
+            public void SubworkStart()
+            {
+                this.WriteEvent(5);
+            }
+
+            [Event(6, Level = EventLevel.Verbose)]
+            public void SubworkStop()
+            {
+                this.WriteEvent(6);
+            }
+        }
+
+        private sealed class TplEventSourceListener : EventListener
+        {
+            private readonly List<System.Diagnostics.Tracing.EventSource> eventSources = new();
+
+            /// <inheritdoc/>
+            public override void Dispose()
+            {
+                foreach (System.Diagnostics.Tracing.EventSource eventSource in this.eventSources)
+                {
+                    this.DisableEvents(eventSource);
+                }
+
+                this.eventSources.Clear();
+
+                base.Dispose();
+            }
+
+            protected override void OnEventSourceCreated(System.Diagnostics.Tracing.EventSource eventSource)
+            {
+                if (eventSource.Name == "System.Threading.Tasks.TplEventSource")
+                {
+                    // Activity IDs aren't enabled by default.
+                    // Enabling Keyword 0x80 on the TplEventSource turns them on
+                    this.EnableEvents(eventSource, EventLevel.LogAlways, (EventKeywords)0x80);
+                    this.eventSources.Add(eventSource);
+                }
             }
         }
     }
