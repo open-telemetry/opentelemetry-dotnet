@@ -102,18 +102,7 @@ internal class ExponentialBucketHistogram
 
             if (exp == 0)
             {
-                // TODO: benchmark and see if this should be changed to a lookup table.
-                fraction--;
-
-                for (int i = IEEE754Double.FRACTION_BITS - 1; i >= 0; i--)
-                {
-                    if ((fraction >> i) != 0)
-                    {
-                        break;
-                    }
-
-                    exp--;
-                }
+                exp -= MathHelper.LeadingZero64(fraction - 1) - (64 - IEEE754Double.FRACTION_BITS);
             }
             else if (fraction == 0)
             {
@@ -145,7 +134,7 @@ internal class ExponentialBucketHistogram
         {
             this.NegativeBuckets.TryIncrement(this.MapToIndex(-value));
         }
-        else // c == 0
+        else
         {
             this.ZeroCount++;
         }

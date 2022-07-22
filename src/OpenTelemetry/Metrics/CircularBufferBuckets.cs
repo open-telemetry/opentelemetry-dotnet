@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Runtime.CompilerServices;
-
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
