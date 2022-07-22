@@ -20,6 +20,7 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Prometheus
 {
@@ -39,11 +40,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteDouble(byte[] buffer, int cursor, double value)
         {
-#if NETCOREAPP3_1_OR_GREATER
-            if (double.IsFinite(value))
-#else
-            if (!double.IsInfinity(value) && !double.IsNaN(value))
-#endif
+            if (MathHelper.IsFinite(value))
             {
 #if NETCOREAPP3_1_OR_GREATER
                 Span<char> span = stackalloc char[128];

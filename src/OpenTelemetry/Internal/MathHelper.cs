@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Internal;
@@ -93,5 +94,26 @@ internal static class MathHelper
 
             return LeadingZero32((int)value) + 32;
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsFinite(double value)
+    {
+#if NETCOREAPP3_1_OR_GREATER
+        return double.IsFinite(value);
+#else
+        return !double.IsInfinity(value) && !double.IsNaN(value);
+#endif
+    }
+
+    public static string DoubleToString(double value)
+    {
+        var repr = Convert.ToString(BitConverter.DoubleToInt64Bits(value), 2);
+        return new string('0', 64 - repr.Length) + repr;
+    }
+
+    public static double DoubleFromString(string value)
+    {
+        return BitConverter.Int64BitsToDouble(Convert.ToInt64(value, 2));
     }
 }

@@ -84,7 +84,7 @@ internal class ExponentialBucketHistogram
     /// </returns>
     public int MapToIndex(double value)
     {
-        Debug.Assert(double.IsFinite(value), "IEEE-754 +Inf, -Inf and NaN should be filtered out before calling this method.");
+        Debug.Assert(MathHelper.IsFinite(value), "IEEE-754 +Inf, -Inf and NaN should be filtered out before calling this method.");
         Debug.Assert(value != 0, "IEEE-754 zero values should be handled by ZeroCount.");
         Debug.Assert(!double.IsNegative(value), "IEEE-754 negative values should be normalized before calling this method.");
 
@@ -97,29 +97,25 @@ internal class ExponentialBucketHistogram
         else
         {
             var bits = BitConverter.DoubleToInt64Bits(value);
-            var exp = (int)((bits & IEEE754Double.EXPONENT_MASK) >> IEEE754Double.FRACTION_BITS);
-            var fraction = bits & IEEE754Double.FRACTION_MASK;
+            var exp = (int)((bits & 0x7FF0000000000000L /* exponent mask */) >> 52 /* fraction width */);
+            var fraction = bits & 0xFFFFFFFFFFFFFL /* fraction mask */;
 
             if (exp == 0)
             {
-                exp -= MathHelper.LeadingZero64(fraction - 1) - (64 - IEEE754Double.FRACTION_BITS);
+                exp -= MathHelper.LeadingZero64(fraction - 1) - 12 /* 64 - fraction width */;
             }
             else if (fraction == 0)
             {
                 exp--;
             }
 
-            return (exp - IEEE754Double.EXPONENT_BIAS) >> -this.Scale;
+            return (exp - 1023 /* exponent bias */) >> -this.Scale;
         }
     }
 
     public void Record(double value)
     {
-#if NETCOREAPP3_1_OR_GREATER
-        if (!double.IsFinite(value))
-#else
-        if (double.IsInfinity(value) || double.IsNaN(value))
-#endif
+        if (!MathHelper.IsFinite(value))
         {
             return;
         }
@@ -137,27 +133,6 @@ internal class ExponentialBucketHistogram
         else
         {
             this.ZeroCount++;
-        }
-    }
-
-    public sealed class IEEE754Double
-    {
-#pragma warning disable SA1310 // Field name should not contain an underscore
-        internal const int EXPONENT_BIAS = 1023;
-        internal const long EXPONENT_MASK = 0x7FF0000000000000L;
-        internal const int FRACTION_BITS = 52;
-        internal const long FRACTION_MASK = 0xFFFFFFFFFFFFFL;
-#pragma warning restore SA1310 // Field name should not contain an underscore
-
-        public static string ToString(double value)
-        {
-            var repr = Convert.ToString(BitConverter.DoubleToInt64Bits(value), 2);
-            return new string('0', 64 - repr.Length) + repr + ":" + "(" + value + ")";
-        }
-
-        public static double FromString(string value)
-        {
-            return BitConverter.Int64BitsToDouble(Convert.ToInt64(value, 2));
         }
     }
 }
