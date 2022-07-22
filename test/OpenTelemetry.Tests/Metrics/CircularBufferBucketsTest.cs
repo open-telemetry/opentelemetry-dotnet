@@ -36,23 +36,29 @@ public class CircularBufferBucketsTest
         Assert.Equal(5, buckets.Capacity);
         Assert.Equal(0, buckets.Size);
 
-        Assert.True(buckets.TryIncrement(0));
+        Assert.Equal(0, buckets.TryIncrement(0));
         Assert.Equal(1, buckets.Size);
 
-        Assert.True(buckets.TryIncrement(1));
+        Assert.Equal(0, buckets.TryIncrement(1));
         Assert.Equal(2, buckets.Size);
 
-        Assert.True(buckets.TryIncrement(3));
+        Assert.Equal(0, buckets.TryIncrement(3));
         Assert.Equal(4, buckets.Size);
 
-        Assert.True(buckets.TryIncrement(4));
+        Assert.Equal(0, buckets.TryIncrement(4));
         Assert.Equal(5, buckets.Size);
 
-        Assert.True(buckets.TryIncrement(2));
+        Assert.Equal(0, buckets.TryIncrement(2));
         Assert.Equal(5, buckets.Size);
 
-        Assert.False(buckets.TryIncrement(5));
-        Assert.False(buckets.TryIncrement(-1));
+        Assert.Equal(1, buckets.TryIncrement(9));
+        Assert.Equal(1, buckets.TryIncrement(5));
+        Assert.Equal(1, buckets.TryIncrement(-1));
+        Assert.Equal(2, buckets.TryIncrement(10));
+        Assert.Equal(2, buckets.TryIncrement(19));
+        Assert.Equal(3, buckets.TryIncrement(20));
+        Assert.Equal(3, buckets.TryIncrement(39));
+        Assert.Equal(4, buckets.TryIncrement(40));
         Assert.Equal(5, buckets.Size);
     }
 
@@ -61,14 +67,14 @@ public class CircularBufferBucketsTest
     {
         var buckets = new CircularBufferBuckets(5);
 
-        Assert.True(buckets.TryIncrement(102));
-        Assert.True(buckets.TryIncrement(103));
-        Assert.True(buckets.TryIncrement(101));
-        Assert.True(buckets.TryIncrement(100));
-        Assert.True(buckets.TryIncrement(104));
+        Assert.Equal(0, buckets.TryIncrement(102));
+        Assert.Equal(0, buckets.TryIncrement(103));
+        Assert.Equal(0, buckets.TryIncrement(101));
+        Assert.Equal(0, buckets.TryIncrement(100));
+        Assert.Equal(0, buckets.TryIncrement(104));
 
-        Assert.False(buckets.TryIncrement(99));
-        Assert.False(buckets.TryIncrement(105));
+        Assert.Equal(1, buckets.TryIncrement(99));
+        Assert.Equal(1, buckets.TryIncrement(105));
     }
 
     [Fact]
@@ -76,14 +82,14 @@ public class CircularBufferBucketsTest
     {
         var buckets = new CircularBufferBuckets(5);
 
-        Assert.True(buckets.TryIncrement(2));
-        Assert.True(buckets.TryIncrement(0));
-        Assert.True(buckets.TryIncrement(-2));
-        Assert.True(buckets.TryIncrement(1));
-        Assert.True(buckets.TryIncrement(-1));
+        Assert.Equal(0, buckets.TryIncrement(2));
+        Assert.Equal(0, buckets.TryIncrement(0));
+        Assert.Equal(0, buckets.TryIncrement(-2));
+        Assert.Equal(0, buckets.TryIncrement(1));
+        Assert.Equal(0, buckets.TryIncrement(-1));
 
-        Assert.False(buckets.TryIncrement(3));
-        Assert.False(buckets.TryIncrement(-3));
+        Assert.Equal(1, buckets.TryIncrement(3));
+        Assert.Equal(1, buckets.TryIncrement(-3));
     }
 
     [Fact]
