@@ -112,7 +112,7 @@ internal sealed class CircularBufferBuckets
         return 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        int CalculateScaleReduction(int size, int capacity)
+        static int CalculateScaleReduction(int size, int capacity)
         {
             var shift = MathHelper.LeadingZero32(capacity);
 
