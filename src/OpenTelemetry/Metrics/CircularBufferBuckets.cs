@@ -22,7 +22,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// A histogram buckets implementation based on circular buffer.
 /// </summary>
-internal class CircularBufferBuckets
+internal sealed class CircularBufferBuckets
 {
     private long[] trait;
     private int begin = 0;
