@@ -181,7 +181,7 @@ namespace OpenTelemetry.Internal.Tests
             [InlineData("paramName")]
             public static void Ctor_ParameterName_Roundtrip(string value)
             {
-                var caea = new Guard.CallerArgumentExpressionAttribute(value);
+                var caea = new CallerArgumentExpressionAttribute(value);
                 Assert.Equal(value, caea.ParameterName);
             }
 
@@ -193,7 +193,7 @@ namespace OpenTelemetry.Internal.Tests
                 Assert.Equal("new object()", GetValue(new object()));
             }
 
-            private static string GetValue(object argument, [Guard.CallerArgumentExpression("argument")] string expr = null) => expr;
+            private static string GetValue(object argument, [CallerArgumentExpression("argument")] string expr = null) => expr;
         }
 #endif
     }
