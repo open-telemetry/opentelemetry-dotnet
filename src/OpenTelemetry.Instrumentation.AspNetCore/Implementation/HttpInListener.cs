@@ -45,7 +45,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private readonly PropertyFetcher<HttpContext> startContextFetcher = new("HttpContext");
         private readonly PropertyFetcher<HttpContext> stopContextFetcher = new("HttpContext");
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
-        private readonly PropertyFetcher<Exception> stopExceptionFilterFetcher = new("ExceptionContext.Exception");
         private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new("actionDescriptor");
         private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new("AttributeRouteInfo");
         private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new("Template");
@@ -274,32 +273,29 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         public override void OnException(Activity activity, object payload)
         {
-            if (!activity.IsAllDataRequested)
+            if (activity.IsAllDataRequested)
             {
-                return;
-            }
+                if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnException));
+                    return;
+                }
 
-            var exc = this.TryFetchException(payload);
-            if (exc == null)
-            {
-                AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnException));
-                return;
-            }
+                if (this.options.RecordException)
+                {
+                    activity.RecordException(exc);
+                }
 
-            if (this.options.RecordException)
-            {
-                activity.RecordException(exc);
-            }
+                activity.SetStatus(Status.Error.WithDescription(exc.Message));
 
-            activity.SetStatus(Status.Error.WithDescription(exc.Message));
-
-            try
-            {
-                this.options.Enrich?.Invoke(activity, "OnException", exc);
-            }
-            catch (Exception ex)
-            {
-                AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                try
+                {
+                    this.options.Enrich?.Invoke(activity, "OnException", exc);
+                }
+                catch (Exception ex)
+                {
+                    AspNetCoreInstrumentationEventSource.Log.EnrichmentException(ex);
+                }
             }
         }
 
