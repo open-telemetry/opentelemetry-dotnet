@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -130,6 +131,28 @@ internal sealed class CircularBufferBuckets
         }
     }
 
+    public void ScaleDown(int n)
+    {
+        Debug.Assert(n > 0, "The scale down level must be a positive integer.");
+
+        if (this.trait == null)
+        {
+            return;
+        }
+
+        // TODO: avoid allocating new array by doing the calculation in-place.
+        var array = new long[this.Capacity];
+
+        for (var index = this.begin; index <= this.end; index++)
+        {
+            array[this.ModuloIndex(index >> n)] += this[index];
+        }
+
+        this.begin >>= n;
+        this.end >>= n;
+        this.trait = array;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int ModuloIndex(int value)
     {
@@ -142,4 +165,18 @@ internal sealed class CircularBufferBuckets
 
         return value;
     }
+
+    /*
+    public override string ToString()
+    {
+        return nameof(CircularBufferBuckets)
+            + "{"
+            + nameof(this.Capacity) + "=" + this.Capacity + ", "
+            + nameof(this.Size) + "=" + this.Size + ", "
+            + nameof(this.begin) + "=" + this.begin + ", "
+            + nameof(this.end) + "=" + this.end + ", "
+            + (this.trait == null ? "null" : "[" + string.Join(", ", this.trait) + "]")
+            + "}";
+    }
+    */
 }
