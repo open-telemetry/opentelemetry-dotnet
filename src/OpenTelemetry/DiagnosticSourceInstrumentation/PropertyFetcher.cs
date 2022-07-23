@@ -71,9 +71,10 @@ namespace OpenTelemetry.Instrumentation
                 return false;
             }
 
-            if (this.innerFetcher == null)
+            if (this.innerFetcher == null && !PropertyFetch.TryCreate(obj.GetType().GetTypeInfo(), this.propertyName, out this.innerFetcher))
             {
-                this.innerFetcher = PropertyFetch.Create(obj.GetType().GetTypeInfo(), this.propertyName);
+                value = default;
+                return false;
             }
 
             return this.innerFetcher.TryFetch(obj, out value);
@@ -82,15 +83,21 @@ namespace OpenTelemetry.Instrumentation
         // see https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/System/Diagnostics/DiagnosticSourceEventSource.cs
         private class PropertyFetch
         {
-            public static PropertyFetch Create(TypeInfo type, string propertyName)
+            public static bool TryCreate(TypeInfo type, string propertyName, out PropertyFetch propertyFetch)
             {
                 var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, propertyName, StringComparison.OrdinalIgnoreCase));
                 if (property == null)
                 {
                     property = type.GetProperty(propertyName);
+                    if (property == null)
+                    {
+                        propertyFetch = null;
+                        return false;
+                    }
                 }
 
-                return CreateFetcherForProperty(property);
+                propertyFetch = CreateFetcherForProperty(property);
+                return true;
 
                 static PropertyFetch CreateFetcherForProperty(PropertyInfo propertyInfo)
                 {
@@ -135,7 +142,11 @@ namespace OpenTelemetry.Instrumentation
                         return true;
                     }
 
-                    this.innerFetcher ??= Create(obj.GetType().GetTypeInfo(), this.propertyName);
+                    if (this.innerFetcher == null && !TryCreate(obj.GetType().GetTypeInfo(), this.propertyName, out this.innerFetcher))
+                    {
+                        value = default;
+                        return false;
+                    }
 
                     return this.innerFetcher.TryFetch(obj, out value);
                 }
