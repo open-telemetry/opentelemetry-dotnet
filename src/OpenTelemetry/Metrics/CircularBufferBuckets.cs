@@ -22,7 +22,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// A histogram buckets implementation based on circular buffer.
 /// </summary>
-internal class CircularBufferBuckets
+internal sealed class CircularBufferBuckets
 {
     private long[] trait;
     private int begin = 0;
@@ -87,7 +87,8 @@ internal class CircularBufferBuckets
         else if (index > this.end)
         {
             var diff = index - this.begin;
-            if (diff >= capacity)
+
+            if (diff >= capacity || diff < 0)
             {
                 return CalculateScaleReduction(diff + 1, capacity);
             }
@@ -97,7 +98,8 @@ internal class CircularBufferBuckets
         else if (index < this.begin)
         {
             var diff = this.end - index;
-            if (diff >= this.Capacity)
+
+            if (diff >= this.Capacity || diff < 0)
             {
                 return CalculateScaleReduction(diff + 1, capacity);
             }
@@ -110,9 +112,14 @@ internal class CircularBufferBuckets
         return 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        int CalculateScaleReduction(int size, int capacity)
+        static int CalculateScaleReduction(int size, int capacity)
         {
-            var shift = MathHelper.LeadingZero32(capacity) - MathHelper.LeadingZero32(size);
+            var shift = MathHelper.LeadingZero32(capacity);
+
+            if (size > 0)
+            {
+                shift -= MathHelper.LeadingZero32(size);
+            }
 
             if (size > (capacity << shift))
             {
