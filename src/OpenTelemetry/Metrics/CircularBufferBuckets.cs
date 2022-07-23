@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// A histogram buckets implementation based on circular buffer.
 /// </summary>
-internal sealed class CircularBufferBuckets
+public sealed class CircularBufferBuckets
 {
     private long[] trait;
     private int begin = 0;
@@ -131,7 +131,7 @@ internal sealed class CircularBufferBuckets
         }
     }
 
-    public void ScaleDown(int n)
+    public void ScaleDownOld(int n)
     {
         Debug.Assert(n > 0, "The scale down level must be a positive integer.");
 
@@ -143,30 +143,91 @@ internal sealed class CircularBufferBuckets
         // TODO: avoid allocating new array by doing the calculation in-place.
         var array = new long[this.Capacity];
 
-        for (var index = this.begin; index <= this.end; index++)
+        for (var index = this.begin; index < this.end; index++)
         {
             array[this.ModuloIndex(index >> n)] += this[index];
         }
+
+        array[this.ModuloIndex(this.end >> n)] += this[this.end];
 
         this.begin >>= n;
         this.end >>= n;
         this.trait = array;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int ModuloIndex(int value)
+    public void ScaleDown(int n)
     {
-        value %= this.Capacity;
+        Debug.Assert(n > 0, "The scale down level must be a positive integer.");
 
-        if (value < 0)
+        if (this.trait == null)
         {
-            value += this.Capacity;
+            return;
         }
 
-        return value;
+        uint capacity = (uint)this.Capacity;
+
+        var offset = (uint)this.ModuloIndex(this.begin); // offset [0, capacity), where capacity is between [1, 2147483647]
+        var currentBegin = this.begin;
+        var currentEnd = this.end;
+
+        for (int i = 0; i < n; i++)
+        {
+            var newBegin = currentBegin >> 1;
+            var newEnd = currentEnd >> 1;
+
+            if (currentBegin != currentEnd)
+            {
+                if (currentBegin % 2 == 0)
+                {
+                    ScaleDownInternal(this.trait, offset, currentBegin, currentEnd, capacity);
+                }
+                else
+                {
+                    currentBegin++;
+
+                    if (currentBegin != currentEnd)
+                    {
+                        ScaleDownInternal(this.trait, offset + 1, currentBegin, currentEnd, capacity);
+                    }
+                }
+            }
+
+            currentBegin = newBegin;
+            currentEnd = newEnd;
+        }
+
+        this.begin = currentBegin;
+        this.end = currentEnd;
+        // Move(this.trait, this.begin, this.begin + newSize - 1, newBegin, capacity);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void ScaleDownInternal(long[] array, uint offset, int begin, int end, uint capacity)
+        {
+            // System.Console.WriteLine($"ScaleDownInternal({offset}, {begin}, {end})");
+
+            for (var index = begin + 1; index < end; index++)
+            {
+                Consolidate(array, (offset + (uint)(index - begin)) % capacity, (offset + (uint)((index >> 1) - (begin >> 1))) % capacity);
+            }
+
+            Consolidate(array, (offset + (uint)(end - begin)) % capacity, (offset + (uint)((end >> 1) - (begin >> 1))) % capacity);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void Consolidate(long[] array, uint src, uint dst)
+        {
+            // System.Console.WriteLine($"Consolidate({src} => {dst})");
+            array[dst] += array[src];
+            array[src] = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void Move(long[] array, int begin, int end, int dst, int capacity)
+        {
+            // TODO
+        }
     }
 
-    /*
     public override string ToString()
     {
         return nameof(CircularBufferBuckets)
@@ -178,5 +239,10 @@ internal sealed class CircularBufferBuckets
             + (this.trait == null ? "null" : "[" + string.Join(", ", this.trait) + "]")
             + "}";
     }
-    */
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int ModuloIndex(int value)
+    {
+        return MathHelper.PositiveModulo32(value, this.Capacity);
+    }
 }

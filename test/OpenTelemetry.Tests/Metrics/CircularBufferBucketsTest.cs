@@ -132,4 +132,64 @@ public class CircularBufferBucketsTest
         Assert.Equal(4, buckets[1]);
         Assert.Equal(5, buckets[2]);
     }
+
+    [Fact]
+    public void EmptyScaleDown()
+    {
+        var buckets = new CircularBufferBuckets(1);
+
+        buckets.ScaleDown(1);
+        buckets.ScaleDown(2);
+        buckets.ScaleDown(3);
+        buckets.ScaleDown(4);
+
+        buckets.TryIncrement(0);
+        Assert.Equal(1, buckets[0]);
+    }
+
+    [Fact]
+    public void BasicScaleDown()
+    {
+        var buckets = new CircularBufferBuckets(7);
+
+        buckets.TryIncrement(60);
+        buckets.TryIncrement(61);
+        buckets.TryIncrement(62);
+        buckets.TryIncrement(63);
+        buckets.TryIncrement(64);
+        buckets.TryIncrement(65);
+        buckets.TryIncrement(66);
+        buckets.TryIncrement(67);
+
+        buckets.ScaleDown(1);
+
+        Assert.Equal(2, buckets[30]);
+        Assert.Equal(2, buckets[31]);
+        Assert.Equal(2, buckets[32]);
+        Assert.Equal(1, buckets[33]);
+    }
+
+    [Fact]
+    public void ScaleDownIntMaxValue()
+    {
+        var buckets = new CircularBufferBuckets(1);
+
+        buckets.TryIncrement(int.MaxValue);
+
+        buckets.ScaleDown(1);
+
+        Assert.Equal(1, buckets[0x3FFFFFFF]);
+    }
+
+    [Fact]
+    public void ScaleDownIntMinValue()
+    {
+        var buckets = new CircularBufferBuckets(1);
+
+        buckets.TryIncrement(int.MinValue);
+
+        buckets.ScaleDown(1);
+
+        Assert.Equal(1, buckets[-0x40000000]);
+    }
 }
