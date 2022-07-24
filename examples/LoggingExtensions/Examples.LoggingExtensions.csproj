@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Console\OpenTelemetry.Exporter.Console.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.Serilog\OpenTelemetry.Extensions.Serilog.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.EventSource\OpenTelemetry.Extensions.EventSource.csproj" />
   </ItemGroup>
 
 </Project>

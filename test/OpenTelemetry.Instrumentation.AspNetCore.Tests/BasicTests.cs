@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -26,7 +27,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using Newtonsoft.Json;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Tests;
@@ -364,7 +364,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Test TraceContext Propagation
                 var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
                 var response = await client.SendAsync(request);
-                var childActivityTraceContext = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+                var childActivityTraceContext = JsonSerializer.Deserialize<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
                 response.EnsureSuccessStatusCode();
 
@@ -376,7 +376,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
 
                 response = await client.SendAsync(request);
-                var childActivityBaggageContext = JsonConvert.DeserializeObject<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+                var childActivityBaggageContext = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
                 response.EnsureSuccessStatusCode();
 
@@ -431,7 +431,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Ensure that filter was called
                 Assert.True(isFilterCalled);
 
-                var childActivityTraceContext = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+                var childActivityTraceContext = JsonSerializer.Deserialize<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
                 response.EnsureSuccessStatusCode();
 
@@ -443,7 +443,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
 
                 response = await client.SendAsync(request);
-                var childActivityBaggageContext = JsonConvert.DeserializeObject<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+                var childActivityBaggageContext = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
                 response.EnsureSuccessStatusCode();
 
