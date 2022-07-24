@@ -23,7 +23,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// A histogram buckets implementation based on circular buffer.
 /// </summary>
-public sealed class CircularBufferBuckets
+internal sealed class CircularBufferBuckets
 {
     private long[] trait;
     private int begin = 0;
@@ -61,9 +61,10 @@ public sealed class CircularBufferBuckets
     }
 
     /// <summary>
-    /// Attempts to increment the value of <c>Bucket[index]</c>.
+    /// Attempts to increment the value of <c>Bucket[index]</c> by <c>value</c>.
     /// </summary>
     /// <param name="index">The index of the bucket.</param>
+    /// <param name="value">The increment.</param>
     /// <returns>
     /// Returns <c>0</c> if the increment attempt succeeded;
     /// Returns a positive integer <c>Math.Ceiling(log_2(X))</c> if the
@@ -74,7 +75,7 @@ public sealed class CircularBufferBuckets
     /// The "index" value can be positive, zero or negative.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int TryIncrement(int index)
+    public int TryIncrement(int index, long value = 1)
     {
         var capacity = this.Capacity;
 
@@ -108,7 +109,7 @@ public sealed class CircularBufferBuckets
             this.begin = index;
         }
 
-        this.trait[this.ModuloIndex(index)] += 1;
+        this.trait[this.ModuloIndex(index)] += value;
 
         return 0;
 
@@ -131,30 +132,6 @@ public sealed class CircularBufferBuckets
         }
     }
 
-    public void ScaleDownOld(int n)
-    {
-        Debug.Assert(n > 0, "The scale down level must be a positive integer.");
-
-        if (this.trait == null)
-        {
-            return;
-        }
-
-        // TODO: avoid allocating new array by doing the calculation in-place.
-        var array = new long[this.Capacity];
-
-        for (var index = this.begin; index < this.end; index++)
-        {
-            array[this.ModuloIndex(index >> n)] += this[index];
-        }
-
-        array[this.ModuloIndex(this.end >> n)] += this[this.end];
-
-        this.begin >>= n;
-        this.end >>= n;
-        this.trait = array;
-    }
-
     public void ScaleDown(int n)
     {
         Debug.Assert(n > 0, "The scale down level must be a positive integer.");
@@ -164,9 +141,10 @@ public sealed class CircularBufferBuckets
             return;
         }
 
+        // 0 <= offset < capacity <= 2147483647
         uint capacity = (uint)this.Capacity;
+        var offset = (uint)this.ModuloIndex(this.begin);
 
-        var offset = (uint)this.ModuloIndex(this.begin); // offset [0, capacity), where capacity is between [1, 2147483647]
         var currentBegin = this.begin;
         var currentEnd = this.end;
 
@@ -198,13 +176,14 @@ public sealed class CircularBufferBuckets
 
         this.begin = currentBegin;
         this.end = currentEnd;
-        // Move(this.trait, this.begin, this.begin + newSize - 1, newBegin, capacity);
+
+        Move(this.trait, offset, this.begin, this.end, capacity);
+
+        return;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void ScaleDownInternal(long[] array, uint offset, int begin, int end, uint capacity)
         {
-            // System.Console.WriteLine($"ScaleDownInternal({offset}, {begin}, {end})");
-
             for (var index = begin + 1; index < end; index++)
             {
                 Consolidate(array, (offset + (uint)(index - begin)) % capacity, (offset + (uint)((index >> 1) - (begin >> 1))) % capacity);
@@ -216,15 +195,13 @@ public sealed class CircularBufferBuckets
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void Consolidate(long[] array, uint src, uint dst)
         {
-            // System.Console.WriteLine($"Consolidate({src} => {dst})");
             array[dst] += array[src];
             array[src] = 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static void Move(long[] array, int begin, int end, int dst, int capacity)
+        static void Move(long[] array, uint offset, int begin, int end, uint capacity)
         {
-            // TODO
         }
     }
 
