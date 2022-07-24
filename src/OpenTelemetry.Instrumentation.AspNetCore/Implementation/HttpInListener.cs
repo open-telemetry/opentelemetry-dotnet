@@ -299,22 +299,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             }
         }
 
-        private Exception TryFetchException(object payload)
-        {
-            Exception exc;
-            if (this.stopExceptionFetcher.TryFetch(payload, out exc) && exc != null)
-            {
-                return exc;
-            }
-
-            if (this.stopExceptionFilterFetcher.TryFetch(payload, out exc) && exc != null)
-            {
-                return exc;
-            }
-
-            return null;
-        }
-
         private static string GetUri(HttpRequest request)
         {
             // this follows the suggestions from https://github.com/dotnet/aspnetcore/issues/28906
