@@ -202,33 +202,19 @@ internal sealed class CircularBufferBuckets
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void AdjustPosition(long[] array, uint src, uint dst, uint size, uint capacity)
         {
-            if (src == dst)
+            var advancement = (dst + capacity - src) % capacity;
+
+            if (advancement == 0)
             {
                 return;
             }
 
-            var advancement = (dst + capacity - src) % capacity;
-
-            if ((size - 1) << 1 == capacity && advancement << 1 == capacity)
+            if (size - 1 == advancement && advancement << 1 == capacity)
             {
                 Exchange(array, src++, dst++);
-
                 size -= 2;
-
-                if (size == 0)
-                {
-                    return;
-                }
             }
-
-            if (advancement >= size)
-            {
-                while (size-- != 0)
-                {
-                    Move(array, src++ % capacity, dst++ % capacity);
-                }
-            }
-            else
+            else if (advancement < size)
             {
                 src = src + size - 1;
                 dst = dst + size - 1;
@@ -237,6 +223,13 @@ internal sealed class CircularBufferBuckets
                 {
                     Move(array, src-- % capacity, dst-- % capacity);
                 }
+
+                return;
+            }
+
+            while (size-- != 0)
+            {
+                Move(array, src++ % capacity, dst++ % capacity);
             }
         }
 
