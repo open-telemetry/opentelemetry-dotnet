@@ -18,6 +18,8 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
+
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests
@@ -94,13 +96,13 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Equal(LogRecordThreadStaticPool.Instance, provider1.LogRecordPool);
 
             var options = new OpenTelemetryLoggerOptions();
-            options.AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()));
+            options.AddProcessor(new SimpleLogRecordExportProcessor(new DelegatingTestExporter<LogRecord>()));
 
             using var provider2 = new OpenTelemetryLoggerProvider(options);
 
             Assert.Equal(LogRecordThreadStaticPool.Instance, provider2.LogRecordPool);
 
-            options.AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()));
+            options.AddProcessor(new SimpleLogRecordExportProcessor(new DelegatingTestExporter<LogRecord>()));
 
             using var provider3 = new OpenTelemetryLoggerProvider(options);
 
@@ -111,39 +113,31 @@ namespace OpenTelemetry.Logs.Tests
         public void SharedPoolUsedByProviderTests()
         {
             var options = new OpenTelemetryLoggerOptions();
-            options.AddProcessor(new BatchLogRecordExportProcessor(new NoopExporter()));
+            options.AddProcessor(new BatchLogRecordExportProcessor(new DelegatingTestExporter<LogRecord>()));
 
             using var provider1 = new OpenTelemetryLoggerProvider(options);
 
             Assert.Equal(LogRecordSharedPool.Current, provider1.LogRecordPool);
 
             options = new OpenTelemetryLoggerOptions();
-            options.AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()));
-            options.AddProcessor(new BatchLogRecordExportProcessor(new NoopExporter()));
+            options.AddProcessor(new SimpleLogRecordExportProcessor(new DelegatingTestExporter<LogRecord>()));
+            options.AddProcessor(new BatchLogRecordExportProcessor(new DelegatingTestExporter<LogRecord>()));
 
             using var provider2 = new OpenTelemetryLoggerProvider(options);
 
             Assert.Equal(LogRecordSharedPool.Current, provider2.LogRecordPool);
 
             options = new OpenTelemetryLoggerOptions();
-            options.AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()));
+            options.AddProcessor(new SimpleLogRecordExportProcessor(new DelegatingTestExporter<LogRecord>()));
             options.AddProcessor(new CompositeProcessor<LogRecord>(new BaseProcessor<LogRecord>[]
             {
-                new SimpleLogRecordExportProcessor(new NoopExporter()),
-                new BatchLogRecordExportProcessor(new NoopExporter()),
+                new SimpleLogRecordExportProcessor(new DelegatingTestExporter<LogRecord>()),
+                new BatchLogRecordExportProcessor(new DelegatingTestExporter<LogRecord>()),
             }));
 
             using var provider3 = new OpenTelemetryLoggerProvider(options);
 
             Assert.Equal(LogRecordSharedPool.Current, provider3.LogRecordPool);
-        }
-
-        private sealed class NoopExporter : BaseExporter<LogRecord>
-        {
-            public override ExportResult Export(in Batch<LogRecord> batch)
-            {
-                return ExportResult.Success;
-            }
         }
     }
 }

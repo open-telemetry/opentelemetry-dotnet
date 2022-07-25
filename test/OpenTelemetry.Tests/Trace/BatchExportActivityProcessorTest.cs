@@ -19,6 +19,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Tests;
+
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
@@ -191,7 +193,10 @@ namespace OpenTelemetry.Trace.Tests
         public void CheckExportDrainsBatchOnFailure()
         {
             using var processor = new BatchActivityExportProcessor(
-                exporter: new FailureExporter<Activity>(),
+                exporter: new DelegatingTestExporter<Activity>
+                {
+                    OnExportFunc = (batch) => ExportResult.Failure,
+                },
                 maxQueueSize: 3,
                 maxExportBatchSize: 3);
 
@@ -206,12 +211,6 @@ namespace OpenTelemetry.Trace.Tests
             processor.Shutdown();
 
             Assert.Equal(3, processor.ProcessedCount); // Verify batch was drained even though nothing was exported.
-        }
-
-        private class FailureExporter<T> : BaseExporter<T>
-            where T : class
-        {
-            public override ExportResult Export(in Batch<T> batch) => ExportResult.Failure;
         }
     }
 }

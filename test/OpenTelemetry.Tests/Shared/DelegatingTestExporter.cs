@@ -15,32 +15,14 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 
 namespace OpenTelemetry.Tests
 {
     public class DelegatingTestExporter<T> : BaseExporter<T>
         where T : class
     {
-        private readonly BaseExporter<T> exporter;
-        private readonly Action onExportAction;
+        public Func<Batch<T>, ExportResult> OnExportFunc { get; set; } = (batch) => default;
 
-        public DelegatingTestExporter(
-            BaseExporter<T> exporter,
-            Action onExportAction = null)
-        {
-            this.exporter = exporter;
-            this.onExportAction = onExportAction;
-        }
-
-        public List<ExportResult> ExportResults { get; } = new();
-
-        public override ExportResult Export(in Batch<T> batch)
-        {
-            var result = this.exporter.Export(batch);
-            this.ExportResults.Add(result);
-            this.onExportAction?.Invoke();
-            return result;
-        }
+        public override ExportResult Export(in Batch<T> batch) => this.OnExportFunc(batch);
     }
 }
