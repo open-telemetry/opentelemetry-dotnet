@@ -28,11 +28,10 @@ docker run --rm \
   -f /source code \
   --template /templates/SemanticConventions.cs.j2 \
   --output /output/TraceSemanticConventions.cs \
+  --trim-whitespace \
   -Dclass=TraceSemanticConventions \
   -DschemaUrl=$SCHEMA_URL \
-  -Dpkg=OpenTelemetry.Trace \
-  -Jtrim_blocks=True \
-  -Jlstrip_blocks=True
+  -Dpkg=OpenTelemetry.Trace
 
 docker run --rm \
   -v ${SCRIPT_DIR}/opentelemetry-specification/semantic_conventions/resource:/source \
@@ -42,8 +41,7 @@ docker run --rm \
   -f /source code \
   --template /templates/SemanticConventions.cs.j2 \
   --output /output/ResourceSemanticConventions.cs \
+  --trim-whitespace \
   -Dclass=ResourceSemanticConventions \
   -DschemaUrl=$SCHEMA_URL \
-  -Dpkg=OpenTelemetry.Resources \
-  -Jtrim_blocks=True \
-  -Jlstrip_blocks=True
+  -Dpkg=OpenTelemetry.Resources
