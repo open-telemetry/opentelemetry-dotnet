@@ -42,7 +42,7 @@ internal sealed class CircularBufferBuckets
     public int Capacity { get; }
 
     /// <summary>
-    /// Gets the size of the <see cref="CircularBufferBuckets"/>.
+    /// Gets the offset of the start index for the <see cref="CircularBufferBuckets"/>.
     /// </summary>
     public int Offset => this.begin;
 
