@@ -641,6 +641,22 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             activity.SetTag("enriched", "yes");
         }
 
+        private static void AssertException(List<Activity> exportedItems)
+        {
+            Assert.Single(exportedItems);
+            var activity = exportedItems[0];
+
+            var exMessage = "something's wrong!";
+            Assert.Single(activity.Events);
+            Assert.Equal("System.Exception", activity.Events.First().Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
+            Assert.Equal(exMessage, activity.Events.First().Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionMessage).Value);
+
+            var status = activity.GetStatus();
+            Assert.Equal(status, Status.Error.WithDescription(exMessage));
+
+            ValidateAspNetCoreActivity(activity, "/api/error");
+        }
+
         private void ConfigureExceptionFilters(IServiceCollection services, int mode, ref List<Activity> exportedItems)
         {
             switch (mode)
@@ -660,22 +676,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .AddAspNetCoreInstrumentation(x => x.RecordException = true)
                 .AddInMemoryExporter(exportedItems)
                 .Build();
-        }
-
-        private static void AssertException(List<Activity> exportedItems)
-        {
-            Assert.Single(exportedItems);
-            var activity = exportedItems[0];
-
-            var exMessage = "something's wrong!";
-            Assert.Single(activity.Events);
-            Assert.Equal("System.Exception", activity.Events.First().Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
-            Assert.Equal(exMessage, activity.Events.First().Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionMessage).Value);
-
-            var status = activity.GetStatus();
-            Assert.Equal(status, Status.Error.WithDescription(exMessage));
-
-            ValidateAspNetCoreActivity(activity, "/api/error");
         }
 
         private class ExtractOnlyPropagator : TextMapPropagator
