@@ -47,6 +47,7 @@
     <SwashbuckleAspNetCorePkgVer>[6.2.3]</SwashbuckleAspNetCorePkgVer>
     <XUnitRunnerVisualStudioPkgVer>[2.4.3,3.0)</XUnitRunnerVisualStudioPkgVer>
     <XUnitPkgVer>[2.4.1,3.0)</XUnitPkgVer>
+    <SystemTextJsonPkgVer>6.0.5</SystemTextJsonPkgVer>
   </PropertyGroup>
 
   <ItemGroup>
