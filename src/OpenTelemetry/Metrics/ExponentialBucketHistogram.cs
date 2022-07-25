@@ -124,11 +124,29 @@ internal class ExponentialBucketHistogram
 
         if (c > 0)
         {
-            this.PositiveBuckets.TryIncrement(this.MapToIndex(value));
+            var index = this.MapToIndex(value);
+            var n = this.PositiveBuckets.TryIncrement(index);
+
+            if (n != 0)
+            {
+                this.PositiveBuckets.ScaleDown(n);
+                this.NegativeBuckets.ScaleDown(n);
+                n = this.PositiveBuckets.TryIncrement(index);
+                Debug.Assert(n == 0, "Increment should always succeed after scale down.");
+            }
         }
         else if (c < 0)
         {
-            this.NegativeBuckets.TryIncrement(this.MapToIndex(-value));
+            var index = this.MapToIndex(-value);
+            var n = this.NegativeBuckets.TryIncrement(index);
+
+            if (n != 0)
+            {
+                this.PositiveBuckets.ScaleDown(n);
+                this.NegativeBuckets.ScaleDown(n);
+                n = this.NegativeBuckets.TryIncrement(index);
+                Debug.Assert(n == 0, "Increment should always succeed after scale down.");
+            }
         }
         else
         {
