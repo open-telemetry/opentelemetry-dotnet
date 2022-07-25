@@ -10,7 +10,7 @@ writing log messages to OpenTelemetry.
 ## Installation
 
 ```shell
-dotnet add package OpenTelemetry.Extensions.Serilog
+dotnet add package OpenTelemetry.Extensions.Serilog --prerelease
 ```
 
 ## Usage Example
