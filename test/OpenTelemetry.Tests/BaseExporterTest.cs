@@ -26,19 +26,22 @@ namespace OpenTelemetry.Tests
         public void Verify_ForceFlush_HandlesException()
         {
             // By default, ForceFlush should return true.
-            var testExporter = new TestExporter();
+            var testExporter = new DelegatingTestExporter<object>();
             Assert.True(testExporter.ForceFlush());
 
             // BaseExporter should catch any exceptions and return false.
-            var exceptionTestExporter = new ExceptionTestExporter();
+            var exceptionTestExporter = new DelegatingTestExporter<object>
+            {
+                OnForceFlushFunc = (timeout) => throw new Exception("test exception"),
+            };
             Assert.False(exceptionTestExporter.ForceFlush());
         }
 
         [Fact]
         public void Verify_Shutdown_HandlesSecond()
         {
-            // By default, Shutdown should return true.
-            var testExporter = new TestExporter();
+            // By default, ForceFlush should return true.
+            var testExporter = new DelegatingTestExporter<object>();
             Assert.True(testExporter.Shutdown());
 
             // A second Shutdown should return false.
@@ -49,36 +52,11 @@ namespace OpenTelemetry.Tests
         public void Verify_Shutdown_HandlesException()
         {
             // BaseExporter should catch any exceptions and return false.
-            var exceptionTestExporter = new ExceptionTestExporter();
+            var exceptionTestExporter = new DelegatingTestExporter<object>
+            {
+                OnShutdownFunc = (timeout) => throw new Exception("test exception"),
+            };
             Assert.False(exceptionTestExporter.Shutdown());
-        }
-
-        /// <summary>
-        /// This Exporter will be used to test the default behavior of <see cref="BaseExporter{T}"/>.
-        /// </summary>
-        public class TestExporter : BaseExporter<object>
-        {
-            public override ExportResult Export(in Batch<object> batch) => ExportResult.Success;
-        }
-
-        /// <summary>
-        /// This Exporter overrides the <see cref="OnForceFlush(int)"/> and <see cref="OnShutdown(int)"/>
-        /// methods to throw an exception. This will test that exceptions are caught and handled by
-        /// the <see cref="BaseExporter{T}"/>.
-        /// </summary>
-        public class ExceptionTestExporter : BaseExporter<object>
-        {
-            public override ExportResult Export(in Batch<object> batch) => ExportResult.Success;
-
-            protected override bool OnForceFlush(int timeoutMilliseconds)
-            {
-                throw new Exception("test exception");
-            }
-
-            protected override bool OnShutdown(int timeoutMilliseconds)
-            {
-                throw new Exception("test exception");
-            }
         }
     }
 }

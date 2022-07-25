@@ -26,11 +26,14 @@ namespace OpenTelemetry.Tests
         public void Verify_ForceFlush_HandlesException()
         {
             // By default, ForceFlush should return true.
-            var testProcessor = new TestProcessor();
+            var testProcessor = new DelegatingTestProcessor<object>();
             Assert.True(testProcessor.ForceFlush());
 
             // BaseExporter should catch any exceptions and return false.
-            var exceptionTestProcessor = new ExceptionTestProcessor();
+            var exceptionTestProcessor = new DelegatingTestProcessor<object>
+            {
+                OnForceFlushFunc = (timeout) => throw new Exception("test exception"),
+            };
             Assert.False(exceptionTestProcessor.ForceFlush());
         }
 
@@ -38,7 +41,7 @@ namespace OpenTelemetry.Tests
         public void Verify_Shutdown_HandlesSecond()
         {
             // By default, Shutdown should return true.
-            var testProcessor = new TestProcessor();
+            var testProcessor = new DelegatingTestProcessor<object>();
             Assert.True(testProcessor.Shutdown());
 
             // A second Shutdown should return false.
@@ -49,43 +52,21 @@ namespace OpenTelemetry.Tests
         public void Verify_Shutdown_HandlesException()
         {
             // BaseExporter should catch any exceptions and return false.
-            var exceptionTestProcessor = new ExceptionTestProcessor();
+            var exceptionTestProcessor = new DelegatingTestProcessor<object>
+            {
+                OnShutdownFunc = (timeout) => throw new Exception("test exception"),
+            };
             Assert.False(exceptionTestProcessor.Shutdown());
         }
 
         [Fact]
         public void NoOp()
         {
-            var testProcessor = new TestProcessor();
+            var testProcessor = new DelegatingTestProcessor<object>();
 
             // These two methods are no-op, but account for 7% of the test coverage.
             testProcessor.OnStart(new object());
             testProcessor.OnEnd(new object());
-        }
-
-        /// <summary>
-        /// This Processor will be used to test the default behavior of <see cref="BaseProcessor{T}"/>.
-        /// </summary>
-        public class TestProcessor : BaseProcessor<object>
-        {
-        }
-
-        /// <summary>
-        /// This Processor overrides the <see cref="OnForceFlush(int)"/> and <see cref="OnShutdown(int)"/>
-        /// methods to throw an exception. This will test that exceptions are caught and handled by
-        /// the <see cref="BaseProcessor{T}"/>.
-        /// </summary>
-        public class ExceptionTestProcessor : BaseProcessor<object>
-        {
-            protected override bool OnForceFlush(int timeoutMilliseconds)
-            {
-                throw new Exception("test exception");
-            }
-
-            protected override bool OnShutdown(int timeoutMilliseconds)
-            {
-                throw new Exception("test exception");
-            }
         }
     }
 }

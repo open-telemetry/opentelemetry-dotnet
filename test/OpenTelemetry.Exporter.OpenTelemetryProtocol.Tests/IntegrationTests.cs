@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Diagnostics.Tracing;
@@ -80,6 +81,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             };
 
             DelegatingTestExporter<Activity> delegatingExporter = null;
+            var exportResults = new List<ExportResult>();
 
             var activitySourceName = "otlp.collector.test";
 
@@ -93,7 +95,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 serviceProvider: null,
                 configureExporterInstance: otlpExporter =>
                 {
-                    delegatingExporter = new DelegatingTestExporter<Activity>(otlpExporter, onExportAction: () => handle.Set());
+                    delegatingExporter = new DelegatingTestExporter<Activity>
+                    {
+                        OnExportFunc = (batch) =>
+                        {
+                            var result = otlpExporter.Export(batch);
+                            exportResults.Add(result);
+                            handle.Set();
+                            return result;
+                        },
+                    };
                     return delegatingExporter;
                 });
 
@@ -108,21 +119,21 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 if (forceFlush)
                 {
                     Assert.True(tracerProvider.ForceFlush());
-                    Assert.Single(delegatingExporter.ExportResults);
-                    Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+                    Assert.Single(exportResults);
+                    Assert.Equal(ExportResult.Success, exportResults[0]);
                 }
                 else if (exporterOptions.ExportProcessorType == ExportProcessorType.Batch)
                 {
                     Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
-                    Assert.Single(delegatingExporter.ExportResults);
-                    Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+                    Assert.Single(exportResults);
+                    Assert.Equal(ExportResult.Success, exportResults[0]);
                 }
             }
 
             if (!forceFlush && exportProcessorType == ExportProcessorType.Simple)
             {
-                Assert.Single(delegatingExporter.ExportResults);
-                Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+                Assert.Single(exportResults);
+                Assert.Equal(ExportResult.Success, exportResults[0]);
             }
         }
 
@@ -156,6 +167,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             };
 
             DelegatingTestExporter<Metric> delegatingExporter = null;
+            var exportResults = new List<ExportResult>();
 
             var meterName = "otlp.collector.test";
 
@@ -174,7 +186,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 serviceProvider: null,
                 configureExporterInstance: otlpExporter =>
                 {
-                    delegatingExporter = new DelegatingTestExporter<Metric>(otlpExporter, onExportAction: () => handle.Set());
+                    delegatingExporter = new DelegatingTestExporter<Metric>
+                    {
+                        OnExportFunc = (batch) =>
+                        {
+                            var result = otlpExporter.Export(batch);
+                            exportResults.Add(result);
+                            handle.Set();
+                            return result;
+                        },
+                    };
                     return delegatingExporter;
                 });
 
@@ -191,21 +212,21 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 if (forceFlush)
                 {
                     Assert.True(meterProvider.ForceFlush());
-                    Assert.Single(delegatingExporter.ExportResults);
-                    Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+                    Assert.Single(exportResults);
+                    Assert.Equal(ExportResult.Success, exportResults[0]);
                 }
                 else if (!useManualExport)
                 {
                     Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
-                    Assert.Single(delegatingExporter.ExportResults);
-                    Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+                    Assert.Single(exportResults);
+                    Assert.Equal(ExportResult.Success, exportResults[0]);
                 }
             }
 
             if (!forceFlush && useManualExport)
             {
-                Assert.Single(delegatingExporter.ExportResults);
-                Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+                Assert.Single(exportResults);
+                Assert.Equal(ExportResult.Success, exportResults[0]);
             }
         }
 

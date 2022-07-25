@@ -23,34 +23,37 @@ namespace OpenTelemetry.Tests
     public class SimpleExportProcessorTest
     {
         [Fact]
-        public void Verify_OnExport_HandlesException()
+        public void Verify_SimpleExportProcessor_HandlesException()
         {
-            var exceptionTestExporter = new ExceptionTestExporter();
-            var testSimpleExportProcessor = new TestSimpleExportProcessor(exceptionTestExporter);
+            int counter = 0;
 
-            // verify that this does NOT throw.
-            testSimpleExportProcessor.InvokeOnExport();
+            // here our exporter will throw an exception.
+            var testExporter = new DelegatingTestExporter<object>
+            {
+                OnExportFunc = (batch) =>
+                {
+                    counter++;
+                    throw new Exception("test exception");
+                },
+            };
+
+            var testSimpleExportProcessor = new TestSimpleExportProcessor(testExporter);
+
+            // Verify that the Processor catches and suppresses the exception.
+            testSimpleExportProcessor.OnEnd(new object());
+
+            // verify Exporter OnExport wall called.
+            Assert.Equal(1, counter);
         }
 
+        /// <summary>
+        /// Testable class for abstract <see cref="SimpleExportProcessor{T}"/>.
+        /// </summary>
         public class TestSimpleExportProcessor : SimpleExportProcessor<object>
         {
             public TestSimpleExportProcessor(BaseExporter<object> exporter)
                 : base(exporter)
             {
-            }
-
-            public void InvokeOnExport() => this.OnExport(new object());
-        }
-
-        /// <summary>
-        /// This Exporter overrides the <see cref="Export(in Batch{object})"/> to throw an exception.
-        /// This will test that exceptions are caught and handled by <see cref="SimpleExportProcessor{T}"/>.
-        /// </summary>
-        public class ExceptionTestExporter : BaseExporter<object>
-        {
-            public override ExportResult Export(in Batch<object> batch)
-            {
-                throw new Exception("test exception");
             }
         }
     }
