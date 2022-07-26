@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Internal;
@@ -94,6 +95,36 @@ internal static class MathHelper
 
             return LeadingZero32((int)value) + 32;
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int PositiveModulo32(int value, int divisor)
+    {
+        Debug.Assert(divisor > 0, $"{nameof(divisor)} must be a positive integer.");
+
+        value %= divisor;
+
+        if (value < 0)
+        {
+            value += divisor;
+        }
+
+        return value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static long PositiveModulo64(long value, long divisor)
+    {
+        Debug.Assert(divisor > 0, $"{nameof(divisor)} must be a positive integer.");
+
+        value %= divisor;
+
+        if (value < 0)
+        {
+            value += divisor;
+        }
+
+        return value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
