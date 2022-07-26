@@ -17,6 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Moq;
@@ -429,11 +430,31 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                        .AddProcessor(processor.Object)
                        .Build())
             {
-                using var c = new HttpClient();
+#if NETCOREAPP3_1
+                // This implementation of HttpClient uses CurlHandler or SocketsHttpHandler (depending on DOTNET_SYSTEM_NET_HTTP_USESOCKETSHTTPHANDLER switch)
+                // and both of them handle redirects internally without calling DiagnosticsHandler.
+                // So, in order for the instrumentation to work correctly in .NET Core 3.1, redirects should be handled manually.
+                using var c = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false });
+                var requestUri = $"{this.url}redirect";
+                while (true)
+                {
+                    var response = await c.GetAsync(requestUri);
+                    if (response.StatusCode == HttpStatusCode.Redirect)
+                    {
+                        requestUri = $"{this.url}{response.Headers.Location}";
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+#else
+                using var c = new HttpClient(new SocketsHttpHandler());
                 await c.GetAsync($"{this.url}redirect");
+#endif
             }
 
-            Assert.Equal(7, processor.Invocations.Count); // SetParentProvider/OnShutdown/Dispose/OnStart/OnEnd/OnStart/OnEnd called.
+            Assert.Equal(7, processor.Invocations.Count); // SetParentProvider/OnStart/OnEnd/OnStart/OnEnd/OnShutdown/Dispose called.
 
             var firstActivity = (Activity)processor.Invocations[2].Arguments[0]; // First OnEnd
             Assert.Contains(firstActivity.TagObjects, t => t.Key == "http.status_code" && (int)t.Value == 302);
