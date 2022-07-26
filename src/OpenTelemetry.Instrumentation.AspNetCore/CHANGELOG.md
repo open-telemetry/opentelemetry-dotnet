@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Fix Remote IP Address - NULL reference exception. 
+* Fix Remote IP Address - NULL reference exception.
   ([#3481](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3481))
 * Metrics instrumentation to correctly populate `http.flavor` tag.
   (1.1 instead of HTTP/1.1 etc.)
