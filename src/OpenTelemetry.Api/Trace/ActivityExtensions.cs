@@ -69,14 +69,26 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Record Exception.
+        /// Adds an activity event containing information from the specified exception.
         /// </summary>
         /// <param name="activity">Activity instance.</param>
         /// <param name="ex">Exception to be recorded.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void RecordException(this Activity activity, Exception ex)
         {
-            if (ex == null)
+            activity?.RecordException(ex, default);
+        }
+
+        /// <summary>
+        /// Adds an activity event containing information from the specified exception and additional tags.
+        /// </summary>
+        /// <param name="activity">Activity instance.</param>
+        /// <param name="ex">Exception to be recorded.</param>
+        /// <param name="tags">Additional tags to record on the event.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void RecordException(this Activity activity, Exception ex, in TagList tags)
+        {
+            if (ex == null || activity == null)
             {
                 return;
             }
@@ -92,7 +104,12 @@ namespace OpenTelemetry.Trace
                 tagsCollection.Add(SemanticConventions.AttributeExceptionMessage, ex.Message);
             }
 
-            activity?.AddEvent(new ActivityEvent(SemanticConventions.AttributeExceptionEventName, default, tagsCollection));
+            foreach (var tag in tags)
+            {
+                tagsCollection[tag.Key] = tag.Value;
+            }
+
+            activity.AddEvent(new ActivityEvent(SemanticConventions.AttributeExceptionEventName, default, tagsCollection));
         }
     }
 }
