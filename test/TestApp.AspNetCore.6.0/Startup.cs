@@ -50,6 +50,7 @@ namespace TestApp.AspNetCore._6._0
             }
 
             app.UseMiddleware<CallbackMiddleware>();
+            app.UseMiddleware<ActivityMiddleware>();
             app.UseRouting();
 
             app.UseAuthorization();
