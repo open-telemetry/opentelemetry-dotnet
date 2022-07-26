@@ -20,7 +20,6 @@ using System;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.Prometheus.AspNetCore;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
@@ -70,8 +69,8 @@ namespace Microsoft.AspNetCore.Builder
         /// If not provided then <see cref="PrometheusExporterOptions.ScrapeEndpointPath"/>
         /// is used.</param>
         /// <param name="meterProvider">Optional <see cref="MeterProvider"/>
-        /// containing a <see cref="PrometheusExporter"/> otherwise the primary
-        /// SDK provider will be resolved using application services.</param>
+        /// containing a Prometheus exporter otherwise the primary SDK provider
+        /// will be resolved using application services.</param>
         /// <param name="configureBranchedPipeline">Optional callback to
         /// configure the branched pipeline. Called before registration of the
         /// Prometheus middleware.</param>

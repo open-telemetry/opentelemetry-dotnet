@@ -26,7 +26,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Shared
 #endif
 {
     /// <summary>
-    /// <see cref="PrometheusExporter"/> options.
+    /// Prometheus exporter options.
     /// </summary>
     public class PrometheusExporterOptions
     {

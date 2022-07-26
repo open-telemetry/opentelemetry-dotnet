@@ -21,13 +21,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
-#if PROMETHEUS_ASPNETCORE
-namespace OpenTelemetry.Exporter.Prometheus.AspNetCore
-#elif PROMETHEUS_ASPNETCORE_HTTPLISTENER
-namespace OpenTelemetry.Exporter.Prometheus.HttpListener
-#else
 namespace OpenTelemetry.Exporter.Prometheus.Shared
-#endif
 {
     /// <summary>
     /// Basic PrometheusSerializer which has no OpenTelemetry dependency.

@@ -19,7 +19,6 @@
 using System;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.Prometheus.AspNetCore;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
@@ -93,8 +92,8 @@ namespace Microsoft.AspNetCore.Builder
         /// <param name="app">The <see cref="IApplicationBuilder"/> to add
         /// middleware to.</param>
         /// <param name="meterProvider">Optional <see cref="MeterProvider"/>
-        /// containing a <see cref="PrometheusExporter"/> otherwise the primary
-        /// SDK provider will be resolved using application services.</param>
+        /// containing a Prometheus exporter otherwise the primary SDK provider
+        /// will be resolved using application services.</param>
         /// <param name="predicate">Optional predicate for deciding if a given
         /// <see cref="HttpContext"/> should be branched. If supplied <paramref
         /// name="path"/> is ignored.</param>

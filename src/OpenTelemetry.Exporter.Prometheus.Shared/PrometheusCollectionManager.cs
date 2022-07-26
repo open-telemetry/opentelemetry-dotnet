@@ -18,15 +18,14 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+#if PROMETHEUS_ASPNETCORE
+using OpenTelemetry.Exporter.Prometheus.AspNetCore;
+#elif PROMETHEUS_ASPNETCORE_HTTPLISTENER
+using OpenTelemetry.Exporter.Prometheus.HttpListener;
+#endif
 using OpenTelemetry.Metrics;
 
-#if PROMETHEUS_ASPNETCORE
-namespace OpenTelemetry.Exporter.Prometheus.AspNetCore
-#elif PROMETHEUS_ASPNETCORE_HTTPLISTENER
-namespace OpenTelemetry.Exporter.Prometheus.HttpListener
-#else
 namespace OpenTelemetry.Exporter.Prometheus.Shared
-#endif
 {
     internal sealed class PrometheusCollectionManager
     {
