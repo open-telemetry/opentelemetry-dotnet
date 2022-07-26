@@ -2,10 +2,6 @@
 
 ## Unreleased
 
-* Fix issue where when an application has an ExceptionFilter, the exception data
-  wouldn't be collected.
-  ([#3475](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3475))
-
 * `TracerProviderSDK` modified for spans with remote parent. For such spans
   activity will be created irrespective of SamplingResult, to maintain context
   propagation.
