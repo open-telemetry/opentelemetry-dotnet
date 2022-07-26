@@ -28,7 +28,7 @@ namespace OpenTelemetry.Metrics;
 /// identified by <c>Bucket[index] = ( base ^ index, base ^ (index + 1) ]</c>,
 /// where <c>index</c> is an integer.
 /// </summary>
-public class ExponentialBucketHistogram
+internal class ExponentialBucketHistogram
 {
     private static readonly double Log2E = Math.Log2(Math.E); // 1 / Math.Log(2)
 
