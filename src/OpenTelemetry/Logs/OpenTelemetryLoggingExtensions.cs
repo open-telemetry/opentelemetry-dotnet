@@ -32,7 +32,7 @@ namespace Microsoft.Extensions.Logging
     public static class OpenTelemetryLoggingExtensions
     {
         /// <summary>
-        /// Adds a OpenTelemetry logger named 'OpenTelemetry' to the factory.
+        /// Adds a OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
         /// </summary>
         /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
         /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
@@ -40,7 +40,7 @@ namespace Microsoft.Extensions.Logging
             => AddOpenTelemetry(builder, configure: null);
 
         /// <summary>
-        /// Adds a OpenTelemetry logger named 'OpenTelemetry' to the factory.
+        /// Adds a OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
         /// </summary>
         /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
         /// <param name="configure">Optional configuration action.</param>
@@ -61,19 +61,55 @@ namespace Microsoft.Extensions.Logging
         }
 
         /// <summary>
-        /// Adds a OpenTelemetry logger named 'OpenTelemetry' to the factory.
+        /// Adds a OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
         /// </summary>
         /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
         /// <param name="openTelemetryLoggerProvider"><see cref="OpenTelemetryLoggerProvider"/>.</param>
+        /// <param name="disposeProvider">Controls whether or not the supplied
+        /// <paramref name="openTelemetryLoggerProvider"/> will be disposed when
+        /// the <see cref="ILoggerFactory"/> is disposed. Default value: <see
+        /// langword="true"/>.</param>
         /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
-        public static ILoggingBuilder AddOpenTelemetry(this ILoggingBuilder builder, OpenTelemetryLoggerProvider openTelemetryLoggerProvider)
+        public static ILoggingBuilder AddOpenTelemetry(
+            this ILoggingBuilder builder,
+            OpenTelemetryLoggerProvider openTelemetryLoggerProvider,
+            bool disposeProvider = true)
         {
             Guard.ThrowIfNull(builder);
             Guard.ThrowIfNull(openTelemetryLoggerProvider);
 
-            builder.AddProvider(openTelemetryLoggerProvider);
+            if (disposeProvider)
+            {
+                builder.AddProvider(openTelemetryLoggerProvider);
+            }
+            else
+            {
+                builder.AddProvider(new WrappedLoggerProvider<OpenTelemetryLoggerProvider>(openTelemetryLoggerProvider));
+            }
 
             return builder;
+        }
+
+        // Note: Prevents disposal of the underlying OpenTelemetryLoggerProvider
+        private sealed class WrappedLoggerProvider<T> : ILoggerProvider, ISupportExternalScope
+            where T : ILoggerProvider, ISupportExternalScope
+        {
+            private readonly T provider;
+
+            public WrappedLoggerProvider(T provider)
+            {
+                this.provider = provider;
+            }
+
+            public ILogger CreateLogger(string categoryName)
+                => this.provider.CreateLogger(categoryName);
+
+            public void SetScopeProvider(IExternalScopeProvider scopeProvider)
+                => this.provider.SetScopeProvider(scopeProvider);
+
+            public void Dispose()
+            {
+            }
         }
     }
 }
