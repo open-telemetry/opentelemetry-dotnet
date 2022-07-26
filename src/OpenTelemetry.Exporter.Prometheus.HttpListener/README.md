@@ -3,7 +3,8 @@
 [![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.Prometheus.HttpListener.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Prometheus.HttpListener)
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.Prometheus.HttpListener.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Prometheus.HttpListener)
 
-An [OpenTelemetry Prometheus exporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/prometheus.md) that configures an [HttpListener](https://docs.microsoft.com/dotnet/api/system.net.httplistener) instance for Prometheus to scrape.
+An [OpenTelemetry Prometheus exporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/prometheus.md)
+that configures an [HttpListener](https://docs.microsoft.com/dotnet/api/system.net.httplistener) instance for Prometheus to scrape.
 
 ## Prerequisite
 
