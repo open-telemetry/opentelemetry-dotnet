@@ -550,7 +550,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(shouldEnrichBeCalled, enrichCalled);
         }
 
-        [Fact]
+        [Fact(Skip = "Changes pending on instrumentation")]
         public async Task ActivitiesStartedInMiddlewareShouldNotBeUpdatedByInstrumentation()
         {
             var exportedItems = new List<Activity>();
