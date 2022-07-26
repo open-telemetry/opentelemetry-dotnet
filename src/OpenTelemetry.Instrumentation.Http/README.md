@@ -79,23 +79,6 @@ applications, it underneath uses `HttpWebRequest`. Because of this,
 Framework applications, irrespective of whether `HttpWebRequest` or `HttpClient`
 is used.
 
-### SetHttpFlavor
-
-By default, this instrumentation does not add the `http.flavor` attribute. The
-`http.flavor` attribute specifies the kind of HTTP protocol used (e.g., `1.1`
-for HTTP 1.1). The `SetHttpFlavor` option can be used to include the
-`http.flavor` attribute.
-
-The following example shows how to use `SetHttpFlavor`.
-
-```csharp
-using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddHttpClientInstrumentation(
-        (options) => options.SetHttpFlavor = true)
-    .AddConsoleExporter()
-    .Build();
-```
-
 ### Filter
 
 This instrumentation by default collects all the outgoing HTTP requests. It

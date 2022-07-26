@@ -231,6 +231,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Se
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Serilog.Tests", "test\OpenTelemetry.Extensions.Serilog.Tests\OpenTelemetry.Extensions.Serilog.Tests.csproj", "{6A2C122A-C1CD-4B6B-AE09-2ABB7D3C50CE}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.EventSource", "src\OpenTelemetry.Extensions.EventSource\OpenTelemetry.Extensions.EventSource.csproj", "{7AFB4975-9680-4668-9F5E-C3F0CA41E982}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.EventSource.Tests", "test\OpenTelemetry.Extensions.EventSource.Tests\OpenTelemetry.Extensions.EventSource.Tests.csproj", "{304FCFFF-97DE-484B-8D8C-612C644426E5}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus.AspNetCore", "src\OpenTelemetry.Exporter.Prometheus.AspNetCore\OpenTelemetry.Exporter.Prometheus.AspNetCore.csproj", "{921CF401-4C2F-4C6D-A750-0B5DC457C1F1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus.HttpListener", "src\OpenTelemetry.Exporter.Prometheus.HttpListener\OpenTelemetry.Exporter.Prometheus.HttpListener.csproj", "{6B0232B7-5F29-4FB5-B383-1AA02DFE1089}"
@@ -481,6 +485,14 @@ Global
 		{6A2C122A-C1CD-4B6B-AE09-2ABB7D3C50CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6A2C122A-C1CD-4B6B-AE09-2ABB7D3C50CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6A2C122A-C1CD-4B6B-AE09-2ABB7D3C50CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7AFB4975-9680-4668-9F5E-C3F0CA41E982}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7AFB4975-9680-4668-9F5E-C3F0CA41E982}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7AFB4975-9680-4668-9F5E-C3F0CA41E982}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7AFB4975-9680-4668-9F5E-C3F0CA41E982}.Release|Any CPU.Build.0 = Release|Any CPU
+		{304FCFFF-97DE-484B-8D8C-612C644426E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{304FCFFF-97DE-484B-8D8C-612C644426E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{304FCFFF-97DE-484B-8D8C-612C644426E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{304FCFFF-97DE-484B-8D8C-612C644426E5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{921CF401-4C2F-4C6D-A750-0B5DC457C1F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{921CF401-4C2F-4C6D-A750-0B5DC457C1F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{921CF401-4C2F-4C6D-A750-0B5DC457C1F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
