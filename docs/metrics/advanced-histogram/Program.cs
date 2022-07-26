@@ -16,11 +16,9 @@
 
 using System;
 using System.Diagnostics.Metrics;
-using System.Runtime.InteropServices;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
-
-namespace CustomizingTheSdk;
+using OpenTelemetry.Tests;
 
 public class Program
 {
@@ -180,84 +178,6 @@ public class Program
             var histogram = new ExponentialBucketHistogram(scale);
             var index = histogram.MapToIndex(value.DoubleValue);
             Console.WriteLine($"{value} => {index}");
-        }
-    }
-
-    [StructLayout(LayoutKind.Explicit)]
-    internal struct IEEE754Double
-    {
-        [FieldOffset(0)]
-        public double DoubleValue = 0;
-
-        [FieldOffset(0)]
-        public long LongValue = 0;
-
-        [FieldOffset(0)]
-        public ulong ULongValue = 0;
-
-        public IEEE754Double(double value)
-        {
-            this.DoubleValue = value;
-        }
-
-        public static IEEE754Double operator ++(IEEE754Double value)
-        {
-            value.ULongValue++;
-            return value;
-        }
-
-        public static IEEE754Double operator --(IEEE754Double value)
-        {
-            value.ULongValue--;
-            return value;
-        }
-
-        public static IEEE754Double FromDouble(double value)
-        {
-            return new IEEE754Double(value);
-        }
-
-        public static IEEE754Double FromLong(long value)
-        {
-            return new IEEE754Double { LongValue = value };
-        }
-
-        public static IEEE754Double FromULong(ulong value)
-        {
-            return new IEEE754Double { ULongValue = value };
-        }
-
-        public static IEEE754Double FromString(string value)
-        {
-            return IEEE754Double.FromULong((ulong)Convert.ToInt64(value.Replace(" ", string.Empty), 2));
-        }
-
-        public override string ToString()
-        {
-            Span<char> chars = stackalloc char[66];
-
-            var bits = this.ULongValue;
-            var index = chars.Length - 1;
-
-            for (int i = 0; i < 52; i++)
-            {
-                chars[index--] = (char)(bits & 0x01 | 0x30);
-                bits >>= 1;
-            }
-
-            chars[index--] = ' ';
-
-            for (int i = 0; i < 11; i++)
-            {
-                chars[index--] = (char)(bits & 0x01 | 0x30);
-                bits >>= 1;
-            }
-
-            chars[index--] = ' ';
-
-            chars[index--] = (char)(bits & 0x01 | 0x30);
-
-            return $"{chars} ({this.DoubleValue})";
         }
     }
 }
