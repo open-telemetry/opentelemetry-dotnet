@@ -139,7 +139,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         {
             var input = JsonSerializer.Deserialize<HttpTestData.HttpOutTestCase>(
             @"
-              {
+             {
                 ""name"": ""Http version attribute populated"",
                 ""method"": ""GET"",
                 ""url"": ""http://{host}:{port}/"",
