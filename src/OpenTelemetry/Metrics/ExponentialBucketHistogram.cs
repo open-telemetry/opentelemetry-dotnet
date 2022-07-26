@@ -28,7 +28,7 @@ namespace OpenTelemetry.Metrics;
 /// identified by <c>Bucket[index] = ( base ^ index, base ^ (index + 1) ]</c>,
 /// where <c>index</c> is an integer.
 /// </summary>
-internal class ExponentialBucketHistogram
+public class ExponentialBucketHistogram
 {
     private static readonly double Log2E = Math.Log2(Math.E); // 1 / Math.Log(2)
 
@@ -88,17 +88,26 @@ internal class ExponentialBucketHistogram
         Debug.Assert(value != 0, "IEEE-754 zero values should be handled by ZeroCount.");
         Debug.Assert(!double.IsNegative(value), "IEEE-754 negative values should be normalized before calling this method.");
 
+        var bits = BitConverter.DoubleToInt64Bits(value);
+        var fraction = bits & 0xFFFFFFFFFFFFFL /* fraction mask */;
+
         if (this.Scale > 0)
         {
+            // TODO: do we really need this given the lookup table is needed for scale>0 anyways?
+            if (fraction == 0)
+            {
+                var exp = (int)((bits & 0x7FF0000000000000L /* exponent mask */) >> 52 /* fraction width */);
+                return ((exp - 1023 /* exponent bias */) << this.Scale) - 1;
+            }
+
             // TODO: due to precision issue, the values that are close to the bucket
             // boundaries should be closely examined to avoid off-by-one.
+
             return (int)Math.Ceiling(Math.Log(value) * this.scalingFactor) - 1;
         }
         else
         {
-            var bits = BitConverter.DoubleToInt64Bits(value);
             var exp = (int)((bits & 0x7FF0000000000000L /* exponent mask */) >> 52 /* fraction width */);
-            var fraction = bits & 0xFFFFFFFFFFFFFL /* fraction mask */;
 
             if (exp == 0)
             {
