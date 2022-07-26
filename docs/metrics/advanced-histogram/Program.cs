@@ -131,6 +131,15 @@ public class Program
             TestMapToIndex(0, ++value);
         }
 
+        Console.WriteLine("Scale -2:");
+
+        for (int i = 0; i < array.Length; i++)
+        {
+            value = array[i];
+            TestMapToIndex(-2, value);
+            TestMapToIndex(-2, ++value);
+        }
+
         Console.WriteLine("Scale -1:");
 
         for (int i = 0; i < array.Length; i++)
@@ -148,6 +157,23 @@ public class Program
             TestMapToIndex(1, value);
             TestMapToIndex(1, ++value);
         }
+
+        Console.WriteLine("Scale 2:");
+
+        for (int i = 0; i < array.Length; i++)
+        {
+            value = array[i];
+            TestMapToIndex(2, value);
+            TestMapToIndex(2, ++value);
+        }
+
+        /*
+        for (var scale = -11; scale <= 20; scale++)
+        {
+            var histogram = new ExponentialBucketHistogram(scale);
+            Console.WriteLine($"Scale {scale}: index in [{histogram.MapToIndex(double.Epsilon)}, {histogram.MapToIndex(double.MaxValue)}]");
+        }
+        */
 
         static void TestMapToIndex(int scale, IEEE754Double value)
         {
