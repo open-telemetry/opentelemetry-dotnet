@@ -32,7 +32,7 @@ namespace Microsoft.Extensions.Logging
     public static class OpenTelemetryLoggingExtensions
     {
         /// <summary>
-        /// Adds a OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+        /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
         /// </summary>
         /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
         /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
@@ -40,7 +40,7 @@ namespace Microsoft.Extensions.Logging
             => AddOpenTelemetry(builder, configure: null);
 
         /// <summary>
-        /// Adds a OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+        /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
         /// </summary>
         /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
         /// <param name="configure">Optional configuration action.</param>
@@ -61,19 +61,32 @@ namespace Microsoft.Extensions.Logging
         }
 
         /// <summary>
-        /// Adds a OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+        /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+        /// </summary>
+        /// <remarks>
+        /// Note: The supplied <see cref="OpenTelemetryLoggerProvider"/> will
+        /// automatically be disposed when the <see cref="ILoggerFactory"/>
+        /// built from <paramref name="builder"/> is disposed.
+        /// </remarks>
+        /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+        /// <param name="openTelemetryLoggerProvider"><see cref="OpenTelemetryLoggerProvider"/>.</param>
+        /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+        public static ILoggingBuilder AddOpenTelemetry(this ILoggingBuilder builder, OpenTelemetryLoggerProvider openTelemetryLoggerProvider)
+            => AddOpenTelemetry(builder, openTelemetryLoggerProvider, disposeProvider: true);
+
+        /// <summary>
+        /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
         /// </summary>
         /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
         /// <param name="openTelemetryLoggerProvider"><see cref="OpenTelemetryLoggerProvider"/>.</param>
         /// <param name="disposeProvider">Controls whether or not the supplied
         /// <paramref name="openTelemetryLoggerProvider"/> will be disposed when
-        /// the <see cref="ILoggerFactory"/> is disposed. Default value: <see
-        /// langword="true"/>.</param>
+        /// the <see cref="ILoggerFactory"/> is disposed.</param>
         /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
         public static ILoggingBuilder AddOpenTelemetry(
             this ILoggingBuilder builder,
             OpenTelemetryLoggerProvider openTelemetryLoggerProvider,
-            bool disposeProvider = true)
+            bool disposeProvider)
         {
             Guard.ThrowIfNull(builder);
             Guard.ThrowIfNull(openTelemetryLoggerProvider);
