@@ -20,7 +20,7 @@ using System.Threading;
 using System.Threading.Tasks;
 #if PROMETHEUS_ASPNETCORE
 using OpenTelemetry.Exporter.Prometheus.AspNetCore;
-#elif PROMETHEUS_ASPNETCORE_HTTPLISTENER
+#elif PROMETHEUS_HTTPLISTENER
 using OpenTelemetry.Exporter.Prometheus.HttpListener;
 #endif
 using OpenTelemetry.Metrics;

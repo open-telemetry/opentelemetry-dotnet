@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <DefineConstants>$(DefineConstants);PROMETHEUS_ASPNETCORE_HTTPLISTENER</DefineConstants>
+    <DefineConstants>$(DefineConstants);PROMETHEUS_HTTPLISTENER</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
