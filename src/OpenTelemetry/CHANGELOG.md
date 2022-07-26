@@ -31,6 +31,9 @@
 * Fix exact match of activity source name when `wildcard` is used.
   ([#3446](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3446))
 
+* `LogRecord.CategoryName` has been marked obsolete.
+  ([#3493](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3493))
+
 ## 1.3.0
 
 Released 2022-Jun-03
