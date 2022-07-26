@@ -35,9 +35,17 @@ namespace Microsoft.Extensions.Logging
         /// Adds a OpenTelemetry logger named 'OpenTelemetry' to the factory.
         /// </summary>
         /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+        /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+        public static ILoggingBuilder AddOpenTelemetry(this ILoggingBuilder builder)
+            => AddOpenTelemetry(builder, configure: null);
+
+        /// <summary>
+        /// Adds a OpenTelemetry logger named 'OpenTelemetry' to the factory.
+        /// </summary>
+        /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
         /// <param name="configure">Optional configuration action.</param>
         /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
-        public static ILoggingBuilder AddOpenTelemetry(this ILoggingBuilder builder, Action<OpenTelemetryLoggerOptions>? configure = null)
+        public static ILoggingBuilder AddOpenTelemetry(this ILoggingBuilder builder, Action<OpenTelemetryLoggerOptions>? configure)
         {
             Guard.ThrowIfNull(builder);
 
@@ -48,6 +56,22 @@ namespace Microsoft.Extensions.Logging
             {
                 builder.Services.Configure(configure);
             }
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds a OpenTelemetry logger named 'OpenTelemetry' to the factory.
+        /// </summary>
+        /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+        /// <param name="openTelemetryLoggerProvider"><see cref="OpenTelemetryLoggerProvider"/>.</param>
+        /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+        public static ILoggingBuilder AddOpenTelemetry(this ILoggingBuilder builder, OpenTelemetryLoggerProvider openTelemetryLoggerProvider)
+        {
+            Guard.ThrowIfNull(builder);
+            Guard.ThrowIfNull(openTelemetryLoggerProvider);
+
+            builder.AddProvider(openTelemetryLoggerProvider);
 
             return builder;
         }
