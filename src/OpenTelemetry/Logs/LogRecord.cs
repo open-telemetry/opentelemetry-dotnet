@@ -127,6 +127,7 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Gets or sets the log category name.
         /// </summary>
+        [Obsolete("CategoryName may not be exported. Consider adding an attribute to the LogRecord.")]
         public string? CategoryName
         {
             get => this.Data.CategoryName;

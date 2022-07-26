@@ -98,7 +98,10 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             Assert.NotEqual(DateTime.MinValue, logRecord.Timestamp);
             Assert.Equal(DateTimeKind.Utc, logRecord.Timestamp.Kind);
             Assert.Equal(LogLevel.Information, logRecord.LogLevel);
+
+#pragma warning disable 618 // LogRecord.CategoryName is obsolete
             Assert.Null(logRecord.CategoryName);
+#pragma warning restore 618 // LogRecord.CategoryName is obsolete
 
             Assert.NotNull(logRecord.StateValues);
             Assert.Single(logRecord.StateValues);
@@ -146,7 +149,7 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
         }
 
         [Fact]
-        public void SerilogCategoryNameTest()
+        public void SerilogSourceContextTest()
         {
             List<LogRecord> exportedItems = new();
 
@@ -172,7 +175,11 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
 
             LogRecord logRecord = exportedItems[0];
 
-            Assert.Equal("OpenTelemetry.Extensions.Serilog.Tests.OpenTelemetrySerilogSinkTests", logRecord.CategoryName);
+#pragma warning disable 618 // LogRecord.CategoryName is obsolete
+            Assert.Null(logRecord.CategoryName);
+#pragma warning restore 618 // LogRecord.CategoryName is obsolete
+
+            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "serilog.source_context" && (string?)kvp.Value == "OpenTelemetry.Extensions.Serilog.Tests.OpenTelemetrySerilogSinkTests");
         }
 
         [Fact]

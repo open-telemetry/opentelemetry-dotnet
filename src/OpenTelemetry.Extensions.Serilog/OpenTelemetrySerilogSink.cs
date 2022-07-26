@@ -71,7 +71,7 @@ namespace OpenTelemetry.Logs
                 if (property.Key == Constants.SourceContextPropertyName
                     && property.Value is ScalarValue sourceContextValue)
                 {
-                    data.CategoryName = sourceContextValue.Value as string;
+                    attributes.Add("serilog.source_context", sourceContextValue.Value as string);
                 }
                 else if (property.Value is ScalarValue scalarValue)
                 {

@@ -136,7 +136,11 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             Assert.Equal(TestEventSource.SimpleEventId, logRecord.EventId.Id);
             Assert.Equal(nameof(TestEventSource.SimpleEvent), logRecord.EventId.Name);
             Assert.Equal(LogLevel.Warning, logRecord.LogLevel);
+
+#pragma warning disable 618 // LogRecord.CategoryName is obsolete
             Assert.Null(logRecord.CategoryName);
+#pragma warning restore 618 // LogRecord.CategoryName is obsolete
+
             Assert.Null(logRecord.Exception);
 
             Assert.Equal(default, logRecord.TraceId);
@@ -222,7 +226,11 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             Assert.Equal(TestEventSource.ComplexEventId, logRecord.EventId.Id);
             Assert.Equal(nameof(TestEventSource.ComplexEvent), logRecord.EventId.Name);
             Assert.Equal(LogLevel.Information, logRecord.LogLevel);
+
+#pragma warning disable 618 // LogRecord.CategoryName is obsolete
             Assert.Null(logRecord.CategoryName);
+#pragma warning restore 618 // LogRecord.CategoryName is obsolete
+
             Assert.Null(logRecord.Exception);
 
             Assert.Equal(default, logRecord.TraceId);

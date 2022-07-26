@@ -42,10 +42,12 @@ namespace OpenTelemetry.Exporter
                     this.WriteLine($"{"LogRecord.TraceFlags:",-RightPaddingLength}{logRecord.TraceFlags}");
                 }
 
+#pragma warning disable 618 // LogRecord.CategoryName is obsolete
                 if (logRecord.CategoryName != null)
                 {
                     this.WriteLine($"{"LogRecord.CategoryName:",-RightPaddingLength}{logRecord.CategoryName}");
                 }
+#pragma warning restore 618 // LogRecord.CategoryName is obsolete
 
                 this.WriteLine($"{"LogRecord.LogLevel:",-RightPaddingLength}{logRecord.LogLevel}");
 

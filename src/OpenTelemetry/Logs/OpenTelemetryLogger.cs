@@ -64,13 +64,17 @@ namespace OpenTelemetry.Logs
                 ref LogRecordData data = ref record.Data;
 
                 data.TimestampBacking = DateTime.UtcNow;
-                data.CategoryName = this.categoryName;
                 data.LogLevel = logLevel;
                 data.EventId = eventId;
                 data.Message = provider.IncludeFormattedMessage ? formatter?.Invoke(state, exception) : null;
                 data.Exception = exception;
 
                 LogRecordData.SetActivityContext(ref data, Activity.Current);
+
+                LogRecordAttributeList attributes = default;
+
+                // TODO: Confirm if this name for attribute is good.
+                attributes.Add("dotnet.ilogger.category", this.categoryName);
 
                 processor.OnEnd(record);
 
