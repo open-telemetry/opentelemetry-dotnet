@@ -49,7 +49,7 @@ namespace TestApp.AspNetCore._6._0
         {
             public virtual void PreProcess(HttpContext context)
             {
-               // Do nothing
+                // Do nothing
             }
 
             public virtual void PostProcess(HttpContext context)
