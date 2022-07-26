@@ -25,6 +25,12 @@
 * Handle possible exception when initializing the default service name.
   ([#3405](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3405))
 
+* `LogRecord` instances are now reused to reduce memory pressure
+  ([#3385](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3385))
+
+* Fix exact match of activity source name when `wildcard` is used.
+  ([#3446](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3446))
+
 ## 1.3.0
 
 Released 2022-Jun-03
