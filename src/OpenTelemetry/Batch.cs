@@ -33,9 +33,9 @@ namespace OpenTelemetry
     public readonly struct Batch<T> : IDisposable
         where T : class
     {
-        private readonly T? item;
-        private readonly CircularBuffer<T>? circularBuffer;
-        private readonly T[]? items;
+        private readonly T? item = null;
+        private readonly CircularBuffer<T>? circularBuffer = null;
+        private readonly T[]? items = null;
         private readonly long targetCount;
 
         /// <summary>
@@ -48,8 +48,6 @@ namespace OpenTelemetry
             Guard.ThrowIfNull(items);
             Guard.ThrowIfOutOfRange(count, min: 0, max: items.Length);
 
-            this.item = null;
-            this.circularBuffer = null;
             this.items = items;
             this.Count = this.targetCount = count;
         }
@@ -59,8 +57,6 @@ namespace OpenTelemetry
             Debug.Assert(item != null, $"{nameof(item)} was null.");
 
             this.item = item;
-            this.circularBuffer = null;
-            this.items = null;
             this.Count = this.targetCount = 1;
         }
 
@@ -69,8 +65,6 @@ namespace OpenTelemetry
             Debug.Assert(maxSize > 0, $"{nameof(maxSize)} should be a positive number.");
             Debug.Assert(circularBuffer != null, $"{nameof(circularBuffer)} was null.");
 
-            this.item = null;
-            this.items = null;
             this.circularBuffer = circularBuffer;
             this.Count = Math.Min(maxSize, circularBuffer!.Count);
             this.targetCount = circularBuffer.RemovedCount + this.Count;
