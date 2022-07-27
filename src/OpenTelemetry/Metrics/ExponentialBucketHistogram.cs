@@ -28,14 +28,19 @@ namespace OpenTelemetry.Metrics;
 /// identified by <c>Bucket[index] = ( base ^ index, base ^ (index + 1) ]</c>,
 /// where <c>index</c> is an integer.
 /// </summary>
-internal class ExponentialBucketHistogram
+public class ExponentialBucketHistogram
 {
     private static readonly double Log2E = Math.Log2(Math.E); // 1 / Math.Log(2)
 
     private int scale;
     private double scalingFactor; // 2 ^ scale / log(2)
 
-    public ExponentialBucketHistogram(int scale, int maxBuckets = 160)
+    public ExponentialBucketHistogram(int maxBuckets = 160)
+        : this(maxBuckets, 20)
+    {
+    }
+
+    internal ExponentialBucketHistogram(int maxBuckets, int scale)
     {
         /*
         The following table is calculated based on [ MapToIndex(double.Epsilon), MapToIndex(double.MaxValue) ]:
@@ -80,7 +85,12 @@ internal class ExponentialBucketHistogram
         */
         Guard.ThrowIfOutOfRange(scale, min: -11, max: 20);
 
-        Guard.ThrowIfOutOfRange(maxBuckets, min: 1);
+        /*
+        Regardless of the scale, MapToIndex(1) will always be -1, so we need two buckets at minimum:
+            bucket[-1] = (1/base, 1]
+            bucket[0] = (1, base]
+        */
+        Guard.ThrowIfOutOfRange(maxBuckets, min: 2);
 
         this.Scale = scale;
         this.PositiveBuckets = new CircularBufferBuckets(maxBuckets);
