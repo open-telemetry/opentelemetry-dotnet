@@ -43,23 +43,32 @@ Running (concurrency = 1), press <Esc> to stop...
 The stress test metrics are exposed via
 [PrometheusExporter](../../src/OpenTelemetry.Exporter.Prometheus/README.md),
 which can be accessed via
-[http://localhost:9184/metrics/](http://localhost:9184/metrics/):
+[http://localhost:9184/metrics/](http://localhost:9184/metrics/).
+
+Following shows a section of the metrics exposed in prometheus format:
 
 ```text
-# TYPE Process_NonpagedSystemMemorySize64 gauge
-Process_NonpagedSystemMemorySize64 31651 1637385964580
+# HELP OpenTelemetry_Tests_Stress_Loops The total number of `Run()` invocations that are completed.
+# TYPE OpenTelemetry_Tests_Stress_Loops counter
+OpenTelemetry_Tests_Stress_Loops 1844902947 1658950184752
 
-# TYPE Process_PagedSystemMemorySize64 gauge
-Process_PagedSystemMemorySize64 238672 1637385964580
+# HELP OpenTelemetry_Tests_Stress_LoopsPerSecond The rate of `Run()` invocations based on a small sliding window of few hundreds of milliseconds.
+# TYPE OpenTelemetry_Tests_Stress_LoopsPerSecond gauge
+OpenTelemetry_Tests_Stress_LoopsPerSecond 9007731.132075472 1658950184752
 
-# TYPE Process_PagedMemorySize64 gauge
-Process_PagedMemorySize64 16187392 1637385964580
+# HELP OpenTelemetry_Tests_Stress_CpuCyclesPerLoop The average CPU cycles for each `Run()` invocation, based on a small sliding window of few hundreds of milliseconds.
+# TYPE OpenTelemetry_Tests_Stress_CpuCyclesPerLoop gauge
+OpenTelemetry_Tests_Stress_CpuCyclesPerLoop 3008 1658950184752
 
-# TYPE Process_WorkingSet64 gauge
-Process_WorkingSet64 29753344 1637385964580
+# HELP process_runtime_dotnet_gc_collections_count Number of garbage collections that have occurred since process start.
+# TYPE process_runtime_dotnet_gc_collections_count counter
+process_runtime_dotnet_gc_collections_count{generation="gen2"} 0 1658950184752
+process_runtime_dotnet_gc_collections_count{generation="gen1"} 0 1658950184752
+process_runtime_dotnet_gc_collections_count{generation="gen0"} 0 1658950184752
 
-# TYPE Process_VirtualMemorySize64 gauge
-Process_VirtualMemorySize64 2204045848576 1637385964580
+# HELP process_runtime_dotnet_gc_allocations_size_bytes Count of bytes allocated on the managed GC heap since the process start. .NET objects are allocated from this heap. Object allocations from unmanaged languages such as C/C++ do not use this heap.
+# TYPE process_runtime_dotnet_gc_allocations_size_bytes counter
+process_runtime_dotnet_gc_allocations_size_bytes 5485192 1658950184752
 ```
 
 ## Writing your own stress test
