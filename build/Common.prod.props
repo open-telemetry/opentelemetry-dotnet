@@ -1,7 +1,7 @@
 <Project>
   <Import Project=".\Common.props" />
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(forRelease)' == 'true'">
     <PackageReference Include="MinVer" Version="$(MinVerPkgVer)" Condition="'$(IntegrationBuild)' != 'true'">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
