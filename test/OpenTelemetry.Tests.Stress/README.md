@@ -92,6 +92,13 @@ Add the [`Skeleton.cs`](./Skeleton.cs) file to your `*.csproj` file:
   </ItemGroup>
 ```
 
+Add the following packages to the project:
+
+```shell
+dotnet add package OpenTelemetry.Exporter.Prometheus --prerelease
+dotnet add package OpenTelemetry.Instrumentation.Runtime --prerelease
+```
+
 Now you are ready to run your own stress test.
 
 Some useful notes:

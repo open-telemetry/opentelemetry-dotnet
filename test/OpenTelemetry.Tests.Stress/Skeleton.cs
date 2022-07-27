@@ -51,6 +51,7 @@ public partial class Program
             concurrency = Environment.ProcessorCount;
         }
 
+        var sw = Stopwatch.StartNew();
         using var meter = new Meter("OpenTelemetry.Tests.Stress." + Guid.NewGuid().ToString("D"));
         var cntLoopsTotal = 0UL;
         meter.CreateObservableCounter(
@@ -63,11 +64,8 @@ public partial class Program
             () => dLoopsPerSecond,
             description: "The rate of `Run()` invocations based on a small sliding window of few hundreds of milliseconds.");
         var dCpuCyclesPerLoop = 0D;
-#if NET462
-        if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-#else
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-#endif
         {
             meter.CreateObservableGauge(
                 "OpenTelemetry.Tests.Stress.CpuCyclesPerLoop",
@@ -169,6 +167,7 @@ public partial class Program
         var cntCpuCyclesTotal = GetCpuCycles();
         var cpuCyclesPerLoopTotal = cntLoopsTotal == 0 ? 0 : cntCpuCyclesTotal / cntLoopsTotal;
         Console.WriteLine("Stopping the stress test...");
+        Console.WriteLine($"Stress test ran for {sw.Elapsed}");
         Console.WriteLine($"* Total Loops: {cntLoopsTotal:n0}");
         Console.WriteLine($"* Average Loops/Second: {totalLoopsPerSecond:n0}");
         Console.WriteLine($"* Average CPU Cycles/Loop: {cpuCyclesPerLoopTotal:n0}");
@@ -180,11 +179,7 @@ public partial class Program
 
     private static ulong GetCpuCycles()
     {
-#if NET462
-        if (Environment.OSVersion.Platform != PlatformID.Win32NT)
-#else
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-#endif
         {
             return 0;
         }
