@@ -91,38 +91,20 @@ namespace Microsoft.Extensions.Logging
             Guard.ThrowIfNull(builder);
             Guard.ThrowIfNull(openTelemetryLoggerProvider);
 
+            // Note: Currently if multiple OpenTelemetryLoggerProvider instances
+            // are added to the same ILoggingBuilder everything after the first
+            // is silently ignored.
+
             if (disposeProvider)
             {
-                builder.AddProvider(openTelemetryLoggerProvider);
+                builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(sp => openTelemetryLoggerProvider));
             }
             else
             {
-                builder.AddProvider(new WrappedLoggerProvider<OpenTelemetryLoggerProvider>(openTelemetryLoggerProvider));
+                builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider>(openTelemetryLoggerProvider));
             }
 
             return builder;
-        }
-
-        // Note: Prevents disposal of the underlying OpenTelemetryLoggerProvider
-        private sealed class WrappedLoggerProvider<T> : ILoggerProvider, ISupportExternalScope
-            where T : ILoggerProvider, ISupportExternalScope
-        {
-            private readonly T provider;
-
-            public WrappedLoggerProvider(T provider)
-            {
-                this.provider = provider;
-            }
-
-            public ILogger CreateLogger(string categoryName)
-                => this.provider.CreateLogger(categoryName);
-
-            public void SetScopeProvider(IExternalScopeProvider scopeProvider)
-                => this.provider.SetScopeProvider(scopeProvider);
-
-            public void Dispose()
-            {
-            }
         }
     }
 }
