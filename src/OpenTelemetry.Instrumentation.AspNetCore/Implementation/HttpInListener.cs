@@ -23,6 +23,9 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 #endif
 using Microsoft.AspNetCore.Http;
+#if NET6_0_OR_GREATER
+using Microsoft.AspNetCore.Http.Features;
+#endif
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 #if !NETSTANDARD2_0
@@ -44,6 +47,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
         private readonly PropertyFetcher<HttpContext> startContextFetcher = new("HttpContext");
         private readonly PropertyFetcher<HttpContext> stopContextFetcher = new("HttpContext");
+        private readonly PropertyFetcher<HttpContext> customContextFetcher = new("HttpContext");
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
         private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new("actionDescriptor");
         private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new("AttributeRouteInfo");
@@ -246,6 +250,23 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             if (name == "Microsoft.AspNetCore.Mvc.BeforeAction")
             {
+                // We cannot rely on Activity.Current here
+                // There could be activities started by middleware
+                // after activity started by framework resulting in different Activity.Current.
+                // so, we need to first find the activity started by framework.
+                _ = this.customContextFetcher.TryFetch(payload, out HttpContext context);
+#if NET6_0_OR_GREATER
+                // https://github.com/dotnet/aspnetcore/blob/c2cba55ca149ab3bd3fadcf97b9d16a74f561111/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L68-L75
+                var httpActivityFeature = context.Features.Get<IHttpActivityFeature>();
+                activity = httpActivityFeature.Activity;
+#else
+                // IHttpActivityFeature is only available in .net6.0 onwards
+                // so we find the root activity by looping through activity parent chain.
+                while (activity.Parent != null)
+                {
+                    activity = activity.Parent;
+                }
+#endif
                 if (activity.IsAllDataRequested)
                 {
                     // See https://github.com/aspnet/Mvc/blob/2414db256f32a047770326d14d8b0e2afd49ba49/src/Microsoft.AspNetCore.Mvc.Core/MvcCoreDiagnosticSourceExtensions.cs#L36-L44

@@ -550,7 +550,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(shouldEnrichBeCalled, enrichCalled);
         }
 
-        [Fact(Skip = "Changes pending on instrumentation")]
+        [Fact]
         public async Task ActivitiesStartedInMiddlewareShouldNotBeUpdatedByInstrumentation()
         {
             var exportedItems = new List<Activity>();
@@ -579,8 +579,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             var middlewareActivity = exportedItems[0];
 
+            var aspnetcoreframeworkactivity = exportedItems[1];
+
             // Middleware activity name should not be changed
+            Assert.Equal(ActivityKind.Internal, middlewareActivity.Kind);
+            Assert.Equal(activityName, middlewareActivity.OperationName);
             Assert.Equal(activityName, middlewareActivity.DisplayName);
+
+            // tag http.route should be added on activity started by asp.net core
+            Assert.Equal("api/Values/{id}", aspnetcoreframeworkactivity.GetTagValue(SemanticConventions.AttributeHttpRoute) as string);
+            Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", aspnetcoreframeworkactivity.OperationName);
+            Assert.Equal("api/Values/{id}", aspnetcoreframeworkactivity.DisplayName);
         }
 
         public void Dispose()
