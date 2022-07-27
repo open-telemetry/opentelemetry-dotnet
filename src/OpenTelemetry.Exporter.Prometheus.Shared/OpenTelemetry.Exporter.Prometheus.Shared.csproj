@@ -3,7 +3,7 @@
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
     <TargetFrameworks>netcoreapp3.1;net462</TargetFrameworks>
-    <Description>Prometheus exporter shared code for both Prometheus exporter HttpListener and Prometheus Exporter AspNetCore</Description>
+    <Description>Prometheus exporter shared code for both Prometheus exporter HttpListener and Prometheus exporter AspNetCore</Description>
     <PackageTags>$(PackageTags);prometheus;metrics</PackageTags>
   </PropertyGroup>
 

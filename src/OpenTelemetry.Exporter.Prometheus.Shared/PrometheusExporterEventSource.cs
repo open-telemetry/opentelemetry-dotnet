@@ -24,7 +24,6 @@ namespace OpenTelemetry.Exporter.Prometheus.Shared
     /// EventSource events emitted from the project.
     /// </summary>
     [EventSource(Name = "OpenTelemetry-Exporter-Prometheus")]
-
     internal sealed class PrometheusExporterEventSource : EventSource
     {
         public static PrometheusExporterEventSource Log = new();
