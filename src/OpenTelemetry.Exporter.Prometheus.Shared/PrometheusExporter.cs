@@ -32,9 +32,9 @@ namespace OpenTelemetry.Exporter.Prometheus.Shared
     {
         internal const string HttpListenerStartFailureExceptionMessage = "PrometheusExporter http listener could not be started.";
         internal readonly PrometheusExporterOptions Options;
-        private readonly bool disposed = false;
         private Func<int, bool> funcCollect;
         private Func<Batch<Metric>, ExportResult> funcExport;
+        private bool disposed = false;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
@@ -80,6 +80,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Shared
                 {
                     this.OnDispose?.Invoke();
                 }
+
+                this.disposed = true;
             }
 
             base.Dispose(disposing);
