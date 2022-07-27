@@ -130,4 +130,4 @@ Some useful notes:
   sliding window of few hundreds of milliseconds.
 * `CPU Cycles/Loop` represents the average CPU cycles for each `Run()`
   invocation, based on a small sliding window of few hundreds of milliseconds.
-* `Runaway time` represents the runway time (Seconds) since tests started.
+* `Runaway Time` represents the runaway time (seconds) since the test started.
