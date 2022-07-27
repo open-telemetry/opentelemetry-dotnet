@@ -565,7 +565,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                     {
                         services.AddSingleton<ActivityMiddleware.ActivityMiddlewareImpl>(new TestActivityMiddlewareImpl(activitySourceName, activityName));
                         services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation()
-                        .SetSampler(new AlwaysOnSampler())
                         .AddSource(activitySourceName)
                         .AddInMemoryExporter(exportedItems));
                     }))
