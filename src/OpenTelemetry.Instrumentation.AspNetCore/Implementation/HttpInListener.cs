@@ -254,7 +254,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // For .net6.0 onwards we could use IHttpActivityFeature to get the activity created by framework
                 // var httpActivityFeature = context.Features.Get<IHttpActivityFeature>();
                 // activity = httpActivityFeature.Activity;
-                // However, this will not work as in case of custom propagator as
+                // However, this will not work as in case of custom propagator
                 // we start a new activity during onStart event which is a sibling to the activity created by framework
                 // So, in that case we need to get the activity created by us here.
                 // we can do so only by looping through activity.Parent chain.
