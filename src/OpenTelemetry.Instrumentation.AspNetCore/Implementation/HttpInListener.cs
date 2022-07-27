@@ -254,19 +254,19 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // There could be activities started by middleware
                 // after activity started by framework resulting in different Activity.Current.
                 // so, we need to first find the activity started by framework.
+                // For .net6.0 onwards we could use IHttpActivityFeature to get the activity created by framework
+                // var httpActivityFeature = context.Features.Get<IHttpActivityFeature>();
+                // activity = httpActivityFeature.Activity;
+                // However, this will not work as in case of custom propagator as
+                // we start a new activity during onStart event which is a sibling to the activity created by framework
+                // So, in that case we need to get the activity created by us here.
+                // we can do so only by looping through activity.Parent chain.
                 _ = this.customContextFetcher.TryFetch(payload, out HttpContext context);
-#if NET6_0_OR_GREATER
-                // https://github.com/dotnet/aspnetcore/blob/c2cba55ca149ab3bd3fadcf97b9d16a74f561111/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L68-L75
-                var httpActivityFeature = context.Features.Get<IHttpActivityFeature>();
-                activity = httpActivityFeature.Activity;
-#else
-                // IHttpActivityFeature is only available in .net6.0 onwards
-                // so we find the root activity by looping through activity parent chain.
                 while (activity.Parent != null)
                 {
                     activity = activity.Parent;
                 }
-#endif
+
                 if (activity.IsAllDataRequested)
                 {
                     // See https://github.com/aspnet/Mvc/blob/2414db256f32a047770326d14d8b0e2afd49ba49/src/Microsoft.AspNetCore.Mvc.Core/MvcCoreDiagnosticSourceExtensions.cs#L36-L44
