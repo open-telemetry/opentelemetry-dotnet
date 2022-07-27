@@ -4,7 +4,8 @@
 [![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.Prometheus.AspNetCore.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Prometheus.AspNetCore)
 
 An [OpenTelemetry Prometheus exporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/prometheus.md)
-for configuring an ASP.NET Core application with an endpoint for Prometheus to scrape.
+for configuring an ASP.NET Core application with an endpoint for Prometheus
+to scrape.
 
 ## Prerequisite
 
