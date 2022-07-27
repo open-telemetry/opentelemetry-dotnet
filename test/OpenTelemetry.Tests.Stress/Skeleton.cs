@@ -51,7 +51,6 @@ public partial class Program
             concurrency = Environment.ProcessorCount;
         }
 
-        var sw = Stopwatch.StartNew();
         using var meter = new Meter("OpenTelemetry.Tests.Stress." + Guid.NewGuid().ToString("D"));
         var cntLoopsTotal = 0UL;
         meter.CreateObservableCounter(
@@ -144,7 +143,7 @@ public partial class Program
                     dLoopsPerSecond = (double)nLoops / ((double)watch.ElapsedMilliseconds / 1000.0);
                     dCpuCyclesPerLoop = nLoops == 0 ? 0 : nCpuCycles / nLoops;
 
-                    output = $"Loops: {cntLoopsTotal:n0}, Loops/Second: {dLoopsPerSecond:n0}, CPU Cycles/Loop: {dCpuCyclesPerLoop:n0}, RunwayTime (Seconds): {sw.Elapsed.TotalSeconds} ";
+                    output = $"Loops: {cntLoopsTotal:n0}, Loops/Second: {dLoopsPerSecond:n0}, CPU Cycles/Loop: {dCpuCyclesPerLoop:n0}, RunwayTime (Seconds): {watchForTotal.Elapsed.TotalSeconds:n0} ";
                     Console.Title = output;
                 }
             },
@@ -167,7 +166,7 @@ public partial class Program
         var cntCpuCyclesTotal = GetCpuCycles();
         var cpuCyclesPerLoopTotal = cntLoopsTotal == 0 ? 0 : cntCpuCyclesTotal / cntLoopsTotal;
         Console.WriteLine("Stopping the stress test...");
-        Console.WriteLine($"* Total Runaway time (seconds) {sw.Elapsed.TotalSeconds}");
+        Console.WriteLine($"* Total Runaway Time (seconds) {watchForTotal.Elapsed.TotalSeconds:n0}");
         Console.WriteLine($"* Total Loops: {cntLoopsTotal:n0}");
         Console.WriteLine($"* Average Loops/Second: {totalLoopsPerSecond:n0}");
         Console.WriteLine($"* Average CPU Cycles/Loop: {cpuCyclesPerLoopTotal:n0}");
