@@ -167,7 +167,7 @@ public partial class Program
         var cntCpuCyclesTotal = GetCpuCycles();
         var cpuCyclesPerLoopTotal = cntLoopsTotal == 0 ? 0 : cntCpuCyclesTotal / cntLoopsTotal;
         Console.WriteLine("Stopping the stress test...");
-        Console.WriteLine($"* Stress test ran for {sw.Elapsed}");
+        Console.WriteLine($"* Stress test ran for {sw.Elapsed.TotalSeconds} seconds");
         Console.WriteLine($"* Total Loops: {cntLoopsTotal:n0}");
         Console.WriteLine($"* Average Loops/Second: {totalLoopsPerSecond:n0}");
         Console.WriteLine($"* Average CPU Cycles/Loop: {cpuCyclesPerLoopTotal:n0}");
