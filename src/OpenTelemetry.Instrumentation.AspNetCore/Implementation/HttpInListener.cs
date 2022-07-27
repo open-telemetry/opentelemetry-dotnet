@@ -23,9 +23,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 #endif
 using Microsoft.AspNetCore.Http;
-#if NET6_0_OR_GREATER
-using Microsoft.AspNetCore.Http.Features;
-#endif
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 #if !NETSTANDARD2_0
