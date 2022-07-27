@@ -37,7 +37,49 @@ internal class ExponentialBucketHistogram
 
     public ExponentialBucketHistogram(int scale, int maxBuckets = 160)
     {
-        Guard.ThrowIfOutOfRange(scale, min: -20, max: 20); // TODO: calculate the actual range
+        /*
+        The following table is calculated based on [ MapToIndex(double.Epsilon), MapToIndex(double.MaxValue) ]:
+
+        | Scale | Index Range               |
+        | ----- | ------------------------- |
+        | < -11 | [-1, 0]                   |
+        | -11   | [-1, 0]                   |
+        | -10   | [-2, 0]                   |
+        | -9    | [-3, 1]                   |
+        | -8    | [-5, 3]                   |
+        | -7    | [-9, 7]                   |
+        | -6    | [-17, 15]                 |
+        | -5    | [-34, 31]                 |
+        | -4    | [-68, 63]                 |
+        | -3    | [-135, 127]               |
+        | -2    | [-269, 255]               |
+        | -1    | [-538, 511]               |
+        | 0     | [-1075, 1023]             |
+        | 1     | [-2149, 2047]             |
+        | 2     | [-4297, 4095]             |
+        | 3     | [-8593, 8191]             |
+        | 4     | [-17185, 16383]           |
+        | 5     | [-34369, 32767]           |
+        | 6     | [-68737, 65535]           |
+        | 7     | [-137473, 131071]         |
+        | 8     | [-274945, 262143]         |
+        | 9     | [-549889, 524287]         |
+        | 10    | [-1099777, 1048575]       |
+        | 11    | [-2199553, 2097151]       |
+        | 12    | [-4399105, 4194303]       |
+        | 13    | [-8798209, 8388607]       |
+        | 14    | [-17596417, 16777215]     |
+        | 15    | [-35192833, 33554431]     |
+        | 16    | [-70385665, 67108863]     |
+        | 17    | [-140771329, 134217727]   |
+        | 18    | [-281542657, 268435455]   |
+        | 19    | [-563085313, 536870911]   |
+        | 20    | [-1126170625, 1073741823] |
+        | 21    | [underflow, 2147483647]   |
+        | > 21  | [underflow, overflow]     |
+        */
+        Guard.ThrowIfOutOfRange(scale, min: -11, max: 20);
+
         Guard.ThrowIfOutOfRange(maxBuckets, min: 1);
 
         this.Scale = scale;
@@ -88,17 +130,26 @@ internal class ExponentialBucketHistogram
         Debug.Assert(value != 0, "IEEE-754 zero values should be handled by ZeroCount.");
         Debug.Assert(!double.IsNegative(value), "IEEE-754 negative values should be normalized before calling this method.");
 
+        var bits = BitConverter.DoubleToInt64Bits(value);
+        var fraction = bits & 0xFFFFFFFFFFFFFL /* fraction mask */;
+
         if (this.Scale > 0)
         {
+            // TODO: do we really need this given the lookup table is needed for scale>0 anyways?
+            if (fraction == 0)
+            {
+                var exp = (int)((bits & 0x7FF0000000000000L /* exponent mask */) >> 52 /* fraction width */);
+                return ((exp - 1023 /* exponent bias */) << this.Scale) - 1;
+            }
+
             // TODO: due to precision issue, the values that are close to the bucket
             // boundaries should be closely examined to avoid off-by-one.
+
             return (int)Math.Ceiling(Math.Log(value) * this.scalingFactor) - 1;
         }
         else
         {
-            var bits = BitConverter.DoubleToInt64Bits(value);
             var exp = (int)((bits & 0x7FF0000000000000L /* exponent mask */) >> 52 /* fraction width */);
-            var fraction = bits & 0xFFFFFFFFFFFFFL /* fraction mask */;
 
             if (exp == 0)
             {
