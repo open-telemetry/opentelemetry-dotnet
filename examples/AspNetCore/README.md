@@ -37,7 +37,7 @@ scrape_configs:
 See the metrics at [https://localhost:53750/metrics](https://localhost:53750/metrics).
 
 Make a request at [https://localhost:53750/WeatherForecast](https://localhost:53750/WeatherForecast)
-for http metrics.
+for HTTP metrics.
 
 ## References
 
