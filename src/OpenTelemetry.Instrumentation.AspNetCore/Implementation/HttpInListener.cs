@@ -44,7 +44,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
         private readonly PropertyFetcher<HttpContext> startContextFetcher = new("HttpContext");
         private readonly PropertyFetcher<HttpContext> stopContextFetcher = new("HttpContext");
-        private readonly PropertyFetcher<HttpContext> customContextFetcher = new("HttpContext");
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
         private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new("actionDescriptor");
         private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new("AttributeRouteInfo");
@@ -258,7 +257,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // we start a new activity during onStart event which is a sibling to the activity created by framework
                 // So, in that case we need to get the activity created by us here.
                 // we can do so only by looping through activity.Parent chain.
-                _ = this.customContextFetcher.TryFetch(payload, out HttpContext context);
                 while (activity.Parent != null)
                 {
                     activity = activity.Parent;
