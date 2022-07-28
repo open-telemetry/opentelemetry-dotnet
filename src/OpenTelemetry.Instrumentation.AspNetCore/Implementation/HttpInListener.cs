@@ -35,6 +35,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     internal class HttpInListener : ListenerHandler
     {
         internal const string ActivityOperationName = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
+#if NET7_0_OR_GREATER
+        // https://github.com/dotnet/aspnetcore/blob/8d6554e655b64da75b71e0e20d6db54a3ba8d2fb/src/Hosting/Hosting/src/GenericHost/GenericWebHostBuilder.cs#L85
+        internal static readonly string AspNetCoreActivitySourceName = "Microsoft.AspNetCore";
+#endif
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
@@ -96,8 +100,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
                     // Asp.Net Core.
+#if NET7_0_OR_GREATER
+                    // For NET7.0 onwards activity is created using ActivitySource so,
+                    // we will use the source of the activity to create the new one.
+                    Activity newOne = activity.Source.CreateActivity(ActivityOperationName, ActivityKind.Server, ctx.ActivityContext);
+#else
                     Activity newOne = new Activity(ActivityOperationName);
                     newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
+#endif
                     newOne.TraceStateString = ctx.ActivityContext.TraceState;
 
                     newOne.SetTag("IsCreatedByInstrumentation", bool.TrueString);
@@ -135,8 +145,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     return;
                 }
 
+#if !NET7_0_OR_GREATER
                 ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
                 ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
+#endif
 
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
