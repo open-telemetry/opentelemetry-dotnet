@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Internal;
@@ -97,6 +97,36 @@ internal static class MathHelper
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int PositiveModulo32(int value, int divisor)
+    {
+        Debug.Assert(divisor > 0, $"{nameof(divisor)} must be a positive integer.");
+
+        value %= divisor;
+
+        if (value < 0)
+        {
+            value += divisor;
+        }
+
+        return value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static long PositiveModulo64(long value, long divisor)
+    {
+        Debug.Assert(divisor > 0, $"{nameof(divisor)} must be a positive integer.");
+
+        value %= divisor;
+
+        if (value < 0)
+        {
+            value += divisor;
+        }
+
+        return value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsFinite(double value)
     {
 #if NETCOREAPP3_1_OR_GREATER
@@ -104,16 +134,5 @@ internal static class MathHelper
 #else
         return !double.IsInfinity(value) && !double.IsNaN(value);
 #endif
-    }
-
-    public static string DoubleToString(double value)
-    {
-        var repr = Convert.ToString(BitConverter.DoubleToInt64Bits(value), 2);
-        return new string('0', 64 - repr.Length) + repr;
-    }
-
-    public static double DoubleFromString(string value)
-    {
-        return BitConverter.Int64BitsToDouble(Convert.ToInt64(value, 2));
     }
 }
