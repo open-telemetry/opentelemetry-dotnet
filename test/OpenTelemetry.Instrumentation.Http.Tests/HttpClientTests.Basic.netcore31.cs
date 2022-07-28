@@ -449,7 +449,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     }
                 }
 #else
-                using var c = new HttpClient(new SocketsHttpHandler());
+                using var c = new HttpClient();
                 await c.GetAsync($"{this.url}redirect");
 #endif
             }
