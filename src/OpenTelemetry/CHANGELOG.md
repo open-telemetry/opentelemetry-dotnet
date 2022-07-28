@@ -6,31 +6,23 @@
   activity will be created irrespective of SamplingResult, to maintain context
   propagation.
   ([#3329](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3329))
-
 * Fix issue where a measurement would be dropped when recording it with a
   null-valued tag.
   ([#3325](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3325))
-
 * `CompositeProcessor` will now ensure `ParentProvider` is set on its children
   ([#3368](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3368))
-
 * Added `ForceFlush` and helper ctors on `OpenTelemetryLoggerProvider`
   ([#3364](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3364))
-
 * `Timestamp`, `TraceId`, `SpanId`, `TraceFlags`, `TraceState`, `CategoryName`,
   `LogLevel`, `EventId`, & `Exception` properties on `LogRecord` now expose
   `set` methods
   ([#3378](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3378))
-
 * Handle possible exception when initializing the default service name.
   ([#3405](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3405))
-
 * `LogRecord` instances are now reused to reduce memory pressure
   ([#3385](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3385))
-
 * Fix exact match of activity source name when `wildcard` is used.
   ([#3446](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3446))
-
 * Added AddOpenTelemetry `ILoggingBuilder` extensions which accept
   `OpenTelemetryLoggerProvider` directly
   ([#3489](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3489))
@@ -67,7 +59,6 @@ Released 2022-Apr-15
 
 * Removes .NET Framework 4.6.1. The minimum .NET Framework
   version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
-
 * Bumped minimum required version of `Microsoft.Extensions.Logging`
   and `Microsoft.Extensions.Logging.Configuration` to 3.1.0
   ([#2582](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3196))
@@ -96,13 +87,11 @@ Released 2022-Apr-12
     [DiagnosticSource version 7.0 onwards](https://www.nuget.org/packages/System.Diagnostics.DiagnosticSource/7.0.0-preview.2.22152.2),
     they will be aggregated using `AggregationTemporality.Cumulative`.
   ([#3153](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3153))
-
 * Fix issue where `ExplicitBucketHistogramConfiguration` could be used to
   configure metric streams for instruments that are not histograms. Currently,
   it is not possible to change the aggregation of an instrument with views. This
   may be possible in the future.
   ([#3126](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3126))
-
 * Conformed to the specification to ensure that each view that an instrument
   matches results in a new metric stream. With this change it is possible for
   views to introduce conflicting metric streams. Any conflicts encountered will
@@ -117,15 +106,12 @@ Released 2022-Mar-30
   `ExportIntervalMilliseconds` of `-1` indicating an infinite export interval
   period.
   ([#2982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2982))
-
 * Fix bug where multiple views selecting a single instrument can result in
   duplicate updates to a single metric point.
   ([#3006](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3006))
-
 * Added the `PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds`
   option.
   ([#3038](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3038))
-
 * Removed `MetricReaderType`. This enumeration was previously used when
   configuring a metric reader with an exporter to configure whether the export
   cycle would be periodic or manual (i.e., requiring a explicit call to flush
@@ -134,11 +120,9 @@ Released 2022-Mar-30
   by setting `PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds`
   to `-1`.
   ([#3038](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3038))
-
 * Marked members of the `MetricPoint` `struct` which do not mutate state as
   `readonly`
   ([#3065](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3065))
-
 * [Bug fix] OpenTelemetryLoggerProvider is now unaffected by changes to
   OpenTelemetryLoggerOptions after the LoggerFactory is built.
   ([#3055](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3055))
@@ -148,24 +132,18 @@ Released 2022-Mar-30
 Released 2022-Mar-04
 
 * Instantiating multiple metric instruments with the same name and also
-  identical in all other respects - same type, description, and unit - result
-  in a single metric stream aggregating measurements from all the identical
-  instruments.
-
-  Instantiating multiple metric instruments with the same name but differ in
-  some respect - different type, description, or unit - will result in a
-  separate metric stream for each distinct instrument.
-
+  identical in all other respects - same type, description, and unit - result in
+  a single metric stream aggregating measurements from all the identical
+  instruments. Instantiating multiple metric instruments with the same name but
+  differ in some respect - different type, description, or unit - will result in
+  a separate metric stream for each distinct instrument.
   ([#2916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2916))
-
 * The `Meter` property on `OpenTelemetry.Metrics.Metric` has been removed.
   It now has `MeterName` and `MeterVersion` properties.
   ([#2916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2916))
-
 * Added support for implementing custom `ResourceDetector`.
   ([#2949](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2949/)
   [#2897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2897))
-
 * Perf improvement for Histogram and HistogramSumCount by implementing lock-free
   updates.
   ([#2951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2951)
@@ -177,14 +155,11 @@ Released 2022-Feb-02
 
 * Make `MetricPoint` of `MetricPointAccessor` readonly.
   ([#2736](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2736))
-
 * Fail-fast when using AddView with guaranteed conflict.
   ([#2751](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2751))
-
 * Swallow `ObjectDisposedException` from the `BatchExportProcessor` worker
   thread.
   ([#2844](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2844))
-
 * Performance improvement: when emitting metrics, users are strongly advised to
   provide tags with same Key order, to achieve maximum performance.
   ([#2805](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2805))
@@ -196,34 +171,27 @@ Released 2021-Nov-29
 * Prevent accessing activity Id before sampler runs in case of legacy
   activities.
   ([#2659](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2659))
-
 * Added `ReadOnlyTagCollection` and expose `Tags` on `MetricPoint` instead of
   `Keys`+`Values`
   ([#2642](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2642))
-
 * Refactored `MetricPoint` and added public methods: `GetBucketCounts`,
   `GetExplicitBounds`, `GetHistogramCount`, and `GetHistogramSum`
   ([#2657](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2657))
-
 * Remove MetricStreamConfiguration.Aggregation, as the feature to customize
   aggregation is not implemented yet.
   ([#2660](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2660))
-
 * Removed the public property `HistogramMeasurements` and added a public method
   `GetHistogramBuckets` instead. Renamed the class `HistogramMeasurements` to
   `HistogramBuckets` and added an enumerator of type `HistogramBucket` for
   enumerating `BucketCounts` and `ExplicitBounds`. Removed `GetBucketCounts` and
   `GetExplicitBounds` methods from `MetricPoint`.
   ([#2664](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2664))
-
 * Refactored temporality setting to align with the latest spec.
   ([#2666](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2666))
-
 * Removed the public properties `LongValue`, `DoubleValue`, in favor of their
   counterpart public methods `GetSumLong`, `GetSumDouble`,
   `GetGaugeLastValueLong`, `GetGaugeLastValueDouble`.
   ([#2667](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2667))
-
 * MetricType modified to reserve bits for future types.
   ([#2693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2693))
 
@@ -234,32 +202,23 @@ Released 2021-Nov-19
 * Renamed `HistogramConfiguration` to `ExplicitBucketHistogramConfiguration` and
   changed its member `BucketBounds` to `Boundaries`.
   ([#2638](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2638))
-
 * Metrics with the same name but from different meters are allowed.
   ([#2634](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2634))
-
 * Metrics SDK will not provide inactive Metrics to delta exporter.
   ([#2629](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2629))
-
 * Histogram bounds are validated when added to a View.
   ([#2573](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2573))
-
 * Changed `BatchExportActivityProcessorOptions` constructor to throw
   `FormatException` if it fails to parse any of the supported environment
   variables.
-
 * Added `BaseExporter.ForceFlush`.
   ([#2525](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2525))
-
 * Exposed public `Batch(T[] items, int count)` constructor on `Batch<T>` struct
   ([#2542](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2542))
-
 * Added wildcard support for AddMeter.
   ([#2459](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2459))
-
 * Add support for multiple Metric readers
   ([#2596](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2596))
-
 * Add ability to configure MaxMetricStreams, MaxMetricPointsPerMetricStream
   ([#2635](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2635))
 
@@ -269,12 +228,9 @@ Released 2021-Oct-08
 
 * Exception from Observable instrument callbacks does not result in entire
   metrics being lost.
-
 * SDK is allocation-free on recording of measurements with up to 8 tags.
-
 * TracerProviderBuilder.AddLegacySource now supports wildcard activity names.
   ([#2183](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2183))
-
 * Instrument and View names are validated [according with the
   spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument).
   ([#2470](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2470))
@@ -298,7 +254,6 @@ Released 2021-Sep-13
 * Metrics perf improvements, bug fixes. Replace MetricProcessor with
   MetricReader.
   ([#2306](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2306))
-
 * Add `BatchExportActivityProcessorOptions` which supports field value
   overriding using `OTEL_BSP_SCHEDULE_DELAY`, `OTEL_BSP_EXPORT_TIMEOUT`,
   `OTEL_BSP_MAX_QUEUE_SIZE`, `OTEL_BSP_MAX_EXPORT_BATCH_SIZE` environmental
@@ -312,19 +267,15 @@ Released 2021-Aug-24
 
 * More Metrics features. All instrument types, push/pull exporters,
   Delta/Cumulative temporality supported.
-
 * `ResourceBuilder.CreateDefault` has detectors for `OTEL_RESOURCE_ATTRIBUTES`,
   `OTEL_SERVICE_NAME` environment variables so that explicit
   `AddEnvironmentVariableDetector` call is not needed.
   ([#2247](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2247))
-
 * `ResourceBuilder.AddEnvironmentVariableDetector` handles `OTEL_SERVICE_NAME`
    environmental variable.
    ([#2209](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2209))
-
 * Removes upper constraint for Microsoft.Extensions.Logging dependencies.
   ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
-
 * OpenTelemetryLogger modified to not throw, when the formatter supplied in
   ILogger.Log call is null.
   ([#2200](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2200))
@@ -336,7 +287,6 @@ Released 2021-Jul-23
 * Add basic Metrics support with a single pipeline, and supporting Counter
   (sync) instrument. Push and Pull exporters are supported.
   ([#2174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2174))
-
 * Removes .NET Framework 4.5.2, .NET 4.6 support. The minimum .NET Framework
   version supported is .NET 4.6.1.
   ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
@@ -363,7 +313,6 @@ Released 2021-May-11
 * `AddLegacySource()` moved out of `TracerProviderBuilderExtensions` and into
   public API
   ([#2019](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2019))
-
 * Fixed an issue causing inconsistent log scopes when using
   `BatchLogRecordExportProcessor`. To make parsing scopes easier the
   `LogRecord.ForEachScope` signature has been changed to receive instances of
@@ -386,47 +335,37 @@ Released 2021-Mar-19
 
 * Removed SuppressScope Increment/Decrement from DiagnosticSourceListeners.
   ([1893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1893))
-
 * Added `TracerProviderBuilder.SetErrorStatusOnException` which automatically
   sets the activity status to `Error` when exception happened.
   ([#1858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1858)
   [#1875](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1875))
-
 * Added `ForceFlush` to `TracerProvider`.
   ([#1837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1837))
-
 * Added a TracerProviderBuilder extension method called `AddLegacySource` which
   is used by instrumentation libraries that use DiagnosticSource to get
   activities processed without ActivitySourceAdapter.
   [#1836](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1836)
   [#1860](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1860)
-
 * Added new constructor with optional parameters to allow customization of
   `ParentBasedSampler` behavior.
   ([#1727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1727))
-
 * The application base directory is now tested after the current directory when
   searching for the [self diagnostic configuration
   file](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry/README.md#troubleshooting).
   ([#1865](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1865))
-
 * Resource Attributes now accept primitive arrays as values.
   ([#1852](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1852))
-
 * Fixed
   [#1846](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1846):
   `ParentBasedSampler` will no longer explicitly consider Activity links.
   ([#1851](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1851))
-
 * Added `IncludeScopes`, `IncludeFormattedMessage`, & `ParseStateValues` on
   `OpenTelemetryLoggerOptions`. Added `FormattedMessage`, `StateValues`, &
   `ForEachScope` on `LogRecord`.
   ([#1869](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1869) &
   [#1883](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1883))
-
 * Added `SetResourceBuilder` support to `OpenTelemetryLoggerOptions`.
   ([#1913](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1913))
-
 * Added `IDeferredTracerProviderBuilder` and `TracerProviderBuilderBase` to
   support dependency injection through OpenTelemetry.Extensions.Hosting.
   ([#1889](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1889))
