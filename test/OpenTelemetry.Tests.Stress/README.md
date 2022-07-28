@@ -41,7 +41,7 @@ Running (concurrency = 1), press <Esc> to stop...
 ```
 
 The stress test metrics are exposed via
-[PrometheusExporter](../../src/OpenTelemetry.Exporter.Prometheus/README.md),
+[Prometheus HttpListener](../../src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md),
 which can be accessed via
 [http://localhost:9184/metrics/](http://localhost:9184/metrics/).
 
