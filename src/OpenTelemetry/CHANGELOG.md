@@ -31,6 +31,10 @@
 * Fix exact match of activity source name when `wildcard` is used.
   ([#3446](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3446))
 
+* Added AddOpenTelemetry `ILoggingBuilder` extensions which accept
+  `OpenTelemetryLoggerProvider` directly
+  ([#3489](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3489))
+
 ## 1.3.0
 
 Released 2022-Jun-03
