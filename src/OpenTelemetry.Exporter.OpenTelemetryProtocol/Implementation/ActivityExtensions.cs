@@ -24,6 +24,7 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
+using OpenTelemetry.Configuration;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
@@ -154,7 +155,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             };
 
             TagEnumerationState otlpTags = default;
-            activity.EnumerateTags(ref otlpTags);
+            activity.EnumerateTags(ref otlpTags, SdkConfiguration.Instance.SpanAttributeCountLimit);
 
             if (activity.Kind == ActivityKind.Client || activity.Kind == ActivityKind.Producer)
             {
@@ -181,7 +182,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             otlpSpan.Status = activity.ToOtlpStatus(ref otlpTags);
 
             EventEnumerationState otlpEvents = default;
-            activity.EnumerateEvents(ref otlpEvents);
+            activity.EnumerateEvents(ref otlpEvents, SdkConfiguration.Instance.SpanEventCountLimit);
             if (otlpEvents.Created)
             {
                 otlpSpan.Events.AddRange(otlpEvents.Events);
@@ -189,13 +190,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
 
             LinkEnumerationState otlpLinks = default;
-            activity.EnumerateLinks(ref otlpLinks);
+            activity.EnumerateLinks(ref otlpLinks, SdkConfiguration.Instance.SpanLinkCountLimit);
             if (otlpLinks.Created)
             {
                 otlpSpan.Links.AddRange(otlpLinks.Links);
                 otlpLinks.Links.Return();
             }
 
+            // TODO: The drop counts should be set when necessary.
             // Activity does not limit number of attributes, events, links, etc so drop counts are always zero.
 
             return otlpSpan;
@@ -259,7 +261,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             };
 
             TagEnumerationState otlpTags = default;
-            activityLink.EnumerateTags(ref otlpTags);
+            activityLink.EnumerateTags(ref otlpTags, SdkConfiguration.Instance.LinkAttributeCountLimit);
             if (otlpTags.Created)
             {
                 otlpLink.Attributes.AddRange(otlpTags.Tags);
@@ -279,7 +281,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             };
 
             TagEnumerationState otlpTags = default;
-            activityEvent.EnumerateTags(ref otlpTags);
+            activityEvent.EnumerateTags(ref otlpTags, SdkConfiguration.Instance.EventAttributeCountLimit);
             if (otlpTags.Created)
             {
                 otlpEvent.Attributes.AddRange(otlpTags.Tags);
@@ -355,7 +357,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     this.Created = true;
                 }
 
-                if (OtlpKeyValueTransformer.Instance.TryTransformTag(activityTag, out var attribute))
+                if (OtlpKeyValueTransformer.Instance.TryTransformTag(activityTag, out var attribute, SdkConfiguration.Instance.AttributeValueLengthLimit))
                 {
                     PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, attribute);
 

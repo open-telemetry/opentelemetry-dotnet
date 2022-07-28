@@ -44,7 +44,7 @@ namespace OpenTelemetry.Trace
 
             ActivityStatusTagEnumerator state = default;
 
-            ActivityTagsEnumeratorFactory<ActivityStatusTagEnumerator>.Enumerate(activity, ref state);
+            ActivityTagsEnumeratorFactory<ActivityStatusTagEnumerator>.Enumerate(activity, ref state, null);
 
             if (!state.StatusCode.HasValue)
             {
@@ -72,7 +72,7 @@ namespace OpenTelemetry.Trace
 
             ActivitySingleTagEnumerator state = new ActivitySingleTagEnumerator(tagName);
 
-            ActivityTagsEnumeratorFactory<ActivitySingleTagEnumerator>.Enumerate(activity, ref state);
+            ActivityTagsEnumeratorFactory<ActivitySingleTagEnumerator>.Enumerate(activity, ref state, null);
 
             return state.Value;
         }
@@ -91,7 +91,7 @@ namespace OpenTelemetry.Trace
 
             ActivityFirstTagEnumerator state = new ActivityFirstTagEnumerator(tagName);
 
-            ActivityTagsEnumeratorFactory<ActivityFirstTagEnumerator>.Enumerate(activity, ref state);
+            ActivityTagsEnumeratorFactory<ActivityFirstTagEnumerator>.Enumerate(activity, ref state, null);
 
             if (state.Value == null)
             {
@@ -109,14 +109,15 @@ namespace OpenTelemetry.Trace
         /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
         /// <param name="activity">Activity instance.</param>
         /// <param name="tagEnumerator">Tag enumerator.</param>
+        /// <param name="maxTags">Maximum number of tags to enumerate.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
-        public static void EnumerateTags<T>(this Activity activity, ref T tagEnumerator)
+        public static void EnumerateTags<T>(this Activity activity, ref T tagEnumerator, int? maxTags = null)
             where T : struct, IActivityEnumerator<KeyValuePair<string, object>>
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            ActivityTagsEnumeratorFactory<T>.Enumerate(activity, ref tagEnumerator);
+            ActivityTagsEnumeratorFactory<T>.Enumerate(activity, ref tagEnumerator, maxTags);
         }
 
         /// <summary>
@@ -125,14 +126,15 @@ namespace OpenTelemetry.Trace
         /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
         /// <param name="activity">Activity instance.</param>
         /// <param name="linkEnumerator">Link enumerator.</param>
+        /// <param name="maxLinks">Maximum number of links to enumerate.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
-        public static void EnumerateLinks<T>(this Activity activity, ref T linkEnumerator)
+        public static void EnumerateLinks<T>(this Activity activity, ref T linkEnumerator, int? maxLinks = null)
             where T : struct, IActivityEnumerator<ActivityLink>
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            ActivityLinksEnumeratorFactory<T>.Enumerate(activity, ref linkEnumerator);
+            ActivityLinksEnumeratorFactory<T>.Enumerate(activity, ref linkEnumerator, maxLinks);
         }
 
         /// <summary>
@@ -141,12 +143,13 @@ namespace OpenTelemetry.Trace
         /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
         /// <param name="activityLink">ActivityLink instance.</param>
         /// <param name="tagEnumerator">Tag enumerator.</param>
+        /// <param name="maxTags">Maximum number of tags to enumerate.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
-        public static void EnumerateTags<T>(this ActivityLink activityLink, ref T tagEnumerator)
+        public static void EnumerateTags<T>(this ActivityLink activityLink, ref T tagEnumerator, int? maxTags = null)
             where T : struct, IActivityEnumerator<KeyValuePair<string, object>>
         {
-            ActivityTagsEnumeratorFactory<T>.Enumerate(activityLink, ref tagEnumerator);
+            ActivityTagsEnumeratorFactory<T>.Enumerate(activityLink, ref tagEnumerator, maxTags);
         }
 
         /// <summary>
@@ -155,14 +158,15 @@ namespace OpenTelemetry.Trace
         /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
         /// <param name="activity">Activity instance.</param>
         /// <param name="eventEnumerator">Event enumerator.</param>
+        /// <param name="maxEvents">Maximum number of events to enumerate.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
-        public static void EnumerateEvents<T>(this Activity activity, ref T eventEnumerator)
+        public static void EnumerateEvents<T>(this Activity activity, ref T eventEnumerator, int? maxEvents = null)
             where T : struct, IActivityEnumerator<ActivityEvent>
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            ActivityEventsEnumeratorFactory<T>.Enumerate(activity, ref eventEnumerator);
+            ActivityEventsEnumeratorFactory<T>.Enumerate(activity, ref eventEnumerator, maxEvents);
         }
 
         /// <summary>
@@ -171,12 +175,13 @@ namespace OpenTelemetry.Trace
         /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
         /// <param name="activityEvent">ActivityEvent instance.</param>
         /// <param name="tagEnumerator">Tag enumerator.</param>
+        /// <param name="maxTags">Maximum number of tags to enumerate.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
-        public static void EnumerateTags<T>(this ActivityEvent activityEvent, ref T tagEnumerator)
+        public static void EnumerateTags<T>(this ActivityEvent activityEvent, ref T tagEnumerator, int? maxTags = null)
             where T : struct, IActivityEnumerator<KeyValuePair<string, object>>
         {
-            ActivityTagsEnumeratorFactory<T>.Enumerate(activityEvent, ref tagEnumerator);
+            ActivityTagsEnumeratorFactory<T>.Enumerate(activityEvent, ref tagEnumerator, maxTags);
         }
 
         private struct ActivitySingleTagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>
@@ -265,12 +270,18 @@ namespace OpenTelemetry.Trace
             private static readonly DictionaryEnumerator<string, object, TState>.ForEachDelegate ForEachTagValueCallbackRef = ForEachTagValueCallback;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void Enumerate(Activity activity, ref TState state)
+            public static void Enumerate(Activity activity, ref TState state, int? maxTags)
             {
                 var tagObjects = activity.TagObjects;
 
                 if (ReferenceEquals(tagObjects, EmptyActivityTagObjects))
                 {
+                    return;
+                }
+
+                if (maxTags.HasValue)
+                {
+                    SkipAllocationFreeEnumeration(tagObjects, ref state, maxTags.Value);
                     return;
                 }
 
@@ -281,12 +292,18 @@ namespace OpenTelemetry.Trace
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void Enumerate(ActivityLink activityLink, ref TState state)
+            public static void Enumerate(ActivityLink activityLink, ref TState state, int? maxTags)
             {
                 var tags = activityLink.Tags;
 
                 if (tags is null)
                 {
+                    return;
+                }
+
+                if (maxTags.HasValue)
+                {
+                    SkipAllocationFreeEnumeration(tags, ref state, maxTags.Value);
                     return;
                 }
 
@@ -297,7 +314,7 @@ namespace OpenTelemetry.Trace
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void Enumerate(ActivityEvent activityEvent, ref TState state)
+            public static void Enumerate(ActivityEvent activityEvent, ref TState state, int? maxTags)
             {
                 var tags = activityEvent.Tags;
 
@@ -306,10 +323,29 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
+                if (maxTags.HasValue)
+                {
+                    SkipAllocationFreeEnumeration(tags, ref state, maxTags.Value);
+                    return;
+                }
+
                 ActivityTagsCollectionEnumerator(
                     tags,
                     ref state,
                     ForEachTagValueCallbackRef);
+            }
+
+            // TODO: When a limit has been configured an allocation-free enumerator is not used.
+            // Need to either:
+            //     1) modify the dynamically generated code to only enumerate up to the max number of items, or
+            //     2) wait until .NET 7 is released and do this more easily with the new enumerator functions
+            private static void SkipAllocationFreeEnumeration(IEnumerable<KeyValuePair<string, object>> tags, ref TState state, int maxTags)
+            {
+                var enumerator = tags.GetEnumerator();
+                for (var i = 0; enumerator.MoveNext() && i < maxTags; ++i)
+                {
+                    state.ForEach(enumerator.Current);
+                }
             }
 
             private static bool ForEachTagValueCallback(ref TState state, KeyValuePair<string, object> item)
@@ -328,12 +364,27 @@ namespace OpenTelemetry.Trace
             private static readonly ListEnumerator<ActivityLink, TState>.ForEachDelegate ForEachLinkCallbackRef = ForEachLinkCallback;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void Enumerate(Activity activity, ref TState state)
+            public static void Enumerate(Activity activity, ref TState state, int? maxLinks)
             {
                 var activityLinks = activity.Links;
 
                 if (ReferenceEquals(activityLinks, EmptyActivityLinks))
                 {
+                    return;
+                }
+
+                // TODO: When a limit has been configured an allocation-free enumerator is not used.
+                // Need to either:
+                //     1) modify the dynamically generated code to only enumerate up to the max number of items, or
+                //     2) wait until .NET 7 is released and do this more easily with the new enumerator functions
+                if (maxLinks.HasValue)
+                {
+                    var enumerator = activityLinks.GetEnumerator();
+                    for (var i = 0; enumerator.MoveNext() && i < maxLinks; ++i)
+                    {
+                        state.ForEach(enumerator.Current);
+                    }
+
                     return;
                 }
 
@@ -359,12 +410,27 @@ namespace OpenTelemetry.Trace
             private static readonly ListEnumerator<ActivityEvent, TState>.ForEachDelegate ForEachEventCallbackRef = ForEachEventCallback;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void Enumerate(Activity activity, ref TState state)
+            public static void Enumerate(Activity activity, ref TState state, int? maxEvents)
             {
                 var activityEvents = activity.Events;
 
                 if (ReferenceEquals(activityEvents, EmptyActivityEvents))
                 {
+                    return;
+                }
+
+                // TODO: When a limit has been configured an allocation-free enumerator is not used.
+                // Need to either:
+                //     1) modify the dynamically generated code to only enumerate up to the max number of items, or
+                //     2) wait until .NET 7 is released and do this more easily with the new enumerator functions
+                if (maxEvents.HasValue)
+                {
+                    var enumerator = activityEvents.GetEnumerator();
+                    for (var i = 0; enumerator.MoveNext() && i < maxEvents; ++i)
+                    {
+                        state.ForEach(enumerator.Current);
+                    }
+
                     return;
                 }
 
