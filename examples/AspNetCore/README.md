@@ -15,7 +15,7 @@ You can try out different samplers like `TraceIdRatioBasedSampler`.
 
 ## Export metrics to Prometheus
 
-Switch to Prometheus by setting UseMetricsExporter to "prometheus" in appsettings.json.
+Switch to Prometheus by setting `UseMetricsExporter` to `"prometheus"` in `appsettings.json`.
 
 Follow [guide](/docs/metrics/getting-started-prometheus-grafana/README.md#collect-metrics-using-prometheus)
 on how to set up prometheus.
