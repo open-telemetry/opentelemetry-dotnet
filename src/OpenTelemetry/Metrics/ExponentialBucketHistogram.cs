@@ -28,7 +28,7 @@ namespace OpenTelemetry.Metrics;
 /// identified by <c>Bucket[index] = ( base ^ index, base ^ (index + 1) ]</c>,
 /// where <c>index</c> is an integer.
 /// </summary>
-internal class ExponentialBucketHistogram
+public class ExponentialBucketHistogram
 {
     private static readonly double Log2E = Math.Log2(Math.E); // 1 / Math.Log(2)
 
@@ -46,7 +46,7 @@ internal class ExponentialBucketHistogram
     {
     }
 
-    internal ExponentialBucketHistogram(int maxBuckets, int scale)
+    public ExponentialBucketHistogram(int maxBuckets, int scale)
     {
         /*
         The following table is calculated based on [ MapToIndex(double.Epsilon), MapToIndex(double.MaxValue) ]:
@@ -120,13 +120,23 @@ internal class ExponentialBucketHistogram
 
     internal CircularBufferBuckets NegativeBuckets { get; }
 
-    /// <inheritdoc/>
-    public override string ToString()
+    public void Dump()
     {
-        return nameof(ExponentialBucketHistogram)
-            + "{"
-            + nameof(this.Scale) + "=" + this.Scale
-            + "}";
+        Console.WriteLine($"{nameof(ExponentialBucketHistogram)}(scale: {this.Scale})");
+        Console.WriteLine($"  * {nameof(this.ZeroCount)}: {this.ZeroCount}");
+        var buckets = this.PositiveBuckets;
+        Console.WriteLine($"  * {nameof(this.PositiveBuckets)}: (capacity: {buckets.Capacity}, offset: {buckets.Offset}, size: {buckets.Size})");
+        for (var index = 0; index < buckets.Size; index++)
+        {
+            Console.WriteLine($"      {index + buckets.Offset} => {buckets[index + buckets.Offset]}");
+        }
+
+        buckets = this.NegativeBuckets;
+        Console.WriteLine($"  * {nameof(this.NegativeBuckets)}: (capacity: {buckets.Capacity}, offset: {buckets.Offset}, size: {buckets.Size})");
+        for (var index = 0; index < buckets.Size; index++)
+        {
+            Console.WriteLine($"      {index + buckets.Offset} => {buckets[index + buckets.Offset]}");
+        }
     }
 
     /// <summary>
@@ -189,36 +199,26 @@ internal class ExponentialBucketHistogram
 
         var c = value.CompareTo(0);
 
-        if (c > 0)
-        {
-            var index = this.MapToIndex(value);
-            var n = this.PositiveBuckets.TryIncrement(index);
-
-            if (n != 0)
-            {
-                this.PositiveBuckets.ScaleDown(n);
-                this.NegativeBuckets.ScaleDown(n);
-                n = this.PositiveBuckets.TryIncrement(index);
-                Debug.Assert(n == 0, "Increment should always succeed after scale down.");
-            }
-        }
-        else if (c < 0)
-        {
-            var index = this.MapToIndex(-value);
-            var n = this.NegativeBuckets.TryIncrement(index);
-
-            if (n != 0)
-            {
-                this.PositiveBuckets.ScaleDown(n);
-                this.NegativeBuckets.ScaleDown(n);
-                n = this.NegativeBuckets.TryIncrement(index);
-                Debug.Assert(n == 0, "Increment should always succeed after scale down.");
-            }
-        }
-        else
+        if (c == 0)
         {
             this.ZeroCount++;
+            return;
         }
+
+        var index = this.MapToIndex(c > 0 ? value : -value);
+        var buckets = c > 0 ? this.PositiveBuckets : this.NegativeBuckets;
+        var n = buckets.TryIncrement(index);
+
+        if (n == 0)
+        {
+            return;
+        }
+
+        this.PositiveBuckets.ScaleDown(n);
+        this.NegativeBuckets.ScaleDown(n);
+        this.Scale -= n;
+        n = buckets.TryIncrement(index >> n);
+        Debug.Assert(n == 0, "Increment should always succeed after scale down.");
     }
 }
 
