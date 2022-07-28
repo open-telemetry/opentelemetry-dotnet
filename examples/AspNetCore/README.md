@@ -21,7 +21,7 @@ Follow this [guide](/docs/metrics/getting-started-prometheus-grafana/README.md#c
 on how to set up Prometheus.
 
 Note that for this example, the `yml` file configuration needs an additional
-parameter `scheme` for https. Sample configuration:
+parameter `scheme` for HTTPS. Here goes an example:
 
 ```yaml
 global:
