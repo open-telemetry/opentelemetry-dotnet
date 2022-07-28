@@ -1,4 +1,4 @@
-// <copyright file="ExponentialBucketHistogramConfiguration.cs" company="OpenTelemetry Authors">
+// <copyright file="ExampleEventSource.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +14,20 @@
 // limitations under the License.
 // </copyright>
 
-namespace OpenTelemetry.Metrics;
+using System.Diagnostics.Tracing;
 
-/// <summary>
-/// Stores configuration for a histogram metric stream with exponential bucket boundaries.
-/// </summary>
-internal class ExponentialBucketHistogramConfiguration : MetricStreamConfiguration
+namespace Examples.LoggingExtensions;
+
+[EventSource(Name = EventSourceName)]
+internal sealed class ExampleEventSource : EventSource
 {
-    /// <summary>
-    /// Gets or sets the maximum number of buckets in each of the positive and negative ranges, not counting the special zero bucket.
-    /// </summary>
-    /// <remarks>
-    /// The default value is 160.
-    /// </remarks>
-    public int MaxSize { get; set; } = 160;
+    public const string EventSourceName = "OpenTelemetry-ExampleEventSource";
+
+    public static ExampleEventSource Log { get; } = new();
+
+    [Event(1, Message = "Example event written with '{0}' reason", Level = EventLevel.Informational)]
+    public void ExampleEvent(string reason)
+    {
+        this.WriteEvent(1, reason);
+    }
 }
