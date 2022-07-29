@@ -152,7 +152,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                   ""http.method"": ""GET"",
                   ""http.host"": ""{host}:{port}"",
                   ""http.flavor"": ""2.0"",
-                  ""http.status_code"": 200,
+                  ""http.status_code"": ""200"",
                   ""http.url"": ""http://{host}:{port}/""
                 }
               }
