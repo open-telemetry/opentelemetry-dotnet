@@ -89,29 +89,38 @@ internal sealed class CircularBufferBuckets
 
             this.begin = index;
             this.end = index;
+            this.trait[this.ModuloIndex(index)] += value;
+
+            return 0;
         }
-        else if (index > this.end)
+
+        var begin = this.begin;
+        var end = this.end;
+
+        if (index > end)
         {
-            var diff = index - this.begin;
-
-            if (diff >= capacity || diff < 0)
-            {
-                return CalculateScaleReduction(this.begin, index, capacity);
-            }
-
-            this.end = index;
+            end = index;
         }
-        else if (index < this.begin)
+        else if (index < begin)
         {
-            var diff = this.end - index;
-
-            if (diff >= this.Capacity || diff < 0)
-            {
-                return CalculateScaleReduction(index, this.end, capacity);
-            }
-
-            this.begin = index;
+            begin = index;
         }
+        else
+        {
+            this.trait[this.ModuloIndex(index)] += value;
+
+            return 0;
+        }
+
+        var diff = end - begin;
+
+        if (diff >= capacity || diff < 0)
+        {
+            return CalculateScaleReduction(begin, end, capacity);
+        }
+
+        this.begin = begin;
+        this.end = end;
 
         this.trait[this.ModuloIndex(index)] += value;
 
