@@ -35,13 +35,13 @@ namespace OpenTelemetry.Logs
         internal ResourceBuilder ResourceBuilder = ResourceBuilder.CreateDefault();
         internal List<Action<IServiceProvider, OpenTelemetryLoggerProvider>>? ConfigurationActions = new();
 
-        internal const bool DefaultIncludeScopes = false;
-        internal const bool DefaultIncludeFormattedMessage = false;
-        internal const bool DefaultParseStateValues = false;
+        private const bool DefaultIncludeScopes = false;
+        private const bool DefaultIncludeFormattedMessage = false;
+        private const bool DefaultParseStateValues = false;
 
-        internal bool? includeScopes;
-        internal bool? includeFormattedMessage;
-        internal bool? parseStateValues;
+        private bool? includeScopes;
+        private bool? includeFormattedMessage;
+        private bool? parseStateValues;
 
         /// <summary>
         /// Gets the <see cref="IServiceCollection"/> where Logging services are
@@ -55,7 +55,7 @@ namespace OpenTelemetry.Logs
         /// unavailable because "Options" are built after application services
         /// have been configured.
         /// </remarks>
-        public IServiceCollection? Services{ get; internal set; }
+        public IServiceCollection? Services { get; internal set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether or not log scopes should be
