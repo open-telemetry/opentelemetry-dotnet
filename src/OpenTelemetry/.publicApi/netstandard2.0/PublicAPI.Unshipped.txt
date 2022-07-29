@@ -15,7 +15,7 @@ OpenTelemetry.Logs.OpenTelemetryLoggerProvider.ForceFlush(int timeoutMillisecond
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider() -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ConfigureResource(System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
 *REMOVED*static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configure = null) -> Microsoft.Extensions.Logging.ILoggingBuilder!
-OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider(System.IServiceProvider! serviceProvider) -> void
+OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider(Microsoft.Extensions.Options.IOptionsMonitor<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>! options, System.IServiceProvider! serviceProvider) -> void
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, OpenTelemetry.Logs.OpenTelemetryLoggerProvider! openTelemetryLoggerProvider) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, OpenTelemetry.Logs.OpenTelemetryLoggerProvider! openTelemetryLoggerProvider, bool disposeProvider) -> Microsoft.Extensions.Logging.ILoggingBuilder!

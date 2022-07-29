@@ -197,6 +197,46 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.True(provider.Disposed);
     }
 
+    [Fact]
+    public void ServiceCollectionAddOpenTelemetryServicesAvailableTest()
+    {
+        int invocationCount = 0;
+
+        var services = new ServiceCollection();
+
+        services.Configure<OpenTelemetryLoggerOptions>(options =>
+        {
+            invocationCount++;
+
+            // Note: Order is important the way things are implemented. Services
+            // aren't available until after the registration in AddOpenTelemetry
+            // fires.
+
+            Assert.Null(options.Services);
+        });
+
+        services.AddLogging(configure =>
+        {
+            configure.AddOpenTelemetry(options =>
+            {
+                invocationCount++;
+                Assert.NotNull(options.Services);
+            });
+        });
+
+        services.Configure<OpenTelemetryLoggerOptions>(options =>
+        {
+            invocationCount++;
+            Assert.NotNull(options.Services);
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+
+        Assert.Equal(3, invocationCount);
+    }
+
     private sealed class WrappedOpenTelemetryLoggerProvider : OpenTelemetryLoggerProvider
     {
         public bool Disposed { get; private set; }

@@ -53,11 +53,12 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Initializes a new instance of the <see cref="OpenTelemetryLoggerProvider"/> class.
         /// </summary>
+        /// <param name="options"><see cref="OpenTelemetryLoggerOptions"/>.</param>
         /// <param name="serviceProvider"><see cref="IServiceProvider"/>.</param>
-        public OpenTelemetryLoggerProvider(IServiceProvider serviceProvider)
+        public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options, IServiceProvider serviceProvider)
             : this(
-                  serviceProvider?.GetRequiredService<IOptions<OpenTelemetryLoggerOptions>>().Value ?? throw new ArgumentNullException(nameof(serviceProvider)),
-                  serviceProvider,
+                  options?.CurrentValue ?? throw new ArgumentNullException(nameof(options)),
+                  serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider)),
                   ownsServiceProvider: false)
         {
         }
@@ -66,7 +67,7 @@ namespace OpenTelemetry.Logs
         /// Initializes a new instance of the <see cref="OpenTelemetryLoggerProvider"/> class.
         /// </summary>
         /// <param name="options"><see cref="OpenTelemetryLoggerOptions"/>.</param>
-        [Obsolete("Call the OpenTelemetryLoggerProvider constructor which accepts IServiceProvider")]
+        [Obsolete("Call the OpenTelemetryLoggerProvider constructor which accepts IOptions & IServiceProvider or the OpenTelemetryLoggerProvider.Create helper method")]
         public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options)
             : this(options?.CurrentValue ?? throw new ArgumentNullException(nameof(options)), serviceProvider: null, ownsServiceProvider: false)
         {

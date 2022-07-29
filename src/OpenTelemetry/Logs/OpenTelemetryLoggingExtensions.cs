@@ -51,7 +51,11 @@ namespace Microsoft.Extensions.Logging
             Guard.ThrowIfNull(builder);
 
             builder.AddConfiguration();
+
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>());
+
+            LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(builder.Services);
+
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<IConfigureOptions<OpenTelemetryLoggerOptions>>(
                 new DefaultOpenTelemetryLoggerOptionsConfigureOptions(builder.Services)));
 
