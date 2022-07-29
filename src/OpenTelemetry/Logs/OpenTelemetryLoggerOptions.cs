@@ -141,11 +141,6 @@ namespace OpenTelemetry.Logs
         {
             Guard.ThrowIfNull(resourceBuilder);
 
-            if (this.ResourceBuilder != null)
-            {
-                throw new InvalidOperationException("Multiple ResourceBuilders cannot be set on options. Call ConfigureResource to chain resource configuration calls instead.");
-            }
-
             this.ResourceBuilder = resourceBuilder;
 
             return this;
