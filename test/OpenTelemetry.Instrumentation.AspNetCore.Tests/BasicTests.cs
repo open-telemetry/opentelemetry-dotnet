@@ -551,7 +551,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task ActivitiesStartedInMiddlewareShouldNotBeUpdatedByInstrumentation()
+        public async Task ActivitiesStartedInMiddlewareShouldNotBeUpdated()
         {
             var exportedItems = new List<Activity>();
 
@@ -590,6 +590,48 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal("api/Values/{id}", aspnetcoreframeworkactivity.GetTagValue(SemanticConventions.AttributeHttpRoute) as string);
             Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", aspnetcoreframeworkactivity.OperationName);
             Assert.Equal("api/Values/{id}", aspnetcoreframeworkactivity.DisplayName);
+        }
+
+        [Fact]
+        public async Task ActivitiesStartedInMiddlewareBySettingHostActivityToNullShouldNotBeUpdated()
+        {
+            var exportedItems = new List<Activity>();
+
+            var activitySourceName = "TestMiddlewareActivitySource";
+            var activityName = "TestMiddlewareActivity";
+
+            // Arrange
+            using (var client = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices((IServiceCollection services) =>
+                    {
+                        services.AddSingleton<ActivityMiddleware.ActivityMiddlewareImpl>(new TestNullHostActivityMiddlewareImpl(activitySourceName, activityName));
+                        services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation()
+                        .AddSource(activitySourceName)
+                        .AddInMemoryExporter(exportedItems));
+                    }))
+                .CreateClient())
+            {
+                var response = await client.GetAsync("/api/values/2");
+                response.EnsureSuccessStatusCode();
+                WaitForActivityExport(exportedItems, 2);
+            }
+
+            Assert.Equal(2, exportedItems.Count);
+
+            var middlewareActivity = exportedItems[0];
+
+            var aspnetcoreframeworkactivity = exportedItems[1];
+
+            // Middleware activity name should not be changed
+            Assert.Equal(ActivityKind.Internal, middlewareActivity.Kind);
+            Assert.Equal(activityName, middlewareActivity.OperationName);
+            Assert.Equal(activityName, middlewareActivity.DisplayName);
+
+            // tag http.route should be added on activity started by asp.net core
+            Assert.DoesNotContain(aspnetcoreframeworkactivity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
+            Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", aspnetcoreframeworkactivity.OperationName);
+            Assert.Equal("/api/values/2", aspnetcoreframeworkactivity.DisplayName);
         }
 
         public void Dispose()
@@ -701,6 +743,30 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 base.OnStopActivity(activity, payload);
 
                 this.OnStopActivityCallback?.Invoke(activity, payload);
+            }
+        }
+
+        private class TestNullHostActivityMiddlewareImpl : ActivityMiddleware.ActivityMiddlewareImpl
+        {
+            private ActivitySource activitySource;
+            private Activity activity;
+            private string activityName;
+
+            public TestNullHostActivityMiddlewareImpl(string activitySourceName, string activityName)
+            {
+                this.activitySource = new ActivitySource(activitySourceName);
+                this.activityName = activityName;
+            }
+
+            public override void PreProcess(HttpContext context)
+            {
+                Activity.Current = null;
+                this.activity = this.activitySource.StartActivity(this.activityName);
+            }
+
+            public override void PostProcess(HttpContext context)
+            {
+                this.activity?.Stop();
             }
         }
 

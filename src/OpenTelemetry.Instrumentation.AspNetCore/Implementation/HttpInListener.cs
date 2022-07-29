@@ -23,6 +23,9 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 #endif
 using Microsoft.AspNetCore.Http;
+#if NET6_0_OR_GREATER
+using Microsoft.AspNetCore.Http.Features;
+#endif
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
 #if !NETSTANDARD2_0
@@ -257,9 +260,19 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // we start a new activity during onStart event which is a sibling to the activity created by framework
                 // So, in that case we need to get the activity created by us here.
                 // we can do so only by looping through activity.Parent chain.
-                while (activity.Parent != null)
+                while (activity != null)
                 {
+                    if (string.Equals(activity.OperationName, ActivityOperationName, StringComparison.Ordinal))
+                    {
+                        break;
+                    }
+
                     activity = activity.Parent;
+                }
+
+                if (activity == null)
+                {
+                    return;
                 }
 
                 if (activity.IsAllDataRequested)
