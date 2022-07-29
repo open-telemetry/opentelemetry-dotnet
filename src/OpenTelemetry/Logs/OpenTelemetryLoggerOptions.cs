@@ -143,7 +143,7 @@ namespace OpenTelemetry.Logs
 
             if (this.ResourceBuilder != null)
             {
-                throw new InvalidOperationException("Multiple ResourceBuilders cannot be set on options. Call ConfigureResource to chain resource configuration instead.");
+                throw new InvalidOperationException("Multiple ResourceBuilders cannot be set on options. Call ConfigureResource to chain resource configuration calls instead.");
             }
 
             this.ResourceBuilder = resourceBuilder;
@@ -159,13 +159,13 @@ namespace OpenTelemetry.Logs
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions ConfigureResource(Action<ResourceBuilder> configure)
         {
-            Guard.ThrowIfNull(configure, nameof(configure));
+            Guard.ThrowIfNull(configure);
 
             this.Configure((sp, provider) =>
             {
-                Debug.Assert(this.ResourceBuilder != null, "ResourceBuilder was null");
+                Debug.Assert(provider.ResourceBuilder != null, "provider.ResourceBuilder was null");
 
-                configure(this.ResourceBuilder!);
+                configure(provider.ResourceBuilder);
             });
 
             return this;

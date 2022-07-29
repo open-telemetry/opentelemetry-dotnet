@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections;
+using System.Diagnostics;
 using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -37,6 +38,7 @@ namespace OpenTelemetry.Logs
         internal readonly bool IncludeFormattedMessage;
         internal readonly bool ParseStateValues;
         internal BaseProcessor<LogRecord>? Processor;
+        internal ResourceBuilder? ResourceBuilder;
         internal Resource Resource;
         private readonly ServiceProvider? ownedServiceProvider;
         private readonly Hashtable loggers = new();
@@ -98,6 +100,8 @@ namespace OpenTelemetry.Logs
             if (ownsServiceProvider)
             {
                 this.ownedServiceProvider = serviceProvider as ServiceProvider;
+
+                Debug.Assert(this.ownedServiceProvider != null, "ownedServiceProvider was null");
             }
 
             // Step 1: Add any processors added to options.
@@ -107,10 +111,7 @@ namespace OpenTelemetry.Logs
                 this.AddProcessor(processor);
             }
 
-            if (options.ResourceBuilder == null)
-            {
-                options.ResourceBuilder = ResourceBuilder.CreateDefault();
-            }
+            this.ResourceBuilder = options.ResourceBuilder ?? ResourceBuilder.CreateDefault();
 
             var configurationActions = options.ConfigurationActions;
             if (configurationActions?.Count > 0)
@@ -143,7 +144,8 @@ namespace OpenTelemetry.Logs
                 }
             }
 
-            this.Resource = options.ResourceBuilder.Build();
+            this.Resource = this.ResourceBuilder.Build();
+            this.ResourceBuilder = null;
         }
 
         internal IExternalScopeProvider? ScopeProvider { get; private set; }
