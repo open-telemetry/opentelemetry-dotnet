@@ -18,8 +18,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Google.Protobuf.Collections;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using OpenTelemetry.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Resources;
@@ -33,6 +35,7 @@ using Status = OpenTelemetry.Trace.Status;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
+    [Collection("xUnitCollectionPreventingTestsThatDependOnSdkConfigurationFromRunningInParallel")]
     public class OtlpTraceExporterTests : Http2UnencryptedSupportTests
     {
         static OtlpTraceExporterTests()
@@ -214,6 +217,79 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                     }
                 }
             }
+        }
+
+        [Fact]
+        public void SpanLimitsTest()
+        {
+            SdkConfiguration.Instance.AttributeValueLengthLimit = 4;
+            SdkConfiguration.Instance.AttributeCountLimit = 3;
+            SdkConfiguration.Instance.SpanEventCountLimit = 1;
+            SdkConfiguration.Instance.SpanLinkCountLimit = 1;
+
+            var tags = new ActivityTagsCollection()
+            {
+                new KeyValuePair<string, object>("TruncatedTag", "12345"),
+                new KeyValuePair<string, object>("TruncatedStringArray", new string[] { "12345", "1234", string.Empty, null }),
+                new KeyValuePair<string, object>("TruncatedObjectTag", new object()),
+                new KeyValuePair<string, object>("OneTagTooMany", 1),
+            };
+
+            var links = new[]
+            {
+                new ActivityLink(default, tags),
+                new ActivityLink(default, tags),
+            };
+
+            using var activitySource = new ActivitySource(nameof(this.SpanLimitsTest));
+            using var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), tags, links);
+
+            var event1 = new ActivityEvent("Event", DateTime.UtcNow, tags);
+            var event2 = new ActivityEvent("OneEventTooMany", DateTime.Now, tags);
+
+            activity.AddEvent(event1);
+            activity.AddEvent(event2);
+
+            var otlpSpan = activity.ToOtlpSpan();
+
+            Assert.NotNull(otlpSpan);
+            Assert.Equal(3, otlpSpan.Attributes.Count);
+            Assert.Equal("1234", otlpSpan.Attributes[0].Value.StringValue);
+            ArrayValueAsserts(otlpSpan.Attributes[1].Value.ArrayValue.Values);
+            Assert.Equal(new object().ToString().Substring(0, 4), otlpSpan.Attributes[2].Value.StringValue);
+
+            Assert.Single(otlpSpan.Events);
+            Assert.Equal(3, otlpSpan.Events[0].Attributes.Count);
+            Assert.Equal("1234", otlpSpan.Events[0].Attributes[0].Value.StringValue);
+            ArrayValueAsserts(otlpSpan.Events[0].Attributes[1].Value.ArrayValue.Values);
+            Assert.Equal(new object().ToString().Substring(0, 4), otlpSpan.Events[0].Attributes[2].Value.StringValue);
+
+            Assert.Single(otlpSpan.Links);
+            Assert.Equal(3, otlpSpan.Links[0].Attributes.Count);
+            Assert.Equal("1234", otlpSpan.Links[0].Attributes[0].Value.StringValue);
+            ArrayValueAsserts(otlpSpan.Links[0].Attributes[1].Value.ArrayValue.Values);
+            Assert.Equal(new object().ToString().Substring(0, 4), otlpSpan.Links[0].Attributes[2].Value.StringValue);
+
+            void ArrayValueAsserts(RepeatedField<OtlpCommon.AnyValue> values)
+            {
+                var expectedStringArray = new string[] { "1234", "1234", string.Empty, null };
+                for (var i = 0; i < expectedStringArray.Length; ++i)
+                {
+                    var expectedValue = expectedStringArray[i];
+                    var expectedValueCase = expectedValue != null
+                        ? OtlpCommon.AnyValue.ValueOneofCase.StringValue
+                        : OtlpCommon.AnyValue.ValueOneofCase.None;
+
+                    var actual = values[i];
+                    Assert.Equal(expectedValueCase, actual.ValueCase);
+                    if (expectedValueCase != OtlpCommon.AnyValue.ValueOneofCase.None)
+                    {
+                        Assert.Equal(expectedValue, actual.StringValue);
+                    }
+                }
+            }
+
+            SdkConfiguration.Reset();
         }
 
         [Fact]
