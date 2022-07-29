@@ -4,21 +4,23 @@
 
 * Fixed an issue where activity started within middleware was modified by
   instrumentation library.
-  ([3498](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3498))
+  ([#3498](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3498))
+* Fix Remote IP Address - NULL reference exception.
+  ([#3481](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3481))
 * Metrics instrumentation to correctly populate `http.flavor` tag.
   (1.1 instead of HTTP/1.1 etc.)
-  ([3379](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3379))
+  ([#3379](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3379))
 * Tracing instrumentation to populate `http.flavor` tag.
-  ([3372](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3372))
+  ([#3372](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3372))
 * Tracing instrumentation to populate `http.scheme` tag.
-([3392](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3392))
+  ([#3392](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3392))
 
 ## 1.0.0-rc9.4
 
 Released 2022-Jun-03
 
 * Added additional metric dimensions.
-  ([3247](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3247))
+  ([#3247](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3247))
 * Removes net5.0 target as .NET 5.0 is going out
   of support. The package keeps netstandard2.1 target, so it
   can still be used with .NET5.0 apps.

@@ -16,12 +16,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace OpenTelemetry.Internal;
 
 internal abstract class TagTransformer<T>
 {
-    public bool TryTransformTag(KeyValuePair<string, object> tag, out T result)
+    public bool TryTransformTag(KeyValuePair<string, object> tag, out T result, int? maxLength = null)
     {
         if (tag.Value == null)
         {
@@ -33,7 +34,7 @@ internal abstract class TagTransformer<T>
         {
             case char:
             case string:
-                result = this.TransformStringTag(tag.Key, Convert.ToString(tag.Value));
+                result = this.TransformStringTag(tag.Key, TruncateString(Convert.ToString(tag.Value), maxLength));
                 break;
             case bool b:
                 result = this.TransformBooleanTag(tag.Key, b);
@@ -54,7 +55,7 @@ internal abstract class TagTransformer<T>
             case Array array:
                 try
                 {
-                    result = this.TransformArrayTagInternal(tag.Key, array);
+                    result = this.TransformArrayTagInternal(tag.Key, array, maxLength);
                 }
                 catch
                 {
@@ -77,7 +78,7 @@ internal abstract class TagTransformer<T>
             default:
                 try
                 {
-                    result = this.TransformStringTag(tag.Key, tag.Value.ToString());
+                    result = this.TransformStringTag(tag.Key, TruncateString(tag.Value.ToString(), maxLength));
                 }
                 catch
                 {
@@ -103,13 +104,20 @@ internal abstract class TagTransformer<T>
 
     protected abstract T TransformArrayTag(string key, Array array);
 
-    private T TransformArrayTagInternal(string key, Array array)
+    private static string TruncateString(string value, int? maxLength)
+    {
+        return maxLength.HasValue && value?.Length > maxLength
+            ? value.Substring(0, maxLength.Value)
+            : value;
+    }
+
+    private T TransformArrayTagInternal(string key, Array array, int? maxStringValueLength)
     {
         // This switch ensures the values of the resultant array-valued tag are of the same type.
         return array switch
         {
             char[] => this.TransformArrayTag(key, array),
-            string[] => this.TransformArrayTag(key, array),
+            string[] => this.ConvertToStringArrayThenTransformArrayTag(key, array, maxStringValueLength),
             bool[] => this.TransformArrayTag(key, array),
             byte[] => this.TransformArrayTag(key, array),
             sbyte[] => this.TransformArrayTag(key, array),
@@ -120,17 +128,25 @@ internal abstract class TagTransformer<T>
             long[] => this.TransformArrayTag(key, array),
             float[] => this.TransformArrayTag(key, array),
             double[] => this.TransformArrayTag(key, array),
-            _ => this.ConvertToStringArrayThenTransformArrayTag(key, array),
+            _ => this.ConvertToStringArrayThenTransformArrayTag(key, array, maxStringValueLength),
         };
     }
 
-    private T ConvertToStringArrayThenTransformArrayTag(string key, Array array)
+    private T ConvertToStringArrayThenTransformArrayTag(string key, Array array, int? maxStringValueLength)
     {
-        var stringArray = new string[array.Length];
+        string[] stringArray;
 
-        for (var i = 0; i < array.Length; ++i)
+        if (array is string[] arrayAsStringArray && (!maxStringValueLength.HasValue || !arrayAsStringArray.Any(s => s?.Length > maxStringValueLength)))
         {
-            stringArray[i] = array.GetValue(i)?.ToString();
+            stringArray = arrayAsStringArray;
+        }
+        else
+        {
+            stringArray = new string[array.Length];
+            for (var i = 0; i < array.Length; ++i)
+            {
+                stringArray[i] = TruncateString(array.GetValue(i)?.ToString(), maxStringValueLength);
+            }
         }
 
         return this.TransformArrayTag(key, stringArray);

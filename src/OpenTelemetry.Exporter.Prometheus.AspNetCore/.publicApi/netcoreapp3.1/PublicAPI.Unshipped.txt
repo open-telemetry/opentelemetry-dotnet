@@ -1,0 +1,17 @@
+Microsoft.AspNetCore.Builder.PrometheusExporterApplicationBuilderExtensions
+Microsoft.AspNetCore.Builder.PrometheusExporterEndpointRouteBuilderExtensions
+OpenTelemetry.Exporter.Prometheus.AspNetCore.PrometheusExporterOptions
+OpenTelemetry.Exporter.Prometheus.AspNetCore.PrometheusExporterOptions.PrometheusExporterOptions() -> void
+OpenTelemetry.Exporter.Prometheus.AspNetCore.PrometheusExporterOptions.ScrapeEndpointPath.get -> string
+OpenTelemetry.Exporter.Prometheus.AspNetCore.PrometheusExporterOptions.ScrapeEndpointPath.set -> void
+OpenTelemetry.Exporter.Prometheus.AspNetCore.PrometheusExporterOptions.ScrapeResponseCacheDurationMilliseconds.get -> int
+OpenTelemetry.Exporter.Prometheus.AspNetCore.PrometheusExporterOptions.ScrapeResponseCacheDurationMilliseconds.set -> void
+OpenTelemetry.Metrics.PrometheusExporterMeterProviderBuilderExtensions
+static Microsoft.AspNetCore.Builder.PrometheusExporterApplicationBuilderExtensions.UseOpenTelemetryPrometheusScrapingEndpoint(this Microsoft.AspNetCore.Builder.IApplicationBuilder app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder
+static Microsoft.AspNetCore.Builder.PrometheusExporterApplicationBuilderExtensions.UseOpenTelemetryPrometheusScrapingEndpoint(this Microsoft.AspNetCore.Builder.IApplicationBuilder app, OpenTelemetry.Metrics.MeterProvider meterProvider, System.Func<Microsoft.AspNetCore.Http.HttpContext, bool> predicate, string path, System.Action<Microsoft.AspNetCore.Builder.IApplicationBuilder> configureBranchedPipeline) -> Microsoft.AspNetCore.Builder.IApplicationBuilder
+static Microsoft.AspNetCore.Builder.PrometheusExporterApplicationBuilderExtensions.UseOpenTelemetryPrometheusScrapingEndpoint(this Microsoft.AspNetCore.Builder.IApplicationBuilder app, string path) -> Microsoft.AspNetCore.Builder.IApplicationBuilder
+static Microsoft.AspNetCore.Builder.PrometheusExporterApplicationBuilderExtensions.UseOpenTelemetryPrometheusScrapingEndpoint(this Microsoft.AspNetCore.Builder.IApplicationBuilder app, System.Func<Microsoft.AspNetCore.Http.HttpContext, bool> predicate) -> Microsoft.AspNetCore.Builder.IApplicationBuilder
+static Microsoft.AspNetCore.Builder.PrometheusExporterEndpointRouteBuilderExtensions.MapPrometheusScrapingEndpoint(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints) -> Microsoft.AspNetCore.Builder.IEndpointConventionBuilder
+static Microsoft.AspNetCore.Builder.PrometheusExporterEndpointRouteBuilderExtensions.MapPrometheusScrapingEndpoint(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string path = null, OpenTelemetry.Metrics.MeterProvider meterProvider = null, System.Action<Microsoft.AspNetCore.Builder.IApplicationBuilder> configureBranchedPipeline = null) -> Microsoft.AspNetCore.Builder.IEndpointConventionBuilder
+static Microsoft.AspNetCore.Builder.PrometheusExporterEndpointRouteBuilderExtensions.MapPrometheusScrapingEndpoint(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, string path) -> Microsoft.AspNetCore.Builder.IEndpointConventionBuilder
+static OpenTelemetry.Metrics.PrometheusExporterMeterProviderBuilderExtensions.AddPrometheusExporter(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Action<OpenTelemetry.Exporter.Prometheus.AspNetCore.PrometheusExporterOptions> configure = null) -> OpenTelemetry.Metrics.MeterProviderBuilder
