@@ -15,20 +15,12 @@
 // </copyright>
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Xunit;
 
 namespace OpenTelemetry.Internal.Tests
 {
-#pragma warning disable SA1402 // File may only contain a single type
-#pragma warning disable SA1649 // File name should match first type name
-    public class Thing
-#pragma warning restore SA1649 // File name should match first type name
-#pragma warning restore SA1402 // File may only contain a single type
-    {
-        public string Bar { get; set; }
-    }
-
     public class GuardTest
     {
         [Fact]
@@ -171,5 +163,38 @@ namespace OpenTelemetry.Internal.Tests
             Assert.Contains("Must not be zero", ex1.Message);
             Assert.Equal("0", ex1.ParamName);
         }
+
+        public class Thing
+        {
+            public string Bar { get; set; }
+        }
+
+#if !NETCOREAPP3_0_OR_GREATER
+        /// <summary>
+        /// Borrowed from: <see href="https://github.com/dotnet/runtime/blob/main/src/libraries/System.Runtime/tests/System/Runtime/CompilerServices/CallerArgumentExpressionAttributeTests.cs"/>.
+        /// </summary>
+        public class CallerArgumentExpressionAttributeTests
+        {
+            [Theory]
+            [InlineData(null)]
+            [InlineData("")]
+            [InlineData("paramName")]
+            public static void Ctor_ParameterName_Roundtrip(string value)
+            {
+                var caea = new CallerArgumentExpressionAttribute(value);
+                Assert.Equal(value, caea.ParameterName);
+            }
+
+            [Fact]
+            public static void BasicTest()
+            {
+                Assert.Equal("\"hello\"", GetValue("hello"));
+                Assert.Equal("3 + 2", GetValue(3 + 2));
+                Assert.Equal("new object()", GetValue(new object()));
+            }
+
+            private static string GetValue(object argument, [CallerArgumentExpression("argument")] string expr = null) => expr;
+        }
+#endif
     }
 }
