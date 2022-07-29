@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Unit test project of Prometheus exporter shared code for both Prometheus exporter HttpListener and Prometheus Exporter AspNetCore</Description>
+    <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
+    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks Condition="$(OS) == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkPkgVer)" />
+    <PackageReference Include="Moq" Version="$(MoqPkgVer)" />
+    <PackageReference Include="xunit" Version="$(XUnitPkgVer)" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="$(XUnitRunnerVisualStudioPkgVer)">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <DotNetCliToolReference Include="dotnet-xunit" Version="$(DotNetXUnitCliVer)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.InMemory\OpenTelemetry.Exporter.InMemory.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.Shared\OpenTelemetry.Exporter.Prometheus.Shared.csproj" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\Utils.cs" Link="Includes\Utils.cs" />
+  </ItemGroup>
+
+</Project>
