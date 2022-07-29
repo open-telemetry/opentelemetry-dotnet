@@ -120,25 +120,6 @@ internal class ExponentialBucketHistogram
 
     internal CircularBufferBuckets NegativeBuckets { get; }
 
-    public void Dump()
-    {
-        Console.WriteLine($"{nameof(ExponentialBucketHistogram)}(scale: {this.Scale})");
-        Console.WriteLine($"  * {nameof(this.ZeroCount)}: {this.ZeroCount}");
-        var buckets = this.PositiveBuckets;
-        Console.WriteLine($"  * {nameof(this.PositiveBuckets)}: (capacity: {buckets.Capacity}, offset: {buckets.Offset}, size: {buckets.Size})");
-        for (var index = 0; index < buckets.Size; index++)
-        {
-            Console.WriteLine($"      {index + buckets.Offset} => {buckets[index + buckets.Offset]}");
-        }
-
-        buckets = this.NegativeBuckets;
-        Console.WriteLine($"  * {nameof(this.NegativeBuckets)}: (capacity: {buckets.Capacity}, offset: {buckets.Offset}, size: {buckets.Size})");
-        for (var index = 0; index < buckets.Size; index++)
-        {
-            Console.WriteLine($"      {index + buckets.Offset} => {buckets[index + buckets.Offset]}");
-        }
-    }
-
     /// <summary>
     /// Maps a finite positive IEEE 754 double-precision floating-point
     /// number to <c>Bucket[index] = ( base ^ index, base ^ (index + 1) ]</c>,
