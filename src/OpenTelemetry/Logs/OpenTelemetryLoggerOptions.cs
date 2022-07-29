@@ -35,6 +35,14 @@ namespace OpenTelemetry.Logs
         internal ResourceBuilder ResourceBuilder = ResourceBuilder.CreateDefault();
         internal List<Action<IServiceProvider, OpenTelemetryLoggerProvider>>? ConfigurationActions = new();
 
+        internal const bool DefaultIncludeScopes = false;
+        internal const bool DefaultIncludeFormattedMessage = false;
+        internal const bool DefaultParseStateValues = false;
+
+        internal bool? includeScopes;
+        internal bool? includeFormattedMessage;
+        internal bool? parseStateValues;
+
         /// <summary>
         /// Gets the <see cref="IServiceCollection"/> where Logging services are
         /// configured.
@@ -47,21 +55,29 @@ namespace OpenTelemetry.Logs
         /// unavailable because "Options" are built after application services
         /// have been configured.
         /// </remarks>
-        public IServiceCollection? Services { get; internal set; }
+        public IServiceCollection? Services{ get; internal set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether or not log scopes should be
         /// included on generated <see cref="LogRecord"/>s. Default value:
         /// False.
         /// </summary>
-        public bool IncludeScopes { get; set; }
+        public bool IncludeScopes
+        {
+            get => this.includeScopes ?? DefaultIncludeScopes;
+            set => this.includeScopes = value;
+        }
 
         /// <summary>
         /// Gets or sets a value indicating whether or not formatted log message
         /// should be included on generated <see cref="LogRecord"/>s. Default
         /// value: False.
         /// </summary>
-        public bool IncludeFormattedMessage { get; set; }
+        public bool IncludeFormattedMessage
+        {
+            get => this.includeFormattedMessage ?? DefaultIncludeFormattedMessage;
+            set => this.includeFormattedMessage = value;
+        }
 
         /// <summary>
         /// Gets or sets a value indicating whether or not log state should be
@@ -73,7 +89,11 @@ namespace OpenTelemetry.Logs
         /// langword="true"/> <see cref="LogRecord.State"/> will always be <see
         /// langword="null"/>.
         /// </remarks>
-        public bool ParseStateValues { get; set; }
+        public bool ParseStateValues
+        {
+            get => this.parseStateValues ?? DefaultParseStateValues;
+            set => this.parseStateValues = value;
+        }
 
         /// <summary>
         /// Adds processor to the options.
@@ -163,14 +183,28 @@ namespace OpenTelemetry.Logs
         {
             Debug.Assert(other != null, "other instance was null");
 
-            other!.IncludeFormattedMessage = this.IncludeFormattedMessage;
-            other.IncludeScopes = this.IncludeScopes;
-            other.ParseStateValues = this.ParseStateValues;
-            other.ResourceBuilder = this.ResourceBuilder;
+            other!.ResourceBuilder = this.ResourceBuilder;
 
-            foreach (var processor in this.Processors)
+            if (this.includeFormattedMessage.HasValue)
             {
-                other.Processors.Add(processor);
+                other.includeFormattedMessage = this.includeFormattedMessage;
+            }
+
+            if (this.includeScopes.HasValue)
+            {
+                other.includeScopes = this.includeScopes;
+            }
+
+            if (this.parseStateValues.HasValue)
+            {
+                other.parseStateValues = this.parseStateValues;
+            }
+
+            Debug.Assert(this.Processors != null && other.Processors != null, "Processors was null");
+
+            foreach (var processor in this.Processors!)
+            {
+                other.Processors!.Add(processor);
             }
 
             Debug.Assert(this.ConfigurationActions != null && other.ConfigurationActions != null, "ConfigurationActions was null");

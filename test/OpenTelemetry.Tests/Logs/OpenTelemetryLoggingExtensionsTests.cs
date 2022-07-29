@@ -19,6 +19,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
@@ -353,6 +354,99 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.Equal(2, CustomProcessor.InstanceCount);
     }
 
+    [Fact]
+    public void ServiceCollectionAddOpenTelemetryOptionsOrderingTest()
+    {
+        int configureInvocationCount = 0;
+
+        var services = new ServiceCollection();
+
+        OpenTelemetryLoggerProvider? provider = null;
+
+        services.Configure<OpenTelemetryLoggerOptions>(options =>
+        {
+            // Note: This will be applied first to the final options
+            options.IncludeFormattedMessage = true;
+            options.IncludeScopes = true;
+            options.ParseStateValues = true;
+
+            options.AddProcessor(new CustomProcessor(0));
+
+            options.Configure((sp, p) =>
+            {
+                Assert.Null(provider);
+                provider = p;
+                configureInvocationCount++;
+            });
+        });
+
+        services.AddLogging(configure =>
+        {
+            configure.AddOpenTelemetry(options =>
+            {
+                // Note: This will run first, but be applied second to the final options
+                options.IncludeFormattedMessage = false;
+                options.ParseStateValues = false;
+
+                options.AddProcessor(new CustomProcessor(1));
+
+                options.Configure((sp, p) =>
+                {
+                    configureInvocationCount++;
+
+                    Assert.NotNull(provider);
+                    Assert.Equal(provider, p);
+                });
+            });
+        });
+
+        services.Configure<OpenTelemetryLoggerOptions>(options =>
+        {
+            // Note: This will be applied last to the final options
+            options.ParseStateValues = true;
+
+            options.AddProcessor(new CustomProcessor(2));
+
+            options.Configure((sp, p) =>
+            {
+                configureInvocationCount++;
+
+                Assert.NotNull(provider);
+                Assert.Equal(provider, p);
+            });
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+
+        Assert.NotNull(provider);
+        Assert.Equal(3, configureInvocationCount);
+
+        var finalOptions = serviceProvider.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
+
+        Assert.False(finalOptions.IncludeFormattedMessage);
+        Assert.True(finalOptions.IncludeScopes);
+        Assert.True(finalOptions.ParseStateValues);
+
+        var processor = provider!.Processor as CompositeProcessor<LogRecord>;
+
+        Assert.NotNull(processor);
+
+        int count = 0;
+        var current = processor!.Head;
+        while (current != null)
+        {
+            var instance = current.Value as CustomProcessor;
+            Assert.Equal(count, instance?.Id);
+
+            count++;
+            current = current.Next;
+        }
+
+        Assert.Equal(3, count);
+    }
+
     private sealed class WrappedOpenTelemetryLoggerProvider : OpenTelemetryLoggerProvider
     {
         public bool Disposed { get; private set; }
@@ -367,12 +461,15 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
     private sealed class CustomProcessor : BaseProcessor<LogRecord>
     {
-        public CustomProcessor()
+        public CustomProcessor(int? id = null)
         {
+            this.Id = id;
             InstanceCount++;
         }
 
         public static int InstanceCount { get; set; }
+
+        public int? Id { get; }
 
         public bool Disposed { get; private set; }
 
