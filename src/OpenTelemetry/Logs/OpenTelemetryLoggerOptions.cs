@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -38,6 +39,14 @@ namespace OpenTelemetry.Logs
         /// Gets the <see cref="IServiceCollection"/> where Logging services are
         /// configured.
         /// </summary>
+        /// <remarks>
+        /// Note: <see cref="Services"/> are only available during the
+        /// application configuration phase. When using "Options" pattern via
+        /// <see cref="OptionsServiceCollectionExtensions"/> or interfaces such
+        /// as <see cref="IConfigureOptions{T}"/> <see cref="Services"/> will be
+        /// unavailable because "Options" are built after application services
+        /// have been configured.
+        /// </remarks>
         public IServiceCollection? Services { get; internal set; }
 
         /// <summary>
