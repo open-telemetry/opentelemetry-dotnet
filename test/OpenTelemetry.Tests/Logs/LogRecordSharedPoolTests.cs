@@ -19,9 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-
-using OpenTelemetry.Tests;
-
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests
@@ -186,10 +183,7 @@ namespace OpenTelemetry.Logs.Tests
                 }
             }
 
-            using var processor = new BatchLogRecordExportProcessor(new DelegatingTestExporter<LogRecord>
-            {
-                OnExportFunc = (batch) => ExportResult.Success,
-            });
+            using BatchLogRecordExportProcessor processor = new(new NoopExporter());
 
             List<Task> tasks = new();
 
@@ -271,6 +265,14 @@ namespace OpenTelemetry.Logs.Tests
             await Task.WhenAll(tasks).ConfigureAwait(false);
 
             Assert.True(pool.Count <= LogRecordSharedPool.DefaultMaxPoolSize);
+        }
+
+        private sealed class NoopExporter : BaseExporter<LogRecord>
+        {
+            public override ExportResult Export(in Batch<LogRecord> batch)
+            {
+                return ExportResult.Success;
+            }
         }
     }
 }
