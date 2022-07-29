@@ -12,7 +12,8 @@ OpenTelemetry .NET SDK has provided the following built-in metric exporters:
 * [InMemory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
 * [Console](../../../src/OpenTelemetry.Exporter.Console/README.md)
 * [OpenTelemetryProtocol](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
-* [Prometheus](../../../src/OpenTelemetry.Exporter.Prometheus/README.md)
+* [Prometheus HttpListener](../../../src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md)
+* [Prometheus AspNetCore](../../../src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)
 
 Custom exporters can be implemented to send telemetry data to places which are
 not covered by the built-in exporters:
