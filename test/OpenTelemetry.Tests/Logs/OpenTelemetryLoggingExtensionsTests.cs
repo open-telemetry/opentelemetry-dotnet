@@ -17,9 +17,11 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Resources;
 using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
@@ -445,6 +447,55 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         }
 
         Assert.Equal(3, count);
+    }
+
+    [Fact]
+    public void ServiceCollectionAddOpenTelemetryResourceTest()
+    {
+        var services = new ServiceCollection();
+
+        OpenTelemetryLoggerProvider? provider = null;
+
+        services.AddLogging(configure =>
+        {
+            configure.AddOpenTelemetry(options =>
+            {
+                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("Examples.LoggingExtensions"));
+
+                options.Configure((sp, p) => provider = p);
+            });
+
+            configure.AddOpenTelemetry(options =>
+            {
+                options.ConfigureResource(builder => builder.AddAttributes(new Dictionary<string, object> { ["key1"] = "value1" }));
+            });
+        });
+
+        services.Configure<OpenTelemetryLoggerOptions>(options =>
+        {
+            options.ConfigureResource(builder => builder.AddAttributes(new Dictionary<string, object> { ["key2"] = "value2" }));
+        });
+
+        services.Configure<OpenTelemetryLoggerOptions>(options =>
+        {
+            options.ConfigureResource(builder => builder.AddAttributes(new Dictionary<string, object> { ["key3"] = "value3" }));
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+
+        Assert.NotNull(provider);
+
+        var resource = provider!.Resource;
+
+        Assert.NotNull(resource);
+
+        Assert.Contains(resource.Attributes, kvp => kvp.Key == "service.name");
+        Assert.Contains(resource.Attributes, kvp => kvp.Key == "service.instance.id");
+        Assert.Contains(resource.Attributes, kvp => kvp.Key == "key1");
+        Assert.Contains(resource.Attributes, kvp => kvp.Key == "key2");
+        Assert.Contains(resource.Attributes, kvp => kvp.Key == "key3");
     }
 
     private sealed class WrappedOpenTelemetryLoggerProvider : OpenTelemetryLoggerProvider
