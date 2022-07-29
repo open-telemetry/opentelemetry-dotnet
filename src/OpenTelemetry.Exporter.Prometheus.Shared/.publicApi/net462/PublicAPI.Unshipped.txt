@@ -1,0 +1,6 @@
+OpenTelemetry.Exporter.Prometheus.Shared.PrometheusExporterOptions
+OpenTelemetry.Exporter.Prometheus.Shared.PrometheusExporterOptions.PrometheusExporterOptions() -> void
+OpenTelemetry.Exporter.Prometheus.Shared.PrometheusExporterOptions.ScrapeEndpointPath.get -> string
+OpenTelemetry.Exporter.Prometheus.Shared.PrometheusExporterOptions.ScrapeEndpointPath.set -> void
+OpenTelemetry.Exporter.Prometheus.Shared.PrometheusExporterOptions.ScrapeResponseCacheDurationMilliseconds.get -> int
+OpenTelemetry.Exporter.Prometheus.Shared.PrometheusExporterOptions.ScrapeResponseCacheDurationMilliseconds.set -> void

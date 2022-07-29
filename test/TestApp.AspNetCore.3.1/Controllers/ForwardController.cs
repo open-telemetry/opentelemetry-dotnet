@@ -15,9 +15,10 @@
 // </copyright>
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 
 namespace TestApp.AspNetCore._3._1.Controllers
 {
@@ -44,7 +45,7 @@ namespace TestApp.AspNetCore._3._1.Controllers
                     var request = new HttpRequestMessage(HttpMethod.Post, argument.Url)
                     {
                         Content = new StringContent(
-                            JsonConvert.SerializeObject(argument.Arguments),
+                            JsonSerializer.Serialize(argument.Arguments),
                             Encoding.UTF8,
                             "application/json"),
                     };
@@ -61,10 +62,10 @@ namespace TestApp.AspNetCore._3._1.Controllers
 
         public class Data
         {
-            [JsonProperty("url")]
+            [JsonPropertyName("url")]
             public string Url { get; set; }
 
-            [JsonProperty("arguments")]
+            [JsonPropertyName("arguments")]
             public Data[] Arguments { get; set; }
         }
     }
