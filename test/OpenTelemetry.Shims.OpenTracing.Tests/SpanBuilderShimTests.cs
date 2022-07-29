@@ -127,13 +127,13 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
 
             // matching root operation name
             var tracer = TracerProvider.Default.GetTracer(TracerName);
-            var shim = new SpanBuilderShim(tracer, "foo", new List<string> { "foo" });
+            var shim = new SpanBuilderShim(tracer, "foo");
             var spanShim1 = (SpanShim)shim.Start();
 
             Assert.Equal("foo", spanShim1.Span.Activity.OperationName);
 
             // mis-matched root operation name
-            shim = new SpanBuilderShim(tracer, "foo", new List<string> { "bar" });
+            shim = new SpanBuilderShim(tracer, "foo");
             var spanShim2 = (SpanShim)shim.Start();
 
             Assert.Equal("foo", spanShim2.Span.Activity.OperationName);
@@ -329,6 +329,30 @@ namespace OpenTelemetry.Shims.OpenTracing.Tests
             // There is nothing left to verify because the rest of the tests were already calling .Start() prior to verification.
             Assert.NotNull(span);
             Assert.Equal("foo", span.Span.Activity.OperationName);
+        }
+
+        [Fact]
+        public void Start_UnderAspNetCoreInstrumentation()
+        {
+            // Simulate a span from AspNetCore instrumentation as parent.
+            using var source = new ActivitySource("Microsoft.AspNetCore.Hosting.HttpRequestIn");
+            using var parentSpan = source.StartActivity("OTelParent");
+            Assert.NotNull(parentSpan);
+
+            // Start the OpenTracing span.
+            var tracer = TracerProvider.Default.GetTracer(TracerName);
+            var builderShim = new SpanBuilderShim(tracer, "foo");
+            var spanShim = builderShim.StartActive().Span as SpanShim;
+            Assert.NotNull(spanShim);
+
+            var telemetrySpan = spanShim.Span;
+            Assert.Same(telemetrySpan.Activity, Activity.Current);
+            Assert.Same(parentSpan, telemetrySpan.Activity.Parent);
+
+            // Dispose the spanShim.Span and ensure correct state for Activity.Current
+            spanShim.Span.Dispose();
+
+            Assert.Same(parentSpan, Activity.Current);
         }
     }
 }
