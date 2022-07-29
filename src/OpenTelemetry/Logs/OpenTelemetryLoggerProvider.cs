@@ -100,13 +100,16 @@ namespace OpenTelemetry.Logs
                 this.ownedServiceProvider = serviceProvider as ServiceProvider;
             }
 
-            this.Resource = options.ResourceBuilder.Build();
-
             // Step 1: Add any processors added to options.
 
             foreach (var processor in options.Processors)
             {
                 this.AddProcessor(processor);
+            }
+
+            if (options.ResourceBuilder == null)
+            {
+                options.ResourceBuilder = ResourceBuilder.CreateDefault();
             }
 
             var configurationActions = options.ConfigurationActions;
@@ -139,6 +142,8 @@ namespace OpenTelemetry.Logs
                     this.AddProcessor(processor);
                 }
             }
+
+            this.Resource = options.ResourceBuilder.Build();
         }
 
         internal IExternalScopeProvider? ScopeProvider { get; private set; }

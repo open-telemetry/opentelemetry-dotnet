@@ -32,7 +32,7 @@ namespace OpenTelemetry.Logs
     public class OpenTelemetryLoggerOptions
     {
         internal readonly List<BaseProcessor<LogRecord>> Processors = new();
-        internal ResourceBuilder ResourceBuilder = ResourceBuilder.CreateDefault();
+        internal ResourceBuilder? ResourceBuilder;
         internal List<Action<IServiceProvider, OpenTelemetryLoggerProvider>>? ConfigurationActions = new();
 
         private const bool DefaultIncludeScopes = false;
@@ -140,7 +140,14 @@ namespace OpenTelemetry.Logs
         public OpenTelemetryLoggerOptions SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
             Guard.ThrowIfNull(resourceBuilder);
+
+            if (this.ResourceBuilder != null)
+            {
+                throw new InvalidOperationException("Multiple ResourceBuilders cannot be set on options. Call ConfigureResource to chain resource configuration instead.");
+            }
+
             this.ResourceBuilder = resourceBuilder;
+
             return this;
         }
 
@@ -153,7 +160,14 @@ namespace OpenTelemetry.Logs
         public OpenTelemetryLoggerOptions ConfigureResource(Action<ResourceBuilder> configure)
         {
             Guard.ThrowIfNull(configure, nameof(configure));
-            configure(this.ResourceBuilder);
+
+            this.Configure((sp, provider) =>
+            {
+                Debug.Assert(this.ResourceBuilder != null, "ResourceBuilder was null");
+
+                configure(this.ResourceBuilder!);
+            });
+
             return this;
         }
 
@@ -183,7 +197,10 @@ namespace OpenTelemetry.Logs
         {
             Debug.Assert(other != null, "other instance was null");
 
-            other!.ResourceBuilder = this.ResourceBuilder;
+            if (this.ResourceBuilder != null)
+            {
+                other!.ResourceBuilder = this.ResourceBuilder;
+            }
 
             if (this.includeFormattedMessage.HasValue)
             {
