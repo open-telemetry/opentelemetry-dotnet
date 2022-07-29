@@ -160,7 +160,7 @@ namespace OpenTelemetry.Logs
             {
                 Debug.Assert(provider.ResourceBuilder != null, "provider.ResourceBuilder was null");
 
-                configure(provider.ResourceBuilder);
+                configure(provider.ResourceBuilder!);
             });
 
             return this;
@@ -199,31 +199,31 @@ namespace OpenTelemetry.Logs
 
             if (this.includeFormattedMessage.HasValue)
             {
-                other.includeFormattedMessage = this.includeFormattedMessage;
+                other!.includeFormattedMessage = this.includeFormattedMessage;
             }
 
             if (this.includeScopes.HasValue)
             {
-                other.includeScopes = this.includeScopes;
+                other!.includeScopes = this.includeScopes;
             }
 
             if (this.parseStateValues.HasValue)
             {
-                other.parseStateValues = this.parseStateValues;
+                other!.parseStateValues = this.parseStateValues;
             }
 
-            Debug.Assert(this.Processors != null && other.Processors != null, "Processors was null");
+            Debug.Assert(this.Processors != null && other!.Processors != null, "Processors was null");
 
             foreach (var processor in this.Processors!)
             {
-                other.Processors!.Add(processor);
+                other!.Processors!.Add(processor);
             }
 
-            Debug.Assert(this.ConfigurationActions != null && other.ConfigurationActions != null, "ConfigurationActions was null");
+            Debug.Assert(this.ConfigurationActions != null && other!.ConfigurationActions != null, "ConfigurationActions was null");
 
             foreach (var configurationAction in this.ConfigurationActions!)
             {
-                other.ConfigurationActions!.Add(configurationAction);
+                other!.ConfigurationActions!.Add(configurationAction);
             }
         }
     }
