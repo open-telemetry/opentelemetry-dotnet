@@ -57,8 +57,8 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
         }
 
         [Theory]
-        [InlineData("OpenTelemetry.Extensions.EventSource.Tests", EventLevel.LogAlways, 2)]
-        [InlineData("OpenTelemetry.Extensions.EventSource.Tests", EventLevel.Warning, 1)]
+        [InlineData(TestEventSource.EventSourceName, EventLevel.LogAlways, 2)]
+        [InlineData(TestEventSource.EventSourceName, EventLevel.Warning, 1)]
         [InlineData("_invalid_", EventLevel.LogAlways, 0)]
         public void OpenTelemetryEventSourceLogEmitterFilterTests(string sourceName, EventLevel? eventLevel, int expectedNumberOfLogRecords)
         {
@@ -98,7 +98,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
 
             using (var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEmitter(
                 openTelemetryLoggerProvider,
-                (name) => name == "OpenTelemetry.Extensions.EventSource.Tests" ? EventLevel.LogAlways : null))
+                (name) => name == TestEventSource.EventSourceName ? EventLevel.LogAlways : null))
             {
                 TestEventSource.Log.SimpleEvent();
             }
@@ -120,7 +120,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
 
             using (var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEmitter(
                 openTelemetryLoggerProvider,
-                (name) => name == "OpenTelemetry.Extensions.EventSource.Tests" ? EventLevel.LogAlways : null))
+                (name) => name == TestEventSource.EventSourceName ? EventLevel.LogAlways : null))
             {
                 TestEventSource.Log.SimpleEvent();
             }
@@ -143,7 +143,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             Assert.Equal(ActivityTraceFlags.None, logRecord.TraceFlags);
 
             Assert.NotNull(logRecord.StateValues);
-            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "event_source.name" && (string?)kvp.Value == "OpenTelemetry.Extensions.EventSource.Tests");
+            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "event_source.name" && (string?)kvp.Value == TestEventSource.EventSourceName);
         }
 
         [Fact]
@@ -163,7 +163,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
 
             using (var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEmitter(
                 openTelemetryLoggerProvider,
-                (name) => name == "OpenTelemetry.Extensions.EventSource.Tests" ? EventLevel.LogAlways : null))
+                (name) => name == TestEventSource.EventSourceName ? EventLevel.LogAlways : null))
             {
                 TestEventSource.Log.SimpleEvent();
             }
@@ -197,7 +197,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
 
             using (var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEmitter(
                 openTelemetryLoggerProvider,
-                (name) => name == "OpenTelemetry.Extensions.EventSource.Tests" ? EventLevel.LogAlways : null))
+                (name) => name == TestEventSource.EventSourceName ? EventLevel.LogAlways : null))
             {
                 TestEventSource.Log.ComplexEvent("Test_Message", 18);
             }
@@ -229,7 +229,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             Assert.Equal(ActivityTraceFlags.None, logRecord.TraceFlags);
 
             Assert.NotNull(logRecord.StateValues);
-            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "event_source.name" && (string?)kvp.Value == "OpenTelemetry.Extensions.EventSource.Tests");
+            Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "event_source.name" && (string?)kvp.Value == TestEventSource.EventSourceName);
             Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "arg1" && (string?)kvp.Value == "Test_Message");
             Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "arg2" && (int?)kvp.Value == 18);
         }
@@ -264,7 +264,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
 
             using (var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEmitter(
                 openTelemetryLoggerProvider,
-                (name) => name == "OpenTelemetry.Extensions.EventSource.Tests" ? EventLevel.LogAlways : null))
+                (name) => name == TestEventSource.EventSourceName ? EventLevel.LogAlways : null))
             {
                 TestEventSource.Log.WorkStart();
 
@@ -300,55 +300,6 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
                 this.Disposed = true;
 
                 base.Dispose(disposing);
-            }
-        }
-
-        [EventSource(Name = "OpenTelemetry.Extensions.EventSource.Tests")]
-        private sealed class TestEventSource : System.Diagnostics.Tracing.EventSource
-        {
-            public const int SimpleEventId = 1;
-            public const string SimpleEventMessage = "Warning event with no arguments.";
-
-            public const int ComplexEventId = 2;
-            public const string ComplexEventMessage = "Information event with two arguments: '{0}' & '{1}'.";
-            public const string ComplexEventMessageStructured = "Information event with two arguments: '{arg1}' & '{arg2}'.";
-
-            public static TestEventSource Log { get; } = new();
-
-            [Event(SimpleEventId, Message = SimpleEventMessage, Level = EventLevel.Warning)]
-            public void SimpleEvent()
-            {
-                this.WriteEvent(SimpleEventId);
-            }
-
-            [Event(ComplexEventId, Message = ComplexEventMessage, Level = EventLevel.Informational)]
-            public void ComplexEvent(string arg1, int arg2)
-            {
-                this.WriteEvent(ComplexEventId, arg1, arg2);
-            }
-
-            [Event(3, Level = EventLevel.Verbose)]
-            public void WorkStart()
-            {
-                this.WriteEvent(3);
-            }
-
-            [Event(4, Level = EventLevel.Verbose)]
-            public void WorkStop()
-            {
-                this.WriteEvent(4);
-            }
-
-            [Event(5, Level = EventLevel.Verbose)]
-            public void SubworkStart()
-            {
-                this.WriteEvent(5);
-            }
-
-            [Event(6, Level = EventLevel.Verbose)]
-            public void SubworkStop()
-            {
-                this.WriteEvent(6);
             }
         }
 
