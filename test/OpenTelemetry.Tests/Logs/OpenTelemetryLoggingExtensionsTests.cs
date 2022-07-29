@@ -97,6 +97,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             }
             else
             {
+                // Note: In the callback phase each options instance is unique
                 Assert.NotEqual(optionsInstance, options);
             }
 
@@ -111,6 +112,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             }
             else
             {
+                // Note: In the options phase each instance is the same
                 Assert.Equal(optionsInstance, options);
             }
 
@@ -250,16 +252,26 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.Throws<InvalidOperationException>(() => serviceProvider.GetRequiredService<ILoggerFactory>());
     }
 
-    [Fact]
-    public void ServiceCollectionAddOpenTelemetryProcessorThroughDependencyWithRegistrationTest()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ServiceCollectionAddOpenTelemetryProcessorThroughDependencyWithRegistrationTests(bool registerOutside)
     {
         var services = new ServiceCollection();
+
+        if (registerOutside)
+        {
+            services.AddSingleton<CustomProcessor>();
+        }
 
         services.AddLogging(configure =>
         {
             configure.AddOpenTelemetry(options =>
             {
-                options.Services!.AddSingleton<CustomProcessor>();
+                if (!registerOutside)
+                {
+                    options.Services!.AddSingleton<CustomProcessor>();
+                }
 
                 options.AddProcessor<CustomProcessor>();
             });
@@ -281,6 +293,40 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.True(customProcessor.Disposed);
     }
 
+    [Fact]
+    public void ServiceCollectionAddOpenTelemetryConfigureCallbackTest()
+    {
+        var services = new ServiceCollection();
+
+        services.AddSingleton<TestClass>();
+
+        CustomProcessor? customProcessor = null;
+
+        services.AddLogging(configure =>
+        {
+            configure.AddOpenTelemetry(options =>
+            {
+                options.Configure((sp, provider) =>
+                {
+                    var testClass = sp.GetRequiredService<TestClass>();
+
+                    customProcessor = new CustomProcessor
+                    {
+                        TestClass = testClass,
+                    };
+
+                    provider.AddProcessor(customProcessor);
+                });
+            });
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+
+        Assert.NotNull(customProcessor?.TestClass);
+    }
+
     private sealed class WrappedOpenTelemetryLoggerProvider : OpenTelemetryLoggerProvider
     {
         public bool Disposed { get; private set; }
@@ -297,11 +343,17 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     {
         public bool Disposed { get; private set; }
 
+        public TestClass? TestClass { get; set; }
+
         protected override void Dispose(bool disposing)
         {
             this.Disposed = true;
 
             base.Dispose(disposing);
         }
+    }
+
+    private sealed class TestClass
+    {
     }
 }
