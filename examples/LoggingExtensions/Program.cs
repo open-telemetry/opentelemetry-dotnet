@@ -22,7 +22,7 @@ using Serilog;
 
 var resourceBuilder = ResourceBuilder.CreateDefault().AddService("Examples.LoggingExtensions");
 
-var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options =>
+var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
 {
     options.IncludeFormattedMessage = true;
     options

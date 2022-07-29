@@ -29,7 +29,7 @@ namespace OpenTelemetry.Logs.Tests
         {
             var exportedItems = new List<LogRecord>();
 
-            using var provider = new OpenTelemetryLoggerProvider(options =>
+            using var provider = OpenTelemetryLoggerProvider.Create(options =>
             {
                 options.AddInMemoryExporter(exportedItems);
             });
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Logs.Tests
         {
             var exportedItems = new List<LogRecord>();
 
-            using var provider = new OpenTelemetryLoggerProvider(options =>
+            using var provider = OpenTelemetryLoggerProvider.Create(options =>
             {
                 options.AddInMemoryExporter(exportedItems);
             });
@@ -117,7 +117,7 @@ namespace OpenTelemetry.Logs.Tests
         {
             var exportedItems = new List<LogRecord>();
 
-            using var provider = new OpenTelemetryLoggerProvider(options =>
+            using var provider = OpenTelemetryLoggerProvider.Create(options =>
             {
                 options.AddInMemoryExporter(exportedItems);
             });
@@ -148,7 +148,7 @@ namespace OpenTelemetry.Logs.Tests
         {
             var exportedItems = new List<LogRecord>();
 
-            using var provider = new OpenTelemetryLoggerProvider(options =>
+            using var provider = OpenTelemetryLoggerProvider.Create(options =>
             {
                 options.AddInMemoryExporter(exportedItems);
             });

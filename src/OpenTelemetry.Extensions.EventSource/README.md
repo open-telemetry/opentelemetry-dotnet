@@ -17,9 +17,38 @@ dotnet add package OpenTelemetry.Extensions.EventSource --prerelease
 
 ## Usage Example
 
+### Configured using dependency injection
+
+```csharp
+IHost host = Host.CreateDefaultBuilder(args)
+    .ConfigureLogging(builder =>
+    {
+        builder.ClearProviders();
+
+        // Step 1: Configure OpenTelemetry logging...
+        builder.AddOpenTelemetry(options =>
+        {
+            options
+                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyService"))
+                .AddConsoleExporter();
+        });
+    })
+    .ConfigureServices((hostContext, services) =>
+    {
+        // Step 2: Register OpenTelemetryEventSourceLogEmitter to listen to events...
+        services.AddOpenTelemetryEventSourceLogEmitter(
+            (name) => name == MyEventSource.Name ? EventLevel.Informational : null);
+    })
+    .Build();
+
+    host.Run();
+```
+
+### Configured manually
+
 ```csharp
 // Step 1: Configure OpenTelemetryLoggerProvider...
-var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options =>
+var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
 {
     options
         .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyService"))
@@ -29,7 +58,7 @@ var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options =>
 // Step 2: Create OpenTelemetryEventSourceLogEmitter to listen to events...
 using var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEmitter(
     openTelemetryLoggerProvider,
-    (name) => name.StartsWith("OpenTelemetry") ? EventLevel.LogAlways : null,
+    (name) => name == MyEventSource.Name ? EventLevel.Informational : null,
     disposeProvider: true);
 ```
 

@@ -21,6 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Configuration;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 
@@ -51,6 +52,8 @@ namespace Microsoft.Extensions.Logging
 
             builder.AddConfiguration();
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>());
+            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<IConfigureOptions<OpenTelemetryLoggerOptions>>(
+                new DefaultOpenTelemetryLoggerOptionsConfigureOptions(builder.Services)));
 
             if (configure != null)
             {
@@ -105,6 +108,21 @@ namespace Microsoft.Extensions.Logging
             }
 
             return builder;
+        }
+
+        private sealed class DefaultOpenTelemetryLoggerOptionsConfigureOptions : IConfigureOptions<OpenTelemetryLoggerOptions>
+        {
+            private readonly IServiceCollection services;
+
+            public DefaultOpenTelemetryLoggerOptionsConfigureOptions(IServiceCollection services)
+            {
+                this.services = services;
+            }
+
+            public void Configure(OpenTelemetryLoggerOptions options)
+            {
+                options.Services = this.services;
+            }
         }
     }
 }

@@ -32,30 +32,28 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
         [InlineData(false)]
         public void OpenTelemetryEventSourceLogEmitterDisposesProviderTests(bool dispose)
         {
-            List<LogRecord> exportedItems = new();
-
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = new WrappedOpenTelemetryLoggerProvider(options =>
-            {
-                options.AddInMemoryExporter(exportedItems);
-            });
+            var disposeTrackingProcessor = new DisposeTrackingProcessor();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
-            using (var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEmitter(
-                openTelemetryLoggerProvider,
-                (name) => null,
-                disposeProvider: dispose))
+            using (var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
             {
-            }
-
-            Assert.Equal(dispose, openTelemetryLoggerProvider.Disposed);
-
-            if (!dispose)
+                options.AddProcessor(disposeTrackingProcessor);
+            }))
             {
+                using (var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEmitter(
+                    openTelemetryLoggerProvider,
+                    (name) => null,
+                    disposeProvider: dispose))
+                {
+                }
+
+                Assert.Equal(dispose, disposeTrackingProcessor.Disposed);
+
                 openTelemetryLoggerProvider.Dispose();
             }
 
-            Assert.True(openTelemetryLoggerProvider.Disposed);
+            Assert.True(disposeTrackingProcessor.Disposed);
         }
 
         [Theory]
@@ -67,7 +65,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = new WrappedOpenTelemetryLoggerProvider(options =>
+            var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
             {
                 options.AddInMemoryExporter(exportedItems);
             });
@@ -90,7 +88,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = new WrappedOpenTelemetryLoggerProvider(options =>
+            var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
             {
                 options.AddInMemoryExporter(exportedItems);
             });
@@ -114,7 +112,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = new WrappedOpenTelemetryLoggerProvider(options =>
+            var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
             {
                 options.AddInMemoryExporter(exportedItems);
             });
@@ -157,7 +155,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = new WrappedOpenTelemetryLoggerProvider(options =>
+            var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
             {
                 options.AddInMemoryExporter(exportedItems);
             });
@@ -190,7 +188,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = new WrappedOpenTelemetryLoggerProvider(options =>
+            var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
             {
                 options.IncludeFormattedMessage = formatMessage;
                 options.AddInMemoryExporter(exportedItems);
@@ -258,7 +256,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = new WrappedOpenTelemetryLoggerProvider(options =>
+            var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
             {
                 options.AddInMemoryExporter(exportedItems);
             });
@@ -293,13 +291,8 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             }
         }
 
-        private sealed class WrappedOpenTelemetryLoggerProvider : OpenTelemetryLoggerProvider
+        private sealed class DisposeTrackingProcessor : BaseProcessor<LogRecord>
         {
-            public WrappedOpenTelemetryLoggerProvider(Action<OpenTelemetryLoggerOptions> configure)
-                : base(configure)
-            {
-            }
-
             public bool Disposed { get; private set; }
 
             protected override void Dispose(bool disposing)

@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -30,6 +31,13 @@ namespace OpenTelemetry.Logs
     {
         internal readonly List<BaseProcessor<LogRecord>> Processors = new();
         internal ResourceBuilder ResourceBuilder = ResourceBuilder.CreateDefault();
+        internal List<Action<IServiceProvider, OpenTelemetryLoggerProvider>>? ConfigurationActions = new();
+
+        /// <summary>
+        /// Gets the <see cref="IServiceCollection"/> where Logging services are
+        /// configured.
+        /// </summary>
+        public IServiceCollection? Services { get; internal set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether or not log scopes should be
@@ -60,6 +68,12 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Adds processor to the options.
         /// </summary>
+        /// <remarks>
+        /// Note: The supplied <paramref name="processor"/> will be
+        /// automatically disposed when then the final <see
+        /// cref="OpenTelemetryLoggerProvider"/> built from the options is
+        /// disposed.
+        /// </remarks>
         /// <param name="processor">Log processor to add.</param>
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions AddProcessor(BaseProcessor<LogRecord> processor)
@@ -72,31 +86,66 @@ namespace OpenTelemetry.Logs
         }
 
         /// <summary>
-        /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
+        /// Adds a processor to the options which will be retrieved using dependency injection.
+        /// </summary>
+        /// <typeparam name="T">Processor type.</typeparam>
+        /// <returns>The supplied <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerOptions AddProcessor<T>()
+            where T : BaseProcessor<LogRecord>
+        {
+            return this.Configure((sp, provider) =>
+            {
+                provider.AddProcessor(sp.GetRequiredService<T>());
+            });
+        }
+
+        /// <summary>
+        /// Sets the <see cref="Resources.ResourceBuilder"/> from which the Resource associated with
         /// this provider is built from. Overwrites currently set ResourceBuilder.
         /// You should usually use <see cref="ConfigureResource(Action{ResourceBuilder})"/> instead
         /// (call <see cref="ResourceBuilder.Clear"/> if desired).
         /// </summary>
-        /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
+        /// <param name="resourceBuilder"><see cref="Resources.ResourceBuilder"/> from which Resource will be built.</param>
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions SetResourceBuilder(ResourceBuilder resourceBuilder)
         {
             Guard.ThrowIfNull(resourceBuilder);
-
             this.ResourceBuilder = resourceBuilder;
             return this;
         }
 
         /// <summary>
-        /// Modify the <see cref="ResourceBuilder"/> from which the Resource associated with
+        /// Modify the <see cref="Resources.ResourceBuilder"/> from which the Resource associated with
         /// this provider is built from in-place.
         /// </summary>
-        /// <param name="configure">An action which modifies the provided <see cref="ResourceBuilder"/> in-place.</param>
+        /// <param name="configure">An action which modifies the provided <see cref="Resources.ResourceBuilder"/> in-place.</param>
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions ConfigureResource(Action<ResourceBuilder> configure)
         {
             Guard.ThrowIfNull(configure, nameof(configure));
             configure(this.ResourceBuilder);
+            return this;
+        }
+
+        /// <summary>
+        /// Register a callback action to configure the <see
+        /// cref="OpenTelemetryLoggerProvider"/> once the application <see
+        /// cref="IServiceProvider"/> is available.
+        /// </summary>
+        /// <param name="configure">Configuration callback.</param>
+        /// <returns>The supplied <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerOptions Configure(Action<IServiceProvider, OpenTelemetryLoggerProvider> configure)
+        {
+            Guard.ThrowIfNull(configure);
+
+            var configurationActions = this.ConfigurationActions;
+            if (configurationActions == null)
+            {
+                throw new InvalidOperationException("Configuration actions cannot be registered on options after OpenTelemetryLoggerProvider has been created.");
+            }
+
+            configurationActions.Add(configure);
+
             return this;
         }
     }

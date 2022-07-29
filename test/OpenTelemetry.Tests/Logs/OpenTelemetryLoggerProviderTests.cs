@@ -43,7 +43,7 @@ namespace OpenTelemetry.Logs.Tests
         {
             OpenTelemetryLoggerOptions defaults = new();
 
-            using OpenTelemetryLoggerProvider provider = new(options =>
+            using OpenTelemetryLoggerProvider provider = OpenTelemetryLoggerProvider.Create(options =>
             {
                 options.IncludeScopes = !defaults.IncludeScopes;
                 options.IncludeFormattedMessage = !defaults.IncludeFormattedMessage;

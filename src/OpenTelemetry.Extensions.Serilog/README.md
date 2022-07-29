@@ -17,7 +17,7 @@ dotnet add package OpenTelemetry.Extensions.Serilog --prerelease
 
 ```csharp
 // Step 1: Configure OpenTelemetryLoggerProvider...
-var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options =>
+var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
 {
     options
         .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyService"))
