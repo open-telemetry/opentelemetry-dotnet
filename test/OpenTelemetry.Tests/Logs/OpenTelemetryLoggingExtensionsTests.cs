@@ -291,6 +291,8 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         }
 
         Assert.True(customProcessor.Disposed);
+
+        Assert.Equal(1, CustomProcessor.InstanceCount);
     }
 
     [Fact]
@@ -327,6 +329,26 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.NotNull(customProcessor?.TestClass);
     }
 
+    [Fact]
+    public void ServiceCollectionAddOpenTelemetryExternalRegistrationTest()
+    {
+        var services = new ServiceCollection();
+
+        services.AddSingleton<BaseProcessor<LogRecord>>(sp => new CustomProcessor());
+        services.AddSingleton<BaseProcessor<LogRecord>>(sp => new CustomProcessor());
+
+        services.AddLogging(configure =>
+        {
+            configure.AddOpenTelemetry();
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+
+        Assert.Equal(2, CustomProcessor.InstanceCount);
+    }
+
     private sealed class WrappedOpenTelemetryLoggerProvider : OpenTelemetryLoggerProvider
     {
         public bool Disposed { get; private set; }
@@ -341,6 +363,13 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
     private sealed class CustomProcessor : BaseProcessor<LogRecord>
     {
+        public CustomProcessor()
+        {
+            InstanceCount++;
+        }
+
+        public static int InstanceCount { get; private set; }
+
         public bool Disposed { get; private set; }
 
         public TestClass? TestClass { get; set; }
