@@ -46,7 +46,7 @@ internal class ExponentialBucketHistogram
     {
     }
 
-    public ExponentialBucketHistogram(int maxBuckets, int scale)
+    internal ExponentialBucketHistogram(int maxBuckets, int scale)
     {
         /*
         The following table is calculated based on [ MapToIndex(double.Epsilon), MapToIndex(double.MaxValue) ]:
