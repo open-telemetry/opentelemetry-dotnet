@@ -257,6 +257,8 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     [InlineData(false)]
     public void ServiceCollectionAddOpenTelemetryProcessorThroughDependencyWithRegistrationTests(bool registerOutside)
     {
+        CustomProcessor.InstanceCount = 0;
+
         var services = new ServiceCollection();
 
         if (registerOutside)
@@ -332,6 +334,8 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     [Fact]
     public void ServiceCollectionAddOpenTelemetryExternalRegistrationTest()
     {
+        CustomProcessor.InstanceCount = 0;
+
         var services = new ServiceCollection();
 
         services.AddSingleton<BaseProcessor<LogRecord>>(sp => new CustomProcessor());
@@ -368,7 +372,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             InstanceCount++;
         }
 
-        public static int InstanceCount { get; private set; }
+        public static int InstanceCount { get; set; }
 
         public bool Disposed { get; private set; }
 
