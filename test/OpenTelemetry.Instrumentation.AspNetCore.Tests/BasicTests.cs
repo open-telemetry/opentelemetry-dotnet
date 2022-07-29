@@ -628,7 +628,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(activityName, middlewareActivity.OperationName);
             Assert.Equal(activityName, middlewareActivity.DisplayName);
 
-            // tag http.route should be added on activity started by asp.net core
+            // tag http.route should not be added on activity started by asp.net core as it will not be found during oncustom event
             Assert.DoesNotContain(aspnetcoreframeworkactivity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
             Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", aspnetcoreframeworkactivity.OperationName);
             Assert.Equal("/api/values/2", aspnetcoreframeworkactivity.DisplayName);
