@@ -65,7 +65,15 @@ namespace Microsoft.Extensions.Logging
                  * is to make "Services" available for extension authors to
                  * register additional dependencies into the collection if
                  * needed.
-                 *
+                 */
+
+                var options = new OpenTelemetryLoggerOptions
+                {
+                    Services = builder.Services,
+                };
+                configure(options);
+
+                /*
                  * Step 2: When ServiceProvider is built from "Services" and the
                  * LoggerFactory is created then the options pipeline runs and
                  * builds a new OpenTelemetryLoggerOptions from configuration
@@ -74,12 +82,6 @@ namespace Microsoft.Extensions.Logging
                  * complete. We apply the inline options to the final instance
                  * to bridge this gap.
                  */
-
-                var options = new OpenTelemetryLoggerOptions
-                {
-                    Services = builder.Services,
-                };
-                configure(options);
 
                 builder.Services.Configure<OpenTelemetryLoggerOptions>(finalOptions =>
                 {
