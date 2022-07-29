@@ -15,8 +15,8 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Exporter.Prometheus.HttpListener;
+using OpenTelemetry.Exporter.Prometheus.HttpListener.Shared;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics

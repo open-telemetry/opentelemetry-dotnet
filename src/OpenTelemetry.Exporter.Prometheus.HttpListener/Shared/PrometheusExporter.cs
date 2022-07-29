@@ -20,7 +20,7 @@ using OpenTelemetry.Exporter.Prometheus.AspNetCore;
 #endif
 using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Exporter.Prometheus
+namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Shared
 {
     /// <summary>
     /// Exporter of OpenTelemetry metrics to Prometheus.
