@@ -16,6 +16,7 @@
 
 #nullable enable
 
+using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -75,13 +76,15 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             serviceCollection.Configure<OpenTelemetryLoggerOptions>(OptionsCallback);
         }
 
+        Assert.NotNull(optionsInstance);
+
         using ServiceProvider serviceProvider = serviceCollection.BuildServiceProvider();
+
+        optionsInstance = null;
 
         ILoggerFactory? loggerFactory = serviceProvider.GetService<ILoggerFactory>();
 
         Assert.NotNull(loggerFactory);
-
-        Assert.NotNull(optionsInstance);
 
         Assert.Equal(numberOfBuilderRegistrations, configureCallbackInvocations);
         Assert.Equal(numberOfOptionsRegistrations, optionsCallbackInvocations);
@@ -94,7 +97,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             }
             else
             {
-                Assert.Equal(optionsInstance, options);
+                Assert.NotEqual(optionsInstance, options);
             }
 
             configureCallbackInvocations++;
@@ -204,17 +207,6 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         var services = new ServiceCollection();
 
-        services.Configure<OpenTelemetryLoggerOptions>(options =>
-        {
-            invocationCount++;
-
-            // Note: Order is important the way things are implemented. Services
-            // aren't available until after the registration in AddOpenTelemetry
-            // fires.
-
-            Assert.Null(options.Services);
-        });
-
         services.AddLogging(configure =>
         {
             configure.AddOpenTelemetry(options =>
@@ -227,17 +219,81 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         services.Configure<OpenTelemetryLoggerOptions>(options =>
         {
             invocationCount++;
-            Assert.NotNull(options.Services);
+
+            // Note: Services are no longer available once OpenTelemetryLoggerOptions has been created
+
+            Assert.Null(options.Services);
         });
 
         using var serviceProvider = services.BuildServiceProvider();
 
         var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
 
-        Assert.Equal(3, invocationCount);
+        Assert.Equal(2, invocationCount);
+    }
+
+    [Fact]
+    public void ServiceCollectionAddOpenTelemetryProcessorThroughDependencyWithoutRegistrationThrowsTest()
+    {
+        var services = new ServiceCollection();
+
+        services.AddLogging(configure =>
+        {
+            // Note: This will throw because CustomProcessor has not been
+            // registered with services
+
+            configure.AddOpenTelemetry(options => options.AddProcessor<CustomProcessor>());
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        Assert.Throws<InvalidOperationException>(() => serviceProvider.GetRequiredService<ILoggerFactory>());
+    }
+
+    [Fact]
+    public void ServiceCollectionAddOpenTelemetryProcessorThroughDependencyWithRegistrationTest()
+    {
+        var services = new ServiceCollection();
+
+        services.AddLogging(configure =>
+        {
+            configure.AddOpenTelemetry(options =>
+            {
+                options.Services!.AddSingleton<CustomProcessor>();
+
+                options.AddProcessor<CustomProcessor>();
+            });
+        });
+
+        CustomProcessor? customProcessor = null;
+
+        using (var serviceProvider = services.BuildServiceProvider())
+        {
+            var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+
+            customProcessor = serviceProvider.GetRequiredService<CustomProcessor>();
+
+            loggerFactory.Dispose();
+
+            Assert.False(customProcessor.Disposed);
+        }
+
+        Assert.True(customProcessor.Disposed);
     }
 
     private sealed class WrappedOpenTelemetryLoggerProvider : OpenTelemetryLoggerProvider
+    {
+        public bool Disposed { get; private set; }
+
+        protected override void Dispose(bool disposing)
+        {
+            this.Disposed = true;
+
+            base.Dispose(disposing);
+        }
+    }
+
+    private sealed class CustomProcessor : BaseProcessor<LogRecord>
     {
         public bool Disposed { get; private set; }
 

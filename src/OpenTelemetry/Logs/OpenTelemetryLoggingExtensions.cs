@@ -21,7 +21,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Configuration;
-using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 
@@ -54,14 +53,38 @@ namespace Microsoft.Extensions.Logging
 
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>());
 
+            // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
             LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(builder.Services);
-
-            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<IConfigureOptions<OpenTelemetryLoggerOptions>>(
-                new DefaultOpenTelemetryLoggerOptionsConfigureOptions(builder.Services)));
 
             if (configure != null)
             {
-                builder.Services.Configure(configure);
+                /*
+                 * We do a two-phase configuration here.
+                 *
+                 * Step 1: Configure callback is first invoked immediately. This
+                 * is to make "Services" available for extension authors to
+                 * register additional dependencies into the collection if
+                 * needed.
+                 *
+                 * Step 2: When ServiceProvider is built from "Services" and the
+                 * LoggerFactory is created then the options pipeline runs and
+                 * builds a new OpenTelemetryLoggerOptions from configuration
+                 * and callbacks are executed. "Services" can no longer be
+                 * modified in this phase because the ServiceProvider is already
+                 * complete. We apply the inline options to the final instance
+                 * to bridge this gap.
+                 */
+
+                var options = new OpenTelemetryLoggerOptions
+                {
+                    Services = builder.Services,
+                };
+                configure(options);
+
+                builder.Services.Configure<OpenTelemetryLoggerOptions>(finalOptions =>
+                {
+                    options.ApplyTo(finalOptions);
+                });
             }
 
             return builder;
@@ -112,21 +135,6 @@ namespace Microsoft.Extensions.Logging
             }
 
             return builder;
-        }
-
-        private sealed class DefaultOpenTelemetryLoggerOptionsConfigureOptions : IConfigureOptions<OpenTelemetryLoggerOptions>
-        {
-            private readonly IServiceCollection services;
-
-            public DefaultOpenTelemetryLoggerOptionsConfigureOptions(IServiceCollection services)
-            {
-                this.services = services;
-            }
-
-            public void Configure(OpenTelemetryLoggerOptions options)
-            {
-                options.Services = this.services;
-            }
         }
     }
 }

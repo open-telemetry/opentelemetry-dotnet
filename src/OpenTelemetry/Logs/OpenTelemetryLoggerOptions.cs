@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
@@ -147,6 +148,28 @@ namespace OpenTelemetry.Logs
             configurationActions.Add(configure);
 
             return this;
+        }
+
+        internal void ApplyTo(OpenTelemetryLoggerOptions other)
+        {
+            Debug.Assert(other != null, "other instance was null");
+
+            other!.IncludeFormattedMessage = this.IncludeFormattedMessage;
+            other.IncludeScopes = this.IncludeScopes;
+            other.ParseStateValues = this.ParseStateValues;
+            other.ResourceBuilder = this.ResourceBuilder;
+
+            foreach (var processor in this.Processors)
+            {
+                other.Processors.Add(processor);
+            }
+
+            Debug.Assert(this.ConfigurationActions != null && other.ConfigurationActions != null, "ConfigurationActions was null");
+
+            foreach (var configurationAction in this.ConfigurationActions!)
+            {
+                other.ConfigurationActions!.Add(configurationAction);
+            }
         }
     }
 }
