@@ -23,8 +23,7 @@ dotnet add package OpenTelemetry.Exporter.Prometheus.HttpListener
 
 ### Step 2: Add PrometheusHttpListener
 
-Add and configure `PrometheusHttpListener` with `PrometheusExporterOptions` as
-the first argument and `PrometheusHttpListenerOptions` as the second argument.
+Add and configure `PrometheusHttpListener` with `PrometheusHttpListenerOptions`.
 
 For example:
 
@@ -32,8 +31,7 @@ For example:
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .AddMeter(MyMeter.Name)
     .AddPrometheusHttpListener(
-        exporterOptions => exporterOptions.ScrapeResponseCacheDurationMilliseconds = 0,
-        listenerOptions => listenerOptions.Prefixes = new string[] { "http://localhost:9464/" })
+        options => options.Prefixes = new string[] { "http://localhost:9464/" })
     .Build();
 ```
 
@@ -49,13 +47,6 @@ For details see:
 
 Defines the path for the Prometheus scrape endpoint for by
 `UseOpenTelemetryPrometheusScrapingEndpoint`. Default value: `"/metrics"`.
-
-### ScrapeResponseCacheDurationMilliseconds
-
-Configures scrape endpoint response caching. Multiple scrape requests within the
-cache duration time period will receive the same previously generated response.
-The default value is `10000` (10 seconds). Set to `0` to disable response
-caching.
 
 ## Troubleshooting
 

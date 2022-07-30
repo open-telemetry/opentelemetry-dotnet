@@ -20,7 +20,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Shared
+namespace OpenTelemetry.Exporter.Prometheus.Internal
 {
     internal sealed class PrometheusCollectionManager
     {

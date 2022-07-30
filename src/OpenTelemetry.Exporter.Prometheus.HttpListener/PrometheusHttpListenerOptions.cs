@@ -18,7 +18,7 @@ using System;
 using System.Collections.Generic;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter.Prometheus.HttpListener
+namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
     /// <see cref="PrometheusHttpListener"/> options.
@@ -26,6 +26,11 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
     public class PrometheusHttpListenerOptions
     {
         private IReadOnlyCollection<string> prefixes = new string[] { "http://localhost:9464/" };
+
+        /// <summary>
+        /// Gets or sets the path to use for the scraping endpoint. Default value: "/metrics".
+        /// </summary>
+        public string ScrapeEndpointPath { get; set; } = "/metrics";
 
         /// <summary>
         /// Gets or sets the prefixes to use for the http listener.

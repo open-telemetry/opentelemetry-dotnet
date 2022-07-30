@@ -20,7 +20,7 @@ using OpenTelemetry.Exporter.Prometheus.AspNetCore;
 #endif
 using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Shared
+namespace OpenTelemetry.Exporter.Prometheus.Internal
 {
     /// <summary>
     /// Exporter of OpenTelemetry metrics to Prometheus.
@@ -28,7 +28,6 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Shared
     [ExportModes(ExportModes.Pull)]
     internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExporter
     {
-        internal const string HttpListenerStartFailureExceptionMessage = "PrometheusExporter http listener could not be started.";
         internal readonly PrometheusExporterOptions Options;
         private Func<int, bool> funcCollect;
         private Func<Batch<Metric>, ExportResult> funcExport;

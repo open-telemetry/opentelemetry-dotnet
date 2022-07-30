@@ -18,10 +18,10 @@ using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Exporter.Prometheus.HttpListener.Shared;
+using OpenTelemetry.Exporter.Prometheus.Internal;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter.Prometheus.HttpListener
+namespace OpenTelemetry.Exporter.Prometheus
 {
     internal sealed class PrometheusHttpListener : IDisposable
     {
