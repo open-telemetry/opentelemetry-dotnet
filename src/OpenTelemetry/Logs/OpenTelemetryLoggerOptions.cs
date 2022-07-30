@@ -44,7 +44,7 @@ namespace OpenTelemetry.Logs
         private bool? parseStateValues;
 
         /// <summary>
-        /// Gets the <see cref="IServiceCollection"/> where Logging services are
+        /// Gets the <see cref="IServiceCollection"/> where logging services are
         /// configured.
         /// </summary>
         /// <remarks>

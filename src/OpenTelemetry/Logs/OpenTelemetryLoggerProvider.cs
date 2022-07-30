@@ -171,7 +171,11 @@ namespace OpenTelemetry.Logs
 
                 IServiceProvider serviceProvider = services.BuildServiceProvider();
 
-                return new OpenTelemetryLoggerProvider(options, serviceProvider, ownsServiceProvider: true);
+                var finalOptions = serviceProvider.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
+
+                options.ApplyTo(finalOptions);
+
+                return new OpenTelemetryLoggerProvider(finalOptions, serviceProvider, ownsServiceProvider: true);
             }
 
             return new OpenTelemetryLoggerProvider(options, serviceProvider: null, ownsServiceProvider: false);
