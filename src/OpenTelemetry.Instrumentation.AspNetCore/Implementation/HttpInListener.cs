@@ -360,7 +360,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             activity.DisplayName = grpcMethod.TrimStart('/');
 
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
-            activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
+            if (context.Connection.RemoteIpAddress != null)
+            {
+                activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
+            }
+
             activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
 
             bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
