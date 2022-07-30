@@ -30,14 +30,10 @@ IHost host = Host.CreateDefaultBuilder(args)
         {
             options
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyService"))
-                .AddConsoleExporter();
+                .AddConsoleExporter()
+                // Step 2: Register OpenTelemetryEventSourceLogEmitter to listen to events...
+                .AddEventSourceLogEmitter((name) => name == MyEventSource.Name ? EventLevel.Informational : null);
         });
-    })
-    .ConfigureServices((hostContext, services) =>
-    {
-        // Step 2: Register OpenTelemetryEventSourceLogEmitter to listen to events...
-        services.AddOpenTelemetryEventSourceLogEmitter(
-            (name) => name == MyEventSource.Name ? EventLevel.Informational : null);
     })
     .Build();
 

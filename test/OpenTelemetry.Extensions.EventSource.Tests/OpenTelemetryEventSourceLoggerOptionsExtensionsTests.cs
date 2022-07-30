@@ -1,4 +1,4 @@
-// <copyright file="OpenTelemetryEventSourceServiceCollectionExtensionsTests.cs" company="OpenTelemetry Authors">
+// <copyright file="OpenTelemetryEventSourceLoggerOptionsExtensionsTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,7 @@ using Xunit;
 
 namespace OpenTelemetry.Extensions.EventSource.Tests
 {
-    public class OpenTelemetryEventSourceServiceCollectionExtensionsTests
+    public class OpenTelemetryEventSourceLoggerOptionsExtensionsTests
     {
         [Fact]
         public void AddOpenTelemetryEventSourceLogEmitterTest()
@@ -36,19 +36,21 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
 
             services.AddLogging(configure =>
             {
-                configure.AddOpenTelemetry(options => options.AddInMemoryExporter(exportedItems));
+                configure.AddOpenTelemetry(options =>
+                {
+                    options
+                        .AddInMemoryExporter(exportedItems)
+                        .AddEventSourceLogEmitter((name) => name == TestEventSource.EventSourceName ? EventLevel.LogAlways : null);
+                });
             });
 
-            services.AddOpenTelemetryEventSourceLogEmitter(
-                (name) => name == TestEventSource.EventSourceName ? EventLevel.LogAlways : null);
-
-            OpenTelemetryEventSourceServiceCollectionExtensions.EventSourceManager? eventSourceManager = null;
+            OpenTelemetryEventSourceLoggerOptionsExtensions.EventSourceManager? eventSourceManager = null;
 
             using (var serviceProvider = services.BuildServiceProvider())
             {
                 var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
 
-                eventSourceManager = serviceProvider.GetRequiredService<OpenTelemetryEventSourceServiceCollectionExtensions.EventSourceManager>();
+                eventSourceManager = serviceProvider.GetRequiredService<OpenTelemetryEventSourceLoggerOptionsExtensions.EventSourceManager>();
 
                 Assert.Single(eventSourceManager.Emitters);
 

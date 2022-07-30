@@ -1,4 +1,4 @@
-// <copyright file="OpenTelemetryEventSourceServiceCollectionExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="OpenTelemetryEventSourceLoggerOptionsExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,42 +24,40 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Logs
 {
     /// <summary>
-    /// Contains extension methods for registering OpenTelemetry EventSource utilities into application services.
+    /// Contains extension methods for registering OpenTelemetry EventSource utilities into logging services.
     /// </summary>
-    public static class OpenTelemetryEventSourceServiceCollectionExtensions
+    public static class OpenTelemetryEventSourceLoggerOptionsExtensions
     {
         /// <summary>
-        /// Registers into application services an <see cref="EventListener"/>
-        /// which will convert <see cref="EventSource"/> events into
-        /// OpenTelemetry logs.
+        /// Registers an <see cref="EventListener"/> which will convert <see
+        /// cref="EventSource"/> events into OpenTelemetry logs.
         /// </summary>
-        /// <param name="services"><see cref="IServiceCollection"/>.</param>
+        /// <param name="options"><see
+        /// cref="OpenTelemetryLoggerOptions"/>.</param>
         /// <param name="shouldListenToFunc">Callback function used to decide if
         /// events should be captured for a given <see
         /// cref="EventSource.Name"/>. Return <see langword="null"/> if no
         /// events should be captured.</param>
-        /// <returns>Supplied <see cref="IServiceCollection"/> for chaining calls.</returns>
-        public static IServiceCollection AddOpenTelemetryEventSourceLogEmitter(
-            this IServiceCollection services,
+        /// <returns>Supplied <see cref="OpenTelemetryLoggerOptions"/> for
+        /// chaining calls.</returns>
+        public static OpenTelemetryLoggerOptions AddEventSourceLogEmitter(
+            this OpenTelemetryLoggerOptions options,
             Func<string, EventLevel?> shouldListenToFunc)
         {
-            Guard.ThrowIfNull(services);
+            Guard.ThrowIfNull(options);
             Guard.ThrowIfNull(shouldListenToFunc);
 
-            services.TryAddSingleton<EventSourceManager>();
+            options.Services.TryAddSingleton<EventSourceManager>();
 
-            services.Configure<OpenTelemetryLoggerOptions>(options =>
+            options.Configure((sp, provider) =>
             {
-                options.Configure((sp, provider) =>
-                {
-                    var manager = sp.GetRequiredService<EventSourceManager>();
+                var manager = sp.GetRequiredService<EventSourceManager>();
 
-                    manager.Emitters.Add(
-                        new OpenTelemetryEventSourceLogEmitter(provider, shouldListenToFunc, disposeProvider: false));
-                });
+                manager.Emitters.Add(
+                    new OpenTelemetryEventSourceLogEmitter(provider, shouldListenToFunc, disposeProvider: false));
             });
 
-            return services;
+            return options;
         }
 
         internal sealed class EventSourceManager : IDisposable
