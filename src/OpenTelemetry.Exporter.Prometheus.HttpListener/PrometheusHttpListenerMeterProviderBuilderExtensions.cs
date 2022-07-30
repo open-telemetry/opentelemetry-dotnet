@@ -56,18 +56,13 @@ namespace OpenTelemetry.Metrics
         {
             configure?.Invoke(options);
 
-            var exporter = new PrometheusExporter(new PrometheusExporterOptions
-            {
-                ScrapeEndpointPath = options.ScrapeEndpointPath,
-                ScrapeResponseCacheDurationMilliseconds = 0,
-            });
+            var exporter = new PrometheusExporter(scrapeEndpointPath: options.ScrapeEndpointPath);
 
             var reader = new BaseExportingMetricReader(exporter)
             {
                 TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
             };
 
-            const string HttpListenerStartFailureExceptionMessage = "PrometheusExporter HttpListener could not be started.";
             try
             {
                 var listener = new PrometheusHttpListener(exporter, options);
@@ -84,7 +79,7 @@ namespace OpenTelemetry.Metrics
                 {
                 }
 
-                throw new InvalidOperationException(HttpListenerStartFailureExceptionMessage, ex);
+                throw new InvalidOperationException("PrometheusExporter HttpListener could not be started.", ex);
             }
 
             return builder.AddReader(reader);

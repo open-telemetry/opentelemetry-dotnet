@@ -16,12 +16,12 @@
 
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter.Prometheus.Internal
+namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
     /// Prometheus exporter options.
     /// </summary>
-    internal class PrometheusExporterOptions
+    public class PrometheusExporterOptions
     {
         internal const string DefaultScrapeEndpointPath = "/metrics";
 

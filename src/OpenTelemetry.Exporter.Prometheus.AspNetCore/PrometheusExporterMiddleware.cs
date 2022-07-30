@@ -19,11 +19,11 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using OpenTelemetry.Exporter.Prometheus.HttpListener.Shared;
+using OpenTelemetry.Exporter.Prometheus.Internal;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Exporter.Prometheus.AspNetCore
+namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
     /// ASP.NET Core middleware for exposing a Prometheus metrics scraping endpoint.
