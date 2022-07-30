@@ -18,7 +18,7 @@ using System;
 using System.Diagnostics.Tracing;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter.Prometheus.Internal
+namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
     /// EventSource events emitted from the project.

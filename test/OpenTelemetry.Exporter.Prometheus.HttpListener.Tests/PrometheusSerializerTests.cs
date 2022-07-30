@@ -21,7 +21,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Exporter.Prometheus.Internal.Tests
+namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
     public sealed class PrometheusSerializerTests
     {

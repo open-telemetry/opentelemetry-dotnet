@@ -34,7 +34,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
         /// <summary>
         /// Gets or sets the prefixes to use for the http listener.
-        /// Default value: http://localhost:9464/.
+        /// Default value: <c>["http://localhost:9464/"]</c>.
         /// </summary>
         public IReadOnlyCollection<string> Prefixes
         {
