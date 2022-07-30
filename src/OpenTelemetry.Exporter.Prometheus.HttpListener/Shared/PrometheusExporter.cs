@@ -17,12 +17,10 @@
 using System;
 #if PROMETHEUS_ASPNETCORE
 using OpenTelemetry.Exporter.Prometheus.AspNetCore;
-#elif PROMETHEUS_HTTPLISTENER
-using OpenTelemetry.Exporter.Prometheus.HttpListener;
 #endif
 using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Exporter.Prometheus.Shared
+namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Shared
 {
     /// <summary>
     /// Exporter of OpenTelemetry metrics to Prometheus.

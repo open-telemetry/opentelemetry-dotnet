@@ -19,10 +19,8 @@ using OpenTelemetry.Internal;
 
 #if PROMETHEUS_ASPNETCORE
 namespace OpenTelemetry.Exporter.Prometheus.AspNetCore
-#elif PROMETHEUS_HTTPLISTENER
-namespace OpenTelemetry.Exporter.Prometheus.HttpListener
 #else
-namespace OpenTelemetry.Exporter.Prometheus.Shared
+namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Shared
 #endif
 {
     /// <summary>

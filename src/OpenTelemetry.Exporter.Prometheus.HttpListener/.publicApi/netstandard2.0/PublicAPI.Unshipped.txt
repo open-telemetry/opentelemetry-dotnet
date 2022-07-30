@@ -1,12 +1,12 @@
-OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusExporterOptions
-OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusExporterOptions.PrometheusExporterOptions() -> void
-OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusExporterOptions.ScrapeEndpointPath.get -> string
-OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusExporterOptions.ScrapeEndpointPath.set -> void
-OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusExporterOptions.ScrapeResponseCacheDurationMilliseconds.get -> int
-OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusExporterOptions.ScrapeResponseCacheDurationMilliseconds.set -> void
 OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListenerOptions
 OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListenerOptions.Prefixes.get -> System.Collections.Generic.IReadOnlyCollection<string>
 OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListenerOptions.Prefixes.set -> void
 OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListenerOptions.PrometheusHttpListenerOptions() -> void
+OpenTelemetry.Exporter.Prometheus.HttpListener.Shared.PrometheusExporterOptions
+OpenTelemetry.Exporter.Prometheus.HttpListener.Shared.PrometheusExporterOptions.PrometheusExporterOptions() -> void
+OpenTelemetry.Exporter.Prometheus.HttpListener.Shared.PrometheusExporterOptions.ScrapeEndpointPath.get -> string
+OpenTelemetry.Exporter.Prometheus.HttpListener.Shared.PrometheusExporterOptions.ScrapeEndpointPath.set -> void
+OpenTelemetry.Exporter.Prometheus.HttpListener.Shared.PrometheusExporterOptions.ScrapeResponseCacheDurationMilliseconds.get -> int
+OpenTelemetry.Exporter.Prometheus.HttpListener.Shared.PrometheusExporterOptions.ScrapeResponseCacheDurationMilliseconds.set -> void
 OpenTelemetry.Metrics.PrometheusExporterHttpListenerMeterProviderBuilderExtensions
-static OpenTelemetry.Metrics.PrometheusExporterHttpListenerMeterProviderBuilderExtensions.AddPrometheusHttpListener(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Action<OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusExporterOptions> configureExporterOptions = null, System.Action<OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListenerOptions> configureListenerOptions = null) -> OpenTelemetry.Metrics.MeterProviderBuilder
+static OpenTelemetry.Metrics.PrometheusExporterHttpListenerMeterProviderBuilderExtensions.AddPrometheusHttpListener(this OpenTelemetry.Metrics.MeterProviderBuilder builder, System.Action<OpenTelemetry.Exporter.Prometheus.HttpListener.Shared.PrometheusExporterOptions> configureExporterOptions = null, System.Action<OpenTelemetry.Exporter.Prometheus.HttpListener.PrometheusHttpListenerOptions> configureListenerOptions = null) -> OpenTelemetry.Metrics.MeterProviderBuilder
