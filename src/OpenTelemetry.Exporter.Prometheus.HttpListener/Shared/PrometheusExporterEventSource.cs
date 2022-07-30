@@ -18,7 +18,7 @@ using System;
 using System.Diagnostics.Tracing;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter.Prometheus.Shared
+namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Shared
 {
     /// <summary>
     /// EventSource events emitted from the project.

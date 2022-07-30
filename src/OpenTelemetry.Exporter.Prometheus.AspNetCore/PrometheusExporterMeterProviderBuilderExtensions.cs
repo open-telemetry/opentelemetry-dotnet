@@ -16,7 +16,7 @@
 
 using System;
 using OpenTelemetry.Exporter.Prometheus.AspNetCore;
-using OpenTelemetry.Exporter.Prometheus.Shared;
+using OpenTelemetry.Exporter.Prometheus.HttpListener.Shared;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics

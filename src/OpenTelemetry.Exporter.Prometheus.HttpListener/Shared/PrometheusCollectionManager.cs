@@ -20,7 +20,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Exporter.Prometheus.Shared
+namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Shared
 {
     internal sealed class PrometheusCollectionManager
     {
@@ -91,7 +91,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Shared
             this.ExitGlobalLock();
 
             CollectionResponse response;
-            bool result = this.ExecuteCollect();
+            var result = this.ExecuteCollect();
             if (result)
             {
                 this.previousDataViewGeneratedAtUtc = DateTime.UtcNow;
@@ -169,14 +169,14 @@ namespace OpenTelemetry.Exporter.Prometheus.Shared
         private bool ExecuteCollect()
         {
             this.exporter.OnExport = this.onCollectRef;
-            bool result = this.exporter.Collect(Timeout.Infinite);
+            var result = this.exporter.Collect(Timeout.Infinite);
             this.exporter.OnExport = null;
             return result;
         }
 
         private ExportResult OnCollect(Batch<Metric> metrics)
         {
-            int cursor = 0;
+            var cursor = 0;
 
             try
             {
@@ -191,7 +191,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Shared
                         }
                         catch (IndexOutOfRangeException)
                         {
-                            int bufferSize = this.buffer.Length * 2;
+                            var bufferSize = this.buffer.Length * 2;
 
                             // there are two cases we might run into the following condition:
                             // 1. we have many metrics to be exported - in this case we probably want
