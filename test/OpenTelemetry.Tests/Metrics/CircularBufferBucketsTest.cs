@@ -101,18 +101,18 @@ public class CircularBufferBucketsTest
     [Fact]
     public void IntegerOverflow()
     {
-        var buckets = new CircularBufferBuckets(1);
+        var buckets = new CircularBufferBuckets(2);
 
         Assert.Equal(0, buckets.TryIncrement(int.MaxValue));
 
         Assert.Equal(int.MaxValue, buckets.Offset);
         Assert.Equal(1, buckets.Size);
 
-        Assert.Equal(31, buckets.TryIncrement(1));
-        Assert.Equal(31, buckets.TryIncrement(0));
-        Assert.Equal(32, buckets.TryIncrement(-1));
-        Assert.Equal(32, buckets.TryIncrement(int.MinValue + 1));
-        Assert.Equal(32, buckets.TryIncrement(int.MinValue));
+        Assert.Equal(30, buckets.TryIncrement(1));
+        Assert.Equal(30, buckets.TryIncrement(0));
+        Assert.Equal(31, buckets.TryIncrement(-1));
+        Assert.Equal(31, buckets.TryIncrement(int.MinValue + 1));
+        Assert.Equal(31, buckets.TryIncrement(int.MinValue));
     }
 
     [Fact]

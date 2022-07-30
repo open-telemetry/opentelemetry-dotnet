@@ -120,15 +120,6 @@ internal class ExponentialBucketHistogram
 
     internal CircularBufferBuckets NegativeBuckets { get; }
 
-    /// <inheritdoc/>
-    public override string ToString()
-    {
-        return nameof(ExponentialBucketHistogram)
-            + "{"
-            + nameof(this.Scale) + "=" + this.Scale
-            + "}";
-    }
-
     /// <summary>
     /// Maps a finite positive IEEE 754 double-precision floating-point
     /// number to <c>Bucket[index] = ( base ^ index, base ^ (index + 1) ]</c>,
@@ -189,36 +180,26 @@ internal class ExponentialBucketHistogram
 
         var c = value.CompareTo(0);
 
-        if (c > 0)
-        {
-            var index = this.MapToIndex(value);
-            var n = this.PositiveBuckets.TryIncrement(index);
-
-            if (n != 0)
-            {
-                this.PositiveBuckets.ScaleDown(n);
-                this.NegativeBuckets.ScaleDown(n);
-                n = this.PositiveBuckets.TryIncrement(index);
-                Debug.Assert(n == 0, "Increment should always succeed after scale down.");
-            }
-        }
-        else if (c < 0)
-        {
-            var index = this.MapToIndex(-value);
-            var n = this.NegativeBuckets.TryIncrement(index);
-
-            if (n != 0)
-            {
-                this.PositiveBuckets.ScaleDown(n);
-                this.NegativeBuckets.ScaleDown(n);
-                n = this.NegativeBuckets.TryIncrement(index);
-                Debug.Assert(n == 0, "Increment should always succeed after scale down.");
-            }
-        }
-        else
+        if (c == 0)
         {
             this.ZeroCount++;
+            return;
         }
+
+        var index = this.MapToIndex(c > 0 ? value : -value);
+        var buckets = c > 0 ? this.PositiveBuckets : this.NegativeBuckets;
+        var n = buckets.TryIncrement(index);
+
+        if (n == 0)
+        {
+            return;
+        }
+
+        this.PositiveBuckets.ScaleDown(n);
+        this.NegativeBuckets.ScaleDown(n);
+        this.Scale -= n;
+        n = buckets.TryIncrement(index >> n);
+        Debug.Assert(n == 0, "Increment should always succeed after scale down.");
     }
 }
 
