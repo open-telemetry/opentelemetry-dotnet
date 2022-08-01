@@ -192,12 +192,12 @@ Released 2021-Jan-29
 * Zipkin will now set the `error` tag to the `Status.Description` value or an
   empty string when `Status.StatusCode` (`otel.status_code` tag) is set to
   `ERROR`.
-  ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579),
-  [#1620](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1620) &
+  ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579)
+  [#1620](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1620)
   [#1655](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655))
 
 * Zipkin will no longer send the `otel.status_code` tag if the value is `UNSET`.
-  ([#1609](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1609) &
+  ([#1609](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1609)
   [#1620](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1620))
 
 * Zipkin bool tag values will now be sent as `true`/`false` instead of

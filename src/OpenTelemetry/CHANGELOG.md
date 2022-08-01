@@ -146,7 +146,7 @@ Released 2022-Mar-04
   [#2897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2897))
 * Perf improvement for Histogram and HistogramSumCount by implementing lock-free
   updates.
-  ([#2951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2951) &
+  ([#2951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2951)
   [#2961](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2961))
 
 ## 1.2.0-rc2
@@ -337,7 +337,7 @@ Released 2021-Mar-19
   ([1893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1893))
 * Added `TracerProviderBuilder.SetErrorStatusOnException` which automatically
   sets the activity status to `Error` when exception happened.
-  ([#1858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1858) &
+  ([#1858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1858)
   [#1875](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1875))
 * Added `ForceFlush` to `TracerProvider`.
   ([#1837](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1837))
@@ -362,7 +362,7 @@ Released 2021-Mar-19
 * Added `IncludeScopes`, `IncludeFormattedMessage`, & `ParseStateValues` on
   `OpenTelemetryLoggerOptions`. Added `FormattedMessage`, `StateValues`, &
   `ForEachScope` on `LogRecord`.
-  ([#1869](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1869) &
+  ([#1869](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1869)
   [#1883](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1883))
 * Added `SetResourceBuilder` support to `OpenTelemetryLoggerOptions`.
   ([#1913](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1913))
@@ -495,7 +495,7 @@ Released 2020-Oct-16
   `RecordOnly`, and `RecordAndSampled` to `RecordAndSample`)
   ([#1297](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1297))
 * Added `ILogger`/`Microsoft.Extensions.Logging` integration
-  ([#1308](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1308) &
+  ([#1308](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1308)
   [#1315](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1315))
 * Changed exporter and processor to generic types
   ([#1328](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1328)):
@@ -536,23 +536,23 @@ Released 2020-08-28
   ([#1015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1015))
 * Changed `TracerProviderBuilder` and `TracerProviderSdk` design to simply the
   flow and usage
-  ([#1008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1008),
-  [#1027](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1027) &
+  ([#1008](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1008)
+  [#1027](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1027)
   [#1035](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1035))
 * Changed `AddActivitySource` to `AddSource` with params support
   ([#1036](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1036))
 * Modified Sampler implementation to match the spec
   ([#1037](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1037))
 * Refactored simple export and batch export APIs
-  ([#1078](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1078),
-  [#1081](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1081),
-  [#1083](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1083),
-  [#1085](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1085),
-  [#1087](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1087),
-  [#1094](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1094),
-  [#1113](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1113),
-  [#1127](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1127),
-  [#1129](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1129) &
+  ([#1078](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1078)
+  [#1081](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1081)
+  [#1083](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1083)
+  [#1085](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1085)
+  [#1087](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1087)
+  [#1094](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1094)
+  [#1113](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1113)
+  [#1127](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1127)
+  [#1129](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1129)
   [#1135](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1135))
 * Changed `MeterProviderBuilder` and `MeterProviderSdk` design to simply the
   flow and usage
