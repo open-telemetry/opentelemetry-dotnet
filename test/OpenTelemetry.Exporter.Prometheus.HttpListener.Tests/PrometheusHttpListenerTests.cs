@@ -1,4 +1,4 @@
-// <copyright file="PrometheusExporterHttpListenerTests.cs" company="OpenTelemetry Authors">
+// <copyright file="PrometheusHttpListenerTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,9 +24,9 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Tests
+namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
-    public class PrometheusExporterHttpListenerTests
+    public class PrometheusHttpListenerTests
     {
         private readonly string meterName = Utils.GetCurrentMethodName();
 
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Tests
         public void ServerEndpointSanityCheckPositiveTest(params string[] uris)
         {
             using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddPrometheusHttpListener(null, listenerOptions => listenerOptions.Prefixes = uris)
+                .AddPrometheusHttpListener(options => options.Prefixes = uris)
                 .Build();
         }
 
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Tests
             try
             {
                 using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                    .AddPrometheusHttpListener(null, listenerOptions => listenerOptions.Prefixes = uris)
+                    .AddPrometheusHttpListener(options => options.Prefixes = uris)
                     .Build();
             }
             catch (Exception ex)
@@ -97,9 +97,9 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Tests
                 address = $"http://localhost:{port}/";
 
                 provider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter.Name)
-                .AddPrometheusHttpListener(null, listenerOptions => listenerOptions.Prefixes = new string[] { address })
-                .Build();
+                    .AddMeter(meter.Name)
+                    .AddPrometheusHttpListener(options => options.Prefixes = new string[] { address })
+                    .Build();
             }
 
             var tags = new KeyValuePair<string, object>[]

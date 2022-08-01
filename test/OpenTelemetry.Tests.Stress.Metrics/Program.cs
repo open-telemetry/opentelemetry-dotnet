@@ -47,8 +47,7 @@ public partial class Program
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(TestMeter.Name)
             .AddPrometheusHttpListener(
-                exporterOptions => exporterOptions.ScrapeResponseCacheDurationMilliseconds = 0,
-                listenerOptions => listenerOptions.Prefixes = new string[] { $"http://localhost:9185/" })
+                options => options.Prefixes = new string[] { $"http://localhost:9185/" })
             .Build();
 
         Stress(prometheusPort: 9184);
