@@ -34,15 +34,28 @@ namespace OpenTelemetry.Logs
         internal readonly List<BaseProcessor<LogRecord>> Processors = new();
         internal ResourceBuilder? ResourceBuilder;
         internal List<Action<IServiceProvider, OpenTelemetryLoggerProvider>>? ConfigurationActions = new();
-        internal IServiceCollection? Services;
 
         private const bool DefaultIncludeScopes = false;
         private const bool DefaultIncludeFormattedMessage = false;
         private const bool DefaultParseStateValues = false;
 
+        private IServiceCollection? services;
         private bool? includeScopes;
         private bool? includeFormattedMessage;
         private bool? parseStateValues;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OpenTelemetryLoggerOptions"/> class.
+        /// </summary>
+        public OpenTelemetryLoggerOptions()
+            : this(services: null)
+        {
+        }
+
+        internal OpenTelemetryLoggerOptions(IServiceCollection? services)
+        {
+            this.services = services;
+        }
 
         /// <summary>
         /// Gets or sets a value indicating whether or not log scopes should be
@@ -81,6 +94,8 @@ namespace OpenTelemetry.Logs
             get => this.parseStateValues ?? DefaultParseStateValues;
             set => this.parseStateValues = value;
         }
+
+        internal IServiceCollection? Services => this.services;
 
         /// <summary>
         /// Adds processor to the options.
@@ -173,7 +188,7 @@ namespace OpenTelemetry.Logs
         {
             Guard.ThrowIfNull(configure);
 
-            var services = this.Services;
+            var services = this.services;
 
             if (services == null)
             {
@@ -206,6 +221,29 @@ namespace OpenTelemetry.Logs
             configurationActions.Add(configure);
 
             return this;
+        }
+
+        internal OpenTelemetryLoggerProvider Build()
+        {
+            var services = this.services;
+
+            if (services == null)
+            {
+                throw new NotSupportedException("LoggerProviderBuilder build method cannot be called multiple times.");
+            }
+
+            this.services = null;
+
+            var serviceProvider = services.BuildServiceProvider();
+
+            var finalOptions = serviceProvider.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
+
+            this.ApplyTo(finalOptions);
+
+            return new OpenTelemetryLoggerProvider(
+                finalOptions,
+                serviceProvider,
+                ownsServiceProvider: true);
         }
 
         internal void ApplyTo(OpenTelemetryLoggerOptions other)

@@ -275,7 +275,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             {
                 if (!registerOutside)
                 {
-                    options.Services!.AddSingleton<CustomProcessor>();
+                    options.ConfigureServices(services => services.AddSingleton<CustomProcessor>());
                 }
 
                 options.AddProcessor<CustomProcessor>();

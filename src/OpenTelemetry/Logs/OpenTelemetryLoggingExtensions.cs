@@ -73,10 +73,8 @@ namespace Microsoft.Extensions.Logging
                  * needed.
                  */
 
-                var options = new OpenTelemetryLoggerOptions
-                {
-                    Services = builder.Services,
-                };
+                var options = new OpenTelemetryLoggerOptions(builder.Services);
+
                 configure(options);
 
                 /*

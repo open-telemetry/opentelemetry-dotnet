@@ -47,7 +47,7 @@ namespace OpenTelemetry.Logs
             Guard.ThrowIfNull(options);
             Guard.ThrowIfNull(shouldListenToFunc);
 
-            options.Services.TryAddSingleton<EventSourceManager>();
+            options.ConfigureServices(services => services.TryAddSingleton<EventSourceManager>());
 
             options.ConfigureProvider((sp, provider) =>
             {

@@ -18,43 +18,16 @@
 
 using System;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace OpenTelemetry.Logs;
 
 internal sealed class OpenTelemetryLoggerOptionsSdk : OpenTelemetryLoggerOptions
 {
     public OpenTelemetryLoggerOptionsSdk(Action<OpenTelemetryLoggerOptions>? configure)
+        : base(new ServiceCollection())
     {
-        var services = new ServiceCollection();
-
-        services.AddOptions();
-
-        this.Services = services;
+        this.ConfigureServices(services => services.AddOptions());
 
         configure?.Invoke(this);
-    }
-
-    public OpenTelemetryLoggerProvider Build()
-    {
-        var services = this.Services;
-
-        if (services == null)
-        {
-            throw new NotSupportedException("LoggerProviderBuilder build method cannot be called multiple times.");
-        }
-
-        this.Services = null;
-
-        var serviceProvider = services.BuildServiceProvider();
-
-        var finalOptions = serviceProvider.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
-
-        this.ApplyTo(finalOptions);
-
-        return new OpenTelemetryLoggerProvider(
-            finalOptions,
-            serviceProvider,
-            ownsServiceProvider: true);
     }
 }
