@@ -1,4 +1,4 @@
-// <copyright file="PrometheusExporterHttpListenerMeterProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
+// <copyright file="PrometheusHttpListenerMeterProviderBuilderExtensions.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,7 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Exporter.Prometheus.HttpListener;
-using OpenTelemetry.Exporter.Prometheus.HttpListener.Shared;
+using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
@@ -24,19 +23,17 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// Extension methods to simplify registering a PrometheusHttpListener.
     /// </summary>
-    public static class PrometheusExporterHttpListenerMeterProviderBuilderExtensions
+    public static class PrometheusHttpListenerMeterProviderBuilderExtensions
     {
         /// <summary>
-        /// Adds Prometheus exporter to MeterProviderBuilder.
+        /// Adds PrometheusHttpListener to MeterProviderBuilder.
         /// </summary>
         /// <param name="builder"><see cref="MeterProviderBuilder"/>builder to use.</param>
-        /// <param name="configureExporterOptions">Exporter configuration options.</param>
-        /// <param name="configureListenerOptions">HttpListener options.</param>
+        /// <param name="configure">PrometheusHttpListenerOptions options.</param>
         /// <returns>The instance of <see cref="MeterProviderBuilder"/>to chain calls.</returns>
         public static MeterProviderBuilder AddPrometheusHttpListener(
             this MeterProviderBuilder builder,
-            Action<PrometheusExporterOptions> configureExporterOptions = null,
-            Action<PrometheusHttpListenerOptions> configureListenerOptions = null)
+            Action<PrometheusHttpListenerOptions> configure = null)
         {
             Guard.ThrowIfNull(builder);
 
@@ -44,44 +41,30 @@ namespace OpenTelemetry.Metrics
             {
                 return deferredMeterProviderBuilder.Configure((sp, builder) =>
                 {
-                    AddPrometheusHttpListener(
-                        builder,
-                        sp.GetOptions<PrometheusExporterOptions>(),
-                        sp.GetOptions<PrometheusHttpListenerOptions>(),
-                        configureExporterOptions,
-                        configureListenerOptions);
+                    AddPrometheusHttpListener(builder, sp.GetOptions<PrometheusHttpListenerOptions>(), configure);
                 });
             }
 
-            return AddPrometheusHttpListener(
-                builder,
-                new PrometheusExporterOptions(),
-                new PrometheusHttpListenerOptions(),
-                configureExporterOptions,
-                configureListenerOptions);
+            return AddPrometheusHttpListener(builder, new PrometheusHttpListenerOptions(), configure);
         }
 
         private static MeterProviderBuilder AddPrometheusHttpListener(
             MeterProviderBuilder builder,
-            PrometheusExporterOptions exporterOptions,
-            PrometheusHttpListenerOptions listenerOptions,
-            Action<PrometheusExporterOptions> configureExporterOptions = null,
-            Action<PrometheusHttpListenerOptions> configureListenerOptions = null)
+            PrometheusHttpListenerOptions options,
+            Action<PrometheusHttpListenerOptions> configure = null)
         {
-            configureExporterOptions?.Invoke(exporterOptions);
-            configureListenerOptions?.Invoke(listenerOptions);
+            configure?.Invoke(options);
 
-            var exporter = new PrometheusExporter(exporterOptions);
+            var exporter = new PrometheusExporter(scrapeEndpointPath: options.ScrapeEndpointPath);
 
             var reader = new BaseExportingMetricReader(exporter)
             {
                 TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
             };
 
-            const string HttpListenerStartFailureExceptionMessage = "PrometheusExporter HttpListener could not be started.";
             try
             {
-                var listener = new PrometheusHttpListener(exporter, listenerOptions);
+                var listener = new PrometheusHttpListener(exporter, options);
                 exporter.OnDispose = () => listener.Dispose();
                 listener.Start();
             }
@@ -95,7 +78,7 @@ namespace OpenTelemetry.Metrics
                 {
                 }
 
-                throw new InvalidOperationException(HttpListenerStartFailureExceptionMessage, ex);
+                throw new InvalidOperationException("PrometheusExporter HttpListener could not be started.", ex);
             }
 
             return builder.AddReader(reader);

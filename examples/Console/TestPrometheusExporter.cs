@@ -52,8 +52,7 @@ internal class TestPrometheusExporter
             .AddMeter(MyMeter.Name)
             .AddMeter(MyMeter2.Name)
             .AddPrometheusHttpListener(
-                exporterOptions => exporterOptions.ScrapeResponseCacheDurationMilliseconds = 0,
-                listenerOptions => listenerOptions.Prefixes = new string[] { $"http://localhost:{port}/" })
+                options => options.Prefixes = new string[] { $"http://localhost:{port}/" })
             .Build();
 
         var process = Process.GetCurrentProcess();
