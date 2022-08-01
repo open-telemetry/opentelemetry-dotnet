@@ -43,7 +43,7 @@ namespace OpenTelemetry.Logs.Tests
         {
             OpenTelemetryLoggerOptions defaults = new();
 
-            using OpenTelemetryLoggerProvider provider = OpenTelemetryLoggerProvider.Create(options =>
+            using OpenTelemetryLoggerProvider provider = Sdk.CreateLoggerProviderBuilder(options =>
             {
                 options.IncludeScopes = !defaults.IncludeScopes;
                 options.IncludeFormattedMessage = !defaults.IncludeFormattedMessage;
@@ -54,7 +54,7 @@ namespace OpenTelemetry.Logs.Tests
                     .AddAttributes(new[] { new KeyValuePair<string, object>("key1", "value1") }));
 
                 options.AddInMemoryExporter(new List<LogRecord>());
-            });
+            }).Build();
 
             Assert.Equal(!defaults.IncludeScopes, provider.IncludeScopes);
             Assert.Equal(!defaults.IncludeFormattedMessage, provider.IncludeFormattedMessage);

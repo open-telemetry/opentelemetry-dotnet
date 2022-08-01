@@ -313,7 +313,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         {
             configure.AddOpenTelemetry(options =>
             {
-                options.Configure((sp, provider) =>
+                options.ConfigureProvider((sp, provider) =>
                 {
                     var testClass = sp.GetRequiredService<TestClass>();
 
@@ -374,7 +374,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
             options.AddProcessor(new CustomProcessor(0));
 
-            options.Configure((sp, p) =>
+            options.ConfigureProvider((sp, p) =>
             {
                 Assert.Null(provider);
                 provider = p;
@@ -392,7 +392,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
                 options.AddProcessor(new CustomProcessor(1));
 
-                options.Configure((sp, p) =>
+                options.ConfigureProvider((sp, p) =>
                 {
                     configureInvocationCount++;
 
@@ -409,7 +409,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
             options.AddProcessor(new CustomProcessor(2));
 
-            options.Configure((sp, p) =>
+            options.ConfigureProvider((sp, p) =>
             {
                 configureInvocationCount++;
 
@@ -462,7 +462,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             {
                 options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("Examples.LoggingExtensions"));
 
-                options.Configure((sp, p) => provider = p);
+                options.ConfigureProvider((sp, p) => provider = p);
             });
 
             configure.AddOpenTelemetry(options =>

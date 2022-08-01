@@ -21,6 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Configuration;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 
@@ -51,7 +52,12 @@ namespace Microsoft.Extensions.Logging
 
             builder.AddConfiguration();
 
-            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>());
+            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(sp =>
+            {
+                var options = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
+
+                return new OpenTelemetryLoggerProvider(options, sp, ownsServiceProvider: false);
+            }));
 
             // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
             LoggerProviderOptions.RegisterProviderOptions<OpenTelemetryLoggerOptions, OpenTelemetryLoggerProvider>(builder.Services);

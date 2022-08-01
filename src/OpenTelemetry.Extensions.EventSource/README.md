@@ -29,7 +29,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         builder.AddOpenTelemetry(options =>
         {
             options
-                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyService"))
+                .ConfigureResource(builder => builder.AddService("MyService"))
                 .AddConsoleExporter()
                 // Step 2: Register OpenTelemetryEventSourceLogEmitter to listen to events...
                 .AddEventSourceLogEmitter((name) => name == MyEventSource.Name ? EventLevel.Informational : null);
@@ -44,12 +44,10 @@ IHost host = Host.CreateDefaultBuilder(args)
 
 ```csharp
 // Step 1: Configure OpenTelemetryLoggerProvider...
-var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
-{
-    options
-        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyService"))
-        .AddConsoleExporter();
-});
+var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+    .ConfigureResource(builder => builder.AddService("MyService"))
+    .AddConsoleExporter()
+    .Build();
 
 // Step 2: Create OpenTelemetryEventSourceLogEmitter to listen to events...
 using var openTelemetryEventSourceLogEmitter = new OpenTelemetryEventSourceLogEmitter(

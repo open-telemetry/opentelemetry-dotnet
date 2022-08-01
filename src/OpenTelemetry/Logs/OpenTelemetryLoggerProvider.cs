@@ -56,20 +56,7 @@ namespace OpenTelemetry.Logs
         /// Initializes a new instance of the <see cref="OpenTelemetryLoggerProvider"/> class.
         /// </summary>
         /// <param name="options"><see cref="OpenTelemetryLoggerOptions"/>.</param>
-        /// <param name="serviceProvider"><see cref="IServiceProvider"/>.</param>
-        public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options, IServiceProvider serviceProvider)
-            : this(
-                  options?.CurrentValue ?? throw new ArgumentNullException(nameof(options)),
-                  serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider)),
-                  ownsServiceProvider: false)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="OpenTelemetryLoggerProvider"/> class.
-        /// </summary>
-        /// <param name="options"><see cref="OpenTelemetryLoggerOptions"/>.</param>
-        [Obsolete("Call the OpenTelemetryLoggerProvider constructor which accepts IOptions & IServiceProvider or the OpenTelemetryLoggerProvider.Create helper method")]
+        [Obsolete("Use the Sdk.CreateLoggerProviderBuilder method instead")]
         public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options)
             : this(options?.CurrentValue ?? throw new ArgumentNullException(nameof(options)), serviceProvider: null, ownsServiceProvider: false)
         {
@@ -89,7 +76,7 @@ namespace OpenTelemetry.Logs
         {
         }
 
-        private OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options, IServiceProvider? serviceProvider, bool ownsServiceProvider)
+        internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options, IServiceProvider? serviceProvider, bool ownsServiceProvider)
         {
             Guard.ThrowIfNull(options);
 
@@ -151,35 +138,6 @@ namespace OpenTelemetry.Logs
         internal IExternalScopeProvider? ScopeProvider { get; private set; }
 
         internal ILogRecordPool LogRecordPool => this.threadStaticPool ?? LogRecordSharedPool.Current;
-
-        /// <summary>
-        /// Create a <see cref="OpenTelemetryLoggerProvider"/> instance.
-        /// </summary>
-        /// <param name="configure">Configuration callback.</param>
-        /// <returns><see cref="OpenTelemetryLoggerProvider"/>.</returns>
-        public static OpenTelemetryLoggerProvider Create(Action<OpenTelemetryLoggerOptions>? configure = null)
-        {
-            OpenTelemetryLoggerOptions options = new();
-
-            if (configure != null)
-            {
-                ServiceCollection services = new ServiceCollection();
-
-                options.Services = services;
-
-                configure.Invoke(options);
-
-                IServiceProvider serviceProvider = services.BuildServiceProvider();
-
-                var finalOptions = serviceProvider.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
-
-                options.ApplyTo(finalOptions);
-
-                return new OpenTelemetryLoggerProvider(finalOptions, serviceProvider, ownsServiceProvider: true);
-            }
-
-            return new OpenTelemetryLoggerProvider(options, serviceProvider: null, ownsServiceProvider: false);
-        }
 
         /// <inheritdoc/>
         void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)

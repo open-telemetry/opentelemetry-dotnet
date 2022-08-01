@@ -37,10 +37,9 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             var disposeTrackingProcessor = new DisposeTrackingProcessor();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
-            using (var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
-            {
-                options.AddProcessor(disposeTrackingProcessor);
-            }))
+            using (var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+                .AddProcessor(disposeTrackingProcessor)
+                .Build())
             {
                 Log.Logger = new LoggerConfiguration()
                     .WriteTo.OpenTelemetry(openTelemetryLoggerProvider, disposeProvider: dispose)
@@ -62,12 +61,14 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
-            {
-                options.IncludeFormattedMessage = includeFormattedMessage;
+            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder(
+                options =>
+                {
+                    options.IncludeFormattedMessage = includeFormattedMessage;
 
-                options.AddInMemoryExporter(exportedItems);
-            });
+                    options.AddInMemoryExporter(exportedItems);
+                })
+                .Build();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
             Log.Logger = new LoggerConfiguration()
@@ -115,10 +116,9 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
-            {
-                options.AddInMemoryExporter(exportedItems);
-            });
+            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
             Log.Logger = new LoggerConfiguration()
@@ -147,10 +147,9 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
-            {
-                options.AddInMemoryExporter(exportedItems);
-            });
+            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
             Log.Logger = new LoggerConfiguration()
@@ -177,10 +176,9 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
-            {
-                options.AddInMemoryExporter(exportedItems);
-            });
+            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
             Log.Logger = new LoggerConfiguration()
@@ -210,10 +208,9 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
-            {
-                options.AddInMemoryExporter(exportedItems);
-            });
+            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
             Log.Logger = new LoggerConfiguration()
@@ -249,10 +246,9 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             InvalidOperationException ex = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = OpenTelemetryLoggerProvider.Create(options =>
-            {
-                options.AddInMemoryExporter(exportedItems);
-            });
+            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
             Log.Logger = new LoggerConfiguration()

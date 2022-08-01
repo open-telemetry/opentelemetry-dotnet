@@ -49,7 +49,7 @@ namespace OpenTelemetry.Logs
 
             options.Services.TryAddSingleton<EventSourceManager>();
 
-            options.Configure((sp, provider) =>
+            options.ConfigureProvider((sp, provider) =>
             {
                 var manager = sp.GetRequiredService<EventSourceManager>();
 

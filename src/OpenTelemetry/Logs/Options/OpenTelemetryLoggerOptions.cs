@@ -34,6 +34,7 @@ namespace OpenTelemetry.Logs
         internal readonly List<BaseProcessor<LogRecord>> Processors = new();
         internal ResourceBuilder? ResourceBuilder;
         internal List<Action<IServiceProvider, OpenTelemetryLoggerProvider>>? ConfigurationActions = new();
+        internal IServiceCollection? Services;
 
         private const bool DefaultIncludeScopes = false;
         private const bool DefaultIncludeFormattedMessage = false;
@@ -42,20 +43,6 @@ namespace OpenTelemetry.Logs
         private bool? includeScopes;
         private bool? includeFormattedMessage;
         private bool? parseStateValues;
-
-        /// <summary>
-        /// Gets the <see cref="IServiceCollection"/> where logging services are
-        /// configured.
-        /// </summary>
-        /// <remarks>
-        /// Note: <see cref="Services"/> are only available during the
-        /// application configuration phase. When using "Options" pattern via
-        /// <see cref="OptionsServiceCollectionExtensions"/> or interfaces such
-        /// as <see cref="IConfigureOptions{T}"/> <see cref="Services"/> will be
-        /// unavailable because "Options" are built after application services
-        /// have been configured.
-        /// </remarks>
-        public IServiceCollection? Services { get; internal set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether or not log scopes should be
@@ -123,7 +110,7 @@ namespace OpenTelemetry.Logs
         public OpenTelemetryLoggerOptions AddProcessor<T>()
             where T : BaseProcessor<LogRecord>
         {
-            return this.Configure((sp, provider) =>
+            return this.ConfigureProvider((sp, provider) =>
             {
                 provider.AddProcessor(sp.GetRequiredService<T>());
             });
@@ -152,11 +139,12 @@ namespace OpenTelemetry.Logs
         /// </summary>
         /// <param name="configure">An action which modifies the provided <see cref="Resources.ResourceBuilder"/> in-place.</param>
         /// <returns>Returns <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
-        public OpenTelemetryLoggerOptions ConfigureResource(Action<ResourceBuilder> configure)
+        public OpenTelemetryLoggerOptions ConfigureResource(
+            Action<ResourceBuilder> configure)
         {
             Guard.ThrowIfNull(configure);
 
-            this.Configure((sp, provider) =>
+            this.ConfigureProvider((sp, provider) =>
             {
                 Debug.Assert(provider.ResourceBuilder != null, "provider.ResourceBuilder was null");
 
@@ -168,19 +156,51 @@ namespace OpenTelemetry.Logs
 
         /// <summary>
         /// Register a callback action to configure the <see
+        /// cref="IServiceCollection"/> where logging services are configured.
+        /// </summary>
+        /// <remarks>
+        /// Note: Logging services are only available during the application
+        /// configuration phase. When using "Options" pattern via <see
+        /// cref="OptionsServiceCollectionExtensions"/> or interfaces such as
+        /// <see cref="IConfigureOptions{T}"/> logging services will be
+        /// unavailable because "Options" are built after application services
+        /// have been configured.
+        /// </remarks>
+        /// <param name="configure">Configuration callback.</param>
+        /// <returns>The supplied <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerOptions ConfigureServices(
+            Action<IServiceCollection> configure)
+        {
+            Guard.ThrowIfNull(configure);
+
+            var services = this.Services;
+
+            if (services == null)
+            {
+                throw new NotSupportedException("Services cannot be configured outside of application configuration phase.");
+            }
+
+            configure(services);
+
+            return this;
+        }
+
+        /// <summary>
+        /// Register a callback action to configure the <see
         /// cref="OpenTelemetryLoggerProvider"/> once the application <see
         /// cref="IServiceProvider"/> is available.
         /// </summary>
         /// <param name="configure">Configuration callback.</param>
         /// <returns>The supplied <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
-        public OpenTelemetryLoggerOptions Configure(Action<IServiceProvider, OpenTelemetryLoggerProvider> configure)
+        public OpenTelemetryLoggerOptions ConfigureProvider(
+            Action<IServiceProvider, OpenTelemetryLoggerProvider> configure)
         {
             Guard.ThrowIfNull(configure);
 
             var configurationActions = this.ConfigurationActions;
             if (configurationActions == null)
             {
-                throw new InvalidOperationException("Configuration actions cannot be registered on options after OpenTelemetryLoggerProvider has been created.");
+                throw new NotSupportedException("Configuration actions cannot be registered on options after OpenTelemetryLoggerProvider has been created.");
             }
 
             configurationActions.Add(configure);
