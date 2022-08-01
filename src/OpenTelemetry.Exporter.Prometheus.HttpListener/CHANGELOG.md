@@ -5,6 +5,7 @@
 * Split up Prometheus projects based on its hosting mechanism,
   HttpListener and AspNetCore, into their own projects
   and assemblies.
+  ([#3512](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3512))
   ([#3507](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3507))
   ([#3503](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3503))
   ([#3430](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3430))
