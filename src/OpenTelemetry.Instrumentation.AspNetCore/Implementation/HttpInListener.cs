@@ -249,7 +249,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 // We cannot rely on Activity.Current here
                 // There could be activities started by middleware
                 // after activity started by framework resulting in different Activity.Current.
-                // so, we need to first find the activity started by framework.
+                // so, we need to first find the activity started by Asp.Net Core.
                 // For .net6.0 onwards we could use IHttpActivityFeature to get the activity created by framework
                 // var httpActivityFeature = context.Features.Get<IHttpActivityFeature>();
                 // activity = httpActivityFeature.Activity;
