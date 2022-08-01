@@ -4,15 +4,16 @@
 
 * Added `http.scheme` tag to tracing instrumentation.
   ([#3464](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3464))
-
 * [Breaking] Removes `SetHttpFlavor` option. "http.flavor" is
   now always automatically populated.
   To remove this tag, set "http.flavor" to null using `ActivityProcessor`.
   ([#3380](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3380))
-
 * Fix `Enrich` not getting invoked when SocketException due to HostNotFound
   occurs.
   ([#3407](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3407))
+* Changed activity source name from `OpenTelemetry.HttpWebRequest`
+  to `OpenTelemetry.Instrumentation.Http` for `HttpWebRequest`s.
+  ([#3509](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3509))
 
 ## 1.0.0-rc9.4
 
