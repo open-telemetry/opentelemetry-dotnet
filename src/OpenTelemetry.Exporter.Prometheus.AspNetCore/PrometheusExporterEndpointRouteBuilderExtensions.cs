@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if NETCOREAPP3_1_OR_GREATER
-
 using System;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -108,4 +106,3 @@ namespace Microsoft.AspNetCore.Builder
         }
     }
 }
-#endif
