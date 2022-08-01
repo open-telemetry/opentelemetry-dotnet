@@ -2,10 +2,11 @@
 
 ## Unreleased
 
-* Split up Prometheus projects based on its hosting mechanism, HttpListener and AspNetCore,
-  into their own projects and assemblies. The shared code for both hosting mechanism
-  now lives in the `OpenTelemetry.Exporter.Prometheus.Shared` project and will not
-  be released.
+* Split up Prometheus projects based on its hosting mechanism,
+  HttpListener and AspNetCore, into their own projects
+  and assemblies.
+  ([#3507](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3507))
+  ([#3503](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3503))
   ([#3430](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3430))
 
 ## 1.3.0-rc.2
