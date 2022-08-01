@@ -39,6 +39,8 @@ namespace TestApp.AspNetCore._3._1
             services.AddSingleton<HttpClient>();
             services.AddSingleton(
                 new CallbackMiddleware.CallbackMiddlewareImpl());
+            services.AddSingleton(
+               new ActivityMiddleware.ActivityMiddlewareImpl());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -50,6 +52,7 @@ namespace TestApp.AspNetCore._3._1
             }
 
             app.UseMiddleware<CallbackMiddleware>();
+            app.UseMiddleware<ActivityMiddleware>();
             app.UseRouting();
 
             app.UseAuthorization();

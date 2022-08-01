@@ -423,7 +423,8 @@ Refer to the individual exporter docs to learn how to use them:
 * [In-memory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
 * [OTLP](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
   (OpenTelemetry Protocol)
-* [Prometheus](../../../src/OpenTelemetry.Exporter.Prometheus/README.md)
+* [Prometheus HttpListener](../../../src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md)
+* [Prometheus AspNetCore](../../../src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)
 
 ### Resource
 
