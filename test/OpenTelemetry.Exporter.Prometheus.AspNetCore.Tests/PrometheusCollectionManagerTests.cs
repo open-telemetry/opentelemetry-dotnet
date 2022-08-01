@@ -21,12 +21,11 @@ using System.Linq;
 #endif
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Exporter.Prometheus.HttpListener.Shared;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
+namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
     public sealed class PrometheusCollectionManagerTests
     {
@@ -110,7 +109,7 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests
                     exporter.CollectionManager.ExitCollect();
                 }
 
-                Thread.Sleep(exporter.Options.ScrapeResponseCacheDurationMilliseconds);
+                Thread.Sleep(exporter.ScrapeResponseCacheDurationMilliseconds);
 
                 counter.Add(100);
 

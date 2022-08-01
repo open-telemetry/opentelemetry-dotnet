@@ -20,12 +20,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Shared
+namespace OpenTelemetry.Exporter.Prometheus
 {
     internal sealed class PrometheusCollectionManager
     {
         private readonly PrometheusExporter exporter;
-        private readonly int scrapeResponseCacheDurationInMilliseconds;
+        private readonly int scrapeResponseCacheDurationMilliseconds;
         private readonly Func<Batch<Metric>, ExportResult> onCollectRef;
         private byte[] buffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
         private int globalLockState;
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Shared
         public PrometheusCollectionManager(PrometheusExporter exporter)
         {
             this.exporter = exporter;
-            this.scrapeResponseCacheDurationInMilliseconds = this.exporter.Options.ScrapeResponseCacheDurationMilliseconds;
+            this.scrapeResponseCacheDurationMilliseconds = this.exporter.ScrapeResponseCacheDurationMilliseconds;
             this.onCollectRef = this.OnCollect;
         }
 
@@ -53,8 +53,8 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Shared
             // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
             // last successful collect, return the previous view.
             if (this.previousDataViewGeneratedAtUtc.HasValue
-                && this.scrapeResponseCacheDurationInMilliseconds > 0
-                && this.previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationInMilliseconds) >= DateTime.UtcNow)
+                && this.scrapeResponseCacheDurationMilliseconds > 0
+                && this.previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationMilliseconds) >= DateTime.UtcNow)
             {
                 Interlocked.Increment(ref this.readerCount);
                 this.ExitGlobalLock();
