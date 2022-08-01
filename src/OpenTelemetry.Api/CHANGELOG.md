@@ -266,7 +266,7 @@ Released 2020-08-28
     header
     ([#1048](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1048))
 * Removed `DistributedContext` as it is no longer part of the spec
-  ([#1048](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1048)))
+  ([#1048](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1048))
 * Renaming from `ot` to `otel`
   ([#1046](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1046))
 * Added `RuntimeContext` API

@@ -193,7 +193,7 @@ Released 2021-Jan-29
   empty string when `Status.StatusCode` (`otel.status_code` tag) is set to
   `ERROR`.
   ([#1579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1579),
-  [#1620](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1620), &
+  [#1620](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1620) &
   [#1655](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655))
 
 * Zipkin will no longer send the `otel.status_code` tag if the value is `UNSET`.
@@ -249,13 +249,13 @@ Released 2020-Sep-15
 
 Released 2020-08-28
 
-* Renamed extension method from `UseZipkinExporter` to `AddZipkinExporter`
+* Renamed extension method from `UseZipkinExporter` to `AddZipkinExporter`.
   ([#1066](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1066))
-* Changed `ZipkinExporter` to use `BatchExportActivityProcessor` by default
+* Changed `ZipkinExporter` to use `BatchExportActivityProcessor` by default.
   ([#1103](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1103))
 * Fixed issue when span has both the `net.peer.name` and `net.peer.port`
-  attributes but did not include `net.peer.port` in the service address field
-  ([#1168](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1168)).
+  attributes but did not include `net.peer.port` in the service address field.
+  ([#1168](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1168))
 
 ## 0.4.0-beta.2
 

@@ -56,8 +56,8 @@ Released 2022-Mar-30
 
 * Added StatusCode, StatusDescription support to
   `ConsoleActivityExporter`.
-  ([#2929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2929)
-   [#3061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3061))
+  ([#2929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2929) &
+  [#3061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3061))
 
 * `AddConsoleExporter` extension method by default sets up exporter
    to export metrics every 10 seconds.
@@ -147,7 +147,7 @@ Released 2021-Mar-19
 * Removed code that prints Baggage information
   ([#1825](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1825))
 * LogRecordExporter exports Message, Scope, StateValues from LogRecord.
-  ([#1871](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1871)
+  ([#1871](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1871) &
   [#1895](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1895))
 * Added Resource support.
   ([#1913](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1913))
