@@ -16,7 +16,7 @@
 
 using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Exporter.Prometheus.Shared
+namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
     /// OpenTelemetry additions to the PrometheusSerializer.
