@@ -240,10 +240,14 @@ namespace OpenTelemetry.Logs
 
             this.ApplyTo(finalOptions);
 
-            return new OpenTelemetryLoggerProvider(
+            var provider = new OpenTelemetryLoggerProvider(
                 finalOptions,
                 serviceProvider,
                 ownsServiceProvider: true);
+
+            this.ConfigurationActions = null;
+
+            return provider;
         }
 
         internal void ApplyTo(OpenTelemetryLoggerOptions other)
