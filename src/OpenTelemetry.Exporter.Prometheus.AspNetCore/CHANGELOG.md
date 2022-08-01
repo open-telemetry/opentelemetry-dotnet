@@ -5,8 +5,8 @@
 * Split up Prometheus projects based on its hosting mechanism,
   HttpListener and AspNetCore, into their own projects
   and assemblies.
-  ([#3507](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3507),
-  [#3503](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3503) &
+  ([#3507](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3507)
+  [#3503](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3503)
   [#3430](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3430))
 
 * Added `IEndpointRouteBuilder` extension methods to help with Prometheus
@@ -82,7 +82,7 @@ Released 2021-Sep-23
 Released 2021-Sep-13
 
 * Bug fixes
-  ([#2289](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2289) &
+  ([#2289](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2289)
   [#2309](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2309))
 
 ## 1.2.0-alpha2
