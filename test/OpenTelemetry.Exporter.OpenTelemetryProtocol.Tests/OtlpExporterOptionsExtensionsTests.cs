@@ -30,7 +30,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [InlineData("key1 = value1, key2=value2 ", new string[] { "key1", "key2" }, new string[] { "value1", "value2" })]
         [InlineData("key==value", new string[] { "key" }, new string[] { "=value" })]
         [InlineData("access-token=abc=/123,timeout=1234", new string[] { "access-token", "timeout" }, new string[] { "abc=/123", "1234" })]
-        [InlineData("key1=value1;key2=value2", new string[] { "key1" }, new string[] { "value1;key2=value2" })] // semicolon is not treated as a delimeter (https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables)
+        [InlineData("key1=value1;key2=value2", new string[] { "key1" }, new string[] { "value1;key2=value2" })] // semicolon is not treated as a delimiter (https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables)
         public void GetMetadataFromHeadersWorksCorrectFormat(string headers, string[] keys, string[] values)
         {
             var options = new OtlpExporterOptions
@@ -73,7 +73,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [Theory]
         [InlineData("")]
         [InlineData(null)]
-        public void GetHeaders_NoOptionHeaders_ReturnsEmptyHeadres(string optionHeaders)
+        public void GetHeaders_NoOptionHeaders_ReturnsEmptyHeaders(string optionHeaders)
         {
             var options = new OtlpExporterOptions
             {

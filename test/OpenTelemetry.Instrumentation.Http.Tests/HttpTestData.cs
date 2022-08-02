@@ -14,9 +14,8 @@
 // limitations under the License.
 // </copyright>
 using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace OpenTelemetry.Instrumentation.Http.Tests
 {
@@ -25,9 +24,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         public static IEnumerable<object[]> ReadTestCases()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var serializer = new JsonSerializer();
-            var input = serializer.Deserialize<HttpOutTestCase[]>(new JsonTextReader(new StreamReader(assembly.GetManifestResourceStream("OpenTelemetry.Instrumentation.Http.Tests.http-out-test-cases.json"))));
-
+            var input = JsonSerializer.Deserialize<HttpOutTestCase[]>(
+                assembly.GetManifestResourceStream("OpenTelemetry.Instrumentation.Http.Tests.http-out-test-cases.json"), new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
             return GetArgumentsFromTestCaseObject(input);
         }
 
