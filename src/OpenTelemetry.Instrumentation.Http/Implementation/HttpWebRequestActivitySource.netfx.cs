@@ -36,7 +36,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     /// </remarks>
     internal static class HttpWebRequestActivitySource
     {
-        public const string ActivitySourceName = "OpenTelemetry.HttpWebRequest";
+        public const string ActivitySourceName = "OpenTelemetry.Instrumentation.HttpWebRequest";
         public const string ActivityName = ActivitySourceName + ".HttpRequestOut";
 
         internal static readonly Func<HttpWebRequest, string, IEnumerable<string>> HttpWebRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);

@@ -84,6 +84,9 @@ Released 2021-Apr-23
 * Update `AddHttpClientInstrumentation` extension method for .NET Framework to
   use only use `HttpWebRequestInstrumentationOptions`
   ([#1982](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1982))
+* Changed activity source name from `OpenTelemetry.HttpWebRequest`
+  to `OpenTelemetry.Instrumentation.HttpWebRequest` for `HttpWebRequest`s.
+  ([#3515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3515))
 
 ## 1.0.0-rc3
 
