@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
 
