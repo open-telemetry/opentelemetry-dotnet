@@ -32,12 +32,20 @@ namespace Microsoft.Extensions.Logging
     public static class OpenTelemetryLoggingExtensions
     {
         /// <summary>
-        /// Adds a OpenTelemetry logger named 'OpenTelemetry' to the factory.
+        /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+        /// </summary>
+        /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+        /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+        public static ILoggingBuilder AddOpenTelemetry(this ILoggingBuilder builder)
+            => AddOpenTelemetry(builder, configure: null);
+
+        /// <summary>
+        /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
         /// </summary>
         /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
         /// <param name="configure">Optional configuration action.</param>
         /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
-        public static ILoggingBuilder AddOpenTelemetry(this ILoggingBuilder builder, Action<OpenTelemetryLoggerOptions>? configure = null)
+        public static ILoggingBuilder AddOpenTelemetry(this ILoggingBuilder builder, Action<OpenTelemetryLoggerOptions>? configure)
         {
             Guard.ThrowIfNull(builder);
 
@@ -47,6 +55,53 @@ namespace Microsoft.Extensions.Logging
             if (configure != null)
             {
                 builder.Services.Configure(configure);
+            }
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+        /// </summary>
+        /// <remarks>
+        /// Note: The supplied <see cref="OpenTelemetryLoggerProvider"/> will
+        /// automatically be disposed when the <see cref="ILoggerFactory"/>
+        /// built from <paramref name="builder"/> is disposed.
+        /// </remarks>
+        /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+        /// <param name="openTelemetryLoggerProvider"><see cref="OpenTelemetryLoggerProvider"/>.</param>
+        /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+        public static ILoggingBuilder AddOpenTelemetry(this ILoggingBuilder builder, OpenTelemetryLoggerProvider openTelemetryLoggerProvider)
+            => AddOpenTelemetry(builder, openTelemetryLoggerProvider, disposeProvider: true);
+
+        /// <summary>
+        /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
+        /// </summary>
+        /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+        /// <param name="openTelemetryLoggerProvider"><see cref="OpenTelemetryLoggerProvider"/>.</param>
+        /// <param name="disposeProvider">Controls whether or not the supplied
+        /// <paramref name="openTelemetryLoggerProvider"/> will be disposed when
+        /// the <see cref="ILoggerFactory"/> is disposed.</param>
+        /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
+        public static ILoggingBuilder AddOpenTelemetry(
+            this ILoggingBuilder builder,
+            OpenTelemetryLoggerProvider openTelemetryLoggerProvider,
+            bool disposeProvider)
+        {
+            Guard.ThrowIfNull(builder);
+            Guard.ThrowIfNull(openTelemetryLoggerProvider);
+
+            // Note: Currently if multiple OpenTelemetryLoggerProvider instances
+            // are added to the same ILoggingBuilder everything after the first
+            // is silently ignored.
+
+            if (disposeProvider)
+            {
+                builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(sp => openTelemetryLoggerProvider));
+            }
+            else
+            {
+                builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider>(openTelemetryLoggerProvider));
             }
 
             return builder;

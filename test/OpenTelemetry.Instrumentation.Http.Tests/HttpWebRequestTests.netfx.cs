@@ -20,8 +20,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text.Json;
 using Moq;
-using Newtonsoft.Json;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
@@ -137,26 +137,27 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public void DebugIndividualTest()
         {
-            var serializer = new JsonSerializer();
-            var input = serializer.Deserialize<HttpTestData.HttpOutTestCase>(new JsonTextReader(new StringReader(@"
-  {
-    ""name"": ""Http version attribute populated"",
-    ""method"": ""GET"",
-    ""url"": ""http://{host}:{port}/"",
-    ""responseCode"": 200,
-    ""spanName"": ""HTTP GET"",
-    ""spanStatus"": ""UNSET"",
-    ""spanKind"": ""Client"",
-    ""setHttpFlavor"": true,
-    ""spanAttributes"": {
-      ""http.method"": ""GET"",
-      ""http.host"": ""{host}:{port}"",
-      ""http.flavor"": ""2.0"",
-      ""http.status_code"": 200,
-      ""http.url"": ""http://{host}:{port}/""
-    }
-  }
-")));
+            var input = JsonSerializer.Deserialize<HttpTestData.HttpOutTestCase>(
+            @"
+             {
+                ""name"": ""Http version attribute populated"",
+                ""method"": ""GET"",
+                ""url"": ""http://{host}:{port}/"",
+                ""responseCode"": 200,
+                ""spanName"": ""HTTP GET"",
+                ""spanStatus"": ""UNSET"",
+                ""spanKind"": ""Client"",
+                ""setHttpFlavor"": true,
+                ""spanAttributes"": {
+                  ""http.method"": ""GET"",
+                  ""http.host"": ""{host}:{port}"",
+                  ""http.flavor"": ""2.0"",
+                  ""http.status_code"": ""200"",
+                  ""http.url"": ""http://{host}:{port}/""
+                }
+              }
+            ",
+            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
             this.HttpOutCallsAreCollectedSuccessfully(input);
         }
 
