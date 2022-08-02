@@ -16,17 +16,16 @@
 
 using System;
 
-namespace OpenTelemetry.Tests
+namespace OpenTelemetry.Tests;
+
+public class DelegatingProcessor<T> : BaseProcessor<T>
+    where T : class
 {
-    public class DelegatingProcessor<T> : BaseProcessor<T>
-        where T : class
-    {
-        public Func<int, bool> OnForceFlushFunc { get; set; } = (timeout) => true;
+    public Func<int, bool> OnForceFlushFunc { get; set; } = (timeout) => true;
 
-        public Func<int, bool> OnShutdownFunc { get; set; } = (timeout) => true;
+    public Func<int, bool> OnShutdownFunc { get; set; } = (timeout) => true;
 
-        protected override bool OnForceFlush(int timeoutMilliseconds) => this.OnForceFlushFunc(timeoutMilliseconds);
+    protected override bool OnForceFlush(int timeoutMilliseconds) => this.OnForceFlushFunc(timeoutMilliseconds);
 
-        protected override bool OnShutdown(int timeoutMilliseconds) => this.OnShutdownFunc(timeoutMilliseconds);
-    }
+    protected override bool OnShutdown(int timeoutMilliseconds) => this.OnShutdownFunc(timeoutMilliseconds);
 }

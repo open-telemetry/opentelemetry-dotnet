@@ -30,11 +30,8 @@ namespace OpenTelemetry.Tests
             Assert.True(testProcessor.ForceFlush());
 
             // BaseExporter should catch any exceptions and return false.
-            var exceptionTestProcessor = new DelegatingProcessor<object>
-            {
-                OnForceFlushFunc = (timeout) => throw new Exception("test exception"),
-            };
-            Assert.False(exceptionTestProcessor.ForceFlush());
+            testProcessor.OnForceFlushFunc = (timeout) => throw new Exception("test exception"),
+            Assert.False(testProcessor.ForceFlush());
         }
 
         [Fact]
