@@ -76,9 +76,9 @@ Released 2020-Sep-15
 
 Released 2020-08-28
 
-* Renamed extension method from `UseZPagesExporter` to `AddZPagesExporter`
+* Renamed extension method from `UseZPagesExporter` to `AddZPagesExporter`.
   ([#1066](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1066))
-* Changed `ZPagesExporter` to use `ZPagesProcessor` by default
+* Changed `ZPagesExporter` to use `ZPagesProcessor` by default.
   ([#1108](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1108))
 
 ## 0.4.0-beta.2
