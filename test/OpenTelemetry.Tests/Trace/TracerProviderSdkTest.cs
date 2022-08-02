@@ -223,6 +223,38 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void TracerSdkSetsActivitySamplingResultAsPropagationWhenParentIsRemote()
+        {
+            var testSampler = new TestSampler();
+            using var activitySource = new ActivitySource(ActivitySourceName);
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                    .AddSource(ActivitySourceName)
+                    .SetSampler(testSampler)
+                    .Build();
+
+            testSampler.SamplingAction = (samplingParameters) =>
+            {
+                return new SamplingResult(SamplingDecision.Drop);
+            };
+
+            ActivityContext ctx = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, isRemote: true);
+
+            using (var activity = activitySource.StartActivity("root", ActivityKind.Server, ctx))
+            {
+                // Even if sampling returns false, for activities with remote parent,
+                // activity is still created with PropagationOnly.
+                Assert.NotNull(activity);
+                Assert.False(activity.IsAllDataRequested);
+                Assert.False(activity.Recorded);
+
+                // This is not a root activity and parent is not remote.
+                // If sampling returns false, no activity is created at all.
+                using var innerActivity = activitySource.StartActivity("inner");
+                Assert.Null(innerActivity);
+            }
+        }
+
+        [Fact]
         public void TracerSdkSetsActivitySamplingResultBasedOnSamplingDecision()
         {
             var testSampler = new TestSampler();
@@ -387,7 +419,7 @@ namespace OpenTelemetry.Trace.Tests
                 (a) =>
                 {
                     Assert.False(Sdk.SuppressInstrumentation);
-                    Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
+                    Assert.True(a.IsAllDataRequested); // If Processor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
@@ -444,7 +476,7 @@ namespace OpenTelemetry.Trace.Tests
                 {
                     Assert.True(samplerCalled);
                     Assert.False(Sdk.SuppressInstrumentation);
-                    Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
+                    Assert.True(a.IsAllDataRequested); // If Processor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
@@ -505,7 +537,7 @@ namespace OpenTelemetry.Trace.Tests
                 {
                     Assert.True(samplerCalled);
                     Assert.False(Sdk.SuppressInstrumentation);
-                    Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
+                    Assert.True(a.IsAllDataRequested); // If Processor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
@@ -554,7 +586,7 @@ namespace OpenTelemetry.Trace.Tests
                 (a) =>
                 {
                     Assert.False(Sdk.SuppressInstrumentation);
-                    Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
+                    Assert.True(a.IsAllDataRequested); // If Processor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
@@ -603,7 +635,7 @@ namespace OpenTelemetry.Trace.Tests
                 (a) =>
                 {
                     Assert.False(Sdk.SuppressInstrumentation);
-                    Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
+                    Assert.True(a.IsAllDataRequested); // If Processor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
@@ -652,7 +684,7 @@ namespace OpenTelemetry.Trace.Tests
                 (a) =>
                 {
                     Assert.False(Sdk.SuppressInstrumentation);
-                    Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
+                    Assert.True(a.IsAllDataRequested); // If Processor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalled = true;
                 };
 
@@ -668,9 +700,11 @@ namespace OpenTelemetry.Trace.Tests
 
             // AddLegacyOperationName chained to TracerProviderBuilder
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .AddProcessor(testActivityProcessor)
-                        .AddLegacySource(operationNameForLegacyActivity)
-                        .Build();
+                .AddProcessor(testActivityProcessor)
+                .AddLegacySource(operationNameForLegacyActivity)
+                .Build();
+
+            Assert.Equal(tracerProvider, testActivityProcessor.ParentProvider);
 
             Activity activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
@@ -690,7 +724,7 @@ namespace OpenTelemetry.Trace.Tests
                 (a) =>
                 {
                     Assert.False(Sdk.SuppressInstrumentation);
-                    Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
+                    Assert.True(a.IsAllDataRequested); // If Processor.OnStart is called, activity's IsAllDataRequested is set to true
                     startCalledNew = true;
                 };
 
@@ -703,6 +737,12 @@ namespace OpenTelemetry.Trace.Tests
                 };
 
             tracerProvider.AddProcessor(testActivityProcessorNew);
+
+            var sdkProvider = (TracerProviderSdk)tracerProvider;
+
+            Assert.True(sdkProvider.Processor is CompositeProcessor<Activity>);
+            Assert.Equal(tracerProvider, sdkProvider.Processor.ParentProvider);
+            Assert.Equal(tracerProvider, testActivityProcessorNew.ParentProvider);
 
             Activity activityNew = new Activity(operationNameForLegacyActivity); // Create a new Activity with the same operation name
             activityNew.Start();
@@ -1028,11 +1068,15 @@ namespace OpenTelemetry.Trace.Tests
             Assert.True(emptyActivitySource.HasListeners());
         }
 
-        [Fact]
-        public void TracerProviderSdkBuildsWithSDKResource()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void TracerProviderSdkBuildsWithSDKResource(bool useConfigure)
         {
-            var tracerProvider = Sdk.CreateTracerProviderBuilder().SetResourceBuilder(
-                ResourceBuilder.CreateDefault().AddTelemetrySdk()).Build();
+            var tracerProvider = useConfigure ?
+                Sdk.CreateTracerProviderBuilder().SetResourceBuilder(
+                    ResourceBuilder.CreateDefault().AddTelemetrySdk()).Build() :
+                Sdk.CreateTracerProviderBuilder().ConfigureResource(r => r.AddTelemetrySdk()).Build();
             var resource = tracerProvider.GetResource();
             var attributes = resource.Attributes;
 
@@ -1082,7 +1126,7 @@ namespace OpenTelemetry.Trace.Tests
                 {
                     Assert.Contains(a.OperationName, sampledActivities);
                     Assert.False(Sdk.SuppressInstrumentation);
-                    Assert.True(a.IsAllDataRequested); // If Proccessor.OnStart is called, activity's IsAllDataRequested is set to true
+                    Assert.True(a.IsAllDataRequested); // If Processor.OnStart is called, activity's IsAllDataRequested is set to true
                     onStartProcessedActivities.Add(a.OperationName);
                 };
 

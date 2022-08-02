@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+* `InMemoryExporter` will now buffer scopes when exporting `LogRecord`
+  ([#3360](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3360))
+
+* The `MetricReaderOptions` defaults can be overridden using
+  `OTEL_METRIC_EXPORT_INTERVAL` and `OTEL_METRIC_EXPORT_TIMEOUT`
+  environmental variables as defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.12.0/specification/sdk-environment-variables.md#periodic-exporting-metricreader).
+  ([#3424](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3424))
+
+## 1.3.0
+
+Released 2022-Jun-03
+
+## 1.3.0-rc.2
+
+Released 2022-June-1
+
+* Adds new `AddInMemoryExporter` extension method to export `Metric` as new
+  type `MetricSnapshot`.
+  ([#2361](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361))
+
+## 1.3.0-beta.2
+
+Released 2022-May-16
+
 ## 1.3.0-beta.1
 
 Released 2022-Apr-15

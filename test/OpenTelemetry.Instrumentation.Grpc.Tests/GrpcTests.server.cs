@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+#if !NETFRAMEWORK
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -125,7 +126,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             try
             {
                 // B3Propagator along with the headers passed to the client.SayHello ensure that the instrumentation creates a sibling activity
-                Sdk.SetDefaultTextMapPropagator(new B3Propagator());
+                Sdk.SetDefaultTextMapPropagator(new Extensions.Propagators.B3Propagator());
                 var exportedItems = new List<Activity>();
                 var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder();
 
@@ -247,3 +248,4 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         }
     }
 }
+#endif

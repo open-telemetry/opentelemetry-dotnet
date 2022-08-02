@@ -14,8 +14,11 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using OpenTelemetry.Internal;
 
@@ -93,21 +96,35 @@ namespace OpenTelemetry
         /// </summary>
         internal long ProcessedCount => this.circularBuffer.RemovedCount;
 
-        /// <inheritdoc/>
-        protected override void OnExport(T data)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool TryExport(T data)
         {
             if (this.circularBuffer.TryAdd(data, maxSpinCount: 50000))
             {
                 if (this.circularBuffer.Count >= this.maxExportBatchSize)
                 {
-                    this.exportTrigger.Set();
+                    try
+                    {
+                        this.exportTrigger.Set();
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                    }
                 }
 
-                return; // enqueue succeeded
+                return true; // enqueue succeeded
             }
 
             // either the queue is full or exceeded the spin limit, drop the item on the floor
             Interlocked.Increment(ref this.droppedCount);
+
+            return false;
+        }
+
+        /// <inheritdoc/>
+        protected override void OnExport(T data)
+        {
+            this.TryExport(data);
         }
 
         /// <inheritdoc/>
@@ -121,7 +138,14 @@ namespace OpenTelemetry
                 return true; // nothing to flush
             }
 
-            this.exportTrigger.Set();
+            try
+            {
+                this.exportTrigger.Set();
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
 
             if (timeoutMilliseconds == 0)
             {
@@ -186,7 +210,15 @@ namespace OpenTelemetry
         protected override bool OnShutdown(int timeoutMilliseconds)
         {
             this.shutdownDrainTarget = this.circularBuffer.AddedCount;
-            this.shutdownTrigger.Set();
+
+            try
+            {
+                this.shutdownTrigger.Set();
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
 
             OpenTelemetrySdkEventSource.Log.DroppedExportProcessorItems(this.GetType().Name, this.exporter.GetType().Name, this.droppedCount);
 

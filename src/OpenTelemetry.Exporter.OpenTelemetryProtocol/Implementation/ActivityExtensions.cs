@@ -24,6 +24,7 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
+using OpenTelemetry.Configuration;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
@@ -154,7 +155,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             };
 
             TagEnumerationState otlpTags = default;
-            activity.EnumerateTags(ref otlpTags);
+            activity.EnumerateTags(ref otlpTags, SdkConfiguration.Instance.SpanAttributeCountLimit);
 
             if (activity.Kind == ActivityKind.Client || activity.Kind == ActivityKind.Producer)
             {
@@ -181,7 +182,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             otlpSpan.Status = activity.ToOtlpStatus(ref otlpTags);
 
             EventEnumerationState otlpEvents = default;
-            activity.EnumerateEvents(ref otlpEvents);
+            activity.EnumerateEvents(ref otlpEvents, SdkConfiguration.Instance.SpanEventCountLimit);
             if (otlpEvents.Created)
             {
                 otlpSpan.Events.AddRange(otlpEvents.Events);
@@ -189,51 +190,17 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
 
             LinkEnumerationState otlpLinks = default;
-            activity.EnumerateLinks(ref otlpLinks);
+            activity.EnumerateLinks(ref otlpLinks, SdkConfiguration.Instance.SpanLinkCountLimit);
             if (otlpLinks.Created)
             {
                 otlpSpan.Links.AddRange(otlpLinks.Links);
                 otlpLinks.Links.Return();
             }
 
+            // TODO: The drop counts should be set when necessary.
             // Activity does not limit number of attributes, events, links, etc so drop counts are always zero.
 
             return otlpSpan;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static OtlpCommon.KeyValue ToOtlpAttribute(this KeyValuePair<string, object> kvp)
-        {
-            if (kvp.Value == null)
-            {
-                return null;
-            }
-
-            var attrib = new OtlpCommon.KeyValue { Key = kvp.Key, Value = new OtlpCommon.AnyValue { } };
-
-            switch (kvp.Value)
-            {
-                case string s:
-                    attrib.Value.StringValue = s;
-                    break;
-                case bool b:
-                    attrib.Value.BoolValue = b;
-                    break;
-                case int i:
-                    attrib.Value.IntValue = i;
-                    break;
-                case long l:
-                    attrib.Value.IntValue = l;
-                    break;
-                case double d:
-                    attrib.Value.DoubleValue = d;
-                    break;
-                default:
-                    attrib.Value.StringValue = kvp.Value.ToString();
-                    break;
-            }
-
-            return attrib;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -294,7 +261,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             };
 
             TagEnumerationState otlpTags = default;
-            activityLink.EnumerateTags(ref otlpTags);
+            activityLink.EnumerateTags(ref otlpTags, SdkConfiguration.Instance.LinkAttributeCountLimit);
             if (otlpTags.Created)
             {
                 otlpLink.Attributes.AddRange(otlpTags.Tags);
@@ -314,7 +281,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             };
 
             TagEnumerationState otlpTags = default;
-            activityEvent.EnumerateTags(ref otlpTags);
+            activityEvent.EnumerateTags(ref otlpTags, SdkConfiguration.Instance.EventAttributeCountLimit);
             if (otlpTags.Created)
             {
                 otlpEvent.Attributes.AddRange(otlpTags.Tags);
@@ -343,12 +310,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             generator.Emit(OpCodes.Ret);
 
             return (Action<RepeatedField<OtlpTrace.Span>, int>)dynamicMethod.CreateDelegate(typeof(Action<RepeatedField<OtlpTrace.Span>, int>));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static OtlpCommon.KeyValue CreateOtlpKeyValue(string key, OtlpCommon.AnyValue value)
-        {
-            return new OtlpCommon.KeyValue { Key = key, Value = value };
         }
 
         private struct TagEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>, PeerServiceResolver.IPeerServiceState
@@ -396,75 +357,18 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     this.Created = true;
                 }
 
-                OtlpCommon.ArrayValue arrayValue;
-
-                switch (activityTag.Value)
+                if (OtlpKeyValueTransformer.Instance.TryTransformTag(activityTag, out var attribute, SdkConfiguration.Instance.AttributeValueLengthLimit))
                 {
-                    case string s:
-                        PeerServiceResolver.InspectTag(ref this, key, s);
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { StringValue = s }));
-                        break;
-                    case bool b:
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { BoolValue = b }));
-                        break;
-                    case int i:
-                        PeerServiceResolver.InspectTag(ref this, key, i);
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { IntValue = i }));
-                        break;
-                    case long l:
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { IntValue = l }));
-                        break;
-                    case double d:
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { DoubleValue = d }));
-                        break;
-                    case int[] intArray:
-                        arrayValue = new OtlpCommon.ArrayValue();
-                        foreach (var item in intArray)
-                        {
-                            arrayValue.Values.Add(new OtlpCommon.AnyValue { IntValue = item });
-                        }
+                    PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, attribute);
 
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { ArrayValue = arrayValue }));
-                        break;
-                    case double[] doubleArray:
-                        arrayValue = new OtlpCommon.ArrayValue();
-                        foreach (var item in doubleArray)
-                        {
-                            arrayValue.Values.Add(new OtlpCommon.AnyValue { DoubleValue = item });
-                        }
-
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { ArrayValue = arrayValue }));
-                        break;
-                    case bool[] boolArray:
-                        arrayValue = new OtlpCommon.ArrayValue();
-                        foreach (var item in boolArray)
-                        {
-                            arrayValue.Values.Add(new OtlpCommon.AnyValue { BoolValue = item });
-                        }
-
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { ArrayValue = arrayValue }));
-                        break;
-                    case string[] stringArray:
-                        arrayValue = new OtlpCommon.ArrayValue();
-                        foreach (var item in stringArray)
-                        {
-                            arrayValue.Values.Add(item == null ? new OtlpCommon.AnyValue() : new OtlpCommon.AnyValue { StringValue = item });
-                        }
-
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { ArrayValue = arrayValue }));
-                        break;
-                    case long[] longArray:
-                        arrayValue = new OtlpCommon.ArrayValue();
-                        foreach (var item in longArray)
-                        {
-                            arrayValue.Values.Add(new OtlpCommon.AnyValue { IntValue = item });
-                        }
-
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { ArrayValue = arrayValue }));
-                        break;
-                    default:
-                        PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, CreateOtlpKeyValue(key, new OtlpCommon.AnyValue { StringValue = activityTag.Value.ToString() }));
-                        break;
+                    if (attribute.Value.ValueCase == OtlpCommon.AnyValue.ValueOneofCase.StringValue)
+                    {
+                        PeerServiceResolver.InspectTag(ref this, key, attribute.Value.StringValue);
+                    }
+                    else if (attribute.Value.ValueCase == OtlpCommon.AnyValue.ValueOneofCase.IntValue)
+                    {
+                        PeerServiceResolver.InspectTag(ref this, key, attribute.Value.IntValue);
+                    }
                 }
 
                 return true;

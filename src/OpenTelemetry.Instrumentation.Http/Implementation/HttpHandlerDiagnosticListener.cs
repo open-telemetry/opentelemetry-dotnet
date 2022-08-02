@@ -17,7 +17,6 @@
 using System;
 using System.Diagnostics;
 using System.Net.Http;
-using System.Net.Sockets;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -112,13 +111,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
                 ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
 
+                activity.SetTag(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
                 activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-                if (this.options.SetHttpFlavor)
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
-                }
+                activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
 
                 try
                 {
@@ -197,20 +194,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 if (exc is HttpRequestException)
                 {
-                    if (exc.InnerException is SocketException exception)
-                    {
-                        switch (exception.SocketErrorCode)
-                        {
-                            case SocketError.HostNotFound:
-                                activity.SetStatus(Status.Error.WithDescription(exc.Message));
-                                return;
-                        }
-                    }
-
-                    if (exc.InnerException != null)
-                    {
-                        activity.SetStatus(Status.Error.WithDescription(exc.Message));
-                    }
+                    activity.SetStatus(Status.Error.WithDescription(exc.Message));
                 }
 
                 try

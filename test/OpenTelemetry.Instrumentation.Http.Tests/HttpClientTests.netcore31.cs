@@ -66,7 +66,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation((opt) =>
                                {
-                                   opt.SetHttpFlavor = tc.SetHttpFlavor;
                                    opt.Enrich = ActivityEnrichment;
                                    opt.RecordException = tc.RecordException ?? false;
                                })
@@ -129,7 +128,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             foreach (var kv in normalizedAttributesTestCase)
             {
-                Assert.Contains(activity.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.InvariantCultureIgnoreCase));
+                Assert.Contains(activity.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.OrdinalIgnoreCase));
             }
 
             if (tc.RecordException.HasValue && tc.RecordException.Value)
@@ -199,9 +198,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
     ""spanStatus"": ""UNSET"",
     ""spanKind"": ""Client"",
     ""spanAttributes"": {
+      ""http.scheme"": ""http"",
       ""http.method"": ""GET"",
       ""http.host"": ""{host}:{port}"",
       ""http.status_code"": ""399"",
+      ""http.flavor"": ""2.0"",
       ""http.url"": ""http://{host}:{port}/""
     }
   }

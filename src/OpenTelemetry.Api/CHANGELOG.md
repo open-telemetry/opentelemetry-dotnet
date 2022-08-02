@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+* Add `Activity.RecordException` overload accepting additional attributes to
+  add to the `ActivityEvent`.
+  [#3433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3433)
+
+## 1.3.0
+
+Released 2022-Jun-03
+
+## 1.3.0-rc.2
+
+Released 2022-June-1
+
+* `B3Propagator` class from `OpenTelemetry.Extensions.Propagators` namespace has
+  been deprecated and moved as is to a new `OpenTelemetry.Extensions.Propagators`
+  namespace, shipped as part of the `OpenTelemetry.Extensions.Propagators` package.
+  It will be removed in the next major release, see issue [#3259](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3259)
+
+## 1.3.0-beta.2
+
+Released 2022-May-16
+
 ## 1.3.0-beta.1
 
 Released 2022-Apr-15
