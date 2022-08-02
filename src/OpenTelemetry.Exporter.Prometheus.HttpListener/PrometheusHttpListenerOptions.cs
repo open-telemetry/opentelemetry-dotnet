@@ -43,7 +43,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             {
                 Guard.ThrowIfNull(value);
 
-                if ((value.Count) == 0)
+                if (value.Count == 0)
                 {
                     throw new ArgumentException("Empty list provided.", nameof(this.UriPrefixes));
                 }
