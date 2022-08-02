@@ -35,38 +35,44 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         [InlineData("https://example.com")]
         [InlineData("http://127.0.0.1")]
         [InlineData("http://example.com", "https://example.com", "http://127.0.0.1")]
-        public void ServerEndpointSanityCheckPositiveTest(params string[] uris)
+        public void UriPrefixesPositiveTest(params string[] uriPrefixes)
         {
             using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddPrometheusHttpListener(options => options.Prefixes = uris)
+                .AddPrometheusHttpListener(options => options.UriPrefixes = uriPrefixes)
                 .Build();
         }
 
-        [Theory]
-        [InlineData("")]
-        [InlineData(null)]
-        [InlineData("ftp://example.com")]
-        [InlineData("http://example.com", "https://example.com", "ftp://example.com")]
-        public void ServerEndpointSanityCheckNegativeTest(params string[] uris)
+        [Fact]
+        public void UriPrefixesNull()
         {
-            try
+            Assert.Throws<ArgumentNullException>(() =>
             {
                 using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                    .AddPrometheusHttpListener(options => options.Prefixes = uris)
+                    .AddPrometheusHttpListener(options => options.UriPrefixes = null)
                     .Build();
-            }
-            catch (Exception ex)
+            });
+        }
+
+        [Fact]
+        public void UriPrefixesEmptyList()
+        {
+            Assert.Throws<ArgumentException>(() =>
             {
-                if (ex is not ArgumentNullException)
-                {
-                    Assert.Equal("System.ArgumentException", ex.GetType().ToString());
-#if NETFRAMEWORK
-                    Assert.Equal("Prometheus HttpListener prefix path should be a valid URI with http/https scheme.\r\nParameter name: prefixes", ex.Message);
-#else
-                    Assert.Equal("Prometheus HttpListener prefix path should be a valid URI with http/https scheme. (Parameter 'prefixes')", ex.Message);
-#endif
-                }
-            }
+                using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+                    .AddPrometheusHttpListener(options => options.UriPrefixes = new string[] { })
+                    .Build();
+            });
+        }
+
+        [Fact]
+        public void UriPrefixesInvalid()
+        {
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+                    .AddPrometheusHttpListener(options => options.UriPrefixes = new string[] { "ftp://example.com" })
+                    .Build();
+            });
         }
 
         [Fact]
@@ -98,7 +104,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
                 provider = Sdk.CreateMeterProviderBuilder()
                     .AddMeter(meter.Name)
-                    .AddPrometheusHttpListener(options => options.Prefixes = new string[] { address })
+                    .AddPrometheusHttpListener(options => options.UriPrefixes = new string[] { address })
                     .Build();
             }
 
