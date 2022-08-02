@@ -362,7 +362,7 @@ Released 2021-Mar-19
 * Added `IncludeScopes`, `IncludeFormattedMessage`, & `ParseStateValues` on
   `OpenTelemetryLoggerOptions`. Added `FormattedMessage`, `StateValues`, &
   `ForEachScope` on `LogRecord`.
-  ([#1869](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1869) &
+  ([#1869](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1869)
   [#1883](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1883))
 * Added `SetResourceBuilder` support to `OpenTelemetryLoggerOptions`.
   ([#1913](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1913))
