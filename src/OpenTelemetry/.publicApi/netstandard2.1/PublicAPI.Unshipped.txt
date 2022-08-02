@@ -11,5 +11,6 @@ OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ConfigureResource(System.Action<Op
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.ForceFlush(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider() -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider(System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>! configure) -> void
+OpenTelemetry.Metrics.MetricType.HistogramWithMinMax = 80 -> OpenTelemetry.Metrics.MetricType
 ~static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder> configure) -> OpenTelemetry.Metrics.MeterProviderBuilder
 ~static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder> configure) -> OpenTelemetry.Trace.TracerProviderBuilder
