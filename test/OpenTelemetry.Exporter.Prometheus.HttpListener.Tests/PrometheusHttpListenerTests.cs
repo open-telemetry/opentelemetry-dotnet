@@ -31,10 +31,14 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         private readonly string meterName = Utils.GetCurrentMethodName();
 
         [Theory]
-        [InlineData("http://example.com")]
+        [InlineData("http://+:9184")]
+        [InlineData("http://*:9184")]
+        [InlineData("http://+:9184/")]
+        [InlineData("http://*:9184/")]
         [InlineData("https://example.com")]
         [InlineData("http://127.0.0.1")]
         [InlineData("http://example.com", "https://example.com", "http://127.0.0.1")]
+        [InlineData("http://example.com")]
         public void UriPrefixesPositiveTest(params string[] uriPrefixes)
         {
             using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
