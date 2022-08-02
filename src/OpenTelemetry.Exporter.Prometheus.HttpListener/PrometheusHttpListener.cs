@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.Prometheus
     internal sealed class PrometheusHttpListener : IDisposable
     {
         private readonly PrometheusExporter exporter;
-        private readonly System.Net.HttpListener httpListener = new();
+        private readonly HttpListener httpListener = new();
         private readonly object syncObject = new();
 
         private CancellationTokenSource tokenSource;
