@@ -8,6 +8,9 @@
   ([#3430](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3430)
   [#3503](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3503)
   [#3507](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3507))
+* Fixed bug
+  [#2840](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2840).
+  ([#3521](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3521))
 
 ## 1.3.0-rc.2
 
