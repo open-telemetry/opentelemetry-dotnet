@@ -82,7 +82,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 },
             };
 
-            DelegatingTestExporter<Activity> delegatingExporter = null;
+            DelegatingExporter<Activity> delegatingExporter = null;
             var exportResults = new List<ExportResult>();
 
             var activitySourceName = "otlp.collector.test";
@@ -97,7 +97,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 serviceProvider: null,
                 configureExporterInstance: otlpExporter =>
                 {
-                    delegatingExporter = new DelegatingTestExporter<Activity>
+                    delegatingExporter = new DelegatingExporter<Activity>
                     {
                         OnExportFunc = (batch) =>
                         {
@@ -168,7 +168,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Protocol = protocol,
             };
 
-            DelegatingTestExporter<Metric> delegatingExporter = null;
+            DelegatingExporter<Metric> delegatingExporter = null;
             var exportResults = new List<ExportResult>();
 
             var meterName = "otlp.collector.test";
@@ -188,7 +188,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 serviceProvider: null,
                 configureExporterInstance: otlpExporter =>
                 {
-                    delegatingExporter = new DelegatingTestExporter<Metric>
+                    delegatingExporter = new DelegatingExporter<Metric>
                     {
                         OnExportFunc = (batch) =>
                         {
