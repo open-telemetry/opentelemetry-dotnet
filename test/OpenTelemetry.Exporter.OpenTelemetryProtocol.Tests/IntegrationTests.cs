@@ -21,11 +21,9 @@ using System.Diagnostics.Metrics;
 using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Threading;
-
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
-
 using Xunit;
 using Xunit.Abstractions;
 
