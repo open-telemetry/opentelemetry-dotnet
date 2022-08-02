@@ -26,11 +26,11 @@ namespace OpenTelemetry.Tests
         public void Verify_ForceFlush_HandlesException()
         {
             // By default, ForceFlush should return true.
-            var testProcessor = new DelegatingTestProcessor<object>();
+            var testProcessor = new DelegatingProcessor<object>();
             Assert.True(testProcessor.ForceFlush());
 
             // BaseExporter should catch any exceptions and return false.
-            var exceptionTestProcessor = new DelegatingTestProcessor<object>
+            var exceptionTestProcessor = new DelegatingProcessor<object>
             {
                 OnForceFlushFunc = (timeout) => throw new Exception("test exception"),
             };
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Tests
         public void Verify_Shutdown_HandlesSecond()
         {
             // By default, Shutdown should return true.
-            var testProcessor = new DelegatingTestProcessor<object>();
+            var testProcessor = new DelegatingProcessor<object>();
             Assert.True(testProcessor.Shutdown());
 
             // A second Shutdown should return false.
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Tests
         public void Verify_Shutdown_HandlesException()
         {
             // BaseExporter should catch any exceptions and return false.
-            var exceptionTestProcessor = new DelegatingTestProcessor<object>
+            var exceptionTestProcessor = new DelegatingProcessor<object>
             {
                 OnShutdownFunc = (timeout) => throw new Exception("test exception"),
             };
@@ -62,7 +62,7 @@ namespace OpenTelemetry.Tests
         [Fact]
         public void NoOp()
         {
-            var testProcessor = new DelegatingTestProcessor<object>();
+            var testProcessor = new DelegatingProcessor<object>();
 
             // These two methods are no-op, but account for 7% of the test coverage.
             testProcessor.OnStart(new object());

@@ -26,11 +26,11 @@ namespace OpenTelemetry.Tests
         public void Verify_ForceFlush_HandlesException()
         {
             // By default, ForceFlush should return true.
-            var testExporter = new DelegatingTestExporter<object>();
+            var testExporter = new DelegatingExporter<object>();
             Assert.True(testExporter.ForceFlush());
 
             // BaseExporter should catch any exceptions and return false.
-            var exceptionTestExporter = new DelegatingTestExporter<object>
+            var exceptionTestExporter = new DelegatingExporter<object>
             {
                 OnForceFlushFunc = (timeout) => throw new Exception("test exception"),
             };
@@ -41,7 +41,7 @@ namespace OpenTelemetry.Tests
         public void Verify_Shutdown_HandlesSecond()
         {
             // By default, ForceFlush should return true.
-            var testExporter = new DelegatingTestExporter<object>();
+            var testExporter = new DelegatingExporter<object>();
             Assert.True(testExporter.Shutdown());
 
             // A second Shutdown should return false.
@@ -52,7 +52,7 @@ namespace OpenTelemetry.Tests
         public void Verify_Shutdown_HandlesException()
         {
             // BaseExporter should catch any exceptions and return false.
-            var exceptionTestExporter = new DelegatingTestExporter<object>
+            var exceptionTestExporter = new DelegatingExporter<object>
             {
                 OnShutdownFunc = (timeout) => throw new Exception("test exception"),
             };

@@ -28,7 +28,7 @@ namespace OpenTelemetry.Tests
             int counter = 0;
 
             // here our exporter will throw an exception.
-            var testExporter = new DelegatingTestExporter<object>
+            var testExporter = new DelegatingExporter<object>
             {
                 OnExportFunc = (batch) =>
                 {

@@ -28,7 +28,7 @@ namespace OpenTelemetry.Tests.Trace
         [Fact]
         public void Verify_ForceFlush_HandlesException()
         {
-            using var testProcessor = new DelegatingTestProcessor<Activity>();
+            using var testProcessor = new DelegatingProcessor<Activity>();
 
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(testProcessor)
@@ -44,7 +44,7 @@ namespace OpenTelemetry.Tests.Trace
         [Fact]
         public void Verify_Shutdown_HandlesSecond()
         {
-            using var testProcessor = new DelegatingTestProcessor<Activity>();
+            using var testProcessor = new DelegatingProcessor<Activity>();
 
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddProcessor(testProcessor)
@@ -57,7 +57,7 @@ namespace OpenTelemetry.Tests.Trace
         [Fact]
         public void Verify_Shutdown_HandlesException()
         {
-            using var testProcessor = new DelegatingTestProcessor<Activity>
+            using var testProcessor = new DelegatingProcessor<Activity>
             {
                 OnShutdownFunc = (timeout) => throw new Exception("test exception"),
             };
