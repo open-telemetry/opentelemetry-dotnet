@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
-using OpenTelemetry.Exporter.Prometheus.Shared;
+using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
