@@ -98,7 +98,7 @@ Released 2020-Sep-15
 * The `grpc.method` and `grpc.status_code` attributes added by the library are
   removed from the span. The information from these attributes is contained in
   other attributes that follow the conventions of OpenTelemetry.
-  ([#1260](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1260)).
+  ([#1260](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1260))
 
 ## 0.5.0-beta.2
 
