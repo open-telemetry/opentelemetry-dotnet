@@ -116,7 +116,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         }
                         else
                         {
-                            throw new NotSupportedException("Multiple tracer provider builders cannot be registered with the same service collection.");
+                            throw new NotSupportedException("Multiple tracer provider builders cannot be registered in the same service collection.");
                         }
                     }
 
