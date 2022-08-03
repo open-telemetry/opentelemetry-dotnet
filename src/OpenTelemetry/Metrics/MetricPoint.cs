@@ -365,7 +365,7 @@ namespace OpenTelemetry.Metrics
                         {
                             if (Interlocked.CompareExchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1, 0) == 0)
                             {
-                                // Lock aqcuired
+                                // Lock acquired
                                 unchecked
                                 {
                                     this.runningValue.AsLong++;
