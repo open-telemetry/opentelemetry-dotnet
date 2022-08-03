@@ -15,11 +15,14 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
 {
+    /// <summary>
+    /// Extension methods to simplify registering a PrometheusExporter.
+    /// </summary>
     public static class PrometheusExporterMeterProviderBuilderExtensions
     {
         /// <summary>
@@ -47,9 +50,11 @@ namespace OpenTelemetry.Metrics
         {
             configure?.Invoke(options);
 
-            var exporter = new PrometheusExporter(options);
-            var reader = new BaseExportingMetricReader(exporter);
-            reader.TemporalityPreference = MetricReaderTemporalityPreference.Cumulative;
+            var exporter = new PrometheusExporter(scrapeResponseCacheDurationMilliseconds: options.ScrapeResponseCacheDurationMilliseconds);
+            var reader = new BaseExportingMetricReader(exporter)
+            {
+                TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+            };
 
             return builder.AddReader(reader);
         }

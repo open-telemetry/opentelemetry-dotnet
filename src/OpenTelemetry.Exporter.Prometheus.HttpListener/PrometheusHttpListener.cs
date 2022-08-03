@@ -1,4 +1,4 @@
-// <copyright file="PrometheusExporterHttpServer.cs" company="OpenTelemetry Authors">
+// <copyright file="PrometheusHttpListener.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,10 +22,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Prometheus
 {
-    /// <summary>
-    /// An HTTP listener used to expose Prometheus metrics.
-    /// </summary>
-    internal sealed class PrometheusExporterHttpServer : IDisposable
+    internal sealed class PrometheusHttpListener : IDisposable
     {
         private readonly PrometheusExporter exporter;
         private readonly HttpListener httpListener = new();
@@ -35,20 +32,19 @@ namespace OpenTelemetry.Exporter.Prometheus
         private Task workerThread;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PrometheusExporterHttpServer"/> class.
+        /// Initializes a new instance of the <see cref="PrometheusHttpListener"/> class.
         /// </summary>
-        /// <param name="exporter">The <see cref="PrometheusExporter"/> instance.</param>
-        public PrometheusExporterHttpServer(PrometheusExporter exporter)
+        /// <param name="exporter"><see cref="PrometheusExporter"/>The exporter instance.</param>
+        /// <param name="options"><see cref="PrometheusHttpListenerOptions"/>The configured HttpListener options.</param>
+        public PrometheusHttpListener(PrometheusExporter exporter, PrometheusHttpListenerOptions options)
         {
             Guard.ThrowIfNull(exporter);
+            Guard.ThrowIfNull(options);
 
             this.exporter = exporter;
-            if ((exporter.Options.HttpListenerPrefixes?.Count ?? 0) <= 0)
-            {
-                throw new ArgumentException("No HttpListenerPrefixes were specified on PrometheusExporterOptions.");
-            }
 
-            string path = exporter.Options.ScrapeEndpointPath ?? PrometheusExporterOptions.DefaultScrapeEndpointPath;
+            string path = options.ScrapeEndpointPath;
+
             if (!path.StartsWith("/"))
             {
                 path = $"/{path}";
@@ -59,16 +55,16 @@ namespace OpenTelemetry.Exporter.Prometheus
                 path = $"{path}/";
             }
 
-            foreach (string prefix in exporter.Options.HttpListenerPrefixes)
+            foreach (string uriPrefix in options.UriPrefixes)
             {
-                this.httpListener.Prefixes.Add($"{prefix.TrimEnd('/')}{path}");
+                this.httpListener.Prefixes.Add($"{uriPrefix.TrimEnd('/')}{path}");
             }
         }
 
         /// <summary>
-        /// Start Http Server.
+        /// Start the HttpListener.
         /// </summary>
-        /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the HTTP server.</param>
+        /// <param name="token">An optional <see cref="CancellationToken"/> that can be used to stop the HTTP listener.</param>
         public void Start(CancellationToken token = default)
         {
             lock (this.syncObject)
@@ -88,7 +84,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         }
 
         /// <summary>
-        /// Stop exporter.
+        /// Gracefully stop the PrometheusHttpListener.
         /// </summary>
         public void Stop()
         {
@@ -108,9 +104,10 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <inheritdoc/>
         public void Dispose()
         {
+            this.Stop();
+
             if (this.httpListener != null && this.httpListener.IsListening)
             {
-                this.Stop();
                 this.httpListener.Close();
             }
         }

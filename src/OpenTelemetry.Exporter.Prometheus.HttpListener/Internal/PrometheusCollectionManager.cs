@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.Prometheus
     internal sealed class PrometheusCollectionManager
     {
         private readonly PrometheusExporter exporter;
-        private readonly int scrapeResponseCacheDurationInMilliseconds;
+        private readonly int scrapeResponseCacheDurationMilliseconds;
         private readonly Func<Batch<Metric>, ExportResult> onCollectRef;
         private byte[] buffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
         private int globalLockState;
@@ -38,7 +38,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         public PrometheusCollectionManager(PrometheusExporter exporter)
         {
             this.exporter = exporter;
-            this.scrapeResponseCacheDurationInMilliseconds = this.exporter.Options.ScrapeResponseCacheDurationMilliseconds;
+            this.scrapeResponseCacheDurationMilliseconds = this.exporter.ScrapeResponseCacheDurationMilliseconds;
             this.onCollectRef = this.OnCollect;
         }
 
@@ -53,8 +53,8 @@ namespace OpenTelemetry.Exporter.Prometheus
             // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
             // last successful collect, return the previous view.
             if (this.previousDataViewGeneratedAtUtc.HasValue
-                && this.scrapeResponseCacheDurationInMilliseconds > 0
-                && this.previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationInMilliseconds) >= DateTime.UtcNow)
+                && this.scrapeResponseCacheDurationMilliseconds > 0
+                && this.previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationMilliseconds) >= DateTime.UtcNow)
             {
                 Interlocked.Increment(ref this.readerCount);
                 this.ExitGlobalLock();
@@ -91,7 +91,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             this.ExitGlobalLock();
 
             CollectionResponse response;
-            bool result = this.ExecuteCollect();
+            var result = this.ExecuteCollect();
             if (result)
             {
                 this.previousDataViewGeneratedAtUtc = DateTime.UtcNow;
@@ -169,14 +169,14 @@ namespace OpenTelemetry.Exporter.Prometheus
         private bool ExecuteCollect()
         {
             this.exporter.OnExport = this.onCollectRef;
-            bool result = this.exporter.Collect(Timeout.Infinite);
+            var result = this.exporter.Collect(Timeout.Infinite);
             this.exporter.OnExport = null;
             return result;
         }
 
         private ExportResult OnCollect(Batch<Metric> metrics)
         {
-            int cursor = 0;
+            var cursor = 0;
 
             try
             {
@@ -191,7 +191,7 @@ namespace OpenTelemetry.Exporter.Prometheus
                         }
                         catch (IndexOutOfRangeException)
                         {
-                            int bufferSize = this.buffer.Length * 2;
+                            var bufferSize = this.buffer.Length * 2;
 
                             // there are two cases we might run into the following condition:
                             // 1. we have many metrics to be exported - in this case we probably want

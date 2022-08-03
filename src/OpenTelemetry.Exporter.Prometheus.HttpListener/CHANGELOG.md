@@ -2,9 +2,16 @@
 
 ## Unreleased
 
-* Added `IEndpointRouteBuilder` extension methods to help with Prometheus
-  middleware configuration on ASP.NET Core
-  ([#3295](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3295))
+* Split up Prometheus projects based on its hosting mechanism,
+  HttpListener and AspNetCore, into their own projects
+  and assemblies.
+  ([#3430](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3430)
+  [#3503](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3503)
+  [#3507](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3507))
+* Fixed bug
+  [#2840](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2840) by
+  allowing `+` and `*` to be used in the URI prefixes (e.g. `"http://*:9184"`).
+  ([#3521](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3521))
 
 ## 1.3.0-rc.2
 
@@ -75,8 +82,8 @@ Released 2021-Sep-23
 Released 2021-Sep-13
 
 * Bug fixes
-  ([#2289](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2289))
-  ([#2309](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2309))
+  ([#2289](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2289)
+  [#2309](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2309))
 
 ## 1.2.0-alpha2
 

@@ -109,7 +109,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
                     exporter.CollectionManager.ExitCollect();
                 }
 
-                Thread.Sleep(exporter.Options.ScrapeResponseCacheDurationMilliseconds);
+                Thread.Sleep(exporter.ScrapeResponseCacheDurationMilliseconds);
 
                 counter.Add(100);
 

@@ -23,10 +23,10 @@ dotnet run
 ```
 
 Add a reference to [Prometheus
-Exporter](../../../src/OpenTelemetry.Exporter.Prometheus/README.md):
+Exporter Http Listener](../../../src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md):
 
 ```sh
-dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus
+dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus.HttpListener
 ```
 
 Now, we are going to make some small tweaks to the example in the
@@ -46,12 +46,13 @@ And replace the below line:
 with
 
 ```csharp
-.AddPrometheusExporter(options => { options.StartHttpListener = true; })
+.AddPrometheusHttpListener()
 ```
 
-With `AddPrometheusExporter()`, OpenTelemetry `PrometheusExporter` will export
+`PrometheusHttpListener` is a wrapper that contains `PrometheusExporter`. With
+`AddPrometheusHttpListener()`, OpenTelemetry `PrometheusExporter` will export
 data via the endpoint defined by
-[PrometheusExporterOptions.HttpListenerPrefixes](../../../src/OpenTelemetry.Exporter.Prometheus/README.md#httplistenerprefixes),
+[PrometheusHttpListenerOptions.UriPrefixes](../../../src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md#uriprefixes),
 which is `http://localhost:9464/` by default.
 
 ```mermaid
@@ -60,7 +61,7 @@ graph LR
 subgraph SDK
   MeterProvider
   MetricReader[BaseExportingMetricReader]
-  PrometheusExporter["PrometheusExporter<br/>(http://localhost:9464/)"]
+  PrometheusHttpListener["PrometheusHttpListener<br/>(http://localhost:9464/)"]
 end
 
 subgraph API
@@ -69,7 +70,7 @@ end
 
 Instrument --> | Measurements | MeterProvider
 
-MeterProvider --> | Metrics | MetricReader --> | Pull | PrometheusExporter
+MeterProvider --> | Metrics | MetricReader --> | Pull | PrometheusHttpListener
 ```
 
 Also, for our learning purpose, use a while-loop to keep increasing the counter
@@ -99,7 +100,7 @@ web browser:
 
 ![Browser UI](https://user-images.githubusercontent.com/17327289/151633547-736c6d91-62d2-4e66-a53f-2e16c44bfabc.png)
 
-Now, we understand how we can configure `PrometheusExporter` to export metrics.
+Now, we understand how we can configure `PrometheusHttpListener` to export metrics.
 Next, we are going to learn about how to use Prometheus to collect the metrics.
 
 ## Collect metrics using Prometheus
@@ -156,7 +157,7 @@ values we have set in `otel.yml`.
 Congratulations!
 
 Now we know how to configure Prometheus server and deploy OpenTelemetry
-`PrometheusExporter` to export our metrics. Next, we are going to explore a tool
+`PrometheusHttpListener` to export our metrics. Next, we are going to explore a tool
 called Grafana, which has powerful visualizations for the metrics.
 
 ## Explore metrics using Grafana
@@ -201,7 +202,7 @@ subgraph Prometheus
   PrometheusDatabase
 end
 
-PrometheusExporter["PrometheusExporter<br/>(listening at #quot;http://localhost:9464/#quot;)"] -->|HTTP GET| PrometheusScraper{{"Prometheus scraper<br/>(polling #quot;http://localhost:9464/metrics#quot; every 10 seconds)"}}
+PrometheusHttpListener["PrometheusHttpListener<br/>(listening at #quot;http://localhost:9464/#quot;)"] -->|HTTP GET| PrometheusScraper{{"Prometheus scraper<br/>(polling #quot;http://localhost:9464/metrics#quot; every 10 seconds)"}}
 PrometheusScraper --> PrometheusDatabase[("Prometheus TSDB (time series database)")]
 PrometheusDatabase -->|http://localhost:9090/graph| PrometheusUI["Browser<br/>(Prometheus Dashboard)"]
 PrometheusDatabase -->|http://localhost:9090/api/| Grafana[Grafana Server]

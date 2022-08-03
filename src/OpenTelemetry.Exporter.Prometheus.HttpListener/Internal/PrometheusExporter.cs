@@ -15,48 +15,38 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Exporter.Prometheus;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Exporter
+namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
     /// Exporter of OpenTelemetry metrics to Prometheus.
     /// </summary>
     [ExportModes(ExportModes.Pull)]
-    public class PrometheusExporter : BaseExporter<Metric>, IPullMetricExporter
+    internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExporter
     {
-        internal const string HttpListenerStartFailureExceptionMessage = "PrometheusExporter http listener could not be started.";
-        internal readonly PrometheusExporterOptions Options;
-        private readonly PrometheusExporterHttpServer metricsHttpServer;
         private Func<int, bool> funcCollect;
         private Func<Batch<Metric>, ExportResult> funcExport;
-        private bool disposed;
+        private bool disposed = false;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
         /// </summary>
-        /// <param name="options">Options for the exporter.</param>
-        public PrometheusExporter(PrometheusExporterOptions options)
+        /// <param name="scrapeResponseCacheDurationMilliseconds">
+        /// The cache duration in milliseconds for scrape responses. Default value: 0.
+        /// </param>
+        public PrometheusExporter(int scrapeResponseCacheDurationMilliseconds = 0)
         {
-            this.Options = options;
+            Guard.ThrowIfOutOfRange(scrapeResponseCacheDurationMilliseconds, min: 0);
 
-            if (options.StartHttpListener)
-            {
-                try
-                {
-                    this.metricsHttpServer = new PrometheusExporterHttpServer(this);
-                    this.metricsHttpServer.Start();
-                }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException(HttpListenerStartFailureExceptionMessage, ex);
-                }
-            }
-
+            this.ScrapeResponseCacheDurationMilliseconds = scrapeResponseCacheDurationMilliseconds;
             this.CollectionManager = new PrometheusCollectionManager(this);
         }
 
+        /// <summary>
+        /// Gets or sets the Collect delegate.
+        /// </summary>
         public Func<int, bool> Collect
         {
             get => this.funcCollect;
@@ -69,20 +59,26 @@ namespace OpenTelemetry.Exporter
             set => this.funcExport = value;
         }
 
+        internal Action OnDispose { get; set; }
+
         internal PrometheusCollectionManager CollectionManager { get; }
 
+        internal int ScrapeResponseCacheDurationMilliseconds { get; }
+
+        /// <inheritdoc/>
         public override ExportResult Export(in Batch<Metric> metrics)
         {
             return this.OnExport(metrics);
         }
 
+        /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
             if (!this.disposed)
             {
                 if (disposing)
                 {
-                    this.metricsHttpServer?.Dispose();
+                    this.OnDispose?.Invoke();
                 }
 
                 this.disposed = true;

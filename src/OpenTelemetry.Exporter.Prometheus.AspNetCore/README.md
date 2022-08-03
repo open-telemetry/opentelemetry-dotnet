@@ -1,23 +1,29 @@
-# Prometheus Exporter for OpenTelemetry .NET
+# Prometheus Exporter AspNetCore for OpenTelemetry .NET
 
-[![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.Prometheus.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Prometheus)
-[![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.Prometheus.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Prometheus)
+[![NuGet](https://img.shields.io/nuget/v/OpenTelemetry.Exporter.Prometheus.AspNetCore.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Prometheus.AspNetCore)
+[![NuGet](https://img.shields.io/nuget/dt/OpenTelemetry.Exporter.Prometheus.AspNetCore.svg)](https://www.nuget.org/packages/OpenTelemetry.Exporter.Prometheus.AspNetCore)
+
+An [OpenTelemetry Prometheus exporter](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/prometheus.md)
+for configuring an ASP.NET Core application with an endpoint for Prometheus
+to scrape.
 
 ## Prerequisite
 
 * [Get Prometheus](https://prometheus.io/docs/introduction/first_steps/)
 
-## Steps to enable OpenTelemetry.Exporter.Prometheus
+## Steps to enable OpenTelemetry.Exporter.Prometheus.AspNetCore
 
 ### Step 1: Install Package
 
 ```shell
-dotnet add package OpenTelemetry.Exporter.Prometheus
+dotnet add package OpenTelemetry.Exporter.Prometheus.AspNetCore
 ```
 
 ### Step 2: Configure OpenTelemetry MeterProvider
 
-* When using OpenTelemetry.Extensions.Hosting package on .NET Core 3.1+:
+* When using
+  [OpenTelemetry.Extensions.Hosting](../OpenTelemetry.Extensions.Hosting/README.md)
+  package on .NET Core 3.1+:
 
     ```csharp
     services.AddOpenTelemetryMetrics(builder =>
@@ -28,18 +34,19 @@ dotnet add package OpenTelemetry.Exporter.Prometheus
 
 * Or configure directly:
 
-    Call the `AddPrometheusExporter` `MeterProviderBuilder` extension to
+    Call the `MeterProviderBuilder.AddPrometheusExporter` extension to
     register the Prometheus exporter.
 
     ```csharp
-    using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    var meterProvider = Sdk.CreateMeterProviderBuilder()
         .AddPrometheusExporter()
         .Build();
+    builder.Services.AddSingleton(meterProvider);
     ```
 
 ### Step 3: Configure Prometheus Scraping Endpoint
 
-* On .NET Core 3.1+ register Prometheus scraping middleware using the
+* Register Prometheus scraping middleware using the
   `UseOpenTelemetryPrometheusScrapingEndpoint` extension:
 
     ```csharp
@@ -72,54 +79,22 @@ dotnet add package OpenTelemetry.Exporter.Prometheus
     }
     ```
 
-* On .NET Framework an HTTP listener is automatically started which will respond
-  to scraping requests. See the [Configuration](#configuration) section for
-  details on the settings available. This may also be turned on in .NET Core (it
-  is OFF by default) when the ASP.NET Core pipeline is not available for
-  middleware registration.
-
 ## Configuration
 
 The `PrometheusExporter` can be configured using the `PrometheusExporterOptions`
-properties. Refer to
-[`TestPrometheusExporter.cs`](../../examples/Console/TestPrometheusExporter.cs)
-for example use.
-
-### StartHttpListener
-
-Set to `true` to start an HTTP listener which will respond to Prometheus scrape
-requests using the [HttpListenerPrefixes](#httplistenerprefixes) and
-[ScrapeEndpointPath](#scrapeendpointpath) options.
-
-Defaults:
-
-* On .NET Framework this is `true` by default.
-
-* On .NET Core 3.1+ this is `false` by default. Users running ASP.NET Core
-  should use the `UseOpenTelemetryPrometheusScrapingEndpoint` extension to
-  register the scraping middleware instead of using the listener.
-
-### HttpListenerPrefixes
-
-Defines the prefixes which will be used by the listener when `StartHttpListener`
-is `true`. The default value is `["http://localhost:9464/"]`. You may specify
-multiple endpoints.
-
-For details see:
-[HttpListenerPrefixCollection.Add(String)](https://docs.microsoft.com/dotnet/api/system.net.httplistenerprefixcollection.add)
+properties.
 
 ### ScrapeEndpointPath
 
-Defines the path for the Prometheus scrape endpoint for
-either the HTTP listener or the middleware registered by
+Defines the path for the Prometheus scrape endpoint for the middleware
+registered by
 `UseOpenTelemetryPrometheusScrapingEndpoint`. Default value: `"/metrics"`.
 
 ### ScrapeResponseCacheDurationMilliseconds
 
 Configures scrape endpoint response caching. Multiple scrape requests within the
 cache duration time period will receive the same previously generated response.
-The default value is `10000` (10 seconds). Set to `0` to disable response
-caching.
+The default value is `300`. Set to `0` to disable response caching.
 
 ## Troubleshooting
 
