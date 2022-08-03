@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-alpha.1
+
+Released 2022-Aug-02
+
 * Add `Activity.RecordException` overload accepting additional attributes to
   add to the `ActivityEvent`.
   [#3433](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3433)

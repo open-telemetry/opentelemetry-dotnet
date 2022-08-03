@@ -38,6 +38,9 @@ using TestApp.AspNetCore._3._1;
 #if NET6_0
 using TestApp.AspNetCore._6._0;
 #endif
+#if NET7_0
+using TestApp.AspNetCore._7._0;
+#endif
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
@@ -345,7 +348,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 var expectedTraceId = ActivityTraceId.CreateRandom();
                 var expectedParentSpanId = ActivitySpanId.CreateRandom();
                 var expectedTraceState = "rojo=1,congo=2";
-                var activityContext = new ActivityContext(expectedTraceId, expectedParentSpanId, ActivityTraceFlags.Recorded, expectedTraceState);
+                var activityContext = new ActivityContext(expectedTraceId, expectedParentSpanId, ActivityTraceFlags.Recorded, expectedTraceState, true);
                 var expectedBaggage = Baggage.SetBaggage("key1", "value1").SetBaggage("key2", "value2");
                 Sdk.SetDefaultTextMapPropagator(new ExtractOnlyPropagator(activityContext, expectedBaggage));
 
@@ -583,6 +586,47 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(activityName, middlewareActivity.DisplayName);
         }
 
+#if NET7_0_OR_GREATER
+        [Fact]
+        public async Task UserRegisteredActivitySourceIsUsedForActivityCreationByAspNetCore()
+        {
+            var exportedItems = new List<Activity>();
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                services.AddOpenTelemetryTracing(options =>
+                {
+                    options.AddAspNetCoreInstrumentation()
+                    .AddInMemoryExporter(exportedItems);
+                });
+
+                // Register ActivitySource here so that it will be used
+                // by ASP.NET Core to create activities
+                // https://github.com/dotnet/aspnetcore/blob/0e5cbf447d329a1e7d69932c3decd1c70a00fbba/src/Hosting/Hosting/src/Internal/WebHost.cs#L152
+                services.AddSingleton(sp => new ActivitySource("UserRegisteredActivitySource"));
+            }
+
+            // Arrange
+            using (var client = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices))
+                .CreateClient())
+            {
+                // Act
+                var response = await client.GetAsync("/api/values");
+
+                // Assert
+                response.EnsureSuccessStatusCode(); // Status Code 200-299
+
+                WaitForActivityExport(exportedItems, 1);
+            }
+
+            Assert.Single(exportedItems);
+            var activity = exportedItems[0];
+
+            Assert.Equal("UserRegisteredActivitySource", activity.Source.Name);
+        }
+#endif
+
         public void Dispose()
         {
             this.tracerProvider?.Dispose();
@@ -605,8 +649,13 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         private static void ValidateAspNetCoreActivity(Activity activityToValidate, string expectedHttpPath)
         {
             Assert.Equal(ActivityKind.Server, activityToValidate.Kind);
+#if NET7_0_OR_GREATER
+            Assert.Equal(HttpInListener.AspNetCoreActivitySourceName, activityToValidate.Source.Name);
+            Assert.Empty(activityToValidate.Source.Version);
+#else
             Assert.Equal(HttpInListener.ActivitySourceName, activityToValidate.Source.Name);
             Assert.Equal(HttpInListener.Version.ToString(), activityToValidate.Source.Version);
+#endif
             Assert.Equal(expectedHttpPath, activityToValidate.GetTagValue(SemanticConventions.AttributeHttpTarget) as string);
         }
 

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry ASP.NET Core instrumentation for W3C Trace Context Trace</Description>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == ''">net6.0;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == ''">net7.0;net6.0</TargetFrameworks>
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) != ''">$(TARGET_FRAMEWORK)</TargetFrameworks>
   </PropertyGroup>
 
@@ -33,8 +33,8 @@
     <ProjectReference Include="$(RepoRoot)\test\TestApp.AspNetCore.6.0\TestApp.AspNetCore.6.0.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
-    <ProjectReference Include="$(RepoRoot)\test\TestApp.AspNetCore.3.1\TestApp.AspNetCore.3.1.csproj" />
+  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
+    <ProjectReference Include="$(RepoRoot)\test\TestApp.AspNetCore.7.0\TestApp.AspNetCore.7.0.csproj" />
   </ItemGroup>
 
   <ItemGroup>
