@@ -1,6 +1,6 @@
 # OpenTelemetry Stress Tests for Traces
 
-This is Stress Test specifically for tracing, and is
+This Stress Test is specifically for tracing, and it is
 based on the [OpenTelemetry.Tests.Stress](../OpenTelemetry.Tests.Stress/README.md).
 
 * [Running the stress test](#running-the-stress-test)
