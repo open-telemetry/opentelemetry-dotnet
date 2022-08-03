@@ -15,47 +15,32 @@ instance for Prometheus to scrape.
 
 ### Step 1: Install Package
 
-Install
-
 ```shell
 dotnet add package OpenTelemetry.Exporter.Prometheus.HttpListener
 ```
 
 ### Step 2: Add PrometheusHttpListener
 
-Add and configure `PrometheusHttpListener` with `PrometheusExporterOptions` as
-the first argument and `PrometheusHttpListenerOptions` as the second argument.
-
-For example:
-
 ```csharp
-using var meterProvider = Sdk.CreateMeterProviderBuilder()
+var meterProvider = Sdk.CreateMeterProviderBuilder()
     .AddMeter(MyMeter.Name)
     .AddPrometheusHttpListener(
-        exporterOptions => exporterOptions.ScrapeResponseCacheDurationMilliseconds = 0,
-        listenerOptions => listenerOptions.Prefixes = new string[] { "http://localhost:9464/" })
+        options => options.UriPrefixes = new string[] { "http://localhost:9464/" })
     .Build();
 ```
 
-### Prefixes
+### UriPrefixes
 
-Defines the prefixes which will be used by the listener. The default value is `["http://localhost:9464/"]`.
-You may specify multiple endpoints.
+Defines one or more URI (Uniform Resource Identifier) prefixes which will be
+used by the HTTP listener. The default value is `["http://localhost:9464/"]`.
 
-For details see:
+Refer to
 [HttpListenerPrefixCollection.Add(String)](https://docs.microsoft.com/dotnet/api/system.net.httplistenerprefixcollection.add)
+for more details.
 
 ### ScrapeEndpointPath
 
-Defines the path for the Prometheus scrape endpoint for by
-`UseOpenTelemetryPrometheusScrapingEndpoint`. Default value: `"/metrics"`.
-
-### ScrapeResponseCacheDurationMilliseconds
-
-Configures scrape endpoint response caching. Multiple scrape requests within the
-cache duration time period will receive the same previously generated response.
-The default value is `10000` (10 seconds). Set to `0` to disable response
-caching.
+Defines the Prometheus scrape endpoint path. Default value: `"/metrics"`.
 
 ## Troubleshooting
 

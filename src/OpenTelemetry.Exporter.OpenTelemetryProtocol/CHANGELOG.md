@@ -31,7 +31,7 @@ Released 2022-May-16
 
 * Support `HttpProtobuf` protocol with logs & added `HttpClientFactory`
 option
-([#3225](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3225))
+ ([#3225](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3225))
 
 * Removes net5.0 target and replaced with net6.0
   as .NET 5.0 is going out of support.
@@ -254,8 +254,8 @@ Released 2021-Apr-23
 
 * Null values in string arrays are preserved according to
   [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md).
-  ([#1919](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1919)) and
-  ([#1945](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1945)).
+  ([#1919](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1919)
+  [#1945](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1945))
 
 * When using OpenTelemetry.Extensions.Hosting you can now bind
   `OtlpExporterOptions` to `IConfiguration` using the `Configure` extension (ex:

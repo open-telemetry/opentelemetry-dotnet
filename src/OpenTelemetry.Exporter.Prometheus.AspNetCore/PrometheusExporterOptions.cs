@@ -14,16 +14,9 @@
 // limitations under the License.
 // </copyright>
 
-using System;
 using OpenTelemetry.Internal;
 
-#if PROMETHEUS_ASPNETCORE
-namespace OpenTelemetry.Exporter.Prometheus.AspNetCore
-#elif PROMETHEUS_HTTPLISTENER
-namespace OpenTelemetry.Exporter.Prometheus.HttpListener
-#else
-namespace OpenTelemetry.Exporter.Prometheus.Shared
-#endif
+namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
     /// Prometheus exporter options.
@@ -31,17 +24,16 @@ namespace OpenTelemetry.Exporter.Prometheus.Shared
     public class PrometheusExporterOptions
     {
         internal const string DefaultScrapeEndpointPath = "/metrics";
-        internal Func<DateTimeOffset> GetUtcNowDateTimeOffset = () => DateTimeOffset.UtcNow;
 
-        private int scrapeResponseCacheDurationMilliseconds = 10 * 1000;
+        private int scrapeResponseCacheDurationMilliseconds = 300;
 
         /// <summary>
-        /// Gets or sets the path to use for the scraping endpoint. Default value: /metrics.
+        /// Gets or sets the path to use for the scraping endpoint. Default value: "/metrics".
         /// </summary>
         public string ScrapeEndpointPath { get; set; } = DefaultScrapeEndpointPath;
 
         /// <summary>
-        /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 10,000 (10 seconds).
+        /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 300.
         /// </summary>
         /// <remarks>
         /// Note: Specify 0 to disable response caching.

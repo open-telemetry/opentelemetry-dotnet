@@ -14,16 +14,14 @@
 // limitations under the License.
 // </copyright>
 
-#if NETCOREAPP3_1_OR_GREATER
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using OpenTelemetry.Exporter.Prometheus.Shared;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Exporter.Prometheus.AspNetCore
+namespace OpenTelemetry.Exporter.Prometheus
 {
     /// <summary>
     /// ASP.NET Core middleware for exposing a Prometheus metrics scraping endpoint.
@@ -103,4 +101,3 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore
         }
     }
 }
-#endif

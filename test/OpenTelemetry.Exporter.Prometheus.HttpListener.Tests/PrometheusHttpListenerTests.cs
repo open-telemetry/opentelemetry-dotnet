@@ -1,4 +1,4 @@
-// <copyright file="PrometheusExporterHttpListenerTests.cs" company="OpenTelemetry Authors">
+// <copyright file="PrometheusHttpListenerTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,49 +24,59 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Tests
+namespace OpenTelemetry.Exporter.Prometheus.Tests
 {
-    public class PrometheusExporterHttpListenerTests
+    public class PrometheusHttpListenerTests
     {
         private readonly string meterName = Utils.GetCurrentMethodName();
 
         [Theory]
-        [InlineData("http://example.com")]
+        [InlineData("http://+:9184")]
+        [InlineData("http://*:9184")]
+        [InlineData("http://+:9184/")]
+        [InlineData("http://*:9184/")]
         [InlineData("https://example.com")]
         [InlineData("http://127.0.0.1")]
         [InlineData("http://example.com", "https://example.com", "http://127.0.0.1")]
-        public void ServerEndpointSanityCheckPositiveTest(params string[] uris)
+        [InlineData("http://example.com")]
+        public void UriPrefixesPositiveTest(params string[] uriPrefixes)
         {
             using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                .AddPrometheusHttpListener(null, listenerOptions => listenerOptions.Prefixes = uris)
+                .AddPrometheusHttpListener(options => options.UriPrefixes = uriPrefixes)
                 .Build();
         }
 
-        [Theory]
-        [InlineData("")]
-        [InlineData(null)]
-        [InlineData("ftp://example.com")]
-        [InlineData("http://example.com", "https://example.com", "ftp://example.com")]
-        public void ServerEndpointSanityCheckNegativeTest(params string[] uris)
+        [Fact]
+        public void UriPrefixesNull()
         {
-            try
+            Assert.Throws<ArgumentNullException>(() =>
             {
                 using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
-                    .AddPrometheusHttpListener(null, listenerOptions => listenerOptions.Prefixes = uris)
+                    .AddPrometheusHttpListener(options => options.UriPrefixes = null)
                     .Build();
-            }
-            catch (Exception ex)
+            });
+        }
+
+        [Fact]
+        public void UriPrefixesEmptyList()
+        {
+            Assert.Throws<ArgumentException>(() =>
             {
-                if (ex is not ArgumentNullException)
-                {
-                    Assert.Equal("System.ArgumentException", ex.GetType().ToString());
-#if NETFRAMEWORK
-                    Assert.Equal("Prometheus HttpListener prefix path should be a valid URI with http/https scheme.\r\nParameter name: prefixes", ex.Message);
-#else
-                    Assert.Equal("Prometheus HttpListener prefix path should be a valid URI with http/https scheme. (Parameter 'prefixes')", ex.Message);
-#endif
-                }
-            }
+                using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+                    .AddPrometheusHttpListener(options => options.UriPrefixes = new string[] { })
+                    .Build();
+            });
+        }
+
+        [Fact]
+        public void UriPrefixesInvalid()
+        {
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+                    .AddPrometheusHttpListener(options => options.UriPrefixes = new string[] { "ftp://example.com" })
+                    .Build();
+            });
         }
 
         [Fact]
@@ -97,9 +107,9 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Tests
                 address = $"http://localhost:{port}/";
 
                 provider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter.Name)
-                .AddPrometheusHttpListener(null, listenerOptions => listenerOptions.Prefixes = new string[] { address })
-                .Build();
+                    .AddMeter(meter.Name)
+                    .AddPrometheusHttpListener(options => options.UriPrefixes = new string[] { address })
+                    .Build();
             }
 
             var tags = new KeyValuePair<string, object>[]
