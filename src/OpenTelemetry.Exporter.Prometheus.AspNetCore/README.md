@@ -15,15 +15,15 @@ to scrape.
 
 ### Step 1: Install Package
 
-Install
-
 ```shell
 dotnet add package OpenTelemetry.Exporter.Prometheus.AspNetCore
 ```
 
 ### Step 2: Configure OpenTelemetry MeterProvider
 
-* When using OpenTelemetry.Extensions.Hosting package on .NET Core 3.1+:
+* When using
+  [OpenTelemetry.Extensions.Hosting](../OpenTelemetry.Extensions.Hosting/README.md)
+  package on .NET Core 3.1+:
 
     ```csharp
     services.AddOpenTelemetryMetrics(builder =>
@@ -34,7 +34,7 @@ dotnet add package OpenTelemetry.Exporter.Prometheus.AspNetCore
 
 * Or configure directly:
 
-    Call the `AddPrometheusExporter` `MeterProviderBuilder` extension to
+    Call the `MeterProviderBuilder.AddPrometheusExporter` extension to
     register the Prometheus exporter.
 
     ```csharp
@@ -94,8 +94,7 @@ registered by
 
 Configures scrape endpoint response caching. Multiple scrape requests within the
 cache duration time period will receive the same previously generated response.
-The default value is `10000` (10 seconds). Set to `0` to disable response
-caching.
+The default value is `300`. Set to `0` to disable response caching.
 
 ## Troubleshooting
 

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.5
+
+Released 2022-Aug-02
+
 * Added `http.scheme` tag to tracing instrumentation.
   ([#3464](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3464))
 
