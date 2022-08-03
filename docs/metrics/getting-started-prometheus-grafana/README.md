@@ -49,10 +49,10 @@ with
 .AddPrometheusHttpListener()
 ```
 
-`PrometheusHttpListener` is a wrapper that contains `PrometheusExporter`.
-With `AddPrometheusHttpListener()`, OpenTelemetry `PrometheusExporter` will export
+`PrometheusHttpListener` is a wrapper that contains `PrometheusExporter`. With
+`AddPrometheusHttpListener()`, OpenTelemetry `PrometheusExporter` will export
 data via the endpoint defined by
-[PrometheusHttpListenerOptions.Prefixes](../../../src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md#prefixes),
+[PrometheusHttpListenerOptions.UriPrefixes](../../../src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md#uriprefixes),
 which is `http://localhost:9464/` by default.
 
 ```mermaid
