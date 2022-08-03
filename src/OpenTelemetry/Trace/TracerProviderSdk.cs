@@ -14,11 +14,14 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -33,7 +36,8 @@ namespace OpenTelemetry.Trace
         private readonly Sampler sampler;
         private readonly Action<Activity> getRequestedDataAction;
         private readonly bool supportLegacyActivity;
-        private BaseProcessor<Activity> processor;
+        private readonly ServiceProvider? ownedServiceProvider;
+        private BaseProcessor<Activity>? processor;
         private bool disposed;
 
         internal TracerProviderSdk(
@@ -42,11 +46,13 @@ namespace OpenTelemetry.Trace
             IEnumerable<TracerProviderBuilderBase.InstrumentationFactory> instrumentationFactories,
             Sampler sampler,
             List<BaseProcessor<Activity>> processors,
-            HashSet<string> legacyActivityOperationNames)
+            HashSet<string> legacyActivityOperationNames,
+            ServiceProvider? ownedServiceProvider)
         {
             this.Resource = resource;
             this.sampler = sampler;
             this.supportLegacyActivity = legacyActivityOperationNames.Count > 0;
+            this.ownedServiceProvider = ownedServiceProvider;
 
             bool legacyActivityWildcardMode = false;
             var legacyActivityWildcardModeRegex = WildcardHelper.GetWildcardRegex();
@@ -77,7 +83,7 @@ namespace OpenTelemetry.Trace
 
             if (this.supportLegacyActivity)
             {
-                Func<Activity, bool> legacyActivityPredicate = null;
+                Func<Activity, bool>? legacyActivityPredicate = null;
                 if (legacyActivityWildcardMode)
                 {
                     legacyActivityPredicate = activity => legacyActivityWildcardModeRegex.IsMatch(activity.OperationName);
@@ -100,7 +106,7 @@ namespace OpenTelemetry.Trace
                             // unless suppressed.
                             if (!Sdk.SuppressInstrumentation)
                             {
-                                this.getRequestedDataAction(activity);
+                                this.getRequestedDataAction!(activity);
                             }
                             else
                             {
@@ -257,7 +263,7 @@ namespace OpenTelemetry.Trace
 
         internal List<object> Instrumentations => this.instrumentations;
 
-        internal BaseProcessor<Activity> Processor => this.processor;
+        internal BaseProcessor<Activity>? Processor => this.processor;
 
         internal Sampler Sampler => this.sampler;
 
@@ -355,6 +361,8 @@ namespace OpenTelemetry.Trace
                     // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
                     // sessions that were open.
                     this.listener?.Dispose();
+
+                    this.ownedServiceProvider?.Dispose();
                 }
 
                 this.disposed = true;

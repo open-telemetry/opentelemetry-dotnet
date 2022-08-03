@@ -14,9 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -25,32 +28,34 @@ namespace OpenTelemetry.Trace
     /// <summary>
     /// Build TracerProvider with Resource, Sampler, Processors and Instrumentation.
     /// </summary>
-    public abstract class TracerProviderBuilderBase : TracerProviderBuilder
+    public abstract class TracerProviderBuilderBase : TracerProviderBuilder, IDeferredTracerProviderBuilder
     {
+        internal IServiceCollection? Services;
+        internal List<Action<IServiceProvider, TracerProviderBuilder>>? BuilderConfigurationActions = new();
+        internal ResourceBuilder? ResourceBuilder;
+
         private readonly List<InstrumentationFactory> instrumentationFactories = new();
         private readonly List<BaseProcessor<Activity>> processors = new();
         private readonly List<string> sources = new();
         private readonly HashSet<string> legacyActivityOperationNames = new(StringComparer.OrdinalIgnoreCase);
-        private ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault();
-        private Sampler sampler = new ParentBasedSampler(new AlwaysOnSampler());
+        private readonly bool ownsServices;
+        private Sampler? sampler;
 
         protected TracerProviderBuilderBase()
         {
+            this.Services = new ServiceCollection();
+            this.ownsServices = true;
         }
 
-        /// <summary>
-        /// Gets or sets the <see cref="ResourceBuilder"/> from which the Resource associated with
-        /// this provider is built from. Setting this overwrites currently set ResourceBuilder.
-        /// </summary>
-        internal ResourceBuilder ResourceBuilder
+        protected TracerProviderBuilderBase(IServiceCollection services)
         {
-            get => this.resourceBuilder;
-            set
-            {
-                Guard.ThrowIfNull(value);
-                this.resourceBuilder = value;
-            }
+            Guard.ThrowIfNull(services);
+
+            this.Services = services;
+            this.ownsServices = false;
         }
+
+        protected IServiceProvider? ServiceProvider { get; set; }
 
         /// <inheritdoc />
         public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(
@@ -95,6 +100,22 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
+        TracerProviderBuilder IDeferredTracerProviderBuilder.Configure(
+            Action<IServiceProvider, TracerProviderBuilder> configure)
+        {
+            Guard.ThrowIfNull(configure);
+
+            var configurationActions = this.BuilderConfigurationActions;
+            if (configurationActions == null)
+            {
+                throw new NotSupportedException("Configuration actions cannot be registered after TracerProvider has been created.");
+            }
+
+            configurationActions.Add(configure);
+
+            return this;
+        }
+
         /// <summary>
         /// Sets whether the status of <see cref="Activity"/>
         /// should be set to <c>Status.Error</c> when it ended abnormally due to an unhandled exception.
@@ -103,7 +124,7 @@ namespace OpenTelemetry.Trace
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         internal TracerProviderBuilder SetErrorStatusOnException(bool enabled)
         {
-            ExceptionProcessor existingExceptionProcessor = null;
+            ExceptionProcessor? existingExceptionProcessor = null;
 
             if (this.processors.Count > 0)
             {
@@ -146,6 +167,7 @@ namespace OpenTelemetry.Trace
             Guard.ThrowIfNull(sampler);
 
             this.sampler = sampler;
+
             return this;
         }
 
@@ -185,15 +207,92 @@ namespace OpenTelemetry.Trace
         /// Run the configured actions to initialize the <see cref="TracerProvider"/>.
         /// </summary>
         /// <returns><see cref="TracerProvider"/>.</returns>
-        protected TracerProvider Build()
+        protected virtual TracerProvider Build()
         {
+            var services = this.Services;
+
+            if (services == null)
+            {
+                throw new NotSupportedException("TracerProviderBuilder build method cannot be called multiple times.");
+            }
+
+            this.Services = null;
+
+            var serviceProvider = this.ServiceProvider;
+            var ownsServiceProvider = false;
+
+            if (serviceProvider == null)
+            {
+                if (!this.ownsServices)
+                {
+                    throw new NotSupportedException("ServiceProvider was not supplied for builder tied to external services.");
+                }
+
+                serviceProvider = services.BuildServiceProvider();
+                ownsServiceProvider = true;
+            }
+            else if (this.ownsServices)
+            {
+                throw new NotSupportedException("ServiceProvider was supplied for builder tied to internal services.");
+            }
+
+            this.ResourceBuilder ??= ResourceBuilder.CreateDefault();
+
+            // Step 1: Look for any Action<IServiceProvider,
+            // TracerProviderBuilder> configuration actions registered and
+            // execute them.
+
+            var registeredConfigurations = serviceProvider.GetServices<Action<IServiceProvider, TracerProviderBuilder>>();
+            foreach (var registeredConfiguration in registeredConfigurations)
+            {
+                registeredConfiguration?.Invoke(serviceProvider, this);
+            }
+
+            // Step 2: Execute any configuration actions directly attached to
+            // the builder.
+
+            var configurationActions = this.BuilderConfigurationActions;
+            if (configurationActions != null)
+            {
+                // Note: Not using a foreach loop because additional actions can be
+                // added during each call.
+                for (int i = 0; i < configurationActions.Count; i++)
+                {
+                    configurationActions[i](serviceProvider, this);
+                }
+
+                this.BuilderConfigurationActions = null;
+            }
+
+            // Step 3: Look for any samplers registered.
+
+            var registeredSampler = serviceProvider.GetService<Sampler>();
+            var sampler = this.sampler;
+            if (sampler == null)
+            {
+                sampler = registeredSampler ?? new ParentBasedSampler(new AlwaysOnSampler());
+            }
+            else if (registeredSampler != null)
+            {
+                throw new NotSupportedException("A sampler was registered in application services and set on tracer builder directly.");
+            }
+
+            // Step 4: Look for any processors registered.
+
+            var registeredProcessors = serviceProvider.GetServices<BaseProcessor<Activity>>();
+            foreach (var registeredProcessor in registeredProcessors)
+            {
+                this.processors.Add(registeredProcessor);
+            }
+
             return new TracerProviderSdk(
-                this.resourceBuilder.Build(),
+                this.ResourceBuilder.Build(),
                 this.sources,
                 this.instrumentationFactories,
-                this.sampler,
+                sampler,
                 this.processors,
-                this.legacyActivityOperationNames);
+                this.legacyActivityOperationNames,
+                ownsServiceProvider ? (ServiceProvider)serviceProvider : null);
         }
 
         internal readonly struct InstrumentationFactory

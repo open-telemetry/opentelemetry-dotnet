@@ -15,48 +15,33 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace
 {
-    /// <summary>
-    /// A <see cref="TracerProviderBuilderBase"/> with support for deferred initialization using <see cref="IServiceProvider"/> for dependency injection.
-    /// </summary>
-    internal sealed class TracerProviderBuilderHosting : TracerProviderBuilderBase, IDeferredTracerProviderBuilder
+    internal sealed class TracerProviderBuilderHosting : TracerProviderBuilderBase
     {
-        private readonly List<Action<IServiceProvider, TracerProviderBuilder>> configurationActions = new();
-
         public TracerProviderBuilderHosting(IServiceCollection services)
+            : base(services)
         {
-            Guard.ThrowIfNull(services);
-
-            this.Services = services;
         }
 
-        public IServiceCollection Services { get; }
-
-        public TracerProviderBuilder Configure(Action<IServiceProvider, TracerProviderBuilder> configure)
-        {
-            Guard.ThrowIfNull(configure);
-
-            this.configurationActions.Add(configure);
-            return this;
-        }
-
-        public TracerProvider Build(IServiceProvider serviceProvider)
+        public void SetServiceProvider(IServiceProvider serviceProvider)
         {
             Guard.ThrowIfNull(serviceProvider);
 
-            // Note: Not using a foreach loop because additional actions can be
-            // added during each call.
-            for (int i = 0; i < this.configurationActions.Count; i++)
+            this.ServiceProvider = serviceProvider;
+        }
+
+        protected override TracerProvider Build()
+        {
+            if (this.ServiceProvider == null)
             {
-                this.configurationActions[i](serviceProvider, this);
+                throw new NotSupportedException("Build cannot be called directly on TracerProviderBuilder instances created through the AddOpenTelemetryTracing extension.");
             }
 
-            return this.Build();
+            return base.Build();
         }
     }
 }

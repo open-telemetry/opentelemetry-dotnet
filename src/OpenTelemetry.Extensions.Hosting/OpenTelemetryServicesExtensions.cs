@@ -38,7 +38,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services)
         {
-            return services.AddOpenTelemetryTracing(builder => { });
+            return services.AddOpenTelemetryTracing((builder) => { });
         }
 
         /// <summary>
@@ -52,8 +52,10 @@ namespace Microsoft.Extensions.DependencyInjection
             Guard.ThrowIfNull(configure);
 
             var builder = new TracerProviderBuilderHosting(services);
+
             configure(builder);
-            return services.AddOpenTelemetryTracing(sp => builder.Build(sp));
+
+            return services.AddOpenTelemetryTracing(builder);
         }
 
         /// <summary>
@@ -85,12 +87,12 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Adds OpenTelemetry TracerProvider to the specified <see cref="IServiceCollection" />.
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-        /// <param name="createTracerProvider">A delegate that provides the tracer provider to be registered.</param>
+        /// <param name="builder"><see cref="TracerProviderBuilder"/>.</param>
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-        private static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Func<IServiceProvider, TracerProvider> createTracerProvider)
+        private static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, TracerProviderBuilderHosting builder)
         {
             Guard.ThrowIfNull(services);
-            Guard.ThrowIfNull(createTracerProvider);
+            Guard.ThrowIfNull(builder);
 
             // Accessing Sdk class is just to trigger its static ctor,
             // which sets default Propagators and default Activity Id format
@@ -98,8 +100,38 @@ namespace Microsoft.Extensions.DependencyInjection
 
             try
             {
+                services.AddSingleton(builder);
+
                 services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
-                return services.AddSingleton(s => createTracerProvider(s));
+                services.TryAddSingleton(sp =>
+                {
+                    TracerProviderBuilderHosting firstBuilder = null;
+
+                    var builders = sp.GetServices<TracerProviderBuilderHosting>();
+                    foreach (var builder in builders)
+                    {
+                        if (firstBuilder == null)
+                        {
+                            firstBuilder = builder;
+                        }
+                        else
+                        {
+                            throw new NotSupportedException("Multiple tracer provider builders cannot be registered with the same service collection.");
+                        }
+                    }
+
+                    if (firstBuilder == null)
+                    {
+                        // Note: This should never happen.
+                        throw new InvalidOperationException("Could not resolve TracerProviderBuilder.");
+                    }
+
+                    firstBuilder.SetServiceProvider(sp);
+
+                    return firstBuilder.Build();
+                });
+
+                return services;
             }
             catch (Exception ex)
             {

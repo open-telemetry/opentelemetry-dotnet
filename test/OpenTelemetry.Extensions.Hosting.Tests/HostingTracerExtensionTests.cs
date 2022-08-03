@@ -91,7 +91,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             services.AddSingleton(testInstrumentation);
             services.AddOpenTelemetryTracing(builder =>
             {
-                builder.Configure(
+                builder.ConfigureBuilder(
                     (sp, b) => b.AddInstrumentation(() => sp.GetRequiredService<TestInstrumentation>()));
             });
 
@@ -115,7 +115,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             Assert.Throws<ArgumentNullException>(() =>
                 services.AddOpenTelemetryTracing(builder =>
                 {
-                    builder.Configure(
+                    builder.ConfigureBuilder(
                         (sp, b) => b.AddInstrumentation(() => sp.GetRequiredService<TestInstrumentation>()));
                 }));
         }
@@ -139,10 +139,10 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             int configureCalls = 0;
             var services = new ServiceCollection();
             services.AddOpenTelemetryTracing(builder => builder
-                .Configure((sp1, builder1) =>
+                .ConfigureBuilder((sp1, builder1) =>
                 {
                     configureCalls++;
-                    builder1.Configure((sp2, builder2) =>
+                    builder1.ConfigureBuilder((sp2, builder2) =>
                     {
                         configureCalls++;
                     });
@@ -165,7 +165,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             services.AddSingleton<TestSampler>();
 
             services.AddOpenTelemetryTracing(builder => builder
-                .Configure((sp1, builder1) =>
+                .ConfigureBuilder((sp1, builder1) =>
                 {
                     builder1
                         .AddInstrumentation<TestInstrumentation>()
@@ -214,8 +214,7 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
 
         private static TracerProviderBuilder AddMyFeature(TracerProviderBuilder tracerProviderBuilder)
         {
-            (tracerProviderBuilder.GetServices() ?? throw new NotSupportedException("MyFeature requires a hosting TracerProviderBuilder instance."))
-                .AddSingleton<TestSampler>();
+            tracerProviderBuilder.ConfigureServices(services => services.AddSingleton<TestSampler>());
 
             return tracerProviderBuilder.SetSampler<TestSampler>();
         }
