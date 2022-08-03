@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-alpha.1
+
+Released 2022-Aug-02
+
 * `TracerProviderSDK` modified for spans with remote parent. For such spans
   activity will be created irrespective of SamplingResult, to maintain context
   propagation.

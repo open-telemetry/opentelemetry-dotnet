@@ -76,7 +76,7 @@ public partial class Program
             .AddMeter(meter.Name)
             .AddRuntimeInstrumentation()
             .AddPrometheusHttpListener(
-                options => options.Prefixes = new string[] { $"http://localhost:{prometheusPort}/" })
+                options => options.UriPrefixes = new string[] { $"http://localhost:{prometheusPort}/" })
             .Build() : null;
 
         var statistics = new long[concurrency];
