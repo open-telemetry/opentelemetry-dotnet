@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-alpha.1
+
+Released 2022-Aug-02
+
 * The `MetricReaderOptions` defaults can be overridden using
   `OTEL_METRIC_EXPORT_INTERVAL` and `OTEL_METRIC_EXPORT_TIMEOUT`
   environmental variables as defined in the
