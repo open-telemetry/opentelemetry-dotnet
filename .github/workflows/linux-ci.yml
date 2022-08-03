@@ -2,11 +2,11 @@ name: Linux
 
 on:
   push:
-    branches: [ main, net7.0 ]
+    branches: [ main ]
     paths-ignore:
     - '**.md'
   pull_request:
-    branches: [ main, net7.0 ]
+    branches: [ main ]
     paths-ignore:
     - '**.md'
 
@@ -16,22 +16,12 @@ jobs:
 
     strategy:
       matrix:
-        version: [net6.0, net7.0]
+        version: [netcoreapp3.1,net6.0]
 
     steps:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # fetching all
-
-    - uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '6.0.x'
-
-    - uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '7.0.x'
-        include-prerelease: true
-
 
     - name: Install dependencies
       run: dotnet restore
