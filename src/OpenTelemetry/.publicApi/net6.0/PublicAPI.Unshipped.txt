@@ -12,6 +12,8 @@ OpenTelemetry.Logs.OpenTelemetryLoggerProvider.ForceFlush(int timeoutMillisecond
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider() -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider(System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>! configure) -> void
 *REMOVED*static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configure = null) -> Microsoft.Extensions.Logging.ILoggingBuilder!
+OpenTelemetry.Metrics.MetricPoint.GetHistogramMax() -> double
+OpenTelemetry.Metrics.MetricPoint.GetHistogramMin() -> double
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, OpenTelemetry.Logs.OpenTelemetryLoggerProvider! openTelemetryLoggerProvider) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, OpenTelemetry.Logs.OpenTelemetryLoggerProvider! openTelemetryLoggerProvider, bool disposeProvider) -> Microsoft.Extensions.Logging.ILoggingBuilder!

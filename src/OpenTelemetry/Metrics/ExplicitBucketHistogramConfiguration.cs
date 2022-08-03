@@ -21,7 +21,7 @@ namespace OpenTelemetry.Metrics
     /// <summary>
     /// Stores configuration for a histogram metric stream with explicit bucket boundaries.
     /// </summary>
-    public class ExplicitBucketHistogramConfiguration : MetricStreamConfiguration
+    public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
     {
         /// <summary>
         /// Gets or sets the optional boundaries of the histogram metric stream.

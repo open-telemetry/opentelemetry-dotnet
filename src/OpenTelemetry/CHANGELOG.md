@@ -5,6 +5,10 @@
 * Use binary search for histograms with 50 or more supplied boundaries.
   ([#3252](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3252))
 
+* Make recording of `Min` and `Max` for histograms configurable, enabled by
+  default.
+  ([#2735](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2735))
+
 ## 1.4.0-alpha.1
 
 Released 2022-Aug-02

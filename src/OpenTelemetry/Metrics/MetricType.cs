@@ -27,7 +27,7 @@ namespace OpenTelemetry.Metrics
             0x20: Gauge
             0x30: Summary (reserved)
             0x40: Histogram
-            0x50: HistogramWithMinMax (reserved)
+            0x50: HistogramWithMinMax
             0x60: ExponentialHistogram (reserved)
             0x70: ExponentialHistogramWithMinMax (reserved)
             0x80: Reserved
@@ -69,5 +69,10 @@ namespace OpenTelemetry.Metrics
         /// Histogram.
         /// </summary>
         Histogram = 0x40,
+
+        /// <summary>
+        /// Histogram with minimum and maximum values.
+        /// </summary>
+        HistogramWithMinMax = 0x50,
     }
 }
