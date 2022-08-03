@@ -17,7 +17,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
-namespace TestApp.AspNetCore._7._0
+namespace TestApp.AspNetCore._3._1
 {
     public class ActivityMiddleware
     {

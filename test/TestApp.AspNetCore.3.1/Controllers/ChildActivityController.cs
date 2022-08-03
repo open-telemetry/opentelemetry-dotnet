@@ -19,9 +19,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using OpenTelemetry;
 
-#pragma warning disable SA1300 // Element should begin with upper-case letter
-namespace TestApp.AspNetCore._7._0.Controllers
-#pragma warning restore SA1300 // Element should begin with upper-case letter
+namespace TestApp.AspNetCore._3._1.Controllers
 {
     public class ChildActivityController : Controller
     {

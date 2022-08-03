@@ -9,7 +9,7 @@ name: Linux
 
 on:
   pull_request:
-    branches: [ main, net7.0 ]
+    branches: [ main ]
     paths:
     - '**.md'
 
@@ -19,7 +19,7 @@ jobs:
 
     strategy:
       matrix:
-        version: [net6.0]
+        version: [netcoreapp3.1,net6.0]
 
     steps:
       - run: 'echo "No build required"'
