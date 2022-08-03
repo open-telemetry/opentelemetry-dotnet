@@ -18,15 +18,14 @@ using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Exporter.Prometheus.Shared;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter.Prometheus.HttpListener
+namespace OpenTelemetry.Exporter.Prometheus
 {
     internal sealed class PrometheusHttpListener : IDisposable
     {
         private readonly PrometheusExporter exporter;
-        private readonly System.Net.HttpListener httpListener = new();
+        private readonly HttpListener httpListener = new();
         private readonly object syncObject = new();
 
         private CancellationTokenSource tokenSource;
@@ -40,14 +39,12 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
         public PrometheusHttpListener(PrometheusExporter exporter, PrometheusHttpListenerOptions options)
         {
             Guard.ThrowIfNull(exporter);
-
-            if ((options.Prefixes?.Count ?? 0) <= 0)
-            {
-                throw new ArgumentException("No Prefixes were specified on PrometheusHttpListenerOptions.");
-            }
+            Guard.ThrowIfNull(options);
 
             this.exporter = exporter;
-            string path = this.exporter.Options.ScrapeEndpointPath ?? PrometheusExporterOptions.DefaultScrapeEndpointPath;
+
+            string path = this.exporter.ScrapeEndpointPath;
+
             if (!path.StartsWith("/"))
             {
                 path = $"/{path}";
@@ -58,9 +55,9 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener
                 path = $"{path}/";
             }
 
-            foreach (string prefix in options.Prefixes)
+            foreach (string uriPrefix in options.UriPrefixes)
             {
-                this.httpListener.Prefixes.Add($"{prefix.TrimEnd('/')}{path}");
+                this.httpListener.Prefixes.Add($"{uriPrefix.TrimEnd('/')}{path}");
             }
         }
 

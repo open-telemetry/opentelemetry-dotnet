@@ -5,6 +5,11 @@
 * Fixed an issue where activity started within middleware was modified by
   instrumentation library.
   ([#3498](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3498))
+
+## 1.0.0-rc9.5
+
+Released 2022-Aug-02
+
 * Fix Remote IP Address - NULL reference exception.
   ([#3481](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3481))
 * Metrics instrumentation to correctly populate `http.flavor` tag.
@@ -156,7 +161,7 @@ Released 2020-Sep-15
   added by the library are removed from the span. The information from these
   attributes is contained in other attributes that follow the conventions of
   OpenTelemetry.
-  ([#1260](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1260)).
+  ([#1260](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1260))
 
 ## 0.5.0-beta.2
 

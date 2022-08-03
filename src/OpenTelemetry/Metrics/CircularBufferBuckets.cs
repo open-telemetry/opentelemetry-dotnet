@@ -89,50 +89,59 @@ internal sealed class CircularBufferBuckets
 
             this.begin = index;
             this.end = index;
+            this.trait[this.ModuloIndex(index)] += value;
+
+            return 0;
         }
-        else if (index > this.end)
+
+        var begin = this.begin;
+        var end = this.end;
+
+        if (index > end)
         {
-            var diff = index - this.begin;
-
-            if (diff >= capacity || diff < 0)
-            {
-                return CalculateScaleReduction(diff + 1, capacity);
-            }
-
-            this.end = index;
+            end = index;
         }
-        else if (index < this.begin)
+        else if (index < begin)
         {
-            var diff = this.end - index;
-
-            if (diff >= this.Capacity || diff < 0)
-            {
-                return CalculateScaleReduction(diff + 1, capacity);
-            }
-
-            this.begin = index;
+            begin = index;
         }
+        else
+        {
+            this.trait[this.ModuloIndex(index)] += value;
+
+            return 0;
+        }
+
+        var diff = end - begin;
+
+        if (diff >= capacity || diff < 0)
+        {
+            return CalculateScaleReduction(begin, end, capacity);
+        }
+
+        this.begin = begin;
+        this.end = end;
 
         this.trait[this.ModuloIndex(index)] += value;
 
         return 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static int CalculateScaleReduction(int size, int capacity)
+        static int CalculateScaleReduction(int begin, int end, int capacity)
         {
-            var shift = MathHelper.LeadingZero32(capacity);
+            Debug.Assert(capacity >= 2, "The capacity must be at least 2.");
 
-            if (size > 0)
+            var retval = 0;
+            var diff = end - begin;
+            while (diff >= capacity || diff < 0)
             {
-                shift -= MathHelper.LeadingZero32(size);
+                begin >>= 1;
+                end >>= 1;
+                diff = end - begin;
+                retval++;
             }
 
-            if (size > (capacity << shift))
-            {
-                shift++;
-            }
-
-            return shift;
+            return retval;
         }
     }
 
@@ -254,18 +263,6 @@ internal sealed class CircularBufferBuckets
             array[dst] = array[src];
             array[src] = 0;
         }
-    }
-
-    public override string ToString()
-    {
-        return nameof(CircularBufferBuckets)
-            + "{"
-            + nameof(this.Capacity) + "=" + this.Capacity + ", "
-            + nameof(this.Size) + "=" + this.Size + ", "
-            + nameof(this.begin) + "=" + this.begin + ", "
-            + nameof(this.end) + "=" + this.end + ", "
-            + (this.trait == null ? "null" : "{" + string.Join(", ", this.trait) + "}")
-            + "}";
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
