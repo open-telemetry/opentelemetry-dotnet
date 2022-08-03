@@ -21,7 +21,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace TestApp.AspNetCore._3._1
+#pragma warning disable SA1300 // Element should begin with upper-case letter
+namespace TestApp.AspNetCore._7._0
+#pragma warning restore SA1300 // Element should begin with upper-case letter
 {
     public class Startup
     {
