@@ -227,7 +227,7 @@ namespace OpenTelemetry.Trace
         {
             if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
-                return tracerProviderBuilderBase.Build();
+                return tracerProviderBuilderBase.InvokeBuild();
             }
 
             return null;

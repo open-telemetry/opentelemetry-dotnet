@@ -34,14 +34,14 @@ namespace OpenTelemetry.Trace
             this.ServiceProvider = serviceProvider;
         }
 
-        protected override TracerProvider Build()
+        protected override TracerProvider OnBuild()
         {
             if (this.ServiceProvider == null)
             {
                 throw new NotSupportedException("Build cannot be called directly on TracerProviderBuilder instances created through the AddOpenTelemetryTracing extension.");
             }
 
-            return base.Build();
+            return base.OnBuild();
         }
     }
 }

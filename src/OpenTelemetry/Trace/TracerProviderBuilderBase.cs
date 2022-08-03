@@ -185,6 +185,11 @@ namespace OpenTelemetry.Trace
             return this;
         }
 
+        internal TracerProvider InvokeBuild()
+        {
+            return this.Build();
+        }
+
         /// <summary>
         /// Adds instrumentation to the provider.
         /// </summary>
@@ -207,7 +212,16 @@ namespace OpenTelemetry.Trace
         /// Run the configured actions to initialize the <see cref="TracerProvider"/>.
         /// </summary>
         /// <returns><see cref="TracerProvider"/>.</returns>
-        protected virtual TracerProvider Build()
+        protected TracerProvider Build()
+        {
+            return this.OnBuild();
+        }
+
+        /// <summary>
+        /// Called to run the configured actions to initialize the <see cref="TracerProvider"/>.
+        /// </summary>
+        /// <returns><see cref="TracerProvider"/>.</returns>
+        protected virtual TracerProvider OnBuild()
         {
             var services = this.Services;
 
