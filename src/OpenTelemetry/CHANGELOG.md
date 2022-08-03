@@ -5,6 +5,10 @@
 * Use binary search for histograms with 50 or more supplied boundaries.
   ([#3252](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3252))
 
+## 1.4.0-alpha.1
+
+Released 2022-Aug-02
+
 * `TracerProviderSDK` modified for spans with remote parent. For such spans
   activity will be created irrespective of SamplingResult, to maintain context
   propagation.

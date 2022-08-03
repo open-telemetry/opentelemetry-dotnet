@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.5
+
+Released 2022-Aug-02
+
 * Fix: Handling of OpenTracing spans when used in conjunction
   with legacy "Microsoft.AspNetCore.Hosting.HttpRequestIn" activities.
   ([#3509](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3506))
