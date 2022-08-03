@@ -43,8 +43,6 @@ namespace OpenTelemetry.Metrics
             this.SnapshotBucketCounts = explicitBounds != null ? new long[explicitBounds.Length + 1] : new long[0];
         }
 
-        internal object LockObject => this.SnapshotBucketCounts;
-
         public Enumerator GetEnumerator() => new(this);
 
         internal HistogramBuckets Copy()
