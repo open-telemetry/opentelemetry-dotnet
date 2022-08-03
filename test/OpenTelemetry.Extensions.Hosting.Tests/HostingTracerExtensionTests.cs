@@ -182,34 +182,21 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
             Assert.True(tracerProvider.Sampler is TestSampler);
         }
 
-        [Fact(Skip = "Known limitation. See issue 1215.")]
+        [Fact]
         public void AddOpenTelemetryTracerProvider_Idempotent()
         {
-            var testInstrumentation1 = new TestInstrumentation();
-            var testInstrumentation2 = new TestInstrumentation();
-
             var services = new ServiceCollection();
-            services.AddSingleton(testInstrumentation1);
-            services.AddOpenTelemetryTracing(builder =>
-            {
-                builder.AddInstrumentation(() => testInstrumentation1);
-            });
 
-            services.AddOpenTelemetryTracing(builder =>
-            {
-                builder.AddInstrumentation(() => testInstrumentation2);
-            });
+            services.AddOpenTelemetryTracing(builder => builder.AddSource("TestSource"));
+            services.AddOpenTelemetryTracing();
 
-            var serviceProvider = services.BuildServiceProvider();
+            using var serviceProvider = services.BuildServiceProvider();
 
-            var tracerFactory = serviceProvider.GetRequiredService<TracerProvider>();
-            Assert.NotNull(tracerFactory);
+            var builders = serviceProvider.GetServices<TracerProviderBuilderHosting>();
 
-            Assert.False(testInstrumentation1.Disposed);
-            Assert.False(testInstrumentation2.Disposed);
-            serviceProvider.Dispose();
-            Assert.True(testInstrumentation1.Disposed);
-            Assert.True(testInstrumentation2.Disposed);
+            Assert.Equal(2, builders.Count());
+
+            Assert.Throws<NotSupportedException>(() => serviceProvider.GetRequiredService<TracerProvider>());
         }
 
         private static TracerProviderBuilder AddMyFeature(TracerProviderBuilder tracerProviderBuilder)

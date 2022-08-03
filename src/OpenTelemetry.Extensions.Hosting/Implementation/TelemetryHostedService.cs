@@ -24,7 +24,7 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Extensions.Hosting.Implementation
 {
-    internal class TelemetryHostedService : IHostedService
+    internal sealed class TelemetryHostedService : IHostedService
     {
         private readonly IServiceProvider serviceProvider;
 
