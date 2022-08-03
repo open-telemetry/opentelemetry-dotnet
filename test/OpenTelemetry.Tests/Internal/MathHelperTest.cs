@@ -82,9 +82,9 @@ public class MathHelperTest
     }
 
     [Theory]
-    [InlineData(4, 10, 4)]
-    [InlineData(10, 10, 0)]
     [InlineData(14, 10, 4)]
+    [InlineData(10, 10, 0)]
+    [InlineData(4, 10, 4)]
     [InlineData(0, 10, 0)]
     [InlineData(-1, 10, 9)]
     [InlineData(-10, 10, 0)]
@@ -94,9 +94,9 @@ public class MathHelperTest
     }
 
     [Theory]
-    [InlineData(4, 10, 4)]
-    [InlineData(10, 10, 0)]
     [InlineData(14, 10, 4)]
+    [InlineData(10, 10, 0)]
+    [InlineData(4, 10, 4)]
     [InlineData(0, 10, 0)]
     [InlineData(-1, 10, 9)]
     [InlineData(-10, 10, 0)]
