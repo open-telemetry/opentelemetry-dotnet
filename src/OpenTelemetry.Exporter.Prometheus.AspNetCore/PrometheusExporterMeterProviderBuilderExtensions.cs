@@ -51,7 +51,7 @@ namespace OpenTelemetry.Metrics
         {
             configure?.Invoke(options);
 
-            var exporter = new PrometheusExporter(scrapeEndpointPath: options.ScrapeEndpointPath, scrapeResponseCacheDurationMilliseconds: options.ScrapeResponseCacheDurationMilliseconds);
+            var exporter = new PrometheusExporter(scrapeResponseCacheDurationMilliseconds: options.ScrapeResponseCacheDurationMilliseconds);
             var reader = new BaseExportingMetricReader(exporter)
             {
                 TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
