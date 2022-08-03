@@ -18,7 +18,7 @@ using System;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
-namespace OpenTelemetry.Exporter.Prometheus
+namespace OpenTelemetry.Exporter.Prometheus.Implementation
 {
     /// <summary>
     /// Exporter of OpenTelemetry metrics to Prometheus.

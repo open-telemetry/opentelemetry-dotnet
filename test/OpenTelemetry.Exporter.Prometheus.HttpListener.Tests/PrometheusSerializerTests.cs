@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Text;
+using OpenTelemetry.Exporter.Prometheus.Implementation;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;
