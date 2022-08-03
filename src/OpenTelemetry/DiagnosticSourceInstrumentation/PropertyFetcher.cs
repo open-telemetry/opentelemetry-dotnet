@@ -84,7 +84,7 @@ namespace OpenTelemetry.Instrumentation
         {
             public static PropertyFetch Create(TypeInfo type, string propertyName)
             {
-                var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, propertyName, StringComparison.InvariantCultureIgnoreCase));
+                var property = type.DeclaredProperties.FirstOrDefault(p => string.Equals(p.Name, propertyName, StringComparison.OrdinalIgnoreCase));
                 if (property == null)
                 {
                     property = type.GetProperty(propertyName);

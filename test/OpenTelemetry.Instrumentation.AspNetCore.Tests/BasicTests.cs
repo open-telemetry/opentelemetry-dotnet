@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -26,7 +27,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using Newtonsoft.Json;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Tests;
@@ -367,7 +367,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Test TraceContext Propagation
                 var request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityTraceContext");
                 var response = await client.SendAsync(request);
-                var childActivityTraceContext = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+                var childActivityTraceContext = JsonSerializer.Deserialize<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
                 response.EnsureSuccessStatusCode();
 
@@ -379,7 +379,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
 
                 response = await client.SendAsync(request);
-                var childActivityBaggageContext = JsonConvert.DeserializeObject<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+                var childActivityBaggageContext = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
                 response.EnsureSuccessStatusCode();
 
@@ -434,7 +434,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 // Ensure that filter was called
                 Assert.True(isFilterCalled);
 
-                var childActivityTraceContext = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+                var childActivityTraceContext = JsonSerializer.Deserialize<Dictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
                 response.EnsureSuccessStatusCode();
 
@@ -446,7 +446,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 request = new HttpRequestMessage(HttpMethod.Get, "/api/GetChildActivityBaggageContext");
 
                 response = await client.SendAsync(request);
-                var childActivityBaggageContext = JsonConvert.DeserializeObject<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
+                var childActivityBaggageContext = JsonSerializer.Deserialize<IReadOnlyDictionary<string, string>>(response.Content.ReadAsStringAsync().Result);
 
                 response.EnsureSuccessStatusCode();
 
@@ -551,6 +551,39 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             // Assert
             Assert.Equal(shouldFilterBeCalled, filterCalled);
             Assert.Equal(shouldEnrichBeCalled, enrichCalled);
+        }
+
+        [Fact(Skip = "Changes pending on instrumentation")]
+        public async Task ActivitiesStartedInMiddlewareShouldNotBeUpdatedByInstrumentation()
+        {
+            var exportedItems = new List<Activity>();
+
+            var activitySourceName = "TestMiddlewareActivitySource";
+            var activityName = "TestMiddlewareActivity";
+
+            // Arrange
+            using (var client = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices((IServiceCollection services) =>
+                    {
+                        services.AddSingleton<ActivityMiddleware.ActivityMiddlewareImpl>(new TestActivityMiddlewareImpl(activitySourceName, activityName));
+                        services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation()
+                        .AddSource(activitySourceName)
+                        .AddInMemoryExporter(exportedItems));
+                    }))
+                .CreateClient())
+            {
+                var response = await client.GetAsync("/api/values/2");
+                response.EnsureSuccessStatusCode();
+                WaitForActivityExport(exportedItems, 2);
+            }
+
+            Assert.Equal(2, exportedItems.Count);
+
+            var middlewareActivity = exportedItems[0];
+
+            // Middleware activity name should not be changed
+            Assert.Equal(activityName, middlewareActivity.DisplayName);
         }
 
         public void Dispose()
@@ -662,6 +695,29 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 base.OnStopActivity(activity, payload);
 
                 this.OnStopActivityCallback?.Invoke(activity, payload);
+            }
+        }
+
+        private class TestActivityMiddlewareImpl : ActivityMiddleware.ActivityMiddlewareImpl
+        {
+            private ActivitySource activitySource;
+            private Activity activity;
+            private string activityName;
+
+            public TestActivityMiddlewareImpl(string activitySourceName, string activityName)
+            {
+                this.activitySource = new ActivitySource(activitySourceName);
+                this.activityName = activityName;
+            }
+
+            public override void PreProcess(HttpContext context)
+            {
+                this.activity = this.activitySource.StartActivity(this.activityName);
+            }
+
+            public override void PostProcess(HttpContext context)
+            {
+                this.activity?.Stop();
             }
         }
     }

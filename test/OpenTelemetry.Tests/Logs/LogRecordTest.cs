@@ -256,8 +256,7 @@ namespace OpenTelemetry.Logs.Tests
             using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
             var logger = loggerFactory.CreateLogger<LogRecordTest>();
 
-            var message = $"This does not matter.";
-            logger.LogInformation(message);
+            logger.LogInformation("This does not matter.");
 
             var logRecord = exportedItems[0];
             logRecord.State = "newState";
@@ -744,17 +743,44 @@ namespace OpenTelemetry.Logs.Tests
             Assert.Same(state, actualState.Value);
         }
 
+        [Fact]
+        public void DisposingStateTest()
+        {
+            using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+            var logger = loggerFactory.CreateLogger<LogRecordTest>();
+
+            DisposingState state = new DisposingState("Hello world");
+
+            logger.Log(
+                LogLevel.Information,
+                0,
+                state,
+                null,
+                (s, e) => "OpenTelemetry!");
+            var logRecord = exportedItems[0];
+
+            state.Dispose();
+
+            Assert.Null(logRecord.State);
+            Assert.NotNull(logRecord.StateValues);
+            Assert.Equal(1, logRecord.StateValues.Count);
+
+            KeyValuePair<string, object> actualState = logRecord.StateValues[0];
+
+            Assert.Same("Value", actualState.Key);
+            Assert.Same("Hello world", actualState.Value);
+        }
+
         private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions> configure = null)
         {
-            exportedItems = new List<LogRecord>();
-            var exporter = new InMemoryExporter<LogRecord>(exportedItems);
-            var processor = new TestLogRecordProcessor(exporter);
+            var items = exportedItems = new List<LogRecord>();
+
             return LoggerFactory.Create(builder =>
             {
                 builder.AddOpenTelemetry(options =>
                 {
                     configure?.Invoke(options);
-                    options.AddProcessor(processor);
+                    options.AddInMemoryExporter(items);
                 });
                 builder.AddFilter(typeof(LogRecordTest).FullName, LogLevel.Trace);
             });
@@ -789,6 +815,54 @@ namespace OpenTelemetry.Logs.Tests
             {
                 return this.list.GetEnumerator();
             }
+        }
+
+        internal sealed class DisposingState : IReadOnlyList<KeyValuePair<string, object>>, IDisposable
+        {
+            private string value;
+            private bool disposed;
+
+            public DisposingState(string value)
+            {
+                this.Value = value;
+            }
+
+            public int Count => 1;
+
+            public string Value
+            {
+                get
+                {
+                    if (this.disposed)
+                    {
+                        throw new ObjectDisposedException(nameof(DisposingState));
+                    }
+
+                    return this.value;
+                }
+                private set => this.value = value;
+            }
+
+            public KeyValuePair<string, object> this[int index] => index switch
+            {
+                0 => new KeyValuePair<string, object>(nameof(this.Value), this.Value),
+                _ => throw new IndexOutOfRangeException(nameof(index)),
+            };
+
+            public void Dispose()
+            {
+                this.disposed = true;
+            }
+
+            public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
+            {
+                for (var i = 0; i < this.Count; i++)
+                {
+                    yield return this[i];
+                }
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
         }
 
         private class RedactionProcessor : BaseProcessor<LogRecord>
@@ -840,21 +914,6 @@ namespace OpenTelemetry.Logs.Tests
         private class CustomState
         {
             public string Property { get; set; }
-        }
-
-        private class TestLogRecordProcessor : SimpleExportProcessor<LogRecord>
-        {
-            public TestLogRecordProcessor(BaseExporter<LogRecord> exporter)
-                : base(exporter)
-            {
-            }
-
-            public override void OnEnd(LogRecord data)
-            {
-                data.BufferLogScopes();
-
-                base.OnEnd(data);
-            }
         }
     }
 }

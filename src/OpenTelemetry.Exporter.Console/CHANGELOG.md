@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 1.4.0-alpha.1
+
+Released 2022-Aug-02
+
+* The `MetricReaderOptions` defaults can be overridden using
+  `OTEL_METRIC_EXPORT_INTERVAL` and `OTEL_METRIC_EXPORT_TIMEOUT`
+  environmental variables as defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.12.0/specification/sdk-environment-variables.md#periodic-exporting-metricreader).
+  ([#3424](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3424))
+
 ## 1.3.0
 
 Released 2022-Jun-03
@@ -51,7 +61,7 @@ Released 2022-Mar-30
 * Added StatusCode, StatusDescription support to
   `ConsoleActivityExporter`.
   ([#2929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2929)
-   [#3061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3061))
+  [#3061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3061))
 
 * `AddConsoleExporter` extension method by default sets up exporter
    to export metrics every 10 seconds.

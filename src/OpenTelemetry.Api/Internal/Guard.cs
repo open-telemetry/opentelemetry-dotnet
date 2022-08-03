@@ -25,6 +25,9 @@ namespace System.Runtime.CompilerServices
     /// <summary>
     /// Allows capturing of the expressions passed to a method.
     /// </summary>
+    /// <remarks>
+    /// Borrowed from: <see href="https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/System/Runtime/CompilerServices/CallerArgumentExpressionAttribute.cs"/>.
+    /// </remarks>
     [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
 #pragma warning disable SA1402 // File may only contain a single type
 #pragma warning disable SA1649 // File name should match first type name

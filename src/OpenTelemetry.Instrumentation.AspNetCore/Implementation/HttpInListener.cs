@@ -153,8 +153,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
+                activity.SetTag(SemanticConventions.AttributeHttpScheme, request.Scheme);
                 activity.SetTag(SemanticConventions.AttributeHttpTarget, path);
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
+                activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
 
                 var userAgent = request.Headers["User-Agent"].FirstOrDefault();
                 if (!string.IsNullOrEmpty(userAgent))
@@ -358,7 +360,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             activity.DisplayName = grpcMethod.TrimStart('/');
 
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
-            activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
+            if (context.Connection.RemoteIpAddress != null)
+            {
+                activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
+            }
+
             activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
 
             bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);

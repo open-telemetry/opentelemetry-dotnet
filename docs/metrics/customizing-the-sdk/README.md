@@ -35,9 +35,10 @@ In a typical application, a single `MeterProvider` is created at application
 startup and disposed at application shutdown. It is important to ensure that the
 provider is not disposed too early. Actual mechanism depends on the application
 type. For example, in a typical ASP.NET application, `MeterProvider` is created
-in `Application_Start`, and disposed in `Application_End` (both methods part of
-Global.asax.cs file) as shown [here](../../../examples/AspNet/Global.asax.cs). In
-a typical ASP.NET Core application, `MeterProvider` lifetime is managed by
+in `Application_Start`, and disposed in `Application_End` (both methods are a
+part of the Global.asax.cs file) as shown
+[here](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/main/examples/AspNet/Global.asax.cs).
+In a typical ASP.NET Core application, `MeterProvider` lifetime is managed by
 leveraging the built-in Dependency Injection container as shown
 [here](../../../examples/AspNetCore/Program.cs).
 
@@ -422,7 +423,8 @@ Refer to the individual exporter docs to learn how to use them:
 * [In-memory](../../../src/OpenTelemetry.Exporter.InMemory/README.md)
 * [OTLP](../../../src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
   (OpenTelemetry Protocol)
-* [Prometheus](../../../src/OpenTelemetry.Exporter.Prometheus/README.md)
+* [Prometheus HttpListener](../../../src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md)
+* [Prometheus AspNetCore](../../../src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)
 
 ### Resource
 

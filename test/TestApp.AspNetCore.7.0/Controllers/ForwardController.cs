@@ -16,9 +16,10 @@
 
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 
 #pragma warning disable SA1300 // Element should begin with upper-case letter
 namespace TestApp.AspNetCore._7._0.Controllers
@@ -47,7 +48,7 @@ namespace TestApp.AspNetCore._7._0.Controllers
                     var request = new HttpRequestMessage(HttpMethod.Post, argument.Url)
                     {
                         Content = new StringContent(
-                            JsonConvert.SerializeObject(argument.Arguments),
+                            JsonSerializer.Serialize(argument.Arguments),
                             Encoding.UTF8,
                             "application/json"),
                     };
@@ -64,10 +65,10 @@ namespace TestApp.AspNetCore._7._0.Controllers
 
         public class Data
         {
-            [JsonProperty("url")]
+            [JsonPropertyName("url")]
             public string Url { get; set; }
 
-            [JsonProperty("arguments")]
+            [JsonPropertyName("arguments")]
             public Data[] Arguments { get; set; }
         }
     }

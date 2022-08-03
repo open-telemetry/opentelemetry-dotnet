@@ -21,4 +21,4 @@ using System.Diagnostics.CodeAnalysis;
     "SA1300",
     Justification = "Reviewed.",
     Scope = "namespaceanddescendants",
-    Target = "TestApp.AspNetCore._6._0")]
+    Target = "TestApp.AspNetCore._7._0")]

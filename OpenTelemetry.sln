@@ -29,6 +29,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{7CB2F02E
 		build\docker-compose.net6.0.yml = build\docker-compose.net6.0.yml
 		build\docker-compose.netcoreapp3.1.yml = build\docker-compose.netcoreapp3.1.yml
 		build\finalize-publicapi.ps1 = build\finalize-publicapi.ps1
+		build\GlobalAttrExclusions.txt = build\GlobalAttrExclusions.txt
 		build\opentelemetry-icon-color.png = build\opentelemetry-icon-color.png
 		build\OpenTelemetry.prod.loose.ruleset = build\OpenTelemetry.prod.loose.ruleset
 		build\OpenTelemetry.prod.ruleset = build\OpenTelemetry.prod.ruleset
@@ -71,10 +72,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Console", "src\OpenTelemetry.Exporter.Console\OpenTelemetry.Exporter.Console.csproj", "{1AFFF251-3B0C-47CA-BE94-937083732C0A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Zipkin.Tests", "test\OpenTelemetry.Exporter.Zipkin.Tests\OpenTelemetry.Exporter.Zipkin.Tests.csproj", "{1D778D2E-9523-450E-A6E0-A36897C7E78E}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.AspNet", "src\OpenTelemetry.Instrumentation.AspNet\OpenTelemetry.Instrumentation.AspNet.csproj", "{B9EEACDD-CAFA-4B75-A18D-898E7DE21B17}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.AspNet.Tests", "test\OpenTelemetry.Instrumentation.AspNet.Tests\OpenTelemetry.Instrumentation.AspNet.Tests.csproj", "{55CBAADE-7040-46D6-A845-F207B4F0E281}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests", "test\OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests\OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.csproj", "{7C4026CA-6434-4762-8B77-D657EAEE1325}"
 EndProject
@@ -125,8 +122,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.Grpc.Tests", "test\OpenTelemetry.Instrumentation.Grpc.Tests\OpenTelemetry.Instrumentation.Grpc.Tests.csproj", "{305E9DFD-E73B-4A28-8769-795C25551020}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.ZPages.Tests", "test\OpenTelemetry.Exporter.ZPages.Tests\OpenTelemetry.Exporter.ZPages.Tests.csproj", "{98F9556B-116F-49B5-9211-BB1D418446FF}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples.AspNet", "examples\AspNet\Examples.AspNet.csproj", "{9A4E3A68-904B-4835-A3C8-F664B73098DB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.Console", "examples\Console\Examples.Console.csproj", "{FF3E6E08-E8E4-4523-B526-847CD989279F}"
 EndProject
@@ -198,12 +193,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "reporting-exceptions", "doc
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customizing-the-sdk", "docs\trace\customizing-the-sdk\customizing-the-sdk.csproj", "{64E3D8BB-93AB-4571-93F7-ED8D64DFFD06}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus", "src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj", "{52158A12-E7EF-45A1-859F-06F9B17410CB}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule", "src\OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule\OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.csproj", "{F38E511B-1877-4E8A-8051-7879FC7DF8A4}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.Tests", "test\OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.Tests\OpenTelemetry.Instrumentation.AspNet.TelemetryHttpModule.Tests.csproj", "{4D7201BC-7124-4401-AD65-FAB58A053D45}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "learning-more-instruments", "docs\metrics\learning-more-instruments\learning-more-instruments.csproj", "{E7F491CC-C37E-4A56-9CA7-8F77F59E0614}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "getting-started", "docs\metrics\getting-started\getting-started.csproj", "{EA60B549-F712-4ABE-8E44-FCA83B78C06E}"
@@ -215,8 +204,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customizing-the-sdk", "docs\metrics\customizing-the-sdk\customizing-the-sdk.csproj", "{81234AFA-B4E7-4D0D-AB97-FD559C78EDA2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Tests.Stress", "test\OpenTelemetry.Tests.Stress\OpenTelemetry.Tests.Stress.csproj", "{2770158A-D220-414B-ABC6-179371323579}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus.Tests", "test\OpenTelemetry.Exporter.Prometheus.Tests\OpenTelemetry.Exporter.Prometheus.Tests.csproj", "{380EE686-91F1-45B3-AEEB-755F0E5B068F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs", "src\OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs\OpenTelemetry.Exporter.OpenTelemetryProtocol.Logs.csproj", "{6E1A5FA3-E024-4972-9EDC-11E36C5A0D6F}"
 EndProject
@@ -233,6 +220,26 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Propagators.Tests", "test\OpenTelemetry.Extensions.Propagators.Tests\OpenTelemetry.Extensions.Propagators.Tests.csproj", "{476D804B-BFEC-4D34-814C-DFFD97109989}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "correlation", "docs\logs\correlation\correlation.csproj", "{9A07D215-90AC-4BAF-BCDB-73D74FD3A5C5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Tests.Stress.Logs", "test\OpenTelemetry.Tests.Stress.Logs\OpenTelemetry.Tests.Stress.Logs.csproj", "{4298057B-24E0-47B3-BB76-C17E81AF6B39}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Examples.LoggingExtensions", "examples\LoggingExtensions\Examples.LoggingExtensions.csproj", "{F5EFF065-7AF5-4D7D-8038-CC419ABD8777}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Serilog", "src\OpenTelemetry.Extensions.Serilog\OpenTelemetry.Extensions.Serilog.csproj", "{0D85558E-15B9-4251-BDBD-9CB7933B57E2}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.Serilog.Tests", "test\OpenTelemetry.Extensions.Serilog.Tests\OpenTelemetry.Extensions.Serilog.Tests.csproj", "{6A2C122A-C1CD-4B6B-AE09-2ABB7D3C50CE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.EventSource", "src\OpenTelemetry.Extensions.EventSource\OpenTelemetry.Extensions.EventSource.csproj", "{7AFB4975-9680-4668-9F5E-C3F0CA41E982}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Extensions.EventSource.Tests", "test\OpenTelemetry.Extensions.EventSource.Tests\OpenTelemetry.Extensions.EventSource.Tests.csproj", "{304FCFFF-97DE-484B-8D8C-612C644426E5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus.AspNetCore", "src\OpenTelemetry.Exporter.Prometheus.AspNetCore\OpenTelemetry.Exporter.Prometheus.AspNetCore.csproj", "{921CF401-4C2F-4C6D-A750-0B5DC457C1F1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus.HttpListener", "src\OpenTelemetry.Exporter.Prometheus.HttpListener\OpenTelemetry.Exporter.Prometheus.HttpListener.csproj", "{6B0232B7-5F29-4FB5-B383-1AA02DFE1089}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests", "test\OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests\OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests.csproj", "{FBD12B0B-6731-4DD4-9C13-86F34593E974}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus.HttpListener.Tests", "test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests.csproj", "{4EF4364F-6E64-43CE-BED1-E6FE01024899}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -304,14 +311,6 @@ Global
 		{1D778D2E-9523-450E-A6E0-A36897C7E78E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1D778D2E-9523-450E-A6E0-A36897C7E78E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1D778D2E-9523-450E-A6E0-A36897C7E78E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B9EEACDD-CAFA-4B75-A18D-898E7DE21B17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B9EEACDD-CAFA-4B75-A18D-898E7DE21B17}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B9EEACDD-CAFA-4B75-A18D-898E7DE21B17}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B9EEACDD-CAFA-4B75-A18D-898E7DE21B17}.Release|Any CPU.Build.0 = Release|Any CPU
-		{55CBAADE-7040-46D6-A845-F207B4F0E281}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{55CBAADE-7040-46D6-A845-F207B4F0E281}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{55CBAADE-7040-46D6-A845-F207B4F0E281}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{55CBAADE-7040-46D6-A845-F207B4F0E281}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7C4026CA-6434-4762-8B77-D657EAEE1325}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7C4026CA-6434-4762-8B77-D657EAEE1325}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C4026CA-6434-4762-8B77-D657EAEE1325}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -324,10 +323,6 @@ Global
 		{98F9556B-116F-49B5-9211-BB1D418446FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98F9556B-116F-49B5-9211-BB1D418446FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98F9556B-116F-49B5-9211-BB1D418446FF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9A4E3A68-904B-4835-A3C8-F664B73098DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9A4E3A68-904B-4835-A3C8-F664B73098DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9A4E3A68-904B-4835-A3C8-F664B73098DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9A4E3A68-904B-4835-A3C8-F664B73098DB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FF3E6E08-E8E4-4523-B526-847CD989279F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FF3E6E08-E8E4-4523-B526-847CD989279F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FF3E6E08-E8E4-4523-B526-847CD989279F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -408,18 +403,6 @@ Global
 		{64E3D8BB-93AB-4571-93F7-ED8D64DFFD06}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{64E3D8BB-93AB-4571-93F7-ED8D64DFFD06}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64E3D8BB-93AB-4571-93F7-ED8D64DFFD06}.Release|Any CPU.Build.0 = Release|Any CPU
-		{52158A12-E7EF-45A1-859F-06F9B17410CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{52158A12-E7EF-45A1-859F-06F9B17410CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{52158A12-E7EF-45A1-859F-06F9B17410CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{52158A12-E7EF-45A1-859F-06F9B17410CB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F38E511B-1877-4E8A-8051-7879FC7DF8A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F38E511B-1877-4E8A-8051-7879FC7DF8A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F38E511B-1877-4E8A-8051-7879FC7DF8A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F38E511B-1877-4E8A-8051-7879FC7DF8A4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4D7201BC-7124-4401-AD65-FAB58A053D45}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4D7201BC-7124-4401-AD65-FAB58A053D45}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4D7201BC-7124-4401-AD65-FAB58A053D45}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4D7201BC-7124-4401-AD65-FAB58A053D45}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E7F491CC-C37E-4A56-9CA7-8F77F59E0614}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E7F491CC-C37E-4A56-9CA7-8F77F59E0614}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E7F491CC-C37E-4A56-9CA7-8F77F59E0614}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -444,10 +427,6 @@ Global
 		{2770158A-D220-414B-ABC6-179371323579}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2770158A-D220-414B-ABC6-179371323579}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2770158A-D220-414B-ABC6-179371323579}.Release|Any CPU.Build.0 = Release|Any CPU
-		{380EE686-91F1-45B3-AEEB-755F0E5B068F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{380EE686-91F1-45B3-AEEB-755F0E5B068F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{380EE686-91F1-45B3-AEEB-755F0E5B068F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{380EE686-91F1-45B3-AEEB-755F0E5B068F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6E1A5FA3-E024-4972-9EDC-11E36C5A0D6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6E1A5FA3-E024-4972-9EDC-11E36C5A0D6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6E1A5FA3-E024-4972-9EDC-11E36C5A0D6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -480,6 +459,46 @@ Global
 		{9A07D215-90AC-4BAF-BCDB-73D74FD3A5C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9A07D215-90AC-4BAF-BCDB-73D74FD3A5C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9A07D215-90AC-4BAF-BCDB-73D74FD3A5C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4298057B-24E0-47B3-BB76-C17E81AF6B39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4298057B-24E0-47B3-BB76-C17E81AF6B39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4298057B-24E0-47B3-BB76-C17E81AF6B39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4298057B-24E0-47B3-BB76-C17E81AF6B39}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5EFF065-7AF5-4D7D-8038-CC419ABD8777}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5EFF065-7AF5-4D7D-8038-CC419ABD8777}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5EFF065-7AF5-4D7D-8038-CC419ABD8777}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5EFF065-7AF5-4D7D-8038-CC419ABD8777}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D85558E-15B9-4251-BDBD-9CB7933B57E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D85558E-15B9-4251-BDBD-9CB7933B57E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D85558E-15B9-4251-BDBD-9CB7933B57E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D85558E-15B9-4251-BDBD-9CB7933B57E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A2C122A-C1CD-4B6B-AE09-2ABB7D3C50CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A2C122A-C1CD-4B6B-AE09-2ABB7D3C50CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A2C122A-C1CD-4B6B-AE09-2ABB7D3C50CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A2C122A-C1CD-4B6B-AE09-2ABB7D3C50CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7AFB4975-9680-4668-9F5E-C3F0CA41E982}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7AFB4975-9680-4668-9F5E-C3F0CA41E982}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7AFB4975-9680-4668-9F5E-C3F0CA41E982}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7AFB4975-9680-4668-9F5E-C3F0CA41E982}.Release|Any CPU.Build.0 = Release|Any CPU
+		{304FCFFF-97DE-484B-8D8C-612C644426E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{304FCFFF-97DE-484B-8D8C-612C644426E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{304FCFFF-97DE-484B-8D8C-612C644426E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{304FCFFF-97DE-484B-8D8C-612C644426E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{921CF401-4C2F-4C6D-A750-0B5DC457C1F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{921CF401-4C2F-4C6D-A750-0B5DC457C1F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{921CF401-4C2F-4C6D-A750-0B5DC457C1F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{921CF401-4C2F-4C6D-A750-0B5DC457C1F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B0232B7-5F29-4FB5-B383-1AA02DFE1089}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B0232B7-5F29-4FB5-B383-1AA02DFE1089}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B0232B7-5F29-4FB5-B383-1AA02DFE1089}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B0232B7-5F29-4FB5-B383-1AA02DFE1089}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBD12B0B-6731-4DD4-9C13-86F34593E974}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBD12B0B-6731-4DD4-9C13-86F34593E974}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBD12B0B-6731-4DD4-9C13-86F34593E974}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBD12B0B-6731-4DD4-9C13-86F34593E974}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EF4364F-6E64-43CE-BED1-E6FE01024899}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EF4364F-6E64-43CE-BED1-E6FE01024899}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EF4364F-6E64-43CE-BED1-E6FE01024899}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EF4364F-6E64-43CE-BED1-E6FE01024899}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -489,7 +508,6 @@ Global
 		{E69578EB-B456-4062-A645-877CD964528B} = {F1D0972B-38CF-49C2-9F4B-4C5DE02FB71D}
 		{C1542297-8763-4DF4-957C-489ED771C21D} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
 		{D2E73927-5966-445C-94E9-EFE6F269C8D5} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
-		{9A4E3A68-904B-4835-A3C8-F664B73098DB} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{FF3E6E08-E8E4-4523-B526-847CD989279F} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{0935622B-9377-4056-8343-AE6ECDC274CF} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 		{2C7DD1DA-C229-4D9E-9AF0-BCD5CD3E4948} = {7CB2F02E-03FA-4FFF-89A5-C51F107623FD}
@@ -517,6 +535,7 @@ Global
 		{41B784AA-3301-4126-AF9F-1D59BD04B0BF} = {3277B1C0-BDFE-4460-9B0D-D9A661FB48DB}
 		{6C7A1595-36D6-4229-BBB5-5A6B5791791D} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
 		{9A07D215-90AC-4BAF-BCDB-73D74FD3A5C5} = {3862190B-E2C5-418E-AFDC-DB281FB5C705}
+		{F5EFF065-7AF5-4D7D-8038-CC419ABD8777} = {E359BB2B-9AEC-497D-B321-7DF2450C3B8E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55639B5C-0770-4A22-AB56-859604650521}

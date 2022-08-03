@@ -31,7 +31,7 @@ public class Program
     {
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter("MyCompany.MyProduct.MyLibrary")
-            .AddPrometheusExporter(options => { options.StartHttpListener = true; })
+            .AddPrometheusHttpListener()
             .Build();
 
         Console.WriteLine("Press any key to exit");

@@ -5,7 +5,6 @@
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == ''">net6.0</TargetFrameworks>
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) == '' AND $(OS) == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
     <TargetFrameworks Condition="$(TARGET_FRAMEWORK) != ''">$(TARGET_FRAMEWORK)</TargetFrameworks>
-    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\DelegatingTestExporter.cs" Link="Includes\DelegatingTestExporter.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\DelegatingExporter.cs" Link="Includes\DelegatingExporter.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="Includes\EventSourceTestHelper.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\SkipUnlessEnvVarFoundTheoryAttribute.cs" Link="Includes\SkipUnlessEnvVarFoundTheoryAttribute.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\SkipUnlessEnvVarFoundFactAttribute.cs" Link="Includes\SkipUnlessEnvVarFoundFactAttribute.cs" />

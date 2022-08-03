@@ -53,7 +53,6 @@ Here are the most commonly used components:
 Here are the [instrumentation
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library):
 
-* [ASP.NET](./src/OpenTelemetry.Instrumentation.AspNet/README.md)
 * [ASP.NET Core](./src/OpenTelemetry.Instrumentation.AspNetCore/README.md)
 * [Grpc.Net.Client](./src/OpenTelemetry.Instrumentation.GrpcNetClient/README.md)
 * [HTTP clients](./src/OpenTelemetry.Instrumentation.Http/README.md)
@@ -67,7 +66,8 @@ libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/ma
 * [Jaeger](./src/OpenTelemetry.Exporter.Jaeger/README.md)
 * [OTLP](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
   (OpenTelemetry Protocol)
-* [Prometheus](./src/OpenTelemetry.Exporter.Prometheus/README.md)
+* [Prometheus HttpListener](./src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md)
+* [Prometheus AspNetCore](./src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)
 * [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md)
 
 See the [OpenTelemetry registry](https://opentelemetry.io/registry/?s=net) for
@@ -111,13 +111,13 @@ If you have trouble accessing the doc, please get in touch on
 * [Alan West](https://github.com/alanwest), New Relic
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
 * [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
+* [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
 [Approvers](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver)
 ([@open-telemetry/dotnet-approvers](https://github.com/orgs/open-telemetry/teams/dotnet-approvers)):
 
 * [Reiley Yang](https://github.com/reyang), Microsoft
 * [Robert Paj&#x105;k](https://github.com/pellared), Splunk
-* [Utkarsh Umesan Pillai](https://github.com/utpilla), Microsoft
 
 [Emeritus
 Maintainer/Approver/Triager](https://github.com/open-telemetry/community/blob/main/community-membership.md#emeritus-maintainerapprovertriager):

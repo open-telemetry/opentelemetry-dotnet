@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 1.4.0-alpha.1
+
+Released 2022-Aug-02
+
+* Adds support for limiting the length and count of attributes exported from
+  the OTLP exporter. These
+  [Attribute Limits](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#attribute-limits)
+  are configured via the environment variables defined in the specification.
+  ([#3376](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3376))
+
+* The `MetricReaderOptions` defaults can be overridden using
+  `OTEL_METRIC_EXPORT_INTERVAL` and `OTEL_METRIC_EXPORT_TIMEOUT`
+  environmental variables as defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.12.0/specification/sdk-environment-variables.md#periodic-exporting-metricreader).
+  ([#3424](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3424))
+
 ## 1.3.0
 
 Released 2022-Jun-03
@@ -19,7 +35,7 @@ Released 2022-May-16
 
 * Support `HttpProtobuf` protocol with logs & added `HttpClientFactory`
 option
-([#3225](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3225))
+ ([#3225](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3225))
 
 * Removes net5.0 target and replaced with net6.0
   as .NET 5.0 is going out of support.
@@ -242,8 +258,8 @@ Released 2021-Apr-23
 
 * Null values in string arrays are preserved according to
   [spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/common/common.md).
-  ([#1919](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1919)) and
-  ([#1945](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1945)).
+  ([#1919](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1919)
+  [#1945](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1945))
 
 * When using OpenTelemetry.Extensions.Hosting you can now bind
   `OtlpExporterOptions` to `IConfiguration` using the `Configure` extension (ex:

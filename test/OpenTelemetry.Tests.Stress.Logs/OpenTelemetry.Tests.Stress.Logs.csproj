@@ -3,14 +3,14 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>net6.0;net5.0;netcoreapp3.1;net462</TargetFrameworks>
-    <IsPackable>false</IsPackable>
+    <TargetFrameworks>net6.0;net462</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests.Stress\Skeleton.cs" />
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus\OpenTelemetry.Exporter.Prometheus.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\OpenTelemetry.Exporter.Prometheus.HttpListener.csproj" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="[6.0.0,)" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="$(RuntimeInstrumentationPkgVer)" />
   </ItemGroup>
 
   <ItemGroup>

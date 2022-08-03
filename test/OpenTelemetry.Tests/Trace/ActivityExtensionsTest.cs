@@ -153,6 +153,43 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void RecordExceptionWithAdditionalTags()
+        {
+            var message = "message";
+            var exception = new ArgumentNullException(message, new Exception(message));
+            var activity = new Activity("test-activity");
+
+            var tags = new TagList
+            {
+                { "key1", "value1" },
+                { "key2", "value2" },
+            };
+
+            activity.RecordException(exception, tags);
+
+            // Additional tags passed in override attributes added from the exception
+            tags.Add(SemanticConventions.AttributeExceptionMessage, "SomeOtherExceptionMessage");
+            tags.Add(SemanticConventions.AttributeExceptionType, "SomeOtherExceptionType");
+
+            activity.RecordException(exception, tags);
+
+            var events = activity.Events.ToArray();
+            Assert.Equal(2, events.Length);
+
+            Assert.Equal(SemanticConventions.AttributeExceptionEventName, events[0].Name);
+            Assert.Equal(message, events[0].Tags.First(t => t.Key == SemanticConventions.AttributeExceptionMessage).Value);
+            Assert.Equal("System.ArgumentNullException", events[0].Tags.First(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
+            Assert.Equal("value1", events[0].Tags.First(t => t.Key == "key1").Value);
+            Assert.Equal("value2", events[0].Tags.First(t => t.Key == "key2").Value);
+
+            Assert.Equal(SemanticConventions.AttributeExceptionEventName, events[1].Name);
+            Assert.Equal("SomeOtherExceptionMessage", events[1].Tags.First(t => t.Key == SemanticConventions.AttributeExceptionMessage).Value);
+            Assert.Equal("SomeOtherExceptionType", events[1].Tags.First(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
+            Assert.Equal("value1", events[1].Tags.First(t => t.Key == "key1").Value);
+            Assert.Equal("value2", events[1].Tags.First(t => t.Key == "key2").Value);
+        }
+
+        [Fact]
         public void GetTagValueEmpty()
         {
             Activity activity = new Activity("Test");

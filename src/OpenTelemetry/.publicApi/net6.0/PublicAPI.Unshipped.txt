@@ -1,0 +1,20 @@
+OpenTelemetry.Logs.LogRecord.CategoryName.set -> void
+OpenTelemetry.Logs.LogRecord.EventId.set -> void
+OpenTelemetry.Logs.LogRecord.Exception.set -> void
+OpenTelemetry.Logs.LogRecord.LogLevel.set -> void
+OpenTelemetry.Logs.LogRecord.SpanId.set -> void
+OpenTelemetry.Logs.LogRecord.Timestamp.set -> void
+OpenTelemetry.Logs.LogRecord.TraceFlags.set -> void
+OpenTelemetry.Logs.LogRecord.TraceId.set -> void
+OpenTelemetry.Logs.LogRecord.TraceState.set -> void
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ConfigureResource(System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
+OpenTelemetry.Logs.OpenTelemetryLoggerProvider.ForceFlush(int timeoutMilliseconds = -1) -> bool
+OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider() -> void
+OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider(System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>! configure) -> void
+*REMOVED*static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configure = null) -> Microsoft.Extensions.Logging.ILoggingBuilder!
+static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder) -> Microsoft.Extensions.Logging.ILoggingBuilder!
+static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, OpenTelemetry.Logs.OpenTelemetryLoggerProvider! openTelemetryLoggerProvider) -> Microsoft.Extensions.Logging.ILoggingBuilder!
+static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, OpenTelemetry.Logs.OpenTelemetryLoggerProvider! openTelemetryLoggerProvider, bool disposeProvider) -> Microsoft.Extensions.Logging.ILoggingBuilder!
+static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configure) -> Microsoft.Extensions.Logging.ILoggingBuilder!
+~static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder> configure) -> OpenTelemetry.Metrics.MeterProviderBuilder
+~static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder> configure) -> OpenTelemetry.Trace.TracerProviderBuilder

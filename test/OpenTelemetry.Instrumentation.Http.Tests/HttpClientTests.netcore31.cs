@@ -22,9 +22,9 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Moq;
-using Newtonsoft.Json;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -66,7 +66,6 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using (Sdk.CreateTracerProviderBuilder()
                                .AddHttpClientInstrumentation((opt) =>
                                {
-                                   opt.SetHttpFlavor = tc.SetHttpFlavor;
                                    opt.Enrich = ActivityEnrichment;
                                    opt.RecordException = tc.RecordException ?? false;
                                })
@@ -129,7 +128,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
 
             foreach (var kv in normalizedAttributesTestCase)
             {
-                Assert.Contains(activity.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.InvariantCultureIgnoreCase));
+                Assert.Contains(activity.TagObjects, i => i.Key == kv.Key && i.Value.ToString().Equals(kv.Value, StringComparison.OrdinalIgnoreCase));
             }
 
             if (tc.RecordException.HasValue && tc.RecordException.Value)
@@ -186,27 +185,30 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
         [Fact]
         public async Task DebugIndividualTestAsync()
         {
-            var serializer = new JsonSerializer();
-            var input = serializer.Deserialize<HttpTestData.HttpOutTestCase[]>(new JsonTextReader(new StringReader(@"
-[
-  {
-    ""name"": ""Response code: 399"",
-    ""method"": ""GET"",
-    ""url"": ""http://{host}:{port}/"",
-    ""responseCode"": 399,
-    ""responseExpected"": true,
-    ""spanName"": ""HTTP GET"",
-    ""spanStatus"": ""UNSET"",
-    ""spanKind"": ""Client"",
-    ""spanAttributes"": {
-      ""http.method"": ""GET"",
-      ""http.host"": ""{host}:{port}"",
-      ""http.status_code"": ""399"",
-      ""http.url"": ""http://{host}:{port}/""
-    }
-  }
-]
-")));
+            var input = JsonSerializer.Deserialize<HttpTestData.HttpOutTestCase[]>(
+                @"
+                [
+                  {
+                    ""name"": ""Response code: 399"",
+                    ""method"": ""GET"",
+                    ""url"": ""http://{host}:{port}/"",
+                    ""responseCode"": 399,
+                    ""responseExpected"": true,
+                    ""spanName"": ""HTTP GET"",
+                    ""spanStatus"": ""UNSET"",
+                    ""spanKind"": ""Client"",
+                    ""spanAttributes"": {
+                      ""http.scheme"": ""http"",
+                      ""http.method"": ""GET"",
+                      ""http.host"": ""{host}:{port}"",
+                      ""http.status_code"": ""399"",
+                      ""http.flavor"": ""2.0"",
+                      ""http.url"": ""http://{host}:{port}/""
+                    }
+                  }
+                ]
+                ",
+                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
             var t = (Task)this.GetType().InvokeMember(nameof(this.HttpOutCallsAreCollectedSuccessfullyAsync), BindingFlags.InvokeMethod, null, this, HttpTestData.GetArgumentsFromTestCaseObject(input).First());
             await t;
