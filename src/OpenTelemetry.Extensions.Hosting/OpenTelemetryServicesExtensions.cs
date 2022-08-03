@@ -38,7 +38,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services)
         {
-            return services.AddOpenTelemetryTracing((builder) => { });
+            return services.AddOpenTelemetryTracing(builder: null, configure: null);
         }
 
         /// <summary>
@@ -51,11 +51,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             Guard.ThrowIfNull(configure);
 
-            var builder = new TracerProviderBuilderHosting(services);
-
-            configure(builder);
-
-            return services.AddOpenTelemetryTracing(builder);
+            return services.AddOpenTelemetryTracing(new TracerProviderBuilderHosting(services), configure);
         }
 
         /// <summary>
@@ -89,19 +85,25 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
         /// <param name="builder"><see cref="TracerProviderBuilder"/>.</param>
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-        private static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, TracerProviderBuilderHosting builder)
+        private static IServiceCollection AddOpenTelemetryTracing(
+            this IServiceCollection services,
+            TracerProviderBuilderHosting builder,
+            Action<TracerProviderBuilder> configure)
         {
             Guard.ThrowIfNull(services);
-            Guard.ThrowIfNull(builder);
 
             // Accessing Sdk class is just to trigger its static ctor,
             // which sets default Propagators and default Activity Id format
             _ = Sdk.SuppressInstrumentation;
 
+            if (builder != null)
+            {
+                configure?.Invoke(builder);
+                services.AddSingleton(builder);
+            }
+
             try
             {
-                services.AddSingleton(builder);
-
                 services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
                 services.TryAddSingleton(sp =>
                 {
@@ -122,8 +124,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
                     if (firstBuilder == null)
                     {
-                        // Note: This should never happen.
-                        throw new InvalidOperationException("Could not resolve TracerProviderBuilder.");
+                        firstBuilder = new TracerProviderBuilderHosting(services);
                     }
 
                     firstBuilder.SetServiceProvider(sp);
