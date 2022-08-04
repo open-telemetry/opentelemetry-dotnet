@@ -43,7 +43,11 @@ namespace OpenTelemetry.Trace
 
         protected TracerProviderBuilderBase()
         {
-            this.Services = new ServiceCollection();
+            var services = new ServiceCollection();
+
+            services.AddOptions();
+
+            this.Services = services;
             this.ownsServices = true;
         }
 
