@@ -21,7 +21,7 @@ using System.Linq;
 #endif
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Exporter.Prometheus.Implementation;
+using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;

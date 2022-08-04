@@ -18,7 +18,7 @@ using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenTelemetry.Exporter.Prometheus.Implementation;
+using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter

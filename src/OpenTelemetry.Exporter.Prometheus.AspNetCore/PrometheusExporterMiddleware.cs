@@ -18,7 +18,7 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using OpenTelemetry.Exporter.Prometheus.Implementation;
+using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 
