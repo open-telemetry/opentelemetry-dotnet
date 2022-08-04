@@ -34,6 +34,11 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <summary>
         /// Adds OpenTelemetry TracerProvider to the specified <see cref="IServiceCollection" />.
         /// </summary>
+        /// <remarks>
+        /// Note: This is safe to be called more than once and should be used by
+        /// library authors to ensure at least one <see cref="TracerProvider"/>
+        /// is registered.
+        /// </remarks>
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
         public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services)
@@ -44,6 +49,11 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <summary>
         /// Adds OpenTelemetry TracerProvider to the specified <see cref="IServiceCollection" />.
         /// </summary>
+        /// <remarks>
+        /// Note: This is should only be called once during application
+        /// bootstrap for a given <see cref="IServiceCollection"/>. This should
+        /// not be used by library authors.
+        /// </remarks>
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
         /// <param name="configure">Callback action to configure the <see cref="TracerProviderBuilder"/>.</param>
         /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
