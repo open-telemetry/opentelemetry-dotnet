@@ -25,8 +25,8 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
-using OtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
-using OtlpMetrics = Opentelemetry.Proto.Metrics.V1;
+using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
+using OtlpMetrics = OpenTelemetry.Proto.Metrics.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
