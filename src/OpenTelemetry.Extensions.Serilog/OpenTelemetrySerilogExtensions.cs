@@ -50,5 +50,19 @@ namespace Serilog
             return loggerConfiguration.Sink(new OpenTelemetrySerilogSink(openTelemetryLoggerProvider, disposeProvider));
 #pragma warning restore CA2000 // Dispose objects before losing scope
         }
+
+        /// <summary>
+        /// Enrich logger output with information regarding the <see
+        /// cref="System.Diagnostics.Activity"/> at the time of logging, if any.
+        /// </summary>
+        /// <param name="loggerEnrichmentConfiguration"><see
+        /// cref="LoggerEnrichmentConfiguration"/>.</param>
+        /// <returns>Associated <see cref="LoggerConfiguration"/> for chaining calls.</returns>
+        public static LoggerConfiguration WithOpenTelemetry(
+            this LoggerEnrichmentConfiguration loggerEnrichmentConfiguration)
+        {
+            Guard.ThrowIfNull(loggerEnrichmentConfiguration);
+            return loggerEnrichmentConfiguration.With<OpenTelemetrySerilogEnricher>();
+        }
     }
 }
