@@ -9,7 +9,7 @@ name: dotnet format
 
 on:
   pull_request:
-    branches: [ main, net7.0 ]
+    branches: [ main ]
     paths:
     - '**.md'
 
