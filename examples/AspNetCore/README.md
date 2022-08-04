@@ -31,13 +31,17 @@ scrape_configs:
   - job_name: "otel"
     scheme: https
     static_configs:
-      - targets: ["localhost:53750"]
+      - targets: ["localhost:<port>"]
 ```
 
-See the metrics at [https://localhost:53750/metrics](https://localhost:53750/metrics).
+Note: `<port>` is a randomly chosen port number. It is randomly chosen when running
+the example according to the
+[tutorial](https://docs.microsoft.com/aspnet/core/tutorials/first-web-api#test-the-project).
 
-Make a request at [https://localhost:53750/WeatherForecast](https://localhost:53750/WeatherForecast)
-for HTTP metrics.
+Now you should be able to see the metrics at `https://localhost:<port>/metrics`.
+
+The example creates a `WeatherForecast` API. To generate telemetry including HTTP
+metrics, make a request at `https://localhost:<port>/WeatherForecast`.
 
 ## References
 
