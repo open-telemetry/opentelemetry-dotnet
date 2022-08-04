@@ -27,7 +27,7 @@ the example for the first time according to the
 Switch to Prometheus by setting `UseMetricsExporter` to `"prometheus"` in `appsettings.json`.
 
 Follow this [guide](../../docs/metrics/getting-started-prometheus-grafana/README.md#collect-metrics-using-prometheus)
-on how to set up Prometheus.
+to set up Prometheus.
 
 Note that for this example, the `yml` file configuration needs an additional
 parameter `scheme` for HTTPS. Here goes an example:
@@ -43,6 +43,7 @@ scrape_configs:
       - targets: ["localhost:<port>"]
 ```
 
+Start the example project and Prometheus and keep them running.
 Now you should be able to see the metrics at `https://localhost:<port>/metrics`.
 
 ## References
