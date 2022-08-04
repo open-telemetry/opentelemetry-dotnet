@@ -2,11 +2,11 @@ name: Windows
 
 on:
   push:
-    branches: [ main, net7.0 ]
+    branches: [ main ]
     paths-ignore:
     - '**.md'
   pull_request:
-    branches: [ main, net7.0 ]
+    branches: [ main ]
     paths-ignore:
     - '**.md'
 
@@ -26,7 +26,7 @@ jobs:
       with:
         fetch-depth: 0 # fetching all
 
-    - uses: actions/setup-dotnet@v1
+    - uses: actions/setup-dotnet@v2
       with:
         dotnet-version: '7.0.x'
         include-prerelease: true
