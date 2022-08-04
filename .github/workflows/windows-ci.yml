@@ -2,26 +2,34 @@ name: Windows
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, net7.0 ]
     paths-ignore:
     - '**.md'
   pull_request:
-    branches: [ main ]
+    branches: [ main, net7.0 ]
     paths-ignore:
     - '**.md'
 
 jobs:
   build-test:
     runs-on: windows-latest
+    env:
+      # https://github.com/actions/setup-dotnet/issues/122
+      DOTNET_MULTILEVEL_LOOKUP: 1
 
     strategy:
       matrix:
-        version: [net462,netcoreapp3.1,net6.0]
+        version: [net462,net6.0,net7.0]
 
     steps:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # fetching all
+
+    - uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '7.0.x'
+        include-prerelease: true
 
     - name: Install dependencies
       run: dotnet restore
