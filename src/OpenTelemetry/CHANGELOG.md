@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Added `Sdk.CreateLoggerProviderBuilder` method and support for dependency
+  injection scenarios when configuring `OpenTelemetryLoggerProvider`
+  ([#3504](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3504))
+
 ## 1.4.0-alpha.1
 
 Released 2022-Aug-02
@@ -30,10 +34,6 @@ Released 2022-Aug-02
 * Added AddOpenTelemetry `ILoggingBuilder` extensions which accept
   `OpenTelemetryLoggerProvider` directly
   ([#3489](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3489))
-
-* Added `Sdk.CreateLoggerProviderBuilder` method and support for dependency
-  injection scenarios when configuring `OpenTelemetryLoggerProvider`
-  ([#3504](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3504))
 
 ## 1.3.0
 
