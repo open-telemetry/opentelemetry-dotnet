@@ -15,8 +15,7 @@
 // </copyright>
 
 using System;
-using OpenTelemetry.Exporter.Prometheus.AspNetCore;
-using OpenTelemetry.Exporter.Prometheus.Shared;
+using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics
@@ -51,7 +50,7 @@ namespace OpenTelemetry.Metrics
         {
             configure?.Invoke(options);
 
-            var exporter = new PrometheusExporter(options);
+            var exporter = new PrometheusExporter(scrapeResponseCacheDurationMilliseconds: options.ScrapeResponseCacheDurationMilliseconds);
             var reader = new BaseExportingMetricReader(exporter)
             {
                 TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,

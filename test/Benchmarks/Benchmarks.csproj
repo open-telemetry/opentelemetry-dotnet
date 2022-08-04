@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>net6.0;netcoreapp3.1;net462</TargetFrameworks>
+    <TargetFrameworks>net6.0;net462</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,6 +29,6 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Zipkin\OpenTelemetry.Exporter.Zipkin.csproj" Aliases="Zipkin" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.AspNetCore\OpenTelemetry.Instrumentation.AspNetCore.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.Http\OpenTelemetry.Instrumentation.Http.csproj" />
-    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.Shared\OpenTelemetry.Exporter.Prometheus.Shared.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\OpenTelemetry.Exporter.Prometheus.HttpListener.csproj" />
   </ItemGroup>
 </Project>
