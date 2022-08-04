@@ -243,6 +243,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prom
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus.HttpListener.Tests", "test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests.csproj", "{4EF4364F-6E64-43CE-BED1-E6FE01024899}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Tests.Stress.Traces", "test\OpenTelemetry.Tests.Stress.Traces\OpenTelemetry.Tests.Stress.Traces.csproj", "{5697662B-5F14-4E32-BB11-1D8942782AB6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -505,6 +507,10 @@ Global
 		{4EF4364F-6E64-43CE-BED1-E6FE01024899}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4EF4364F-6E64-43CE-BED1-E6FE01024899}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4EF4364F-6E64-43CE-BED1-E6FE01024899}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5697662B-5F14-4E32-BB11-1D8942782AB6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5697662B-5F14-4E32-BB11-1D8942782AB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5697662B-5F14-4E32-BB11-1D8942782AB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5697662B-5F14-4E32-BB11-1D8942782AB6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
