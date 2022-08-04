@@ -55,7 +55,7 @@ namespace OpenTelemetry.Metrics
         {
             configure?.Invoke(options);
 
-            var exporter = new PrometheusExporter(scrapeEndpointPath: options.ScrapeEndpointPath);
+            var exporter = new PrometheusExporter();
 
             var reader = new BaseExportingMetricReader(exporter)
             {

@@ -16,7 +16,7 @@
 
 using System;
 using OpenTelemetry.Internal;
-using OtlpCommon = Opentelemetry.Proto.Common.V1;
+using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 

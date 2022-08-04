@@ -23,10 +23,10 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
-using OtlpCollector = Opentelemetry.Proto.Collector.Logs.V1;
-using OtlpCommon = Opentelemetry.Proto.Common.V1;
-using OtlpLogs = Opentelemetry.Proto.Logs.V1;
-using OtlpResource = Opentelemetry.Proto.Resource.V1;
+using OtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
+using OtlpCommon = OpenTelemetry.Proto.Common.V1;
+using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
+using OtlpResource = OpenTelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {

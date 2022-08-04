@@ -43,7 +43,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
             this.exporter = exporter;
 
-            string path = this.exporter.ScrapeEndpointPath;
+            string path = options.ScrapeEndpointPath;
 
             if (!path.StartsWith("/"))
             {
