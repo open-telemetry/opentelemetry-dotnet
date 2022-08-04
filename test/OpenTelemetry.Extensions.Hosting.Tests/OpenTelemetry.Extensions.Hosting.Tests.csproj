@@ -31,7 +31,7 @@
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="6.0.0" />
   </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="7.0.0-preview.6.22330.3" />
   </ItemGroup>
 
