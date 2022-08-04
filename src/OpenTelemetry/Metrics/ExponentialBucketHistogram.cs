@@ -28,7 +28,7 @@ namespace OpenTelemetry.Metrics;
 /// identified by <c>Bucket[index] = ( base ^ index, base ^ (index + 1) ]</c>,
 /// where <c>index</c> is an integer.
 /// </summary>
-internal class ExponentialBucketHistogram
+public class ExponentialBucketHistogram
 {
     private static readonly double Log2E = Math.Log2(Math.E); // 1 / Math.Log(2)
 
@@ -46,7 +46,7 @@ internal class ExponentialBucketHistogram
     {
     }
 
-    internal ExponentialBucketHistogram(int maxBuckets, int scale)
+    public ExponentialBucketHistogram(int maxBuckets, int scale)
     {
         /*
         The following table is calculated based on [ MapToIndex(double.Epsilon), MapToIndex(double.MaxValue) ]:
