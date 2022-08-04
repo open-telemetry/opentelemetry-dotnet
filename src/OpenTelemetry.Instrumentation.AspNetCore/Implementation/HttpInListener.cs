@@ -188,7 +188,15 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 var response = context.Response;
 
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
+                //activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
+                if (response.StatusCode > 200 && response.StatusCode <= 299)
+                {
+                    activity.SetStatus(ActivityStatusCode.Ok);
+                }
+                else
+                {
+                    activity.SetStatus(ActivityStatusCode.Error, string.Concat("httpStatusCode: ", response.StatusCode));
+                }
 
 #if !NETSTANDARD2_0
                 if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
@@ -197,7 +205,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
                 else if (activity.GetStatus().StatusCode == StatusCode.Unset)
                 {
-                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
+                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCodeNew(activity.Kind, response.StatusCode));
                 }
 #else
                 if (activity.GetStatus().StatusCode == StatusCode.Unset)

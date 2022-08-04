@@ -44,7 +44,7 @@ namespace OpenTelemetry.Trace
         public const string AttributeHttpTarget = "http.target";
         public const string AttributeHttpHost = "http.host";
         public const string AttributeHttpScheme = "http.scheme";
-        public const string AttributeHttpStatusCode = "http.status_code";
+        //public const string AttributeHttpStatusCode = "http.status_code";
         public const string AttributeHttpStatusText = "http.status_text";
         public const string AttributeHttpFlavor = "http.flavor";
         public const string AttributeHttpServerName = "http.server_name";

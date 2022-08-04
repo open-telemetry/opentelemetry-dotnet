@@ -44,13 +44,22 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 var request = response.RequestMessage;
 
+                if (response.IsSuccessStatusCode)
+                {
+                    activity.SetStatus(ActivityStatusCode.Ok);
+                }
+                else
+                {
+                    activity.SetStatus(ActivityStatusCode.Error, string.Concat("httpStatusCode:", response.StatusCode));
+                }
+
                 // TODO: This is just a minimal set of attributes. See the spec for additional attributes:
                 // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/http-metrics.md#http-client
                 var tags = new KeyValuePair<string, object>[]
                 {
                     new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method)),
                     new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme),
-                    new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode),
+                    //new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode),
                     new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version)),
                 };
 

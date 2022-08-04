@@ -136,19 +136,19 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 // requestTaskStatus is not null
                 _ = this.stopRequestStatusFetcher.TryFetch(payload, out var requestTaskStatus);
 
-                StatusCode currentStatusCode = activity.GetStatus().StatusCode;
+                ActivityStatusCode currentStatusCode = activity.Status;
                 if (requestTaskStatus != TaskStatus.RanToCompletion)
                 {
                     if (requestTaskStatus == TaskStatus.Canceled)
                     {
-                        if (currentStatusCode == StatusCode.Unset)
+                        if (currentStatusCode == ActivityStatusCode.Unset)
                         {
                             activity.SetStatus(Status.Error);
                         }
                     }
                     else if (requestTaskStatus != TaskStatus.Faulted)
                     {
-                        if (currentStatusCode == StatusCode.Unset)
+                        if (currentStatusCode == ActivityStatusCode.Unset)
                         {
                             // Faults are handled in OnException and should already have a span.Status of Error w/ Description.
                             activity.SetStatus(Status.Error);
@@ -158,11 +158,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 if (this.stopResponseFetcher.TryFetch(payload, out HttpResponseMessage response) && response != null)
                 {
-                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
+                    //activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
 
-                    if (currentStatusCode == StatusCode.Unset)
+                    if (currentStatusCode == ActivityStatusCode.Unset)
                     {
-                        activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode));
+                        activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCodeNew(activity.Kind, (int)response.StatusCode));
                     }
 
                     try

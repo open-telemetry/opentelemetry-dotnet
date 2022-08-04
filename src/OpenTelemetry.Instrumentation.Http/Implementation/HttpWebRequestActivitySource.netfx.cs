@@ -117,7 +117,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
+                //activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
 
                 activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode));
 
@@ -145,7 +145,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             {
                 if (wexc.Response is HttpWebResponse response)
                 {
-                    activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
+                    //activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
 
                     status = SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode);
                 }
