@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -64,13 +63,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using (serverLifeTime)
 
             using (Sdk.CreateTracerProviderBuilder()
-                               .AddHttpClientInstrumentation((opt) =>
-                               {
-                                   opt.Enrich = ActivityEnrichment;
-                                   opt.RecordException = tc.RecordException ?? false;
-                               })
-                               .AddProcessor(processor.Object)
-                               .Build())
+                        .AddHttpClientInstrumentation((opt) =>
+                        {
+                            opt.Enrich = ActivityEnrichment;
+                            opt.RecordException = tc.RecordException ?? false;
+                        })
+                        .AddProcessor(processor.Object)
+                        .Build())
             {
                 try
                 {
