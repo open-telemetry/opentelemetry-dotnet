@@ -40,6 +40,8 @@ the example for the first time according to the
 
 Now you should be able to see the metrics at `https://localhost:<port>/metrics`.
 
+## How to run the example
+
 The example creates a `WeatherForecast` API. To generate telemetry including HTTP
 metrics, make a request at `https://localhost:<port>/WeatherForecast`.
 
