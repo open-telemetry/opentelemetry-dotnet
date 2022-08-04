@@ -28,7 +28,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
     {
         internal static readonly AssemblyName AssemblyName = typeof(HttpHandlerDiagnosticListener).Assembly.GetName();
-        internal static readonly string ActivitySourceName = AssemblyName.Name;
+        internal static readonly string ActivitySourceName = AssemblyName.Name + ".HttpClient";
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
 
