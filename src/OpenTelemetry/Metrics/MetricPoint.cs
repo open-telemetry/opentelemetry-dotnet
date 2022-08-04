@@ -336,23 +336,14 @@ namespace OpenTelemetry.Metrics
                             }
                         }
 
-                        var sw = default(SpinWait);
-                        while (true)
+                        lock (this.histogramBuckets.LockObject)
                         {
-                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            unchecked
                             {
-                                unchecked
-                                {
-                                    this.runningValue.AsLong++;
-                                    this.histogramBuckets.RunningSum += number;
-                                    this.histogramBuckets.RunningBucketCounts[i]++;
-                                }
-
-                                this.histogramBuckets.IsCriticalSectionOccupied = 0;
-                                break;
+                                this.runningValue.AsLong++;
+                                this.histogramBuckets.RunningSum += number;
+                                this.histogramBuckets.RunningBucketCounts[i]++;
                             }
-
-                            sw.SpinOnce();
                         }
 
                         break;
@@ -360,22 +351,13 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramSumCount:
                     {
-                        var sw = default(SpinWait);
-                        while (true)
+                        lock (this.histogramBuckets.LockObject)
                         {
-                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            unchecked
                             {
-                                unchecked
-                                {
-                                    this.runningValue.AsLong++;
-                                    this.histogramBuckets.RunningSum += number;
-                                }
-
-                                this.histogramBuckets.IsCriticalSectionOccupied = 0;
-                                break;
+                                this.runningValue.AsLong++;
+                                this.histogramBuckets.RunningSum += number;
                             }
-
-                            sw.SpinOnce();
                         }
 
                         break;
