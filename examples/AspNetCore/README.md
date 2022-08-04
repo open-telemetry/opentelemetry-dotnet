@@ -34,8 +34,8 @@ scrape_configs:
       - targets: ["localhost:<port>"]
 ```
 
-Note: `<port>` is a randomly chosen port number. It is randomly chosen when running
-the example according to the
+Note: `<port>` is a randomly chosen port number. It is generated when running
+the example for the first time according to the
 [tutorial](https://docs.microsoft.com/aspnet/core/tutorials/first-web-api#test-the-project).
 
 Now you should be able to see the metrics at `https://localhost:<port>/metrics`.
