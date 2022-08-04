@@ -28,6 +28,10 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
     {
         internal static readonly AssemblyName AssemblyName = typeof(HttpHandlerDiagnosticListener).Assembly.GetName();
+        internal static readonly bool IsNet7OrGreater;
+
+        // https://github.com/dotnet/runtime/blob/7d034ddbbbe1f2f40c264b323b3ed3d6b3d45e9a/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L19
+        internal static readonly string HttpClientActivitySourceName = "System.Net.Http";
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
@@ -39,6 +43,18 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
         private readonly PropertyFetcher<TaskStatus> stopRequestStatusFetcher = new("RequestTaskStatus");
         private readonly HttpClientInstrumentationOptions options;
+
+        static HttpHandlerDiagnosticListener()
+        {
+            try
+            {
+                IsNet7OrGreater = typeof(HttpClient).Assembly.GetName().Version.Major >= 7;
+            }
+            catch (Exception)
+            {
+                IsNet7OrGreater = false;
+            }
+        }
 
         public HttpHandlerDiagnosticListener(HttpClientInstrumentationOptions options)
             : base("HttpHandlerDiagnosticListener")
@@ -58,7 +74,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             // By this time, samplers have already run and
             // activity.IsAllDataRequested populated accordingly.
 
-            if (Sdk.SuppressInstrumentation)
+            // For .NET7.0 or higher versions, activity is created using activity source
+            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
+            // To prevent processing such activities we first check the source name to confirm if it was created using
+            // activity source or not.
+            if (Sdk.SuppressInstrumentation || (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name)))
             {
                 return;
             }
@@ -108,8 +128,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-                ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
-                ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
+                if (!IsNet7OrGreater)
+                {
+                    ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+                    ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
+                }
 
                 activity.SetTag(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
@@ -130,6 +153,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public override void OnStopActivity(Activity activity, object payload)
         {
+            // For .NET7.0 or higher versions, activity is created using activity source
+            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
+            // To prevent processing such activities we first check the source name to confirm if it was created using
+            // activity source or not.
+            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
+            {
+                return;
+            }
+
             if (activity.IsAllDataRequested)
             {
                 // https://github.com/dotnet/runtime/blob/master/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
@@ -179,6 +211,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public override void OnException(Activity activity, object payload)
         {
+            // For .NET7.0 or higher versions, activity is created using activity source
+            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
+            // To prevent processing such activities we first check the source name to confirm if it was created using
+            // activity source or not.
+            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
+            {
+                return;
+            }
+
             if (activity.IsAllDataRequested)
             {
                 if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
