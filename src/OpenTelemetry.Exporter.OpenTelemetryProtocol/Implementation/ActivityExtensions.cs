@@ -27,10 +27,10 @@ using Google.Protobuf.Collections;
 using OpenTelemetry.Configuration;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
-using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
-using OtlpCommon = Opentelemetry.Proto.Common.V1;
-using OtlpResource = Opentelemetry.Proto.Resource.V1;
-using OtlpTrace = Opentelemetry.Proto.Trace.V1;
+using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
+using OtlpCommon = OpenTelemetry.Proto.Common.V1;
+using OtlpResource = OpenTelemetry.Proto.Resource.V1;
+using OtlpTrace = OpenTelemetry.Proto.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
