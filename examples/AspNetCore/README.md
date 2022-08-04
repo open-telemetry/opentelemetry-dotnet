@@ -13,6 +13,15 @@ service name, version and the machine on which this program is running.
 The sample rate is set to emit all the traces using `AlwaysOnSampler`.
 You can try out different samplers like `TraceIdRatioBasedSampler`.
 
+## How to run the example
+
+The example creates a `WeatherForecast` API. To generate telemetry including HTTP
+metrics, make a request at `https://localhost:<port>/WeatherForecast`.
+
+Note: `<port>` is a randomly chosen port number. It is generated when running
+the example for the first time according to the
+[tutorial](https://docs.microsoft.com/aspnet/core/tutorials/first-web-api#test-the-project).
+
 ## Export metrics to Prometheus
 
 Switch to Prometheus by setting `UseMetricsExporter` to `"prometheus"` in `appsettings.json`.
@@ -34,16 +43,7 @@ scrape_configs:
       - targets: ["localhost:<port>"]
 ```
 
-Note: `<port>` is a randomly chosen port number. It is generated when running
-the example for the first time according to the
-[tutorial](https://docs.microsoft.com/aspnet/core/tutorials/first-web-api#test-the-project).
-
 Now you should be able to see the metrics at `https://localhost:<port>/metrics`.
-
-## How to run the example
-
-The example creates a `WeatherForecast` API. To generate telemetry including HTTP
-metrics, make a request at `https://localhost:<port>/WeatherForecast`.
 
 ## References
 
