@@ -129,7 +129,7 @@ internal static class MathHelper
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsFinite(double value)
     {
-#if NETCOREAPP3_1_OR_GREATER
+#if NET6_0_OR_GREATER
         return double.IsFinite(value);
 #else
         return !double.IsInfinity(value) && !double.IsNaN(value);

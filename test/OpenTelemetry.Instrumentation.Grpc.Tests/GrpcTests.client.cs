@@ -142,7 +142,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     .AddProcessor(processor.Object)
                     .Build())
             {
-#if NETCOREAPP3_1
+#if NET6_0_OR_GREATER
                 using var channel = GrpcChannel.ForAddress(uri);
 #else
                 // With net5, based on the grpc changes, the quantity of default activities changed.
