@@ -15,12 +15,17 @@ You can try out different samplers like `TraceIdRatioBasedSampler`.
 
 ## How to run the example
 
-The example creates a `WeatherForecast` API. To generate telemetry including HTTP
+The example creates a `WeatherForecast` API based on the project in this
+[tutorial](https://docs.microsoft.com/aspnet/core/tutorials/first-web-api).
+
+Start the example project by following the [test the project step](https://docs.microsoft.com/aspnet/core/tutorials/first-web-api#test-the-project)
+in the tutorial.
+
+To generate telemetry including HTTP
 metrics, make a request at `https://localhost:<port>/WeatherForecast`.
 
 Note: `<port>` is a randomly chosen port number. It is generated when running
-the example for the first time according to the
-[tutorial](https://docs.microsoft.com/aspnet/core/tutorials/first-web-api#test-the-project).
+the example for the first time.
 
 ## Export metrics to Prometheus
 
@@ -29,7 +34,7 @@ Switch to Prometheus by setting `UseMetricsExporter` to `"prometheus"` in `appse
 Start the example project and keep it running.
 Now you should be able to see the metrics at `https://localhost:<port>/metrics`.
 
-To collect metrics using Prometheus, follow this [guide](../../docs/metrics/getting-started-prometheus-grafana/README.md#collect-metrics-using-prometheus).
+Collect metrics using Prometheus by following this [guide](../../docs/metrics/getting-started-prometheus-grafana/README.md#collect-metrics-using-prometheus).
 
 Note that for this example, the `yml` file configuration needs an additional
 parameter `scheme` for HTTPS. Here goes an example:
