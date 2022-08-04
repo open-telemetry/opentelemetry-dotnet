@@ -339,7 +339,7 @@ namespace OpenTelemetry.Metrics
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.CompareExchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1, 0) == 0)
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
                                 unchecked
@@ -365,7 +365,7 @@ namespace OpenTelemetry.Metrics
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.CompareExchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1, 0) == 0)
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
                                 unchecked
@@ -504,7 +504,7 @@ namespace OpenTelemetry.Metrics
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.CompareExchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1, 0) == 0)
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
                                 this.snapshotValue.AsLong = this.runningValue.AsLong;
@@ -542,7 +542,7 @@ namespace OpenTelemetry.Metrics
                         var sw = default(SpinWait);
                         while (true)
                         {
-                            if (Interlocked.CompareExchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1, 0) == 0)
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                             {
                                 // Lock acquired
                                 this.snapshotValue.AsLong = this.runningValue.AsLong;
