@@ -38,7 +38,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     {
         internal static readonly AssemblyName AssemblyName = typeof(HttpWebRequestActivitySource).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name + ".HttpWebRequest";
-        internal static string ActivityName = ActivitySourceName + ".HttpRequestOut";
+        internal static readonly string ActivityName = ActivitySourceName + ".HttpRequestOut";
 
         internal static readonly Func<HttpWebRequest, string, IEnumerable<string>> HttpWebRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Add(name, value);
