@@ -46,6 +46,7 @@ requires adding the package
 to the application.
 
 ```csharp
+using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 public class Program

@@ -26,6 +26,9 @@ using TestApp.AspNetCore._3._1;
 #if NET6_0
 using TestApp.AspNetCore._6._0;
 #endif
+#if NET7_0
+using TestApp.AspNetCore._7._0;
+#endif
 using Xunit.Abstractions;
 
 namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
