@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Moved some of the dependency injection support when configuring
+  `TracerProvider` into the SDK
+  ([#3533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3533))
+
 ## 1.0.0-rc9.5
 
 Released 2022-Aug-02
