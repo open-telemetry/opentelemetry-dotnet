@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Google.Protobuf.Collections;
 using Xunit;
-using OtlpCommon = Opentelemetry.Proto.Common.V1;
+using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {
