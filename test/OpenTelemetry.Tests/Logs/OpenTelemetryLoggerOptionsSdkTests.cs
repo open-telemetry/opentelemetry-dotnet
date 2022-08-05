@@ -48,7 +48,6 @@ public class OpenTelemetryLoggerOptionsSdkTests
     [Fact]
     public void CreateLoggerProviderBuilderExtensionPointsTest()
     {
-        int ctorConfigureInvocations = 0;
         int optionsConfigureInvocations = 0;
         OpenTelemetryLoggerProvider? providerFromConfigureCallback = null;
 
@@ -91,7 +90,6 @@ public class OpenTelemetryLoggerOptionsSdkTests
         Assert.Throws<NotSupportedException>(() => returnedOptions.ConfigureProvider((sp, p) => { }));
         Assert.Throws<NotSupportedException>(() => returnedOptions.Build());
 
-        Assert.Equal(1, ctorConfigureInvocations);
         Assert.Equal(2, optionsConfigureInvocations);
         Assert.NotNull(providerFromConfigureCallback);
         Assert.Equal(provider, providerFromConfigureCallback);
