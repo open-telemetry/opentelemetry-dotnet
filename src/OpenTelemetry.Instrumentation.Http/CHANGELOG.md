@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Changed activity source name from `OpenTelemetry.HttpWebRequest`
+  to `OpenTelemetry.Instrumentation.Http.HttpWebRequest` for `HttpWebRequest`s
+  and from `OpenTelemetry.Instrumentation.Http`
+  to `OpenTelemetry.Instrumentation.Http.HttpClient` for `HttpClient`.
+  ([#3515](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3515))
+
 ## 1.0.0-rc9.5
 
 Released 2022-Aug-02
