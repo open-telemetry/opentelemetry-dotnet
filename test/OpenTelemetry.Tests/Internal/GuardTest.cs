@@ -169,7 +169,7 @@ namespace OpenTelemetry.Internal.Tests
             public string Bar { get; set; }
         }
 
-#if !NETCOREAPP3_0_OR_GREATER
+#if !NET6_0_OR_GREATER
         /// <summary>
         /// Borrowed from: <see href="https://github.com/dotnet/runtime/blob/main/src/libraries/System.Runtime/tests/System/Runtime/CompilerServices/CallerArgumentExpressionAttributeTests.cs"/>.
         /// </summary>

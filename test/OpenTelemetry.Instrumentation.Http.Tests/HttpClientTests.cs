@@ -1,4 +1,4 @@
-// <copyright file="HttpClientTests.netcore31.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpClientTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if NETCOREAPP3_1_OR_GREATER
+#if !NETFRAMEWORK
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -64,13 +63,13 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             using (serverLifeTime)
 
             using (Sdk.CreateTracerProviderBuilder()
-                               .AddHttpClientInstrumentation((opt) =>
-                               {
-                                   opt.Enrich = ActivityEnrichment;
-                                   opt.RecordException = tc.RecordException ?? false;
-                               })
-                               .AddProcessor(processor.Object)
-                               .Build())
+                        .AddHttpClientInstrumentation((opt) =>
+                        {
+                            opt.Enrich = ActivityEnrichment;
+                            opt.RecordException = tc.RecordException ?? false;
+                        })
+                        .AddProcessor(processor.Object)
+                        .Build())
             {
                 try
                 {

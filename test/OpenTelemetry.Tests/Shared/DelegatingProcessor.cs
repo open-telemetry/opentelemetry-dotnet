@@ -1,4 +1,4 @@
-// <copyright file="Program.cs" company="OpenTelemetry Authors">
+// <copyright file="DelegatingProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,20 +14,18 @@
 // limitations under the License.
 // </copyright>
 
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
+using System;
 
-namespace TestApp.AspNetCore._3._1
+namespace OpenTelemetry.Tests;
+
+public class DelegatingProcessor<T> : BaseProcessor<T>
+    where T : class
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            CreateWebHostBuilder(args).Build().Run();
-        }
+    public Func<int, bool> OnForceFlushFunc { get; set; } = (timeout) => true;
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>();
-    }
+    public Func<int, bool> OnShutdownFunc { get; set; } = (timeout) => true;
+
+    protected override bool OnForceFlush(int timeoutMilliseconds) => this.OnForceFlushFunc(timeoutMilliseconds);
+
+    protected override bool OnShutdown(int timeoutMilliseconds) => this.OnShutdownFunc(timeoutMilliseconds);
 }

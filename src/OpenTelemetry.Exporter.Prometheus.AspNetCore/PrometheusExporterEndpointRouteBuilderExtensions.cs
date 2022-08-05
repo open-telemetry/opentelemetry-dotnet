@@ -18,7 +18,7 @@ using System;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using OpenTelemetry.Exporter.Prometheus;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 

@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_1_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER || NET6_0_OR_GREATER
 using Microsoft.Extensions.Options;
 #endif
 
@@ -34,7 +34,7 @@ namespace System
         public static T GetOptions<T>(this IServiceProvider serviceProvider)
             where T : class, new()
         {
-#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_1_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER || NET6_0_OR_GREATER
             IOptions<T> options = (IOptions<T>)serviceProvider.GetService(typeof(IOptions<T>));
 
             // Note: options could be null if user never invoked services.AddOptions().
