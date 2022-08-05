@@ -21,8 +21,8 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using Serilog;
 
-var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder(
-    options => options.IncludeFormattedMessage = true)
+var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+    .SetIncludeFormattedMessage(true)
     .ConfigureResource(builder => builder.AddService("Examples.LoggingExtensions"))
     .AddConsoleExporter()
     .Build();
