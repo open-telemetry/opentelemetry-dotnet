@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -65,15 +66,18 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Sets the sampler on the provider.
         /// </summary>
+        /// <remarks>
+        /// Note: The type specified by <typeparamref name="T"/> will be
+        /// registered as a singleton service into application services.
+        /// </remarks>
         /// <typeparam name="T">Sampler type.</typeparam>
         /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder SetSampler<T>(this TracerProviderBuilder tracerProviderBuilder)
             where T : Sampler
         {
-            return ConfigureBuilder(
-                tracerProviderBuilder,
-                (sp, builder) => builder.SetSampler(sp.GetRequiredService<T>()));
+            return tracerProviderBuilder
+                .ConfigureServices(services => services.TryAddSingleton<Sampler, T>());
         }
 
         /// <summary>
@@ -139,15 +143,18 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Adds a processor to the provider which will be retrieved using dependency injection.
         /// </summary>
+        /// <remarks>
+        /// Note: The type specified by <typeparamref name="T"/> will be
+        /// registered as a singleton service into application services.
+        /// </remarks>
         /// <typeparam name="T">Processor type.</typeparam>
         /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
         /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder AddProcessor<T>(this TracerProviderBuilder tracerProviderBuilder)
             where T : BaseProcessor<Activity>
         {
-            return ConfigureBuilder(
-                tracerProviderBuilder,
-                (sp, provider) => provider.AddProcessor(sp.GetRequiredService<T>()));
+            return tracerProviderBuilder
+                .ConfigureServices(services => services.TryAddSingleton<BaseProcessor<Activity>, T>());
         }
 
         /// <summary>

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
@@ -284,15 +285,21 @@ namespace OpenTelemetry.Trace
 
             // Step 3: Look for any samplers registered.
 
-            var registeredSampler = serviceProvider.GetService<Sampler>();
+            var registeredSamplers = serviceProvider.GetServices<Sampler>();
+            int registeredSamplerCount = registeredSamplers.Count();
+            if (registeredSamplerCount > 1)
+            {
+                throw new NotSupportedException("Multiple samplers registered in application services is not supported.");
+            }
+
             var sampler = this.sampler;
             if (sampler == null)
             {
-                sampler = registeredSampler ?? new ParentBasedSampler(new AlwaysOnSampler());
+                sampler = registeredSamplers.First() ?? new ParentBasedSampler(new AlwaysOnSampler());
             }
-            else if (registeredSampler != null)
+            else if (registeredSamplerCount > 0)
             {
-                throw new NotSupportedException("A sampler was registered in application services and set on tracer builder directly.");
+                throw new NotSupportedException("Setting sampler directly on tracer builder and through application services is not supported.");
             }
 
             // Step 4: Look for any processors registered.
