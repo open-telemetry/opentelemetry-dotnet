@@ -100,10 +100,23 @@ namespace OpenTelemetry.Logs
 
             this.ResourceBuilder = options.ResourceBuilder ?? ResourceBuilder.CreateDefault();
 
+            if (serviceProvider != null)
+            {
+                // Step 2: Look for any Action<IServiceProvider,
+                // OpenTelemetryLoggerProvider> configuration actions registered and
+                // execute them.
+
+                var registeredConfigurations = serviceProvider.GetServices<Action<IServiceProvider, OpenTelemetryLoggerProvider>>();
+                foreach (var registeredConfiguration in registeredConfigurations)
+                {
+                    registeredConfiguration?.Invoke(serviceProvider, this);
+                }
+            }
+
             var configurationActions = options.ConfigurationActions;
             if (configurationActions?.Count > 0)
             {
-                // Step 2: Execute any configuration actions.
+                // Step 3: Execute any configuration actions.
 
                 if (serviceProvider == null)
                 {
@@ -122,7 +135,7 @@ namespace OpenTelemetry.Logs
 
             if (serviceProvider != null)
             {
-                // Step 3: Look for any processors registered directly with the service provider.
+                // Step 4: Look for any processors registered directly with the service provider.
 
                 var registeredProcessors = serviceProvider.GetServices<BaseProcessor<LogRecord>>();
                 foreach (BaseProcessor<LogRecord> processor in registeredProcessors)

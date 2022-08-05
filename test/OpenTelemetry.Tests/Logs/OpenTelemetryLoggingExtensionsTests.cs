@@ -470,6 +470,24 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.Contains(resource.Attributes, kvp => kvp.Key == "key3");
     }
 
+    [Fact]
+    public void ServiceCollectionAddOpenTelemetryDetachedConfigurationTest()
+    {
+        int configurationInvocations = 0;
+
+        var services = new ServiceCollection();
+
+        services.AddLogging(configure => configure.AddOpenTelemetry());
+
+        services.AddSingleton<Action<IServiceProvider, OpenTelemetryLoggerProvider>>((sp, provider) => configurationInvocations++);
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+
+        Assert.Equal(1, configurationInvocations);
+    }
+
     private sealed class WrappedOpenTelemetryLoggerProvider : OpenTelemetryLoggerProvider
     {
         public bool Disposed { get; private set; }
