@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry ASP.NET Core instrumentation</Description>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
-    <TargetFrameworks>net6.0;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net7.0;net6.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,14 +27,14 @@
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestEventListener.cs" Link="TestEventListener.cs" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
+    <ProjectReference Include="$(RepoRoot)\test\TestApp.AspNetCore.7.0\TestApp.AspNetCore.7.0.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="7.0.0-preview.5.22303.8" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <ProjectReference Include="$(RepoRoot)\test\TestApp.AspNetCore.6.0\TestApp.AspNetCore.6.0.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="6.0.0" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
-    <ProjectReference Include="$(RepoRoot)\test\TestApp.AspNetCore.3.1\TestApp.AspNetCore.3.1.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="3.0.0" />
   </ItemGroup>
 
 </Project>
