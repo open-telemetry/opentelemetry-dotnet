@@ -142,13 +142,12 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     .AddProcessor(processor.Object)
                     .Build())
             {
-
-            // With net5, based on the grpc changes, the quantity of default activities changed.
-            // TODO: This is a workaround. https://github.com/open-telemetry/opentelemetry-dotnet/issues/1490
-            using var channel = GrpcChannel.ForAddress(uri, new GrpcChannelOptions()
-            {
-                HttpClient = new HttpClient(),
-            });
+                // With net5, based on the grpc changes, the quantity of default activities changed.
+                // TODO: This is a workaround. https://github.com/open-telemetry/opentelemetry-dotnet/issues/1490
+                using var channel = GrpcChannel.ForAddress(uri, new GrpcChannelOptions()
+                {
+                    HttpClient = new HttpClient(),
+                });
 
                 var client = new Greeter.GreeterClient(channel);
                 var rs = client.SayHello(new HelloRequest());
