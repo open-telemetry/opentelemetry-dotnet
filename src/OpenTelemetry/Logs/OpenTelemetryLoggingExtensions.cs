@@ -17,6 +17,7 @@
 #nullable enable
 
 using System;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -35,6 +36,11 @@ namespace Microsoft.Extensions.Logging
         /// <summary>
         /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
         /// </summary>
+        /// <remarks>
+        /// Note: This is safe to be called more than once and should be used by
+        /// library authors to ensure at least one <see
+        /// cref="OpenTelemetryLoggerProvider"/> is registered.
+        /// </remarks>
         /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
         /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
         public static ILoggingBuilder AddOpenTelemetry(this ILoggingBuilder builder)
@@ -43,6 +49,11 @@ namespace Microsoft.Extensions.Logging
         /// <summary>
         /// Adds an OpenTelemetry logger named 'OpenTelemetry' to the <see cref="ILoggerFactory"/>.
         /// </summary>
+        /// <remarks>
+        /// Note: This is should only be called once during application
+        /// bootstrap for a given <see cref="IServiceCollection"/>. This should
+        /// not be used by library authors.
+        /// </remarks>
         /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
         /// <param name="configure">Optional configuration action.</param>
         /// <returns>The supplied <see cref="ILoggingBuilder"/> for call chaining.</returns>
@@ -54,9 +65,15 @@ namespace Microsoft.Extensions.Logging
 
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, OpenTelemetryLoggerProvider>(sp =>
             {
-                var options = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
+                var registeredBuilders = sp.GetServices<TrackedOpenTelemetryLoggerOptions>();
+                if (registeredBuilders.Count() > 1)
+                {
+                    throw new NotSupportedException("Multiple logger provider builders cannot be registered in the same service collection.");
+                }
 
-                return new OpenTelemetryLoggerProvider(options, sp, ownsServiceProvider: false);
+                var finalOptions = sp.GetRequiredService<IOptionsMonitor<OpenTelemetryLoggerOptions>>().CurrentValue;
+
+                return new OpenTelemetryLoggerProvider(finalOptions, sp, ownsServiceProvider: false);
             }));
 
             // Note: This will bind logger options element (eg "Logging:OpenTelemetry") to OpenTelemetryLoggerOptions
@@ -76,6 +93,8 @@ namespace Microsoft.Extensions.Logging
                 var options = new OpenTelemetryLoggerOptions(builder.Services);
 
                 configure(options);
+
+                builder.Services.AddSingleton(new TrackedOpenTelemetryLoggerOptions(options));
 
                 /*
                  * Step 2: When ServiceProvider is built from "Services" and the
@@ -141,6 +160,16 @@ namespace Microsoft.Extensions.Logging
             }
 
             return builder;
+        }
+
+        private sealed class TrackedOpenTelemetryLoggerOptions
+        {
+            public TrackedOpenTelemetryLoggerOptions(OpenTelemetryLoggerOptions options)
+            {
+                this.Options = options;
+            }
+
+            public OpenTelemetryLoggerOptions Options { get; }
         }
     }
 }

@@ -29,7 +29,7 @@ namespace OpenTelemetry.Logs.Tests;
 public sealed class OpenTelemetryLoggingExtensionsTests
 {
     [Fact]
-    public void ServiceCollectionAddOpenTelemetryNoParametersTest()
+    public void LoggingBuilderAddOpenTelemetryNoParametersTest()
     {
         bool optionsCallbackInvoked = false;
 
@@ -55,10 +55,9 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     }
 
     [Theory]
-    [InlineData(1, 0)]
-    [InlineData(1, 1)]
-    [InlineData(5, 5)]
-    public void ServiceCollectionAddOpenTelemetryConfigureActionTests(int numberOfBuilderRegistrations, int numberOfOptionsRegistrations)
+    [InlineData(1)]
+    [InlineData(5)]
+    public void LoggingBuilderAddOpenTelemetryConfigureActionTests(int numberOfOptionsRegistrations)
     {
         int configureCallbackInvocations = 0;
         int optionsCallbackInvocations = 0;
@@ -68,10 +67,8 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         serviceCollection.AddLogging(configure =>
         {
-            for (int i = 0; i < numberOfBuilderRegistrations; i++)
-            {
-                configure.AddOpenTelemetry(ConfigureCallback);
-            }
+            configure.AddOpenTelemetry(); // <- Just to verify this doesn't cause a throw.
+            configure.AddOpenTelemetry(ConfigureCallback);
         });
 
         for (int i = 0; i < numberOfOptionsRegistrations; i++)
@@ -89,7 +86,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         Assert.NotNull(loggerFactory);
 
-        Assert.Equal(numberOfBuilderRegistrations, configureCallbackInvocations);
+        Assert.Equal(1, configureCallbackInvocations);
         Assert.Equal(numberOfOptionsRegistrations, optionsCallbackInvocations);
 
         void ConfigureCallback(OpenTelemetryLoggerOptions options)
@@ -124,7 +121,23 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     }
 
     [Fact]
-    public void ServiceCollectionAddOpenTelemetryWithProviderTest()
+    public void LoggingBuilderAddOpenTelemetryMultipleBuildersThrows()
+    {
+        var serviceCollection = new ServiceCollection();
+
+        serviceCollection.AddLogging(configure =>
+        {
+            configure.AddOpenTelemetry(optiosn => { });
+            configure.AddOpenTelemetry(optiosn => { });
+        });
+
+        using ServiceProvider serviceProvider = serviceCollection.BuildServiceProvider();
+
+        Assert.Throws<NotSupportedException>(() => serviceProvider.GetService<ILoggerFactory>());
+    }
+
+    [Fact]
+    public void LoggingBuilderAddOpenTelemetryWithProviderTest()
     {
         var provider = new WrappedOpenTelemetryLoggerProvider();
 
@@ -153,7 +166,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void ServiceCollectionAddOpenTelemetryWithProviderAndDisposeSpecifiedTests(bool dispose)
+    public void LoggingBuilderAddOpenTelemetryWithProviderAndDisposeSpecifiedTests(bool dispose)
     {
         var provider = new WrappedOpenTelemetryLoggerProvider();
 
@@ -206,7 +219,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     }
 
     [Fact]
-    public void ServiceCollectionAddOpenTelemetryServicesAvailableTest()
+    public void LoggingBuilderAddOpenTelemetryServicesAvailableTest()
     {
         int invocationCount = 0;
 
@@ -238,7 +251,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     }
 
     [Fact]
-    public void ServiceCollectionAddOpenTelemetryProcessorThroughDependencyTest()
+    public void LoggingBuilderAddOpenTelemetryProcessorThroughDependencyTest()
     {
         CustomProcessor.InstanceCount = 0;
 
@@ -273,7 +286,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     }
 
     [Fact]
-    public void ServiceCollectionAddOpenTelemetryConfigureCallbackTest()
+    public void LoggingBuilderAddOpenTelemetryConfigureCallbackTest()
     {
         var services = new ServiceCollection();
 
@@ -307,7 +320,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     }
 
     [Fact]
-    public void ServiceCollectionAddOpenTelemetryExternalRegistrationTest()
+    public void LoggingBuilderAddOpenTelemetryExternalRegistrationTest()
     {
         CustomProcessor.InstanceCount = 0;
 
@@ -329,7 +342,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     }
 
     [Fact]
-    public void ServiceCollectionAddOpenTelemetryOptionsOrderingTest()
+    public void LoggingBuilderAddOpenTelemetryOptionsOrderingTest()
     {
         int configureInvocationCount = 0;
 
@@ -422,7 +435,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     }
 
     [Fact]
-    public void ServiceCollectionAddOpenTelemetryResourceTest()
+    public void LoggingBuilderAddOpenTelemetryResourceTest()
     {
         var services = new ServiceCollection();
 
@@ -436,21 +449,16 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
                 options.ConfigureProvider((sp, p) => provider = p);
             });
+        });
 
-            configure.AddOpenTelemetry(options =>
-            {
-                options.ConfigureResource(builder => builder.AddAttributes(new Dictionary<string, object> { ["key1"] = "value1" }));
-            });
+        services.Configure<OpenTelemetryLoggerOptions>(options =>
+        {
+            options.ConfigureResource(builder => builder.AddAttributes(new Dictionary<string, object> { ["key1"] = "value1" }));
         });
 
         services.Configure<OpenTelemetryLoggerOptions>(options =>
         {
             options.ConfigureResource(builder => builder.AddAttributes(new Dictionary<string, object> { ["key2"] = "value2" }));
-        });
-
-        services.Configure<OpenTelemetryLoggerOptions>(options =>
-        {
-            options.ConfigureResource(builder => builder.AddAttributes(new Dictionary<string, object> { ["key3"] = "value3" }));
         });
 
         using var serviceProvider = services.BuildServiceProvider();
@@ -467,11 +475,10 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.Contains(resource.Attributes, kvp => kvp.Key == "service.instance.id");
         Assert.Contains(resource.Attributes, kvp => kvp.Key == "key1");
         Assert.Contains(resource.Attributes, kvp => kvp.Key == "key2");
-        Assert.Contains(resource.Attributes, kvp => kvp.Key == "key3");
     }
 
     [Fact]
-    public void ServiceCollectionAddOpenTelemetryDetachedConfigurationTest()
+    public void LoggingBuilderAddOpenTelemetryDetachedConfigurationTest()
     {
         int configurationInvocations = 0;
 
