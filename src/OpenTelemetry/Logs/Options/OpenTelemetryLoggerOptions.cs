@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
@@ -120,15 +121,17 @@ namespace OpenTelemetry.Logs
         /// <summary>
         /// Adds a processor to the options which will be retrieved using dependency injection.
         /// </summary>
+        /// <remarks>
+        /// Note: The type specified by <typeparamref name="T"/> will be
+        /// registered as a singleton service into application services.
+        /// </remarks>
         /// <typeparam name="T">Processor type.</typeparam>
         /// <returns>The supplied <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
         public OpenTelemetryLoggerOptions AddProcessor<T>()
             where T : BaseProcessor<LogRecord>
         {
-            return this.ConfigureProvider((sp, provider) =>
-            {
-                provider.AddProcessor(sp.GetRequiredService<T>());
-            });
+            return this
+                .ConfigureServices(services => services.TryAddSingleton<BaseProcessor<LogRecord>, T>());
         }
 
         /// <summary>
