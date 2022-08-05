@@ -42,7 +42,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             this.onCollectRef = this.OnCollect;
         }
 
-#if NETCOREAPP3_1_OR_GREATER
+#if NET6_0_OR_GREATER
         public ValueTask<CollectionResponse> EnterCollect()
 #else
         public Task<CollectionResponse> EnterCollect()
@@ -58,7 +58,7 @@ namespace OpenTelemetry.Exporter.Prometheus
             {
                 Interlocked.Increment(ref this.readerCount);
                 this.ExitGlobalLock();
-#if NETCOREAPP3_1_OR_GREATER
+#if NET6_0_OR_GREATER
                 return new ValueTask<CollectionResponse>(new CollectionResponse(this.previousDataView, this.previousDataViewGeneratedAtUtc.Value, fromCache: true));
 #else
                 return Task.FromResult(new CollectionResponse(this.previousDataView, this.previousDataViewGeneratedAtUtc.Value, fromCache: true));
@@ -75,7 +75,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
                 Interlocked.Increment(ref this.readerCount);
                 this.ExitGlobalLock();
-#if NETCOREAPP3_1_OR_GREATER
+#if NET6_0_OR_GREATER
                 return new ValueTask<CollectionResponse>(this.collectionTcs.Task);
 #else
                 return this.collectionTcs.Task;
@@ -114,7 +114,7 @@ namespace OpenTelemetry.Exporter.Prometheus
 
             this.ExitGlobalLock();
 
-#if NETCOREAPP3_1_OR_GREATER
+#if NET6_0_OR_GREATER
             return new ValueTask<CollectionResponse>(response);
 #else
             return Task.FromResult(response);
