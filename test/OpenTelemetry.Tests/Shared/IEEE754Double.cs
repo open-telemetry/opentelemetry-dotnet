@@ -98,6 +98,6 @@ public struct IEEE754Double
 
         chars[index--] = (char)(bits & 0x01 | 0x30);
 
-        return $"{chars.ToString()} ({this.DoubleValue})";
+        return chars.ToString();
     }
 }
