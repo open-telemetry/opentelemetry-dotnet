@@ -73,6 +73,9 @@ def sanitycheck(pattern, allow_utf8 = False, allow_eol = (CRLF, LF), indent = 1)
 
 retval = 0
 retval += sanitycheck('.editorconfig', allow_eol = (LF,), indent = 0)
+retval += sanitycheck('.github/**/*.md', allow_eol = (LF,))
+retval += sanitycheck('.github/**/*.yml', allow_eol = (LF,), indent = 2)
+retval += sanitycheck('.vscode/**/*.json', allow_eol = (LF,), indent = 2)
 retval += sanitycheck('**/Dockerfile', allow_eol = (LF,), indent = 2)
 retval += sanitycheck('**/*.cmd', allow_eol = (CRLF,), indent = 2)
 retval += sanitycheck('**/*.config', allow_utf8 = True, allow_eol = (LF,), indent = 2)

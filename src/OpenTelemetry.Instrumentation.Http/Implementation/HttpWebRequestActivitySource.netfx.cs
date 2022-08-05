@@ -36,15 +36,16 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     /// </remarks>
     internal static class HttpWebRequestActivitySource
     {
-        public const string ActivitySourceName = "OpenTelemetry.HttpWebRequest";
-        public const string ActivityName = ActivitySourceName + ".HttpRequestOut";
+        internal static readonly AssemblyName AssemblyName = typeof(HttpWebRequestActivitySource).Assembly.GetName();
+        internal static readonly string ActivitySourceName = AssemblyName.Name + ".HttpWebRequest";
+        internal static readonly string ActivityName = ActivitySourceName + ".HttpRequestOut";
 
         internal static readonly Func<HttpWebRequest, string, IEnumerable<string>> HttpWebRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Add(name, value);
 
         internal static HttpWebRequestInstrumentationOptions Options = new HttpWebRequestInstrumentationOptions();
 
-        private static readonly Version Version = typeof(HttpWebRequestActivitySource).Assembly.GetName().Version;
+        private static readonly Version Version = AssemblyName.Version;
         private static readonly ActivitySource WebRequestActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
 
         // Fields for reflection
