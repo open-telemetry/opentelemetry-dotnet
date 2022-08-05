@@ -37,7 +37,12 @@ namespace OpenTelemetry.Logs
 
             logEvent!.AddPropertyIfAbsent(propertyFactory!.CreateProperty(nameof(Activity.SpanId), activity.SpanId.ToHexString()));
             logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty(nameof(Activity.TraceId), activity.TraceId.ToHexString()));
-            logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty(nameof(Activity.ParentSpanId), activity.ParentSpanId.ToHexString()));
+
+            if (activity.ParentSpanId != default)
+            {
+                logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty(nameof(Activity.ParentSpanId), activity.ParentSpanId.ToHexString()));
+            }
+
             logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("TraceFlags", activity.ActivityTraceFlags));
         }
     }
