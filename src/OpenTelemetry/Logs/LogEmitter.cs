@@ -21,7 +21,7 @@ using OpenTelemetry.Internal;
 namespace OpenTelemetry.Logs
 {
     /// <summary>
-    /// LogEmitter implementation.
+    /// LogEmitter implementations.
     /// </summary>
     /// <remarks>
     /// Spec reference: <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/logging-library-sdk.md#logemitter">LogEmitter</a>.
