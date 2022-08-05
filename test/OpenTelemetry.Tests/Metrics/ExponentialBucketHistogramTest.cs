@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if NET6_0_OR_GREATER
-
 using System;
 using OpenTelemetry.Tests;
 using Xunit;
@@ -24,6 +22,108 @@ namespace OpenTelemetry.Metrics.Tests;
 
 public class ExponentialBucketHistogramTest
 {
+    [Fact]
+    public void ScalingFactorCalculation()
+    {
+        var histogram = new ExponentialBucketHistogram();
+
+        histogram.Scale = 20;
+        Assert.Equal("0 10000010011 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 19;
+        Assert.Equal("0 10000010010 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 18;
+        Assert.Equal("0 10000010001 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 17;
+        Assert.Equal("0 10000010000 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 16;
+        Assert.Equal("0 10000001111 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 15;
+        Assert.Equal("0 10000001110 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 14;
+        Assert.Equal("0 10000001101 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 13;
+        Assert.Equal("0 10000001100 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 12;
+        Assert.Equal("0 10000001011 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 11;
+        Assert.Equal("0 10000001010 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 10;
+        Assert.Equal("0 10000001001 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 9;
+        Assert.Equal("0 10000001000 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 8;
+        Assert.Equal("0 10000000111 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 7;
+        Assert.Equal("0 10000000110 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 6;
+        Assert.Equal("0 10000000101 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 5;
+        Assert.Equal("0 10000000100 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 4;
+        Assert.Equal("0 10000000011 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 3;
+        Assert.Equal("0 10000000010 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 2;
+        Assert.Equal("0 10000000001 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 1;
+        Assert.Equal("0 10000000000 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = 0;
+        Assert.Equal("0 01111111111 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = -1;
+        Assert.Equal("0 01111111110 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = -2;
+        Assert.Equal("0 01111111101 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = -3;
+        Assert.Equal("0 01111111100 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = -4;
+        Assert.Equal("0 01111111011 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = -5;
+        Assert.Equal("0 01111111010 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = -6;
+        Assert.Equal("0 01111111001 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = -7;
+        Assert.Equal("0 01111111000 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = -8;
+        Assert.Equal("0 01111110111 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = -9;
+        Assert.Equal("0 01111110110 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = -10;
+        Assert.Equal("0 01111110101 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+
+        histogram.Scale = -11;
+        Assert.Equal("0 01111110100 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
+    }
+
     [Fact]
     public void IndexLookupScale0()
     {
@@ -368,5 +468,3 @@ public class ExponentialBucketHistogramTest
         Assert.Equal(2, histogram.ZeroCount);
     }
 }
-
-#endif
