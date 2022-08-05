@@ -27,7 +27,7 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
     public class OpenTelemetrySerilogEnricherTests
     {
         [Fact]
-        public void SerilogBasicLogWithoutActivityTest()
+        public void SerilogLogWithoutActivityTest()
         {
             List<LogEvent> emittedLogs = new();
 
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
         }
 
         [Fact]
-        public void SerilogBasicLogWithActivityTest()
+        public void SerilogLogWithActivityAndNoParentTest()
         {
             using var activity = new Activity("Test");
             activity.Start();
@@ -70,10 +70,41 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
 
             AssertPropertyExistsAndHaveValue(logEvent, nameof(Activity.SpanId), $"\"{activity.SpanId.ToHexString()}\"");
             AssertPropertyExistsAndHaveValue(logEvent, nameof(Activity.TraceId), $"\"{activity.TraceId.ToHexString()}\"");
-            AssertPropertyExistsAndHaveValue(logEvent, nameof(Activity.ParentSpanId), $"\"{activity.ParentSpanId.ToHexString()}\"");
+            Assert.False(logEvent.Properties.ContainsKey(nameof(Activity.ParentSpanId)));
             AssertPropertyExistsAndHaveValue(logEvent, "TraceFlags", activity.ActivityTraceFlags.ToString());
+        }
 
-            // We don't need to quote the `ActivityTraceFlags` as Serilog doesn't quote value types
+        [Fact]
+        public void SerilogLogWithActivityAndParentTest()
+        {
+            using var activity = new Activity("ParentActivity");
+            activity.Start();
+
+            using var childActivity = new Activity("ChildActivity");
+            childActivity.SetParentId(activity.TraceId, activity.SpanId, activity.ActivityTraceFlags);
+            childActivity.Start();
+
+            Assert.NotEqual(default, childActivity.ParentSpanId);
+
+            List<LogEvent> emittedLogs = new();
+
+            Log.Logger = new LoggerConfiguration()
+                .Enrich.WithOpenTelemetry()
+                .WriteTo.Sink(new InMemorySink(emittedLogs))
+                .CreateLogger();
+
+            Log.Logger.Information("Hello {greeting}", "World");
+
+            Log.CloseAndFlush();
+
+            Assert.Single(emittedLogs);
+
+            LogEvent logEvent = emittedLogs[0];
+
+            AssertPropertyExistsAndHaveValue(logEvent, nameof(Activity.SpanId), $"\"{childActivity.SpanId.ToHexString()}\"");
+            AssertPropertyExistsAndHaveValue(logEvent, nameof(Activity.TraceId), $"\"{childActivity.TraceId.ToHexString()}\"");
+            AssertPropertyExistsAndHaveValue(logEvent, nameof(Activity.ParentSpanId), $"\"{childActivity.ParentSpanId.ToHexString()}\"");
+            AssertPropertyExistsAndHaveValue(logEvent, "TraceFlags", childActivity.ActivityTraceFlags.ToString());
         }
 
         private static void AssertPropertyExistsAndHaveValue(
