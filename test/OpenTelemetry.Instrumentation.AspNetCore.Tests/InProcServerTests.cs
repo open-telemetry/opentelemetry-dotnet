@@ -74,7 +74,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal("localhost:5000", activity.GetTagValue(SemanticConventions.AttributeHttpHost));
             Assert.Equal("GET", activity.GetTagValue(SemanticConventions.AttributeHttpMethod));
             Assert.Equal("1.1", activity.GetTagValue(SemanticConventions.AttributeHttpFlavor));
-            Assert.Equal(200, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
+            Assert.True(activity.Status == ActivityStatusCode.Unset);
+            Assert.True(activity.StatusDescription is null);
         }
 
         public async void Dispose()

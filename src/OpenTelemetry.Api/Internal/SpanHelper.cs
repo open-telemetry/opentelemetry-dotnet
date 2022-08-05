@@ -30,15 +30,15 @@ namespace OpenTelemetry.Trace
         /// <param name="kind">The span kind.</param>
         /// <param name="httpStatusCode">Http status code.</param>
         /// <returns>Resolved span <see cref="Status"/> for the Http status code.</returns>
-        public static Status ResolveSpanStatusForHttpStatusCode(ActivityKind kind, int httpStatusCode)
+        public static ActivityStatusCode ResolveSpanStatusForHttpStatusCode(ActivityKind kind, int httpStatusCode)
         {
             var upperBound = kind == ActivityKind.Client ? 399 : 499;
             if (httpStatusCode >= 100 && httpStatusCode <= upperBound)
             {
-                return Status.Unset;
+                return ActivityStatusCode.Unset;
             }
 
-            return Status.Error;
+            return ActivityStatusCode.Error;
         }
     }
 }
