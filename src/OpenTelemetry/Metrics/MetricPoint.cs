@@ -40,6 +40,8 @@ namespace OpenTelemetry.Metrics
 
         private MetricPointValueStorage deltaLastValue;
 
+        private SpinLock spinLock = new SpinLock(true);   // Enable owner tracking
+
         internal MetricPoint(
             AggregatorStore aggregatorStore,
             AggregationType aggType,
@@ -336,23 +338,23 @@ namespace OpenTelemetry.Metrics
                             }
                         }
 
-                        var sw = default(SpinWait);
-                        while (true)
+                        bool lockTaken = false;
+                        try
                         {
-                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            this.spinLock.Enter(ref lockTaken);
+                            unchecked
                             {
-                                unchecked
-                                {
-                                    this.runningValue.AsLong++;
-                                    this.histogramBuckets.RunningSum += number;
-                                    this.histogramBuckets.RunningBucketCounts[i]++;
-                                }
-
-                                this.histogramBuckets.IsCriticalSectionOccupied = 0;
-                                break;
+                                this.runningValue.AsLong++;
+                                this.histogramBuckets.RunningSum += number;
+                                this.histogramBuckets.RunningBucketCounts[i]++;
                             }
-
-                            sw.SpinOnce();
+                        }
+                        finally
+                        {
+                            if (lockTaken)
+                            {
+                                this.spinLock.Exit();
+                            }
                         }
 
                         break;
@@ -360,22 +362,22 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramSumCount:
                     {
-                        var sw = default(SpinWait);
-                        while (true)
+                        bool lockTaken = false;
+                        try
                         {
-                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
+                            this.spinLock.Enter(ref lockTaken);
+                            unchecked
                             {
-                                unchecked
-                                {
-                                    this.runningValue.AsLong++;
-                                    this.histogramBuckets.RunningSum += number;
-                                }
-
-                                this.histogramBuckets.IsCriticalSectionOccupied = 0;
-                                break;
+                                this.runningValue.AsLong++;
+                                this.histogramBuckets.RunningSum += number;
                             }
-
-                            sw.SpinOnce();
+                        }
+                        finally
+                        {
+                            if (lockTaken)
+                            {
+                                this.spinLock.Exit();
+                            }
                         }
 
                         break;
@@ -497,8 +499,10 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        lock (this.histogramBuckets.LockObject)
+                        bool lockTaken = false;
+                        try
                         {
+                            this.spinLock.Enter(ref lockTaken);
                             this.snapshotValue.AsLong = this.runningValue.AsLong;
                             this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
                             if (outputDelta)
@@ -518,14 +522,23 @@ namespace OpenTelemetry.Metrics
 
                             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
                         }
+                        finally
+                        {
+                            if (lockTaken)
+                            {
+                                this.spinLock.Exit();
+                            }
+                        }
 
                         break;
                     }
 
                 case AggregationType.HistogramSumCount:
                     {
-                        lock (this.histogramBuckets.LockObject)
+                        bool lockTaken = false;
+                        try
                         {
+                            this.spinLock.Enter(ref lockTaken);
                             this.snapshotValue.AsLong = this.runningValue.AsLong;
                             this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
                             if (outputDelta)
@@ -535,6 +548,13 @@ namespace OpenTelemetry.Metrics
                             }
 
                             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+                        }
+                        finally
+                        {
+                            if (lockTaken)
+                            {
+                                this.spinLock.Exit();
+                            }
                         }
 
                         break;
