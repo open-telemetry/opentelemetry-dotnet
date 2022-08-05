@@ -80,4 +80,28 @@ public class MathHelperTest
     {
         Assert.Equal(numberOfLeaderZeros, MathHelper.LeadingZero64(value));
     }
+
+    [Theory]
+    [InlineData(14, 10, 4)]
+    [InlineData(10, 10, 0)]
+    [InlineData(4, 10, 4)]
+    [InlineData(0, 10, 0)]
+    [InlineData(-1, 10, 9)]
+    [InlineData(-10, 10, 0)]
+    public void PositiveModulo32(int value, int divisor, int expectedRemainder)
+    {
+        Assert.Equal(expectedRemainder, MathHelper.PositiveModulo32(value: value, divisor: divisor));
+    }
+
+    [Theory]
+    [InlineData(14, 10, 4)]
+    [InlineData(10, 10, 0)]
+    [InlineData(4, 10, 4)]
+    [InlineData(0, 10, 0)]
+    [InlineData(-1, 10, 9)]
+    [InlineData(-10, 10, 0)]
+    public void PositiveModulo64(long value, long divisor, long expectedRemainder)
+    {
+        Assert.Equal(expectedRemainder, MathHelper.PositiveModulo64(value: value, divisor: divisor));
+    }
 }

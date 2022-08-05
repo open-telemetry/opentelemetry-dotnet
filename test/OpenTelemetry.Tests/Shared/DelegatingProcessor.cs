@@ -1,4 +1,4 @@
-// <copyright file="DelegatingExporter.cs" company="OpenTelemetry Authors">
+// <copyright file="DelegatingProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,16 +18,12 @@ using System;
 
 namespace OpenTelemetry.Tests;
 
-internal sealed class DelegatingExporter<T> : BaseExporter<T>
+public class DelegatingProcessor<T> : BaseProcessor<T>
     where T : class
 {
-    public Func<Batch<T>, ExportResult> OnExportFunc { get; set; } = (batch) => default;
-
     public Func<int, bool> OnForceFlushFunc { get; set; } = (timeout) => true;
 
     public Func<int, bool> OnShutdownFunc { get; set; } = (timeout) => true;
-
-    public override ExportResult Export(in Batch<T> batch) => this.OnExportFunc(batch);
 
     protected override bool OnForceFlush(int timeoutMilliseconds) => this.OnForceFlushFunc(timeoutMilliseconds);
 
