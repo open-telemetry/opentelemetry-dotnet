@@ -16,7 +16,6 @@
 
 #nullable enable
 
-using System;
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
