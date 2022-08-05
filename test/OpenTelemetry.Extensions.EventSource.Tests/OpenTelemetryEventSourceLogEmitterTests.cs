@@ -183,8 +183,8 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder(
-                options => options.IncludeFormattedMessage = formatMessage)
+            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+                .SetIncludeFormattedMessage(formatMessage)
                 .AddInMemoryExporter(exportedItems)
                 .Build();
 #pragma warning restore CA2000 // Dispose objects before losing scope

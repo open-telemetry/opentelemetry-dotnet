@@ -11,6 +11,9 @@ OpenTelemetry.Logs.OpenTelemetryLoggerOptions.AddProcessor<T>() -> OpenTelemetry
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ConfigureProvider(System.Action<System.IServiceProvider!, OpenTelemetry.Logs.OpenTelemetryLoggerProvider!>! configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ConfigureResource(System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ConfigureServices(System.Action<Microsoft.Extensions.DependencyInjection.IServiceCollection!>! configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.SetIncludeFormattedMessage(bool enabled) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.SetIncludeScopes(bool enabled) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.SetParseStateValues(bool enabled) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
 OpenTelemetry.Logs.OpenTelemetryLoggerOptionsExtensions
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.AddProcessor(OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord!>! processor) -> OpenTelemetry.Logs.OpenTelemetryLoggerProvider!
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.ForceFlush(int timeoutMilliseconds = -1) -> bool
@@ -22,6 +25,5 @@ static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTeleme
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configure) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 static OpenTelemetry.Logs.OpenTelemetryLoggerOptionsExtensions.Build(this OpenTelemetry.Logs.OpenTelemetryLoggerOptions! options) -> OpenTelemetry.Logs.OpenTelemetryLoggerProvider!
 static OpenTelemetry.Sdk.CreateLoggerProviderBuilder() -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
-static OpenTelemetry.Sdk.CreateLoggerProviderBuilder(System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>! configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
 ~static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder> configure) -> OpenTelemetry.Metrics.MeterProviderBuilder
 ~static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder> configure) -> OpenTelemetry.Trace.TracerProviderBuilder

@@ -23,11 +23,9 @@ namespace OpenTelemetry.Logs;
 
 internal sealed class OpenTelemetryLoggerOptionsSdk : OpenTelemetryLoggerOptions
 {
-    public OpenTelemetryLoggerOptionsSdk(Action<OpenTelemetryLoggerOptions>? configure)
+    public OpenTelemetryLoggerOptionsSdk()
         : base(new ServiceCollection())
     {
         this.ConfigureServices(services => services.AddOptions());
-
-        configure?.Invoke(this);
     }
 }

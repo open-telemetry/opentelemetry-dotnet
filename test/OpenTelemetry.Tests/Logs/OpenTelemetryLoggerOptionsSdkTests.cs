@@ -52,19 +52,12 @@ public class OpenTelemetryLoggerOptionsSdkTests
         int optionsConfigureInvocations = 0;
         OpenTelemetryLoggerProvider? providerFromConfigureCallback = null;
 
-        var returnedOptions = Sdk.CreateLoggerProviderBuilder(options =>
-        {
-            ctorConfigureInvocations++;
-
-            Assert.NotNull(options.Services);
-
-            options.ConfigureServices(services => services.AddSingleton<TestClass1>());
-        })
+        var returnedOptions = Sdk.CreateLoggerProviderBuilder()
             .AddProcessor(new CustomProcessor())
             .AddProcessor<CustomProcessor>()
             .ConfigureServices(services =>
             {
-                services.AddSingleton<TestClass2>();
+                services.AddSingleton<TestClass1>();
                 services.AddSingleton<CustomProcessor>();
                 services.AddSingleton<BaseProcessor<LogRecord>, CustomProcessor>();
                 services.Configure<OpenTelemetryLoggerOptions>(o =>
@@ -87,7 +80,6 @@ public class OpenTelemetryLoggerOptionsSdkTests
                 providerFromConfigureCallback = p;
 
                 Assert.NotNull(sp.GetService<TestClass1>());
-                Assert.NotNull(sp.GetService<TestClass2>());
             });
 
         using var provider = returnedOptions.Build();
@@ -122,10 +114,6 @@ public class OpenTelemetryLoggerOptionsSdkTests
     }
 
     private sealed class TestClass1
-    {
-    }
-
-    private sealed class TestClass2
     {
     }
 

@@ -61,13 +61,9 @@ namespace OpenTelemetry.Extensions.Serilog.Tests
             List<LogRecord> exportedItems = new();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder(
-                options =>
-                {
-                    options.IncludeFormattedMessage = includeFormattedMessage;
-
-                    options.AddInMemoryExporter(exportedItems);
-                })
+            var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+                .SetIncludeFormattedMessage(includeFormattedMessage)
+                .AddInMemoryExporter(exportedItems)
                 .Build();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 

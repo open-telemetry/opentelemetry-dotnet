@@ -70,24 +70,7 @@ namespace OpenTelemetry
         /// <returns><see cref="OpenTelemetryLoggerOptions"/> instance, which is used to build a <see cref="OpenTelemetryLoggerProvider"/>.</returns>
         public static OpenTelemetryLoggerOptions CreateLoggerProviderBuilder()
         {
-            return new OpenTelemetryLoggerOptionsSdk(configure: null);
-        }
-
-        /// <summary>
-        /// Creates a <see cref="OpenTelemetryLoggerOptions"/> which is used to build
-        /// an <see cref="OpenTelemetryLoggerProvider"/>. In a typical application, a single
-        /// <see cref="OpenTelemetryLoggerProvider"/> is created at application startup and disposed
-        /// at application shutdown. It is important to ensure that the provider is not
-        /// disposed too early.
-        /// </summary>
-        /// <param name="configure">Configuration action.</param>
-        /// <returns><see cref="OpenTelemetryLoggerOptions"/> instance, which is used to build a <see cref="OpenTelemetryLoggerProvider"/>.</returns>
-        public static OpenTelemetryLoggerOptions CreateLoggerProviderBuilder(
-            Action<OpenTelemetryLoggerOptions> configure)
-        {
-            Guard.ThrowIfNull(configure);
-
-            return new OpenTelemetryLoggerOptionsSdk(configure);
+            return new OpenTelemetryLoggerOptionsSdk();
         }
 
         /// <summary>

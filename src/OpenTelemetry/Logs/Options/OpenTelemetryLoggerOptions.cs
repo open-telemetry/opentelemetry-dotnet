@@ -226,6 +226,45 @@ namespace OpenTelemetry.Logs
             return this;
         }
 
+        /// <summary>
+        /// Sets the value of the <see cref="IncludeFormattedMessage"/> options.
+        /// </summary>
+        /// <param name="enabled"><see langword="true"/> to enable the option or
+        /// <see langword="false"/> to disable it.</param>
+        /// <returns>The supplied <see cref="OpenTelemetryLoggerOptions"/> for
+        /// chaining.</returns>
+        public OpenTelemetryLoggerOptions SetIncludeFormattedMessage(bool enabled)
+        {
+            this.includeFormattedMessage = enabled;
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the value of the <see cref="IncludeScopes"/> options.
+        /// </summary>
+        /// <param name="enabled"><see langword="true"/> to enable the option or
+        /// <see langword="false"/> to disable it.</param>
+        /// <returns>The supplied <see cref="OpenTelemetryLoggerOptions"/> for
+        /// chaining.</returns>
+        public OpenTelemetryLoggerOptions SetIncludeScopes(bool enabled)
+        {
+            this.includeScopes = enabled;
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the value of the <see cref="ParseStateValues"/> options.
+        /// </summary>
+        /// <param name="enabled"><see langword="true"/> to enable the option or
+        /// <see langword="false"/> to disable it.</param>
+        /// <returns>The supplied <see cref="OpenTelemetryLoggerOptions"/> for
+        /// chaining.</returns>
+        public OpenTelemetryLoggerOptions SetParseStateValues(bool enabled)
+        {
+            this.parseStateValues = enabled;
+            return this;
+        }
+
         internal OpenTelemetryLoggerProvider Build()
         {
             var services = this.services;
