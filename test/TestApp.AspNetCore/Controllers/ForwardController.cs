@@ -14,16 +14,12 @@
 // limitations under the License.
 // </copyright>
 
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
-#pragma warning disable SA1300 // Element should begin with upper-case letter
-namespace TestApp.AspNetCore._7._0.Controllers
-#pragma warning restore SA1300 // Element should begin with upper-case letter
+namespace TestApp.AspNetCore.Controllers
 {
     [Route("api/[controller]")]
     public class ForwardController : Controller
@@ -66,10 +62,10 @@ namespace TestApp.AspNetCore._7._0.Controllers
         public class Data
         {
             [JsonPropertyName("url")]
-            public string Url { get; set; }
+            public string? Url { get; set; }
 
             [JsonPropertyName("arguments")]
-            public Data[] Arguments { get; set; }
+            public Data[]? Arguments { get; set; }
         }
     }
 }
