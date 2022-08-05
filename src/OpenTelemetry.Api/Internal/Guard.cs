@@ -19,7 +19,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-#if !NET6_0_OR_GREATER
+#if !NET6_0_OR_GREATER && !NETCOREAPP3_0_OR_GREATER
 namespace System.Runtime.CompilerServices
 {
     /// <summary>
