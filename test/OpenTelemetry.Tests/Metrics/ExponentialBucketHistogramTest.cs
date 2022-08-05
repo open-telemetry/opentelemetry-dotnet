@@ -25,7 +25,7 @@ namespace OpenTelemetry.Metrics.Tests;
 public class ExponentialBucketHistogramTest
 {
     [Fact]
-    public void IndexLookup()
+    public void IndexLookupScale0()
     {
         /*
         An exponential bucket histogram with scale = 0.
@@ -75,13 +75,17 @@ public class ExponentialBucketHistogramTest
         Assert.Equal(4, histogram.MapToIndex(IEEE754Double.FromString("0 10000000100 0000000000000000000000000000000000000000000000000000"))); // 32
         Assert.Equal(5, histogram.MapToIndex(IEEE754Double.FromString("0 10000000101 0000000000000000000000000000000000000000000000000000"))); // 64
         Assert.Equal(6, histogram.MapToIndex(IEEE754Double.FromString("0 10000000110 0000000000000000000000000000000000000000000000000000"))); // 128
-        Assert.Equal(52, histogram.MapToIndex(IEEE754Double.FromString("0 10000110011 1111111111111111111111111111111111111111111111111111"))); // 9,007,199,254,740,991 (2 ^ 53 - 1, Number.MAX_SAFE_INTEGER)
-        Assert.Equal(52, histogram.MapToIndex(IEEE754Double.FromString("0 10000110100 0000000000000000000000000000000000000000000000000000"))); // 9,007,199,254,740,992 (2 ^ 53, Number.MAX_SAFE_INTEGER + 1)
+        Assert.Equal(52, histogram.MapToIndex(IEEE754Double.FromString("0 10000110011 1111111111111111111111111111111111111111111111111111"))); // 9,007,199,254,740,991 (Number.MAX_SAFE_INTEGER, 2 ^ 53 - 1)
+        Assert.Equal(52, histogram.MapToIndex(IEEE754Double.FromString("0 10000110100 0000000000000000000000000000000000000000000000000000"))); // 9,007,199,254,740,992 (Number.MAX_SAFE_INTEGER + 1, 2 ^ 53)
         Assert.Equal(1022, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 0000000000000000000000000000000000000000000000000000"))); // ~8.98846567431158E+307
         Assert.Equal(1023, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 0000000000000000000000000000000000000000000000000001"))); // ~8.988465674311582E+307
         Assert.Equal(1023, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111110"))); // ~1.7976931348623155E+308
-        Assert.Equal(1023, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111111"))); // ~1.7976931348623157E+308 (maximum normal positive, double.MaxValue)
+        Assert.Equal(1023, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111111"))); // ~1.7976931348623157E+308 (maximum normal positive, double.MaxValue, 2 ^ 1024 - 1)
+    }
 
+    [Fact]
+    public void IndexLookupScaleMinusOne()
+    {
         /*
         An exponential bucket histogram with scale = -1.
         The base is 2 ^ (2 ^ 1) = 4.
@@ -96,7 +100,7 @@ public class ExponentialBucketHistogramTest
             bucket[3]:  (64, 256]
             ...
         */
-        histogram = new ExponentialBucketHistogram(maxBuckets: 2, scale: -1);
+        var histogram = new ExponentialBucketHistogram(maxBuckets: 2, scale: -1);
 
         Assert.Equal(-538, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000001"))); // ~4.9406564584124654E-324 (minimum subnormal positive, double.Epsilon, 2 ^ -1074)
         Assert.Equal(-537, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000010"))); // double.Epsilon * 2
@@ -133,8 +137,12 @@ public class ExponentialBucketHistogramTest
         Assert.Equal(511, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 0000000000000000000000000000000000000000000000000000"))); // ~8.98846567431158E+307
         Assert.Equal(511, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 0000000000000000000000000000000000000000000000000001"))); // ~8.988465674311582E+307
         Assert.Equal(511, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111110"))); // ~1.7976931348623155E+308
-        Assert.Equal(511, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111111"))); // ~1.7976931348623157E+308 (maximum normal positive, double.MaxValue, 2 ^ 1023 - 1)
+        Assert.Equal(511, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111111"))); // ~1.7976931348623157E+308 (maximum normal positive, double.MaxValue, 2 ^ 1024 - 1)
+    }
 
+    [Fact]
+    public void IndexLookupScaleMinusTwo()
+    {
         /*
         An exponential bucket histogram with scale = -2.
         The base is 2 ^ (2 ^ 2) = 16.
@@ -149,7 +157,7 @@ public class ExponentialBucketHistogramTest
             bucket[3]:  (4096, 65536]
             ...
         */
-        histogram = new ExponentialBucketHistogram(maxBuckets: 2, scale: -2);
+        var histogram = new ExponentialBucketHistogram(maxBuckets: 2, scale: -2);
 
         Assert.Equal(-269, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000001"))); // ~4.9406564584124654E-324 (minimum subnormal positive, double.Epsilon, 2 ^ -1074)
         Assert.Equal(-269, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000010"))); // double.Epsilon * 2
@@ -186,8 +194,12 @@ public class ExponentialBucketHistogramTest
         Assert.Equal(255, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 0000000000000000000000000000000000000000000000000000"))); // ~8.98846567431158E+307
         Assert.Equal(255, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 0000000000000000000000000000000000000000000000000001"))); // ~8.988465674311582E+307
         Assert.Equal(255, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111110"))); // ~1.7976931348623155E+308
-        Assert.Equal(255, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111111"))); // ~1.7976931348623157E+308 (maximum normal positive, double.MaxValue, 2 ^ 1023 - 1)
+        Assert.Equal(255, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111111"))); // ~1.7976931348623157E+308 (maximum normal positive, double.MaxValue, 2 ^ 1024 - 1)
+    }
 
+    [Fact]
+    public void IndexLookupScaleMinusTen()
+    {
         /*
         An exponential bucket histogram with scale = -10.
         The base is 2 ^ (2 ^ 10) = 2 ^ 1024 = double.MaxValue + 2 ^ -52 (slightly bigger than double.MaxValue).
@@ -196,7 +208,7 @@ public class ExponentialBucketHistogramTest
             bucket[-1]: (2 ^ -1024, 1]
             bucket[0]:  (1, double.MaxValue]
         */
-        histogram = new ExponentialBucketHistogram(maxBuckets: 2, scale: -10);
+        var histogram = new ExponentialBucketHistogram(maxBuckets: 2, scale: -10);
 
         Assert.Equal(-2, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000001"))); // ~4.9406564584124654E-324 (minimum subnormal positive, double.Epsilon, 2 ^ -1074)
         Assert.Equal(-2, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0100000000000000000000000000000000000000000000000000"))); // ~5.562684646268003E-309 (2 ^ -1024)
@@ -206,8 +218,12 @@ public class ExponentialBucketHistogramTest
         Assert.Equal(-1, histogram.MapToIndex(IEEE754Double.FromString("0 00000000001 0000000000000000000000000000000000000000000000000000"))); // ~2.2250738585072014E-308 (minimum normal positive, 2 ^ -1022)
         Assert.Equal(-1, histogram.MapToIndex(IEEE754Double.FromString("0 01111111111 0000000000000000000000000000000000000000000000000000"))); // 1
         Assert.Equal(0, histogram.MapToIndex(IEEE754Double.FromString("0 01111111111 0000000000000000000000000000000000000000000000000001"))); // ~1.0000000000000002
-        Assert.Equal(0, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111111"))); // ~1.7976931348623157E+308 (maximum normal positive, double.MaxValue, 2 ^ 1023 - 1)
+        Assert.Equal(0, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111111"))); // ~1.7976931348623157E+308 (maximum normal positive, double.MaxValue, 2 ^ 1024 - 1)
+    }
 
+    [Fact]
+    public void IndexLookupScaleMinusEleven()
+    {
         /*
         An exponential bucket histogram with scale = -11.
         The base is 2 ^ (2 ^ 11) = 2 ^ 2048 (much bigger than double.MaxValue).
@@ -215,30 +231,106 @@ public class ExponentialBucketHistogramTest
             bucket[-1]: [double.Epsilon, 1]
             bucket[0]:  (1, double.MaxValue]
         */
-        histogram = new ExponentialBucketHistogram(maxBuckets: 2, scale: -11);
+        var histogram = new ExponentialBucketHistogram(maxBuckets: 2, scale: -11);
 
         Assert.Equal(-1, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000001"))); // ~4.9406564584124654E-324 (minimum subnormal positive, double.Epsilon, 2 ^ -1074)
         Assert.Equal(-1, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 1111111111111111111111111111111111111111111111111111"))); // ~2.2250738585072009E-308 (maximum subnormal positive)
         Assert.Equal(-1, histogram.MapToIndex(IEEE754Double.FromString("0 00000000001 0000000000000000000000000000000000000000000000000000"))); // ~2.2250738585072014E-308 (minimum normal positive, 2 ^ -1022)
         Assert.Equal(-1, histogram.MapToIndex(IEEE754Double.FromString("0 01111111111 0000000000000000000000000000000000000000000000000000"))); // 1
         Assert.Equal(0, histogram.MapToIndex(IEEE754Double.FromString("0 01111111111 0000000000000000000000000000000000000000000000000001"))); // ~1.0000000000000002
-        Assert.Equal(0, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111111"))); // ~1.7976931348623157E+308 (maximum normal positive, double.MaxValue, 2 ^ 1023 - 1)
+        Assert.Equal(0, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111111"))); // ~1.7976931348623157E+308 (maximum normal positive, double.MaxValue, 2 ^ 1024 - 1)
+    }
 
+    [Fact]
+    public void IndexLookupScaleOne()
+    {
         /*
         An exponential bucket histogram with scale = 1.
-        The base is 2 ^ (2 ^ -1) = sqrt(2) = 1.41421356237.
+                                     ___
+        The base is 2 ^ (2 ^ -1) = \/ 2  = 1.4142135623730951.
         The buckets are:
             ...
-            bucket[-3]: (0.35355339059, 1/2]
-            bucket[-2]: (1/2, 0.70710678118]
-            bucket[-1]: (0.70710678118, 1]
-            bucket[0]:  (1, 1.41421356237]
-            bucket[1]:  (1.41421356237, 2]
-            bucket[2]:  (2, 2.82842712474]
-            bucket[3]:  (2.82842712474, 4]
+            bucket[-3]: (0.3535533905932738, 1/2]
+            bucket[-2]: (1/2, 0.7071067811865476]
+            bucket[-1]: (0.7071067811865476, 1]
+            bucket[0]:  (1, 1.4142135623730951]
+            bucket[1]:  (1.4142135623730951, 2]
+            bucket[2]:  (2, 2.8284271247461901]
+            bucket[3]:  (2.8284271247461901, 4]
             ...
         */
-        histogram = new ExponentialBucketHistogram(maxBuckets: 2, scale: 1);
+        var histogram = new ExponentialBucketHistogram(maxBuckets: 2, scale: 1);
+
+        Assert.Equal(-2149, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000001"))); // ~4.9406564584124654E-324 (minimum subnormal positive, double.Epsilon, 2 ^ -1074)
+        Assert.Equal(-2147, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000010"))); // double.Epsilon * 2
+        Assert.Equal(-2145, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000011"))); // double.Epsilon * 3
+        Assert.Equal(-2145, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000100"))); // double.Epsilon * 4
+
+        // Assert.Equal(-2143, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000101"))); // double.Epsilon * 5
+        Assert.Equal(-2143, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000110"))); // double.Epsilon * 6
+        Assert.Equal(-2143, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000111"))); // double.Epsilon * 7
+        Assert.Equal(-2143, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000001000"))); // double.Epsilon * 8
+        Assert.Equal(-2049, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0100000000000000000000000000000000000000000000000000"))); // ~5.562684646268003E-309 (2 ^ -1024)
+
+        // Assert.Equal(-2048, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0100000000000000000000000000000000000000000000000001"))); // ~5.56268464626801E-309
+        Assert.Equal(-2047, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 1000000000000000000000000000000000000000000000000000"))); // ~1.1125369292536007E-308 (2 ^ -1023)
+
+        // Assert.Equal(-2046, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 1000000000000000000000000000000000000000000000000001"))); // ~1.112536929253601E-308
+        Assert.Equal(-2045, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 1111111111111111111111111111111111111111111111111111"))); // ~2.2250738585072009E-308 (maximum subnormal positive)
+        Assert.Equal(-2045, histogram.MapToIndex(IEEE754Double.FromString("0 00000000001 0000000000000000000000000000000000000000000000000000"))); // ~2.2250738585072014E-308 (minimum normal positive, 2 ^ -1022)
+
+        // Assert.Equal(-2044, histogram.MapToIndex(IEEE754Double.FromString("0 00000000001 0000000000000000000000000000000000000000000000000001"))); // ~2.225073858507202E-308
+        Assert.Equal(-15, histogram.MapToIndex(IEEE754Double.FromString("0 01111111000 0000000000000000000000000000000000000000000000000000"))); // 1/128
+        Assert.Equal(-13, histogram.MapToIndex(IEEE754Double.FromString("0 01111111001 0000000000000000000000000000000000000000000000000000"))); // 1/64
+        Assert.Equal(-11, histogram.MapToIndex(IEEE754Double.FromString("0 01111111010 0000000000000000000000000000000000000000000000000000"))); // 1/32
+        Assert.Equal(-9, histogram.MapToIndex(IEEE754Double.FromString("0 01111111011 0000000000000000000000000000000000000000000000000000"))); // 1/16
+        Assert.Equal(-7, histogram.MapToIndex(IEEE754Double.FromString("0 01111111100 0000000000000000000000000000000000000000000000000000"))); // 1/8
+        Assert.Equal(-5, histogram.MapToIndex(IEEE754Double.FromString("0 01111111101 0000000000000000000000000000000000000000000000000000"))); // 1/4
+        Assert.Equal(-3, histogram.MapToIndex(IEEE754Double.FromString("0 01111111110 0000000000000000000000000000000000000000000000000000"))); // 1/2
+        Assert.Equal(-2, histogram.MapToIndex(IEEE754Double.FromString("0 01111111110 0000000000000000000000000000000000000000000000000001"))); // ~0.5000000000000001
+        Assert.Equal(-1, histogram.MapToIndex(IEEE754Double.FromString("0 01111111111 0000000000000000000000000000000000000000000000000000"))); // 1
+        Assert.Equal(0, histogram.MapToIndex(IEEE754Double.FromString("0 01111111111 0000000000000000000000000000000000000000000000000001"))); // ~1.0000000000000002
+        Assert.Equal(1, histogram.MapToIndex(IEEE754Double.FromString("0 10000000000 0000000000000000000000000000000000000000000000000000"))); // 2
+        Assert.Equal(3, histogram.MapToIndex(IEEE754Double.FromString("0 10000000001 0000000000000000000000000000000000000000000000000000"))); // 4
+        Assert.Equal(5, histogram.MapToIndex(IEEE754Double.FromString("0 10000000010 0000000000000000000000000000000000000000000000000000"))); // 8
+        Assert.Equal(7, histogram.MapToIndex(IEEE754Double.FromString("0 10000000011 0000000000000000000000000000000000000000000000000000"))); // 16
+        Assert.Equal(9, histogram.MapToIndex(IEEE754Double.FromString("0 10000000100 0000000000000000000000000000000000000000000000000000"))); // 32
+        Assert.Equal(11, histogram.MapToIndex(IEEE754Double.FromString("0 10000000101 0000000000000000000000000000000000000000000000000000"))); // 64
+        Assert.Equal(13, histogram.MapToIndex(IEEE754Double.FromString("0 10000000110 0000000000000000000000000000000000000000000000000000"))); // 128
+        Assert.Equal(105, histogram.MapToIndex(IEEE754Double.FromString("0 10000110011 1111111111111111111111111111111111111111111111111111"))); // 9,007,199,254,740,991 (Number.MAX_SAFE_INTEGER, 2 ^ 53 - 1)
+        Assert.Equal(105, histogram.MapToIndex(IEEE754Double.FromString("0 10000110100 0000000000000000000000000000000000000000000000000000"))); // 9,007,199,254,740,992 (Number.MAX_SAFE_INTEGER + 1, 2 ^ 53)
+        Assert.Equal(2045, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 0000000000000000000000000000000000000000000000000000"))); // ~8.98846567431158E+307
+
+        // Assert.Equal(2046, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 0000000000000000000000000000000000000000000000000001"))); // ~8.988465674311582E+307
+        Assert.Equal(2047, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111110"))); // ~1.7976931348623155E+308
+        Assert.Equal(2047, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111111"))); // ~1.7976931348623157E+308 (maximum normal positive, double.MaxValue, 2 ^ 1024 - 1)
+    }
+
+    [Fact]
+    public void IndexLookupScaleTwenty()
+    {
+        /*
+        An exponential bucket histogram with scale = 20.
+                                    1048576 ___
+        The base is 2 ^ (2 ^ -20) =       \/ 2  = 1.0000006610368821.
+        The buckets are:
+            ...
+            bucket[-3]: (0.9999980168919756, 0.9999986779275468]
+            bucket[-2]: (0.9999986779275468, 0.9999993389635549]
+            bucket[-1]: (0.9999993389635549, 1]
+            bucket[0]:  (1, 1.0000006610368821]
+            bucket[1]:  (1.0000006610368821, 1.0000013220742011]
+            bucket[2]:  (1.0000013220742011, 1.0000019831119571]
+            bucket[3]:  (1.0000019831119571, 1.0000026441501501]
+            ...
+        */
+
+        var histogram = new ExponentialBucketHistogram(maxBuckets: 2, scale: 20);
+
+        Assert.Equal((-1074 * 1048576) - 1, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000001"))); // ~4.9406564584124654E-324 (minimum subnormal positive, double.Epsilon, 2 ^ -1074)
+        Assert.Equal(-1, histogram.MapToIndex(IEEE754Double.FromString("0 01111111111 0000000000000000000000000000000000000000000000000000"))); // 1
+        Assert.Equal((1023 * 1048576) - 1, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 0000000000000000000000000000000000000000000000000000"))); // ~8.98846567431158E+307
+        Assert.Equal((1024 * 1048576) - 1, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111111"))); // ~1.7976931348623157E+308 (maximum normal positive, double.MaxValue, 2 ^ 1024 - 1)
     }
 
     [Fact]
