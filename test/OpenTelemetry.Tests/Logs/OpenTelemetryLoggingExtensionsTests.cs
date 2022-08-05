@@ -238,46 +238,16 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     }
 
     [Fact]
-    public void ServiceCollectionAddOpenTelemetryProcessorThroughDependencyWithoutRegistrationThrowsTest()
-    {
-        var services = new ServiceCollection();
-
-        services.AddLogging(configure =>
-        {
-            // Note: This will throw because CustomProcessor has not been
-            // registered with services
-
-            configure.AddOpenTelemetry(options => options.AddProcessor<CustomProcessor>());
-        });
-
-        using var serviceProvider = services.BuildServiceProvider();
-
-        Assert.Throws<InvalidOperationException>(() => serviceProvider.GetRequiredService<ILoggerFactory>());
-    }
-
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void ServiceCollectionAddOpenTelemetryProcessorThroughDependencyWithRegistrationTests(bool registerOutside)
+    public void ServiceCollectionAddOpenTelemetryProcessorThroughDependencyTest()
     {
         CustomProcessor.InstanceCount = 0;
 
         var services = new ServiceCollection();
 
-        if (registerOutside)
-        {
-            services.AddSingleton<CustomProcessor>();
-        }
-
         services.AddLogging(configure =>
         {
             configure.AddOpenTelemetry(options =>
             {
-                if (!registerOutside)
-                {
-                    options.ConfigureServices(services => services.AddSingleton<CustomProcessor>());
-                }
-
                 options.AddProcessor<CustomProcessor>();
             });
         });
@@ -288,11 +258,13 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         {
             var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
 
-            customProcessor = serviceProvider.GetRequiredService<CustomProcessor>();
+            customProcessor = serviceProvider.GetRequiredService<BaseProcessor<LogRecord>>() as CustomProcessor;
+
+            Assert.NotNull(customProcessor);
 
             loggerFactory.Dispose();
 
-            Assert.False(customProcessor.Disposed);
+            Assert.False(customProcessor!.Disposed);
         }
 
         Assert.True(customProcessor.Disposed);
