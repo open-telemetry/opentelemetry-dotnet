@@ -245,10 +245,8 @@ namespace OpenTelemetry.Trace
                 .ConfigureServices(services =>
                 {
                     services.TryAddSingleton<BaseExporter<Activity>, T>();
-                    services.TryAddSingleton(sp =>
-                    {
-                        return BuildExportProcessor(sp, exportProcessorType, sp.GetRequiredService<T>(), configure);
-                    });
+                    services.TryAddSingleton(
+                        sp => BuildExportProcessor(sp, exportProcessorType, sp.GetRequiredService<T>(), configure));
                 });
         }
 
