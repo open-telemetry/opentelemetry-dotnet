@@ -17,12 +17,10 @@ dotnet add package OpenTelemetry.Extensions.Serilog --prerelease
 
 ```csharp
 // Step 1: Configure OpenTelemetryLoggerProvider...
-var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options =>
-{
-    options
-        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyService"))
-        .AddConsoleExporter();
-});
+var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+    .ConfigureResource(builder => builder.AddService("MyService"))
+    .AddConsoleExporter()
+    .Build();
 
 // Step 2: Register OpenTelemetry sink with Serilog...
 Log.Logger = new LoggerConfiguration()
