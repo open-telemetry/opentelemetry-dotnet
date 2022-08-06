@@ -125,7 +125,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Adds processor to the provider.
+        /// Adds a processor to the provider.
         /// </summary>
         /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
         /// <param name="processor">Activity processor to add.</param>
@@ -155,6 +155,88 @@ namespace OpenTelemetry.Trace
         {
             return tracerProviderBuilder
                 .ConfigureServices(services => services.TryAddSingleton<BaseProcessor<Activity>, T>());
+        }
+
+        /// <summary>
+        /// Adds an exporter to the provider.
+        /// </summary>
+        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="options"><see cref="ExportProcessorOptions"/>.</param>
+        /// <param name="exporter">Activity exporter to add.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder AddExporter(
+            this TracerProviderBuilder tracerProviderBuilder,
+            ExportProcessorOptions options,
+            BaseExporter<Activity> exporter)
+        {
+            Guard.ThrowIfNull(tracerProviderBuilder);
+            Guard.ThrowIfNull(options);
+            Guard.ThrowIfNull(exporter);
+
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            {
+                switch (options.ExportProcessorType)
+                {
+                    case ExportProcessorType.Simple:
+                        return tracerProviderBuilderBase.AddProcessor(new SimpleActivityExportProcessor(exporter));
+                    case ExportProcessorType.Batch:
+                        var batchOptions = options.BatchExportProcessorOptions ?? new BatchExportProcessorOptions<Activity>();
+                        return tracerProviderBuilderBase.AddProcessor(
+                            new BatchActivityExportProcessor(
+                                exporter,
+                                batchOptions.MaxQueueSize,
+                                batchOptions.ScheduledDelayMilliseconds,
+                                batchOptions.ExporterTimeoutMilliseconds,
+                                batchOptions.MaxExportBatchSize));
+                    default:
+                        throw new NotSupportedException($"ExportProcessorType '{options.ExportProcessorType}' is not supported.");
+                }
+            }
+
+            return tracerProviderBuilder;
+        }
+
+        /// <summary>
+        /// Adds an exporter to the provider which will be retrieved using dependency injection.
+        /// </summary>
+        /// <remarks>
+        /// Note: The type specified by <typeparamref name="T"/> will be
+        /// registered as a singleton service into application services.
+        /// </remarks>
+        /// <typeparam name="T">Exporter type.</typeparam>
+        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="options"><see cref="ExportProcessorOptions"/>.</param>
+        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder AddExporter<T>(
+            this TracerProviderBuilder tracerProviderBuilder,
+            ExportProcessorOptions options)
+            where T : BaseExporter<Activity>
+        {
+            Guard.ThrowIfNull(options);
+
+            return tracerProviderBuilder
+                .ConfigureServices(services =>
+                {
+                    services.TryAddSingleton<BaseExporter<Activity>, T>();
+                    services.TryAddSingleton<BaseProcessor<Activity>>(sp =>
+                    {
+                        switch (options.ExportProcessorType)
+                        {
+                            case ExportProcessorType.Simple:
+                                return new SimpleActivityExportProcessor(sp.GetRequiredService<T>());
+                            case ExportProcessorType.Batch:
+                                var batchOptions = options.BatchExportProcessorOptions;
+                                return new BatchActivityExportProcessor(
+                                    sp.GetRequiredService<T>(),
+                                    batchOptions.MaxQueueSize,
+                                    batchOptions.ScheduledDelayMilliseconds,
+                                    batchOptions.ExporterTimeoutMilliseconds,
+                                    batchOptions.MaxExportBatchSize);
+                            default:
+                                throw new NotSupportedException($"ExportProcessorType '{options.ExportProcessorType}' is not supported.");
+                        }
+                    });
+                });
         }
 
         /// <summary>
@@ -204,6 +286,31 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Gets the application <see cref="IServiceCollection"/> attached to
+        /// the <see cref="TracerProviderBuilder"/>.
+        /// </summary>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <returns><see cref="IServiceCollection"/> or <see langword="null"/>
+        /// if services are unavailable.</returns>
+        [Obsolete("Call ConfigureServices instead this method will be removed in a future version.")]
+        public static IServiceCollection? GetServices(this TracerProviderBuilder tracerProviderBuilder)
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            {
+                var services = tracerProviderBuilderBase.Services;
+
+                if (services == null)
+                {
+                    throw new NotSupportedException("Services cannot be configured outside of application configuration phase.");
+                }
+
+                return services;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Register a callback action to configure the <see
         /// cref="TracerProviderBuilder"/> once the application <see
         /// cref="IServiceProvider"/> is available.
@@ -224,6 +331,20 @@ namespace OpenTelemetry.Trace
 
             return tracerProviderBuilder;
         }
+
+        /// <summary>
+        /// Register a callback action to configure the <see
+        /// cref="TracerProviderBuilder"/> once the application <see
+        /// cref="IServiceProvider"/> is available.
+        /// </summary>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <param name="configure">Configuration callback.</param>
+        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        [Obsolete("Call ConfigureBuilder instead this method will be removed in a future version.")]
+        public static TracerProviderBuilder Configure(
+            this TracerProviderBuilder tracerProviderBuilder,
+            Action<IServiceProvider, TracerProviderBuilder> configure)
+            => ConfigureBuilder(tracerProviderBuilder, configure);
 
         /// <summary>
         /// Run the given actions to initialize the <see cref="TracerProvider"/>.
