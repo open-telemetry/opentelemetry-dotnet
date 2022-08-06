@@ -59,6 +59,9 @@ of Windows.
 * Visual Studio 2022+ or Visual Studio Code
 * .NET Framework 4.6.2+
 
+**NOTE** : Visual Studio 2022 preview is **recommended** due to projects
+targeting `.net7.0` which is in preview currently.
+
 ### Public API
 
 It is critical to keep public API surface small and clean. This repository is
