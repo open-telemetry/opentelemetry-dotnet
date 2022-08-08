@@ -56,7 +56,7 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
             var builder = WebApplication.CreateBuilder();
             var app = builder.Build();
 
-            app.MapPost("/", async ([FromBody] Data[] data) =>
+            app.MapPost("/", async ([FromBody]Data[] data) =>
             {
                 var result = string.Empty;
 
