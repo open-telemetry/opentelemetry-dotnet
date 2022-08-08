@@ -56,33 +56,30 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
             var builder = WebApplication.CreateBuilder();
             var app = builder.Build();
 
-            app.MapPost(
-                "/",
-                async ([FromBody]Data[] data) =>
+            app.MapPost("/", async ([FromBody]Data[] data) =>
+            {
+                var result = string.Empty;
+                if (data != null)
                 {
-                    var result = string.Empty;
-
-                    if (data != null)
+                    foreach (var argument in data)
                     {
-                        foreach (var argument in data)
+                        var request = new HttpRequestMessage(HttpMethod.Post, argument.Url)
                         {
-                            var request = new HttpRequestMessage(HttpMethod.Post, argument.Url)
-                            {
-                                Content = new StringContent(
-                                    JsonSerializer.Serialize(argument.Arguments),
-                                    Encoding.UTF8,
-                                    "application/json"),
-                            };
-                            await this.httpClient.SendAsync(request);
-                        }
+                            Content = new StringContent(
+                                JsonSerializer.Serialize(argument.Arguments),
+                                Encoding.UTF8,
+                                "application/json"),
+                        };
+                        await this.httpClient.SendAsync(request);
                     }
-                    else
-                    {
-                        result = "done";
-                    }
+                }
+                else
+                {
+                    result = "done";
+                }
 
-                    return result;
-                });
+                return result;
+            });
 
             app.RunAsync();
 
