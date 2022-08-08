@@ -56,7 +56,10 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
             var builder = WebApplication.CreateBuilder();
             var app = builder.Build();
 
-            app.MapPost("/", async ([FromBody]Data[] data) =>
+            // disabling due to failing dotnet-format
+            // TODO: invetigate why dotnet-format fails.
+#pragma warning disable SA1008 // Opening parenthesis should be spaced correctly
+            app.MapPost("/", async([FromBody]Data[] data) =>
             {
                 var result = string.Empty;
                 if (data != null)
@@ -80,6 +83,7 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
 
                 return result;
             });
+#pragma warning restore SA1008 // Opening parenthesis should be spaced correctly
 
             app.RunAsync();
 
