@@ -75,8 +75,6 @@ namespace Microsoft.Extensions.DependencyInjection
             try
             {
                 services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
-
-                return services;
             }
             catch (Exception ex)
             {
