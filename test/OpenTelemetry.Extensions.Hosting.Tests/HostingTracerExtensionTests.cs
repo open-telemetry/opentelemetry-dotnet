@@ -183,41 +183,19 @@ namespace OpenTelemetry.Extensions.Hosting.Tests
         }
 
         [Fact]
-        public void AddOpenTelemetryTracing_SingleBuilderAllowed()
+        public void AddOpenTelemetryTracing_MultipleCallsConfigureSingleProvider()
         {
             var services = new ServiceCollection();
 
             services.AddOpenTelemetryTracing(builder => builder.AddSource("TestSourceBuilder1"));
             services.AddOpenTelemetryTracing();
-            services.AddOpenTelemetryTracing();
-            services.AddOpenTelemetryTracing();
-
-            using var serviceProvider = services.BuildServiceProvider();
-
-            var builders = serviceProvider.GetServices<TracerProviderBuilderHosting>();
-
-            Assert.Single(builders);
-
-            var provider = serviceProvider.GetRequiredService<TracerProvider>();
-
-            Assert.NotNull(provider);
-        }
-
-        [Fact]
-        public void AddOpenTelemetryTracing_MultipleBuildersThrowsNotSupported()
-        {
-            var services = new ServiceCollection();
-
-            services.AddOpenTelemetryTracing(builder => builder.AddSource("TestSourceBuilder1"));
             services.AddOpenTelemetryTracing(builder => builder.AddSource("TestSourceBuilder2"));
 
             using var serviceProvider = services.BuildServiceProvider();
 
-            var builders = serviceProvider.GetServices<TracerProviderBuilderHosting>();
+            var providers = serviceProvider.GetServices<TracerProvider>();
 
-            Assert.Equal(2, builders.Count());
-
-            Assert.Throws<NotSupportedException>(() => serviceProvider.GetRequiredService<TracerProvider>());
+            Assert.Single(providers);
         }
 
         private static TracerProviderBuilder AddMyFeature(TracerProviderBuilder tracerProviderBuilder)
