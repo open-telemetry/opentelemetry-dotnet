@@ -50,7 +50,8 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
         {
             // configure SDK
             using var tracerprovider = Sdk.CreateTracerProviderBuilder()
-               .AddAspNetCoreInstrumentation().Build();
+            .AddAspNetCoreInstrumentation()
+            .Build();
 
             var builder = WebApplication.CreateBuilder();
             var app = builder.Build();
