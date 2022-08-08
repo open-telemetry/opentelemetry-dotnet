@@ -91,7 +91,9 @@ namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests
 
             // Assert
             // Assert on the last line
-            // TODO: Investigate failures
+            // TODO: Investigate failures:
+            // 1) harness sends a request with an invalid tracestate header with duplicated keys ... FAIL
+            // 2) harness sends an invalid traceparent with illegal characters in trace_flags ... FAIL
             string lastLine = ParseLastLine(result);
             this.output.WriteLine("result:" + result);
             Assert.StartsWith("FAILED (failures=2)", lastLine);
