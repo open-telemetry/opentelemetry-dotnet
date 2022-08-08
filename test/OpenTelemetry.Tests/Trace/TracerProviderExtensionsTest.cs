@@ -16,12 +16,11 @@
 
 using System;
 using System.Diagnostics;
-
-using OpenTelemetry.Trace;
+using OpenTelemetry.Tests;
 
 using Xunit;
 
-namespace OpenTelemetry.Tests.Trace
+namespace OpenTelemetry.Trace.Tests
 {
     public class TracerProviderExtensionsTest
     {

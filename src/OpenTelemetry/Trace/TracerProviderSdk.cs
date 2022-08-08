@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -36,47 +35,55 @@ namespace OpenTelemetry.Trace
         private readonly Sampler sampler;
         private readonly Action<Activity> getRequestedDataAction;
         private readonly bool supportLegacyActivity;
-        private readonly ServiceProvider? ownedServiceProvider;
+        private readonly IDisposable? ownedServiceProvider;
         private BaseProcessor<Activity>? processor;
         private bool disposed;
 
         internal TracerProviderSdk(
-            Resource resource,
-            IEnumerable<string> sources,
-            IEnumerable<TracerProviderBuilderBase.InstrumentationFactory> instrumentationFactories,
-            Sampler sampler,
-            List<BaseProcessor<Activity>> processors,
-            HashSet<string> legacyActivityOperationNames,
-            ServiceProvider? ownedServiceProvider)
+            IServiceProvider serviceProvider,
+            bool ownsServiceProvider)
         {
-            this.Resource = resource;
-            this.sampler = sampler;
-            this.supportLegacyActivity = legacyActivityOperationNames.Count > 0;
-            this.ownedServiceProvider = ownedServiceProvider;
+            if (ownsServiceProvider)
+            {
+                this.ownedServiceProvider = serviceProvider as IDisposable;
+                Debug.Assert(this.ownedServiceProvider != null, "serviceProvider was not IDisposable");
+            }
+
+            var state = new TracerProviderBuilderState();
+
+            TracerProviderBuilderServiceCollectionHelper.InvokeRegisteredConfigureStateCallbacks(
+                serviceProvider,
+                state);
+
+            if (state.SetErrorStatusOnException)
+            {
+                state.EnableErrorStatusOnException();
+            }
+
+            this.Resource = (state.ResourceBuilder ?? ResourceBuilder.CreateDefault()).Build();
+            this.sampler = state.Sampler ?? new ParentBasedSampler(new AlwaysOnSampler());
+            this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;
 
             bool legacyActivityWildcardMode = false;
             var legacyActivityWildcardModeRegex = WildcardHelper.GetWildcardRegex();
-            foreach (var legacyName in legacyActivityOperationNames)
+            foreach (var legacyName in state.LegacyActivityOperationNames)
             {
                 if (WildcardHelper.ContainsWildcard(legacyName))
                 {
                     legacyActivityWildcardMode = true;
-                    legacyActivityWildcardModeRegex = WildcardHelper.GetWildcardRegex(legacyActivityOperationNames);
+                    legacyActivityWildcardModeRegex = WildcardHelper.GetWildcardRegex(state.LegacyActivityOperationNames);
                     break;
                 }
             }
 
-            foreach (var processor in processors)
+            foreach (var processor in state.Processors)
             {
                 this.AddProcessor(processor);
             }
 
-            if (instrumentationFactories.Any())
+            foreach (var instrumentation in state.Instrumentation)
             {
-                foreach (var instrumentationFactory in instrumentationFactories)
-                {
-                    this.instrumentations.Add(instrumentationFactory.Factory());
-                }
+                this.instrumentations.Add(instrumentation.Instance);
             }
 
             var listener = new ActivityListener();
@@ -90,7 +97,7 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    legacyActivityPredicate = activity => legacyActivityOperationNames.Contains(activity.OperationName);
+                    legacyActivityPredicate = activity => state.LegacyActivityOperationNames.Contains(activity.OperationName);
                 }
 
                 listener.ActivityStarted = activity =>
@@ -196,13 +203,13 @@ namespace OpenTelemetry.Trace
                 };
             }
 
-            if (sampler is AlwaysOnSampler)
+            if (this.sampler is AlwaysOnSampler)
             {
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                     !Sdk.SuppressInstrumentation ? ActivitySamplingResult.AllDataAndRecorded : ActivitySamplingResult.None;
                 this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
             }
-            else if (sampler is AlwaysOffSampler)
+            else if (this.sampler is AlwaysOffSampler)
             {
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
                     !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(options.Parent) : ActivitySamplingResult.None;
@@ -212,19 +219,19 @@ namespace OpenTelemetry.Trace
             {
                 // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
-                    !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(options, sampler) : ActivitySamplingResult.None;
+                    !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(options, this.sampler) : ActivitySamplingResult.None;
                 this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
             }
 
             // Sources can be null. This happens when user
             // is only interested in InstrumentationLibraries
             // which do not depend on ActivitySources.
-            if (sources.Any())
+            if (state.Sources.Any())
             {
                 // Validation of source name is already done in builder.
-                if (sources.Any(s => WildcardHelper.ContainsWildcard(s)))
+                if (state.Sources.Any(s => WildcardHelper.ContainsWildcard(s)))
                 {
-                    var regex = WildcardHelper.GetWildcardRegex(sources);
+                    var regex = WildcardHelper.GetWildcardRegex(state.Sources);
 
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
@@ -235,7 +242,7 @@ namespace OpenTelemetry.Trace
                 }
                 else
                 {
-                    var activitySources = new HashSet<string>(sources, StringComparer.OrdinalIgnoreCase);
+                    var activitySources = new HashSet<string>(state.Sources, StringComparer.OrdinalIgnoreCase);
 
                     if (this.supportLegacyActivity)
                     {

@@ -19,9 +19,6 @@
 using System;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
@@ -35,7 +32,7 @@ namespace OpenTelemetry.Trace
         /// Sets whether the status of <see cref="Activity"/>
         /// should be set to <c>Status.Error</c> when it ended abnormally due to an unhandled exception.
         /// </summary>
-        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <param name="enabled">Enabled or not. Default value is <c>true</c>.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder SetErrorStatusOnException(this TracerProviderBuilder tracerProviderBuilder, bool enabled = true)
@@ -51,7 +48,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Sets sampler.
         /// </summary>
-        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <param name="sampler">Sampler instance.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder SetSampler(this TracerProviderBuilder tracerProviderBuilder, Sampler sampler)
@@ -77,8 +74,12 @@ namespace OpenTelemetry.Trace
         public static TracerProviderBuilder SetSampler<T>(this TracerProviderBuilder tracerProviderBuilder)
             where T : Sampler
         {
-            return tracerProviderBuilder
-                .ConfigureServices(services => services.TryAddSingleton<Sampler, T>());
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            {
+                tracerProviderBuilderBase.SetSampler<T>();
+            }
+
+            return tracerProviderBuilder;
         }
 
         /// <summary>
@@ -87,14 +88,14 @@ namespace OpenTelemetry.Trace
         /// You should usually use <see cref="ConfigureResource(TracerProviderBuilder, Action{ResourceBuilder})"/> instead
         /// (call <see cref="ResourceBuilder.Clear"/> if desired).
         /// </summary>
-        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder SetResourceBuilder(this TracerProviderBuilder tracerProviderBuilder, ResourceBuilder resourceBuilder)
         {
             if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
-                tracerProviderBuilderBase.ResourceBuilder = resourceBuilder;
+                tracerProviderBuilderBase.SetResourceBuilder(resourceBuilder);
             }
 
             return tracerProviderBuilder;
@@ -104,31 +105,23 @@ namespace OpenTelemetry.Trace
         /// Modify the <see cref="ResourceBuilder"/> from which the Resource associated with
         /// this provider is built from in-place.
         /// </summary>
-        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <param name="configure">An action which modifies the provided <see cref="ResourceBuilder"/> in-place.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder ConfigureResource(this TracerProviderBuilder tracerProviderBuilder, Action<ResourceBuilder> configure)
         {
-            Guard.ThrowIfNull(configure);
-
-            return tracerProviderBuilder.ConfigureBuilder((sp, b) =>
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
-                // Note: ConfigureResource is deferred until the build phase.
-                // This allows them to play nice and apply on top of any
-                // SetResourceBuilder calls.
-                if (b is TracerProviderBuilderBase tracerProviderBuilderBase)
-                {
-                    Debug.Assert(tracerProviderBuilderBase.ResourceBuilder != null, "ResourceBuilder was null");
+                tracerProviderBuilderBase.ConfigureResource(configure);
+            }
 
-                    configure(tracerProviderBuilderBase.ResourceBuilder!);
-                }
-            });
+            return tracerProviderBuilder;
         }
 
         /// <summary>
         /// Adds a processor to the provider.
         /// </summary>
-        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <param name="processor">Activity processor to add.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder AddProcessor(this TracerProviderBuilder tracerProviderBuilder, BaseProcessor<Activity> processor)
@@ -149,19 +142,23 @@ namespace OpenTelemetry.Trace
         /// registered as a singleton service into application services.
         /// </remarks>
         /// <typeparam name="T">Processor type.</typeparam>
-        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder AddProcessor<T>(this TracerProviderBuilder tracerProviderBuilder)
             where T : BaseProcessor<Activity>
         {
-            return tracerProviderBuilder
-                .ConfigureServices(services => services.TryAddSingleton<BaseProcessor<Activity>, T>());
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            {
+                tracerProviderBuilderBase.AddProcessor<T>();
+            }
+
+            return tracerProviderBuilder;
         }
 
         /// <summary>
         /// Adds an exporter to the provider.
         /// </summary>
-        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
         /// <param name="exporter">Activity exporter to add.</param>
         /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
@@ -174,7 +171,7 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Adds an exporter to the provider.
         /// </summary>
-        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
         /// <param name="exporter">Activity exporter to add.</param>
         /// <param name="configure">Callback action to configure <see
@@ -188,17 +185,12 @@ namespace OpenTelemetry.Trace
             BaseExporter<Activity> exporter,
             Action<ExportActivityProcessorOptions> configure)
         {
-            Guard.ThrowIfNull(exporter);
-            Guard.ThrowIfNull(configure);
-
-            return tracerProviderBuilder.ConfigureBuilder((sp, b) =>
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
-                if (b is TracerProviderBuilderBase tracerProviderBuilderBase)
-                {
-                    tracerProviderBuilderBase.AddProcessor(
-                        BuildExportProcessor(sp, exportProcessorType, exporter, configure));
-                }
-            });
+                tracerProviderBuilderBase.AddExporter(exportProcessorType, exporter, configure);
+            }
+
+            return tracerProviderBuilder;
         }
 
         /// <summary>
@@ -209,7 +201,7 @@ namespace OpenTelemetry.Trace
         /// registered as a singleton service into application services.
         /// </remarks>
         /// <typeparam name="T">Exporter type.</typeparam>
-        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
         /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder AddExporter<T>(
@@ -226,7 +218,7 @@ namespace OpenTelemetry.Trace
         /// registered as a singleton service into application services.
         /// </remarks>
         /// <typeparam name="T">Exporter type.</typeparam>
-        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <param name="exportProcessorType"><see cref="ExportProcessorType"/>.</param>
         /// <param name="configure">Callback action to configure <see
         /// cref="ExportActivityProcessorOptions"/>. Only invoked when <paramref
@@ -239,29 +231,33 @@ namespace OpenTelemetry.Trace
             Action<ExportActivityProcessorOptions> configure)
             where T : BaseExporter<Activity>
         {
-            Guard.ThrowIfNull(configure);
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            {
+                tracerProviderBuilderBase.AddExporter<T>(exportProcessorType, configure);
+            }
 
-            return tracerProviderBuilder
-                .ConfigureServices(services =>
-                {
-                    services.TryAddSingleton<BaseExporter<Activity>, T>();
-                    services.TryAddSingleton(
-                        sp => BuildExportProcessor(sp, exportProcessorType, sp.GetRequiredService<T>(), configure));
-                });
+            return tracerProviderBuilder;
         }
 
         /// <summary>
         /// Adds instrumentation to the provider.
         /// </summary>
+        /// <remarks>
+        /// Note: The type specified by <typeparamref name="T"/> will be
+        /// registered as a singleton service into application services.
+        /// </remarks>
         /// <typeparam name="T">Instrumentation type.</typeparam>
         /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
         public static TracerProviderBuilder AddInstrumentation<T>(this TracerProviderBuilder tracerProviderBuilder)
             where T : class
         {
-            return ConfigureBuilder(
-                tracerProviderBuilder,
-                (sp, builder) => builder.AddInstrumentation(() => sp.GetRequiredService<T>()));
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            {
+                tracerProviderBuilderBase.AddInstrumentation<T>();
+            }
+
+            return tracerProviderBuilder;
         }
 
         /// <summary>
@@ -279,18 +275,9 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder tracerProviderBuilder,
             Action<IServiceCollection> configure)
         {
-            Guard.ThrowIfNull(configure);
-
             if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
-                var services = tracerProviderBuilderBase.Services;
-
-                if (services == null)
-                {
-                    throw new NotSupportedException("Services cannot be configured outside of application configuration phase.");
-                }
-
-                configure(services);
+                tracerProviderBuilderBase.ConfigureServices(configure);
             }
 
             return tracerProviderBuilder;
@@ -308,13 +295,8 @@ namespace OpenTelemetry.Trace
         {
             if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
-                var services = tracerProviderBuilderBase.Services;
-
-                if (services == null)
-                {
-                    throw new NotSupportedException("Services cannot be configured outside of application configuration phase.");
-                }
-
+                IServiceCollection? services = null;
+                tracerProviderBuilderBase.ConfigureServices(s => services = s);
                 return services;
             }
 
@@ -333,8 +315,6 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder tracerProviderBuilder,
             Action<IServiceProvider, TracerProviderBuilder> configure)
         {
-            Guard.ThrowIfNull(configure);
-
             if (tracerProviderBuilder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
             {
                 deferredTracerProviderBuilder.Configure(configure);
@@ -370,38 +350,6 @@ namespace OpenTelemetry.Trace
             }
 
             return null;
-        }
-
-        private static BaseProcessor<Activity> BuildExportProcessor(
-            IServiceProvider serviceProvider,
-            ExportProcessorType exportProcessorType,
-            BaseExporter<Activity> exporter,
-            Action<ExportActivityProcessorOptions>? configure = null)
-        {
-            switch (exportProcessorType)
-            {
-                case ExportProcessorType.Simple:
-                    return new SimpleActivityExportProcessor(exporter);
-                case ExportProcessorType.Batch:
-                    var options = new ExportActivityProcessorOptions
-                    {
-                        ExportProcessorType = ExportProcessorType.Batch,
-                        BatchExportProcessorOptions = serviceProvider.GetRequiredService<IOptions<BatchExportActivityProcessorOptions>>().Value,
-                    };
-
-                    configure?.Invoke(options);
-
-                    var batchOptions = options.BatchExportProcessorOptions;
-
-                    return new BatchActivityExportProcessor(
-                        exporter,
-                        batchOptions.MaxQueueSize,
-                        batchOptions.ScheduledDelayMilliseconds,
-                        batchOptions.ExporterTimeoutMilliseconds,
-                        batchOptions.MaxExportBatchSize);
-                default:
-                    throw new NotSupportedException($"ExportProcessorType '{exportProcessorType}' is not supported.");
-            }
         }
     }
 }
