@@ -16,48 +16,50 @@
 
 using TestApp.AspNetCore;
 
-var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-
-builder.Services.AddControllers();
-
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-
-builder.Services.AddSwaggerGen();
-
-builder.Services.AddMvc();
-
-builder.Services.AddSingleton<HttpClient>();
-
-builder.Services.AddSingleton(
-    new CallbackMiddleware.CallbackMiddlewareImpl());
-
-builder.Services.AddSingleton(
-    new ActivityMiddleware.ActivityMiddlewareImpl());
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+public class Program
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    public static void Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
 
-app.UseHttpsRedirection();
+        // Add services to the container.
 
-app.UseAuthorization();
+        builder.Services.AddControllers();
 
-app.MapControllers();
+        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+        builder.Services.AddEndpointsApiExplorer();
 
-app.UseMiddleware<CallbackMiddleware>();
+        builder.Services.AddSwaggerGen();
 
-app.UseMiddleware<ActivityMiddleware>();
+        builder.Services.AddMvc();
 
-app.Run();
+        builder.Services.AddSingleton<HttpClient>();
 
-public partial class Program
-{
+        builder.Services.AddSingleton(
+            new CallbackMiddleware.CallbackMiddlewareImpl());
+
+        builder.Services.AddSingleton(
+            new ActivityMiddleware.ActivityMiddlewareImpl());
+
+        var app = builder.Build();
+
+        // Configure the HTTP request pipeline.
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+
+        app.UseHttpsRedirection();
+
+        app.UseAuthorization();
+
+        app.MapControllers();
+
+        app.UseMiddleware<CallbackMiddleware>();
+
+        app.UseMiddleware<ActivityMiddleware>();
+
+        app.Run();
+    }
 }
