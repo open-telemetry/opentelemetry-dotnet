@@ -25,22 +25,17 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Trace;
-#if NET6_0
-using TestApp.AspNetCore._6._0;
-#endif
-#if NET7_0
-using TestApp.AspNetCore._7._0;
-#endif
+using TestApp.AspNetCore;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
     public class IncomingRequestsCollectionsIsAccordingToTheSpecTests
-        : IClassFixture<WebApplicationFactory<Startup>>
+        : IClassFixture<WebApplicationFactory<Program>>
     {
-        private readonly WebApplicationFactory<Startup> factory;
+        private readonly WebApplicationFactory<Program> factory;
 
-        public IncomingRequestsCollectionsIsAccordingToTheSpecTests(WebApplicationFactory<Startup> factory)
+        public IncomingRequestsCollectionsIsAccordingToTheSpecTests(WebApplicationFactory<Program> factory)
         {
             this.factory = factory;
         }

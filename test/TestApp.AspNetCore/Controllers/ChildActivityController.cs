@@ -19,12 +19,11 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using OpenTelemetry;
 
-#pragma warning disable SA1300 // Element should begin with upper-case letter
-namespace TestApp.AspNetCore._7._0.Controllers
-#pragma warning restore SA1300 // Element should begin with upper-case letter
+namespace TestApp.AspNetCore.Controllers
 {
     public class ChildActivityController : Controller
     {
+        [HttpGet]
         [Route("api/GetChildActivityTraceContext")]
         public Dictionary<string, string> GetChildActivityTraceContext()
         {
@@ -33,11 +32,16 @@ namespace TestApp.AspNetCore._7._0.Controllers
             activity.Start();
             result["TraceId"] = activity.Context.TraceId.ToString();
             result["ParentSpanId"] = activity.ParentSpanId.ToString();
-            result["TraceState"] = activity.Context.TraceState;
+            if (activity.Context.TraceState != null)
+            {
+                result["TraceState"] = activity.Context.TraceState;
+            }
+
             activity.Stop();
             return result;
         }
 
+        [HttpGet]
         [Route("api/GetChildActivityBaggageContext")]
         public IReadOnlyDictionary<string, string> GetChildActivityBaggageContext()
         {
