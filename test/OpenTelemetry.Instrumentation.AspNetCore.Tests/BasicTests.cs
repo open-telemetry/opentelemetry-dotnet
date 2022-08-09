@@ -552,16 +552,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var activitySourceName = "TestMiddlewareActivitySource";
             var activityName = "TestMiddlewareActivity";
 
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                services.AddSingleton<ActivityMiddleware.ActivityMiddlewareImpl>(new TestActivityMiddlewareImpl(activitySourceName, activityName));
+                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation()
+                    .AddSource(activitySourceName)
+                    .AddInMemoryExporter(exportedItems)
+                    .Build();
+            }
+
             // Arrange
             using (var client = this.factory
                 .WithWebHostBuilder(builder =>
-                    builder.ConfigureTestServices((IServiceCollection services) =>
-                    {
-                        services.AddSingleton<ActivityMiddleware.ActivityMiddlewareImpl>(new TestActivityMiddlewareImpl(activitySourceName, activityName));
-                        services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation()
-                        .AddSource(activitySourceName)
-                        .AddInMemoryExporter(exportedItems));
-                    }))
+                    builder.ConfigureTestServices(ConfigureTestServices))
                 .CreateClient())
             {
                 var response = await client.GetAsync("/api/values/2");
