@@ -116,6 +116,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal("http", activity.GetTagValue(SemanticConventions.AttributeHttpScheme));
             Assert.Equal(urlPath, activity.GetTagValue(SemanticConventions.AttributeHttpTarget));
             Assert.Equal($"http://localhost{urlPath}{query}", activity.GetTagValue(SemanticConventions.AttributeHttpUrl));
+            Assert.Equal(statusCode, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
 
             if (statusCode == 503)
             {
