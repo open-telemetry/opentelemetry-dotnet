@@ -15,6 +15,10 @@
 // </copyright>
 
 using System;
+#if NET7_0_OR_GREATER
+using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+#endif
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Internal;
@@ -42,7 +46,7 @@ namespace OpenTelemetry.Trace
             {
                 return deferredTracerProviderBuilder.Configure((sp, builder) =>
                 {
-                    AddAspNetCoreInstrumentation(builder, sp.GetOptions<AspNetCoreInstrumentationOptions>(), configureAspNetCoreInstrumentationOptions);
+                    AddAspNetCoreInstrumentation(builder, sp.GetOptions<AspNetCoreInstrumentationOptions>(), configureAspNetCoreInstrumentationOptions, sp);
                 });
             }
 
@@ -51,22 +55,44 @@ namespace OpenTelemetry.Trace
 
         internal static TracerProviderBuilder AddAspNetCoreInstrumentation(
             this TracerProviderBuilder builder,
-            AspNetCoreInstrumentation instrumentation)
+            AspNetCoreInstrumentation instrumentation,
+            IServiceProvider serviceProvider = null)
         {
+            // For .NET7.0 onwards activity will be created using activitySource.
+            // https://github.com/dotnet/aspnetcore/blob/bf3352f2422bf16fa3ca49021f0e31961ce525eb/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L327
+            // For .NET6.0 and below, we will continue to use legacy way.
+#if NET7_0_OR_GREATER
+            // TODO: Check with .NET team to see if this can be prevented
+            // as this allows user to override the ActivitySource.
+            var activitySourceService = serviceProvider?.GetService<ActivitySource>();
+            if (activitySourceService != null)
+            {
+                builder.AddSource(activitySourceService.Name);
+            }
+            else
+            {
+                // For users not using hosting package?
+                builder.AddSource(HttpInListener.AspNetCoreActivitySourceName);
+            }
+#else
             builder.AddSource(HttpInListener.ActivitySourceName);
             builder.AddLegacySource(HttpInListener.ActivityOperationName); // for the activities created by AspNetCore
+#endif
+
             return builder.AddInstrumentation(() => instrumentation);
         }
 
         private static TracerProviderBuilder AddAspNetCoreInstrumentation(
             TracerProviderBuilder builder,
             AspNetCoreInstrumentationOptions options,
-            Action<AspNetCoreInstrumentationOptions> configure = null)
+            Action<AspNetCoreInstrumentationOptions> configure = null,
+            IServiceProvider serviceProvider = null)
         {
             configure?.Invoke(options);
             return AddAspNetCoreInstrumentation(
                 builder,
-                new AspNetCoreInstrumentation(new HttpInListener(options)));
+                new AspNetCoreInstrumentation(new HttpInListener(options)),
+                serviceProvider);
         }
     }
 }

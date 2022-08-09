@@ -4,6 +4,9 @@
 
 * Use binary search for histograms with 50 or more supplied boundaries.
   ([#3252](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3252))
+* Added `Sdk.CreateLoggerProviderBuilder` method and support for dependency
+  injection scenarios when configuring `OpenTelemetryLoggerProvider`
+  ([#3504](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3504))
 
 ## 1.4.0-alpha.1
 
