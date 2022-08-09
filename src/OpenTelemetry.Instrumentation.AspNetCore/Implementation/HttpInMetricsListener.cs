@@ -17,9 +17,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Http;
-#if NETCOREAPP
 using Microsoft.AspNetCore.Routing;
-#endif
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
@@ -67,9 +65,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
             TagList tags;
 
-            // We need following directive as
-            // RouteEndpoint is not available in netstandard2.0 and netstandard2.1
-#if NETCOREAPP
             var target = (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText;
 
             // TODO: This is just a minimal set of attributes. See the spec for additional attributes:
@@ -97,17 +92,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString() },
                 };
             }
-#else
-            tags = new TagList
-            {
-                { SemanticConventions.AttributeHttpFlavor, context.Request.Protocol },
-                { SemanticConventions.AttributeHttpScheme, context.Request.Scheme },
-                { SemanticConventions.AttributeHttpMethod, context.Request.Method },
-                { SemanticConventions.AttributeHttpHost, host },
-                { SemanticConventions.AttributeHttpStatusCode, context.Response.StatusCode.ToString() },
-            };
 
-#endif
             this.httpServerDuration.Record(activity.Duration.TotalMilliseconds, tags);
         }
     }
