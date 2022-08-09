@@ -29,6 +29,7 @@ namespace OpenTelemetry.Trace
     /// </summary>
     internal sealed class TracerProviderBuilderState
     {
+        internal readonly IServiceProvider ServiceProvider;
         internal readonly List<InstrumentationRegistration> Instrumentation = new();
         internal readonly List<BaseProcessor<Activity>> Processors = new();
         internal readonly List<string> Sources = new();
@@ -36,6 +37,17 @@ namespace OpenTelemetry.Trace
         internal ResourceBuilder? ResourceBuilder;
         internal Sampler? Sampler;
         internal bool SetErrorStatusOnException;
+
+        private TracerProviderBuilderSdk? builder;
+
+        public TracerProviderBuilderState(IServiceProvider serviceProvider)
+        {
+            Debug.Assert(serviceProvider != null, "serviceProvider was null");
+
+            this.ServiceProvider = serviceProvider!;
+        }
+
+        public TracerProviderBuilderSdk Builder => this.builder ??= new TracerProviderBuilderSdk(this);
 
         public void AddInstrumentation(
             string instrumentationName,

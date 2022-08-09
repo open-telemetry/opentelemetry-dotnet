@@ -30,7 +30,7 @@ internal static class TracerProviderBuilderServiceCollectionHelper
 
         return RegisterConfigureStateCallback(
             services,
-            (sp, state) => configure(sp, new TracerProviderBuilderSdk(sp, state)));
+            (sp, state) => configure(sp, state.Builder));
     }
 
     internal static IServiceCollection RegisterConfigureStateCallback(

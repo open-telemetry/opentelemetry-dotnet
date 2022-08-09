@@ -31,21 +31,16 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public abstract class TracerProviderBuilderBase : TracerProviderBuilder, IDeferredTracerProviderBuilder
     {
-        private readonly IServiceProvider? serviceProvider;
         private readonly TracerProviderBuilderState? state;
         private readonly bool ownsServices;
         private IServiceCollection? services;
 
         // This ctor is for a builder created from TracerProviderBuilderState which
         // happens after the service provider has been created.
-        internal TracerProviderBuilderBase(
-            IServiceProvider serviceProvider,
-            TracerProviderBuilderState state)
+        internal TracerProviderBuilderBase(TracerProviderBuilderState state)
         {
-            Debug.Assert(serviceProvider != null, "serviceProvider was null");
             Debug.Assert(state != null, "state was null");
 
-            this.serviceProvider = serviceProvider;
             this.state = state;
         }
 
@@ -109,9 +104,7 @@ namespace OpenTelemetry.Trace
 
             if (this.state != null)
             {
-                Debug.Assert(this.serviceProvider != null, "serviceProvider was null");
-
-                configure(this.serviceProvider!, this);
+                configure(this.state.ServiceProvider, this);
             }
             else
             {
@@ -130,7 +123,7 @@ namespace OpenTelemetry.Trace
             this.TryAddSingleton<T>();
             this.ConfigureState((sp, state)
                 => state.AddProcessor(
-                    this.BuildExportProcessor(exportProcessorType, sp.GetRequiredService<T>(), configure)));
+                    BuildExportProcessor(state.ServiceProvider, exportProcessorType, sp.GetRequiredService<T>(), configure)));
 
             return this;
         }
@@ -142,7 +135,7 @@ namespace OpenTelemetry.Trace
 
             this.ConfigureState((sp, state)
                 => state.AddProcessor(
-                    this.BuildExportProcessor(exportProcessorType, exporter, configure)));
+                    BuildExportProcessor(state.ServiceProvider, exportProcessorType, exporter, configure)));
 
             return this;
         }
@@ -274,56 +267,12 @@ namespace OpenTelemetry.Trace
             return serviceProvider.GetRequiredService<TracerProvider>();
         }
 
-        private TracerProviderBuilder AddInstrumentation<T>(Func<IServiceProvider, T> instrumentationFactory)
-            where T : class
-        {
-            this.ConfigureState((sp, state)
-                => state.AddInstrumentation(
-                    typeof(T).Name,
-                    "semver:" + typeof(T).Assembly.GetName().Version,
-                    instrumentationFactory(sp)));
-
-            return this;
-        }
-
-        private TracerProviderBuilder ConfigureState(Action<IServiceProvider, TracerProviderBuilderState> configure)
-        {
-            Debug.Assert(configure != null, "configure was null");
-
-            if (this.state != null)
-            {
-                Debug.Assert(this.serviceProvider != null, "serviceProvider was null");
-
-                configure!(this.serviceProvider!, this.state);
-            }
-            else
-            {
-                this.ConfigureServices(services => TracerProviderBuilderServiceCollectionHelper.RegisterConfigureStateCallback(services, configure));
-            }
-
-            return this;
-        }
-
-        private void TryAddSingleton<T>()
-            where T : class
-        {
-            var services = this.services;
-
-            if (services != null)
-            {
-                services.TryAddSingleton<T>();
-            }
-        }
-
-        private BaseProcessor<Activity> BuildExportProcessor(
+        private static BaseProcessor<Activity> BuildExportProcessor(
+            IServiceProvider serviceProvider,
             ExportProcessorType exportProcessorType,
             BaseExporter<Activity> exporter,
             Action<ExportActivityProcessorOptions> configure)
         {
-            Debug.Assert(this.serviceProvider != null, "serviceProvider was null");
-
-            var serviceProvider = this.serviceProvider;
-
             switch (exportProcessorType)
             {
                 case ExportProcessorType.Simple:
@@ -347,6 +296,45 @@ namespace OpenTelemetry.Trace
                         batchOptions.MaxExportBatchSize);
                 default:
                     throw new NotSupportedException($"ExportProcessorType '{exportProcessorType}' is not supported.");
+            }
+        }
+
+        private TracerProviderBuilder AddInstrumentation<T>(Func<IServiceProvider, T> instrumentationFactory)
+            where T : class
+        {
+            this.ConfigureState((sp, state)
+                => state.AddInstrumentation(
+                    typeof(T).Name,
+                    "semver:" + typeof(T).Assembly.GetName().Version,
+                    instrumentationFactory(sp)));
+
+            return this;
+        }
+
+        private TracerProviderBuilder ConfigureState(Action<IServiceProvider, TracerProviderBuilderState> configure)
+        {
+            Debug.Assert(configure != null, "configure was null");
+
+            if (this.state != null)
+            {
+                configure!(this.state.ServiceProvider, this.state);
+            }
+            else
+            {
+                this.ConfigureServices(services => TracerProviderBuilderServiceCollectionHelper.RegisterConfigureStateCallback(services, configure));
+            }
+
+            return this;
+        }
+
+        private void TryAddSingleton<T>()
+            where T : class
+        {
+            var services = this.services;
+
+            if (services != null)
+            {
+                services.TryAddSingleton<T>();
             }
         }
     }

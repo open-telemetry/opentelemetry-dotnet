@@ -49,7 +49,7 @@ namespace OpenTelemetry.Trace
                 Debug.Assert(this.ownedServiceProvider != null, "serviceProvider was not IDisposable");
             }
 
-            var state = new TracerProviderBuilderState();
+            var state = new TracerProviderBuilderState(serviceProvider);
 
             TracerProviderBuilderServiceCollectionHelper.InvokeRegisteredConfigureStateCallbacks(
                 serviceProvider,

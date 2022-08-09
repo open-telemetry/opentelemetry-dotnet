@@ -16,7 +16,6 @@
 
 #nullable enable
 
-using System;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace OpenTelemetry.Trace
@@ -32,10 +31,8 @@ namespace OpenTelemetry.Trace
         {
         }
 
-        internal TracerProviderBuilderSdk(
-            IServiceProvider serviceProvider,
-            TracerProviderBuilderState state)
-            : base(serviceProvider, state)
+        internal TracerProviderBuilderSdk(TracerProviderBuilderState state)
+            : base(state)
         {
         }
     }
