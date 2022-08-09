@@ -17,7 +17,7 @@
 using System;
 using System.Threading;
 using Grpc.Core;
-using OtlpCollector = Opentelemetry.Proto.Collector.Logs.V1;
+using OtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient
 {

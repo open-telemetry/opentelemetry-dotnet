@@ -14,8 +14,6 @@
 // limitations under the License.
 // </copyright>
 
-#if NET6_0_OR_GREATER
-
 using System;
 using System.Diagnostics;
 using OpenTelemetry.Internal;
@@ -30,8 +28,6 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 internal class ExponentialBucketHistogram
 {
-    private static readonly double Log2E = Math.Log2(Math.E); // 1 / Math.Log(2)
-
     private int scale;
     private double scalingFactor; // 2 ^ scale / log(2)
 
@@ -107,12 +103,16 @@ internal class ExponentialBucketHistogram
     {
         get => this.scale;
 
-        private set
+        set
         {
             this.scale = value;
-            this.scalingFactor = Math.ScaleB(Log2E, value);
+
+            // A subset of Math.ScaleB(Math.Log2(Math.E), value)
+            this.scalingFactor = BitConverter.Int64BitsToDouble(0x71547652B82FEL | ((0x3FFL + value) << 52 /* fraction width */));
         }
     }
+
+    internal double ScalingFactor => this.scalingFactor;
 
     internal CircularBufferBuckets PositiveBuckets { get; }
 
@@ -135,7 +135,7 @@ internal class ExponentialBucketHistogram
     {
         Debug.Assert(MathHelper.IsFinite(value), "IEEE-754 +Inf, -Inf and NaN should be filtered out before calling this method.");
         Debug.Assert(value != 0, "IEEE-754 zero values should be handled by ZeroCount.");
-        Debug.Assert(!double.IsNegative(value), "IEEE-754 negative values should be normalized before calling this method.");
+        Debug.Assert(value > 0, "IEEE-754 negative values should be normalized before calling this method.");
 
         var bits = BitConverter.DoubleToInt64Bits(value);
         var fraction = bits & 0xFFFFFFFFFFFFFL /* fraction mask */;
@@ -202,5 +202,3 @@ internal class ExponentialBucketHistogram
         Debug.Assert(n == 0, "Increment should always succeed after scale down.");
     }
 }
-
-#endif
