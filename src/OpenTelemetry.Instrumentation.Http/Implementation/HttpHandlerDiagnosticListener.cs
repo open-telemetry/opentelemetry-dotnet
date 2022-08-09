@@ -32,7 +32,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         // https://github.com/dotnet/runtime/blob/7d034ddbbbe1f2f40c264b323b3ed3d6b3d45e9a/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L19
         internal static readonly string HttpClientActivitySourceName = "System.Net.Http";
-        internal static readonly string ActivitySourceName = AssemblyName.Name;
+        internal static readonly string ActivitySourceName = AssemblyName.Name + ".HttpClient";
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
 
