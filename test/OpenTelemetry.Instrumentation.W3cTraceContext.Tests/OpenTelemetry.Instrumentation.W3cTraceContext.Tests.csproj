@@ -22,6 +22,7 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.AspNetCore\OpenTelemetry.Instrumentation.AspNetCore.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Instrumentation.Http\OpenTelemetry.Instrumentation.Http.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <ProjectReference Include="$(RepoRoot)\test\TestApp.AspNetCore\TestApp.AspNetCore.csproj" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\ActivityHelperExtensions.cs" Link="Includes\ActivityHelperExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\StatusHelper.cs" Link="Includes\StatusHelper.cs" />
     <Compile Include="$(RepoRoot)\src\OpenTelemetry.Api\Internal\IActivityEnumerator.cs" Link="Includes\IActivityEnumerator.cs" />
