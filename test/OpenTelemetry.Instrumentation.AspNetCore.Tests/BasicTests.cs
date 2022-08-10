@@ -86,10 +86,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var activity = exportedItems[0];
 
             Assert.Equal(200, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
-
-            var status = activity.GetStatus();
-            Assert.Equal(status, Status.Unset);
-
+            Assert.Equal(ActivityStatusCode.Unset, activity.Status);
             ValidateAspNetCoreActivity(activity, "/api/values");
         }
 

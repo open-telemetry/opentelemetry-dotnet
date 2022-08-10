@@ -165,22 +165,22 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 // requestTaskStatus is not null
                 _ = this.stopRequestStatusFetcher.TryFetch(payload, out var requestTaskStatus);
 
-                StatusCode currentStatusCode = activity.GetStatus().StatusCode;
+                ActivityStatusCode currentStatusCode = activity.Status;
                 if (requestTaskStatus != TaskStatus.RanToCompletion)
                 {
                     if (requestTaskStatus == TaskStatus.Canceled)
                     {
-                        if (currentStatusCode == StatusCode.Unset)
+                        if (currentStatusCode == ActivityStatusCode.Unset)
                         {
-                            activity.SetStatus(Status.Error);
+                            activity.SetStatus(ActivityStatusCode.Error);
                         }
                     }
                     else if (requestTaskStatus != TaskStatus.Faulted)
                     {
-                        if (currentStatusCode == StatusCode.Unset)
+                        if (currentStatusCode == ActivityStatusCode.Unset)
                         {
                             // Faults are handled in OnException and should already have a span.Status of Error w/ Description.
-                            activity.SetStatus(Status.Error);
+                            activity.SetStatus(ActivityStatusCode.Error);
                         }
                     }
                 }
@@ -189,7 +189,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
 
-                    if (currentStatusCode == StatusCode.Unset)
+                    if (currentStatusCode == ActivityStatusCode.Unset)
                     {
                         activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode));
                     }
@@ -232,7 +232,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 if (exc is HttpRequestException)
                 {
-                    activity.SetStatus(Status.Error.WithDescription(exc.Message));
+                    activity.SetStatus(ActivityStatusCode.Error, exc.Message);
                 }
 
                 try
