@@ -544,8 +544,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
 
-            Assert.True(exceptionEvent.Value.Status != ActivityStatusCode.Unset);
-            Assert.NotNull(exceptionEvent.Value.StatusDescription);
+            Assert.True(activity.Status != ActivityStatusCode.Unset);
+            Assert.NotNull(activity.StatusDescription);
         }
 
         /// <summary>
