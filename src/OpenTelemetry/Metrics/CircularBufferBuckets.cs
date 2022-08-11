@@ -200,12 +200,10 @@ internal sealed class CircularBufferBuckets
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void ScaleDownInternal(long[] array, uint offset, int begin, int end, uint capacity)
         {
-            for (var index = begin + 1; index < end; index++)
+            for (var index = begin + 1; index <= end; index++)
             {
                 Consolidate(array, (offset + (uint)(index - begin)) % capacity, (offset + (uint)((index >> 1) - (begin >> 1))) % capacity);
             }
-
-            Consolidate(array, (offset + (uint)(end - begin)) % capacity, (offset + (uint)((end >> 1) - (begin >> 1))) % capacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
