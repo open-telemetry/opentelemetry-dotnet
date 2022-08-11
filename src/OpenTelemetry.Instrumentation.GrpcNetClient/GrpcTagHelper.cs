@@ -71,16 +71,16 @@ namespace OpenTelemetry.Instrumentation.GrpcNetClient
         /// </summary>
         /// <param name="statusCode">RPC status code.</param>
         /// <returns>Resolved span <see cref="Status"/> for the Grpc status code.</returns>
-        public static Status ResolveSpanStatusForGrpcStatusCode(int statusCode)
+        public static ActivityStatusCode ResolveSpanStatusForGrpcStatusCode(int statusCode)
         {
-            var status = Status.Error;
+            var status = ActivityStatusCode.Error;
 
             if (typeof(StatusCanonicalCode).IsEnumDefined(statusCode))
             {
                 status = ((StatusCanonicalCode)statusCode) switch
                 {
-                    StatusCanonicalCode.Ok => Status.Unset,
-                    _ => Status.Error,
+                    StatusCanonicalCode.Ok => ActivityStatusCode.Unset,
+                    _ => ActivityStatusCode.Error,
                 };
             }
 
