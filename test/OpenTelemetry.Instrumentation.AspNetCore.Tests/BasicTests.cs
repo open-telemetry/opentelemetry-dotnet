@@ -801,6 +801,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             public override void PreProcess(HttpContext context)
             {
+                // Setting the host activity i.e. activity started by asp.net core 
+                // to null here will have no impact on middleware activity.
+                // This also means that asp.net core activity will not be found
+                // during OnCustom event.
                 Activity.Current = null;
                 this.activity = this.activitySource.StartActivity(this.activityName);
             }
