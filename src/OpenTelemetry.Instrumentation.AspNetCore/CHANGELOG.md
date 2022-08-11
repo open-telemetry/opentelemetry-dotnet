@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Fixed an issue where activity started within middleware was modified by
+  instrumentation library.
+  ([#3498](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3498))
+
 * Updated to use Activity native support from `System.Diagnostics.DiagnosticSource`
   to set activity status.
   ([#3118](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3118))

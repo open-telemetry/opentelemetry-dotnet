@@ -258,6 +258,32 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             if (name == "Microsoft.AspNetCore.Mvc.BeforeAction")
             {
+                // We cannot rely on Activity.Current here
+                // There could be activities started by middleware
+                // after activity started by framework resulting in different Activity.Current.
+                // so, we need to first find the activity started by Asp.Net Core.
+                // For .net6.0 onwards we could use IHttpActivityFeature to get the activity created by framework
+                // var httpActivityFeature = context.Features.Get<IHttpActivityFeature>();
+                // activity = httpActivityFeature.Activity;
+                // However, this will not work as in case of custom propagator
+                // we start a new activity during onStart event which is a sibling to the activity created by framework
+                // So, in that case we need to get the activity created by us here.
+                // we can do so only by looping through activity.Parent chain.
+                while (activity != null)
+                {
+                    if (string.Equals(activity.OperationName, ActivityOperationName, StringComparison.Ordinal))
+                    {
+                        break;
+                    }
+
+                    activity = activity.Parent;
+                }
+
+                if (activity == null)
+                {
+                    return;
+                }
+
                 if (activity.IsAllDataRequested)
                 {
                     // See https://github.com/aspnet/Mvc/blob/2414db256f32a047770326d14d8b0e2afd49ba49/src/Microsoft.AspNetCore.Mvc.Core/MvcCoreDiagnosticSourceExtensions.cs#L36-L44
