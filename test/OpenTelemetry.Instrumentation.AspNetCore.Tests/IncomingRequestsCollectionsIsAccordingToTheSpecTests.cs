@@ -25,22 +25,17 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Trace;
-#if NET6_0
-using TestApp.AspNetCore._6._0;
-#endif
-#if NET7_0
-using TestApp.AspNetCore._7._0;
-#endif
+using TestApp.AspNetCore;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
     public class IncomingRequestsCollectionsIsAccordingToTheSpecTests
-        : IClassFixture<WebApplicationFactory<Startup>>
+        : IClassFixture<WebApplicationFactory<Program>>
     {
-        private readonly WebApplicationFactory<Startup> factory;
+        private readonly WebApplicationFactory<Program> factory;
 
-        public IncomingRequestsCollectionsIsAccordingToTheSpecTests(WebApplicationFactory<Startup> factory)
+        public IncomingRequestsCollectionsIsAccordingToTheSpecTests(WebApplicationFactory<Program> factory)
         {
             this.factory = factory;
         }
@@ -120,22 +115,22 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             if (statusCode == 503)
             {
-                Assert.Equal(Status.Error.StatusCode, activity.GetStatus().StatusCode);
+                Assert.Equal(ActivityStatusCode.Error, activity.Status);
             }
             else
             {
-                Assert.Equal(Status.Unset, activity.GetStatus());
+                Assert.Equal(ActivityStatusCode.Unset, activity.Status);
             }
 
             // Instrumentation is not expected to set status description
             // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
             if (!urlPath.EndsWith("exception"))
             {
-                Assert.True(string.IsNullOrEmpty(activity.GetStatus().Description));
+                Assert.True(string.IsNullOrEmpty(activity.StatusDescription));
             }
             else
             {
-                Assert.Equal("exception description", activity.GetStatus().Description);
+                Assert.Equal("exception description", activity.StatusDescription);
             }
 
             if (recordException)

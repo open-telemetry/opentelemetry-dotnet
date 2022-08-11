@@ -207,12 +207,12 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     AddGrpcAttributes(activity, grpcMethod, context);
                 }
-                else if (activity.GetStatus().StatusCode == StatusCode.Unset)
+                else if (activity.Status == ActivityStatusCode.Unset)
                 {
                     activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
                 }
 #else
-                if (activity.GetStatus().StatusCode == StatusCode.Unset)
+                if (activity.Status == ActivityStatusCode.Unset)
                 {
                     activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
                 }
@@ -298,7 +298,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     activity.RecordException(exc);
                 }
 
-                activity.SetStatus(Status.Error.WithDescription(exc.Message));
+                activity.SetStatus(ActivityStatusCode.Error, exc.Message);
 
                 try
                 {
