@@ -206,7 +206,7 @@ internal sealed class CircularBufferBuckets
             }
 
             // Don't merge below call into above for loop.
-            // Merging causes above loop to be infite if end = int.MaxValue, because index <= int.MaxValue is always true.
+            // Merging causes above loop to be infinite if end = int.MaxValue, because index <= int.MaxValue is always true.
             Consolidate(array, (offset + (uint)(end - begin)) % capacity, (offset + (uint)((end >> 1) - (begin >> 1))) % capacity);
         }
 
