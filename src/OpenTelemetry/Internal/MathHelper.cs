@@ -15,7 +15,9 @@
 // </copyright>
 
 using System.Diagnostics;
+#if NETCOREAPP3_0_OR_GREATER
 using System.Numerics;
+#endif
 using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Internal;
