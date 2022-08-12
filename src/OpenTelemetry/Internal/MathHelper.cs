@@ -15,8 +15,8 @@
 // </copyright>
 
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Internal;
 
