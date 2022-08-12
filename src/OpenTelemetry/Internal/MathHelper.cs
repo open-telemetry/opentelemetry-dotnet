@@ -24,7 +24,6 @@ namespace OpenTelemetry.Internal;
 
 internal static class MathHelper
 {
-#if !NETCOREAPP3_0_OR_GREATER
     // https://en.wikipedia.org/wiki/Leading_zero
     private static readonly byte[] LeadingZeroLookupTable = new byte[]
     {
@@ -83,7 +82,6 @@ internal static class MathHelper
             return LeadingZero16((short)value) + 16;
         }
     }
-#endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int LeadingZero64(long value)
