@@ -35,7 +35,16 @@ namespace OpenTelemetry.Exporter
                 throw new NotSupportedException($"Endpoint URI scheme ({options.Endpoint.Scheme}) is not supported. Currently only \"http\" and \"https\" are supported.");
             }
 
-            return GrpcChannel.ForAddress(options.Endpoint);
+            return GrpcChannel.ForAddress(
+                options.Endpoint,
+                new GrpcChannelOptions
+                {
+                    // https://docs.microsoft.com/en-us/aspnet/core/grpc/netstandard?view=aspnetcore-6.0
+                    //https://docs.microsoft.com/en-us/aspnet/core/grpc/netstandard?view=aspnetcore-6.0#net-framework
+                    HttpHandler = new WinHttpHandler(),
+                    HttpClient = options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null."),
+                    DisposeHttpClient = true,
+                });
         }
 
         public static Metadata GetMetadataFromHeaders(this OtlpExporterOptions options)

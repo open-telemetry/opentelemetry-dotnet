@@ -35,6 +35,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
             }
             else
             {
+                // AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
                 this.Channel = options.CreateChannel();
                 this.traceClient = new OtlpCollector.TraceService.TraceServiceClient(this.Channel);
             }

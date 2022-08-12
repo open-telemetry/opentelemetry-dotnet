@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Grpc.Net.Client" Version="$(GrpcNetClientPkgVer)" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="6.0.1" />
   </ItemGroup>
 
   <ItemGroup>
