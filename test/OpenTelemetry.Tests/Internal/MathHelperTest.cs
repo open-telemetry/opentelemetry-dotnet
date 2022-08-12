@@ -20,6 +20,7 @@ namespace OpenTelemetry.Internal.Tests;
 
 public class MathHelperTest
 {
+#if !NETCOREAPP3_0_OR_GREATER
     [Theory]
     [InlineData(0b0000_0000, 8)]
     [InlineData(0b0000_0001, 7)]
@@ -69,6 +70,7 @@ public class MathHelperTest
     {
         Assert.Equal(numberOfLeaderZeros, MathHelper.LeadingZero32(value));
     }
+#endif
 
     [Theory]
     [InlineData(0b0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000L, 64)]
