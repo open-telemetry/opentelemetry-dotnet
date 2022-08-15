@@ -2,8 +2,11 @@
 
 ## Unreleased
 
-* Moved some of the dependency injection support when configuring
-  `TracerProvider` into the SDK
+* **BREAKING CHANGE** Dependency injection support when configuring
+  `TracerProvider` has been moved into the SDK. Call
+  `IHostBuilder.UseOpenTelemetryTracing` to automatically register and start the
+  `TracerProvider` or `IServiceCollection.AddOpenTelemetryTracing` to register
+  and `IHost.UseOpenTelemetry` to start the `TracerProvider`
   ([#3533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3533))
 
 ## 1.0.0-rc9.5

@@ -69,8 +69,10 @@ namespace Examples.GrpcService
             }
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IHost host, IWebHostEnvironment env)
         {
+            host.UseOpenTelemetry();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

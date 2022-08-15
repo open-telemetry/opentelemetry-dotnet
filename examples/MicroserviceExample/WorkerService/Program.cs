@@ -36,17 +36,16 @@ namespace WorkerService
                     services.AddHostedService<Worker>();
 
                     services.AddSingleton<MessageReceiver>();
-
-                    services.AddOpenTelemetryTracing((builder) =>
-                    {
-                        builder
-                            .AddSource(nameof(MessageReceiver))
-                            .AddZipkinExporter(b =>
-                            {
-                                var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
-                                b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
-                            });
-                    });
+                })
+                .UseOpenTelemetryTracing(builder =>
+                {
+                    builder
+                        .AddSource(nameof(MessageReceiver))
+                        .AddZipkinExporter(b =>
+                        {
+                            var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
+                            b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
+                        });
                 });
     }
 }

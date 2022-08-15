@@ -31,58 +31,7 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public static class OpenTelemetryServicesExtensions
     {
-        /// <summary>
-        /// Adds OpenTelemetry TracerProvider to the specified <see cref="IServiceCollection" />.
-        /// </summary>
-        /// <remarks>
-        /// Notes: This is safe to be called multiple times and by library
-        /// authors. Only a single <see cref="TracerProvider"/> will be created
-        /// for a given <see cref="IServiceCollection"/>.
-        /// </remarks>
-        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-        public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services)
-            => AddOpenTelemetryTracing(services, (b) => { });
-
-        /// <summary>
-        /// Adds OpenTelemetry TracerProvider to the specified <see cref="IServiceCollection" />.
-        /// </summary>
-        /// <remarks>
-        /// Notes: This is safe to be called multiple times and by library
-        /// authors. Only a single <see cref="TracerProvider"/> will be created
-        /// for a given <see cref="IServiceCollection"/>.
-        /// </remarks>
-        /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-        /// <param name="configure">Callback action to configure the <see cref="TracerProviderBuilder"/>.</param>
-        /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-        public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Action<TracerProviderBuilder> configure)
-        {
-            Guard.ThrowIfNull(services);
-            Guard.ThrowIfNull(configure);
-
-            // Accessing Sdk class is just to trigger its static ctor,
-            // which sets default Propagators and default Activity Id format
-            _ = Sdk.SuppressInstrumentation;
-
-            // Note: We need to create a builder even if there is no configure
-            // because the builder will register services
-            var builder = new TracerProviderBuilderHosting(services);
-
-            configure(builder);
-
-            try
-            {
-                services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
-            }
-            catch (Exception ex)
-            {
-                HostingExtensionsEventSource.Log.FailedInitialize(ex);
-            }
-
-            return services;
-        }
-
-        /// <summary>
+         /// <summary>
         /// Adds OpenTelemetry MeterProvider to the specified <see cref="IServiceCollection" />.
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>

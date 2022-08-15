@@ -1,9 +1,13 @@
 Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions
+Microsoft.Extensions.Hosting.OpenTelemetryHostExtensions
 OpenTelemetry.Metrics.MeterProviderBuilderExtensions
 static Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions.AddOpenTelemetryMetrics(this Microsoft.Extensions.DependencyInjection.IServiceCollection services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection
 static Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions.AddOpenTelemetryMetrics(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, System.Action<OpenTelemetry.Metrics.MeterProviderBuilder> configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection
 static Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions.AddOpenTelemetryTracing(this Microsoft.Extensions.DependencyInjection.IServiceCollection services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection
 static Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions.AddOpenTelemetryTracing(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, System.Action<OpenTelemetry.Trace.TracerProviderBuilder> configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection
+static Microsoft.Extensions.Hosting.OpenTelemetryHostExtensions.UseOpenTelemetry(this Microsoft.Extensions.Hosting.IHost host) -> Microsoft.Extensions.Hosting.IHost
+static Microsoft.Extensions.Hosting.OpenTelemetryHostExtensions.UseOpenTelemetryTracing(this Microsoft.Extensions.Hosting.IHostBuilder hostBuilder) -> Microsoft.Extensions.Hosting.IHostBuilder
+static Microsoft.Extensions.Hosting.OpenTelemetryHostExtensions.UseOpenTelemetryTracing(this Microsoft.Extensions.Hosting.IHostBuilder hostBuilder, System.Action<OpenTelemetry.Trace.TracerProviderBuilder> configure) -> Microsoft.Extensions.Hosting.IHostBuilder
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddInstrumentation<T>(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder) -> OpenTelemetry.Metrics.MeterProviderBuilder
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddReader<T>(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder) -> OpenTelemetry.Metrics.MeterProviderBuilder
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.Build(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, System.IServiceProvider serviceProvider) -> OpenTelemetry.Metrics.MeterProvider

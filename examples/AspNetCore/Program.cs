@@ -42,7 +42,7 @@ Action<ResourceBuilder> configureResource = r => r.AddService(
     serviceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName);
 
 // Traces
-builder.Services.AddOpenTelemetryTracing(options =>
+builder.Host.UseOpenTelemetryTracing(options =>
 {
     options
         .ConfigureResource(configureResource)
