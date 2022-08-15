@@ -1,1 +1,1 @@
-override OpenTelemetry.Exporter.ConsoleExporter<T>.Dispose(bool disposing) -> void
+override OpenTelemetry.Exporter.ConsoleLogRecordExporter.Dispose(bool disposing) -> void

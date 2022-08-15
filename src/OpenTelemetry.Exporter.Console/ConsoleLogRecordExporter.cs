@@ -23,6 +23,7 @@ namespace OpenTelemetry.Exporter
     public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
     {
         private const int RightPaddingLength = 35;
+        private bool disposed = false;
 
         public ConsoleLogRecordExporter(ConsoleExporterOptions options)
             : base(options)
@@ -33,6 +34,11 @@ namespace OpenTelemetry.Exporter
         {
             foreach (var logRecord in batch)
             {
+                if (this.disposed)
+                {
+                    this.WriteLine("Something is wrong: the ConsoleLogger has been disposed.");
+                }
+
                 this.WriteLine($"{"LogRecord.Timestamp:",-RightPaddingLength}{logRecord.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
 
                 if (logRecord.TraceId != default)
@@ -128,6 +134,14 @@ namespace OpenTelemetry.Exporter
             }
 
             return ExportResult.Success;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.disposed = true;
+            }
         }
     }
 }
