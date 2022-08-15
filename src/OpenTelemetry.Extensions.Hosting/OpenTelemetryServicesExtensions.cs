@@ -83,13 +83,5 @@ namespace Microsoft.Extensions.DependencyInjection
 
             return services;
         }
-
-        private sealed class TracerProviderBuilderHosting : TracerProviderBuilderBase
-        {
-            public TracerProviderBuilderHosting(IServiceCollection services)
-                : base(services)
-            {
-            }
-        }
     }
 }

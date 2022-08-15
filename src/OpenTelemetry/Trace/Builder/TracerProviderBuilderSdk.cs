@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace
         {
         }
 
-        internal TracerProviderBuilderSdk(TracerProviderBuilderState state)
+        public TracerProviderBuilderSdk(TracerProviderBuilderState state)
             : base(state)
         {
         }

@@ -44,6 +44,19 @@ namespace OpenTelemetry.Trace
             this.state = state;
         }
 
+        // This ctor is for AddOpenTelemetryTracing scenario where the builder
+        // is bound to an external service collection.
+        internal TracerProviderBuilderBase(IServiceCollection services)
+        {
+            Guard.ThrowIfNull(services);
+
+            services.AddOptions();
+            services.TryAddSingleton<TracerProvider>(sp => new TracerProviderSdk(sp, ownsServiceProvider: false));
+
+            this.services = services;
+            this.ownsServices = false;
+        }
+
         // This ctor is for Sdk.CreateTracerProviderBuilder where the builder
         // owns its services and service provider.
         protected TracerProviderBuilderBase()
@@ -55,19 +68,6 @@ namespace OpenTelemetry.Trace
 
             this.services = services;
             this.ownsServices = true;
-        }
-
-        // This ctor is for hosting scenarios where the builder is bound to an
-        // external service collection.
-        protected TracerProviderBuilderBase(IServiceCollection services)
-        {
-            Guard.ThrowIfNull(services);
-
-            services.AddOptions();
-            services.TryAddSingleton<TracerProvider>(sp => new TracerProviderSdk(sp, ownsServiceProvider: false));
-
-            this.services = services;
-            this.ownsServices = false;
         }
 
         /// <inheritdoc />

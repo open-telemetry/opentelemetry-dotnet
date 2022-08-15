@@ -26,7 +26,6 @@ OpenTelemetry.Trace.ExportActivityProcessorOptions.BatchExportProcessorOptions.s
 OpenTelemetry.Trace.ExportActivityProcessorOptions.ExportActivityProcessorOptions() -> void
 OpenTelemetry.Trace.ExportActivityProcessorOptions.ExportProcessorType.get -> OpenTelemetry.ExportProcessorType
 OpenTelemetry.Trace.ExportActivityProcessorOptions.ExportProcessorType.set -> void
-OpenTelemetry.Trace.TracerProviderBuilderBase.TracerProviderBuilderBase(Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> void
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, OpenTelemetry.Logs.OpenTelemetryLoggerProvider! openTelemetryLoggerProvider) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, OpenTelemetry.Logs.OpenTelemetryLoggerProvider! openTelemetryLoggerProvider, bool disposeProvider) -> Microsoft.Extensions.Logging.ILoggingBuilder!
