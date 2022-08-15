@@ -20,6 +20,7 @@ namespace OpenTelemetry.Exporter
         where T : class
     {
         private readonly ConsoleExporterOptions options;
+        private bool disposed = false;
 
         protected ConsoleExporter(ConsoleExporterOptions options)
         {
@@ -28,6 +29,11 @@ namespace OpenTelemetry.Exporter
 
         protected void WriteLine(string message)
         {
+            if (this.disposed)
+            {
+                return;
+            }
+
             if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Console))
             {
                 System.Console.WriteLine(message);
@@ -36,6 +42,14 @@ namespace OpenTelemetry.Exporter
             if (this.options.Targets.HasFlag(ConsoleExporterOutputTargets.Debug))
             {
                 System.Diagnostics.Trace.WriteLine(message);
+            }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.disposed = true;
             }
         }
     }
