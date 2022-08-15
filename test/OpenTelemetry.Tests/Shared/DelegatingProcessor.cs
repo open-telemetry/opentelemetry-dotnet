@@ -1,4 +1,4 @@
-// <copyright file="AssemblyInfo.cs" company="OpenTelemetry Authors">
+// <copyright file="DelegatingProcessor.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +14,18 @@
 // limitations under the License.
 // </copyright>
 
-using System.Diagnostics.CodeAnalysis;
+using System;
 
-[assembly: SuppressMessage(
-    "StyleCop.CSharp.NamingRules",
-    "SA1300",
-    Justification = "Reviewed.",
-    Scope = "namespaceanddescendants",
-    Target = "TestApp.AspNetCore._7._0")]
+namespace OpenTelemetry.Tests;
+
+public class DelegatingProcessor<T> : BaseProcessor<T>
+    where T : class
+{
+    public Func<int, bool> OnForceFlushFunc { get; set; } = (timeout) => true;
+
+    public Func<int, bool> OnShutdownFunc { get; set; } = (timeout) => true;
+
+    protected override bool OnForceFlush(int timeoutMilliseconds) => this.OnForceFlushFunc(timeoutMilliseconds);
+
+    protected override bool OnShutdown(int timeoutMilliseconds) => this.OnShutdownFunc(timeoutMilliseconds);
+}

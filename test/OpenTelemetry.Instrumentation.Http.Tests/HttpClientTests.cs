@@ -1,4 +1,4 @@
-// <copyright file="HttpClientTests.netcore31.cs" company="OpenTelemetry Authors">
+// <copyright file="HttpClientTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
-#if NETCOREAPP3_1_OR_GREATER
+#if !NETFRAMEWORK
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -110,13 +110,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(tc.SpanName, activity.DisplayName);
 
             // Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
-            Assert.Equal(
-                    tc.SpanStatus,
-                    activity.GetTagValue(SpanAttributeConstants.StatusCodeKey) as string);
+            Assert.Equal(tc.SpanStatus, activity.Status.ToString());
 
             if (tc.SpanStatusHasDescription.HasValue)
             {
-                var desc = activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey) as string;
+                var desc = activity.StatusDescription;
                 Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(desc));
             }
 
@@ -194,7 +192,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     ""responseCode"": 399,
                     ""responseExpected"": true,
                     ""spanName"": ""HTTP GET"",
-                    ""spanStatus"": ""UNSET"",
+                    ""spanStatus"": ""Unset"",
                     ""spanKind"": ""Client"",
                     ""spanAttributes"": {
                       ""http.scheme"": ""http"",

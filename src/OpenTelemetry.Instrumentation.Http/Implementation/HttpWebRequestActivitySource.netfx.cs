@@ -36,15 +36,16 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     /// </remarks>
     internal static class HttpWebRequestActivitySource
     {
-        public const string ActivitySourceName = "OpenTelemetry.HttpWebRequest";
-        public const string ActivityName = ActivitySourceName + ".HttpRequestOut";
+        internal static readonly AssemblyName AssemblyName = typeof(HttpWebRequestActivitySource).Assembly.GetName();
+        internal static readonly string ActivitySourceName = AssemblyName.Name + ".HttpWebRequest";
+        internal static readonly string ActivityName = ActivitySourceName + ".HttpRequestOut";
 
         internal static readonly Func<HttpWebRequest, string, IEnumerable<string>> HttpWebRequestHeaderValuesGetter = (request, name) => request.Headers.GetValues(name);
         internal static readonly Action<HttpWebRequest, string, string> HttpWebRequestHeaderValuesSetter = (request, name, value) => request.Headers.Add(name, value);
 
         internal static HttpWebRequestInstrumentationOptions Options = new HttpWebRequestInstrumentationOptions();
 
-        private static readonly Version Version = typeof(HttpWebRequestActivitySource).Assembly.GetName().Version;
+        private static readonly Version Version = AssemblyName.Version;
         private static readonly ActivitySource WebRequestActivitySource = new ActivitySource(ActivitySourceName, Version.ToString());
 
         // Fields for reflection
@@ -140,7 +141,9 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            Status status;
+            ActivityStatusCode status;
+            string exceptionMessage = null;
+
             if (exception is WebException wexc)
             {
                 if (wexc.Response is HttpWebResponse response)
@@ -155,7 +158,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     {
                         case WebExceptionStatus.Timeout:
                         case WebExceptionStatus.RequestCanceled:
-                            status = Status.Error;
+                            status = ActivityStatusCode.Error;
                             break;
                         case WebExceptionStatus.SendFailure:
                         case WebExceptionStatus.ConnectFailure:
@@ -163,20 +166,23 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                         case WebExceptionStatus.TrustFailure:
                         case WebExceptionStatus.ServerProtocolViolation:
                         case WebExceptionStatus.MessageLengthLimitExceeded:
-                            status = Status.Error.WithDescription(exception.Message);
+                            status = ActivityStatusCode.Error;
+                            exceptionMessage = exception.Message;
                             break;
                         default:
-                            status = Status.Error.WithDescription(exception.Message);
+                            status = ActivityStatusCode.Error;
+                            exceptionMessage = exception.Message;
                             break;
                     }
                 }
             }
             else
             {
-                status = Status.Error.WithDescription(exception.Message);
+                status = ActivityStatusCode.Error;
+                exceptionMessage = exception.Message;
             }
 
-            activity.SetStatus(status);
+            activity.SetStatus(status, exceptionMessage);
             if (Options.RecordException)
             {
                 activity.RecordException(exception);

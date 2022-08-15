@@ -1,4 +1,4 @@
-// <copyright file="ActivityMiddleware.cs" company="OpenTelemetry Authors">
+// <copyright file="CallbackMiddleware.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,14 @@
 // limitations under the License.
 // </copyright>
 
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-
-namespace TestApp.AspNetCore._7._0
+namespace TestApp.AspNetCore
 {
-    public class ActivityMiddleware
+    public class CallbackMiddleware
     {
-        private readonly ActivityMiddlewareImpl impl;
+        private readonly CallbackMiddlewareImpl impl;
         private readonly RequestDelegate next;
 
-        public ActivityMiddleware(RequestDelegate next, ActivityMiddlewareImpl impl)
+        public CallbackMiddleware(RequestDelegate next, CallbackMiddlewareImpl impl)
         {
             this.next = next;
             this.impl = impl;
@@ -32,29 +29,17 @@ namespace TestApp.AspNetCore._7._0
 
         public async Task InvokeAsync(HttpContext context)
         {
-            if (this.impl != null)
+            if (this.impl == null || await this.impl.ProcessAsync(context))
             {
-                this.impl.PreProcess(context);
-            }
-
-            await this.next(context);
-
-            if (this.impl != null)
-            {
-                this.impl.PostProcess(context);
+                await this.next(context);
             }
         }
 
-        public class ActivityMiddlewareImpl
+        public class CallbackMiddlewareImpl
         {
-            public virtual void PreProcess(HttpContext context)
+            public virtual async Task<bool> ProcessAsync(HttpContext context)
             {
-                // do nothing
-            }
-
-            public virtual void PostProcess(HttpContext context)
-            {
-                // do nothing
+                return await Task.FromResult(true);
             }
         }
     }

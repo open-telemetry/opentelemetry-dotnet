@@ -1,4 +1,4 @@
-// <copyright file="Program.cs" company="OpenTelemetry Authors">
+// <copyright file="OpenTelemetryLoggerOptionsSdk.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,20 +14,17 @@
 // limitations under the License.
 // </copyright>
 
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
+#nullable enable
 
-namespace TestApp.AspNetCore._6._0
+using Microsoft.Extensions.DependencyInjection;
+
+namespace OpenTelemetry.Logs;
+
+internal sealed class OpenTelemetryLoggerOptionsSdk : OpenTelemetryLoggerOptions
 {
-    public class Program
+    public OpenTelemetryLoggerOptionsSdk()
+        : base(new ServiceCollection())
     {
-        public static void Main(string[] args)
-        {
-            CreateWebHostBuilder(args).Build().Run();
-        }
-
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>();
+        this.ConfigureServices(services => services.AddOptions());
     }
 }

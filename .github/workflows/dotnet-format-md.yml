@@ -9,9 +9,10 @@ name: dotnet format
 
 on:
   pull_request:
-    branches: [ main, net7.0 ]
-    paths:
-    - '**.md'
+    branches: [ main ]
+    paths-ignore:
+    - '**.cs'
+    - '.editorconfig'
 
 jobs:
   check-format:

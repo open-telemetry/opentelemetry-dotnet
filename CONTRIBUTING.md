@@ -44,7 +44,7 @@ You can contribute to this project from a Windows, macOS or Linux machine.
 On all platforms, the minimum requirements are:
 
 * Git client and command line tools.
-* .NET 6.0+
+* .NET 7.0+
 
 ### Linux or MacOS
 
@@ -58,6 +58,9 @@ of Windows.
 
 * Visual Studio 2022+ or Visual Studio Code
 * .NET Framework 4.6.2+
+
+**NOTE** : Visual Studio 2022 preview is **recommended** due to projects
+targeting `.net7.0` which is in preview currently.
 
 ### Public API
 

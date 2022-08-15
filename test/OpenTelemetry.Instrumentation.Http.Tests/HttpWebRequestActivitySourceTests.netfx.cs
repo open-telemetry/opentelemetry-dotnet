@@ -544,8 +544,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
 
-            Assert.NotNull(activity.GetTagValue(SpanAttributeConstants.StatusCodeKey));
-            Assert.NotNull(activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
+            Assert.True(activity.Status != ActivityStatusCode.Unset);
+            Assert.NotNull(activity.StatusDescription);
         }
 
         /// <summary>
@@ -583,8 +583,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
 
-            Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
-            Assert.Null(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
+            Assert.True(exceptionEvent.Value.Status != ActivityStatusCode.Unset);
+            Assert.True(exceptionEvent.Value.StatusDescription == null);
         }
 
         /// <summary>
@@ -622,8 +622,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
 
-            Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
-            Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
+            Assert.True(exceptionEvent.Value.Status != ActivityStatusCode.Unset);
+            Assert.NotNull(exceptionEvent.Value.StatusDescription);
         }
 
         /// <summary>
@@ -664,8 +664,8 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.True(eventRecords.Records.TryDequeue(out KeyValuePair<string, Activity> exceptionEvent));
             Assert.Equal("Stop", exceptionEvent.Key);
 
-            Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusCodeKey));
-            Assert.NotNull(exceptionEvent.Value.GetTagValue(SpanAttributeConstants.StatusDescriptionKey));
+            Assert.True(exceptionEvent.Value.Status != ActivityStatusCode.Unset);
+            Assert.NotNull(exceptionEvent.Value.StatusDescription);
         }
 
         [Fact]

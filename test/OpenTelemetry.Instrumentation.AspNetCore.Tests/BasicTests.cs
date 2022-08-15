@@ -31,28 +31,19 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
-
-#if NETCOREAPP3_1
-using TestApp.AspNetCore._3._1;
-#endif
-#if NET6_0
-using TestApp.AspNetCore._6._0;
-#endif
-#if NET7_0
-using TestApp.AspNetCore._7._0;
-#endif
+using TestApp.AspNetCore;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
     // See https://github.com/aspnet/Docs/tree/master/aspnetcore/test/integration-tests/samples/2.x/IntegrationTestsSample
     public sealed class BasicTests
-        : IClassFixture<WebApplicationFactory<Startup>>, IDisposable
+        : IClassFixture<WebApplicationFactory<Program>>, IDisposable
     {
-        private readonly WebApplicationFactory<Startup> factory;
+        private readonly WebApplicationFactory<Program> factory;
         private TracerProvider tracerProvider = null;
 
-        public BasicTests(WebApplicationFactory<Startup> factory)
+        public BasicTests(WebApplicationFactory<Program> factory)
         {
             this.factory = factory;
         }
@@ -95,10 +86,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             var activity = exportedItems[0];
 
             Assert.Equal(200, activity.GetTagValue(SemanticConventions.AttributeHttpStatusCode));
-
-            var status = activity.GetStatus();
-            Assert.Equal(status, Status.Unset);
-
+            Assert.Equal(ActivityStatusCode.Unset, activity.Status);
             ValidateAspNetCoreActivity(activity, "/api/values");
         }
 
@@ -553,8 +541,54 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Equal(shouldEnrichBeCalled, enrichCalled);
         }
 
-        [Fact(Skip = "Changes pending on instrumentation")]
-        public async Task ActivitiesStartedInMiddlewareShouldNotBeUpdatedByInstrumentation()
+        [Fact]
+        public async Task ActivitiesStartedInMiddlewareShouldNotBeUpdated()
+        {
+            var exportedItems = new List<Activity>();
+
+            var activitySourceName = "TestMiddlewareActivitySource";
+            var activityName = "TestMiddlewareActivity";
+
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                services.AddSingleton<ActivityMiddleware.ActivityMiddlewareImpl>(new TestActivityMiddlewareImpl(activitySourceName, activityName));
+                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation()
+                    .AddSource(activitySourceName)
+                    .AddInMemoryExporter(exportedItems)
+                    .Build();
+            }
+
+            // Arrange
+            using (var client = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices))
+                .CreateClient())
+            {
+                var response = await client.GetAsync("/api/values/2");
+                response.EnsureSuccessStatusCode();
+                WaitForActivityExport(exportedItems, 2);
+            }
+
+            Assert.Equal(2, exportedItems.Count);
+
+            var middlewareActivity = exportedItems[0];
+
+            var aspnetcoreframeworkactivity = exportedItems[1];
+
+            // Middleware activity name should not be changed
+            Assert.Equal(ActivityKind.Internal, middlewareActivity.Kind);
+            Assert.Equal(activityName, middlewareActivity.OperationName);
+            Assert.Equal(activityName, middlewareActivity.DisplayName);
+
+            // tag http.route should be added on activity started by asp.net core
+            Assert.Equal("api/Values/{id}", aspnetcoreframeworkactivity.GetTagValue(SemanticConventions.AttributeHttpRoute) as string);
+            Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", aspnetcoreframeworkactivity.OperationName);
+            Assert.Equal("api/Values/{id}", aspnetcoreframeworkactivity.DisplayName);
+        }
+
+        [Fact]
+        public async Task ActivitiesStartedInMiddlewareBySettingHostActivityToNullShouldNotBeUpdated()
         {
             var exportedItems = new List<Activity>();
 
@@ -566,7 +600,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 .WithWebHostBuilder(builder =>
                     builder.ConfigureTestServices((IServiceCollection services) =>
                     {
-                        services.AddSingleton<ActivityMiddleware.ActivityMiddlewareImpl>(new TestActivityMiddlewareImpl(activitySourceName, activityName));
+                        services.AddSingleton<ActivityMiddleware.ActivityMiddlewareImpl>(new TestNullHostActivityMiddlewareImpl(activitySourceName, activityName));
                         services.AddOpenTelemetryTracing((builder) => builder.AddAspNetCoreInstrumentation()
                         .AddSource(activitySourceName)
                         .AddInMemoryExporter(exportedItems));
@@ -582,8 +616,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             var middlewareActivity = exportedItems[0];
 
+            var aspnetcoreframeworkactivity = exportedItems[1];
+
             // Middleware activity name should not be changed
+            Assert.Equal(ActivityKind.Internal, middlewareActivity.Kind);
+            Assert.Equal(activityName, middlewareActivity.OperationName);
             Assert.Equal(activityName, middlewareActivity.DisplayName);
+
+            // tag http.route should not be added on activity started by asp.net core as it will not be found during oncustom event
+            Assert.DoesNotContain(aspnetcoreframeworkactivity.TagObjects, t => t.Key == SemanticConventions.AttributeHttpRoute);
+            Assert.Equal("Microsoft.AspNetCore.Hosting.HttpRequestIn", aspnetcoreframeworkactivity.OperationName);
+            Assert.Equal("/api/values/2", aspnetcoreframeworkactivity.DisplayName);
         }
 
 #if NET7_0_OR_GREATER
@@ -741,6 +784,34 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 base.OnStopActivity(activity, payload);
 
                 this.OnStopActivityCallback?.Invoke(activity, payload);
+            }
+        }
+
+        private class TestNullHostActivityMiddlewareImpl : ActivityMiddleware.ActivityMiddlewareImpl
+        {
+            private ActivitySource activitySource;
+            private Activity activity;
+            private string activityName;
+
+            public TestNullHostActivityMiddlewareImpl(string activitySourceName, string activityName)
+            {
+                this.activitySource = new ActivitySource(activitySourceName);
+                this.activityName = activityName;
+            }
+
+            public override void PreProcess(HttpContext context)
+            {
+                // Setting the host activity i.e. activity started by asp.net core
+                // to null here will have no impact on middleware activity.
+                // This also means that asp.net core activity will not be found
+                // during OnCustom event.
+                Activity.Current = null;
+                this.activity = this.activitySource.StartActivity(this.activityName);
+            }
+
+            public override void PostProcess(HttpContext context)
+            {
+                this.activity?.Stop();
             }
         }
 
