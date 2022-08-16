@@ -250,21 +250,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
             };
 
-            var enumerator = activityLink.EnumerateTagObjects();
-            if (enumerator.MoveNext())
+            int maxTags = SdkConfiguration.Instance.LinkAttributeCountLimit ?? int.MaxValue;
+            foreach (ref readonly var tag in activityLink.EnumerateTagObjects())
             {
-                int maxTags = SdkConfiguration.Instance.LinkAttributeCountLimit ?? int.MaxValue;
-                if (maxTags > 0)
+                if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, SdkConfiguration.Instance.AttributeValueLengthLimit))
                 {
-                    do
+                    if (otlpLink.Attributes.Count < maxTags)
                     {
-                        ref readonly var tag = ref enumerator.Current;
-                        if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, SdkConfiguration.Instance.AttributeValueLengthLimit))
-                        {
-                            otlpLink.Attributes.Add(attribute);
-                        }
+                        otlpLink.Attributes.Add(attribute);
                     }
-                    while (enumerator.MoveNext() && otlpLink.Attributes.Count < maxTags);
+                    else
+                    {
+                        otlpLink.DroppedAttributesCount++;
+                    }
                 }
             }
 
@@ -280,21 +278,19 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 TimeUnixNano = (ulong)activityEvent.Timestamp.ToUnixTimeNanoseconds(),
             };
 
-            var enumerator = activityEvent.EnumerateTagObjects();
-            if (enumerator.MoveNext())
+            int maxTags = SdkConfiguration.Instance.EventAttributeCountLimit ?? int.MaxValue;
+            foreach (ref readonly var tag in activityEvent.EnumerateTagObjects())
             {
-                int maxTags = SdkConfiguration.Instance.EventAttributeCountLimit ?? int.MaxValue;
-                if (maxTags > 0)
+                if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, SdkConfiguration.Instance.AttributeValueLengthLimit))
                 {
-                    do
+                    if (otlpEvent.Attributes.Count < maxTags)
                     {
-                        ref readonly var tag = ref enumerator.Current;
-                        if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, SdkConfiguration.Instance.AttributeValueLengthLimit))
-                        {
-                            otlpEvent.Attributes.Add(attribute);
-                        }
+                        otlpEvent.Attributes.Add(attribute);
                     }
-                    while (enumerator.MoveNext() && otlpEvent.Attributes.Count < maxTags);
+                    else
+                    {
+                        otlpEvent.DroppedAttributesCount++;
+                    }
                 }
             }
 
