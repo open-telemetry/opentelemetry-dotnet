@@ -385,6 +385,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                         if (attribute.Value.ValueCase == OtlpCommon.AnyValue.ValueOneofCase.StringValue)
                         {
+                            // Note: tag.Value is used and not attribute.Value here because attribute.Value may be truncated
                             PeerServiceResolver.InspectTag(ref this, key, tag.Value as string);
                         }
                         else if (attribute.Value.ValueCase == OtlpCommon.AnyValue.ValueOneofCase.IntValue)
