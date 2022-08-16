@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#if !NETFRAMEWORK
+#if NET6_0_OR_GREATER
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -115,8 +115,6 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
 
 #if NET6_0_OR_GREATER
         [Theory(Skip = "Skipping for .NET 6 and higher due to bug #3023")]
-#else
-        [Theory]
 #endif
         [InlineData(null)]
         [InlineData(true)]

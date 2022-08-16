@@ -119,7 +119,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal(0, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
         }
 
-#if !NETFRAMEWORK
+#if NET6_0_OR_GREATER
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
