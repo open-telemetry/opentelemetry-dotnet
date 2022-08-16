@@ -5,6 +5,15 @@
 * Removed `netstandard2.0` and `netstandard2.1` targets
   ([#3576](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3567))
 
+* Fixed an issue where activity started within middleware was modified by
+  instrumentation library.
+  ([#3498](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3498))
+
+* Updated to use Activity native support from
+  `System.Diagnostics.DiagnosticSource` to set activity status.
+  ([#3118](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3118))
+  ([#3555](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3555))
+
 ## 1.0.0-rc9.5
 
 Released 2022-Aug-02

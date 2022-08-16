@@ -15,6 +15,9 @@
 // </copyright>
 
 using System.Diagnostics;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Numerics;
+#endif
 using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Internal;
@@ -83,6 +86,9 @@ internal static class MathHelper
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int LeadingZero64(long value)
     {
+#if NETCOREAPP3_0_OR_GREATER
+        return BitOperations.LeadingZeroCount((ulong)value);
+#else
         unchecked
         {
             var high32 = (int)(value >> 32);
@@ -94,6 +100,7 @@ internal static class MathHelper
 
             return LeadingZero32((int)value) + 32;
         }
+#endif
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
