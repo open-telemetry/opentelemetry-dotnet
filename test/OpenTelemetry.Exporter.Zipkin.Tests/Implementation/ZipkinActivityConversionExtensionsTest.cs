@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using OpenTelemetry.Internal;
 using Xunit;
 using static OpenTelemetry.Exporter.Zipkin.Implementation.ZipkinActivityConversionExtensions;
@@ -35,7 +36,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
                 Tags = PooledList<KeyValuePair<string, object>>.Create(),
             };
 
-            attributeEnumerationState.ForEach(new KeyValuePair<string, object>(key, value));
+            Activity activity = new Activity("TestActivity");
+            activity.SetTag(key, value);
+
+            attributeEnumerationState.EnumerateTags(activity);
 
             Assert.Equal(key, attributeEnumerationState.Tags[0].Key);
             Assert.Equal(value, attributeEnumerationState.Tags[0].Value);
@@ -53,7 +57,10 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests
                 Tags = PooledList<KeyValuePair<string, object>>.Create(),
             };
 
-            attributeEnumerationState.ForEach(new KeyValuePair<string, object>(key, value));
+            Activity activity = new Activity("TestActivity");
+            activity.SetTag(key, value);
+
+            attributeEnumerationState.EnumerateTags(activity);
 
             Assert.Empty(attributeEnumerationState.Tags);
         }
