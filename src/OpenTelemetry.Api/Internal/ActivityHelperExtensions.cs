@@ -40,41 +40,38 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            StatusCode? tempStatusCode = null;
-            string tempStatusDescription = null;
+            bool foundStatusCode = false;
+            statusCode = default;
+            statusDescription = null;
 
             foreach (ref readonly var tag in activity.EnumerateTagObjects())
             {
-                if (tag.Key == SpanAttributeConstants.StatusCodeKey)
+                switch (tag.Key)
                 {
-                    tempStatusCode = StatusHelper.GetStatusCodeForTagValue(tag.Value as string);
-                }
-                else if (tag.Key == SpanAttributeConstants.StatusDescriptionKey)
-                {
-                    tempStatusDescription = tag.Value as string;
-                }
-                else
-                {
-                    continue;
+                    case SpanAttributeConstants.StatusCodeKey:
+                        foundStatusCode = StatusHelper.TryGetStatusCodeForTagValue(tag.Value as string, out statusCode);
+                        if (!foundStatusCode)
+                        {
+                            // If status code was found but turned out to be invalid give up immediately.
+                            return false;
+                        }
+
+                        break;
+                    case SpanAttributeConstants.StatusDescriptionKey:
+                        statusDescription = tag.Value as string;
+                        break;
+                    default:
+                        continue;
                 }
 
-                if (tempStatusCode.HasValue && tempStatusDescription != null)
+                if (foundStatusCode && statusDescription != null)
                 {
-                    goto Done;
+                    // If we found a status code and a description we break enumeration because our work is done.
+                    break;
                 }
             }
 
-            if (!tempStatusCode.HasValue)
-            {
-                statusCode = default;
-                statusDescription = null;
-                return false;
-            }
-
-Done:
-            statusCode = tempStatusCode.Value;
-            statusDescription = tempStatusDescription;
-            return true;
+            return foundStatusCode;
         }
 
         /// <summary>
