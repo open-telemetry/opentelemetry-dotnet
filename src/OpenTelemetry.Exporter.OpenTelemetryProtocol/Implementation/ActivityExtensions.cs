@@ -26,11 +26,11 @@ using Google.Protobuf;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Configuration;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Proto.Collector.Trace.V1;
+using OpenTelemetry.Proto.Common.V1;
+using OpenTelemetry.Proto.Resource.V1;
 using OpenTelemetry.Proto.Trace.V1;
 using OpenTelemetry.Trace;
-using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
-using OtlpCommon = OpenTelemetry.Proto.Common.V1;
-using OtlpResource = OpenTelemetry.Proto.Resource.V1;
 using OtlpTrace = OpenTelemetry.Proto.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
@@ -41,8 +41,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         private static readonly Action<RepeatedField<Span>, int> RepeatedFieldOfSpanSetCountAction = CreateRepeatedFieldOfSpanSetCountAction();
 
         internal static void AddBatch(
-            this OtlpCollector.ExportTraceServiceRequest request,
-            OtlpResource.Resource processResource,
+            this ExportTraceServiceRequest request,
+            Resource processResource,
             in Batch<Activity> activityBatch)
         {
             Dictionary<string, ScopeSpans> spansByLibrary = new Dictionary<string, ScopeSpans>();
@@ -77,7 +77,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void Return(this OtlpCollector.ExportTraceServiceRequest request)
+        internal static void Return(this ExportTraceServiceRequest request)
         {
             var resourceSpans = request.ResourceSpans.FirstOrDefault();
             if (resourceSpans == null)
@@ -99,7 +99,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             {
                 spans = new ScopeSpans
                 {
-                    Scope = new OtlpCommon.InstrumentationScope
+                    Scope = new InstrumentationScope
                     {
                         Name = name, // Name is enforced to not be null, but it can be empty.
                         Version = version ?? string.Empty, // NRE throw by proto
@@ -168,10 +168,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 if (peerServiceName != null && addAsTag)
                 {
                     otlpSpan.Attributes.Add(
-                        new OtlpCommon.KeyValue
+                        new KeyValue
                         {
                             Key = SemanticConventions.AttributePeerService,
-                            Value = new OtlpCommon.AnyValue { StringValue = peerServiceName },
+                            Value = new AnyValue { StringValue = peerServiceName },
                         });
                 }
             }
@@ -368,12 +368,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             this.Span.DroppedAttributesCount++;
                         }
 
-                        if (attribute.Value.ValueCase == OtlpCommon.AnyValue.ValueOneofCase.StringValue)
+                        if (attribute.Value.ValueCase == AnyValue.ValueOneofCase.StringValue)
                         {
                             // Note: tag.Value is used and not attribute.Value here because attribute.Value may be truncated
                             PeerServiceResolver.InspectTag(ref this, key, tag.Value as string);
                         }
-                        else if (attribute.Value.ValueCase == OtlpCommon.AnyValue.ValueOneofCase.IntValue)
+                        else if (attribute.Value.ValueCase == AnyValue.ValueOneofCase.IntValue)
                         {
                             PeerServiceResolver.InspectTag(ref this, key, attribute.Value.IntValue);
                         }
