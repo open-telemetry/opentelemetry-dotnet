@@ -274,7 +274,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             otlpLink.Attributes.Add(attribute);
                         }
                     }
-                    while (enumerator.MoveNext() && otlpLink.Attributes.Count <= maxTags);
+                    while (enumerator.MoveNext() && otlpLink.Attributes.Count < maxTags);
                 }
             }
 
@@ -304,7 +304,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                             otlpEvent.Attributes.Add(attribute);
                         }
                     }
-                    while (enumerator.MoveNext() && otlpEvent.Attributes.Count <= maxTags);
+                    while (enumerator.MoveNext() && otlpEvent.Attributes.Count < maxTags);
                 }
             }
 
@@ -378,14 +378,14 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                     if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, SdkConfiguration.Instance.AttributeValueLengthLimit))
                     {
-                        if (this.Tags.Count <= maxTags)
+                        if (this.Tags.Count < maxTags)
                         {
                             PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, attribute);
                         }
 
                         if (attribute.Value.ValueCase == OtlpCommon.AnyValue.ValueOneofCase.StringValue)
                         {
-                            PeerServiceResolver.InspectTag(ref this, key, attribute.Value.StringValue);
+                            PeerServiceResolver.InspectTag(ref this, key, tag.Value as string);
                         }
                         else if (attribute.Value.ValueCase == OtlpCommon.AnyValue.ValueOneofCase.IntValue)
                         {
@@ -421,7 +421,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         ref readonly var @event = ref enumerator.Current;
                         PooledList<OtlpTrace.Span.Types.Event>.Add(ref this.Events, ToOtlpEvent(in @event));
                     }
-                    while (enumerator.MoveNext() && this.Events.Count <= maxEvents);
+                    while (enumerator.MoveNext() && this.Events.Count < maxEvents);
                 }
             }
         }
@@ -451,7 +451,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         ref readonly var link = ref enumerator.Current;
                         PooledList<OtlpTrace.Span.Types.Link>.Add(ref this.Links, ToOtlpLink(in link));
                     }
-                    while (enumerator.MoveNext() && this.Links.Count <= maxLinks);
+                    while (enumerator.MoveNext() && this.Links.Count < maxLinks);
                 }
             }
         }
