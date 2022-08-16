@@ -87,7 +87,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
         [Theory]
         [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcTraceExportClient))]
-        //[InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient))]
+        [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpTraceExportClient))]
         public void GetTraceExportClient_SupportedProtocol_ReturnsCorrectExportClient(OtlpExportProtocol protocol, Type expectedExportClientType)
         {
             if (protocol == OtlpExportProtocol.Grpc && Environment.Version.Major == 3)
