@@ -42,7 +42,7 @@ Action<ResourceBuilder> configureResource = r => r.AddService(
     serviceName, serviceVersion: assemblyVersion, serviceInstanceId: Environment.MachineName);
 
 // Traces
-builder.Host.UseOpenTelemetryTracing(options =>
+builder.Services.AddOpenTelemetryTracing(options =>
 {
     options
         .ConfigureResource(configureResource)
@@ -149,6 +149,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// Start collection of OpenTelemetry traces & metrics
+app.UseOpenTelemetry();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

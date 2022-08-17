@@ -14,12 +14,8 @@
 // limitations under the License.
 // </copyright>
 
-using System;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Extensions.Hosting.Implementation;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.Hosting;
 
@@ -28,32 +24,6 @@ namespace Microsoft.Extensions.Hosting;
 /// </summary>
 public static class OpenTelemetryHostExtensions
 {
-    /// <summary>
-    /// Register and automatically start services required to collect OpenTelemetry traces.
-    /// </summary>
-    /// <param name="hostBuilder"><see cref="IHostBuilder"/>.</param>
-    /// <returns>Supplied <see cref="IHostBuilder"/> for chaining calls.</returns>
-    public static IHostBuilder UseOpenTelemetryTracing(this IHostBuilder hostBuilder)
-        => UseOpenTelemetryTracing(hostBuilder, (b) => { });
-
-    /// <summary>
-    /// Register and automatically start services required to collect OpenTelemetry traces.
-    /// </summary>
-    /// <param name="hostBuilder"><see cref="IHostBuilder"/>.</param>
-    /// <param name="configure">Callback action to configure the <see cref="TracerProviderBuilder"/>.</param>
-    /// <returns>Supplied <see cref="IHostBuilder"/> for chaining calls.</returns>
-    public static IHostBuilder UseOpenTelemetryTracing(this IHostBuilder hostBuilder, Action<TracerProviderBuilder> configure)
-    {
-        Guard.ThrowIfNull(hostBuilder);
-
-        return hostBuilder.ConfigureServices((hostBuilderContext, services) =>
-        {
-            services.AddOpenTelemetryTracing(configure);
-
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
-        });
-    }
-
     /// <summary>
     /// Start OpenTelemetry tracing and/or metric collection.
     /// </summary>
