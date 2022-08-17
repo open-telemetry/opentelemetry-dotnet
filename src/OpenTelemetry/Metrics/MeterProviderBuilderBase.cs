@@ -32,6 +32,10 @@ namespace OpenTelemetry.Metrics
     {
         internal const int MaxMetricsDefault = 1000;
         internal const int MaxMetricPointsPerMetricDefault = 2000;
+
+        // Builds noop MeterProvider when this flag is set.
+        // This flag is controlled through reflection.
+        private static bool disableMeterProviderBuilder = false;
         private readonly List<InstrumentationFactory> instrumentationFactories = new();
         private readonly List<string> meterSources = new();
         private readonly List<Func<Instrument, MetricStreamConfiguration>> viewConfigs = new();
@@ -142,7 +146,9 @@ namespace OpenTelemetry.Metrics
         /// <returns><see cref="MeterProvider"/>.</returns>
         protected MeterProvider Build()
         {
-            return new MeterProviderSdk(
+            if (!disableMeterProviderBuilder)
+            {
+                return new MeterProviderSdk(
                 this.resourceBuilder.Build(),
                 this.meterSources,
                 this.instrumentationFactories,
@@ -150,6 +156,11 @@ namespace OpenTelemetry.Metrics
                 this.maxMetricStreams,
                 this.maxMetricPointsPerMetricStream,
                 this.MetricReaders.ToArray());
+            }
+            else
+            {
+                return MeterProvider.Default;
+            }
         }
 
         internal readonly struct InstrumentationFactory

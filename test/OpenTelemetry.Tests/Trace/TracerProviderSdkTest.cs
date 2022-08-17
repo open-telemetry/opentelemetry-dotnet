@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using OpenTelemetry.Instrumentation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -1176,6 +1177,21 @@ namespace OpenTelemetry.Trace.Tests
 
             Assert.Contains(nonLegacyActivity.OperationName, onStartProcessedActivities); // Processor.OnStart is called since we added a legacy OperationName
             Assert.Contains(nonLegacyActivity.OperationName, onStopProcessedActivities);  // Processor.OnEnd is called since we added a legacy OperationName
+        }
+
+        [Fact]
+        public void NoopTracerProviderWithDisabledTracerProviderBuilderFlag()
+        {
+            var buildTracerProviderBuilderField = typeof(TracerProviderBuilderBase).GetField("disableTracerProviderBuilder", BindingFlags.Static | BindingFlags.NonPublic);
+            buildTracerProviderBuilderField.SetValue(null, true);
+
+            using var source1 = new ActivitySource($"{Utils.GetCurrentMethodName()}.1");
+            var builder = Sdk.CreateTracerProviderBuilder();
+            builder.AddSource(source1.Name);
+            using var provider = builder.Build();
+
+            Assert.Same(provider, TracerProvider.Default);
+            buildTracerProviderBuilderField.SetValue(null, false);
         }
 
         public void Dispose()

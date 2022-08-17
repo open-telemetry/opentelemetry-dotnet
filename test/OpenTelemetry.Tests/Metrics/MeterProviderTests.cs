@@ -15,6 +15,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Reflection;
 using OpenTelemetry.Exporter;
 using Xunit;
 
@@ -32,6 +33,21 @@ namespace OpenTelemetry.Metrics.Tests
 
             Assert.True(meterProvider.TryFindExporter(out InMemoryExporter<Metric> inMemoryExporter));
             Assert.False(meterProvider.TryFindExporter(out MyExporter myExporter));
+        }
+
+        [Fact]
+        public void NoopMeterProviderWithDisabledMeterProviderBuilderFlag()
+        {
+            var buildMeterProviderBuilderField = typeof(MeterProviderBuilderBase).GetField("disableMeterProviderBuilder", BindingFlags.Static | BindingFlags.NonPublic);
+            buildMeterProviderBuilderField.SetValue(null, true);
+
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            Assert.Same(meterProvider, MeterProvider.Default);
+            buildMeterProviderBuilderField.SetValue(null, false);
         }
 
         private class MyExporter : BaseExporter<Metric>

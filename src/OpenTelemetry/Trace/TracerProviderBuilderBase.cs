@@ -27,6 +27,9 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public abstract class TracerProviderBuilderBase : TracerProviderBuilder
     {
+        // Builds noop TracerProvider when this flag is set.
+        // This flag is controlled through reflection.
+        private static bool disableTracerProviderBuilder = false;
         private readonly List<InstrumentationFactory> instrumentationFactories = new();
         private readonly List<BaseProcessor<Activity>> processors = new();
         private readonly List<string> sources = new();
@@ -187,13 +190,20 @@ namespace OpenTelemetry.Trace
         /// <returns><see cref="TracerProvider"/>.</returns>
         protected TracerProvider Build()
         {
-            return new TracerProviderSdk(
+            if (!disableTracerProviderBuilder)
+            {
+                return new TracerProviderSdk(
                 this.resourceBuilder.Build(),
                 this.sources,
                 this.instrumentationFactories,
                 this.sampler,
                 this.processors,
                 this.legacyActivityOperationNames);
+            }
+            else
+            {
+                return TracerProvider.Default;
+            }
         }
 
         internal readonly struct InstrumentationFactory

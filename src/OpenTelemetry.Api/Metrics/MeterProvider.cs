@@ -27,5 +27,10 @@ namespace OpenTelemetry.Metrics
         protected MeterProvider()
         {
         }
+
+        /// <summary>
+        /// Gets the default <see cref="MeterProvider"/>.
+        /// </summary>
+        internal static MeterProvider Default { get; } = new MeterProvider();
     }
 }
