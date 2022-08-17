@@ -31,7 +31,36 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public static class OpenTelemetryServicesExtensions
     {
-         /// <summary>
+        /// <summary>
+        /// Configure OpenTelemetry and register a <see cref="IHostedService"/>
+        /// to automatically start tracing services in the supplied <see
+        /// cref="IServiceCollection" />.
+        /// </summary>
+        /// <param name="services"><see cref="IServiceCollection"/>.</param>
+        /// <returns>Supplied <see cref="IServiceCollection"/> for chaining calls.</returns>
+        public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services)
+            => AddOpenTelemetryTracing(services, (b) => { });
+
+        /// <summary>
+        /// Configure OpenTelemetry and register a <see cref="IHostedService"/>
+        /// to automatically start tracing services in the supplied <see
+        /// cref="IServiceCollection" />.
+        /// </summary>
+        /// <param name="services"><see cref="IServiceCollection"/>.</param>
+        /// <param name="configure">Callback action to configure the <see cref="TracerProviderBuilder"/>.</param>
+        /// <returns>Supplied <see cref="IServiceCollection"/> for chaining calls.</returns>
+        public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Action<TracerProviderBuilder> configure)
+        {
+            Guard.ThrowIfNull(services);
+
+            services.ConfigureOpenTelemetryTracing(configure);
+
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
+
+            return services;
+        }
+
+        /// <summary>
         /// Adds OpenTelemetry MeterProvider to the specified <see cref="IServiceCollection" />.
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>

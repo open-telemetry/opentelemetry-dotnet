@@ -26,11 +26,7 @@ namespace WorkerService
     {
         public static void Main(string[] args)
         {
-            var host = CreateHostBuilder(args).Build();
-
-            host
-                .UseOpenTelemetry()
-                .Run();
+            CreateHostBuilder(args).Build().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>

@@ -321,7 +321,7 @@ namespace OpenTelemetry.Trace
             }
             else
             {
-                this.ConfigureServices(services => TracerProviderBuilderServiceCollectionHelper.RegisterConfigureStateCallback(services, configure));
+                this.ConfigureServices(services => TracerProviderBuilderServiceCollectionHelper.RegisterConfigureStateCallback(services, configure!));
             }
 
             return this;

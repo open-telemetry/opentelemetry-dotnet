@@ -150,9 +150,6 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Start collection of OpenTelemetry traces & metrics
-app.UseOpenTelemetry();
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

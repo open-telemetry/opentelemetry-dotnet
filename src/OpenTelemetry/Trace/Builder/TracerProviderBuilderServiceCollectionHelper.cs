@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,7 +32,7 @@ internal static class TracerProviderBuilderServiceCollectionHelper
 
         return RegisterConfigureStateCallback(
             services,
-            (sp, state) => configure(sp, state.Builder));
+            (sp, state) => configure!(sp, state.Builder));
     }
 
     internal static IServiceCollection RegisterConfigureStateCallback(
@@ -40,7 +42,7 @@ internal static class TracerProviderBuilderServiceCollectionHelper
         Debug.Assert(services != null, "services was null");
         Debug.Assert(configure != null, "configure was null");
 
-        return services.AddSingleton(new ConfigureTracerProviderBuilderStateCallbackRegistration(configure));
+        return services.AddSingleton(new ConfigureTracerProviderBuilderStateCallbackRegistration(configure!));
     }
 
     internal static void InvokeRegisteredConfigureStateCallbacks(
@@ -54,7 +56,7 @@ internal static class TracerProviderBuilderServiceCollectionHelper
 
         foreach (var callbackRegistration in callbackRegistrations)
         {
-            callbackRegistration.Configure(serviceProvider, state);
+            callbackRegistration.Configure(serviceProvider!, state!);
         }
     }
 
@@ -73,7 +75,7 @@ internal static class TracerProviderBuilderServiceCollectionHelper
             Debug.Assert(serviceProvider != null, "serviceProvider was null");
             Debug.Assert(state != null, "state was null");
 
-            this.configure(serviceProvider, state);
+            this.configure(serviceProvider!, state!);
         }
     }
 }

@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using OpenTelemetry;
 using OpenTelemetry.Internal;
@@ -27,15 +29,14 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class TracerProviderBuilderServiceCollectionExtensions
 {
     /// <summary>
-    /// Adds OpenTelemetry tracing services to the specified <see cref="IServiceCollection" />.
+    /// Configures OpenTelemetry tracing services in the supplied <see cref="IServiceCollection" />.
     /// </summary>
     /// <remarks>
     /// Notes:
     /// <list type="bullet">
     /// <item>A <see cref="TracerProvider"/> will not be created automatically
     /// using this method. Either use the
-    /// <c>IHostBuilder.UseOpenTelemetryTracing</c> or
-    /// <c>IHost.UseOpenTelemetry</c> extension in the
+    /// <c>IServiceCollection.AddOpenTelemetryTracing</c> extension in the
     /// <c>OpenTelemetry.Extensions.Hosting</c> package or access the <see
     /// cref="TracerProvider"/> through the application <see
     /// cref="IServiceProvider"/> to begin collecting traces.</item>
@@ -46,17 +47,17 @@ public static class TracerProviderBuilderServiceCollectionExtensions
     /// </remarks>
     /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-    public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services)
-        => AddOpenTelemetryTracing(services, (b) => { });
+    public static IServiceCollection ConfigureOpenTelemetryTracing(this IServiceCollection services)
+        => ConfigureOpenTelemetryTracing(services, (b) => { });
 
     /// <summary>
-    /// Adds OpenTelemetry tracing services to the specified <see cref="IServiceCollection" />.
+    /// Configures OpenTelemetry tracing services in the supplied <see cref="IServiceCollection" />.
     /// </summary>
-    /// <remarks><inheritdoc cref="AddOpenTelemetryTracing(IServiceCollection)" path="/remarks"/></remarks>
+    /// <remarks><inheritdoc cref="ConfigureOpenTelemetryTracing(IServiceCollection)" path="/remarks"/></remarks>
     /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
     /// <param name="configure">Callback action to configure the <see cref="TracerProviderBuilder"/>.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-    public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services, Action<TracerProviderBuilder> configure)
+    public static IServiceCollection ConfigureOpenTelemetryTracing(this IServiceCollection services, Action<TracerProviderBuilder> configure)
     {
         Guard.ThrowIfNull(services);
         Guard.ThrowIfNull(configure);

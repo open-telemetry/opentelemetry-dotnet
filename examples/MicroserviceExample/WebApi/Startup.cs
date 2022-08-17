@@ -50,10 +50,8 @@ namespace WebApi
                 }));
         }
 
-        public void Configure(IApplicationBuilder app, IHost host, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            host.UseOpenTelemetry();
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
