@@ -26,7 +26,11 @@ namespace WorkerService
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            var host = CreateHostBuilder(args).Build();
+
+            host
+                .UseOpenTelemetry()
+                .Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -36,16 +40,17 @@ namespace WorkerService
                     services.AddHostedService<Worker>();
 
                     services.AddSingleton<MessageReceiver>();
-                })
-                .UseOpenTelemetryTracing(builder =>
-                {
-                    builder
-                        .AddSource(nameof(MessageReceiver))
-                        .AddZipkinExporter(b =>
-                        {
-                            var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
-                            b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
-                        });
+
+                    services.AddOpenTelemetryTracing(builder =>
+                    {
+                        builder
+                            .AddSource(nameof(MessageReceiver))
+                            .AddZipkinExporter(b =>
+                            {
+                                var zipkinHostName = Environment.GetEnvironmentVariable("ZIPKIN_HOSTNAME") ?? "localhost";
+                                b.Endpoint = new Uri($"http://{zipkinHostName}:9411/api/v2/spans");
+                            });
+                    });
                 });
     }
 }
