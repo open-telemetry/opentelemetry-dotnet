@@ -48,11 +48,7 @@ namespace OpenTelemetry.Tests
 
                 VerifyEventId(eventMethod, actualEvent);
                 VerifyEventLevel(eventMethod, actualEvent);
-
-                if (eventMethod.Name != "ExporterErrorResult")
-                {
-                    VerifyEventMessage(eventMethod, actualEvent, eventArguments);
-                }
+                VerifyEventMessage(eventMethod, actualEvent, eventArguments);
             }
             catch (Exception e)
             {
