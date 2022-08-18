@@ -195,7 +195,7 @@ namespace OpenTelemetry.Internal
         [Event(3, Message = "Exporter returned error '{0}'.", Level = EventLevel.Warning)]
         public void ExporterErrorResult(ExportResult exportResult)
         {
-            this.WriteEvent(3, exportResult.ToString());
+            this.WriteEvent(3, exportResult);
         }
 
         [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Error)]
