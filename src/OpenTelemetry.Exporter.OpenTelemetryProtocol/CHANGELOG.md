@@ -2,15 +2,15 @@
 
 ## Unreleased
 
+## 1.4.0-alpha.2
+
+Released 2022-Aug-18
+
 * When using [Attribute
   Limits](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md#attribute-limits)
   the OTLP exporter will now send "dropped" counts where applicable (ex:
   [dropped_attributes_count](https://github.com/open-telemetry/opentelemetry-proto/blob/001e5eabf3ea0193ef9343c1b9a057d23d583d7c/opentelemetry/proto/trace/v1/trace.proto#L191)).
   ([#3580](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3580))
-
-## 1.4.0-alpha.2
-
-Released 2022-Aug-18
 
 ## 1.4.0-alpha.1
 
