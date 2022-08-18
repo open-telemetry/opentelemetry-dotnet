@@ -19,15 +19,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-#if !NETSTANDARD2_0
 using System.Runtime.CompilerServices;
-#endif
 using Microsoft.AspNetCore.Http;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Internal;
-#if !NETSTANDARD2_0
 using OpenTelemetry.Instrumentation.GrpcNetClient;
-#endif
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
@@ -202,7 +198,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
-#if !NETSTANDARD2_0
                 if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
                 {
                     AddGrpcAttributes(activity, grpcMethod, context);
@@ -211,12 +206,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
                 }
-#else
-                if (activity.Status == ActivityStatusCode.Unset)
-                {
-                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
-                }
-#endif
 
                 try
                 {
@@ -350,7 +339,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             var queryString = request.QueryString.Value ?? string.Empty;
             var length = scheme.Length + Uri.SchemeDelimiter.Length + host.Length + pathBase.Length
                          + path.Length + queryString.Length;
-#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+
             return string.Create(length, (scheme, host, pathBase, path, queryString), (span, parts) =>
             {
                 CopyTo(ref span, parts.scheme);
@@ -369,19 +358,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     }
                 }
             });
-#else
-            return new System.Text.StringBuilder(length)
-                .Append(scheme)
-                .Append(Uri.SchemeDelimiter)
-                .Append(host)
-                .Append(pathBase)
-                .Append(path)
-                .Append(queryString)
-                .ToString();
-#endif
         }
 
-#if !NETSTANDARD2_0
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
         {
@@ -429,6 +407,5 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
         }
-#endif
     }
 }
