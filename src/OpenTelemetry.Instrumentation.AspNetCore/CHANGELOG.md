@@ -2,8 +2,10 @@
 
 ## Unreleased
 
-* Removed `netstandard2.0` and `netstandard2.1` targets
-  ([#3576](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3567))
+* Removed `netstandard2.0` and `netstandard2.1` targets. .NET 5 reached EOL
+  in May 2022 and .NET Core 3.1 reaches EOL in December 2022. The
+  instrumentation for ASP.NET Core now requires .NET 6 or later.
+  ([#3567](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3567))
 
 * Fixed an issue where activity started within middleware was modified by
   instrumentation library.
