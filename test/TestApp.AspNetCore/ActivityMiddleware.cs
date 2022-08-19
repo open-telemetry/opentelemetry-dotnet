@@ -1,4 +1,4 @@
-// <copyright file="CallbackMiddleware.cs" company="OpenTelemetry Authors">
+// <copyright file="ActivityMiddleware.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,19 +14,14 @@
 // limitations under the License.
 // </copyright>
 
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-
-#pragma warning disable SA1300 // Element should begin with upper-case letter
-namespace TestApp.AspNetCore._7._0
-#pragma warning restore SA1300 // Element should begin with upper-case letter
+namespace TestApp.AspNetCore
 {
-    public class CallbackMiddleware
+    public class ActivityMiddleware
     {
-        private readonly CallbackMiddlewareImpl impl;
+        private readonly ActivityMiddlewareImpl impl;
         private readonly RequestDelegate next;
 
-        public CallbackMiddleware(RequestDelegate next, CallbackMiddlewareImpl impl)
+        public ActivityMiddleware(RequestDelegate next, ActivityMiddlewareImpl impl)
         {
             this.next = next;
             this.impl = impl;
@@ -34,17 +29,29 @@ namespace TestApp.AspNetCore._7._0
 
         public async Task InvokeAsync(HttpContext context)
         {
-            if (this.impl == null || await this.impl.ProcessAsync(context))
+            if (this.impl != null)
             {
-                await this.next(context);
+                this.impl.PreProcess(context);
+            }
+
+            await this.next(context);
+
+            if (this.impl != null)
+            {
+                this.impl.PostProcess(context);
             }
         }
 
-        public class CallbackMiddlewareImpl
+        public class ActivityMiddlewareImpl
         {
-            public virtual async Task<bool> ProcessAsync(HttpContext context)
+            public virtual void PreProcess(HttpContext context)
             {
-                return await Task.FromResult(true);
+                // Do nothing
+            }
+
+            public virtual void PostProcess(HttpContext context)
+            {
+                // Do nothing
             }
         }
     }

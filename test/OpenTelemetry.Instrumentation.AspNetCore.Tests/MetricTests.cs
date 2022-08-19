@@ -21,23 +21,17 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
-#if NET6_0
-using TestApp.AspNetCore._6._0;
-#endif
-#if NET7_0
-using TestApp.AspNetCore._7._0;
-#endif
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
     public class MetricTests
-        : IClassFixture<WebApplicationFactory<Startup>>, IDisposable
+        : IClassFixture<WebApplicationFactory<Program>>, IDisposable
     {
-        private readonly WebApplicationFactory<Startup> factory;
+        private readonly WebApplicationFactory<Program> factory;
         private MeterProvider meterProvider = null;
 
-        public MetricTests(WebApplicationFactory<Startup> factory)
+        public MetricTests(WebApplicationFactory<Program> factory)
         {
             this.factory = factory;
         }

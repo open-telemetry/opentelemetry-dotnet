@@ -141,7 +141,9 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 return;
             }
 
-            Status status;
+            ActivityStatusCode status;
+            string exceptionMessage = null;
+
             if (exception is WebException wexc)
             {
                 if (wexc.Response is HttpWebResponse response)
@@ -156,7 +158,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                     {
                         case WebExceptionStatus.Timeout:
                         case WebExceptionStatus.RequestCanceled:
-                            status = Status.Error;
+                            status = ActivityStatusCode.Error;
                             break;
                         case WebExceptionStatus.SendFailure:
                         case WebExceptionStatus.ConnectFailure:
@@ -164,20 +166,23 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                         case WebExceptionStatus.TrustFailure:
                         case WebExceptionStatus.ServerProtocolViolation:
                         case WebExceptionStatus.MessageLengthLimitExceeded:
-                            status = Status.Error.WithDescription(exception.Message);
+                            status = ActivityStatusCode.Error;
+                            exceptionMessage = exception.Message;
                             break;
                         default:
-                            status = Status.Error.WithDescription(exception.Message);
+                            status = ActivityStatusCode.Error;
+                            exceptionMessage = exception.Message;
                             break;
                     }
                 }
             }
             else
             {
-                status = Status.Error.WithDescription(exception.Message);
+                status = ActivityStatusCode.Error;
+                exceptionMessage = exception.Message;
             }
 
-            activity.SetStatus(status);
+            activity.SetStatus(status, exceptionMessage);
             if (Options.RecordException)
             {
                 activity.RecordException(exception);

@@ -16,7 +16,7 @@ instance for Prometheus to scrape.
 ### Step 1: Install Package
 
 ```shell
-dotnet add package OpenTelemetry.Exporter.Prometheus.HttpListener
+dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus.HttpListener
 ```
 
 ### Step 2: Add PrometheusHttpListener

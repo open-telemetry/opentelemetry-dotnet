@@ -16,14 +16,14 @@ to scrape.
 ### Step 1: Install Package
 
 ```shell
-dotnet add package OpenTelemetry.Exporter.Prometheus.AspNetCore
+dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus.AspNetCore
 ```
 
 ### Step 2: Configure OpenTelemetry MeterProvider
 
 * When using
   [OpenTelemetry.Extensions.Hosting](../OpenTelemetry.Extensions.Hosting/README.md)
-  package on .NET Core 3.1+:
+  package on .NET 6.0+:
 
     ```csharp
     services.AddOpenTelemetryMetrics(builder =>
