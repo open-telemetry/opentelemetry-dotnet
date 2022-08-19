@@ -36,6 +36,11 @@ namespace Microsoft.Extensions.DependencyInjection
         /// to automatically start tracing services in the supplied <see
         /// cref="IServiceCollection" />.
         /// </summary>
+        /// <remarks>
+        /// Note: This is safe to be called multiple times and by library authors.
+        /// Only a single <see cref="TracerProvider"/> will be created for a given
+        /// <see cref="IServiceCollection"/>.
+        /// </remarks>
         /// <param name="services"><see cref="IServiceCollection"/>.</param>
         /// <returns>Supplied <see cref="IServiceCollection"/> for chaining calls.</returns>
         public static IServiceCollection AddOpenTelemetryTracing(this IServiceCollection services)
@@ -46,6 +51,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// to automatically start tracing services in the supplied <see
         /// cref="IServiceCollection" />.
         /// </summary>
+        /// <remarks><inheritdoc cref="AddOpenTelemetryTracing(IServiceCollection)" path="/remarks"/></remarks>
         /// <param name="services"><see cref="IServiceCollection"/>.</param>
         /// <param name="configure">Callback action to configure the <see cref="TracerProviderBuilder"/>.</param>
         /// <returns>Supplied <see cref="IServiceCollection"/> for chaining calls.</returns>
