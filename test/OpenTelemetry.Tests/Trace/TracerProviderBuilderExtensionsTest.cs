@@ -16,6 +16,9 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
@@ -105,6 +108,188 @@ namespace OpenTelemetry.Trace.Tests
             }
 
             Assert.Equal(StatusCode.Unset, activity.GetStatus().StatusCode);
+        }
+
+        [Fact]
+        public void ServiceLifecycleAvailableToSDKBuilderTest()
+        {
+            var builder = Sdk.CreateTracerProviderBuilder();
+
+            builder.ConfigureServices(services => services.AddSingleton<MyInstrumentation>());
+
+            MyInstrumentation myInstrumentation = null;
+
+            RunBuilderServiceLifecycleTest(
+                builder,
+                () =>
+                {
+                    var provider = builder.Build() as TracerProviderSdk;
+
+                    Assert.NotNull(provider);
+                    Assert.NotNull(provider.OwnedServiceProvider);
+
+                    myInstrumentation = ((IServiceProvider)provider.OwnedServiceProvider).GetRequiredService<MyInstrumentation>();
+
+                    return provider;
+                },
+                provider =>
+                {
+                    provider.Dispose();
+                });
+
+            Assert.NotNull(myInstrumentation);
+            Assert.True(myInstrumentation.Disposed);
+        }
+
+        [Fact]
+        public void ServiceLifecycleAvailableToServicesBuilderTest()
+        {
+            var services = new ServiceCollection();
+
+            bool testRun = false;
+
+            ServiceProvider serviceProvider = null;
+            TracerProviderSdk provider = null;
+
+            services.ConfigureOpenTelemetryTracing(builder =>
+            {
+                testRun = true;
+
+                RunBuilderServiceLifecycleTest(
+                    builder,
+                    () =>
+                    {
+                        // Note: Build can't be called directly on builder tied to external services
+                        Assert.Throws<NotSupportedException>(() => builder.Build());
+
+                        serviceProvider = services.BuildServiceProvider();
+
+                        provider = serviceProvider.GetRequiredService<TracerProvider>() as TracerProviderSdk;
+
+                        Assert.NotNull(provider);
+                        Assert.Null(provider.OwnedServiceProvider);
+
+                        return provider;
+                    },
+                    (provider) => { });
+            });
+
+            Assert.True(testRun);
+
+            Assert.NotNull(serviceProvider);
+            Assert.NotNull(provider);
+
+            Assert.False(provider.Disposed);
+
+            serviceProvider.Dispose();
+
+            Assert.True(provider.Disposed);
+        }
+
+        [Fact]
+        public void SingleProviderForServiceCollectionTest()
+        {
+            var services = new ServiceCollection();
+
+            services.ConfigureOpenTelemetryTracing(builder =>
+            {
+                builder.AddInstrumentation<MyInstrumentation>(() => new());
+            });
+
+            services.ConfigureOpenTelemetryTracing(builder =>
+            {
+                builder.AddInstrumentation<MyInstrumentation>(() => new());
+            });
+
+            using var serviceProvider = services.BuildServiceProvider();
+
+            Assert.NotNull(serviceProvider);
+
+            var tracerProviders = serviceProvider.GetServices<TracerProvider>();
+
+            Assert.Single(tracerProviders);
+
+            var provider = tracerProviders.First() as TracerProviderSdk;
+
+            Assert.NotNull(provider);
+
+            Assert.Equal(2, provider.Instrumentations.Count);
+        }
+
+        private static void RunBuilderServiceLifecycleTest(
+            TracerProviderBuilder builder,
+            Func<TracerProviderSdk> buildFunc,
+            Action<TracerProviderSdk> postAction)
+        {
+            builder.SetSampler<MySampler>();
+
+            bool configureServicesCalled = false;
+            builder.ConfigureServices(services =>
+            {
+                configureServicesCalled = true;
+
+                Assert.NotNull(services);
+
+                services.TryAddSingleton<MyProcessor>();
+
+                services.ConfigureOpenTelemetryTracing(b =>
+                {
+                    // Note: This is strange to call ConfigureOpenTelemetryTracing here, but supported
+                    b.AddInstrumentation<MyInstrumentation>();
+                });
+            });
+
+            int configureBuilderInvocations = 0;
+            builder.ConfigureBuilder((sp, builder) =>
+            {
+                configureBuilderInvocations++;
+
+                // Note: Services can't be configured at this stage
+                Assert.Throws<NotSupportedException>(
+                    () => builder.ConfigureServices(services => services.TryAddSingleton<TracerProviderBuilderExtensionsTest>()));
+
+                builder.AddProcessor(sp.GetRequiredService<MyProcessor>());
+
+                builder.ConfigureBuilder((_, _) =>
+                {
+                    // Note: ConfigureBuilder calls can be nested, this is supported
+                    configureBuilderInvocations++;
+                });
+            });
+
+            var provider = buildFunc();
+
+            Assert.True(configureServicesCalled);
+            Assert.Equal(2, configureBuilderInvocations);
+
+            Assert.True(provider.Sampler is MySampler);
+            Assert.Single(provider.Instrumentations);
+            Assert.True(provider.Instrumentations[0] is MyInstrumentation);
+            Assert.True(provider.Processor is MyProcessor);
+
+            postAction(provider);
+        }
+
+        private sealed class MySampler : Sampler
+        {
+            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+            {
+                return new SamplingResult(SamplingDecision.RecordAndSample);
+            }
+        }
+
+        private sealed class MyInstrumentation : IDisposable
+        {
+            internal bool Disposed;
+
+            public void Dispose()
+            {
+                this.Disposed = true;
+            }
+        }
+
+        private sealed class MyProcessor : BaseProcessor<Activity>
+        {
         }
     }
 }

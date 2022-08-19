@@ -28,16 +28,16 @@ namespace OpenTelemetry.Trace
 {
     internal sealed class TracerProviderSdk : TracerProvider
     {
+        internal readonly IDisposable? OwnedServiceProvider;
         internal int ShutdownCount;
+        internal bool Disposed;
 
         private readonly List<object> instrumentations = new();
         private readonly ActivityListener listener;
         private readonly Sampler sampler;
         private readonly Action<Activity> getRequestedDataAction;
         private readonly bool supportLegacyActivity;
-        private readonly IDisposable? ownedServiceProvider;
         private BaseProcessor<Activity>? processor;
-        private bool disposed;
 
         internal TracerProviderSdk(
             IServiceProvider serviceProvider,
@@ -45,8 +45,8 @@ namespace OpenTelemetry.Trace
         {
             if (ownsServiceProvider)
             {
-                this.ownedServiceProvider = serviceProvider as IDisposable;
-                Debug.Assert(this.ownedServiceProvider != null, "serviceProvider was not IDisposable");
+                this.OwnedServiceProvider = serviceProvider as IDisposable;
+                Debug.Assert(this.OwnedServiceProvider != null, "serviceProvider was not IDisposable");
             }
 
             var state = new TracerProviderBuilderState(serviceProvider);
@@ -344,7 +344,7 @@ namespace OpenTelemetry.Trace
 
         protected override void Dispose(bool disposing)
         {
-            if (!this.disposed)
+            if (!this.Disposed)
             {
                 if (disposing)
                 {
@@ -369,10 +369,10 @@ namespace OpenTelemetry.Trace
                     // sessions that were open.
                     this.listener?.Dispose();
 
-                    this.ownedServiceProvider?.Dispose();
+                    this.OwnedServiceProvider?.Dispose();
                 }
 
-                this.disposed = true;
+                this.Disposed = true;
                 OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(TracerProvider));
             }
 
