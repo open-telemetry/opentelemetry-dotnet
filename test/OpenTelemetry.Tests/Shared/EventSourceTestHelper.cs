@@ -57,8 +57,6 @@ namespace OpenTelemetry.Tests
                     throw new Exception(actualEvent.Message);
                 }
 
-                actualEvent = listener.Messages.First(q => q.EventName == eventMethod.Name);
-
                 VerifyEventId(eventMethod, actualEvent);
                 VerifyEventLevel(eventMethod, actualEvent);
                 VerifyEventMessage(eventMethod, actualEvent, eventArguments);
