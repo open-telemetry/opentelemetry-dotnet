@@ -64,7 +64,6 @@ namespace OpenTelemetry.Trace
             var services = new ServiceCollection();
 
             services.AddOptions();
-            services.TryAddSingleton<TracerProvider>(sp => new TracerProviderSdk(sp, ownsServiceProvider: true));
 
             this.services = services;
             this.ownsServices = true;
@@ -264,7 +263,7 @@ namespace OpenTelemetry.Trace
 
             var serviceProvider = services.BuildServiceProvider();
 
-            return serviceProvider.GetRequiredService<TracerProvider>();
+            return new TracerProviderSdk(serviceProvider, ownsServiceProvider: true);
         }
 
         private static BaseProcessor<Activity> BuildExportProcessor(
