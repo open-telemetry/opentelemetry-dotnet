@@ -26,26 +26,27 @@ using Google.Protobuf;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Configuration;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Proto.Collector.Trace.V1;
+using OpenTelemetry.Proto.Common.V1;
+using OpenTelemetry.Proto.Resource.V1;
+using OpenTelemetry.Proto.Trace.V1;
 using OpenTelemetry.Trace;
-using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
-using OtlpCommon = OpenTelemetry.Proto.Common.V1;
-using OtlpResource = OpenTelemetry.Proto.Resource.V1;
 using OtlpTrace = OpenTelemetry.Proto.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
     internal static class ActivityExtensions
     {
-        private static readonly ConcurrentBag<OtlpTrace.ScopeSpans> SpanListPool = new();
-        private static readonly Action<RepeatedField<OtlpTrace.Span>, int> RepeatedFieldOfSpanSetCountAction = CreateRepeatedFieldOfSpanSetCountAction();
+        private static readonly ConcurrentBag<ScopeSpans> SpanListPool = new();
+        private static readonly Action<RepeatedField<Span>, int> RepeatedFieldOfSpanSetCountAction = CreateRepeatedFieldOfSpanSetCountAction();
 
         internal static void AddBatch(
-            this OtlpCollector.ExportTraceServiceRequest request,
-            OtlpResource.Resource processResource,
+            this ExportTraceServiceRequest request,
+            Resource processResource,
             in Batch<Activity> activityBatch)
         {
-            Dictionary<string, OtlpTrace.ScopeSpans> spansByLibrary = new Dictionary<string, OtlpTrace.ScopeSpans>();
-            OtlpTrace.ResourceSpans resourceSpans = new OtlpTrace.ResourceSpans
+            Dictionary<string, ScopeSpans> spansByLibrary = new Dictionary<string, ScopeSpans>();
+            ResourceSpans resourceSpans = new ResourceSpans
             {
                 Resource = processResource,
             };
@@ -53,7 +54,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             foreach (var activity in activityBatch)
             {
-                OtlpTrace.Span span = activity.ToOtlpSpan();
+                Span span = activity.ToOtlpSpan();
                 if (span == null)
                 {
                     OpenTelemetryProtocolExporterEventSource.Log.CouldNotTranslateActivity(
@@ -76,7 +77,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void Return(this OtlpCollector.ExportTraceServiceRequest request)
+        internal static void Return(this ExportTraceServiceRequest request)
         {
             var resourceSpans = request.ResourceSpans.FirstOrDefault();
             if (resourceSpans == null)
@@ -92,13 +93,13 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static OtlpTrace.ScopeSpans GetSpanListFromPool(string name, string version)
+        internal static ScopeSpans GetSpanListFromPool(string name, string version)
         {
             if (!SpanListPool.TryTake(out var spans))
             {
-                spans = new OtlpTrace.ScopeSpans
+                spans = new ScopeSpans
                 {
-                    Scope = new OtlpCommon.InstrumentationScope
+                    Scope = new InstrumentationScope
                     {
                         Name = name, // Name is enforced to not be null, but it can be empty.
                         Version = version ?? string.Empty, // NRE throw by proto
@@ -115,7 +116,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static OtlpTrace.Span ToOtlpSpan(this Activity activity)
+        internal static Span ToOtlpSpan(this Activity activity)
         {
             if (activity.IdFormat != ActivityIdFormat.W3C)
             {
@@ -139,12 +140,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             }
 
             var startTimeUnixNano = activity.StartTimeUtc.ToUnixTimeNanoseconds();
-            var otlpSpan = new OtlpTrace.Span
+            var otlpSpan = new Span
             {
                 Name = activity.DisplayName,
 
                 // There is an offset of 1 on the OTLP enum.
-                Kind = (OtlpTrace.Span.Types.SpanKind)(activity.Kind + 1),
+                Kind = (Span.Types.SpanKind)(activity.Kind + 1),
 
                 TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes),
                 SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
@@ -154,8 +155,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 EndTimeUnixNano = (ulong)(startTimeUnixNano + activity.Duration.ToNanoseconds()),
             };
 
-            TagEnumerationState otlpTags = default;
-            activity.EnumerateTags(ref otlpTags, SdkConfiguration.Instance.SpanAttributeCountLimit);
+            TagEnumerationState otlpTags = new()
+            {
+                Span = otlpSpan,
+            };
+            otlpTags.EnumerateTags(activity, SdkConfiguration.Instance.SpanAttributeCountLimit ?? int.MaxValue);
 
             if (activity.Kind == ActivityKind.Client || activity.Kind == ActivityKind.Producer)
             {
@@ -163,42 +167,28 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
                 if (peerServiceName != null && addAsTag)
                 {
-                    PooledList<OtlpCommon.KeyValue>.Add(
-                        ref otlpTags.Tags,
-                        new OtlpCommon.KeyValue
+                    otlpSpan.Attributes.Add(
+                        new KeyValue
                         {
                             Key = SemanticConventions.AttributePeerService,
-                            Value = new OtlpCommon.AnyValue { StringValue = peerServiceName },
+                            Value = new AnyValue { StringValue = peerServiceName },
                         });
                 }
             }
 
-            if (otlpTags.Created)
-            {
-                otlpSpan.Attributes.AddRange(otlpTags.Tags);
-                otlpTags.Tags.Return();
-            }
-
             otlpSpan.Status = activity.ToOtlpStatus(ref otlpTags);
 
-            EventEnumerationState otlpEvents = default;
-            activity.EnumerateEvents(ref otlpEvents, SdkConfiguration.Instance.SpanEventCountLimit);
-            if (otlpEvents.Created)
+            EventEnumerationState otlpEvents = new()
             {
-                otlpSpan.Events.AddRange(otlpEvents.Events);
-                otlpEvents.Events.Return();
-            }
+                Span = otlpSpan,
+            };
+            otlpEvents.EnumerateEvents(activity, SdkConfiguration.Instance.SpanEventCountLimit ?? int.MaxValue);
 
-            LinkEnumerationState otlpLinks = default;
-            activity.EnumerateLinks(ref otlpLinks, SdkConfiguration.Instance.SpanLinkCountLimit);
-            if (otlpLinks.Created)
+            LinkEnumerationState otlpLinks = new()
             {
-                otlpSpan.Links.AddRange(otlpLinks.Links);
-                otlpLinks.Links.Return();
-            }
-
-            // TODO: The drop counts should be set when necessary.
-            // Activity does not limit number of attributes, events, links, etc so drop counts are always zero.
+                Span = otlpSpan,
+            };
+            otlpLinks.EnumerateLinks(activity, SdkConfiguration.Instance.SpanLinkCountLimit ?? int.MaxValue);
 
             return otlpSpan;
         }
@@ -246,7 +236,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static OtlpTrace.Span.Types.Link ToOtlpLink(ActivityLink activityLink)
+        private static Span.Types.Link ToOtlpLink(in ActivityLink activityLink)
         {
             byte[] traceIdBytes = new byte[16];
             byte[] spanIdBytes = new byte[8];
@@ -254,51 +244,67 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             activityLink.Context.TraceId.CopyTo(traceIdBytes);
             activityLink.Context.SpanId.CopyTo(spanIdBytes);
 
-            var otlpLink = new OtlpTrace.Span.Types.Link
+            var otlpLink = new Span.Types.Link
             {
                 TraceId = UnsafeByteOperations.UnsafeWrap(traceIdBytes),
                 SpanId = UnsafeByteOperations.UnsafeWrap(spanIdBytes),
             };
 
-            TagEnumerationState otlpTags = default;
-            activityLink.EnumerateTags(ref otlpTags, SdkConfiguration.Instance.LinkAttributeCountLimit);
-            if (otlpTags.Created)
+            int maxTags = SdkConfiguration.Instance.LinkAttributeCountLimit ?? int.MaxValue;
+            foreach (ref readonly var tag in activityLink.EnumerateTagObjects())
             {
-                otlpLink.Attributes.AddRange(otlpTags.Tags);
-                otlpTags.Tags.Return();
+                if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, SdkConfiguration.Instance.AttributeValueLengthLimit))
+                {
+                    if (otlpLink.Attributes.Count < maxTags)
+                    {
+                        otlpLink.Attributes.Add(attribute);
+                    }
+                    else
+                    {
+                        otlpLink.DroppedAttributesCount++;
+                    }
+                }
             }
 
             return otlpLink;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static OtlpTrace.Span.Types.Event ToOtlpEvent(ActivityEvent activityEvent)
+        private static Span.Types.Event ToOtlpEvent(in ActivityEvent activityEvent)
         {
-            var otlpEvent = new OtlpTrace.Span.Types.Event
+            var otlpEvent = new Span.Types.Event
             {
                 Name = activityEvent.Name,
                 TimeUnixNano = (ulong)activityEvent.Timestamp.ToUnixTimeNanoseconds(),
             };
 
-            TagEnumerationState otlpTags = default;
-            activityEvent.EnumerateTags(ref otlpTags, SdkConfiguration.Instance.EventAttributeCountLimit);
-            if (otlpTags.Created)
+            int maxTags = SdkConfiguration.Instance.EventAttributeCountLimit ?? int.MaxValue;
+            foreach (ref readonly var tag in activityEvent.EnumerateTagObjects())
             {
-                otlpEvent.Attributes.AddRange(otlpTags.Tags);
-                otlpTags.Tags.Return();
+                if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, SdkConfiguration.Instance.AttributeValueLengthLimit))
+                {
+                    if (otlpEvent.Attributes.Count < maxTags)
+                    {
+                        otlpEvent.Attributes.Add(attribute);
+                    }
+                    else
+                    {
+                        otlpEvent.DroppedAttributesCount++;
+                    }
+                }
             }
 
             return otlpEvent;
         }
 
-        private static Action<RepeatedField<OtlpTrace.Span>, int> CreateRepeatedFieldOfSpanSetCountAction()
+        private static Action<RepeatedField<Span>, int> CreateRepeatedFieldOfSpanSetCountAction()
         {
-            FieldInfo repeatedFieldOfSpanCountField = typeof(RepeatedField<OtlpTrace.Span>).GetField("count", BindingFlags.NonPublic | BindingFlags.Instance);
+            FieldInfo repeatedFieldOfSpanCountField = typeof(RepeatedField<Span>).GetField("count", BindingFlags.NonPublic | BindingFlags.Instance);
 
             DynamicMethod dynamicMethod = new DynamicMethod(
                 "CreateSetCountAction",
                 null,
-                new[] { typeof(RepeatedField<OtlpTrace.Span>), typeof(int) },
+                new[] { typeof(RepeatedField<Span>), typeof(int) },
                 typeof(ActivityExtensions).Module,
                 skipVisibility: true);
 
@@ -309,14 +315,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             generator.Emit(OpCodes.Stfld, repeatedFieldOfSpanCountField);
             generator.Emit(OpCodes.Ret);
 
-            return (Action<RepeatedField<OtlpTrace.Span>, int>)dynamicMethod.CreateDelegate(typeof(Action<RepeatedField<OtlpTrace.Span>, int>));
+            return (Action<RepeatedField<Span>, int>)dynamicMethod.CreateDelegate(typeof(Action<RepeatedField<Span>, int>));
         }
 
-        private struct TagEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>, PeerServiceResolver.IPeerServiceState
+        private struct TagEnumerationState : PeerServiceResolver.IPeerServiceState
         {
-            public bool Created;
-
-            public PooledList<OtlpCommon.KeyValue> Tags;
+            public Span Span;
 
             public string StatusCode;
 
@@ -332,86 +336,89 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             public long Port { get; set; }
 
-            public bool ForEach(KeyValuePair<string, object> activityTag)
+            public void EnumerateTags(Activity activity, int maxTags)
             {
-                if (activityTag.Value == null)
+                foreach (ref readonly var tag in activity.EnumerateTagObjects())
                 {
-                    return true;
-                }
-
-                var key = activityTag.Key;
-
-                switch (key)
-                {
-                    case SpanAttributeConstants.StatusCodeKey:
-                        this.StatusCode = activityTag.Value as string;
-                        return true;
-                    case SpanAttributeConstants.StatusDescriptionKey:
-                        this.StatusDescription = activityTag.Value as string;
-                        return true;
-                }
-
-                if (!this.Created)
-                {
-                    this.Tags = PooledList<OtlpCommon.KeyValue>.Create();
-                    this.Created = true;
-                }
-
-                if (OtlpKeyValueTransformer.Instance.TryTransformTag(activityTag, out var attribute, SdkConfiguration.Instance.AttributeValueLengthLimit))
-                {
-                    PooledList<OtlpCommon.KeyValue>.Add(ref this.Tags, attribute);
-
-                    if (attribute.Value.ValueCase == OtlpCommon.AnyValue.ValueOneofCase.StringValue)
+                    if (tag.Value == null)
                     {
-                        PeerServiceResolver.InspectTag(ref this, key, attribute.Value.StringValue);
+                        continue;
                     }
-                    else if (attribute.Value.ValueCase == OtlpCommon.AnyValue.ValueOneofCase.IntValue)
+
+                    var key = tag.Key;
+
+                    switch (key)
                     {
-                        PeerServiceResolver.InspectTag(ref this, key, attribute.Value.IntValue);
+                        case SpanAttributeConstants.StatusCodeKey:
+                            this.StatusCode = tag.Value as string;
+                            continue;
+                        case SpanAttributeConstants.StatusDescriptionKey:
+                            this.StatusDescription = tag.Value as string;
+                            continue;
+                    }
+
+                    if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var attribute, SdkConfiguration.Instance.AttributeValueLengthLimit))
+                    {
+                        if (this.Span.Attributes.Count < maxTags)
+                        {
+                            this.Span.Attributes.Add(attribute);
+                        }
+                        else
+                        {
+                            this.Span.DroppedAttributesCount++;
+                        }
+
+                        if (attribute.Value.ValueCase == AnyValue.ValueOneofCase.StringValue)
+                        {
+                            // Note: tag.Value is used and not attribute.Value here because attribute.Value may be truncated
+                            PeerServiceResolver.InspectTag(ref this, key, tag.Value as string);
+                        }
+                        else if (attribute.Value.ValueCase == AnyValue.ValueOneofCase.IntValue)
+                        {
+                            PeerServiceResolver.InspectTag(ref this, key, attribute.Value.IntValue);
+                        }
                     }
                 }
-
-                return true;
             }
         }
 
-        private struct EventEnumerationState : IActivityEnumerator<ActivityEvent>
+        private struct EventEnumerationState
         {
-            public bool Created;
+            public Span Span;
 
-            public PooledList<OtlpTrace.Span.Types.Event> Events;
-
-            public bool ForEach(ActivityEvent activityEvent)
+            public void EnumerateEvents(Activity activity, int maxEvents)
             {
-                if (!this.Created)
+                foreach (ref readonly var @event in activity.EnumerateEvents())
                 {
-                    this.Events = PooledList<OtlpTrace.Span.Types.Event>.Create();
-                    this.Created = true;
+                    if (this.Span.Events.Count < maxEvents)
+                    {
+                        this.Span.Events.Add(ToOtlpEvent(in @event));
+                    }
+                    else
+                    {
+                        this.Span.DroppedEventsCount++;
+                    }
                 }
-
-                PooledList<OtlpTrace.Span.Types.Event>.Add(ref this.Events, ToOtlpEvent(activityEvent));
-
-                return true;
             }
         }
 
-        private struct LinkEnumerationState : IActivityEnumerator<ActivityLink>
+        private struct LinkEnumerationState
         {
-            public bool Created;
+            public Span Span;
 
-            public PooledList<OtlpTrace.Span.Types.Link> Links;
-
-            public bool ForEach(ActivityLink activityLink)
+            public void EnumerateLinks(Activity activity, int maxLinks)
             {
-                if (!this.Created)
+                foreach (ref readonly var link in activity.EnumerateLinks())
                 {
-                    this.Links = PooledList<OtlpTrace.Span.Types.Link>.Create();
-                    this.Created = true;
+                    if (this.Span.Links.Count < maxLinks)
+                    {
+                        this.Span.Links.Add(ToOtlpLink(in link));
+                    }
+                    else
+                    {
+                        this.Span.DroppedLinksCount++;
+                    }
                 }
-
-                PooledList<OtlpTrace.Span.Types.Link>.Add(ref this.Links, ToOtlpLink(activityLink));
-
-                return true;
             }
         }
     }
