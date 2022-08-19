@@ -31,7 +31,8 @@ namespace OpenTelemetry.Trace
     /// </summary>
     public abstract class TracerProviderBuilderBase : TracerProviderBuilder, IDeferredTracerProviderBuilder
     {
-        private readonly TracerProviderBuilderState? state;
+        internal readonly TracerProviderBuilderState? State;
+
         private readonly bool ownsServices;
         private IServiceCollection? services;
 
@@ -41,7 +42,7 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(state != null, "state was null");
 
-            this.state = state;
+            this.State = state;
         }
 
         // This ctor is for AddOpenTelemetryTracing scenario where the builder
@@ -101,9 +102,9 @@ namespace OpenTelemetry.Trace
         {
             Guard.ThrowIfNull(configure);
 
-            if (this.state != null)
+            if (this.State != null)
             {
-                configure(this.state.ServiceProvider, this);
+                configure(this.State.ServiceProvider, this);
             }
             else
             {
@@ -247,7 +248,7 @@ namespace OpenTelemetry.Trace
         /// <returns><see cref="TracerProvider"/>.</returns>
         protected TracerProvider Build()
         {
-            if (!this.ownsServices || this.state != null)
+            if (!this.ownsServices || this.State != null)
             {
                 throw new NotSupportedException("Build cannot be called directly on TracerProviderBuilder tied to external services.");
             }
@@ -314,9 +315,9 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(configure != null, "configure was null");
 
-            if (this.state != null)
+            if (this.State != null)
             {
-                configure!(this.state.ServiceProvider, this.state);
+                configure!(this.State.ServiceProvider, this.State);
             }
             else
             {

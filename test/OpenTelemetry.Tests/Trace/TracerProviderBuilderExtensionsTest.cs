@@ -125,6 +125,9 @@ namespace OpenTelemetry.Trace.Tests
                 {
                     var provider = builder.Build() as TracerProviderSdk;
 
+                    // Note: Build can only be called once
+                    Assert.Throws<NotSupportedException>(() => builder.Build());
+
                     Assert.NotNull(provider);
                     Assert.NotNull(provider.OwnedServiceProvider);
 
@@ -217,6 +220,32 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void AddProcessorUsingDependencyInjectionTest()
+        {
+            var builder = Sdk.CreateTracerProviderBuilder();
+
+            builder.AddProcessor<MyProcessor>();
+            builder.AddProcessor<MyProcessor>();
+
+            using var provider = builder.Build() as TracerProviderSdk;
+
+            Assert.NotNull(provider);
+
+            var processors = ((IServiceProvider)provider.OwnedServiceProvider).GetServices<MyProcessor>();
+
+            // Note: Two "Add" calls but it is a singleton so only a single registration is produced
+            Assert.Single(processors);
+
+            var processor = provider.Processor as CompositeProcessor<Activity>;
+
+            Assert.NotNull(processor);
+
+            // Note: Two "Add" calls due yield two processors added to provider, even though they are the same
+            Assert.True(processor.Head.Value is MyProcessor);
+            Assert.True(processor.Head.Next?.Value is MyProcessor);
+        }
+
+        [Fact]
         public void AddExporterTest()
         {
             var builder = Sdk.CreateTracerProviderBuilder();
@@ -301,7 +330,14 @@ namespace OpenTelemetry.Trace.Tests
             Func<TracerProviderSdk> buildFunc,
             Action<TracerProviderSdk> postAction)
         {
-            builder.SetSampler<MySampler>();
+            var baseBuilder = builder as TracerProviderBuilderBase;
+            Assert.Null(baseBuilder.State);
+            Assert.NotNull(baseBuilder.GetServices());
+
+            builder
+                .AddSource("TestSource")
+                .AddLegacySource("TestLegacySource")
+                .SetSampler<MySampler>();
 
             bool configureServicesCalled = false;
             builder.ConfigureServices(services =>
@@ -324,9 +360,22 @@ namespace OpenTelemetry.Trace.Tests
             {
                 configureBuilderInvocations++;
 
+                var baseBuilder = builder as TracerProviderBuilderBase;
+                Assert.NotNull(baseBuilder?.State);
+
+                builder
+                    .AddSource("TestSource2")
+                    .AddLegacySource("TestLegacySource2");
+
+                Assert.Contains(baseBuilder.State.Sources, s => s == "TestSource");
+                Assert.Contains(baseBuilder.State.Sources, s => s == "TestSource2");
+                Assert.Contains(baseBuilder.State.LegacyActivityOperationNames, s => s == "TestLegacySource");
+                Assert.Contains(baseBuilder.State.LegacyActivityOperationNames, s => s == "TestLegacySource2");
+
                 // Note: Services can't be configured at this stage
                 Assert.Throws<NotSupportedException>(
                     () => builder.ConfigureServices(services => services.TryAddSingleton<TracerProviderBuilderExtensionsTest>()));
+                Assert.Throws<NotSupportedException>(() => builder.GetServices());
 
                 builder.AddProcessor(sp.GetRequiredService<MyProcessor>());
 
