@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-alpha.2
+
+Released 2022-Aug-18
+
 * Updated to System.Diagnostics.DiagnosticSource preview version 7.0.0.
 
   With this update, applications targeting .NET 5 and lower will receive a
