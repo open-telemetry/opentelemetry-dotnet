@@ -15,10 +15,12 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using OpenTelemetry.Resources;
 using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
@@ -246,6 +248,44 @@ namespace OpenTelemetry.Trace.Tests
         }
 
         [Fact]
+        public void SetAndConfigureResourceTest()
+        {
+            var builder = Sdk.CreateTracerProviderBuilder();
+
+            int configureInvocations = 0;
+
+            builder.SetResourceBuilder(ResourceBuilder.CreateEmpty().AddService("Test"));
+            builder.ConfigureResource(builder =>
+            {
+                configureInvocations++;
+
+                Assert.Single(builder.Resources);
+
+                builder.AddAttributes(new Dictionary<string, object>() { ["key1"] = "value1" });
+
+                Assert.Equal(2, builder.Resources.Count);
+            });
+            builder.SetResourceBuilder(ResourceBuilder.CreateEmpty());
+            builder.ConfigureResource(builder =>
+            {
+                configureInvocations++;
+
+                Assert.Empty(builder.Resources);
+
+                builder.AddAttributes(new Dictionary<string, object>() { ["key2"] = "value2" });
+
+                Assert.Single(builder.Resources);
+            });
+
+            using var provider = builder.Build() as TracerProviderSdk;
+
+            Assert.Equal(2, configureInvocations);
+
+            Assert.Single(provider.Resource.Attributes);
+            Assert.Contains(provider.Resource.Attributes, kvp => kvp.Key == "key2" && (string)kvp.Value == "value2");
+        }
+
+        [Fact]
         public void AddExporterTest()
         {
             var builder = Sdk.CreateTracerProviderBuilder();
@@ -379,17 +419,22 @@ namespace OpenTelemetry.Trace.Tests
 
                 builder.AddProcessor(sp.GetRequiredService<MyProcessor>());
 
-                builder.ConfigureBuilder((_, _) =>
+                builder.ConfigureBuilder((_, b) =>
                 {
                     // Note: ConfigureBuilder calls can be nested, this is supported
                     configureBuilderInvocations++;
+
+                    b.Configure((_, _) =>
+                    {
+                        configureBuilderInvocations++;
+                    });
                 });
             });
 
             var provider = buildFunc();
 
             Assert.True(configureServicesCalled);
-            Assert.Equal(2, configureBuilderInvocations);
+            Assert.Equal(3, configureBuilderInvocations);
 
             Assert.True(provider.Sampler is MySampler);
             Assert.Single(provider.Instrumentations);
