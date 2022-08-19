@@ -39,10 +39,23 @@ namespace OpenTelemetry.Tests
             listener.EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
             try
             {
+                var guid = Guid.NewGuid();
+                EventSource.SetCurrentThreadActivityId(guid);
+
                 object[] eventArguments = GenerateEventArguments(eventMethod);
                 eventMethod.Invoke(eventSource, eventArguments);
 
-                EventWrittenEventArgs actualEvent = null;
+                EventWrittenEventArgs actualEvent = listener.Messages.FirstOrDefault(x => x.ActivityId == guid);
+
+                if (actualEvent == null)
+                {
+                    throw new Exception("Listener failed to collect event.");
+                }
+                else if (actualEvent.EventId == 0)
+                {
+                    // an error occurred
+                    throw new Exception(actualEvent.Message);
+                }
 
                 actualEvent = listener.Messages.First(q => q.EventName == eventMethod.Name);
 
