@@ -216,6 +216,86 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Equal(2, provider.Instrumentations.Count);
         }
 
+        [Fact]
+        public void AddExporterTest()
+        {
+            var builder = Sdk.CreateTracerProviderBuilder();
+
+            builder.AddExporter(ExportProcessorType.Simple, new MyExporter());
+            builder.AddExporter<MyExporter>(ExportProcessorType.Batch);
+
+            using var provider = builder.Build() as TracerProviderSdk;
+
+            Assert.NotNull(provider);
+
+            var processor = provider.Processor as CompositeProcessor<Activity>;
+
+            Assert.NotNull(processor);
+
+            var firstProcessor = processor.Head.Value;
+            var secondProcessor = processor.Head.Next?.Value;
+
+            Assert.True(firstProcessor is SimpleActivityExportProcessor simpleProcessor && simpleProcessor.Exporter is MyExporter);
+            Assert.True(secondProcessor is BatchActivityExportProcessor batchProcessor && batchProcessor.Exporter is MyExporter);
+        }
+
+        [Fact]
+        public void AddExporterWithOptionsTest()
+        {
+            int optionsInvocations = 0;
+
+            var builder = Sdk.CreateTracerProviderBuilder();
+
+            builder.ConfigureServices(services =>
+            {
+                services.Configure<BatchExportActivityProcessorOptions>(options =>
+                {
+                    // Note: This is testing options integration
+
+                    optionsInvocations++;
+
+                    options.MaxExportBatchSize = 18;
+                });
+            });
+
+            builder.AddExporter(
+                ExportProcessorType.Simple,
+                new MyExporter(),
+                options =>
+                {
+                    // Note: Options delegate isn't invoked for simple processor type
+                    Assert.True(false);
+                });
+            builder.AddExporter<MyExporter>(
+                ExportProcessorType.Batch,
+                options =>
+                {
+                    optionsInvocations++;
+
+                    Assert.Equal(18, options.BatchExportProcessorOptions.MaxExportBatchSize);
+
+                    options.BatchExportProcessorOptions.MaxExportBatchSize = 100;
+                });
+
+            using var provider = builder.Build() as TracerProviderSdk;
+
+            Assert.NotNull(provider);
+
+            Assert.Equal(2, optionsInvocations);
+
+            var processor = provider.Processor as CompositeProcessor<Activity>;
+
+            Assert.NotNull(processor);
+
+            var firstProcessor = processor.Head.Value;
+            var secondProcessor = processor.Head.Next?.Value;
+
+            Assert.True(firstProcessor is SimpleActivityExportProcessor simpleProcessor && simpleProcessor.Exporter is MyExporter);
+            Assert.True(secondProcessor is BatchActivityExportProcessor batchProcessor
+                && batchProcessor.Exporter is MyExporter
+                && batchProcessor.MaxExportBatchSize == 100);
+        }
+
         private static void RunBuilderServiceLifecycleTest(
             TracerProviderBuilder builder,
             Func<TracerProviderSdk> buildFunc,
@@ -290,6 +370,14 @@ namespace OpenTelemetry.Trace.Tests
 
         private sealed class MyProcessor : BaseProcessor<Activity>
         {
+        }
+
+        private sealed class MyExporter : BaseExporter<Activity>
+        {
+            public override ExportResult Export(in Batch<Activity> batch)
+            {
+                return ExportResult.Success;
+            }
         }
     }
 }

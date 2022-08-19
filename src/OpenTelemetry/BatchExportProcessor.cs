@@ -36,10 +36,11 @@ namespace OpenTelemetry
         internal const int DefaultExporterTimeoutMilliseconds = 30000;
         internal const int DefaultMaxExportBatchSize = 512;
 
+        internal readonly int MaxExportBatchSize;
+
         private readonly CircularBuffer<T> circularBuffer;
         private readonly int scheduledDelayMilliseconds;
         private readonly int exporterTimeoutMilliseconds;
-        private readonly int maxExportBatchSize;
         private readonly Thread exporterThread;
         private readonly AutoResetEvent exportTrigger = new(false);
         private readonly ManualResetEvent dataExportedNotification = new(false);
@@ -72,7 +73,7 @@ namespace OpenTelemetry
             this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
             this.exporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
-            this.maxExportBatchSize = maxExportBatchSize;
+            this.MaxExportBatchSize = maxExportBatchSize;
             this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
             {
                 IsBackground = true,
@@ -101,7 +102,7 @@ namespace OpenTelemetry
         {
             if (this.circularBuffer.TryAdd(data, maxSpinCount: 50000))
             {
-                if (this.circularBuffer.Count >= this.maxExportBatchSize)
+                if (this.circularBuffer.Count >= this.MaxExportBatchSize)
                 {
                     try
                     {
@@ -264,7 +265,7 @@ namespace OpenTelemetry
             while (true)
             {
                 // only wait when the queue doesn't have enough items, otherwise keep busy and send data continuously
-                if (this.circularBuffer.Count < this.maxExportBatchSize)
+                if (this.circularBuffer.Count < this.MaxExportBatchSize)
                 {
                     try
                     {
@@ -279,7 +280,7 @@ namespace OpenTelemetry
 
                 if (this.circularBuffer.Count > 0)
                 {
-                    using (var batch = new Batch<T>(this.circularBuffer, this.maxExportBatchSize))
+                    using (var batch = new Batch<T>(this.circularBuffer, this.MaxExportBatchSize))
                     {
                         this.exporter.Export(batch);
                     }
