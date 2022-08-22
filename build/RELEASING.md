@@ -89,7 +89,7 @@ Only for Maintainers.
  7. Open [Pack and publish to MyGet
     workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
     and manually trigger a build. At the end of this, MyGet will have the
-    packages. The package name will be the tag name used in step 5.
+    packages. The package name will be the tag name used in Step 5.
 
  8. Validate using MyGet packages. Basic sanity checks :)
 
@@ -100,11 +100,11 @@ Only for Maintainers.
     core packages, only copy them over.
 
 11. Download latest [nuget.exe](https://www.nuget.org/downloads) into the same
-    folder from step 9.
+    folder from Step 9.
 
 12. Obtain the API key from nuget.org (Only maintainers have access)
 
-13. Run the following commands from PowerShell from local folder used in step 9:
+13. Run the following commands from PowerShell from local folder used in Step 9:
 
     ```powershell
     .\nuget.exe setApiKey <actual api key>
@@ -115,10 +115,10 @@ Only for Maintainers.
 14. Packages would be available in nuget.org in few minutes. Validate that the
     package is uploaded.
 
-15. Delete the API key generated in step 11.
+15. Delete the API key generated in Step 11.
 
-16. Make the Github release with tag from Step5 and contents of
-    combinedchangelog from Step2.
+16. Make the Github release with tag from Step 5 and contents of
+    combinedchangelog from Step 2.
 
     TODO: Add tagging for Metrics release. TODO: Separate version for
     instrumention/hosting/OTshim package.
