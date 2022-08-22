@@ -670,6 +670,43 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 #endif
 
+        [Fact(Skip ="Pending Changes https://github.com/open-telemetry/opentelemetry-dotnet/issues/3495")]
+        public async Task DiagnosticSourceCustomCallbacksAreReceivedOnlyForSubscribedEvents()
+        {
+            int numberOfCustomCallbacks = 0;
+            string expectedCustomEventName = "Microsoft.AspNetCore.Mvc.BeforeAction";
+            string actualCustomEventName = null;
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
+                        new TestHttpInListener(new AspNetCoreInstrumentationOptions())
+                        {
+                            OnCustomCallback = (name, activity, payload) =>
+                            {
+                                actualCustomEventName = name;
+                                numberOfCustomCallbacks++;
+                            },
+                        }))
+                    .Build();
+            }
+
+            // Arrange
+            using (var client = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices))
+                .CreateClient())
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
+
+                // Act
+                using var response = await client.SendAsync(request);
+            }
+
+            Assert.Equal(1, numberOfCustomCallbacks);
+            Assert.Equal(expectedCustomEventName, actualCustomEventName);
+        }
+
         public void Dispose()
         {
             this.tracerProvider?.Dispose();
@@ -767,6 +804,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             public Action<Activity, object> OnStopActivityCallback;
 
+            public Action<string, Activity, object> OnCustomCallback;
+
+            public Action<Activity, object> OnExceptionCallback;
+
             public TestHttpInListener(AspNetCoreInstrumentationOptions options)
                 : base(options)
             {
@@ -784,6 +825,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 base.OnStopActivity(activity, payload);
 
                 this.OnStopActivityCallback?.Invoke(activity, payload);
+            }
+
+            public override void OnCustom(string name, Activity activity, object payload)
+            {
+                base.OnCustom(name, activity, payload);
+
+                this.OnCustomCallback?.Invoke(name, activity, payload);
+            }
+
+            public override void OnException(Activity activity, object payload)
+            {
+                base.OnException(activity, payload);
+
+                this.OnExceptionCallback?.Invoke(activity, payload);
             }
         }
 
