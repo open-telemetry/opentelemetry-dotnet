@@ -58,7 +58,7 @@ Only for Maintainers.
         }
     ```
 
- 4. Normalize PublicApi files (Stable Release Only) Run the PowerShell script
+ 4. Normalize PublicApi files (Stable Release Only): Run the PowerShell script
     `.\build\finalize-publicapi.ps1`. This will merge the contents of
     Unshipped.txt into the Shipped.txt.
 
