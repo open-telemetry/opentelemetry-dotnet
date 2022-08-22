@@ -806,8 +806,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             public Action<string, Activity, object> OnCustomCallback;
 
-            public Action<Activity, object> OnExceptionCallback;
-
             public TestHttpInListener(AspNetCoreInstrumentationOptions options)
                 : base(options)
             {
@@ -832,13 +830,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 base.OnCustom(name, activity, payload);
 
                 this.OnCustomCallback?.Invoke(name, activity, payload);
-            }
-
-            public override void OnException(Activity activity, object payload)
-            {
-                base.OnException(activity, payload);
-
-                this.OnExceptionCallback?.Invoke(activity, payload);
             }
         }
 
