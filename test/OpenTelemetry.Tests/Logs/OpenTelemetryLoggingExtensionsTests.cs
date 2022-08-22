@@ -16,7 +16,6 @@
 
 #nullable enable
 
-using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -121,19 +120,35 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     }
 
     [Fact]
-    public void LoggingBuilderAddOpenTelemetryMultipleBuildersThrows()
+    public void LoggingBuilderAddOpenTelemetryMultipleBuildersTest()
     {
         var serviceCollection = new ServiceCollection();
 
+        OpenTelemetryLoggerProvider? provider = null;
+
         serviceCollection.AddLogging(configure =>
         {
-            configure.AddOpenTelemetry(optiosn => { });
-            configure.AddOpenTelemetry(optiosn => { });
+            configure.AddOpenTelemetry(options
+                => options.ConfigureResource(
+                    r => r.AddAttributes(new Dictionary<string, object>() { ["key1"] = "value1" })));
+            configure.AddOpenTelemetry(options
+                => options.ConfigureResource(
+                    r => r.AddAttributes(new Dictionary<string, object>() { ["key2"] = "value2" })));
+
+            configure.AddOpenTelemetry(options
+                => options.ConfigureProvider((sp, p) => provider = p));
         });
 
         using ServiceProvider serviceProvider = serviceCollection.BuildServiceProvider();
 
-        Assert.Throws<NotSupportedException>(() => serviceProvider.GetService<ILoggerFactory>());
+        var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
+
+        Assert.NotNull(loggerFactory);
+
+        Assert.NotNull(provider);
+
+        Assert.Contains(provider!.Resource.Attributes, kvp => kvp.Key == "key1" && (string)kvp.Value == "value1");
+        Assert.Contains(provider!.Resource.Attributes, kvp => kvp.Key == "key2" && (string)kvp.Value == "value2");
     }
 
     [Fact]
@@ -271,7 +286,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         {
             var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
 
-            customProcessor = serviceProvider.GetRequiredService<BaseProcessor<LogRecord>>() as CustomProcessor;
+            customProcessor = serviceProvider.GetRequiredService<CustomProcessor>();
 
             Assert.NotNull(customProcessor);
 
@@ -317,28 +332,6 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
 
         Assert.NotNull(customProcessor?.TestClass);
-    }
-
-    [Fact]
-    public void LoggingBuilderAddOpenTelemetryExternalRegistrationTest()
-    {
-        CustomProcessor.InstanceCount = 0;
-
-        var services = new ServiceCollection();
-
-        services.AddSingleton<BaseProcessor<LogRecord>>(sp => new CustomProcessor());
-        services.AddSingleton<BaseProcessor<LogRecord>>(sp => new CustomProcessor());
-
-        services.AddLogging(configure =>
-        {
-            configure.AddOpenTelemetry();
-        });
-
-        using var serviceProvider = services.BuildServiceProvider();
-
-        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-
-        Assert.Equal(2, CustomProcessor.InstanceCount);
     }
 
     [Fact]
@@ -478,21 +471,83 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     }
 
     [Fact]
-    public void LoggingBuilderAddOpenTelemetryDetachedConfigurationTest()
+    public void LoggingBuilderAddOpenTelemetryAddExporterTest()
     {
-        int configurationInvocations = 0;
+        var builder = Sdk.CreateLoggerProviderBuilder();
 
-        var services = new ServiceCollection();
+        builder.AddExporter(ExportProcessorType.Simple, new CustomExporter());
+        builder.AddExporter<CustomExporter>(ExportProcessorType.Batch);
 
-        services.AddLogging(configure => configure.AddOpenTelemetry());
+        using var provider = builder.Build();
 
-        services.AddSingleton<Action<IServiceProvider, OpenTelemetryLoggerProvider>>((sp, provider) => configurationInvocations++);
+        Assert.NotNull(provider);
 
-        using var serviceProvider = services.BuildServiceProvider();
+        var processor = provider.Processor as CompositeProcessor<LogRecord>;
 
-        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+        Assert.NotNull(processor);
 
-        Assert.Equal(1, configurationInvocations);
+        var firstProcessor = processor!.Head.Value;
+        var secondProcessor = processor.Head.Next?.Value;
+
+        Assert.True(firstProcessor is SimpleLogRecordExportProcessor simpleProcessor && simpleProcessor.Exporter is CustomExporter);
+        Assert.True(secondProcessor is BatchLogRecordExportProcessor batchProcessor && batchProcessor.Exporter is CustomExporter);
+    }
+
+    [Fact]
+    public void LoggingBuilderAddOpenTelemetryAddExporterWithOptionsTest()
+    {
+        int optionsInvocations = 0;
+
+        var builder = Sdk.CreateLoggerProviderBuilder();
+
+        builder.ConfigureServices(services =>
+        {
+            services.Configure<BatchExportLogRecordProcessorOptions>(options =>
+            {
+                // Note: This is testing options integration
+
+                optionsInvocations++;
+
+                options.MaxExportBatchSize = 18;
+            });
+        });
+
+        builder.AddExporter(
+            ExportProcessorType.Simple,
+            new CustomExporter(),
+            options =>
+            {
+                // Note: Options delegate isn't invoked for simple processor type
+                Assert.True(false);
+            });
+        builder.AddExporter<CustomExporter>(
+            ExportProcessorType.Batch,
+            options =>
+            {
+                optionsInvocations++;
+
+                Assert.Equal(18, options.BatchExportProcessorOptions.MaxExportBatchSize);
+
+                options.BatchExportProcessorOptions.MaxExportBatchSize = 100;
+            });
+
+        using var provider = builder.Build();
+
+        Assert.NotNull(provider);
+
+        Assert.Equal(2, optionsInvocations);
+
+        var processor = provider.Processor as CompositeProcessor<LogRecord>;
+
+        Assert.NotNull(processor);
+
+        var firstProcessor = processor!.Head.Value;
+        var secondProcessor = processor.Head.Next?.Value;
+
+        Assert.True(firstProcessor is SimpleLogRecordExportProcessor simpleProcessor && simpleProcessor.Exporter is CustomExporter);
+        Assert.True(secondProcessor is BatchLogRecordExportProcessor batchProcessor
+            && batchProcessor.Exporter is CustomExporter
+            && batchProcessor.MaxExportBatchSize == 100);
     }
 
     private sealed class WrappedOpenTelemetryLoggerProvider : OpenTelemetryLoggerProvider
@@ -528,6 +583,14 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             this.Disposed = true;
 
             base.Dispose(disposing);
+        }
+    }
+
+    private sealed class CustomExporter : BaseExporter<LogRecord>
+    {
+        public override ExportResult Export(in Batch<LogRecord> batch)
+        {
+            return ExportResult.Success;
         }
     }
 
