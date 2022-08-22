@@ -66,7 +66,7 @@ namespace OpenTelemetry.Exporter
                         // Special casing {OriginalFormat}
                         // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
                         // for explanation.
-                        var valueToTransform = logRecord.StateValues[i].Key.Equals("{OriginalValue}")
+                        var valueToTransform = logRecord.StateValues[i].Key.Equals("{OriginalFormat}")
                             ? new KeyValuePair<string, object>("OriginalFormat (a.k.a Body)", logRecord.StateValues[i].Value)
                             : logRecord.StateValues[i];
 

@@ -22,9 +22,9 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 #if NETSTANDARD2_1 || NET6_0_OR_GREATER
 using Grpc.Net.Client;
 #endif
-using LogOtlpCollector = Opentelemetry.Proto.Collector.Logs.V1;
-using MetricsOtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
-using TraceOtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
+using LogOtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
+using MetricsOtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
+using TraceOtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter
 {

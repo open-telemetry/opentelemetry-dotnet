@@ -14,9 +14,12 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -51,7 +54,22 @@ namespace OpenTelemetry
         /// <param name="textMapPropagator">TextMapPropagator to be set as default.</param>
         public static void SetDefaultTextMapPropagator(TextMapPropagator textMapPropagator)
         {
+            Guard.ThrowIfNull(textMapPropagator);
+
             Propagators.DefaultTextMapPropagator = textMapPropagator;
+        }
+
+        /// <summary>
+        /// Creates a <see cref="OpenTelemetryLoggerOptions"/> which is used to build
+        /// an <see cref="OpenTelemetryLoggerProvider"/>. In a typical application, a single
+        /// <see cref="OpenTelemetryLoggerProvider"/> is created at application startup and disposed
+        /// at application shutdown. It is important to ensure that the provider is not
+        /// disposed too early.
+        /// </summary>
+        /// <returns><see cref="OpenTelemetryLoggerOptions"/> instance, which is used to build a <see cref="OpenTelemetryLoggerProvider"/>.</returns>
+        public static OpenTelemetryLoggerOptions CreateLoggerProviderBuilder()
+        {
+            return new OpenTelemetryLoggerOptionsSdk();
         }
 
         /// <summary>

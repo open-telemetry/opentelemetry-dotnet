@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.4.0-alpha.2
+
+Released 2022-Aug-18
+
+## 1.4.0-alpha.1
+
+Released 2022-Aug-02
+
 ## 1.3.0
 
 Released 2022-Jun-03

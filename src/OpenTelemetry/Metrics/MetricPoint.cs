@@ -264,7 +264,9 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.HistogramSumCount:
                     {
                         this.Update((double)number);
-                        break;
+
+                        // At this point MetricPointStatus is already set to CollectPending so we can simply return.
+                        return;
                     }
             }
 

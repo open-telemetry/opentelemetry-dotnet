@@ -18,9 +18,10 @@ using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter.Prometheus
+namespace OpenTelemetry.Exporter
 {
     internal sealed class PrometheusHttpListener : IDisposable
     {
@@ -39,14 +40,12 @@ namespace OpenTelemetry.Exporter.Prometheus
         public PrometheusHttpListener(PrometheusExporter exporter, PrometheusHttpListenerOptions options)
         {
             Guard.ThrowIfNull(exporter);
-
-            if ((options.Prefixes?.Count ?? 0) <= 0)
-            {
-                throw new ArgumentException("No Prefixes were specified on PrometheusHttpListenerOptions.");
-            }
+            Guard.ThrowIfNull(options);
 
             this.exporter = exporter;
-            string path = this.exporter.ScrapeEndpointPath;
+
+            string path = options.ScrapeEndpointPath;
+
             if (!path.StartsWith("/"))
             {
                 path = $"/{path}";
@@ -57,9 +56,9 @@ namespace OpenTelemetry.Exporter.Prometheus
                 path = $"{path}/";
             }
 
-            foreach (string prefix in options.Prefixes)
+            foreach (string uriPrefix in options.UriPrefixes)
             {
-                this.httpListener.Prefixes.Add($"{prefix.TrimEnd('/')}{path}");
+                this.httpListener.Prefixes.Add($"{uriPrefix.TrimEnd('/')}{path}");
             }
         }
 

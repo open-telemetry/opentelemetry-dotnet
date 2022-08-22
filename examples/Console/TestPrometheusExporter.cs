@@ -52,7 +52,7 @@ internal class TestPrometheusExporter
             .AddMeter(MyMeter.Name)
             .AddMeter(MyMeter2.Name)
             .AddPrometheusHttpListener(
-                options => options.Prefixes = new string[] { $"http://localhost:{port}/" })
+                options => options.UriPrefixes = new string[] { $"http://localhost:{port}/" })
             .Build();
 
         var process = Process.GetCurrentProcess();

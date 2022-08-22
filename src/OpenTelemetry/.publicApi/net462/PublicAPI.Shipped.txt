@@ -94,9 +94,9 @@ readonly OpenTelemetry.BaseExportProcessor<T>.exporter -> OpenTelemetry.BaseExpo
 ~static OpenTelemetry.Resources.ResourceBuilderExtensions.AddEnvironmentVariableDetector(this OpenTelemetry.Resources.ResourceBuilder resourceBuilder) -> OpenTelemetry.Resources.ResourceBuilder
 ~static OpenTelemetry.Resources.ResourceBuilderExtensions.AddService(this OpenTelemetry.Resources.ResourceBuilder resourceBuilder, string serviceName, string serviceNamespace = null, string serviceVersion = null, bool autoGenerateServiceInstanceId = true, string serviceInstanceId = null) -> OpenTelemetry.Resources.ResourceBuilder
 ~static OpenTelemetry.Resources.ResourceBuilderExtensions.AddTelemetrySdk(this OpenTelemetry.Resources.ResourceBuilder resourceBuilder) -> OpenTelemetry.Resources.ResourceBuilder
-~static OpenTelemetry.Sdk.CreateMeterProviderBuilder() -> OpenTelemetry.Metrics.MeterProviderBuilder
-~static OpenTelemetry.Sdk.CreateTracerProviderBuilder() -> OpenTelemetry.Trace.TracerProviderBuilder
-~static OpenTelemetry.Sdk.SetDefaultTextMapPropagator(OpenTelemetry.Context.Propagation.TextMapPropagator textMapPropagator) -> void
+static OpenTelemetry.Sdk.CreateMeterProviderBuilder() -> OpenTelemetry.Metrics.MeterProviderBuilder!
+static OpenTelemetry.Sdk.CreateTracerProviderBuilder() -> OpenTelemetry.Trace.TracerProviderBuilder!
+static OpenTelemetry.Sdk.SetDefaultTextMapPropagator(OpenTelemetry.Context.Propagation.TextMapPropagator! textMapPropagator) -> void
 ~static OpenTelemetry.SuppressInstrumentationScope.Begin(bool value = true) -> System.IDisposable
 ~static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, OpenTelemetry.BaseProcessor<System.Diagnostics.Activity> processor) -> OpenTelemetry.Trace.TracerProviderBuilder
 ~static OpenTelemetry.Trace.TracerProviderBuilderExtensions.Build(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProvider
