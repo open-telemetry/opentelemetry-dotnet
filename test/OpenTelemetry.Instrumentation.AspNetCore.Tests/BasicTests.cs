@@ -670,7 +670,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 #endif
 
-        [Fact(Skip ="Pending Changes https://github.com/open-telemetry/opentelemetry-dotnet/issues/3495")]
+        [Fact(Skip = "Pending Changes https://github.com/open-telemetry/opentelemetry-dotnet/issues/3495")]
         public async Task DiagnosticSourceCustomCallbacksAreReceivedOnlyForSubscribedEvents()
         {
             int numberOfCustomCallbacks = 0;
