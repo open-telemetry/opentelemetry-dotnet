@@ -38,7 +38,7 @@ Only for Maintainers.
         }
     ```
 
-    This generates combined changelog to be used in Github release. Once
+    This generates combined changelog to be used in GitHub release. Once
     contents of combined changelog is saved somewhere, delete the file.
 
  3. Run the following PowerShell script from the root of the repo. This updates
