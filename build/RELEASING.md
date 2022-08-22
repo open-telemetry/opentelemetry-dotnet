@@ -2,7 +2,7 @@
 
 Only for Maintainers.
 
- 1. Decide the tag name (version name) to be released. eg: 1.4.0-beta.1,
+ 1. Decide the tag name (version name) to be released. e.g. 1.4.0-beta.1,
     1.0.0-rc9.7 etc.
 
  2. Run the following PowerShell from the root of the repo to get combined
@@ -38,7 +38,7 @@ Only for Maintainers.
         }
     ```
 
-    This generates combined changelog to be used in Github release. Once
+    This generates combined changelog to be used in GitHub release. Once
     contents of combined changelog is saved somewhere, delete the file.
 
  3. Run the following PowerShell script from the root of the repo. This updates
