@@ -83,7 +83,7 @@ namespace OpenTelemetry.Trace.Tests
             Assert.True(link1.Equals(link3));
         }
 
-        [Fact]
+        [Fact(Skip = "ActivityLink.Equals is broken in DS7 preview: https://github.com/dotnet/runtime/issues/74026")]
         public void Equality_WithAttributes()
         {
             var link1 = new Link(this.spanContext, this.tags);

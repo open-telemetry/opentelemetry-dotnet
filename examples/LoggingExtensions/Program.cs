@@ -16,19 +16,16 @@
 
 using System.Diagnostics.Tracing;
 using Examples.LoggingExtensions;
+using OpenTelemetry;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using Serilog;
 
-var resourceBuilder = ResourceBuilder.CreateDefault().AddService("Examples.LoggingExtensions");
-
-var openTelemetryLoggerProvider = new OpenTelemetryLoggerProvider(options =>
-{
-    options.IncludeFormattedMessage = true;
-    options
-        .SetResourceBuilder(resourceBuilder)
-        .AddConsoleExporter();
-});
+var openTelemetryLoggerProvider = Sdk.CreateLoggerProviderBuilder()
+    .SetIncludeFormattedMessage(true)
+    .ConfigureResource(builder => builder.AddService("Examples.LoggingExtensions"))
+    .AddConsoleExporter()
+    .Build();
 
 // Creates an OpenTelemetryEventSourceLogEmitter for routing ExampleEventSource
 // events into logs

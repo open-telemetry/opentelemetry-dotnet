@@ -31,7 +31,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Gets the default Tracer.
+        /// Gets the default <see cref="TracerProvider"/>.
         /// </summary>
         public static TracerProvider Default { get; } = new TracerProvider();
 

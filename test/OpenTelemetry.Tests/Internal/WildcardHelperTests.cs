@@ -37,5 +37,15 @@ namespace OpenTelemetry.Internal.Tests
 
             Assert.True(result == isMatch);
         }
+
+        [Theory]
+        [InlineData(null, false)]
+        [InlineData("a", false)]
+        [InlineData("a.*", true)]
+        [InlineData("a.?", true)]
+        public void Verify_ContainsWildcard(string pattern, bool expected)
+        {
+            Assert.Equal(expected, WildcardHelper.ContainsWildcard(pattern));
+        }
     }
 }
