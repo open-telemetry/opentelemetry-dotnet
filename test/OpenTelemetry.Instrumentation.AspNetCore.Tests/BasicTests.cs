@@ -32,6 +32,7 @@ using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using TestApp.AspNetCore;
+using TestApp.AspNetCore.Filters;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
@@ -754,9 +755,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             Assert.Single(activity.Events);
             Assert.Equal("System.Exception", activity.Events.First().Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
             Assert.Equal(exMessage, activity.Events.First().Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionMessage).Value);
-
-            var status = activity.GetStatus();
-            Assert.Equal(status, Status.Error.WithDescription(exMessage));
 
             ValidateAspNetCoreActivity(activity, "/api/error");
         }
