@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.0-alpha.2
+
+Released 2022-Aug-18
+
 * Split up Prometheus projects based on its hosting mechanism,
   HttpListener and AspNetCore, into their own projects
   and assemblies.
