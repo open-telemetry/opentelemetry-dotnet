@@ -372,7 +372,6 @@ namespace OpenTelemetry.Trace.Tests
         {
             var baseBuilder = builder as TracerProviderBuilderBase;
             Assert.Null(baseBuilder.State);
-            Assert.NotNull(baseBuilder.GetServices());
 
             builder
                 .AddSource("TestSource")
@@ -415,7 +414,6 @@ namespace OpenTelemetry.Trace.Tests
                 // Note: Services can't be configured at this stage
                 Assert.Throws<NotSupportedException>(
                     () => builder.ConfigureServices(services => services.TryAddSingleton<TracerProviderBuilderExtensionsTest>()));
-                Assert.Throws<NotSupportedException>(() => builder.GetServices());
 
                 builder.AddProcessor(sp.GetRequiredService<MyProcessor>());
 
@@ -424,7 +422,7 @@ namespace OpenTelemetry.Trace.Tests
                     // Note: ConfigureBuilder calls can be nested, this is supported
                     configureBuilderInvocations++;
 
-                    b.Configure((_, _) =>
+                    b.ConfigureBuilder((_, _) =>
                     {
                         configureBuilderInvocations++;
                     });
