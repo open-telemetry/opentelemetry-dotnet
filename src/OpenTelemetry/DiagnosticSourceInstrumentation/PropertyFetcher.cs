@@ -76,6 +76,12 @@ namespace OpenTelemetry.Instrumentation
                 this.innerFetcher = PropertyFetch.Create(obj.GetType().GetTypeInfo(), this.propertyName);
             }
 
+            if (this.innerFetcher == null)
+            {
+                value = default;
+                return false;
+            }
+
             return this.innerFetcher.TryFetch(obj, out value);
         }
 
@@ -96,8 +102,8 @@ namespace OpenTelemetry.Instrumentation
                 {
                     if (propertyInfo == null || !typeof(T).IsAssignableFrom(propertyInfo.PropertyType))
                     {
-                        // returns null on any fetch.
-                        return new PropertyFetch();
+                        // returns null and wait for a valid payload to arrive.
+                        return null;
                     }
 
                     var typedPropertyFetcher = typeof(TypedPropertyFetch<,>);
@@ -136,6 +142,12 @@ namespace OpenTelemetry.Instrumentation
                     }
 
                     this.innerFetcher ??= Create(obj.GetType().GetTypeInfo(), this.propertyName);
+
+                    if (this.innerFetcher == null)
+                    {
+                        value = default;
+                        return false;
+                    }
 
                     return this.innerFetcher.TryFetch(obj, out value);
                 }
