@@ -51,9 +51,19 @@ namespace OpenTelemetry.Metrics
         LongSum = 0x1a,
 
         /// <summary>
+        /// Non-monotonic Sum of Long type.
+        /// </summary>
+        LongSumNonMonotonic = 0x1b,
+
+        /// <summary>
         /// Sum of Double type.
         /// </summary>
         DoubleSum = 0x1d,
+
+        /// <summary>
+        /// Non-monotonic Sum of Double type.
+        /// </summary>
+        DoubleSumNonMonotonic = 0x1e,
 
         /// <summary>
         /// Gauge of Long type.
