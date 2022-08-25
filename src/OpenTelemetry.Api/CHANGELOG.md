@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Added support for the .NET7 version of the
+  `System.Diagnostics.DiagnosticSource` package
+  ([#3605](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3605))
+
 ## 1.3.0
 
 Released 2022-Jun-03
