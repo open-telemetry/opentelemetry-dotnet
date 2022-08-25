@@ -36,7 +36,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         public override void OnStopActivity(Activity activity, object payload)
         {
-            HttpContext context = payload as DefaultHttpContext;
+            HttpContext context = payload as HttpContext;
             if (context == null)
             {
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnStopActivity));

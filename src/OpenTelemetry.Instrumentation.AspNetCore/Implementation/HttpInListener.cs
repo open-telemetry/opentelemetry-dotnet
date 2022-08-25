@@ -72,7 +72,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
-            HttpContext context = payload as DefaultHttpContext;
+            HttpContext context = payload as HttpContext;
             if (context == null)
             {
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
@@ -183,7 +183,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                HttpContext context = payload as DefaultHttpContext;
+                HttpContext context = payload as HttpContext;
                 if (context == null)
                 {
                     AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
