@@ -2,8 +2,25 @@
 
 ## Unreleased
 
-* Removes .NET Framework 4.6.1. The minimum .NET Framework
-  version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
+## 1.0.0-rc9.6
+
+Released 2022-Aug-18
+
+## 1.0.0-rc9.5
+
+Released 2022-Aug-02
+
+* Fix: Handling of OpenTracing spans when used in conjunction
+  with legacy "Microsoft.AspNetCore.Hosting.HttpRequestIn" activities.
+  ([#3509](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3506))
+
+## 1.0.0-rc9.4
+
+Released 2022-Jun-03
+
+* Removes .NET Framework 4.6.1. The minimum .NET Framework version supported is
+  .NET 4.6.2.
+  ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
 
 ## 1.0.0-rc9.3
 
@@ -17,7 +34,7 @@ Released 2022-Apr-12
 
 Released 2022-Mar-30
 
-## 1.0.0-rc10
+## 1.0.0-rc10 (broken. use 1.0.0-rc9.1 and newer)
 
 Released 2022-Mar-04
 
@@ -30,7 +47,8 @@ Released 2022-Feb-02
 Released 2021-Oct-08
 
 * Removes .NET Framework 4.5.2 support. The minimum .NET Framework version
-  supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
+  supported is .NET 4.6.1.
+  ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
 
 ## 1.0.0-rc7
 
@@ -64,9 +82,9 @@ Released 2020-Nov-17
 
 Released 2020-Nov-5
 
-* Renamed TextMapPropagator to TraceContextPropagator, CompositePropagator
-  to CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator
-  and changed from interface to abstract class.
+* Renamed TextMapPropagator to TraceContextPropagator, CompositePropagator to
+  CompositeTextMapPropagator. IPropagator is renamed to TextMapPropagator and
+  changed from interface to abstract class.
   ([#1427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1427))
 
 ## 0.7.0-beta.1

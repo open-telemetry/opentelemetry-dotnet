@@ -142,6 +142,9 @@ dotnet_diagnostic.IDE0002.severity = warning
 # IDE0005: Remove unnecessary import
 dotnet_diagnostic.IDE0005.severity = warning
 
+# RS0041: Public members should not use oblivious types
+dotnet_diagnostic.RS0041.severity = suggestion
+
 [obj/**.cs]
 generated_code = true
 

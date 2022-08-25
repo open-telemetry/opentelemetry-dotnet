@@ -71,7 +71,7 @@ namespace Examples.Console
             // and use OTLP exporter.
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
-                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("otlp-test"))
+                    .ConfigureResource(r => r.AddService("otlp-test"))
                     .AddOtlpExporter(opt =>
                     {
                         // If endpoint was not specified, the proper one will be selected according to the protocol.

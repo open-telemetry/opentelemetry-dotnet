@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Threading;
 using OpenTelemetry.Internal;
@@ -26,12 +28,21 @@ namespace OpenTelemetry
     /// <typeparam name="T">The type of object to be processed.</typeparam>
     public abstract class BaseProcessor<T> : IDisposable
     {
+        private readonly string typeName;
         private int shutdownCount;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BaseProcessor{T}"/> class.
+        /// </summary>
+        public BaseProcessor()
+        {
+            this.typeName = this.GetType().Name;
+        }
 
         /// <summary>
         /// Gets the parent <see cref="BaseProvider"/>.
         /// </summary>
-        public BaseProvider ParentProvider { get; private set; }
+        public BaseProvider? ParentProvider { get; private set; }
 
         /// <summary>
         /// Called synchronously when a telemetry object is started.
@@ -86,7 +97,11 @@ namespace OpenTelemetry
 
             try
             {
-                return this.OnForceFlush(timeoutMilliseconds);
+                bool result = this.OnForceFlush(timeoutMilliseconds);
+
+                OpenTelemetrySdkEventSource.Log.ProcessorForceFlushInvoked(this.typeName, result);
+
+                return result;
             }
             catch (Exception ex)
             {

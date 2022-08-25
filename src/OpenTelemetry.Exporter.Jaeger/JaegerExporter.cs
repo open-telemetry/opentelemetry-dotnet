@@ -145,12 +145,15 @@ namespace OpenTelemetry.Exporter
                     }
                 }
 
-                if (process.Tags == null)
+                if (JaegerTagTransformer.Instance.TryTransformTag(label, out var result))
                 {
-                    process.Tags = new Dictionary<string, JaegerTag>();
-                }
+                    if (process.Tags == null)
+                    {
+                        process.Tags = new Dictionary<string, JaegerTag>();
+                    }
 
-                process.Tags[key] = label.ToJaegerTag();
+                    process.Tags[key] = result;
+                }
             }
 
             if (serviceName != null)

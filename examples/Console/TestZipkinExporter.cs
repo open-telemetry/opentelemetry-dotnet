@@ -39,7 +39,7 @@ namespace Examples.Console
             // and use the Zipkin exporter.
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource("Samples.SampleClient", "Samples.SampleServer")
-                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("zipkin-test"))
+                    .ConfigureResource(r => r.AddService("zipkin-test"))
                     .AddZipkinExporter(o =>
                     {
                         o.Endpoint = new Uri(zipkinUri);

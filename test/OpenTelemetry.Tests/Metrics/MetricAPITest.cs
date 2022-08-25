@@ -43,6 +43,39 @@ namespace OpenTelemetry.Metrics.Tests
         }
 
         [Fact]
+        public void MeasurementWithNullValuedTag()
+        {
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            var exportedItems = new List<Metric>();
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
+
+            var counter = meter.CreateCounter<long>("myCounter");
+            counter.Add(100, new KeyValuePair<string, object>("tagWithNullValue", null));
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("myCounter", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Single(metricPoints);
+            var metricPoint = metricPoints[0];
+            Assert.Equal(100, metricPoint.GetSumLong());
+            Assert.Equal(1, metricPoint.Tags.Count);
+            var tagEnumerator = metricPoint.Tags.GetEnumerator();
+            tagEnumerator.MoveNext();
+            Assert.Equal("tagWithNullValue", tagEnumerator.Current.Key);
+            Assert.Null(tagEnumerator.Current.Value);
+        }
+
+        [Fact]
         public void ObserverCallbackTest()
         {
             using var meter = new Meter(Utils.GetCurrentMethodName());

@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -23,10 +25,10 @@ namespace OpenTelemetry.Internal
     /// Lock-free implementation of single-reader multi-writer circular buffer.
     /// </summary>
     /// <typeparam name="T">The type of the underlying value.</typeparam>
-    internal class CircularBuffer<T>
+    internal sealed class CircularBuffer<T>
         where T : class
     {
-        private readonly T[] trait;
+        private readonly T?[] trait;
         private long head;
         private long tail;
 
@@ -54,20 +56,20 @@ namespace OpenTelemetry.Internal
         {
             get
             {
-                var tailSnapshot = this.tail;
-                return (int)(this.head - tailSnapshot);
+                var tailSnapshot = Volatile.Read(ref this.tail);
+                return (int)(Volatile.Read(ref this.head) - tailSnapshot);
             }
         }
 
         /// <summary>
         /// Gets the number of items added to the <see cref="CircularBuffer{T}"/>.
         /// </summary>
-        public long AddedCount => this.head;
+        public long AddedCount => Volatile.Read(ref this.head);
 
         /// <summary>
         /// Gets the number of items removed from the <see cref="CircularBuffer{T}"/>.
         /// </summary>
-        public long RemovedCount => this.tail;
+        public long RemovedCount => Volatile.Read(ref this.tail);
 
         /// <summary>
         /// Adds the specified item to the buffer.
@@ -83,22 +85,21 @@ namespace OpenTelemetry.Internal
 
             while (true)
             {
-                var tailSnapshot = this.tail;
-                var headSnapshot = this.head;
+                var tailSnapshot = Volatile.Read(ref this.tail);
+                var headSnapshot = Volatile.Read(ref this.head);
 
                 if (headSnapshot - tailSnapshot >= this.Capacity)
                 {
                     return false; // buffer is full
                 }
 
-                var head = Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot);
-                if (head != headSnapshot)
+                if (Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot) != headSnapshot)
                 {
                     continue;
                 }
 
-                var index = (int)(head % this.Capacity);
-                this.trait[index] = value;
+                Volatile.Write(ref this.trait[headSnapshot % this.Capacity], value);
+
                 return true;
             }
         }
@@ -125,16 +126,15 @@ namespace OpenTelemetry.Internal
 
             while (true)
             {
-                var tailSnapshot = this.tail;
-                var headSnapshot = this.head;
+                var tailSnapshot = Volatile.Read(ref this.tail);
+                var headSnapshot = Volatile.Read(ref this.head);
 
                 if (headSnapshot - tailSnapshot >= this.Capacity)
                 {
                     return false; // buffer is full
                 }
 
-                var head = Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot);
-                if (head != headSnapshot)
+                if (Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot) != headSnapshot)
                 {
                     if (spinCountDown-- == 0)
                     {
@@ -144,8 +144,8 @@ namespace OpenTelemetry.Internal
                     continue;
                 }
 
-                var index = (int)(head % this.Capacity);
-                this.trait[index] = value;
+                Volatile.Write(ref this.trait[headSnapshot % this.Capacity], value);
+
                 return true;
             }
         }
@@ -161,19 +161,19 @@ namespace OpenTelemetry.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Read()
         {
-            var index = (int)(this.tail % this.Capacity);
+            var tail = Volatile.Read(ref this.tail);
+            var index = (int)(tail % this.Capacity);
             while (true)
             {
-                var value = this.trait[index];
-                if (value == null)
+                var previous = Interlocked.Exchange(ref this.trait[index], null);
+                if (previous == null)
                 {
                     // If we got here it means a writer isn't done.
                     continue;
                 }
 
-                this.trait[index] = null;
-                this.tail++;
-                return value;
+                Volatile.Write(ref this.tail, tail + 1);
+                return previous;
             }
         }
     }

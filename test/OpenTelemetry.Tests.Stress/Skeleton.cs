@@ -27,18 +27,11 @@ namespace OpenTelemetry.Tests.Stress;
 
 public partial class Program
 {
-    private static readonly Meter StressMeter = new("OpenTelemetry.Tests.Stress");
     private static volatile bool bContinue = true;
     private static volatile string output = "Test results not available yet.";
 
     static Program()
     {
-        var process = Process.GetCurrentProcess();
-        StressMeter.CreateObservableGauge("Process.NonpagedSystemMemorySize64", () => process.NonpagedSystemMemorySize64);
-        StressMeter.CreateObservableGauge("Process.PagedSystemMemorySize64", () => process.PagedSystemMemorySize64);
-        StressMeter.CreateObservableGauge("Process.PagedMemorySize64", () => process.PagedMemorySize64);
-        StressMeter.CreateObservableGauge("Process.WorkingSet64", () => process.WorkingSet64);
-        StressMeter.CreateObservableGauge("Process.VirtualMemorySize64", () => process.VirtualMemorySize64);
     }
 
     public static void Stress(int concurrency = 0, int prometheusPort = 0)
@@ -70,11 +63,8 @@ public partial class Program
             () => dLoopsPerSecond,
             description: "The rate of `Run()` invocations based on a small sliding window of few hundreds of milliseconds.");
         var dCpuCyclesPerLoop = 0D;
-#if NET462
-        if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-#else
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-#endif
         {
             meter.CreateObservableGauge(
                 "OpenTelemetry.Tests.Stress.CpuCyclesPerLoop",
@@ -83,14 +73,10 @@ public partial class Program
         }
 
         using var meterProvider = prometheusPort != 0 ? Sdk.CreateMeterProviderBuilder()
-            .AddMeter(StressMeter.Name)
             .AddMeter(meter.Name)
-            .AddPrometheusExporter(options =>
-            {
-                options.StartHttpListener = true;
-                options.HttpListenerPrefixes = new string[] { $"http://localhost:{prometheusPort}/" };
-                options.ScrapeResponseCacheDurationMilliseconds = 0;
-            })
+            .AddRuntimeInstrumentation()
+            .AddPrometheusHttpListener(
+                options => options.UriPrefixes = new string[] { $"http://localhost:{prometheusPort}/" })
             .Build() : null;
 
         var statistics = new long[concurrency];
@@ -153,7 +139,7 @@ public partial class Program
                     dLoopsPerSecond = (double)nLoops / ((double)watch.ElapsedMilliseconds / 1000.0);
                     dCpuCyclesPerLoop = nLoops == 0 ? 0 : nCpuCycles / nLoops;
 
-                    output = $"Loops: {cntLoopsTotal:n0}, Loops/Second: {dLoopsPerSecond:n0}, CPU Cycles/Loop: {dCpuCyclesPerLoop:n0}";
+                    output = $"Loops: {cntLoopsTotal:n0}, Loops/Second: {dLoopsPerSecond:n0}, CPU Cycles/Loop: {dCpuCyclesPerLoop:n0}, RunwayTime (Seconds): {watchForTotal.Elapsed.TotalSeconds:n0} ";
                     Console.Title = output;
                 }
             },
@@ -176,6 +162,7 @@ public partial class Program
         var cntCpuCyclesTotal = GetCpuCycles();
         var cpuCyclesPerLoopTotal = cntLoopsTotal == 0 ? 0 : cntCpuCyclesTotal / cntLoopsTotal;
         Console.WriteLine("Stopping the stress test...");
+        Console.WriteLine($"* Total Runaway Time (seconds) {watchForTotal.Elapsed.TotalSeconds:n0}");
         Console.WriteLine($"* Total Loops: {cntLoopsTotal:n0}");
         Console.WriteLine($"* Average Loops/Second: {totalLoopsPerSecond:n0}");
         Console.WriteLine($"* Average CPU Cycles/Loop: {cpuCyclesPerLoopTotal:n0}");
@@ -187,11 +174,7 @@ public partial class Program
 
     private static ulong GetCpuCycles()
     {
-#if NET462
-        if (Environment.OSVersion.Platform != PlatformID.Win32NT)
-#else
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-#endif
         {
             return 0;
         }

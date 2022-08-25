@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+#if !NETFRAMEWORK
 using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -101,3 +102,4 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         }
     }
 }
+#endif

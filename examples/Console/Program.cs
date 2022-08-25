@@ -46,7 +46,7 @@ namespace Examples.Console
         /// <param name="args">Arguments from command line.</param>
         public static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, LogsOptions, GrpcNetClientOptions, HttpClientOptions, RedisOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
+            Parser.Default.ParseArguments<JaegerOptions, ZipkinOptions, PrometheusOptions, MetricsOptions, LogsOptions, GrpcNetClientOptions, HttpClientOptions, ZPagesOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
                 .MapResult(
                     (JaegerOptions options) => TestJaegerExporter.Run(options.Host, options.Port),
                     (ZipkinOptions options) => TestZipkinExporter.Run(options.Uri),
@@ -55,7 +55,6 @@ namespace Examples.Console
                     (LogsOptions options) => TestLogs.Run(options),
                     (GrpcNetClientOptions options) => TestGrpcNetClient.Run(),
                     (HttpClientOptions options) => TestHttpClient.Run(),
-                    (RedisOptions options) => TestRedis.Run(options.Uri),
                     (ZPagesOptions options) => TestZPagesExporter.Run(),
                     (ConsoleOptions options) => TestConsoleExporter.Run(options),
                     (OpenTelemetryShimOptions options) => TestOTelShimWithConsoleExporter.Run(options),
@@ -125,13 +124,6 @@ namespace Examples.Console
     [Verb("httpclient", HelpText = "Specify the options required to test HttpClient")]
     internal class HttpClientOptions
     {
-    }
-
-    [Verb("redis", HelpText = "Specify the options required to test Redis with Zipkin")]
-    internal class RedisOptions
-    {
-        [Option('u', "uri", HelpText = "Please specify the uri of Zipkin backend", Required = true)]
-        public string Uri { get; set; }
     }
 
     [Verb("zpages", HelpText = "Specify the options required to test ZPages")]

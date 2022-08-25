@@ -28,7 +28,7 @@ namespace Examples.Console
             // and use a single pipeline with a custom MyProcessor, and Console exporter.
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource("MyCompany.MyProduct.MyWebServer")
-                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyServiceName"))
+                    .ConfigureResource(r => r.AddService("MyServiceName"))
                     .AddConsoleExporter()
                     .Build();
 

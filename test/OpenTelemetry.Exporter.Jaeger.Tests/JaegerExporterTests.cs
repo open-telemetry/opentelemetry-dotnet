@@ -201,7 +201,8 @@ namespace OpenTelemetry.Exporter.Jaeger.Tests
             using var jaegerTraceExporter = new JaegerExporter(new JaegerExporterOptions());
             var process = jaegerTraceExporter.Process;
 
-            process.Tags = new Dictionary<string, JaegerTag> { ["Tag1"] = new KeyValuePair<string, object>("Tag1", "value1").ToJaegerTag() };
+            JaegerTagTransformer.Instance.TryTransformTag(new KeyValuePair<string, object>("Tag1", "value1"), out var result);
+            process.Tags = new Dictionary<string, JaegerTag> { ["Tag1"] = result };
 
             jaegerTraceExporter.SetResourceAndInitializeBatch(ResourceBuilder.CreateEmpty().AddAttributes(new Dictionary<string, object>
             {

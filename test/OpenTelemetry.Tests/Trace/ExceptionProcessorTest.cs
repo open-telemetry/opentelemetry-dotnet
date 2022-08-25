@@ -69,6 +69,16 @@ namespace OpenTelemetry.Trace.Tests
             }
             catch (Exception)
             {
+                /*
+                   Note: Behavior here is different depending on the processor
+                   architecture.
+
+                   x86: Exception is cleared BEFORE the catch runs.
+                   Marshal.GetExceptionPointers returns zero.
+
+                   non-x86: Exception is cleared AFTER the catch runs.
+                   Marshal.GetExceptionPointers returns non-zero.
+                */
                 activity5 = activitySource.StartActivity("Activity5");
             }
             finally
@@ -86,8 +96,15 @@ namespace OpenTelemetry.Trace.Tests
             Assert.Null(activity4.GetTagValue("otel.exception_pointers"));
             Assert.Equal(StatusCode.Unset, activity5.GetStatus().StatusCode);
 #if !NETFRAMEWORK
-            // In this rare case, the following Activity tag will not get cleaned up due to perf consideration.
-            Assert.NotNull(activity5.GetTagValue("otel.exception_pointers"));
+            if (Environment.Is64BitProcess)
+            {
+                // In this rare case, the following Activity tag will not get cleaned up due to perf consideration.
+                Assert.NotNull(activity5.GetTagValue("otel.exception_pointers"));
+            }
+            else
+            {
+                Assert.Null(activity5.GetTagValue("otel.exception_pointers"));
+            }
 #endif
         }
 

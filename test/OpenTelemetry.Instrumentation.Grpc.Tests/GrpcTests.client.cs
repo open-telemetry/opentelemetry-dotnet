@@ -17,14 +17,18 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Greet;
 using Grpc.Core;
 using Grpc.Net.Client;
+#if NET6_0_OR_GREATER
 using Microsoft.AspNetCore.Http;
+#endif
 using Moq;
 using OpenTelemetry.Context.Propagation;
+using OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Instrumentation.GrpcNetClient.Implementation;
 using OpenTelemetry.Trace;
@@ -44,8 +48,16 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
         [InlineData("http://[::1]", false)]
         public void GrpcClientCallsAreCollectedSuccessfully(string baseAddress, bool shouldEnrich = true)
         {
-            var uri = new Uri($"{baseAddress}:{this.server.Port}");
+            var uri = new Uri($"{baseAddress}:1234");
             var uriHostNameType = Uri.CheckHostName(uri.Host);
+
+            var httpClient = ClientTestHelpers.CreateTestClient(async request =>
+            {
+                var streamContent = await ClientTestHelpers.CreateResponseContent(new HelloReply());
+                var response = ResponseUtils.CreateResponse(HttpStatusCode.OK, streamContent, grpcStatusCode: global::Grpc.Core.StatusCode.OK);
+                response.TrailingHeaders().Add("grpc-message", "value");
+                return response;
+            });
 
             var processor = new Mock<BaseProcessor<Activity>>();
 
@@ -65,7 +77,10 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     .AddProcessor(processor.Object)
                     .Build())
             {
-                var channel = GrpcChannel.ForAddress(uri);
+                var channel = GrpcChannel.ForAddress(uri, new GrpcChannelOptions
+                {
+                    HttpClient = httpClient,
+                });
                 var client = new Greeter.GreeterClient(channel);
                 var rs = client.SayHello(new HelloRequest());
             }
@@ -104,6 +119,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal(0, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
         }
 
+#if NET6_0_OR_GREATER
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -128,16 +144,13 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     .AddProcessor(processor.Object)
                     .Build())
             {
-#if NETCOREAPP3_1
-                using var channel = GrpcChannel.ForAddress(uri);
-#else
                 // With net5, based on the grpc changes, the quantity of default activities changed.
                 // TODO: This is a workaround. https://github.com/open-telemetry/opentelemetry-dotnet/issues/1490
                 using var channel = GrpcChannel.ForAddress(uri, new GrpcChannelOptions()
                 {
                     HttpClient = new HttpClient(),
                 });
-#endif
+
                 var client = new Greeter.GreeterClient(channel);
                 var rs = client.SayHello(new HelloRequest());
             }
@@ -427,6 +440,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 }));
             }
         }
+#endif
 
         [Fact]
         public void Grpc_BadArgs()

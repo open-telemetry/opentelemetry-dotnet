@@ -19,15 +19,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-#if !NETSTANDARD2_0
 using System.Runtime.CompilerServices;
-#endif
 using Microsoft.AspNetCore.Http;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Internal;
-#if !NETSTANDARD2_0
 using OpenTelemetry.Instrumentation.GrpcNetClient;
-#endif
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
@@ -35,6 +31,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
     internal class HttpInListener : ListenerHandler
     {
         internal const string ActivityOperationName = "Microsoft.AspNetCore.Hosting.HttpRequestIn";
+#if NET7_0_OR_GREATER
+        // https://github.com/dotnet/aspnetcore/blob/8d6554e655b64da75b71e0e20d6db54a3ba8d2fb/src/Hosting/Hosting/src/GenericHost/GenericWebHostBuilder.cs#L85
+        internal static readonly string AspNetCoreActivitySourceName = "Microsoft.AspNetCore";
+#endif
         internal static readonly AssemblyName AssemblyName = typeof(HttpInListener).Assembly.GetName();
         internal static readonly string ActivitySourceName = AssemblyName.Name;
         internal static readonly Version Version = AssemblyName.Version;
@@ -96,8 +96,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     // Create a new activity with its parent set from the extracted context.
                     // This makes the new activity as a "sibling" of the activity created by
                     // Asp.Net Core.
+#if NET7_0_OR_GREATER
+                    // For NET7.0 onwards activity is created using ActivitySource so,
+                    // we will use the source of the activity to create the new one.
+                    Activity newOne = activity.Source.CreateActivity(ActivityOperationName, ActivityKind.Server, ctx.ActivityContext);
+#else
                     Activity newOne = new Activity(ActivityOperationName);
                     newOne.SetParentId(ctx.ActivityContext.TraceId, ctx.ActivityContext.SpanId, ctx.ActivityContext.TraceFlags);
+#endif
                     newOne.TraceStateString = ctx.ActivityContext.TraceState;
 
                     newOne.SetTag("IsCreatedByInstrumentation", bool.TrueString);
@@ -135,8 +141,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     return;
                 }
 
+#if !NET7_0_OR_GREATER
                 ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
                 ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Server);
+#endif
 
                 var path = (request.PathBase.HasValue || request.Path.HasValue) ? (request.PathBase + request.Path).ToString() : "/";
                 activity.DisplayName = path;
@@ -153,8 +161,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
 
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, request.Method);
+                activity.SetTag(SemanticConventions.AttributeHttpScheme, request.Scheme);
                 activity.SetTag(SemanticConventions.AttributeHttpTarget, path);
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, GetUri(request));
+                activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocol(request.Protocol));
 
                 var userAgent = request.Headers["User-Agent"].FirstOrDefault();
                 if (!string.IsNullOrEmpty(userAgent))
@@ -188,21 +198,14 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
-#if !NETSTANDARD2_0
                 if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
                 {
                     AddGrpcAttributes(activity, grpcMethod, context);
                 }
-                else if (activity.GetStatus().StatusCode == StatusCode.Unset)
+                else if (activity.Status == ActivityStatusCode.Unset)
                 {
                     activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
                 }
-#else
-                if (activity.GetStatus().StatusCode == StatusCode.Unset)
-                {
-                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
-                }
-#endif
 
                 try
                 {
@@ -244,6 +247,32 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             if (name == "Microsoft.AspNetCore.Mvc.BeforeAction")
             {
+                // We cannot rely on Activity.Current here
+                // There could be activities started by middleware
+                // after activity started by framework resulting in different Activity.Current.
+                // so, we need to first find the activity started by Asp.Net Core.
+                // For .net6.0 onwards we could use IHttpActivityFeature to get the activity created by framework
+                // var httpActivityFeature = context.Features.Get<IHttpActivityFeature>();
+                // activity = httpActivityFeature.Activity;
+                // However, this will not work as in case of custom propagator
+                // we start a new activity during onStart event which is a sibling to the activity created by framework
+                // So, in that case we need to get the activity created by us here.
+                // we can do so only by looping through activity.Parent chain.
+                while (activity != null)
+                {
+                    if (string.Equals(activity.OperationName, ActivityOperationName, StringComparison.Ordinal))
+                    {
+                        break;
+                    }
+
+                    activity = activity.Parent;
+                }
+
+                if (activity == null)
+                {
+                    return;
+                }
+
                 if (activity.IsAllDataRequested)
                 {
                     // See https://github.com/aspnet/Mvc/blob/2414db256f32a047770326d14d8b0e2afd49ba49/src/Microsoft.AspNetCore.Mvc.Core/MvcCoreDiagnosticSourceExtensions.cs#L36-L44
@@ -284,7 +313,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     activity.RecordException(exc);
                 }
 
-                activity.SetStatus(Status.Error.WithDescription(exc.Message));
+                activity.SetStatus(ActivityStatusCode.Error, exc.Message);
 
                 try
                 {
@@ -310,7 +339,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             var queryString = request.QueryString.Value ?? string.Empty;
             var length = scheme.Length + Uri.SchemeDelimiter.Length + host.Length + pathBase.Length
                          + path.Length + queryString.Length;
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_1_OR_GREATER
+
             return string.Create(length, (scheme, host, pathBase, path, queryString), (span, parts) =>
             {
                 CopyTo(ref span, parts.scheme);
@@ -329,19 +358,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     }
                 }
             });
-#else
-            return new System.Text.StringBuilder(length)
-                .Append(scheme)
-                .Append(Uri.SchemeDelimiter)
-                .Append(host)
-                .Append(pathBase)
-                .Append(path)
-                .Append(queryString)
-                .ToString();
-#endif
         }
 
-#if !NETSTANDARD2_0
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
         {
@@ -358,7 +376,11 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             activity.DisplayName = grpcMethod.TrimStart('/');
 
             activity.SetTag(SemanticConventions.AttributeRpcSystem, GrpcTagHelper.RpcSystemGrpc);
-            activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
+            if (context.Connection.RemoteIpAddress != null)
+            {
+                activity.SetTag(SemanticConventions.AttributeNetPeerIp, context.Connection.RemoteIpAddress.ToString());
+            }
+
             activity.SetTag(SemanticConventions.AttributeNetPeerPort, context.Connection.RemotePort);
 
             bool validConversion = GrpcTagHelper.TryGetGrpcStatusCodeFromActivity(activity, out int status);
@@ -385,6 +407,5 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
         }
-#endif
     }
 }

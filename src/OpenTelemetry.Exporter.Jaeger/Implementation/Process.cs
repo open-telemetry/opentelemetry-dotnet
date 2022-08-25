@@ -15,7 +15,6 @@
 // </copyright>
 
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Thrift.Protocol;
 using Thrift.Protocol.Entities;
@@ -27,20 +26,6 @@ namespace OpenTelemetry.Exporter.Jaeger.Implementation
         public Process(string serviceName)
         {
             this.ServiceName = serviceName;
-        }
-
-        public Process(string serviceName, IEnumerable<KeyValuePair<string, object>> processTags)
-            : this(serviceName, processTags?.Select(pt => pt.ToJaegerTag()).ToDictionary(pt => pt.Key, pt => pt))
-        {
-        }
-
-        internal Process(string serviceName, Dictionary<string, JaegerTag> processTags)
-            : this(serviceName)
-        {
-            if (processTags != null)
-            {
-                this.Tags = processTags;
-            }
         }
 
         public string ServiceName { get; internal set; }

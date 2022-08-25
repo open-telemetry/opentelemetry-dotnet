@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.6
+
+Released 2022-Aug-18
+
+## 1.0.0-rc9.5
+
+Released 2022-Aug-02
+
+## 1.0.0-rc9.4
+
+Released 2022-Jun-03
+
 ## 1.0.0-rc9.3
 
 Released 2022-Apr-15
@@ -33,7 +45,8 @@ Released 2022-Feb-02
 Released 2021-Oct-08
 
 * Removes upper constraint for Microsoft.Extensions.Hosting.Abstractions
-  dependency. ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
+  dependency.
+  ([#2179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2179))
 
 * Added `AddOpenTelemetryMetrics` extensions on `IServiceCollection` to register
   OpenTelemetry `MeterProvider` with application services. Added

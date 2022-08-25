@@ -17,9 +17,7 @@
 using System;
 using System.Diagnostics;
 using System.Net.Http;
-using System.Net.Sockets;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
@@ -29,17 +27,31 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
     internal sealed class HttpHandlerDiagnosticListener : ListenerHandler
     {
         internal static readonly AssemblyName AssemblyName = typeof(HttpHandlerDiagnosticListener).Assembly.GetName();
-        internal static readonly string ActivitySourceName = AssemblyName.Name;
+        internal static readonly bool IsNet7OrGreater;
+
+        // https://github.com/dotnet/runtime/blob/7d034ddbbbe1f2f40c264b323b3ed3d6b3d45e9a/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs#L19
+        internal static readonly string HttpClientActivitySourceName = "System.Net.Http";
+        internal static readonly string ActivitySourceName = AssemblyName.Name + ".HttpClient";
         internal static readonly Version Version = AssemblyName.Version;
         internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
-
-        private static readonly Regex CoreAppMajorVersionCheckRegex = new("^\\.NETCoreApp,Version=v(\\d+)\\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private readonly PropertyFetcher<HttpRequestMessage> startRequestFetcher = new("Request");
         private readonly PropertyFetcher<HttpResponseMessage> stopResponseFetcher = new("Response");
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
         private readonly PropertyFetcher<TaskStatus> stopRequestStatusFetcher = new("RequestTaskStatus");
         private readonly HttpClientInstrumentationOptions options;
+
+        static HttpHandlerDiagnosticListener()
+        {
+            try
+            {
+                IsNet7OrGreater = typeof(HttpClient).Assembly.GetName().Version.Major >= 7;
+            }
+            catch (Exception)
+            {
+                IsNet7OrGreater = false;
+            }
+        }
 
         public HttpHandlerDiagnosticListener(HttpClientInstrumentationOptions options)
             : base("HttpHandlerDiagnosticListener")
@@ -59,7 +71,11 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
             // By this time, samplers have already run and
             // activity.IsAllDataRequested populated accordingly.
 
-            if (Sdk.SuppressInstrumentation)
+            // For .NET7.0 or higher versions, activity is created using activity source
+            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
+            // To prevent processing such activities we first check the source name to confirm if it was created using
+            // activity source or not.
+            if (Sdk.SuppressInstrumentation || (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name)))
             {
                 return;
             }
@@ -109,16 +125,17 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 activity.DisplayName = HttpTagHelper.GetOperationNameForHttpMethod(request.Method);
 
-                ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
-                ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
+                if (!IsNet7OrGreater)
+                {
+                    ActivityInstrumentationHelper.SetActivitySourceProperty(activity, ActivitySource);
+                    ActivityInstrumentationHelper.SetKindProperty(activity, ActivityKind.Client);
+                }
 
+                activity.SetTag(SemanticConventions.AttributeHttpScheme, request.RequestUri.Scheme);
                 activity.SetTag(SemanticConventions.AttributeHttpMethod, HttpTagHelper.GetNameForHttpMethod(request.Method));
                 activity.SetTag(SemanticConventions.AttributeHttpHost, HttpTagHelper.GetHostTagValueFromRequestUri(request.RequestUri));
                 activity.SetTag(SemanticConventions.AttributeHttpUrl, HttpTagHelper.GetUriTagValueFromRequestUri(request.RequestUri));
-                if (this.options.SetHttpFlavor)
-                {
-                    activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
-                }
+                activity.SetTag(SemanticConventions.AttributeHttpFlavor, HttpTagHelper.GetFlavorTagValueFromProtocolVersion(request.Version));
 
                 try
                 {
@@ -133,28 +150,37 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public override void OnStopActivity(Activity activity, object payload)
         {
+            // For .NET7.0 or higher versions, activity is created using activity source
+            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
+            // To prevent processing such activities we first check the source name to confirm if it was created using
+            // activity source or not.
+            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
+            {
+                return;
+            }
+
             if (activity.IsAllDataRequested)
             {
                 // https://github.com/dotnet/runtime/blob/master/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
                 // requestTaskStatus is not null
                 _ = this.stopRequestStatusFetcher.TryFetch(payload, out var requestTaskStatus);
 
-                StatusCode currentStatusCode = activity.GetStatus().StatusCode;
+                ActivityStatusCode currentStatusCode = activity.Status;
                 if (requestTaskStatus != TaskStatus.RanToCompletion)
                 {
                     if (requestTaskStatus == TaskStatus.Canceled)
                     {
-                        if (currentStatusCode == StatusCode.Unset)
+                        if (currentStatusCode == ActivityStatusCode.Unset)
                         {
-                            activity.SetStatus(Status.Error);
+                            activity.SetStatus(ActivityStatusCode.Error);
                         }
                     }
                     else if (requestTaskStatus != TaskStatus.Faulted)
                     {
-                        if (currentStatusCode == StatusCode.Unset)
+                        if (currentStatusCode == ActivityStatusCode.Unset)
                         {
                             // Faults are handled in OnException and should already have a span.Status of Error w/ Description.
-                            activity.SetStatus(Status.Error);
+                            activity.SetStatus(ActivityStatusCode.Error);
                         }
                     }
                 }
@@ -163,7 +189,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
                 {
                     activity.SetTag(SemanticConventions.AttributeHttpStatusCode, (int)response.StatusCode);
 
-                    if (currentStatusCode == StatusCode.Unset)
+                    if (currentStatusCode == ActivityStatusCode.Unset)
                     {
                         activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, (int)response.StatusCode));
                     }
@@ -182,6 +208,15 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
         public override void OnException(Activity activity, object payload)
         {
+            // For .NET7.0 or higher versions, activity is created using activity source
+            // However, the framework will fallback to creating activity if the sampler's decision is to drop and there is a active diagnostic listener.
+            // To prevent processing such activities we first check the source name to confirm if it was created using
+            // activity source or not.
+            if (IsNet7OrGreater && string.IsNullOrEmpty(activity.Source.Name))
+            {
+                return;
+            }
+
             if (activity.IsAllDataRequested)
             {
                 if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
@@ -197,20 +232,7 @@ namespace OpenTelemetry.Instrumentation.Http.Implementation
 
                 if (exc is HttpRequestException)
                 {
-                    if (exc.InnerException is SocketException exception)
-                    {
-                        switch (exception.SocketErrorCode)
-                        {
-                            case SocketError.HostNotFound:
-                                activity.SetStatus(Status.Error.WithDescription(exc.Message));
-                                return;
-                        }
-                    }
-
-                    if (exc.InnerException != null)
-                    {
-                        activity.SetStatus(Status.Error.WithDescription(exc.Message));
-                    }
+                    activity.SetStatus(ActivityStatusCode.Error, exc.Message);
                 }
 
                 try

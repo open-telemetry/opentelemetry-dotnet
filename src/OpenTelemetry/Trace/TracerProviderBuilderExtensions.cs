@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Trace
@@ -61,6 +62,8 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
         /// this provider is built from. Overwrites currently set ResourceBuilder.
+        /// You should usually use <see cref="ConfigureResource(TracerProviderBuilder, Action{ResourceBuilder})"/> instead
+        /// (call <see cref="ResourceBuilder.Clear"/> if desired).
         /// </summary>
         /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
         /// <param name="resourceBuilder"><see cref="ResourceBuilder"/> from which Resource will be built.</param>
@@ -69,7 +72,27 @@ namespace OpenTelemetry.Trace
         {
             if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
             {
-                tracerProviderBuilderBase.SetResourceBuilder(resourceBuilder);
+                tracerProviderBuilderBase.ResourceBuilder = resourceBuilder;
+            }
+
+            return tracerProviderBuilder;
+        }
+
+        /// <summary>
+        /// Modify the <see cref="ResourceBuilder"/> from which the Resource associated with
+        /// this provider is built from in-place.
+        /// </summary>
+        /// <param name="tracerProviderBuilder">TracerProviderBuilder instance.</param>
+        /// <param name="configure">An action which modifies the provided <see cref="ResourceBuilder"/> in-place.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder ConfigureResource(this TracerProviderBuilder tracerProviderBuilder, Action<ResourceBuilder> configure)
+        {
+            Guard.ThrowIfNull(tracerProviderBuilder, nameof(tracerProviderBuilder));
+            Guard.ThrowIfNull(configure, nameof(configure));
+
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            {
+                configure(tracerProviderBuilderBase.ResourceBuilder);
             }
 
             return tracerProviderBuilder;

@@ -23,10 +23,10 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
-using OtlpCollector = Opentelemetry.Proto.Collector.Logs.V1;
-using OtlpCommon = Opentelemetry.Proto.Common.V1;
-using OtlpLogs = Opentelemetry.Proto.Logs.V1;
-using OtlpResource = Opentelemetry.Proto.Resource.V1;
+using OtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
+using OtlpCommon = OpenTelemetry.Proto.Common.V1;
+using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
+using OtlpResource = OpenTelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
@@ -103,10 +103,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                         {
                             otlpLogRecord.Body = new OtlpCommon.AnyValue { StringValue = stateValue.Value as string };
                         }
-                        else
+                        else if (OtlpKeyValueTransformer.Instance.TryTransformTag(stateValue, out var result))
                         {
-                            var otlpAttribute = stateValue.ToOtlpAttribute();
-                            otlpLogRecord.Attributes.Add(otlpAttribute);
+                            otlpLogRecord.Attributes.Add(result);
                         }
                     }
                 }
@@ -150,8 +149,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                     foreach (var scopeItem in scope)
                     {
                         var scopeItemWithDepthInfo = new KeyValuePair<string, object>($"[Scope.{scopeDepth}]:{scopeItem.Key}", scopeItem.Value);
-                        var otlpAttribute = scopeItemWithDepthInfo.ToOtlpAttribute();
-                        otlpLog.Attributes.Add(otlpAttribute);
+                        if (OtlpKeyValueTransformer.Instance.TryTransformTag(scopeItemWithDepthInfo, out var result))
+                        {
+                            otlpLog.Attributes.Add(result);
+                        }
                     }
                 }
             }

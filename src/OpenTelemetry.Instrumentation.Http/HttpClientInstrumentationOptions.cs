@@ -19,7 +19,6 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Instrumentation.Http.Implementation;
-using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.Http
 {
@@ -28,11 +27,6 @@ namespace OpenTelemetry.Instrumentation.Http
     /// </summary>
     public class HttpClientInstrumentationOptions
     {
-        /// <summary>
-        /// Gets or sets a value indicating whether or not the HTTP version should be added as the <see cref="SemanticConventions.AttributeHttpFlavor"/> tag. Default value: False.
-        /// </summary>
-        public bool SetHttpFlavor { get; set; }
-
         /// <summary>
         /// Gets or sets a Filter function that determines whether or not to collect telemetry about requests on a per request basis.
         /// The Filter gets the HttpRequestMessage, and should return a boolean.

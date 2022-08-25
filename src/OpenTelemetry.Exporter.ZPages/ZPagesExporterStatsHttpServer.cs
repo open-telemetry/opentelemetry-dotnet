@@ -65,6 +65,8 @@ namespace OpenTelemetry.Exporter.ZPages
                     new CancellationTokenSource() :
                     CancellationTokenSource.CreateLinkedTokenSource(token);
 
+                this.httpListener.Start();
+
                 this.workerThread = Task.Factory.StartNew(this.WorkerThread, default, TaskCreationOptions.LongRunning, TaskScheduler.Default);
             }
         }
@@ -110,8 +112,6 @@ namespace OpenTelemetry.Exporter.ZPages
 
         private void WorkerThread()
         {
-            this.httpListener.Start();
-
             try
             {
                 while (!this.tokenSource.IsCancellationRequested)

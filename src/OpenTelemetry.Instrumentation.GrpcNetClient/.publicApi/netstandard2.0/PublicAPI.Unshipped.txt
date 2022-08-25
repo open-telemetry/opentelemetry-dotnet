@@ -1,0 +1,8 @@
+OpenTelemetry.Instrumentation.GrpcNetClient.GrpcClientInstrumentationOptions
+OpenTelemetry.Instrumentation.GrpcNetClient.GrpcClientInstrumentationOptions.Enrich.get -> System.Action<System.Diagnostics.Activity, string, object>
+OpenTelemetry.Instrumentation.GrpcNetClient.GrpcClientInstrumentationOptions.Enrich.set -> void
+OpenTelemetry.Instrumentation.GrpcNetClient.GrpcClientInstrumentationOptions.GrpcClientInstrumentationOptions() -> void
+OpenTelemetry.Instrumentation.GrpcNetClient.GrpcClientInstrumentationOptions.SuppressDownstreamInstrumentation.get -> bool
+OpenTelemetry.Instrumentation.GrpcNetClient.GrpcClientInstrumentationOptions.SuppressDownstreamInstrumentation.set -> void
+OpenTelemetry.Trace.TracerProviderBuilderExtensions
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddGrpcClientInstrumentation(this OpenTelemetry.Trace.TracerProviderBuilder builder, System.Action<OpenTelemetry.Instrumentation.GrpcNetClient.GrpcClientInstrumentationOptions> configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder

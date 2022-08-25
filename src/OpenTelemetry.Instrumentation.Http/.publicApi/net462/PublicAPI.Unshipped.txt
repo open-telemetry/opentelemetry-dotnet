@@ -6,8 +6,6 @@ OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.Filter.set -
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.HttpClientInstrumentationOptions() -> void
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.RecordException.get -> bool
 OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.RecordException.set -> void
-OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.SetHttpFlavor.get -> bool
-OpenTelemetry.Instrumentation.Http.HttpClientInstrumentationOptions.SetHttpFlavor.set -> void
 OpenTelemetry.Instrumentation.Http.HttpWebRequestInstrumentationOptions
 OpenTelemetry.Instrumentation.Http.HttpWebRequestInstrumentationOptions.Enrich.get -> System.Action<System.Diagnostics.Activity, string, object>
 OpenTelemetry.Instrumentation.Http.HttpWebRequestInstrumentationOptions.Enrich.set -> void
@@ -16,8 +14,6 @@ OpenTelemetry.Instrumentation.Http.HttpWebRequestInstrumentationOptions.Filter.s
 OpenTelemetry.Instrumentation.Http.HttpWebRequestInstrumentationOptions.HttpWebRequestInstrumentationOptions() -> void
 OpenTelemetry.Instrumentation.Http.HttpWebRequestInstrumentationOptions.RecordException.get -> bool
 OpenTelemetry.Instrumentation.Http.HttpWebRequestInstrumentationOptions.RecordException.set -> void
-OpenTelemetry.Instrumentation.Http.HttpWebRequestInstrumentationOptions.SetHttpFlavor.get -> bool
-OpenTelemetry.Instrumentation.Http.HttpWebRequestInstrumentationOptions.SetHttpFlavor.set -> void
 OpenTelemetry.Metrics.MeterProviderBuilderExtensions
 OpenTelemetry.Trace.TracerProviderBuilderExtensions
 static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.AddHttpClientInstrumentation(this OpenTelemetry.Metrics.MeterProviderBuilder builder) -> OpenTelemetry.Metrics.MeterProviderBuilder

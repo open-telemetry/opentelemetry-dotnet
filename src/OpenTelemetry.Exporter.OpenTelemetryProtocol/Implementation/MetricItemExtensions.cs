@@ -23,10 +23,10 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using Google.Protobuf.Collections;
 using OpenTelemetry.Metrics;
-using OtlpCollector = Opentelemetry.Proto.Collector.Metrics.V1;
-using OtlpCommon = Opentelemetry.Proto.Common.V1;
-using OtlpMetrics = Opentelemetry.Proto.Metrics.V1;
-using OtlpResource = Opentelemetry.Proto.Resource.V1;
+using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
+using OtlpCommon = OpenTelemetry.Proto.Common.V1;
+using OtlpMetrics = OpenTelemetry.Proto.Metrics.V1;
+using OtlpResource = OpenTelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {
@@ -279,7 +279,10 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         {
             foreach (var tag in tags)
             {
-                attributes.Add(tag.ToOtlpAttribute());
+                if (OtlpKeyValueTransformer.Instance.TryTransformTag(tag, out var result))
+                {
+                    attributes.Add(result);
+                }
             }
         }
 

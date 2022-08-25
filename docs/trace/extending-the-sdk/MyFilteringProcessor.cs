@@ -17,16 +17,28 @@
 using System;
 using System.Diagnostics;
 using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
-internal class MyFilteringProcessor : BaseProcessor<Activity>
+/// <summary>
+/// A custom processor for filtering <see cref="Activity"/> instances.
+/// </summary>
+/// <remarks>
+/// Note: <see cref="CompositeProcessor{T}"/> is used as the base class because
+/// the SDK needs to understand that <c>MyFilteringProcessor</c> wraps an inner
+/// processor. Without that understanding some features such as <see
+/// cref="Resource"/> would be unavailable because the SDK needs to push state
+/// about the parent <see cref="TracerProvider"/> to all processors in the
+/// chain.
+/// </remarks>
+internal sealed class MyFilteringProcessor : CompositeProcessor<Activity>
 {
     private readonly Func<Activity, bool> filter;
-    private readonly BaseProcessor<Activity> processor;
 
     public MyFilteringProcessor(BaseProcessor<Activity> processor, Func<Activity, bool> filter)
+        : base(new[] { processor })
     {
         this.filter = filter ?? throw new ArgumentNullException(nameof(filter));
-        this.processor = processor ?? throw new ArgumentNullException(nameof(processor));
     }
 
     public override void OnEnd(Activity activity)
@@ -35,7 +47,7 @@ internal class MyFilteringProcessor : BaseProcessor<Activity>
         // only if the Filter returns true.
         if (this.filter(activity))
         {
-            this.processor.OnEnd(activity);
+            base.OnEnd(activity);
         }
     }
 }

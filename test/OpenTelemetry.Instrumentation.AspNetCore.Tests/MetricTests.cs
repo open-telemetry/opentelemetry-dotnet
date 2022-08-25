@@ -21,23 +21,17 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
-#if NETCOREAPP3_1
-using TestApp.AspNetCore._3._1;
-#endif
-#if NET6_0
-using TestApp.AspNetCore._6._0;
-#endif
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 {
     public class MetricTests
-        : IClassFixture<WebApplicationFactory<Startup>>, IDisposable
+        : IClassFixture<WebApplicationFactory<Program>>, IDisposable
     {
-        private readonly WebApplicationFactory<Startup> factory;
+        private readonly WebApplicationFactory<Program> factory;
         private MeterProvider meterProvider = null;
 
-        public MetricTests(WebApplicationFactory<Startup> factory)
+        public MetricTests(WebApplicationFactory<Program> factory)
         {
             this.factory = factory;
         }
@@ -116,13 +110,17 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             var method = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpMethod, "GET");
             var scheme = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpScheme, "http");
-            var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, 200);
-            var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "HTTP/1.1");
+            var statusCode = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpStatusCode, "200");
+            var flavor = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpFlavor, "1.1");
+            var host = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpHost, "localhost");
+            var target = new KeyValuePair<string, object>(SemanticConventions.AttributeHttpTarget, "api/Values");
             Assert.Contains(method, attributes);
             Assert.Contains(scheme, attributes);
             Assert.Contains(statusCode, attributes);
             Assert.Contains(flavor, attributes);
-            Assert.Equal(4, attributes.Length);
+            Assert.Contains(host, attributes);
+            Assert.Contains(target, attributes);
+            Assert.Equal(6, attributes.Length);
         }
 
         public void Dispose()

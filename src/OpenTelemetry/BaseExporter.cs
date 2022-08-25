@@ -14,6 +14,8 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
 using System;
 using System.Threading;
 using OpenTelemetry.Internal;
@@ -48,7 +50,7 @@ namespace OpenTelemetry
         /// <summary>
         /// Gets the parent <see cref="BaseProvider"/>.
         /// </summary>
-        public BaseProvider ParentProvider { get; internal set; }
+        public BaseProvider? ParentProvider { get; internal set; }
 
         /// <summary>
         /// Exports a batch of telemetry objects.

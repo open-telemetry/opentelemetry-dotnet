@@ -14,7 +14,13 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
+using System;
 using System.Collections;
+using System.Diagnostics;
+using System.Threading;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
@@ -22,17 +28,22 @@ using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Logs
 {
+    /// <summary>
+    /// An <see cref="ILoggerProvider"/> implementation for exporting logs using OpenTelemetry.
+    /// </summary>
     [ProviderAlias("OpenTelemetry")]
     public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISupportExternalScope
     {
         internal readonly bool IncludeScopes;
         internal readonly bool IncludeFormattedMessage;
         internal readonly bool ParseStateValues;
-        internal BaseProcessor<LogRecord> Processor;
+        internal BaseProcessor<LogRecord>? Processor;
+        internal ResourceBuilder? ResourceBuilder;
         internal Resource Resource;
+        private readonly ServiceProvider? ownedServiceProvider;
         private readonly Hashtable loggers = new();
+        private ILogRecordPool? threadStaticPool = LogRecordThreadStaticPool.Instance;
         private bool disposed;
-        private IExternalScopeProvider scopeProvider;
 
         static OpenTelemetryLoggerProvider()
         {
@@ -41,12 +52,31 @@ namespace OpenTelemetry.Logs
             _ = Sdk.SuppressInstrumentation;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OpenTelemetryLoggerProvider"/> class.
+        /// </summary>
+        /// <param name="options"><see cref="OpenTelemetryLoggerOptions"/>.</param>
+        [Obsolete("Use the Sdk.CreateLoggerProviderBuilder method instead")]
         public OpenTelemetryLoggerProvider(IOptionsMonitor<OpenTelemetryLoggerOptions> options)
-            : this(options?.CurrentValue)
+            : this(options?.CurrentValue ?? throw new ArgumentNullException(nameof(options)), serviceProvider: null, ownsServiceProvider: false)
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OpenTelemetryLoggerProvider"/> class.
+        /// </summary>
+        public OpenTelemetryLoggerProvider()
+            : this(new(), serviceProvider: null, ownsServiceProvider: false)
+        {
+        }
+
+        // Note: This is only for tests. Options will be missing ServiceCollection & ServiceProvider features will be unavailable.
         internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options)
+            : this(options, serviceProvider: null, ownsServiceProvider: false)
+        {
+        }
+
+        internal OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options, IServiceProvider? serviceProvider, bool ownsServiceProvider)
         {
             Guard.ThrowIfNull(options);
 
@@ -54,17 +84,78 @@ namespace OpenTelemetry.Logs
             this.IncludeFormattedMessage = options.IncludeFormattedMessage;
             this.ParseStateValues = options.ParseStateValues;
 
-            this.Resource = options.ResourceBuilder.Build();
+            if (ownsServiceProvider)
+            {
+                this.ownedServiceProvider = serviceProvider as ServiceProvider;
+
+                Debug.Assert(this.ownedServiceProvider != null, "ownedServiceProvider was null");
+            }
+
+            // Step 1: Add any processors added to options.
 
             foreach (var processor in options.Processors)
             {
                 this.AddProcessor(processor);
             }
+
+            this.ResourceBuilder = options.ResourceBuilder ?? ResourceBuilder.CreateDefault();
+
+            if (serviceProvider != null)
+            {
+                // Step 2: Look for any Action<IServiceProvider,
+                // OpenTelemetryLoggerProvider> configuration actions registered and
+                // execute them.
+
+                var registeredConfigurations = serviceProvider.GetServices<Action<IServiceProvider, OpenTelemetryLoggerProvider>>();
+                foreach (var registeredConfiguration in registeredConfigurations)
+                {
+                    registeredConfiguration?.Invoke(serviceProvider, this);
+                }
+            }
+
+            var configurationActions = options.ConfigurationActions;
+            if (configurationActions?.Count > 0)
+            {
+                // Step 3: Execute any configuration actions.
+
+                if (serviceProvider == null)
+                {
+                    throw new InvalidOperationException("Configuration actions were registered on options but no service provider was supplied.");
+                }
+
+                // Note: Not using a foreach loop because additional actions can be
+                // added during each call.
+                for (int i = 0; i < configurationActions.Count; i++)
+                {
+                    configurationActions[i](serviceProvider, this);
+                }
+
+                options.ConfigurationActions = null;
+            }
+
+            if (serviceProvider != null)
+            {
+                // Step 4: Look for any processors registered directly with the service provider.
+
+                var registeredProcessors = serviceProvider.GetServices<BaseProcessor<LogRecord>>();
+                foreach (BaseProcessor<LogRecord> processor in registeredProcessors)
+                {
+                    this.AddProcessor(processor);
+                }
+            }
+
+            this.Resource = this.ResourceBuilder.Build();
+            this.ResourceBuilder = null;
         }
 
+        internal IExternalScopeProvider? ScopeProvider { get; private set; }
+
+        internal ILogRecordPool LogRecordPool => this.threadStaticPool ?? LogRecordSharedPool.Current;
+
+        /// <inheritdoc/>
         void ISupportExternalScope.SetScopeProvider(IExternalScopeProvider scopeProvider)
         {
-            this.scopeProvider = scopeProvider;
+            this.ScopeProvider = scopeProvider;
 
             lock (this.loggers)
             {
@@ -78,18 +169,19 @@ namespace OpenTelemetry.Logs
             }
         }
 
+        /// <inheritdoc/>
         public ILogger CreateLogger(string categoryName)
         {
             if (this.loggers[categoryName] is not OpenTelemetryLogger logger)
             {
                 lock (this.loggers)
                 {
-                    logger = this.loggers[categoryName] as OpenTelemetryLogger;
+                    logger = (this.loggers[categoryName] as OpenTelemetryLogger)!;
                     if (logger == null)
                     {
                         logger = new OpenTelemetryLogger(categoryName, this)
                         {
-                            ScopeProvider = this.scopeProvider,
+                            ScopeProvider = this.ScopeProvider,
                         };
 
                         this.loggers[categoryName] = logger;
@@ -100,11 +192,49 @@ namespace OpenTelemetry.Logs
             return logger;
         }
 
-        internal OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
+        /// <summary>
+        /// Flushes all the processors registered under <see
+        /// cref="OpenTelemetryLoggerProvider"/>, blocks the current thread
+        /// until flush completed, shutdown signaled or timed out.
+        /// </summary>
+        /// <param name="timeoutMilliseconds">
+        /// The number (non-negative) of milliseconds to wait, or
+        /// <c>Timeout.Infinite</c> to wait indefinitely.
+        /// </param>
+        /// <returns>
+        /// Returns <c>true</c> when force flush succeeded; otherwise, <c>false</c>.
+        /// </returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// Thrown when the <c>timeoutMilliseconds</c> is smaller than -1.
+        /// </exception>
+        /// <remarks>
+        /// This function guarantees thread-safety.
+        /// </remarks>
+        public bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
+        {
+            return this.Processor?.ForceFlush(timeoutMilliseconds) ?? true;
+        }
+
+        /// <summary>
+        /// Add a processor to the <see cref="OpenTelemetryLoggerProvider"/>.
+        /// </summary>
+        /// <remarks>
+        /// Note: The supplied <paramref name="processor"/> will be
+        /// automatically disposed when then the <see
+        /// cref="OpenTelemetryLoggerProvider"/> is disposed.
+        /// </remarks>
+        /// <param name="processor">Log processor to add.</param>
+        /// <returns>The supplied <see cref="OpenTelemetryLoggerOptions"/> for chaining.</returns>
+        public OpenTelemetryLoggerProvider AddProcessor(BaseProcessor<LogRecord> processor)
         {
             Guard.ThrowIfNull(processor);
 
             processor.SetParentProvider(this);
+
+            if (this.threadStaticPool != null && this.ContainsBatchProcessor(processor))
+            {
+                this.threadStaticPool = null;
+            }
 
             if (this.Processor == null)
             {
@@ -116,16 +246,48 @@ namespace OpenTelemetry.Logs
             }
             else
             {
-                this.Processor = new CompositeProcessor<LogRecord>(new[]
+                var newCompositeProcessor = new CompositeProcessor<LogRecord>(new[]
                 {
                     this.Processor,
-                    processor,
                 });
+                newCompositeProcessor.SetParentProvider(this);
+                newCompositeProcessor.AddProcessor(processor);
+                this.Processor = newCompositeProcessor;
             }
 
             return this;
         }
 
+        /// <summary>
+        /// Create a <see cref="LogEmitter"/>.
+        /// </summary>
+        /// <returns><see cref="LogEmitter"/>.</returns>
+        internal LogEmitter CreateEmitter() => new(this);
+
+        internal bool ContainsBatchProcessor(BaseProcessor<LogRecord> processor)
+        {
+            if (processor is BatchExportProcessor<LogRecord>)
+            {
+                return true;
+            }
+            else if (processor is CompositeProcessor<LogRecord> compositeProcessor)
+            {
+                var current = compositeProcessor.Head;
+                while (current != null)
+                {
+                    if (this.ContainsBatchProcessor(current.Value))
+                    {
+                        return true;
+                    }
+
+                    current = current.Next;
+                }
+            }
+
+            return false;
+        }
+
+        /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
             if (!this.disposed)
@@ -135,6 +297,8 @@ namespace OpenTelemetry.Logs
                     // Wait for up to 5 seconds grace period
                     this.Processor?.Shutdown(5000);
                     this.Processor?.Dispose();
+
+                    this.ownedServiceProvider?.Dispose();
                 }
 
                 this.disposed = true;

@@ -119,8 +119,8 @@ means is that you can instrument your application by simply depending on
 
 ## Learn more
 
-* If you want to learn about more instruments, refer to [learning
-  more about instruments](../learning-more-instruments/README.md).
-
-* If you want to customize the Sdk, refer to [customizing
-  the SDK](../customizing-the-sdk/README.md).
+* [Getting Started with Prometheus and
+  Grafana](../getting-started-prometheus-grafana/README.md)
+* [Learning more about Instruments](../learning-more-instruments/README.md)
+* [Customizing the OpenTelemetry .NET SDK](../customizing-the-sdk/README.md)
+* [Extending the OpenTelemetry .NET SDK](../extending-the-sdk/README.md)

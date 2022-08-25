@@ -18,9 +18,9 @@ dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol
 
 ## Configuration
 
-You can configure the `OtlpExporter` through `OtlpExporterOptions`
-properties and environment variables. The `OtlpExporterOptions`
-setters take precedence over the environment variables.
+You can configure the `OtlpExporter` through `Options` types properties
+and environment variables.
+The `Options` type setters take precedence over the environment variables.
 
 ## Options Properties
 
@@ -62,6 +62,15 @@ values of the `OtlpExporterOptions`
 | `OTEL_EXPORTER_OTLP_HEADERS`  | `Headers`                             |
 | `OTEL_EXPORTER_OTLP_TIMEOUT`  | `TimeoutMilliseconds`                 |
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | `Protocol` (`grpc` or `http/protobuf`)|
+
+The following environment variables can be used to override the default
+values of the `PeriodicExportingMetricReaderOptions`
+(following the [OpenTelemetry specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.12.0/specification/sdk-environment-variables.md#periodic-exporting-metricreader).
+
+| Environment variable          | `PeriodicExportingMetricReaderOptions` property |
+| ------------------------------| ------------------------------------------------|
+| `OTEL_METRIC_EXPORT_INTERVAL` | `ExportIntervalMilliseconds`                    |
+| `OTEL_METRIC_EXPORT_TIMEOUT`  | `ExportTimeoutMilliseconds`                     |
 
 `FormatException` is thrown in case of an invalid value for any of the
 supported environment variables.

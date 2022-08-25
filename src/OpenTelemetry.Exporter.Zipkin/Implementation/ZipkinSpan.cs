@@ -17,7 +17,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using OpenTelemetry.Internal;
@@ -178,12 +177,18 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 {
                     foreach (var tag in this.LocalEndpoint.Tags ?? Enumerable.Empty<KeyValuePair<string, object>>())
                     {
-                        writer.WriteString(tag.Key, ConvertObjectToString(tag.Value));
+                        if (ZipkinTagTransformer.Instance.TryTransformTag(tag, out var result))
+                        {
+                            writer.WriteString(tag.Key, result);
+                        }
                     }
 
                     foreach (var tag in this.Tags)
                     {
-                        writer.WriteString(tag.Key, ConvertObjectToString(tag.Value));
+                        if (ZipkinTagTransformer.Instance.TryTransformTag(tag, out var result))
+                        {
+                            writer.WriteString(tag.Key, result);
+                        }
                     }
                 }
                 finally
@@ -195,27 +200,6 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             }
 
             writer.WriteEndObject();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static string ConvertObjectToString(object obj)
-        {
-            return obj switch
-            {
-                string stringVal => stringVal,
-                bool boolVal => GetBoolString(boolVal),
-                int[] arrayValue => string.Join(",", arrayValue),
-                long[] arrayValue => string.Join(",", arrayValue),
-                double[] arrayValue => string.Join(",", arrayValue),
-                bool[] arrayValue => string.Join(",", arrayValue.Select(GetBoolString)),
-                _ => obj.ToString(),
-            };
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static string GetBoolString(bool value)
-        {
-            return value ? "true" : "false";
         }
     }
 }

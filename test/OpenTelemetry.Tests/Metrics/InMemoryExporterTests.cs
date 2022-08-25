@@ -16,17 +16,19 @@
 
 using System.Collections.Generic;
 using System.Diagnostics.Metrics;
+
 using OpenTelemetry.Tests;
+
 using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests
 {
     public class InMemoryExporterTests
     {
-        [Fact(Skip = "To be run after https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361 is fixed")]
+        [Fact]
         public void InMemoryExporterShouldDeepCopyMetricPoints()
         {
-            var exportedItems = new List<Metric>();
+            var exportedItems = new List<MetricSnapshot>();
 
             using var meter = new Meter(Utils.GetCurrentMethodName());
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -39,30 +41,29 @@ namespace OpenTelemetry.Metrics.Tests
 
             var counter = meter.CreateCounter<long>("meter");
 
-            // Emit 10 for the MetricPoint with a single key-vaue pair: ("tag1", "value1")
+            // TEST 1: Emit 10 for the MetricPoint with a single key-vaue pair: ("tag1", "value1")
             counter.Add(10, new KeyValuePair<string, object>("tag1", "value1"));
 
             meterProvider.ForceFlush();
 
-            var metric = exportedItems[0]; // Only one Metric object is added to the collection at this point
-            var metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
-            Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
-            ref readonly var metricPointForFirstExport = ref metricPointsEnumerator.Current;
-            Assert.Equal(10, metricPointForFirstExport.GetSumLong());
+            Assert.Single(exportedItems);
+            var metric1 = exportedItems[0]; // Only one Metric object is added to the collection at this point
+            Assert.Single(metric1.MetricPoints);
+            Assert.Equal(10, metric1.MetricPoints[0].GetSumLong());
 
-            // Emit 25 for the MetricPoint with a single key-vaue pair: ("tag1", "value1")
+            // TEST 2: Emit 25 for the MetricPoint with a single key-vaue pair: ("tag1", "value1")
             counter.Add(25, new KeyValuePair<string, object>("tag1", "value1"));
 
             meterProvider.ForceFlush();
 
-            metric = exportedItems[1]; // Second Metric object is added to the collection at this point
-            metricPointsEnumerator = metric.GetMetricPoints().GetEnumerator();
-            Assert.True(metricPointsEnumerator.MoveNext()); // One MetricPoint is emitted for the Metric
-            var metricPointForSecondExport = metricPointsEnumerator.Current;
-            Assert.Equal(25, metricPointForSecondExport.GetSumLong());
+            Assert.Equal(2, exportedItems.Count);
+            var metric2 = exportedItems[1]; // Second Metric object is added to the collection at this point
+            Assert.Single(metric2.MetricPoints);
+            Assert.Equal(25, metric2.MetricPoints[0].GetSumLong());
 
-            // MetricPoint.LongValue for the first exporter metric should still be 10
-            Assert.Equal(10, metricPointForFirstExport.GetSumLong());
+            // TEST 3: Verify first exported metric is unchanged
+            // MetricPoint.LongValue for the first exported metric should still be 10
+            Assert.Equal(10, metric1.MetricPoints[0].GetSumLong());
         }
     }
 }

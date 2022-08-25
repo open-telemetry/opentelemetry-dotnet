@@ -1,0 +1,4 @@
+// These attributes should be excluded from ApiCompat checks.
+
+T:System.Runtime.CompilerServices.CompilerGeneratedAttribute
+T:System.Runtime.CompilerServices.NullableContextAttribute
