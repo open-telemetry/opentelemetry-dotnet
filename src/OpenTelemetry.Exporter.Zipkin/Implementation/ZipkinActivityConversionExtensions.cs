@@ -45,7 +45,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
                 Tags = PooledList<KeyValuePair<string, object>>.Create(),
             };
 
-            activity.EnumerateTags(ref tagState);
+            tagState.EnumerateTags(activity);
 
             // When status is set on Activity using the native Status field in activity,
             // which was first introduced in System.Diagnostic.DiagnosticSource 6.0.0.
@@ -125,7 +125,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             }
 
             EventEnumerationState eventState = default;
-            activity.EnumerateEvents(ref eventState);
+            eventState.EnumerateEvents(activity);
 
             return new ZipkinSpan(
                 EncodeTraceId(context.TraceId, useShortTraceIds),
@@ -193,7 +193,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
             };
         }
 
-        internal struct TagEnumerationState : IActivityEnumerator<KeyValuePair<string, object>>, PeerServiceResolver.IPeerServiceState
+        internal struct TagEnumerationState : PeerServiceResolver.IPeerServiceState
         {
             public PooledList<KeyValuePair<string, object>> Tags;
 
@@ -211,64 +211,71 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation
 
             public string StatusDescription { get; set; }
 
-            public bool ForEach(KeyValuePair<string, object> activityTag)
+            public void EnumerateTags(Activity activity)
             {
-                if (activityTag.Value == null)
+                foreach (ref readonly var tag in activity.EnumerateTagObjects())
                 {
-                    return true;
-                }
-
-                string key = activityTag.Key;
-
-                if (activityTag.Value is string strVal)
-                {
-                    PeerServiceResolver.InspectTag(ref this, key, strVal);
-
-                    if (key == SpanAttributeConstants.StatusCodeKey)
+                    if (tag.Value == null)
                     {
-                        this.StatusCode = StatusHelper.GetStatusCodeForTagValue(strVal);
-                        return true;
+                        continue;
                     }
-                    else if (key == SpanAttributeConstants.StatusDescriptionKey)
-                    {
-                        // Description is sent as `error` but only if StatusCode is Error. See: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
-                        this.StatusDescription = strVal;
-                        return true;
-                    }
-                    else if (key == ZipkinErrorFlagTagName)
-                    {
-                        // Ignore `error` tag if it exists, it will be added based on StatusCode + StatusDescription.
-                        return true;
-                    }
-                }
-                else if (activityTag.Value is int intVal && activityTag.Key == SemanticConventions.AttributeNetPeerPort)
-                {
-                    PeerServiceResolver.InspectTag(ref this, key, intVal);
-                }
 
-                PooledList<KeyValuePair<string, object>>.Add(ref this.Tags, activityTag);
+                    string key = tag.Key;
 
-                return true;
+                    if (tag.Value is string strVal)
+                    {
+                        PeerServiceResolver.InspectTag(ref this, key, strVal);
+
+                        if (key == SpanAttributeConstants.StatusCodeKey)
+                        {
+                            this.StatusCode = StatusHelper.GetStatusCodeForTagValue(strVal);
+                            continue;
+                        }
+                        else if (key == SpanAttributeConstants.StatusDescriptionKey)
+                        {
+                            // Description is sent as `error` but only if StatusCode is Error. See: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk_exporters/zipkin.md#status
+                            this.StatusDescription = strVal;
+                            continue;
+                        }
+                        else if (key == ZipkinErrorFlagTagName)
+                        {
+                            // Ignore `error` tag if it exists, it will be added based on StatusCode + StatusDescription.
+                            continue;
+                        }
+                    }
+                    else if (tag.Value is int intVal && tag.Key == SemanticConventions.AttributeNetPeerPort)
+                    {
+                        PeerServiceResolver.InspectTag(ref this, key, intVal);
+                    }
+
+                    PooledList<KeyValuePair<string, object>>.Add(ref this.Tags, tag);
+                }
             }
         }
 
-        private struct EventEnumerationState : IActivityEnumerator<ActivityEvent>
+        private struct EventEnumerationState
         {
             public bool Created;
 
             public PooledList<ZipkinAnnotation> Annotations;
 
-            public bool ForEach(ActivityEvent activityEvent)
+            public void EnumerateEvents(Activity activity)
             {
-                if (!this.Created)
+                var enumerator = activity.EnumerateEvents();
+
+                if (enumerator.MoveNext())
                 {
                     this.Annotations = PooledList<ZipkinAnnotation>.Create();
                     this.Created = true;
+
+                    do
+                    {
+                        ref readonly var @event = ref enumerator.Current;
+
+                        PooledList<ZipkinAnnotation>.Add(ref this.Annotations, new ZipkinAnnotation(@event.Timestamp.ToEpochMicroseconds(), @event.Name));
+                    }
+                    while (enumerator.MoveNext());
                 }
-
-                PooledList<ZipkinAnnotation>.Add(ref this.Annotations, new ZipkinAnnotation(activityEvent.Timestamp.ToEpochMicroseconds(), activityEvent.Name));
-
-                return true;
             }
         }
     }

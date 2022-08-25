@@ -32,6 +32,7 @@ using OpenTelemetry.Instrumentation.AspNetCore.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using TestApp.AspNetCore;
+using TestApp.AspNetCore.Filters;
 using Xunit;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
@@ -670,6 +671,29 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
         }
 #endif
 
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        public async Task ShouldExportActivityWithOneOrMoreExceptionFilters(int mode)
+        {
+            var exportedItems = new List<Activity>();
+
+            // Arrange
+            using (var client = this.factory
+                .WithWebHostBuilder(builder => builder.ConfigureTestServices(
+                    (s) => this.ConfigureExceptionFilters(s, mode, ref exportedItems)))
+                .CreateClient())
+            {
+                // Act
+                var response = await client.GetAsync("/api/error");
+
+                WaitForActivityExport(exportedItems, 1);
+            }
+
+            // Assert
+            AssertException(exportedItems);
+        }
+
         public void Dispose()
         {
             this.tracerProvider?.Dispose();
@@ -720,6 +744,40 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             }
 
             activity.SetTag("enriched", "yes");
+        }
+
+        private static void AssertException(List<Activity> exportedItems)
+        {
+            Assert.Single(exportedItems);
+            var activity = exportedItems[0];
+
+            var exMessage = "something's wrong!";
+            Assert.Single(activity.Events);
+            Assert.Equal("System.Exception", activity.Events.First().Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionType).Value);
+            Assert.Equal(exMessage, activity.Events.First().Tags.FirstOrDefault(t => t.Key == SemanticConventions.AttributeExceptionMessage).Value);
+
+            ValidateAspNetCoreActivity(activity, "/api/error");
+        }
+
+        private void ConfigureExceptionFilters(IServiceCollection services, int mode, ref List<Activity> exportedItems)
+        {
+            switch (mode)
+            {
+                case 1:
+                    services.AddMvc(x => x.Filters.Add<ExceptionFilter1>());
+                    break;
+                case 2:
+                    services.AddMvc(x => x.Filters.Add<ExceptionFilter1>());
+                    services.AddMvc(x => x.Filters.Add<ExceptionFilter2>());
+                    break;
+                default:
+                    break;
+            }
+
+            this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddAspNetCoreInstrumentation(x => x.RecordException = true)
+                .AddInMemoryExporter(exportedItems)
+                .Build();
         }
 
         private class ExtractOnlyPropagator : TextMapPropagator

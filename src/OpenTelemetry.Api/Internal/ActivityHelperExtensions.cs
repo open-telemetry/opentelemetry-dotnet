@@ -14,9 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -42,20 +40,38 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            ActivityStatusTagEnumerator state = default;
+            bool foundStatusCode = false;
+            statusCode = default;
+            statusDescription = null;
 
-            ActivityTagsEnumeratorFactory<ActivityStatusTagEnumerator>.Enumerate(activity, ref state, null);
-
-            if (!state.StatusCode.HasValue)
+            foreach (ref readonly var tag in activity.EnumerateTagObjects())
             {
-                statusCode = default;
-                statusDescription = null;
-                return false;
+                switch (tag.Key)
+                {
+                    case SpanAttributeConstants.StatusCodeKey:
+                        foundStatusCode = StatusHelper.TryGetStatusCodeForTagValue(tag.Value as string, out statusCode);
+                        if (!foundStatusCode)
+                        {
+                            // If status code was found but turned out to be invalid give up immediately.
+                            return false;
+                        }
+
+                        break;
+                    case SpanAttributeConstants.StatusDescriptionKey:
+                        statusDescription = tag.Value as string;
+                        break;
+                    default:
+                        continue;
+                }
+
+                if (foundStatusCode && statusDescription != null)
+                {
+                    // If we found a status code and a description we break enumeration because our work is done.
+                    break;
+                }
             }
 
-            statusCode = state.StatusCode.Value;
-            statusDescription = state.StatusDescription;
-            return true;
+            return foundStatusCode;
         }
 
         /// <summary>
@@ -70,11 +86,15 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            ActivitySingleTagEnumerator state = new ActivitySingleTagEnumerator(tagName);
+            foreach (ref readonly var tag in activity.EnumerateTagObjects())
+            {
+                if (tag.Key == tagName)
+                {
+                    return tag.Value;
+                }
+            }
 
-            ActivityTagsEnumeratorFactory<ActivitySingleTagEnumerator>.Enumerate(activity, ref state, null);
-
-            return state.Value;
+            return null;
         }
 
         /// <summary>
@@ -89,359 +109,21 @@ namespace OpenTelemetry.Trace
         {
             Debug.Assert(activity != null, "Activity should not be null");
 
-            ActivityFirstTagEnumerator state = new ActivityFirstTagEnumerator(tagName);
+            var enumerator = activity.EnumerateTagObjects();
 
-            ActivityTagsEnumeratorFactory<ActivityFirstTagEnumerator>.Enumerate(activity, ref state, null);
-
-            if (state.Value == null)
+            if (enumerator.MoveNext())
             {
-                tagValue = null;
-                return false;
-            }
+                ref readonly var tag = ref enumerator.Current;
 
-            tagValue = state.Value;
-            return true;
-        }
-
-        /// <summary>
-        /// Enumerates all the key/value pairs on an <see cref="Activity"/> without performing an allocation.
-        /// </summary>
-        /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
-        /// <param name="activity">Activity instance.</param>
-        /// <param name="tagEnumerator">Tag enumerator.</param>
-        /// <param name="maxTags">Maximum number of tags to enumerate.</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
-        public static void EnumerateTags<T>(this Activity activity, ref T tagEnumerator, int? maxTags = null)
-            where T : struct, IActivityEnumerator<KeyValuePair<string, object>>
-        {
-            Debug.Assert(activity != null, "Activity should not be null");
-
-            ActivityTagsEnumeratorFactory<T>.Enumerate(activity, ref tagEnumerator, maxTags);
-        }
-
-        /// <summary>
-        /// Enumerates all the <see cref="ActivityLink"/>s on an <see cref="Activity"/> without performing an allocation.
-        /// </summary>
-        /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
-        /// <param name="activity">Activity instance.</param>
-        /// <param name="linkEnumerator">Link enumerator.</param>
-        /// <param name="maxLinks">Maximum number of links to enumerate.</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
-        public static void EnumerateLinks<T>(this Activity activity, ref T linkEnumerator, int? maxLinks = null)
-            where T : struct, IActivityEnumerator<ActivityLink>
-        {
-            Debug.Assert(activity != null, "Activity should not be null");
-
-            ActivityLinksEnumeratorFactory<T>.Enumerate(activity, ref linkEnumerator, maxLinks);
-        }
-
-        /// <summary>
-        /// Enumerates all the key/value pairs on an <see cref="ActivityLink"/> without performing an allocation.
-        /// </summary>
-        /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
-        /// <param name="activityLink">ActivityLink instance.</param>
-        /// <param name="tagEnumerator">Tag enumerator.</param>
-        /// <param name="maxTags">Maximum number of tags to enumerate.</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
-        public static void EnumerateTags<T>(this ActivityLink activityLink, ref T tagEnumerator, int? maxTags = null)
-            where T : struct, IActivityEnumerator<KeyValuePair<string, object>>
-        {
-            ActivityTagsEnumeratorFactory<T>.Enumerate(activityLink, ref tagEnumerator, maxTags);
-        }
-
-        /// <summary>
-        /// Enumerates all the <see cref="ActivityEvent"/>s on an <see cref="Activity"/> without performing an allocation.
-        /// </summary>
-        /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
-        /// <param name="activity">Activity instance.</param>
-        /// <param name="eventEnumerator">Event enumerator.</param>
-        /// <param name="maxEvents">Maximum number of events to enumerate.</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
-        public static void EnumerateEvents<T>(this Activity activity, ref T eventEnumerator, int? maxEvents = null)
-            where T : struct, IActivityEnumerator<ActivityEvent>
-        {
-            Debug.Assert(activity != null, "Activity should not be null");
-
-            ActivityEventsEnumeratorFactory<T>.Enumerate(activity, ref eventEnumerator, maxEvents);
-        }
-
-        /// <summary>
-        /// Enumerates all the key/value pairs on an <see cref="ActivityEvent"/> without performing an allocation.
-        /// </summary>
-        /// <typeparam name="T">The struct <see cref="IActivityEnumerator{T}"/> implementation to use for the enumeration.</typeparam>
-        /// <param name="activityEvent">ActivityEvent instance.</param>
-        /// <param name="tagEnumerator">Tag enumerator.</param>
-        /// <param name="maxTags">Maximum number of tags to enumerate.</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "ActivityProcessor is hot path")]
-        public static void EnumerateTags<T>(this ActivityEvent activityEvent, ref T tagEnumerator, int? maxTags = null)
-            where T : struct, IActivityEnumerator<KeyValuePair<string, object>>
-        {
-            ActivityTagsEnumeratorFactory<T>.Enumerate(activityEvent, ref tagEnumerator, maxTags);
-        }
-
-        private struct ActivitySingleTagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>
-        {
-            public object Value;
-
-            private readonly string tagName;
-
-            public ActivitySingleTagEnumerator(string tagName)
-            {
-                this.tagName = tagName;
-                this.Value = null;
-            }
-
-            public bool ForEach(KeyValuePair<string, object> item)
-            {
-                if (item.Key == this.tagName)
+                if (tag.Key == tagName)
                 {
-                    this.Value = item.Value;
-                    return false;
-                }
-
-                return true;
-            }
-        }
-
-        private struct ActivityStatusTagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>
-        {
-            public StatusCode? StatusCode;
-
-            public string StatusDescription;
-
-            public bool ForEach(KeyValuePair<string, object> item)
-            {
-                switch (item.Key)
-                {
-                    case SpanAttributeConstants.StatusCodeKey:
-                        this.StatusCode = StatusHelper.GetStatusCodeForTagValue(item.Value as string);
-                        break;
-                    case SpanAttributeConstants.StatusDescriptionKey:
-                        this.StatusDescription = item.Value as string;
-                        break;
-                }
-
-                return !this.StatusCode.HasValue || this.StatusDescription == null;
-            }
-        }
-
-        private struct ActivityFirstTagEnumerator : IActivityEnumerator<KeyValuePair<string, object>>
-        {
-            public object Value;
-
-            private readonly string tagName;
-
-            public ActivityFirstTagEnumerator(string tagName)
-            {
-                this.tagName = tagName;
-                this.Value = null;
-            }
-
-            public bool ForEach(KeyValuePair<string, object> item)
-            {
-                if (item.Key == this.tagName)
-                {
-                    this.Value = item.Value;
-                }
-
-                return false;
-            }
-        }
-
-        private static class ActivityTagsEnumeratorFactory<TState>
-            where TState : struct, IActivityEnumerator<KeyValuePair<string, object>>
-        {
-            private static readonly object EmptyActivityTagObjects = typeof(Activity).GetField("s_emptyTagObjects", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
-
-            private static readonly object EmptyActivityEventTags = typeof(ActivityEvent).GetField("s_emptyTags", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
-
-            private static readonly DictionaryEnumerator<string, object, TState>.AllocationFreeForEachDelegate
-                ActivityTagObjectsEnumerator = DictionaryEnumerator<string, object, TState>.BuildAllocationFreeForEachDelegate(
-                    typeof(Activity).GetField("_tags", BindingFlags.Instance | BindingFlags.NonPublic).FieldType);
-
-            private static readonly DictionaryEnumerator<string, object, TState>.AllocationFreeForEachDelegate
-                ActivityTagsCollectionEnumerator = DictionaryEnumerator<string, object, TState>.BuildAllocationFreeForEachDelegate(typeof(ActivityTagsCollection));
-
-            private static readonly DictionaryEnumerator<string, object, TState>.ForEachDelegate ForEachTagValueCallbackRef = ForEachTagValueCallback;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void Enumerate(Activity activity, ref TState state, int? maxTags)
-            {
-                var tagObjects = activity.TagObjects;
-
-                if (ReferenceEquals(tagObjects, EmptyActivityTagObjects))
-                {
-                    return;
-                }
-
-                if (maxTags.HasValue)
-                {
-                    SkipAllocationFreeEnumeration(tagObjects, ref state, maxTags.Value);
-                    return;
-                }
-
-                ActivityTagObjectsEnumerator(
-                    tagObjects,
-                    ref state,
-                    ForEachTagValueCallbackRef);
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void Enumerate(ActivityLink activityLink, ref TState state, int? maxTags)
-            {
-                var tags = activityLink.Tags;
-
-                if (tags is null)
-                {
-                    return;
-                }
-
-                if (maxTags.HasValue)
-                {
-                    SkipAllocationFreeEnumeration(tags, ref state, maxTags.Value);
-                    return;
-                }
-
-                ActivityTagsCollectionEnumerator(
-                    tags,
-                    ref state,
-                    ForEachTagValueCallbackRef);
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void Enumerate(ActivityEvent activityEvent, ref TState state, int? maxTags)
-            {
-                var tags = activityEvent.Tags;
-
-                if (ReferenceEquals(tags, EmptyActivityEventTags))
-                {
-                    return;
-                }
-
-                if (maxTags.HasValue)
-                {
-                    SkipAllocationFreeEnumeration(tags, ref state, maxTags.Value);
-                    return;
-                }
-
-                ActivityTagsCollectionEnumerator(
-                    tags,
-                    ref state,
-                    ForEachTagValueCallbackRef);
-            }
-
-            // TODO: When a limit has been configured an allocation-free enumerator is not used.
-            // Need to either:
-            //     1) modify the dynamically generated code to only enumerate up to the max number of items, or
-            //     2) wait until .NET 7 is released and do this more easily with the new enumerator functions
-            private static void SkipAllocationFreeEnumeration(IEnumerable<KeyValuePair<string, object>> tags, ref TState state, int maxTags)
-            {
-                var enumerator = tags.GetEnumerator();
-                for (var i = 0; enumerator.MoveNext() && i < maxTags; ++i)
-                {
-                    state.ForEach(enumerator.Current);
+                    tagValue = tag.Value;
+                    return true;
                 }
             }
 
-            private static bool ForEachTagValueCallback(ref TState state, KeyValuePair<string, object> item)
-                => state.ForEach(item);
-        }
-
-        private static class ActivityLinksEnumeratorFactory<TState>
-            where TState : struct, IActivityEnumerator<ActivityLink>
-        {
-            private static readonly object EmptyActivityLinks = typeof(Activity).GetField("s_emptyLinks", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
-
-            private static readonly ListEnumerator<ActivityLink, TState>.AllocationFreeForEachDelegate
-                ActivityLinksEnumerator = ListEnumerator<ActivityLink, TState>.BuildAllocationFreeForEachDelegate(
-                    typeof(Activity).GetField("_links", BindingFlags.Instance | BindingFlags.NonPublic).FieldType);
-
-            private static readonly ListEnumerator<ActivityLink, TState>.ForEachDelegate ForEachLinkCallbackRef = ForEachLinkCallback;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void Enumerate(Activity activity, ref TState state, int? maxLinks)
-            {
-                var activityLinks = activity.Links;
-
-                if (ReferenceEquals(activityLinks, EmptyActivityLinks))
-                {
-                    return;
-                }
-
-                // TODO: When a limit has been configured an allocation-free enumerator is not used.
-                // Need to either:
-                //     1) modify the dynamically generated code to only enumerate up to the max number of items, or
-                //     2) wait until .NET 7 is released and do this more easily with the new enumerator functions
-                if (maxLinks.HasValue)
-                {
-                    var enumerator = activityLinks.GetEnumerator();
-                    for (var i = 0; enumerator.MoveNext() && i < maxLinks; ++i)
-                    {
-                        state.ForEach(enumerator.Current);
-                    }
-
-                    return;
-                }
-
-                ActivityLinksEnumerator(
-                    activityLinks,
-                    ref state,
-                    ForEachLinkCallbackRef);
-            }
-
-            private static bool ForEachLinkCallback(ref TState state, ActivityLink item)
-                => state.ForEach(item);
-        }
-
-        private static class ActivityEventsEnumeratorFactory<TState>
-            where TState : struct, IActivityEnumerator<ActivityEvent>
-        {
-            private static readonly object EmptyActivityEvents = typeof(Activity).GetField("s_emptyEvents", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
-
-            private static readonly ListEnumerator<ActivityEvent, TState>.AllocationFreeForEachDelegate
-                ActivityEventsEnumerator = ListEnumerator<ActivityEvent, TState>.BuildAllocationFreeForEachDelegate(
-                    typeof(Activity).GetField("_events", BindingFlags.Instance | BindingFlags.NonPublic).FieldType);
-
-            private static readonly ListEnumerator<ActivityEvent, TState>.ForEachDelegate ForEachEventCallbackRef = ForEachEventCallback;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static void Enumerate(Activity activity, ref TState state, int? maxEvents)
-            {
-                var activityEvents = activity.Events;
-
-                if (ReferenceEquals(activityEvents, EmptyActivityEvents))
-                {
-                    return;
-                }
-
-                // TODO: When a limit has been configured an allocation-free enumerator is not used.
-                // Need to either:
-                //     1) modify the dynamically generated code to only enumerate up to the max number of items, or
-                //     2) wait until .NET 7 is released and do this more easily with the new enumerator functions
-                if (maxEvents.HasValue)
-                {
-                    var enumerator = activityEvents.GetEnumerator();
-                    for (var i = 0; enumerator.MoveNext() && i < maxEvents; ++i)
-                    {
-                        state.ForEach(enumerator.Current);
-                    }
-
-                    return;
-                }
-
-                ActivityEventsEnumerator(
-                    activityEvents,
-                    ref state,
-                    ForEachEventCallbackRef);
-            }
-
-            private static bool ForEachEventCallback(ref TState state, ActivityEvent item)
-                => state.ForEach(item);
+            tagValue = null;
+            return false;
         }
     }
 }

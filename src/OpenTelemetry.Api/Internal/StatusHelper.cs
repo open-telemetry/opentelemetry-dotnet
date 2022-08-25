@@ -59,5 +59,15 @@ namespace OpenTelemetry.Internal
                 _ => null,
             };
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryGetStatusCodeForTagValue(string statusCodeTagValue, out StatusCode statusCode)
+        {
+            StatusCode? tempStatusCode = GetStatusCodeForTagValue(statusCodeTagValue);
+
+            statusCode = tempStatusCode ?? default;
+
+            return tempStatusCode.HasValue;
+        }
     }
 }
