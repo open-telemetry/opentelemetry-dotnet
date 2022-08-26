@@ -33,7 +33,8 @@ namespace OpenTelemetry.Logs.Tests
             List<LogRecord> exportedItems = new();
 
             using var exporter = new BatchLogRecordExportProcessor(
-                new InMemoryExporter<LogRecord>(exportedItems));
+                new InMemoryExporter<LogRecord>(exportedItems),
+                scheduledDelayMilliseconds: int.MaxValue);
 
             using var scope = scopeProvider.Push(exportedItems);
 
@@ -45,7 +46,6 @@ namespace OpenTelemetry.Logs.Tests
             logRecord.StateValues = state;
 
             exporter.OnEnd(logRecord);
-            exporter.Shutdown();
 
             state.Dispose();
 
@@ -71,6 +71,8 @@ namespace OpenTelemetry.Logs.Tests
                 null);
 
             Assert.True(foundScope);
+
+            exporter.Shutdown();
         }
 
         [Fact]
