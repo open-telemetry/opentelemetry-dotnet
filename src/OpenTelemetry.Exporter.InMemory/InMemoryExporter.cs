@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Exporter
@@ -23,6 +24,7 @@ namespace OpenTelemetry.Exporter
     {
         private readonly ICollection<T> exportedItems;
         private readonly ExportFunc onExport;
+        private bool disposed;
 
         public InMemoryExporter(ICollection<T> exportedItems)
         {
@@ -37,7 +39,27 @@ namespace OpenTelemetry.Exporter
 
         internal delegate ExportResult ExportFunc(in Batch<T> batch);
 
-        public override ExportResult Export(in Batch<T> batch) => this.onExport(batch);
+        public override ExportResult Export(in Batch<T> batch)
+        {
+            if (this.disposed)
+            {
+                // Note: In-memory exporter is designed for testing purposes so this error is strategic to surface lifecycle management bugs during development.
+                throw new ObjectDisposedException(this.GetType().Name, "The in-memory exporter is still being invoked after it has been disposed. This could be the result of invalid lifecycle management of the OpenTelemetry .NET SDK.");
+            }
+
+            return this.onExport(batch);
+        }
+
+        /// <inheritdoc/>
+        protected override void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                this.disposed = true;
+            }
+
+            base.Dispose(disposing);
+        }
 
         private ExportResult DefaultExport(in Batch<T> batch)
         {
