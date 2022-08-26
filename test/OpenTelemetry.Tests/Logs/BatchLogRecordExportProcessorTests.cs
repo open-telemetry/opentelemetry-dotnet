@@ -45,6 +45,7 @@ namespace OpenTelemetry.Logs.Tests
             logRecord.StateValues = state;
 
             exporter.OnEnd(logRecord);
+            exporter.Shutdown();
 
             state.Dispose();
 
