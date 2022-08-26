@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 
 namespace OpenTelemetry.Exporter
@@ -23,6 +24,7 @@ namespace OpenTelemetry.Exporter
     {
         private readonly ICollection<T> exportedItems;
         private readonly ExportFunc onExport;
+        private bool disposed = false;
 
         public InMemoryExporter(ICollection<T> exportedItems)
         {
@@ -37,7 +39,26 @@ namespace OpenTelemetry.Exporter
 
         internal delegate ExportResult ExportFunc(in Batch<T> batch);
 
-        public override ExportResult Export(in Batch<T> batch) => this.onExport(batch);
+        public override ExportResult Export(in Batch<T> batch)
+        {
+            if (this.disposed)
+            {
+                throw new ObjectDisposedException(this.GetType().Name);
+            }
+
+            return this.onExport(batch);
+        }
+
+        /// <inheritdoc/>
+        protected override void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                this.disposed = true;
+            }
+
+            base.Dispose(disposing);
+        }
 
         private ExportResult DefaultExport(in Batch<T> batch)
         {
