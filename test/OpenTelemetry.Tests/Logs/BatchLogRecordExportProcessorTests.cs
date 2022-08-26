@@ -90,7 +90,7 @@ namespace OpenTelemetry.Logs.Tests
             logRecord.State = state;
 
             exporter.OnEnd(logRecord);
-            exporter.ForceFlush();
+            exporter.Shutdown();
 
             state.Dispose();
 
