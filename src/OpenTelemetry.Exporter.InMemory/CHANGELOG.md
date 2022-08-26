@@ -5,6 +5,7 @@
 * Changed error handling, `InMemoryExporter` will now throw
   `ObjectDisposedException` if `Export` is invoked after the exporter is
   disposed.
+  ([#3607](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3607))
 
 ## 1.4.0-alpha.2
 
