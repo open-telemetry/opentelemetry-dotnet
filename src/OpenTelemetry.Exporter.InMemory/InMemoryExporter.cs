@@ -24,7 +24,7 @@ namespace OpenTelemetry.Exporter
     {
         private readonly ICollection<T> exportedItems;
         private readonly ExportFunc onExport;
-        private bool disposed = false;
+        private bool disposed;
 
         public InMemoryExporter(ICollection<T> exportedItems)
         {
@@ -43,7 +43,8 @@ namespace OpenTelemetry.Exporter
         {
             if (this.disposed)
             {
-                throw new ObjectDisposedException(this.GetType().Name);
+                // Since in-memory exporter is designed for testing purpose, having an early error would help developers to catch the bug during early stage of the development.
+                throw new ObjectDisposedException(this.GetType().Name, "The in-memory exporter is still being invoked after it is disposed. This indicates a wrong use of the OpenTelemetry .NET SDK, where the object lifecycle is not properly managed.");
             }
 
             return this.onExport(batch);
