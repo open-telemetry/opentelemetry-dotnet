@@ -115,22 +115,22 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             if (statusCode == 503)
             {
-                Assert.Equal(Status.Error.StatusCode, activity.GetStatus().StatusCode);
+                Assert.Equal(ActivityStatusCode.Error, activity.Status);
             }
             else
             {
-                Assert.Equal(Status.Unset, activity.GetStatus());
+                Assert.Equal(ActivityStatusCode.Unset, activity.Status);
             }
 
             // Instrumentation is not expected to set status description
             // as the reason can be inferred from SemanticConventions.AttributeHttpStatusCode
             if (!urlPath.EndsWith("exception"))
             {
-                Assert.True(string.IsNullOrEmpty(activity.GetStatus().Description));
+                Assert.True(string.IsNullOrEmpty(activity.StatusDescription));
             }
             else
             {
-                Assert.Equal("exception description", activity.GetStatus().Description);
+                Assert.Equal("exception description", activity.StatusDescription);
             }
 
             if (recordException)

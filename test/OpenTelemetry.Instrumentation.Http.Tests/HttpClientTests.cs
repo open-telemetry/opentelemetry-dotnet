@@ -110,13 +110,11 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             Assert.Equal(tc.SpanName, activity.DisplayName);
 
             // Assert.Equal(tc.SpanStatus, d[span.Status.CanonicalCode]);
-            Assert.Equal(
-                    tc.SpanStatus,
-                    activity.GetTagValue(SpanAttributeConstants.StatusCodeKey) as string);
+            Assert.Equal(tc.SpanStatus, activity.Status.ToString());
 
             if (tc.SpanStatusHasDescription.HasValue)
             {
-                var desc = activity.GetTagValue(SpanAttributeConstants.StatusDescriptionKey) as string;
+                var desc = activity.StatusDescription;
                 Assert.Equal(tc.SpanStatusHasDescription.Value, !string.IsNullOrEmpty(desc));
             }
 
@@ -194,7 +192,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
                     ""responseCode"": 399,
                     ""responseExpected"": true,
                     ""spanName"": ""HTTP GET"",
-                    ""spanStatus"": ""UNSET"",
+                    ""spanStatus"": ""Unset"",
                     ""spanKind"": ""Client"",
                     ""spanAttributes"": {
                       ""http.scheme"": ""http"",
