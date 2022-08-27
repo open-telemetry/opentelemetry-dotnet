@@ -141,14 +141,14 @@ namespace OpenTelemetry.Trace
             var result = 1;
             result = (31 * result) + this.Decision.GetHashCode();
             result = (31 * result) + this.Attributes.GetHashCode();
-            result = (31 * result) + this.TraceStateString.GetHashCode();
+            result = this.TraceStateString == null ? result : (result * 31) + this.TraceStateString.GetHashCode();
             return result;
         }
 
         /// <inheritdoc/>
         public bool Equals(SamplingResult other)
         {
-            return this.Decision == other.Decision && this.Attributes.SequenceEqual(other.Attributes) && this.TraceStateString.Equals(other.TraceStateString);
+            return this.Decision == other.Decision && this.Attributes.SequenceEqual(other.Attributes) && this.TraceStateString == other.TraceStateString;
         }
     }
 }
