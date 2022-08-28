@@ -36,6 +36,7 @@
     "struct",
     "tbody",
     "thead",
+    "tracestate",
     "triager",
     "umesan",
     "unencrypted",
