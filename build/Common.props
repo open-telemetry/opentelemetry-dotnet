@@ -22,15 +22,15 @@
       Please sort alphabetically.
       Refer to https://docs.microsoft.com/nuget/concepts/package-versioning for semver syntax.
     -->
-    <MinVerPkgVer>[4.1.0,5.0)</MinVerPkgVer>
+    <MinVerPkgVer>[4.2.0,5.0)</MinVerPkgVer>
     <GoogleProtobufPkgVer>[3.19.4,4.0)</GoogleProtobufPkgVer>
     <GrpcPkgVer>[2.44.0,3.0)</GrpcPkgVer>
     <GrpcNetClientPkgVer>[2.43.0,3.0)</GrpcNetClientPkgVer>
     <GrpcToolsPkgVer>[2.44.0,3.0)</GrpcToolsPkgVer>
     <MicrosoftAspNetCoreHttpAbstractionsPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpAbstractionsPkgVer>
     <MicrosoftAspNetCoreHttpFeaturesPkgVer>[2.1.1,6.0)</MicrosoftAspNetCoreHttpFeaturesPkgVer>
-    <MicrosoftCodeAnalysisAnalyzersPkgVer>[3.3.1]</MicrosoftCodeAnalysisAnalyzersPkgVer>
-    <MicrosoftCodeCoveragePkgVer>[16.10.0]</MicrosoftCodeCoveragePkgVer>
+    <MicrosoftCodeAnalysisAnalyzersPkgVer>[3.3.3]</MicrosoftCodeAnalysisAnalyzersPkgVer>
+    <MicrosoftCodeCoveragePkgVer>[17.3.0]</MicrosoftCodeCoveragePkgVer>
     <MicrosoftExtensionsHostingAbstractionsPkgVer>[2.1.0,)</MicrosoftExtensionsHostingAbstractionsPkgVer>
     <MicrosoftExtensionsLoggingPkgVer>[3.1.0,)</MicrosoftExtensionsLoggingPkgVer>
     <MicrosoftExtensionsLoggingConfigurationPkgVer>[3.1.0,)</MicrosoftExtensionsLoggingConfigurationPkgVer>
@@ -40,7 +40,7 @@
     <OpenTracingPkgVer>[0.12.1,0.13)</OpenTracingPkgVer>
     <OTelPreviousStableVer>1.3.0</OTelPreviousStableVer>
     <SerilogPkgVer>[2.8.0,3.0)</SerilogPkgVer>
-    <StyleCopAnalyzersPkgVer>[1.2.0-beta.354,2.0)</StyleCopAnalyzersPkgVer>
+    <StyleCopAnalyzersPkgVer>[1.2.0-beta.435,2.0)</StyleCopAnalyzersPkgVer>
     <SystemCollectionsImmutablePkgVer>1.4.0</SystemCollectionsImmutablePkgVer>
     <SystemDiagnosticSourcePkgVer>7.0.0-preview.7.22375.6</SystemDiagnosticSourcePkgVer>
     <SystemReflectionEmitLightweightPkgVer>4.7.0</SystemReflectionEmitLightweightPkgVer>
