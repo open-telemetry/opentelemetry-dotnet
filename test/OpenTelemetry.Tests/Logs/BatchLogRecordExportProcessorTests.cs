@@ -32,8 +32,9 @@ namespace OpenTelemetry.Logs.Tests
 
             List<LogRecord> exportedItems = new();
 
-            using var exporter = new BatchLogRecordExportProcessor(
-                new InMemoryExporter<LogRecord>(exportedItems));
+            using var processor = new BatchLogRecordExportProcessor(
+                new InMemoryExporter<LogRecord>(exportedItems),
+                scheduledDelayMilliseconds: int.MaxValue);
 
             using var scope = scopeProvider.Push(exportedItems);
 
@@ -44,7 +45,7 @@ namespace OpenTelemetry.Logs.Tests
             logRecord.ScopeProvider = scopeProvider;
             logRecord.StateValues = state;
 
-            exporter.OnEnd(logRecord);
+            processor.OnEnd(logRecord);
 
             state.Dispose();
 
@@ -70,6 +71,10 @@ namespace OpenTelemetry.Logs.Tests
                 null);
 
             Assert.True(foundScope);
+
+            processor.Shutdown();
+
+            Assert.Single(exportedItems);
         }
 
         [Fact]
@@ -81,7 +86,7 @@ namespace OpenTelemetry.Logs.Tests
             // StateValues/ParseStateValues behavior.
             List<LogRecord> exportedItems = new();
 
-            using var exporter = new BatchLogRecordExportProcessor(
+            using var processor = new BatchLogRecordExportProcessor(
                 new InMemoryExporter<LogRecord>(exportedItems));
 
             var logRecord = new LogRecord();
@@ -89,7 +94,8 @@ namespace OpenTelemetry.Logs.Tests
             var state = new LogRecordTest.DisposingState("Hello world");
             logRecord.State = state;
 
-            exporter.OnEnd(logRecord);
+            processor.OnEnd(logRecord);
+            processor.Shutdown();
 
             state.Dispose();
 

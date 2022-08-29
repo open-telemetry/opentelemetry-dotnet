@@ -1,4 +1,4 @@
-// <copyright file="TracerProviderBuilderSdk.cs" company="OpenTelemetry Authors">
+// <copyright file="ErrorController.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,11 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+using Microsoft.AspNetCore.Mvc;
 
-namespace OpenTelemetry.Trace
+namespace TestApp.AspNetCore.Controllers
 {
-    internal sealed class TracerProviderBuilderSdk : TracerProviderBuilderBase
+    [Route("api/[controller]")]
+    public class ErrorController : Controller
     {
-        internal TracerProvider BuildSdk() => this.Build();
+        // GET api/error
+        [HttpGet]
+        public string Get()
+        {
+            throw new Exception("something's wrong!");
+        }
     }
 }
