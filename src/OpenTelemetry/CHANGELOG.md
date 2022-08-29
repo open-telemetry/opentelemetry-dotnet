@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Allows samplers the ability to modify tracestate if desired.
+  ([#3610](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3610))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18
