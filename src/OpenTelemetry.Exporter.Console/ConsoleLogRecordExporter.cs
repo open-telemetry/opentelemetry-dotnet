@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
@@ -23,7 +24,10 @@ namespace OpenTelemetry.Exporter
     public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
     {
         private const int RightPaddingLength = 35;
+        private readonly object disposeLockObj = new();
         private bool disposed = false;
+        private string disposedStackTrace;
+        private bool isDisposeMessageSent = false;
 
         public ConsoleLogRecordExporter(ConsoleExporterOptions options)
             : base(options)
@@ -32,13 +36,14 @@ namespace OpenTelemetry.Exporter
 
         public override ExportResult Export(in Batch<LogRecord> batch)
         {
+            if (this.disposed)
+            {
+                this.SendDisposedMessage();
+                return ExportResult.Failure;
+            }
+
             foreach (var logRecord in batch)
             {
-                if (this.disposed)
-                {
-                    this.WriteLine("Something is wrong: the ConsoleLogger has been disposed.");
-                }
-
                 this.WriteLine($"{"LogRecord.Timestamp:",-RightPaddingLength}{logRecord.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
 
                 if (logRecord.TraceId != default)
@@ -138,9 +143,33 @@ namespace OpenTelemetry.Exporter
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
+            lock (this.disposeLockObj)
             {
-                this.disposed = true;
+                if (!this.disposed)
+                {
+                    this.disposed = true;
+                    this.disposedStackTrace = Environment.StackTrace;
+                }
+            }
+
+            base.Dispose(disposing);
+        }
+
+        private void SendDisposedMessage()
+        {
+            lock (this.disposeLockObj)
+            {
+                if (this.isDisposeMessageSent)
+                {
+                    return;
+                }
+
+                this.isDisposeMessageSent = true;
+
+                this.WriteLine("The console exporter is still being invoked after it has been disposed. This could be the result of invalid lifecycle management of the OpenTelemetry .NET SDK.");
+                this.WriteLine(Environment.StackTrace);
+                this.WriteLine(Environment.NewLine + "The console exporter has been disposed");
+                this.WriteLine(this.disposedStackTrace);
             }
         }
     }
