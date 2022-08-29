@@ -77,6 +77,118 @@ namespace OpenTelemetry.Trace.Tests
         [InlineData(SamplingDecision.Drop)]
         [InlineData(SamplingDecision.RecordOnly)]
         [InlineData(SamplingDecision.RecordAndSample)]
+        public void TracerProviderSdkSamplerAttributesAreAppliedToLegacyActivity(SamplingDecision samplingDecision)
+        {
+            var testSampler = new TestSampler
+            {
+                SamplingAction = (samplingParams) =>
+                {
+                    var attributes = new Dictionary<string, object>
+                    {
+                        { "tagkeybysampler", "tagvalueaddedbysampler" },
+                    };
+                    return new SamplingResult(samplingDecision, attributes);
+                },
+            };
+
+            var operationNameForLegacyActivity = "TestOperationName";
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .SetSampler(testSampler)
+                        .AddLegacySource(operationNameForLegacyActivity)
+                        .Build();
+
+            Activity activity = new Activity(operationNameForLegacyActivity);
+            activity.Start();
+            Assert.NotNull(activity);
+            if (samplingDecision != SamplingDecision.Drop)
+            {
+                Assert.Contains(new KeyValuePair<string, object>("tagkeybysampler", "tagvalueaddedbysampler"), activity.TagObjects);
+            }
+
+            activity.Stop();
+        }
+
+        [Theory]
+        [InlineData(SamplingDecision.Drop)]
+        [InlineData(SamplingDecision.RecordOnly)]
+        [InlineData(SamplingDecision.RecordAndSample)]
+        public void SamplersCanModifyTraceStateOnLegacyActivity(SamplingDecision samplingDecision)
+        {
+            var existingTraceState = "a=1,b=2";
+            var newTraceState = "a=1,b=2,c=3,d=4";
+            var testSampler = new TestSampler
+            {
+                SamplingAction = (samplingParams) =>
+                {
+                    Assert.Equal(existingTraceState, samplingParams.ParentContext.TraceState);
+                    return new SamplingResult(samplingDecision, newTraceState);
+                },
+            };
+
+            var operationNameForLegacyActivity = "TestOperationName";
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .SetSampler(testSampler)
+                        .AddLegacySource(operationNameForLegacyActivity)
+                        .Build();
+
+            Activity parentActivity = new Activity("Foo");
+            parentActivity.TraceStateString = existingTraceState;
+            parentActivity.Start();
+
+            Activity activity = new Activity(operationNameForLegacyActivity);
+            activity.Start();
+            Assert.NotNull(activity);
+            if (samplingDecision != SamplingDecision.Drop)
+            {
+                Assert.Equal(newTraceState, activity.TraceStateString);
+            }
+
+            activity.Stop();
+            parentActivity.Stop();
+        }
+
+        [Theory]
+        [InlineData(SamplingDecision.Drop)]
+        [InlineData(SamplingDecision.RecordOnly)]
+        [InlineData(SamplingDecision.RecordAndSample)]
+        public void SamplersDoesNotImpactTraceStateWhenUsingNullLegacyActivity(SamplingDecision samplingDecision)
+        {
+            var existingTraceState = "a=1,b=2";
+            var testSampler = new TestSampler
+            {
+                SamplingAction = (samplingParams) =>
+                {
+                    Assert.Equal(existingTraceState, samplingParams.ParentContext.TraceState);
+                    return new SamplingResult(samplingDecision);
+                },
+            };
+
+            var operationNameForLegacyActivity = "TestOperationName";
+            using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+                        .SetSampler(testSampler)
+                        .AddLegacySource(operationNameForLegacyActivity)
+                        .Build();
+
+            Activity parentActivity = new Activity("Foo");
+            parentActivity.TraceStateString = existingTraceState;
+            parentActivity.Start();
+
+            Activity activity = new Activity(operationNameForLegacyActivity);
+            activity.Start();
+            Assert.NotNull(activity);
+            if (samplingDecision != SamplingDecision.Drop)
+            {
+                Assert.Equal(existingTraceState, activity.TraceStateString);
+            }
+
+            activity.Stop();
+            parentActivity.Stop();
+        }
+
+        [Theory]
+        [InlineData(SamplingDecision.Drop)]
+        [InlineData(SamplingDecision.RecordOnly)]
+        [InlineData(SamplingDecision.RecordAndSample)]
         public void SamplersCanModifyTraceState(SamplingDecision sampling)
         {
             var parentTraceState = "a=1,b=2";

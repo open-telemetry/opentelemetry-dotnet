@@ -495,6 +495,11 @@ namespace OpenTelemetry.Trace
                 {
                     activity.SetTag(att.Key, att.Value);
                 }
+
+                if (samplingResult.TraceStateString != null)
+                {
+                    activity.TraceStateString = samplingResult.TraceStateString;
+                }
             }
         }
     }
