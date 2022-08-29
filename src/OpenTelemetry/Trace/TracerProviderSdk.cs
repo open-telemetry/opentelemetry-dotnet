@@ -219,7 +219,7 @@ namespace OpenTelemetry.Trace
             {
                 // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
-                    !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(ref options, sampler) : ActivitySamplingResult.None;
+                    !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(ref options, this.sampler) : ActivitySamplingResult.None;
                 this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
             }
 
