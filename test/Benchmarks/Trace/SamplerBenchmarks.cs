@@ -29,8 +29,8 @@ Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
   DefaultJob : .NET 6.0.8 (6.0.822.36306), X64 RyuJIT
 
 
-|       Method |     Mean |   Error |  StdDev |  Gen 0 | Allocated |
-|------------- |---------:|--------:|--------:|-------:|----------:|
+|       Method        |     Mean |   Error |  StdDev |  Gen 0 | Allocated |
+|------------- -------|---------:|--------:|--------:|-------:|----------:|
 | TraceIdRatioSampler | 608.1 ns | 4.72 ns | 4.19 ns | 0.0992 |     416 B |
 
 */
@@ -43,6 +43,8 @@ namespace Benchmarks.Trace
 
         public SamplerBenchmarks()
         {
+            // TODO: Parameterize ratio.
+            // TODO: Have sampler which modify tracestate
             Sdk.CreateTracerProviderBuilder()
                 .SetSampler(new TraceIdRatioBasedSampler(.5))
                 .AddSource(this.source.Name)
