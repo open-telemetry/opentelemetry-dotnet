@@ -19,6 +19,9 @@ OpenTelemetry.Logs.OpenTelemetryLoggerOptionsExtensions
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.AddProcessor(OpenTelemetry.BaseProcessor<OpenTelemetry.Logs.LogRecord!>! processor) -> OpenTelemetry.Logs.OpenTelemetryLoggerProvider!
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.ForceFlush(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider() -> void
+~OpenTelemetry.Trace.SamplingResult.TraceStateString.get -> string
+~OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, string traceStateString) -> void
+~OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes, string traceStateString) -> void
 *REMOVED*static Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions.AddOpenTelemetry(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, System.Action<OpenTelemetry.Logs.OpenTelemetryLoggerOptions!>? configure = null) -> Microsoft.Extensions.Logging.ILoggingBuilder!
 OpenTelemetry.Trace.ExportActivityProcessorOptions
 OpenTelemetry.Trace.ExportActivityProcessorOptions.BatchExportProcessorOptions.get -> OpenTelemetry.Trace.BatchExportActivityProcessorOptions!
