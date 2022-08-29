@@ -10,6 +10,10 @@ Released 2022-Aug-18
   injection scenarios when configuring `OpenTelemetryLoggerProvider`
   ([#3504](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3504))
 
+* Added support for dependency injection scenarios when configuring
+  `TracerProvider`
+  ([#3533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3533))
+
 ## 1.4.0-alpha.1
 
 Released 2022-Aug-02
