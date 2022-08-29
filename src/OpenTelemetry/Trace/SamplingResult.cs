@@ -79,7 +79,7 @@ namespace OpenTelemetry.Trace
         /// Initializes a new instance of the <see cref="SamplingResult"/> struct.
         /// </summary>
         /// <param name="decision">indicates whether an activity object is recorded and sampled.</param>
-        /// <param name="attributes">Attributes associated with the sampling decision. Attributes list passed to
+        /// <param name="attributes">attributes associated with the sampling decision. Attributes list passed to
         /// this method must be immutable. Mutations of the collection and/or attribute values may lead to unexpected behavior.</param>
         /// <param name="traceStateString">traceStateString associated with the created Activity.</param>
         public SamplingResult(SamplingDecision decision, IEnumerable<KeyValuePair<string, object>> attributes, string traceStateString)
@@ -105,7 +105,7 @@ namespace OpenTelemetry.Trace
         public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
 
         /// <summary>
-        /// Gets the Tracestate.
+        /// Gets the tracestate.
         /// </summary>
         public string TraceStateString { get; }
 
