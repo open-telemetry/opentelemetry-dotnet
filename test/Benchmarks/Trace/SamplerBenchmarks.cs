@@ -75,19 +75,16 @@ namespace Benchmarks.Trace
             Sdk.CreateTracerProviderBuilder()
                 .SetSampler(testSamplerNotModifyTracestate)
                 .AddSource(this.sourceNotModifyTracestate.Name)
-                .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
                 .SetSampler(testSamplerModifyTracestate)
                 .AddSource(this.sourceModifyTracestate.Name)
-                .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
                 .SetSampler(testSamplerAppendTracestate)
                 .AddSource(this.sourceAppendTracestate.Name)
-                .AddProcessor(new DummyActivityProcessor())
                 .Build();
         }
 
@@ -107,10 +104,6 @@ namespace Benchmarks.Trace
         public void SamplerAppendingTraceState()
         {
             using var activity = this.sourceAppendTracestate.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
-        }
-
-        internal class DummyActivityProcessor : BaseProcessor<Activity>
-        {
         }
 
         internal class TestSampler : Sampler
