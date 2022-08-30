@@ -324,7 +324,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Null(actual.ExponentialHistogram);
             Assert.Null(actual.Summary);
 
-            Assert.Equal(true, actual.Sum.IsMonotonic);
+            Assert.True(actual.Sum.IsMonotonic);
 
             var otlpAggregationTemporality = aggregationTemporality == MetricReaderTemporalityPreference.Cumulative
                 ? OtlpMetrics.AggregationTemporality.Cumulative
@@ -413,7 +413,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Null(actual.ExponentialHistogram);
             Assert.Null(actual.Summary);
 
-            Assert.Equal(false, actual.Sum.IsMonotonic);
+            Assert.False(actual.Sum.IsMonotonic);
 
             var otlpAggregationTemporality = aggregationTemporality == MetricReaderTemporalityPreference.Cumulative
                 ? OtlpMetrics.AggregationTemporality.Cumulative
