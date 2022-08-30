@@ -36,7 +36,11 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             using (var provider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
+#if NETFRAMEWORK
+                .AddPrometheusHttpListener()
+#else
                 .AddPrometheusExporter()
+#endif
                 .Build())
             {
                 if (!provider.TryFindExporter(out PrometheusExporter exporter))
