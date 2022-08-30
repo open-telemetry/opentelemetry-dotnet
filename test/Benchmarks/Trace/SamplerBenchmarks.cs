@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Diagnostics;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
@@ -29,9 +30,10 @@ Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
   DefaultJob : .NET 6.0.8 (6.0.822.36306), X64 RyuJIT
 
 
-|              Method |     Mean |    Error |  StdDev |  Gen 0 | Allocated |
-|-------------------- |---------:|---------:|--------:|-------:|----------:|
-| TraceIdRatioSampler | 642.5 ns | 11.22 ns | 9.95 ns | 0.0992 |     416 B |
+|                        Method |     Mean |   Error |  StdDev |  Gen 0 | Allocated |
+|------------------------------ |---------:|--------:|--------:|-------:|----------:|
+| SamplerNotModifyingTraceState | 462.4 ns | 1.90 ns | 1.78 ns | 0.0992 |     416 B |
+|    SamplerModifyingTraceState | 470.3 ns | 1.64 ns | 1.54 ns | 0.0992 |     416 B |
 
 */
 
@@ -39,27 +41,86 @@ namespace Benchmarks.Trace
 {
     public class SamplerBenchmarks
     {
-        private readonly ActivitySource source = new("SamplerBenchmarks");
+        private readonly ActivitySource sourceNotModifyTracestate = new("SamplerNotModifyingTraceState");
+        private readonly ActivitySource sourceModifyTracestate = new("SamplerModifyingTraceState");
+        private readonly ActivitySource sourceAppendTracestate = new("SamplerAppendingTraceState");
+        private readonly ActivityContext parentContext = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, "a=b", true);
 
         public SamplerBenchmarks()
         {
-            // TODO: Parameterize ratio.
-            // TODO: Have sampler which modify tracestate
+            var testSamplerNotModifyTracestate = new TestSampler
+            {
+                SamplingAction = (samplingParams) =>
+                {
+                    return new SamplingResult(SamplingDecision.RecordAndSample);
+                },
+            };
+
+            var testSamplerModifyTracestate = new TestSampler
+            {
+                SamplingAction = (samplingParams) =>
+                {
+                    return new SamplingResult(SamplingDecision.RecordAndSample, "a=b");
+                },
+            };
+
+            var testSamplerAppendTracestate = new TestSampler
+            {
+                SamplingAction = (samplingParams) =>
+                {
+                    return new SamplingResult(SamplingDecision.RecordAndSample, samplingParams.ParentContext.TraceState + ",addedkey=bar");
+                },
+            };
+
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(new TraceIdRatioBasedSampler(.5))
-                .AddSource(this.source.Name)
+                .SetSampler(testSamplerNotModifyTracestate)
+                .AddSource(this.sourceNotModifyTracestate.Name)
+                .AddProcessor(new DummyActivityProcessor())
+                .Build();
+
+            Sdk.CreateTracerProviderBuilder()
+                .SetSampler(testSamplerModifyTracestate)
+                .AddSource(this.sourceModifyTracestate.Name)
+                .AddProcessor(new DummyActivityProcessor())
+                .Build();
+
+            Sdk.CreateTracerProviderBuilder()
+                .SetSampler(testSamplerAppendTracestate)
+                .AddSource(this.sourceAppendTracestate.Name)
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
         }
 
         [Benchmark]
-        public void TraceIdRatioSampler()
+        public void SamplerNotModifyingTraceState()
         {
-            using var activity = this.source.StartActivity("Benchmark");
+            using var activity = this.sourceNotModifyTracestate.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
+        }
+
+        [Benchmark]
+        public void SamplerModifyingTraceState()
+        {
+            using var activity = this.sourceModifyTracestate.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
+        }
+
+        [Benchmark]
+        public void SamplerAppendingTraceState()
+        {
+            using var activity = this.sourceAppendTracestate.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
         }
 
         internal class DummyActivityProcessor : BaseProcessor<Activity>
         {
+        }
+
+        internal class TestSampler : Sampler
+        {
+            public Func<SamplingParameters, SamplingResult> SamplingAction { get; set; }
+
+            public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
+            {
+                return this.SamplingAction?.Invoke(samplingParameters) ?? new SamplingResult(SamplingDecision.RecordAndSample);
+            }
         }
     }
 }
