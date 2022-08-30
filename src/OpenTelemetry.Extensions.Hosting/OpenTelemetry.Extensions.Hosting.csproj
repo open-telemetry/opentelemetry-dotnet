@@ -1,8 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <Description>Startup extensions to register OpenTelemetry into the applications using Microsoft.Extensions.DependencyInjection and Microsoft.Extensions.Hosting</Description>
+    <Description>Contains extensions to register and start OpenTelemetry in applications using Microsoft.Extensions.Hosting</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
   </PropertyGroup>
 
