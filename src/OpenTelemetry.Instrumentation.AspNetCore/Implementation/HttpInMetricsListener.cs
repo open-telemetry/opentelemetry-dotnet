@@ -24,7 +24,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 {
     internal class HttpInMetricsListener : ListenerHandler
     {
-        private readonly PropertyFetcher<HttpContext> stopContextFetcher = new("HttpContext");
         private readonly Meter meter;
         private readonly Histogram<double> httpServerDuration;
 
@@ -37,7 +36,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
         public override void OnStopActivity(Activity activity, object payload)
         {
-            HttpContext context = this.stopContextFetcher.Fetch(payload);
+            HttpContext context = payload as HttpContext;
             if (context == null)
             {
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInMetricsListener), nameof(this.OnStopActivity));
