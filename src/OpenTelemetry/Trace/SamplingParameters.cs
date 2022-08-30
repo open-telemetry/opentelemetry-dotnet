@@ -50,7 +50,7 @@ namespace OpenTelemetry.Trace
             this.TraceId = traceId;
             this.Name = name;
             this.Kind = kind;
-            this.Tags = tags ?? Enumerable.Empty<KeyValuePair<string, object>>();
+            this.Tags = tags;
             this.Links = links;
         }
 
