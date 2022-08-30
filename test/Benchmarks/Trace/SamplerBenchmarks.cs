@@ -32,8 +32,9 @@ Intel Core i7-4790 CPU 3.60GHz (Haswell), 1 CPU, 8 logical and 4 physical cores
 
 |                        Method |     Mean |   Error |  StdDev |  Gen 0 | Allocated |
 |------------------------------ |---------:|--------:|--------:|-------:|----------:|
-| SamplerNotModifyingTraceState | 462.4 ns | 1.90 ns | 1.78 ns | 0.0992 |     416 B |
-|    SamplerModifyingTraceState | 470.3 ns | 1.64 ns | 1.54 ns | 0.0992 |     416 B |
+| SamplerNotModifyingTraceState | 398.6 ns | 7.48 ns | 7.68 ns | 0.0782 |     328 B |
+|    SamplerModifyingTraceState | 411.8 ns | 2.38 ns | 2.11 ns | 0.0782 |     328 B |
+|    SamplerAppendingTraceState | 428.5 ns | 2.54 ns | 2.25 ns | 0.0916 |     384 B |
 
 */
 
