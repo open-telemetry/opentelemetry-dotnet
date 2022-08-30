@@ -135,6 +135,7 @@ namespace OpenTelemetry.Trace.Tests
                 // Validate that the TraceId seen by Sampler is same as the
                 // Activity when it got created.
                 Assert.Equal(rootActivity.TraceId, testSampler.LatestSamplingParameters.TraceId);
+                Assert.Empty(testSampler.LatestSamplingParameters.Tags);
             }
 
             using (var parent = activitySource.StartActivity("parent", ActivityKind.Client))
@@ -142,6 +143,7 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.Equal(parent.TraceId, testSampler.LatestSamplingParameters.TraceId);
                 using var child = activitySource.StartActivity("child");
                 Assert.Equal(child.TraceId, testSampler.LatestSamplingParameters.TraceId);
+                Assert.Empty(testSampler.LatestSamplingParameters.Tags);
                 Assert.Equal(parent.TraceId, child.TraceId);
                 Assert.Equal(parent.SpanId, child.ParentSpanId);
             }
@@ -155,9 +157,18 @@ namespace OpenTelemetry.Trace.Tests
                 activitySource.StartActivity("customContext", ActivityKind.Client, customContext))
             {
                 Assert.Equal(fromCustomContext.TraceId, testSampler.LatestSamplingParameters.TraceId);
+                Assert.Empty(testSampler.LatestSamplingParameters.Tags);
                 Assert.Equal(customContext.TraceId, fromCustomContext.TraceId);
                 Assert.Equal(customContext.SpanId, fromCustomContext.ParentSpanId);
                 Assert.NotEqual(customContext.SpanId, fromCustomContext.SpanId);
+            }
+
+            var initialTags = new ActivityTagsCollection();
+            initialTags["tagA"] = "tagAValue";
+            using (var withInitialTags = activitySource.StartActivity("withInitialTags", ActivityKind.Client, default(ActivityContext), initialTags))
+            {
+                Assert.Equal(withInitialTags.TraceId, testSampler.LatestSamplingParameters.TraceId);
+                Assert.Equal(initialTags, testSampler.LatestSamplingParameters.Tags);
             }
 
             // Validate that when StartActivity is called using Parent as string,
