@@ -143,12 +143,15 @@ namespace OpenTelemetry.Exporter
 
         protected override void Dispose(bool disposing)
         {
-            lock (this.disposeLockObj)
+            if (!this.disposed)
             {
-                if (!this.disposed)
+                lock (this.disposeLockObj)
                 {
-                    this.disposed = true;
-                    this.disposedStackTrace = Environment.StackTrace;
+                    if (!this.disposed)
+                    {
+                        this.disposed = true;
+                        this.disposedStackTrace = Environment.StackTrace;
+                    }
                 }
             }
 
@@ -157,19 +160,19 @@ namespace OpenTelemetry.Exporter
 
         private void SendDisposedMessage()
         {
-            lock (this.disposeLockObj)
+            if (!this.isDisposeMessageSent)
             {
-                if (this.isDisposeMessageSent)
+                lock (this.disposeLockObj)
                 {
-                    return;
+                    if (!this.isDisposeMessageSent)
+                    {
+                        this.isDisposeMessageSent = true;
+                        this.WriteLine("The console exporter is still being invoked after it has been disposed. This could be the result of invalid lifecycle management of the OpenTelemetry .NET SDK.");
+                        this.WriteLine(Environment.StackTrace);
+                        this.WriteLine(Environment.NewLine + "The console exporter has been disposed");
+                        this.WriteLine(this.disposedStackTrace);
+                    }
                 }
-
-                this.isDisposeMessageSent = true;
-
-                this.WriteLine("The console exporter is still being invoked after it has been disposed. This could be the result of invalid lifecycle management of the OpenTelemetry .NET SDK.");
-                this.WriteLine(Environment.StackTrace);
-                this.WriteLine(Environment.NewLine + "The console exporter has been disposed");
-                this.WriteLine(this.disposedStackTrace);
             }
         }
     }
