@@ -899,6 +899,10 @@ namespace OpenTelemetry.Metrics.Tests
 
             exportedItems.Clear();
 
+#if NETFRAMEWORK
+            Thread.Sleep(5000); // Compensates for low resolution timing in netfx.
+#endif
+
             counterLong.Add(10);
             counterLong.Add(-5);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
