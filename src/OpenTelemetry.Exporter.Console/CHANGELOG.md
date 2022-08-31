@@ -2,8 +2,9 @@
 
 ## Unreleased
 
-* Changed error handling, `ConsoleExporter` will only output an error message with two call stacks the first time,
-  then the data will simply be deleted and nothing will be output.
+* Changed error handling, `ConsoleExporter` will only output an error message
+  with two call stacks the first time,
+  then the data will simply be dropped and nothing will be output.
   ([#1848](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1848))
 
 ## 1.4.0-alpha.2
