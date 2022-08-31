@@ -36,7 +36,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
     internal static class ActivityExtensions
     {
         private static readonly ConcurrentBag<OtlpTrace.ScopeSpans> SpanListPool = new();
-        private static readonly Action<RepeatedField<OtlpTrace.Span>, int> RepeatedFieldOfSpanSetCountAction = CreateRepeatedFieldOfSpanSetCountAction();
+        private static Action<RepeatedField<OtlpTrace.Span>, int> RepeatedFieldOfSpanSetCountAction = CreateRepeatedFieldOfSpanSetCountAction();
 
         internal static void AddBatch(
             this OtlpCollector.ExportTraceServiceRequest request,
@@ -77,6 +77,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void Return(this OtlpCollector.ExportTraceServiceRequest request)
         {
+            if (RepeatedFieldOfSpanSetCountAction == null)
+            {
+                return;
+            }
+
             var resourceSpans = request.ResourceSpans.FirstOrDefault();
             if (resourceSpans == null)
             {
@@ -85,7 +90,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             foreach (var scope in resourceSpans.ScopeSpans)
             {
-                RepeatedFieldOfSpanSetCountAction(scope.Spans, 0);
+                try
+                {
+                    RepeatedFieldOfSpanSetCountAction(scope.Spans, 0);
+                }
+                catch
+                {
+                    RepeatedFieldOfSpanSetCountAction = null;
+                    return;
+                }
+
                 SpanListPool.Add(scope);
             }
         }
@@ -292,6 +306,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         private static Action<RepeatedField<OtlpTrace.Span>, int> CreateRepeatedFieldOfSpanSetCountAction()
         {
             FieldInfo repeatedFieldOfSpanCountField = typeof(RepeatedField<OtlpTrace.Span>).GetField("count", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            if (repeatedFieldOfSpanCountField == null)
+            {
+                return null;
+            }
 
             DynamicMethod dynamicMethod = new DynamicMethod(
                 "CreateSetCountAction",
