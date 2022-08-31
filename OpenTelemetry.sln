@@ -244,6 +244,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Tests.Stress.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.AspNetCore", "test\TestApp.AspNetCore\TestApp.AspNetCore.csproj", "{5FDAF679-DE5A-4C73-A49B-8ABCF2399229}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Prometheus.Tests", "test\OpenTelemetry.Exporter.Prometheus.Tests\OpenTelemetry.Exporter.Prometheus.Tests.csproj", "{48509CA5-5CCA-42A5-9B77-3FDA63885C0A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -506,6 +508,10 @@ Global
 		{5FDAF679-DE5A-4C73-A49B-8ABCF2399229}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5FDAF679-DE5A-4C73-A49B-8ABCF2399229}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5FDAF679-DE5A-4C73-A49B-8ABCF2399229}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48509CA5-5CCA-42A5-9B77-3FDA63885C0A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48509CA5-5CCA-42A5-9B77-3FDA63885C0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48509CA5-5CCA-42A5-9B77-3FDA63885C0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48509CA5-5CCA-42A5-9B77-3FDA63885C0A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

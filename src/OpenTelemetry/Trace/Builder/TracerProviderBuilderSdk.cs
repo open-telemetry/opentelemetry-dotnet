@@ -14,10 +14,26 @@
 // limitations under the License.
 // </copyright>
 
+#nullable enable
+
+using Microsoft.Extensions.DependencyInjection;
+
 namespace OpenTelemetry.Trace
 {
     internal sealed class TracerProviderBuilderSdk : TracerProviderBuilderBase
     {
-        internal TracerProvider BuildSdk() => this.Build();
+        public TracerProviderBuilderSdk()
+        {
+        }
+
+        public TracerProviderBuilderSdk(IServiceCollection services)
+            : base(services)
+        {
+        }
+
+        public TracerProviderBuilderSdk(TracerProviderBuilderState state)
+            : base(state)
+        {
+        }
     }
 }

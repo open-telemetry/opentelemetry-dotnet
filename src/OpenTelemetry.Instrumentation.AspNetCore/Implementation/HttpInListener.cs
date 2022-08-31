@@ -21,6 +21,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.GrpcNetClient;
 using OpenTelemetry.Internal;
@@ -42,12 +43,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private const string DiagnosticSourceName = "Microsoft.AspNetCore";
         private const string UnknownHostName = "UNKNOWN-HOST";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
-        private readonly PropertyFetcher<HttpContext> startContextFetcher = new("HttpContext");
-        private readonly PropertyFetcher<HttpContext> stopContextFetcher = new("HttpContext");
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
-        private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new("actionDescriptor");
-        private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new("AttributeRouteInfo");
-        private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new("Template");
         private readonly AspNetCoreInstrumentationOptions options;
 
         public HttpInListener(AspNetCoreInstrumentationOptions options)
@@ -76,7 +72,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
-            _ = this.startContextFetcher.TryFetch(payload, out HttpContext context);
+            HttpContext context = payload as HttpContext;
             if (context == null)
             {
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
@@ -187,7 +183,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                _ = this.stopContextFetcher.TryFetch(payload, out HttpContext context);
+                HttpContext context = payload as HttpContext;
                 if (context == null)
                 {
                     AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
@@ -275,15 +271,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 if (activity.IsAllDataRequested)
                 {
-                    // See https://github.com/aspnet/Mvc/blob/2414db256f32a047770326d14d8b0e2afd49ba49/src/Microsoft.AspNetCore.Mvc.Core/MvcCoreDiagnosticSourceExtensions.cs#L36-L44
-                    // Reflection accessing: ActionDescriptor.AttributeRouteInfo.Template
-                    // The reason to use reflection is to avoid a reference on MVC package.
-                    // This package can be used with non-MVC apps and this logic simply wouldn't run.
-                    // Taking reference on MVC will increase size of deployment for non-MVC apps.
-                    _ = this.beforeActionActionDescriptorFetcher.TryFetch(payload, out var actionDescriptor);
-                    _ = this.beforeActionAttributeRouteInfoFetcher.TryFetch(actionDescriptor, out var attributeRouteInfo);
-                    _ = this.beforeActionTemplateFetcher.TryFetch(attributeRouteInfo, out var template);
-
+                    var beforeActionEventData = payload as BeforeActionEventData;
+                    var template = beforeActionEventData.ActionDescriptor?.AttributeRouteInfo?.Template;
                     if (!string.IsNullOrEmpty(template))
                     {
                         // override the span name that was previously set to the path part of URL.
@@ -302,6 +291,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             if (activity.IsAllDataRequested)
             {
+                // We need to use reflection here as the payload type is not a defined public type.
                 if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
                 {
                     AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnException));
