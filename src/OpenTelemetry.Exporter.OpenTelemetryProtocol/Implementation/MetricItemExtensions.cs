@@ -33,7 +33,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
     internal static class MetricItemExtensions
     {
         private static readonly ConcurrentBag<OtlpMetrics.ScopeMetrics> MetricListPool = new();
-        private static Action<RepeatedField<OtlpMetrics.Metric>, int> RepeatedFieldOfMetricSetCountAction = CreateRepeatedFieldOfMetricSetCountAction();
+        private static Action<RepeatedField<OtlpMetrics.Metric>, int> repeatedFieldOfMetricSetCountAction = CreateRepeatedFieldOfMetricSetCountAction();
 
         internal static void AddMetrics(
             this OtlpCollector.ExportMetricsServiceRequest request,
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void Return(this OtlpCollector.ExportMetricsServiceRequest request)
         {
-            if (RepeatedFieldOfMetricSetCountAction == null)
+            if (repeatedFieldOfMetricSetCountAction == null)
             {
                 return;
             }
@@ -91,11 +91,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             {
                 try
                 {
-                    RepeatedFieldOfMetricSetCountAction(scope.Metrics, 0);
+                    repeatedFieldOfMetricSetCountAction(scope.Metrics, 0);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    RepeatedFieldOfMetricSetCountAction = null;
+                    repeatedFieldOfMetricSetCountAction = null;
                     return;
                 }
 

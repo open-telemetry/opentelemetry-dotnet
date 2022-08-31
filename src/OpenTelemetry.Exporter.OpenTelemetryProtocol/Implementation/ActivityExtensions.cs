@@ -36,7 +36,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
     internal static class ActivityExtensions
     {
         private static readonly ConcurrentBag<OtlpTrace.ScopeSpans> SpanListPool = new();
-        private static Action<RepeatedField<OtlpTrace.Span>, int> RepeatedFieldOfSpanSetCountAction = CreateRepeatedFieldOfSpanSetCountAction();
+        private static Action<RepeatedField<OtlpTrace.Span>, int> repeatedFieldOfSpanSetCountAction = CreateRepeatedFieldOfSpanSetCountAction();
 
         internal static void AddBatch(
             this OtlpCollector.ExportTraceServiceRequest request,
@@ -77,7 +77,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void Return(this OtlpCollector.ExportTraceServiceRequest request)
         {
-            if (RepeatedFieldOfSpanSetCountAction == null)
+            if (repeatedFieldOfSpanSetCountAction == null)
             {
                 return;
             }
@@ -92,11 +92,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
             {
                 try
                 {
-                    RepeatedFieldOfSpanSetCountAction(scope.Spans, 0);
+                    repeatedFieldOfSpanSetCountAction(scope.Spans, 0);
                 }
                 catch
                 {
-                    RepeatedFieldOfSpanSetCountAction = null;
+                    repeatedFieldOfSpanSetCountAction = null;
                     return;
                 }
 
