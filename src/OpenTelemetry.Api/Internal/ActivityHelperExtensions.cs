@@ -259,10 +259,36 @@ namespace OpenTelemetry.Trace
                 ActivityTagObjectsEnumerator = DictionaryEnumerator<string, object, TState>.BuildAllocationFreeForEachDelegate(
                     typeof(Activity).GetField("_tags", BindingFlags.Instance | BindingFlags.NonPublic).FieldType);
 
-            private static readonly DictionaryEnumerator<string, object, TState>.AllocationFreeForEachDelegate
-                ActivityTagsCollectionEnumerator = DictionaryEnumerator<string, object, TState>.BuildAllocationFreeForEachDelegate(typeof(ActivityTagsCollection));
-
             private static readonly DictionaryEnumerator<string, object, TState>.ForEachDelegate ForEachTagValueCallbackRef = ForEachTagValueCallback;
+
+            private static readonly DictionaryEnumerator<string, object, TState>.AllocationFreeForEachDelegate ActivityEventTagsEnumerator;
+
+            private static readonly DictionaryEnumerator<string, object, TState>.AllocationFreeForEachDelegate ActivityLinkTagsEnumerator;
+
+            static ActivityTagsEnumeratorFactory()
+            {
+                var activityEventTagsField = typeof(ActivityEvent).GetField("_tags", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (activityEventTagsField != null)
+                {
+                    // .NET 7 API
+                    ActivityEventTagsEnumerator = DictionaryEnumerator<string, object, TState>.BuildAllocationFreeForEachDelegate(activityEventTagsField.FieldType);
+                }
+                else
+                {
+                    ActivityEventTagsEnumerator = DictionaryEnumerator<string, object, TState>.BuildAllocationFreeForEachDelegate(typeof(ActivityTagsCollection));
+                }
+
+                var activityLinkTagsField = typeof(ActivityLink).GetField("_tags", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (activityLinkTagsField != null)
+                {
+                    // .NET 7 API
+                    ActivityLinkTagsEnumerator = DictionaryEnumerator<string, object, TState>.BuildAllocationFreeForEachDelegate(activityLinkTagsField.FieldType);
+                }
+                else
+                {
+                    ActivityLinkTagsEnumerator = DictionaryEnumerator<string, object, TState>.BuildAllocationFreeForEachDelegate(typeof(ActivityTagsCollection));
+                }
+            }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static void Enumerate(Activity activity, ref TState state)
@@ -290,7 +316,7 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                ActivityTagsCollectionEnumerator(
+                ActivityLinkTagsEnumerator(
                     tags,
                     ref state,
                     ForEachTagValueCallbackRef);
@@ -306,7 +332,7 @@ namespace OpenTelemetry.Trace
                     return;
                 }
 
-                ActivityTagsCollectionEnumerator(
+                ActivityEventTagsEnumerator(
                     tags,
                     ref state,
                     ForEachTagValueCallbackRef);
