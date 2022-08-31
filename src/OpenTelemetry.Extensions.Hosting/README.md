@@ -45,27 +45,27 @@ Similar methods exist for registering instrumentation (`AddInstrumentation<T>`)
 and setting a sampler (`SetSampler<T>`).
 
 You can also access the application `IServiceProvider` directly and accomplish
-the same registration using the `Configure` extension like this:
+the same registration using the `ConfigureBuilder` extension like this:
 
 ```csharp
 services.AddSingleton<MyProcessor>();
 
 services.AddOpenTelemetryTracing(hostingBuilder => hostingBuilder
-    .Configure((sp, builder) => builder
+    .ConfigureBuilder((sp, builder) => builder
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
         .AddProcessor(sp.GetRequiredService<MyProcessor>())));
 ```
 
-**Note:** `Configure` is called _after_ the `IServiceProvider` has been built
+**Note:** `ConfigureBuilder` is called _after_ the `IServiceProvider` has been built
 from the application `IServiceCollection` so any services registered in the
-`Configure` callback will be ignored.
+`ConfigureBuilder` callback will be ignored.
 
 #### Building Extension Methods
 
 Library authors may want to configure the OpenTelemetry `TracerProvider` and
 register application services to provide more complex features. This can be
-accomplished concisely by using the `TracerProviderBuilder.GetServices`
+accomplished concisely by using the `TracerProviderBuilder.ConfigureServices`
 extension method inside of a more general `TracerProviderBuilder` configuration
 extension like this:
 
@@ -74,15 +74,13 @@ public static class MyLibraryExtensions
 {
     public static TracerProviderBuilder AddMyFeature(this TracerProviderBuilder tracerProviderBuilder)
     {
-        (tracerProviderBuilder.GetServices()
-            ?? throw new NotSupportedException(
-                "MyFeature requires a hosting TracerProviderBuilder instance."))
-            .AddHostedService<MyHostedService>()
-            .AddSingleton<MyService>()
-            .AddSingleton<MyProcessor>()
-            .AddSingleton<MySampler>();
-
         return tracerProviderBuilder
+            .ConfigureServices(services =>
+                services
+                    .AddHostedService<MyHostedService>()
+                    .AddSingleton<MyService>()
+                    .AddSingleton<MyProcessor>()
+                    .AddSingleton<MySampler>())
             .AddProcessor<MyProcessor>()
             .SetSampler<MySampler>();
     }

@@ -2,12 +2,25 @@
 
 ## Unreleased
 
+* Fix issue where when an application has an ExceptionFilter, the exception data
+  wouldn't be collected.
+  ([#3475](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3475))
+
+## 1.0.0-rc9.6
+
+Released 2022-Aug-18
+
+* Removed `netstandard2.0` and `netstandard2.1` targets. .NET 5 reached EOL
+  in May 2022 and .NET Core 3.1 reaches EOL in December 2022. The
+  instrumentation for ASP.NET Core now requires .NET 6 or later.
+  ([#3567](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3567))
+
 * Fixed an issue where activity started within middleware was modified by
   instrumentation library.
   ([#3498](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3498))
 
-* Updated to use Activity native support from `System.Diagnostics.DiagnosticSource`
-  to set activity status.
+* Updated to use Activity native support from
+  `System.Diagnostics.DiagnosticSource` to set activity status.
   ([#3118](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3118))
   ([#3555](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3555))
 

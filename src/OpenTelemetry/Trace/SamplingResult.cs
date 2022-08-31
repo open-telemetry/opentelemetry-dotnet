@@ -20,7 +20,7 @@ using System.Linq;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Sampling decision.
+    /// Sampling result.
     /// </summary>
     public readonly struct SamplingResult : System.IEquatable<SamplingResult>
     {
@@ -32,6 +32,7 @@ namespace OpenTelemetry.Trace
         {
             this.Decision = decision;
             this.Attributes = Enumerable.Empty<KeyValuePair<string, object>>();
+            this.TraceStateString = null;
         }
 
         /// <summary>
@@ -42,6 +43,7 @@ namespace OpenTelemetry.Trace
         {
             this.Decision = isSampled ? SamplingDecision.RecordAndSample : SamplingDecision.Drop;
             this.Attributes = Enumerable.Empty<KeyValuePair<string, object>>();
+            this.TraceStateString = null;
         }
 
         /// <summary>
@@ -58,6 +60,38 @@ namespace OpenTelemetry.Trace
             // Current implementation has no means to ensure the collection will not be modified by the caller.
             // If this behavior will be abused we must switch to cloning of the collection.
             this.Attributes = attributes;
+            this.TraceStateString = null;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SamplingResult"/> struct.
+        /// </summary>
+        /// <param name="decision">indicates whether an activity object is recorded and sampled.</param>
+        /// <param name="traceStateString">traceStateString associated with the created Activity.</param>
+        public SamplingResult(SamplingDecision decision, string traceStateString)
+        {
+            this.Decision = decision;
+            this.Attributes = Enumerable.Empty<KeyValuePair<string, object>>();
+            this.TraceStateString = traceStateString;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SamplingResult"/> struct.
+        /// </summary>
+        /// <param name="decision">indicates whether an activity object is recorded and sampled.</param>
+        /// <param name="attributes">attributes associated with the sampling decision. Attributes list passed to
+        /// this method must be immutable. Mutations of the collection and/or attribute values may lead to unexpected behavior.</param>
+        /// <param name="traceStateString">traceStateString associated with the created Activity.</param>
+        public SamplingResult(SamplingDecision decision, IEnumerable<KeyValuePair<string, object>> attributes, string traceStateString)
+        {
+            this.Decision = decision;
+
+            // Note: Decision object takes ownership of the collection.
+            // Current implementation has no means to ensure the collection will not be modified by the caller.
+            // If this behavior will be abused we must switch to cloning of the collection.
+            this.Attributes = attributes;
+
+            this.TraceStateString = traceStateString;
         }
 
         /// <summary>
@@ -69,6 +103,11 @@ namespace OpenTelemetry.Trace
         /// Gets a map of attributes associated with the sampling decision.
         /// </summary>
         public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
+
+        /// <summary>
+        /// Gets the tracestate.
+        /// </summary>
+        public string TraceStateString { get; }
 
         /// <summary>
         /// Compare two <see cref="SamplingResult"/> for equality.
@@ -93,7 +132,7 @@ namespace OpenTelemetry.Trace
             }
 
             var that = (SamplingResult)obj;
-            return this.Decision == that.Decision && this.Attributes == that.Attributes;
+            return this.Decision == that.Decision && this.Attributes == that.Attributes && this.TraceStateString == that.TraceStateString;
         }
 
         /// <inheritdoc/>
@@ -102,13 +141,14 @@ namespace OpenTelemetry.Trace
             var result = 1;
             result = (31 * result) + this.Decision.GetHashCode();
             result = (31 * result) + this.Attributes.GetHashCode();
+            result = this.TraceStateString == null ? result : (result * 31) + this.TraceStateString.GetHashCode();
             return result;
         }
 
         /// <inheritdoc/>
         public bool Equals(SamplingResult other)
         {
-            return this.Decision == other.Decision && this.Attributes.SequenceEqual(other.Attributes);
+            return this.Decision == other.Decision && this.Attributes.SequenceEqual(other.Attributes) && this.TraceStateString == other.TraceStateString;
         }
     }
 }

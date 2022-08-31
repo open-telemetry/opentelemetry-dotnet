@@ -19,15 +19,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-#if !NETSTANDARD2_0
 using System.Runtime.CompilerServices;
-#endif
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Diagnostics;
 using OpenTelemetry.Context.Propagation;
-using OpenTelemetry.Internal;
-#if !NETSTANDARD2_0
 using OpenTelemetry.Instrumentation.GrpcNetClient;
-#endif
+using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
@@ -46,12 +43,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         private const string DiagnosticSourceName = "Microsoft.AspNetCore";
         private const string UnknownHostName = "UNKNOWN-HOST";
         private static readonly Func<HttpRequest, string, IEnumerable<string>> HttpRequestHeaderValuesGetter = (request, name) => request.Headers[name];
-        private readonly PropertyFetcher<HttpContext> startContextFetcher = new("HttpContext");
-        private readonly PropertyFetcher<HttpContext> stopContextFetcher = new("HttpContext");
         private readonly PropertyFetcher<Exception> stopExceptionFetcher = new("Exception");
-        private readonly PropertyFetcher<object> beforeActionActionDescriptorFetcher = new("actionDescriptor");
-        private readonly PropertyFetcher<object> beforeActionAttributeRouteInfoFetcher = new("AttributeRouteInfo");
-        private readonly PropertyFetcher<string> beforeActionTemplateFetcher = new("Template");
         private readonly AspNetCoreInstrumentationOptions options;
 
         public HttpInListener(AspNetCoreInstrumentationOptions options)
@@ -80,7 +72,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 return;
             }
 
-            _ = this.startContextFetcher.TryFetch(payload, out HttpContext context);
+            HttpContext context = payload as HttpContext;
             if (context == null)
             {
                 AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStartActivity));
@@ -191,7 +183,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             if (activity.IsAllDataRequested)
             {
-                _ = this.stopContextFetcher.TryFetch(payload, out HttpContext context);
+                HttpContext context = payload as HttpContext;
                 if (context == null)
                 {
                     AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnStopActivity));
@@ -202,7 +194,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 activity.SetTag(SemanticConventions.AttributeHttpStatusCode, response.StatusCode);
 
-#if !NETSTANDARD2_0
                 if (this.options.EnableGrpcAspNetCoreSupport && TryGetGrpcMethod(activity, out var grpcMethod))
                 {
                     AddGrpcAttributes(activity, grpcMethod, context);
@@ -211,12 +202,6 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 {
                     activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
                 }
-#else
-                if (activity.Status == ActivityStatusCode.Unset)
-                {
-                    activity.SetStatus(SpanHelper.ResolveSpanStatusForHttpStatusCode(activity.Kind, response.StatusCode));
-                }
-#endif
 
                 try
                 {
@@ -286,15 +271,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
 
                 if (activity.IsAllDataRequested)
                 {
-                    // See https://github.com/aspnet/Mvc/blob/2414db256f32a047770326d14d8b0e2afd49ba49/src/Microsoft.AspNetCore.Mvc.Core/MvcCoreDiagnosticSourceExtensions.cs#L36-L44
-                    // Reflection accessing: ActionDescriptor.AttributeRouteInfo.Template
-                    // The reason to use reflection is to avoid a reference on MVC package.
-                    // This package can be used with non-MVC apps and this logic simply wouldn't run.
-                    // Taking reference on MVC will increase size of deployment for non-MVC apps.
-                    _ = this.beforeActionActionDescriptorFetcher.TryFetch(payload, out var actionDescriptor);
-                    _ = this.beforeActionAttributeRouteInfoFetcher.TryFetch(actionDescriptor, out var attributeRouteInfo);
-                    _ = this.beforeActionTemplateFetcher.TryFetch(attributeRouteInfo, out var template);
-
+                    var beforeActionEventData = payload as BeforeActionEventData;
+                    var template = beforeActionEventData.ActionDescriptor?.AttributeRouteInfo?.Template;
                     if (!string.IsNullOrEmpty(template))
                     {
                         // override the span name that was previously set to the path part of URL.
@@ -313,6 +291,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
         {
             if (activity.IsAllDataRequested)
             {
+                // We need to use reflection here as the payload type is not a defined public type.
                 if (!this.stopExceptionFetcher.TryFetch(payload, out Exception exc) || exc == null)
                 {
                     AspNetCoreInstrumentationEventSource.Log.NullPayload(nameof(HttpInListener), nameof(this.OnException));
@@ -350,7 +329,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
             var queryString = request.QueryString.Value ?? string.Empty;
             var length = scheme.Length + Uri.SchemeDelimiter.Length + host.Length + pathBase.Length
                          + path.Length + queryString.Length;
-#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
+
             return string.Create(length, (scheme, host, pathBase, path, queryString), (span, parts) =>
             {
                 CopyTo(ref span, parts.scheme);
@@ -369,19 +348,8 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                     }
                 }
             });
-#else
-            return new System.Text.StringBuilder(length)
-                .Append(scheme)
-                .Append(Uri.SchemeDelimiter)
-                .Append(host)
-                .Append(pathBase)
-                .Append(path)
-                .Append(queryString)
-                .ToString();
-#endif
         }
 
-#if !NETSTANDARD2_0
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryGetGrpcMethod(Activity activity, out string grpcMethod)
         {
@@ -429,6 +397,5 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Implementation
                 }
             }
         }
-#endif
     }
 }

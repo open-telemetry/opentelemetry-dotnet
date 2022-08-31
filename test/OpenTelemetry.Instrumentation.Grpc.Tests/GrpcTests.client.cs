@@ -23,7 +23,9 @@ using System.Threading.Tasks;
 using Greet;
 using Grpc.Core;
 using Grpc.Net.Client;
+#if NET6_0_OR_GREATER
 using Microsoft.AspNetCore.Http;
+#endif
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers;
@@ -117,7 +119,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal(0, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
         }
 
-#if !NETFRAMEWORK
+#if NET6_0_OR_GREATER
         [Theory]
         [InlineData(true)]
         [InlineData(false)]

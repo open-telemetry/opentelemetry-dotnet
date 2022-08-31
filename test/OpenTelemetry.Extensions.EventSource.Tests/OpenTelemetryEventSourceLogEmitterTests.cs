@@ -271,7 +271,7 @@ namespace OpenTelemetry.Extensions.EventSource.Tests
             Assert.Equal(4, exportedItems.Count);
 
             var logRecord = exportedItems[1];
-
+            Assert.NotNull(logRecord.StateValues);
             if (enableTplListener)
             {
                 Assert.Contains(logRecord.StateValues, kvp => kvp.Key == "event_source.activity_id");

@@ -136,6 +136,8 @@ namespace OpenTelemetry.Trace.Tests
                 // Validate that the TraceId seen by Sampler is same as the
                 // Activity when it got created.
                 Assert.Equal(rootActivity.TraceId, testSampler.LatestSamplingParameters.TraceId);
+                Assert.Null(testSampler.LatestSamplingParameters.Tags);
+                Assert.Null(testSampler.LatestSamplingParameters.Links);
             }
 
             using (var parent = activitySource.StartActivity("parent", ActivityKind.Client))
@@ -143,6 +145,8 @@ namespace OpenTelemetry.Trace.Tests
                 Assert.Equal(parent.TraceId, testSampler.LatestSamplingParameters.TraceId);
                 using var child = activitySource.StartActivity("child");
                 Assert.Equal(child.TraceId, testSampler.LatestSamplingParameters.TraceId);
+                Assert.Null(testSampler.LatestSamplingParameters.Tags);
+                Assert.Null(testSampler.LatestSamplingParameters.Links);
                 Assert.Equal(parent.TraceId, child.TraceId);
                 Assert.Equal(parent.SpanId, child.ParentSpanId);
             }
@@ -156,9 +160,36 @@ namespace OpenTelemetry.Trace.Tests
                 activitySource.StartActivity("customContext", ActivityKind.Client, customContext))
             {
                 Assert.Equal(fromCustomContext.TraceId, testSampler.LatestSamplingParameters.TraceId);
+                Assert.Null(testSampler.LatestSamplingParameters.Tags);
+                Assert.Null(testSampler.LatestSamplingParameters.Links);
                 Assert.Equal(customContext.TraceId, fromCustomContext.TraceId);
                 Assert.Equal(customContext.SpanId, fromCustomContext.ParentSpanId);
                 Assert.NotEqual(customContext.SpanId, fromCustomContext.SpanId);
+            }
+
+            // Validate that Samplers get the tags passed with Activity creation
+            var initialTags = new ActivityTagsCollection();
+            initialTags["tagA"] = "tagAValue";
+            using (var withInitialTags = activitySource.StartActivity("withInitialTags", ActivityKind.Client, default(ActivityContext), initialTags))
+            {
+                Assert.Equal(withInitialTags.TraceId, testSampler.LatestSamplingParameters.TraceId);
+                Assert.Equal(initialTags, testSampler.LatestSamplingParameters.Tags);
+            }
+
+            // Validate that Samplers get the links passed with Activity creation
+            var links = new List<ActivityLink>();
+            var linkContext1 = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+            var linkContext2 = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded);
+            var link1 = new ActivityLink(linkContext1);
+            var link2 = new ActivityLink(linkContext2);
+            links.Add(link1);
+            links.Add(link2);
+
+            using (var withInitialTags = activitySource.StartActivity("withLinks", ActivityKind.Client, default(ActivityContext), links: links))
+            {
+                Assert.Equal(withInitialTags.TraceId, testSampler.LatestSamplingParameters.TraceId);
+                Assert.Null(testSampler.LatestSamplingParameters.Tags);
+                Assert.Equal(links, testSampler.LatestSamplingParameters.Links);
             }
 
             // Validate that when StartActivity is called using Parent as string,
@@ -603,7 +634,7 @@ namespace OpenTelemetry.Trace.Tests
             Assert.False(emptyActivitySource.HasListeners()); // No ActivityListener for empty ActivitySource added yet
 
             var operationNameForLegacyActivity = "TestOperationName";
-            var activitySourceForLegacyActvity = new ActivitySource("TestActivitySource", "1.0.0");
+            var activitySourceForLegacyActivity = new ActivitySource("TestActivitySource", "1.0.0");
 
             // AddLegacyOperationName chained to TracerProviderBuilder
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -615,7 +646,7 @@ namespace OpenTelemetry.Trace.Tests
 
             Activity activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
-            ActivityInstrumentationHelper.SetActivitySourceProperty(activity, activitySourceForLegacyActvity);
+            ActivityInstrumentationHelper.SetActivitySourceProperty(activity, activitySourceForLegacyActivity);
             activity.Stop();
 
             Assert.True(startCalled); // Processor.OnStart is called since we provided the legacy OperationName
@@ -652,11 +683,11 @@ namespace OpenTelemetry.Trace.Tests
             Assert.False(emptyActivitySource.HasListeners()); // No ActivityListener for empty ActivitySource added yet
 
             var operationNameForLegacyActivity = "TestOperationName";
-            var activitySourceForLegacyActvity = new ActivitySource("TestActivitySource", "1.0.0");
+            var activitySourceForLegacyActivity = new ActivitySource("TestActivitySource", "1.0.0");
 
             // AddLegacyOperationName chained to TracerProviderBuilder
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .AddSource(activitySourceForLegacyActvity.Name) // Add the updated ActivitySource as a Source
+                        .AddSource(activitySourceForLegacyActivity.Name) // Add the updated ActivitySource as a Source
                         .AddLegacySource(operationNameForLegacyActivity)
                         .AddProcessor(testActivityProcessor)
                         .Build();
@@ -665,7 +696,7 @@ namespace OpenTelemetry.Trace.Tests
 
             Activity activity = new Activity(operationNameForLegacyActivity);
             activity.Start();
-            ActivityInstrumentationHelper.SetActivitySourceProperty(activity, activitySourceForLegacyActvity);
+            ActivityInstrumentationHelper.SetActivitySourceProperty(activity, activitySourceForLegacyActivity);
             activity.Stop();
 
             Assert.True(startCalled); // Processor.OnStart is called since we provided the legacy OperationName
@@ -1043,7 +1074,7 @@ namespace OpenTelemetry.Trace.Tests
             Assert.NotNull(resource);
             Assert.NotEqual(Resource.Empty, resource);
             Assert.Single(resource.Attributes);
-            Assert.Equal(resource.Attributes.FirstOrDefault().Key, ResourceSemanticConventions.AttributeServiceName);
+            Assert.Equal(ResourceSemanticConventions.AttributeServiceName, resource.Attributes.FirstOrDefault().Key);
             Assert.Contains("unknown_service", (string)resource.Attributes.FirstOrDefault().Value);
         }
 
