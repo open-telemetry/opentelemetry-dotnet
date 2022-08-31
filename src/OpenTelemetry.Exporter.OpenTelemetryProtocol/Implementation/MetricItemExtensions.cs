@@ -93,7 +93,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
                 {
                     repeatedFieldOfMetricSetCountAction(scope.Metrics, 0);
                 }
-                catch (Exception ex)
+                catch
                 {
                     repeatedFieldOfMetricSetCountAction = null;
                     return;
