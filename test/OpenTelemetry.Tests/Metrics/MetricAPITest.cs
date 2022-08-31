@@ -907,55 +907,35 @@ namespace OpenTelemetry.Metrics.Tests
             counterLong.Add(-5);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             sumReceived = GetLongSum(exportedItems);
-            if (exportDelta)
-            {
-                Assert.Equal(10, sumReceived);
-            }
-            else
-            {
-                Assert.Equal(10, sumReceived);
-            }
+
+            // Same for both cumulative and delta. MetricReaderTemporalityPreference.Delta implies cumulative for UpDownCounters.
+            Assert.Equal(10, sumReceived);
 
             metricPoint = GetFirstMetricPoint(exportedItems);
             Assert.NotNull(metricPoint);
             Assert.True(metricPoint.Value.StartTime >= testStartTime);
             Assert.True(metricPoint.Value.EndTime != default);
-            if (exportDelta)
-            {
-                Assert.Equal(firstRunStartTime, metricPoint.Value.StartTime);
-            }
-            else
-            {
-                Assert.Equal(firstRunStartTime, metricPoint.Value.StartTime);
-            }
+
+            // Same for both cumulative and delta. MetricReaderTemporalityPreference.Delta implies cumulative for UpDownCounters.
+            Assert.Equal(firstRunStartTime, metricPoint.Value.StartTime);
 
             Assert.True(metricPoint.Value.EndTime > firstRunEndTime);
 
             exportedItems.Clear();
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             sumReceived = GetLongSum(exportedItems);
-            if (exportDelta)
-            {
-                Assert.Equal(10, sumReceived);
-            }
-            else
-            {
-                Assert.Equal(10, sumReceived);
-            }
+
+            // Same for both cumulative and delta. MetricReaderTemporalityPreference.Delta implies cumulative for UpDownCounters.
+            Assert.Equal(10, sumReceived);
 
             exportedItems.Clear();
             counterLong.Add(40);
             counterLong.Add(-20);
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             sumReceived = GetLongSum(exportedItems);
-            if (exportDelta)
-            {
-                Assert.Equal(30, sumReceived);
-            }
-            else
-            {
-                Assert.Equal(30, sumReceived);
-            }
+
+            // Same for both cumulative and delta. MetricReaderTemporalityPreference.Delta implies cumulative for UpDownCounters.
+            Assert.Equal(30, sumReceived);
         }
 
         [Theory]
@@ -992,26 +972,16 @@ namespace OpenTelemetry.Metrics.Tests
             exportedItems.Clear();
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             sumReceived = GetLongSum(exportedItems);
-            if (exportDelta)
-            {
-                Assert.Equal(20, sumReceived);
-            }
-            else
-            {
-                Assert.Equal(20, sumReceived);
-            }
+
+            // Same for both cumulative and delta. MetricReaderTemporalityPreference.Delta implies cumulative for UpDownCounters.
+            Assert.Equal(20, sumReceived);
 
             exportedItems.Clear();
             meterProvider.ForceFlush(MaxTimeToAllowForFlush);
             sumReceived = GetLongSum(exportedItems);
-            if (exportDelta)
-            {
-                Assert.Equal(30, sumReceived);
-            }
-            else
-            {
-                Assert.Equal(30, sumReceived);
-            }
+
+            // Same for both cumulative and delta. MetricReaderTemporalityPreference.Delta implies cumulative for UpDownCounters.
+            Assert.Equal(30, sumReceived);
         }
 
         [Theory]
@@ -1098,16 +1068,17 @@ namespace OpenTelemetry.Metrics.Tests
 
             Assert.Equal(3, metricPoints.Count);
 
+            // Same for both cumulative and delta. MetricReaderTemporalityPreference.Delta implies cumulative for UpDownCounters.
             metricPoint1 = metricPoints[0];
-            Assert.Equal(exportDelta ? 10 : 10, metricPoint1.GetSumLong());
+            Assert.Equal(10, metricPoint1.GetSumLong());
             ValidateMetricPointTags(tags1, metricPoint1.Tags);
 
             metricPoint2 = metricPoints[1];
-            Assert.Equal(exportDelta ? 10 : 10, metricPoint2.GetSumLong());
+            Assert.Equal(10, metricPoint2.GetSumLong());
             ValidateMetricPointTags(tags2, metricPoint2.Tags);
 
             metricPoint3 = metricPoints[2];
-            Assert.Equal(exportDelta ? 10 : 10, metricPoint3.GetSumLong());
+            Assert.Equal(10, metricPoint3.GetSumLong());
             ValidateMetricPointTags(tags3, metricPoint3.Tags);
         }
 
