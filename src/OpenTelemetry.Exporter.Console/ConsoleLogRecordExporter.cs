@@ -38,7 +38,21 @@ namespace OpenTelemetry.Exporter
         {
             if (this.disposed)
             {
-                this.SendDisposedMessage();
+                if (!this.isDisposeMessageSent)
+                {
+                    lock (this.disposeLockObj)
+                    {
+                        if (!this.isDisposeMessageSent)
+                        {
+                            this.isDisposeMessageSent = true;
+                            this.WriteLine("The console exporter is still being invoked after it has been disposed. This could be the result of invalid lifecycle management of the OpenTelemetry .NET SDK.");
+                            this.WriteLine(Environment.StackTrace);
+                            this.WriteLine(Environment.NewLine + "The console exporter has been disposed");
+                            this.WriteLine(this.disposedStackTrace);
+                        }
+                    }
+                }
+
                 return ExportResult.Failure;
             }
 
@@ -156,24 +170,6 @@ namespace OpenTelemetry.Exporter
             }
 
             base.Dispose(disposing);
-        }
-
-        private void SendDisposedMessage()
-        {
-            if (!this.isDisposeMessageSent)
-            {
-                lock (this.disposeLockObj)
-                {
-                    if (!this.isDisposeMessageSent)
-                    {
-                        this.isDisposeMessageSent = true;
-                        this.WriteLine("The console exporter is still being invoked after it has been disposed. This could be the result of invalid lifecycle management of the OpenTelemetry .NET SDK.");
-                        this.WriteLine(Environment.StackTrace);
-                        this.WriteLine(Environment.NewLine + "The console exporter has been disposed");
-                        this.WriteLine(this.disposedStackTrace);
-                    }
-                }
-            }
         }
     }
 }
