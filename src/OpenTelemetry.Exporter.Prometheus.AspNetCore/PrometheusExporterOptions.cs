@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.Prometheus
     {
         internal const string DefaultScrapeEndpointPath = "/metrics";
 
-        private int scrapeResponseCacheDurationMilliseconds = 10 * 1000;
+        private int scrapeResponseCacheDurationMilliseconds = 300;
 
         /// <summary>
         /// Gets or sets the path to use for the scraping endpoint. Default value: "/metrics".
@@ -33,7 +33,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         public string ScrapeEndpointPath { get; set; } = DefaultScrapeEndpointPath;
 
         /// <summary>
-        /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 10,000 (10 seconds).
+        /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 300.
         /// </summary>
         /// <remarks>
         /// Note: Specify 0 to disable response caching.

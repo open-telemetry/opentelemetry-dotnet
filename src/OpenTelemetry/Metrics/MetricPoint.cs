@@ -189,10 +189,7 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly long GetHistogramCount()
         {
-            if (this.aggType != AggregationType.Histogram &&
-                this.aggType != AggregationType.HistogramMinMax &&
-                this.aggType != AggregationType.HistogramSumCount &&
-                this.aggType != AggregationType.HistogramSumCountMinMax)
+            if (!this.aggType.IsHistogram())
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramCount));
             }
@@ -210,10 +207,7 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly double GetHistogramSum()
         {
-            if (this.aggType != AggregationType.Histogram &&
-                this.aggType != AggregationType.HistogramMinMax &&
-                this.aggType != AggregationType.HistogramSumCount &&
-                this.aggType != AggregationType.HistogramSumCountMinMax)
+            if (!this.aggType.IsHistogram())
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramSum));
             }
@@ -279,15 +273,50 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly HistogramBuckets GetHistogramBuckets()
         {
-            if (this.aggType != AggregationType.Histogram &&
-                this.aggType != AggregationType.HistogramMinMax &&
-                this.aggType != AggregationType.HistogramSumCount &&
-                this.aggType != AggregationType.HistogramSumCountMinMax)
+            if (!this.aggType.IsHistogram())
             {
                 this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramBuckets));
             }
 
             return this.histogramBuckets;
+        }
+
+        /// <summary>
+        /// Gets the minimum value of the histogram associated with the metric point.
+        /// </summary>
+        /// <remarks>
+        /// Applies to <see cref="MetricType.Histogram"/> metric type.
+        /// </remarks>
+        /// <returns>Minimum value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public double GetHistogramMin()
+        {
+            if (this.aggType != AggregationType.HistogramMinMax &&
+                this.aggType != AggregationType.HistogramSumCountMinMax)
+            {
+                this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramMin));
+            }
+
+            return this.histogramBuckets.SnapshotMin;
+        }
+
+        /// <summary>
+        /// Gets the maximum value of the histogram associated with the metric point.
+        /// </summary>
+        /// <remarks>
+        /// Applies to <see cref="MetricType.Histogram"/> metric type.
+        /// </remarks>
+        /// <returns>Maximum value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public double GetHistogramMax()
+        {
+            if (this.aggType != AggregationType.HistogramMinMax &&
+                this.aggType != AggregationType.HistogramSumCountMinMax)
+            {
+                this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramMax));
+            }
+
+            return this.histogramBuckets.SnapshotMax;
         }
 
         internal readonly MetricPoint Copy()
@@ -556,18 +585,9 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void HistogramUpdate(double number, bool hasBuckets, bool hasMinMax)
         {
-            int i = 0;
-            if (hasBuckets)
-            {
-                for (; i < this.histogramBuckets.ExplicitBounds.Length; i++)
-                {
-                    // Upper bound is inclusive
-                    if (number <= this.histogramBuckets.ExplicitBounds[i])
-                    {
-                        break;
-                    }
-                }
-            }
+            int i = hasBuckets
+                ? this.histogramBuckets.FindBucketIndex(number)
+                : 0;
 
             var sw = default(SpinWait);
             while (true)

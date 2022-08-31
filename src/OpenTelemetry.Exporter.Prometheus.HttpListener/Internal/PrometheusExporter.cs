@@ -33,15 +33,13 @@ namespace OpenTelemetry.Exporter.Prometheus
         /// <summary>
         /// Initializes a new instance of the <see cref="PrometheusExporter"/> class.
         /// </summary>
-        /// <param name="scrapeEndpointPath">Scraping endpoint.</param>
         /// <param name="scrapeResponseCacheDurationMilliseconds">
         /// The cache duration in milliseconds for scrape responses. Default value: 0.
         /// </param>
-        public PrometheusExporter(string scrapeEndpointPath = null, int scrapeResponseCacheDurationMilliseconds = 0)
+        public PrometheusExporter(int scrapeResponseCacheDurationMilliseconds = 0)
         {
             Guard.ThrowIfOutOfRange(scrapeResponseCacheDurationMilliseconds, min: 0);
 
-            this.ScrapeEndpointPath = scrapeEndpointPath ?? "/metrics";
             this.ScrapeResponseCacheDurationMilliseconds = scrapeResponseCacheDurationMilliseconds;
             this.CollectionManager = new PrometheusCollectionManager(this);
         }
@@ -66,8 +64,6 @@ namespace OpenTelemetry.Exporter.Prometheus
         internal PrometheusCollectionManager CollectionManager { get; }
 
         internal int ScrapeResponseCacheDurationMilliseconds { get; }
-
-        internal string ScrapeEndpointPath { get; }
 
         /// <inheritdoc/>
         public override ExportResult Export(in Batch<Metric> metrics)

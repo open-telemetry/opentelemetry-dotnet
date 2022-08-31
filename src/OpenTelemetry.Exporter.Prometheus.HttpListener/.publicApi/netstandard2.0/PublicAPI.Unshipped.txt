@@ -1,6 +1,6 @@
 OpenTelemetry.Exporter.Prometheus.PrometheusHttpListenerOptions
-OpenTelemetry.Exporter.Prometheus.PrometheusHttpListenerOptions.Prefixes.get -> System.Collections.Generic.IReadOnlyCollection<string>
-OpenTelemetry.Exporter.Prometheus.PrometheusHttpListenerOptions.Prefixes.set -> void
+OpenTelemetry.Exporter.Prometheus.PrometheusHttpListenerOptions.UriPrefixes.get -> System.Collections.Generic.IReadOnlyCollection<string>
+OpenTelemetry.Exporter.Prometheus.PrometheusHttpListenerOptions.UriPrefixes.set -> void
 OpenTelemetry.Exporter.Prometheus.PrometheusHttpListenerOptions.PrometheusHttpListenerOptions() -> void
 OpenTelemetry.Exporter.Prometheus.PrometheusHttpListenerOptions.ScrapeEndpointPath.get -> string
 OpenTelemetry.Exporter.Prometheus.PrometheusHttpListenerOptions.ScrapeEndpointPath.set -> void

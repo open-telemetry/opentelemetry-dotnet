@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.0.0-rc9.5
+
+Released 2022-Aug-02
+
 * Update the `ActivitySource.Name` from "OpenTelemetry.SqlClient" to
   "OpenTelemetry.Instrumentation.SqlClient".
   ([#3435](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3435))

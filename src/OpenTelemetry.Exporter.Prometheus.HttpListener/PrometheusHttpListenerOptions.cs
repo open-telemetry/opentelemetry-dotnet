@@ -25,7 +25,7 @@ namespace OpenTelemetry.Exporter.Prometheus
     /// </summary>
     public class PrometheusHttpListenerOptions
     {
-        private IReadOnlyCollection<string> prefixes = new string[] { "http://localhost:9464/" };
+        private IReadOnlyCollection<string> uriPrefixes = new string[] { "http://localhost:9464/" };
 
         /// <summary>
         /// Gets or sets the path to use for the scraping endpoint. Default value: "/metrics".
@@ -33,28 +33,22 @@ namespace OpenTelemetry.Exporter.Prometheus
         public string ScrapeEndpointPath { get; set; } = "/metrics";
 
         /// <summary>
-        /// Gets or sets the prefixes to use for the http listener.
+        /// Gets or sets the URI (Uniform Resource Identifier) prefixes to use for the http listener.
         /// Default value: <c>["http://localhost:9464/"]</c>.
         /// </summary>
-        public IReadOnlyCollection<string> Prefixes
+        public IReadOnlyCollection<string> UriPrefixes
         {
-            get => this.prefixes;
+            get => this.uriPrefixes;
             set
             {
                 Guard.ThrowIfNull(value);
 
-                foreach (string inputUri in value)
+                if (value.Count == 0)
                 {
-                    if (!(Uri.TryCreate(inputUri, UriKind.Absolute, out var uri) &&
-                        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)))
-                    {
-                        throw new ArgumentException(
-                            "Prometheus HttpListener prefix path should be a valid URI with http/https scheme.",
-                            nameof(this.prefixes));
-                    }
+                    throw new ArgumentException("Empty list provided.", nameof(this.UriPrefixes));
                 }
 
-                this.prefixes = value;
+                this.uriPrefixes = value;
             }
         }
     }
