@@ -33,6 +33,10 @@ namespace OpenTelemetry.Trace
     {
         internal readonly TracerProviderBuilderState? State;
 
+        // Builds noop TracerProvider when this flag is set.
+        // This flag is controlled through reflection.
+        private static bool disableTracerProviderBuilder = false;
+
         private readonly bool ownsServices;
         private IServiceCollection? services;
 
@@ -264,7 +268,14 @@ namespace OpenTelemetry.Trace
 
             var serviceProvider = services.BuildServiceProvider();
 
-            return new TracerProviderSdk(serviceProvider, ownsServiceProvider: true);
+            if (!disableTracerProviderBuilder)
+            {
+                return new TracerProviderSdk(serviceProvider, ownsServiceProvider: true);
+            }
+            else
+            {
+                return TracerProvider.Default;
+            }
         }
 
         private static BaseProcessor<Activity> BuildExportProcessor(
