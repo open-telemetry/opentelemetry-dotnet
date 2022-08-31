@@ -17,7 +17,7 @@
 using OpenTelemetry.Tests;
 using Xunit;
 
-namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Tests;
+namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
 public class EventSourceTest
 {
