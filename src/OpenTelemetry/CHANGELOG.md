@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Allows samplers the ability to modify tracestate if desired.
+  ([#3610](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3610))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18
@@ -9,6 +12,10 @@ Released 2022-Aug-18
 * Added `Sdk.CreateLoggerProviderBuilder` method and support for dependency
   injection scenarios when configuring `OpenTelemetryLoggerProvider`
   ([#3504](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3504))
+
+* Added support for dependency injection scenarios when configuring
+  `TracerProvider`
+  ([#3533](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3533))
 
 ## 1.4.0-alpha.1
 
@@ -54,7 +61,7 @@ Released 2022-June-1
   ([#3291](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3291))
 * Add `ConfigureResource` which can replace SetResourceBuilder more succinctly
   in most cases and has greater flexibility (applies to
-  TracerProvicerBuilder, MeterProviderBuilder, OpenTelemetryLoggingOptions).
+  TracerProviderBuilder, MeterProviderBuilder, OpenTelemetryLoggingOptions).
   ([#3307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3307))
 
 ## 1.3.0-beta.2

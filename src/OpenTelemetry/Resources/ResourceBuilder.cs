@@ -25,7 +25,7 @@ namespace OpenTelemetry.Resources
     /// </summary>
     public class ResourceBuilder
     {
-        private readonly List<Resource> resources = new();
+        internal readonly List<Resource> Resources = new();
 
         static ResourceBuilder()
         {
@@ -83,7 +83,7 @@ namespace OpenTelemetry.Resources
         /// <returns><see cref="ResourceBuilder"/> for chaining.</returns>
         public ResourceBuilder Clear()
         {
-            this.resources.Clear();
+            this.Resources.Clear();
 
             return this;
         }
@@ -96,7 +96,7 @@ namespace OpenTelemetry.Resources
         {
             Resource finalResource = Resource.Empty;
 
-            foreach (Resource resource in this.resources)
+            foreach (Resource resource in this.Resources)
             {
                 finalResource = finalResource.Merge(resource);
             }
@@ -112,7 +112,7 @@ namespace OpenTelemetry.Resources
 
             if (resource != null)
             {
-                this.resources.Add(resource);
+                this.Resources.Add(resource);
             }
 
             return this;
@@ -122,7 +122,7 @@ namespace OpenTelemetry.Resources
         {
             Guard.ThrowIfNull(resource);
 
-            this.resources.Add(resource);
+            this.Resources.Add(resource);
 
             return this;
         }

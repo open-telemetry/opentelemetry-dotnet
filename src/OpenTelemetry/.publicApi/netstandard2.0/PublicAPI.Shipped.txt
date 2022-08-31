@@ -58,8 +58,8 @@ OpenTelemetry.SimpleExportProcessor<T>.SimpleExportProcessor(OpenTelemetry.BaseE
 ~OpenTelemetry.Trace.SamplingParameters.Tags.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
 ~OpenTelemetry.Trace.SamplingResult.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>>
 ~OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes) -> void
-~OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation(string instrumentationName, string instrumentationVersion, System.Func<object> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
-~OpenTelemetry.Trace.TracerProviderBuilderBase.Build() -> OpenTelemetry.Trace.TracerProvider
+OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation(string! instrumentationName, string! instrumentationVersion, System.Func<object!>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
+OpenTelemetry.Trace.TracerProviderBuilderBase.Build() -> OpenTelemetry.Trace.TracerProvider!
 override OpenTelemetry.BaseExportProcessor<T>.OnEnd(T! data) -> void
 ~override OpenTelemetry.BatchActivityExportProcessor.OnEnd(System.Diagnostics.Activity data) -> void
 override OpenTelemetry.BatchExportProcessor<T>.OnExport(T! data) -> void
@@ -68,9 +68,9 @@ override OpenTelemetry.BatchExportProcessor<T>.OnExport(T! data) -> void
 ~override OpenTelemetry.SimpleActivityExportProcessor.OnEnd(System.Diagnostics.Activity data) -> void
 override OpenTelemetry.SimpleExportProcessor<T>.OnExport(T! data) -> void
 ~override OpenTelemetry.Trace.SamplingResult.Equals(object obj) -> bool
-~override OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation> instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder
-~override OpenTelemetry.Trace.TracerProviderBuilderBase.AddLegacySource(string operationName) -> OpenTelemetry.Trace.TracerProviderBuilder
-~override OpenTelemetry.Trace.TracerProviderBuilderBase.AddSource(params string[] names) -> OpenTelemetry.Trace.TracerProviderBuilder
+~override OpenTelemetry.Trace.TracerProviderBuilderBase.AddInstrumentation<TInstrumentation>(System.Func<TInstrumentation>! instrumentationFactory) -> OpenTelemetry.Trace.TracerProviderBuilder!
+override OpenTelemetry.Trace.TracerProviderBuilderBase.AddLegacySource(string! operationName) -> OpenTelemetry.Trace.TracerProviderBuilder!
+override OpenTelemetry.Trace.TracerProviderBuilderBase.AddSource(params string![]! names) -> OpenTelemetry.Trace.TracerProviderBuilder!
 override sealed OpenTelemetry.BaseExportProcessor<T>.OnStart(T! data) -> void
 readonly OpenTelemetry.BaseExportProcessor<T>.exporter -> OpenTelemetry.BaseExporter<T!>!
 ~readonly OpenTelemetry.Metrics.BaseExportingMetricReader.exporter -> OpenTelemetry.BaseExporter<OpenTelemetry.Metrics.Metric>
@@ -98,14 +98,14 @@ static OpenTelemetry.Sdk.CreateMeterProviderBuilder() -> OpenTelemetry.Metrics.M
 static OpenTelemetry.Sdk.CreateTracerProviderBuilder() -> OpenTelemetry.Trace.TracerProviderBuilder!
 static OpenTelemetry.Sdk.SetDefaultTextMapPropagator(OpenTelemetry.Context.Propagation.TextMapPropagator! textMapPropagator) -> void
 ~static OpenTelemetry.SuppressInstrumentationScope.Begin(bool value = true) -> System.IDisposable
-~static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, OpenTelemetry.BaseProcessor<System.Diagnostics.Activity> processor) -> OpenTelemetry.Trace.TracerProviderBuilder
-~static OpenTelemetry.Trace.TracerProviderBuilderExtensions.Build(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProvider
-~static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetErrorStatusOnException(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, bool enabled = true) -> OpenTelemetry.Trace.TracerProviderBuilder
-~static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetResourceBuilder(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, OpenTelemetry.Resources.ResourceBuilder resourceBuilder) -> OpenTelemetry.Trace.TracerProviderBuilder
-~static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetSampler(this OpenTelemetry.Trace.TracerProviderBuilder tracerProviderBuilder, OpenTelemetry.Trace.Sampler sampler) -> OpenTelemetry.Trace.TracerProviderBuilder
-~static OpenTelemetry.Trace.TracerProviderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProvider provider, OpenTelemetry.BaseProcessor<System.Diagnostics.Activity> processor) -> OpenTelemetry.Trace.TracerProvider
-~static OpenTelemetry.Trace.TracerProviderExtensions.ForceFlush(this OpenTelemetry.Trace.TracerProvider provider, int timeoutMilliseconds = -1) -> bool
-~static OpenTelemetry.Trace.TracerProviderExtensions.Shutdown(this OpenTelemetry.Trace.TracerProvider provider, int timeoutMilliseconds = -1) -> bool
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, OpenTelemetry.BaseProcessor<System.Diagnostics.Activity!>! processor) -> OpenTelemetry.Trace.TracerProviderBuilder!
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.Build(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder) -> OpenTelemetry.Trace.TracerProvider?
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetErrorStatusOnException(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, bool enabled = true) -> OpenTelemetry.Trace.TracerProviderBuilder!
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetResourceBuilder(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, OpenTelemetry.Resources.ResourceBuilder! resourceBuilder) -> OpenTelemetry.Trace.TracerProviderBuilder!
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetSampler(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, OpenTelemetry.Trace.Sampler! sampler) -> OpenTelemetry.Trace.TracerProviderBuilder!
+static OpenTelemetry.Trace.TracerProviderExtensions.AddProcessor(this OpenTelemetry.Trace.TracerProvider! provider, OpenTelemetry.BaseProcessor<System.Diagnostics.Activity!>! processor) -> OpenTelemetry.Trace.TracerProvider!
+static OpenTelemetry.Trace.TracerProviderExtensions.ForceFlush(this OpenTelemetry.Trace.TracerProvider! provider, int timeoutMilliseconds = -1) -> bool
+static OpenTelemetry.Trace.TracerProviderExtensions.Shutdown(this OpenTelemetry.Trace.TracerProvider! provider, int timeoutMilliseconds = -1) -> bool
 abstract OpenTelemetry.Trace.Sampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
 Microsoft.Extensions.Logging.OpenTelemetryLoggingExtensions
 OpenTelemetry.BaseExporter<T>.BaseExporter() -> void
