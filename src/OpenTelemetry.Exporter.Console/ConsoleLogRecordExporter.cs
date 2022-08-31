@@ -24,10 +24,9 @@ namespace OpenTelemetry.Exporter
     public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
     {
         private const int RightPaddingLength = 35;
-        private readonly object disposeLockObj = new();
-        private bool disposed = false;
+        private bool disposed;
         private string disposedStackTrace;
-        private bool isDisposeMessageSent = false;
+        private bool isDisposeMessageSent;
 
         public ConsoleLogRecordExporter(ConsoleExporterOptions options)
             : base(options)
@@ -40,17 +39,11 @@ namespace OpenTelemetry.Exporter
             {
                 if (!this.isDisposeMessageSent)
                 {
-                    lock (this.disposeLockObj)
-                    {
-                        if (!this.isDisposeMessageSent)
-                        {
-                            this.isDisposeMessageSent = true;
-                            this.WriteLine("The console exporter is still being invoked after it has been disposed. This could be the result of invalid lifecycle management of the OpenTelemetry .NET SDK.");
-                            this.WriteLine(Environment.StackTrace);
-                            this.WriteLine(Environment.NewLine + "The console exporter has been disposed");
-                            this.WriteLine(this.disposedStackTrace);
-                        }
-                    }
+                    this.isDisposeMessageSent = true;
+                    this.WriteLine("The console exporter is still being invoked after it has been disposed. This could be the result of invalid lifecycle management of the OpenTelemetry .NET SDK.");
+                    this.WriteLine(Environment.StackTrace);
+                    this.WriteLine(Environment.NewLine + "Dispose was called on the following stack trace:");
+                    this.WriteLine(this.disposedStackTrace);
                 }
 
                 return ExportResult.Failure;
@@ -159,14 +152,8 @@ namespace OpenTelemetry.Exporter
         {
             if (!this.disposed)
             {
-                lock (this.disposeLockObj)
-                {
-                    if (!this.disposed)
-                    {
-                        this.disposed = true;
-                        this.disposedStackTrace = Environment.StackTrace;
-                    }
-                }
+                this.disposed = true;
+                this.disposedStackTrace = Environment.StackTrace;
             }
 
             base.Dispose(disposing);
