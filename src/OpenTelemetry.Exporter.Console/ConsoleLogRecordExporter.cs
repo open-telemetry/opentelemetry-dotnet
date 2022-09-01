@@ -24,6 +24,7 @@ namespace OpenTelemetry.Exporter
     public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
     {
         private const int RightPaddingLength = 35;
+        private readonly object syncObject = new();
         private bool disposed;
         private string disposedStackTrace;
         private bool isDisposeMessageSent;
@@ -39,7 +40,16 @@ namespace OpenTelemetry.Exporter
             {
                 if (!this.isDisposeMessageSent)
                 {
-                    this.isDisposeMessageSent = true;
+                    lock (this.syncObject)
+                    {
+                        if (this.isDisposeMessageSent)
+                        {
+                            return ExportResult.Failure;
+                        }
+
+                        this.isDisposeMessageSent = true;
+                    }
+
                     this.WriteLine("The console exporter is still being invoked after it has been disposed. This could be the result of invalid lifecycle management of the OpenTelemetry .NET SDK.");
                     this.WriteLine(Environment.StackTrace);
                     this.WriteLine(Environment.NewLine + "Dispose was called on the following stack trace:");

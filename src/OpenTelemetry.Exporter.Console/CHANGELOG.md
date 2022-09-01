@@ -2,9 +2,8 @@
 
 ## Unreleased
 
-* Changed error handling, `ConsoleExporter` will output error messages,
-  tell user where dispose happened and drop the data
-  if `Export` is invoked after the exporter is disposed.
+* Changed the behavior of `ConsoleExporter`, the exporter will stop outputting
+  the data if it is disposed.
   ([#1848](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1848))
 
 ## 1.4.0-alpha.2
