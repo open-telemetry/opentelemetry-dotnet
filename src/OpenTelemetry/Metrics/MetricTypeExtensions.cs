@@ -24,11 +24,11 @@ namespace OpenTelemetry.Metrics
 
         internal const MetricType METRIC_TYPE_MASK = (MetricType)0xf0;
 
-        internal const MetricType METRIC_TYPE_SUM = (MetricType)0x10;
+        internal const MetricType METRIC_TYPE_MONOTONIC_SUM = (MetricType)0x10;
         internal const MetricType METRIC_TYPE_GAUGE = (MetricType)0x20;
         /* internal const byte METRIC_TYPE_SUMMARY = 0x30; // not used */
         internal const MetricType METRIC_TYPE_HISTOGRAM = (MetricType)0x40;
-        internal const MetricType METRIC_TYPE_SUM_NON_MONOTONIC = (MetricType)0x80;
+        internal const MetricType METRIC_TYPE_NON_MONOTONIC_SUM = (MetricType)0x80;
 
         internal const MetricType POINT_KIND_MASK = (MetricType)0x0f;
 
@@ -48,7 +48,7 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsSum(this MetricType self)
         {
-            return (self & METRIC_TYPE_MASK) == METRIC_TYPE_SUM || (self & METRIC_TYPE_MASK) == METRIC_TYPE_SUM_NON_MONOTONIC;
+            return (self & METRIC_TYPE_MASK) == METRIC_TYPE_MONOTONIC_SUM || (self & METRIC_TYPE_MASK) == METRIC_TYPE_NON_MONOTONIC_SUM;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
