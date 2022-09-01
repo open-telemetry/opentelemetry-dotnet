@@ -201,7 +201,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
 
             var counter = meter.CreateUpDownCounter<double>("test_updown_counter");
             counter.Add(10);
-            counter.Add(-5);
+            counter.Add(-11);
 
             provider.ForceFlush();
 
@@ -209,7 +209,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
             Assert.Matches(
                 ("^"
                     + "# TYPE test_updown_counter gauge\n"
-                    + "test_updown_counter 5 \\d+\n"
+                    + "test_updown_counter -1 \\d+\n"
                     + "$").Replace('\'', '"'),
                 Encoding.UTF8.GetString(buffer, 0, cursor));
         }
