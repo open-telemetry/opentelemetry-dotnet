@@ -48,7 +48,8 @@ namespace OpenTelemetry.Metrics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsSum(this MetricType self)
         {
-            return (self & METRIC_TYPE_MASK) == METRIC_TYPE_MONOTONIC_SUM || (self & METRIC_TYPE_MASK) == METRIC_TYPE_NON_MONOTONIC_SUM;
+            var type = self & METRIC_TYPE_MASK;
+            return type == METRIC_TYPE_MONOTONIC_SUM || type == METRIC_TYPE_NON_MONOTONIC_SUM;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
