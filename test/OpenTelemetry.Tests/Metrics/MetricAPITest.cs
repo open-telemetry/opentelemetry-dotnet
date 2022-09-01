@@ -586,7 +586,7 @@ namespace OpenTelemetry.Metrics.Tests
             exportedItems.Clear();
 
 #if NETFRAMEWORK
-            Thread.Sleep(5000); // Compensates for low resolution timing in netfx.
+            Thread.Sleep(10); // Compensates for low resolution timing in netfx.
 #endif
 
             counterLong.Add(10);
@@ -900,7 +900,7 @@ namespace OpenTelemetry.Metrics.Tests
             exportedItems.Clear();
 
 #if NETFRAMEWORK
-            Thread.Sleep(5000); // Compensates for low resolution timing in netfx.
+            Thread.Sleep(10); // Compensates for low resolution timing in netfx.
 #endif
 
             counterLong.Add(10);
