@@ -107,7 +107,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static OtlpTrace.ScopeSpans GetSpanListFromPool(string name, string version)
         {
-            if (!SpanListPool.TryTake(out var spans))
+            if (repeatedFieldOfSpanSetCountAction == null || !SpanListPool.TryTake(out var spans))
             {
                 spans = new OtlpTrace.ScopeSpans
                 {

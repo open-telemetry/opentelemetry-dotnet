@@ -106,7 +106,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static OtlpMetrics.ScopeMetrics GetMetricListFromPool(string name, string version)
         {
-            if (!MetricListPool.TryTake(out var metrics))
+            if (repeatedFieldOfMetricSetCountAction == null || !MetricListPool.TryTake(out var metrics))
             {
                 metrics = new OtlpMetrics.ScopeMetrics
                 {
