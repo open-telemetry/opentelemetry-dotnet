@@ -33,7 +33,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
     internal static class MetricItemExtensions
     {
         private static readonly ConcurrentBag<OtlpMetrics.ScopeMetrics> MetricListPool = new();
-        private static readonly Action<RepeatedField<OtlpMetrics.Metric>, int> RepeatedFieldOfMetricSetCountAction = CreateRepeatedFieldOfMetricSetCountAction();
+        private static Action<RepeatedField<OtlpMetrics.Metric>, int> repeatedFieldOfMetricSetCountAction = CreateRepeatedFieldOfMetricSetCountAction();
 
         internal static void AddMetrics(
             this OtlpCollector.ExportMetricsServiceRequest request,
@@ -76,6 +76,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void Return(this OtlpCollector.ExportMetricsServiceRequest request)
         {
+            if (repeatedFieldOfMetricSetCountAction == null)
+            {
+                return;
+            }
+
             var resourceMetrics = request.ResourceMetrics.FirstOrDefault();
             if (resourceMetrics == null)
             {
@@ -84,7 +89,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 
             foreach (var scope in resourceMetrics.ScopeMetrics)
             {
-                RepeatedFieldOfMetricSetCountAction(scope.Metrics, 0);
+                try
+                {
+                    repeatedFieldOfMetricSetCountAction(scope.Metrics, 0);
+                }
+                catch
+                {
+                    repeatedFieldOfMetricSetCountAction = null;
+                    return;
+                }
+
                 MetricListPool.Add(scope);
             }
         }
@@ -92,7 +106,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static OtlpMetrics.ScopeMetrics GetMetricListFromPool(string name, string version)
         {
-            if (!MetricListPool.TryTake(out var metrics))
+            if (repeatedFieldOfMetricSetCountAction == null || !MetricListPool.TryTake(out var metrics))
             {
                 metrics = new OtlpMetrics.ScopeMetrics
                 {
@@ -337,6 +351,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
         private static Action<RepeatedField<OtlpMetrics.Metric>, int> CreateRepeatedFieldOfMetricSetCountAction()
         {
             FieldInfo repeatedFieldOfMetricCountField = typeof(RepeatedField<OtlpMetrics.Metric>).GetField("count", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            if (repeatedFieldOfMetricCountField == null)
+            {
+                return null;
+            }
 
             DynamicMethod dynamicMethod = new DynamicMethod(
                 "CreateSetCountAction",
