@@ -216,54 +216,6 @@ namespace OpenTelemetry.Metrics
         }
 
         /// <summary>
-        /// Gets the minimum value of the histogram associated with the metric point.
-        /// </summary>
-        /// <remarks>
-        /// Applies to <see cref="MetricType.Histogram"/> metric type.
-        /// </remarks>
-        /// <returns>Minimum value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public double GetHistogramMin()
-        {
-            if (this.aggType != AggregationType.HistogramMinMax &&
-                this.aggType != AggregationType.HistogramSumCountMinMax)
-            {
-                this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramMin));
-            }
-
-            if (this.runningValue.AsLong == 0)
-            {
-                throw new InvalidOperationException("No values have been recorded yet.");
-            }
-
-            return this.histogramBuckets.SnapshotMin;
-        }
-
-        /// <summary>
-        /// Gets the maximum value of the histogram associated with the metric point.
-        /// </summary>
-        /// <remarks>
-        /// Applies to <see cref="MetricType.Histogram"/> metric type.
-        /// </remarks>
-        /// <returns>Maximum value.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public double GetHistogramMax()
-        {
-            if (this.aggType != AggregationType.HistogramMinMax &&
-                this.aggType != AggregationType.HistogramSumCountMinMax)
-            {
-                this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramMax));
-            }
-
-            if (this.runningValue.AsLong == 0)
-            {
-                throw new InvalidOperationException("No values have been recorded yet.");
-            }
-
-            return this.histogramBuckets.SnapshotMax;
-        }
-
-        /// <summary>
         /// Gets the buckets of the histogram associated with the metric point.
         /// </summary>
         /// <remarks>
@@ -419,6 +371,7 @@ namespace OpenTelemetry.Metrics
                         this.HistogramUpdate(number, true, false);
                         break;
                     }
+
                 case AggregationType.HistogramMinMax:
                     {
                         this.HistogramUpdate(number, true, true);
@@ -430,6 +383,7 @@ namespace OpenTelemetry.Metrics
                         this.HistogramUpdate(number, false, false);
                         break;
                     }
+
                 case AggregationType.HistogramSumCountMinMax:
                     {
                         this.HistogramUpdate(number, false, true);
@@ -555,6 +509,7 @@ namespace OpenTelemetry.Metrics
                         this.HistogramSnapshot(outputDelta, true, false);
                         break;
                     }
+
                 case AggregationType.HistogramMinMax:
                     {
                         this.HistogramSnapshot(outputDelta, true, true);
@@ -566,6 +521,7 @@ namespace OpenTelemetry.Metrics
                         this.HistogramSnapshot(outputDelta, false, false);
                         break;
                     }
+
                 case AggregationType.HistogramSumCountMinMax:
                     {
                         this.HistogramSnapshot(outputDelta, false, true);

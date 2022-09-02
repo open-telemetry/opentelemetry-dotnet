@@ -75,7 +75,7 @@ namespace OpenTelemetry.Metrics
         /// </summary>
         HistogramWithMinMax = 0x50,
 
-        /// </summary>
+        /// <summary>
         /// Non-monotonic Sum of Long type.
         /// </summary>
         LongSumNonMonotonic = 0x8a,
