@@ -1198,18 +1198,5 @@ namespace OpenTelemetry.Metrics.Tests
             Assert.Equal("othername", exportedItems[0].Name);
             Assert.Equal(10, GetLongSum(metric1));
         }
-
-        [Fact]
-        public void GetHistogramMinThrows()
-        {
-            AggregatorStore aggregatorStore = new("test", AggregationType.HistogramMinMax, AggregationTemporality.Cumulative, 1024, Metric.DefaultHistogramBounds);
-            var histogramPoint = new MetricPoint(aggregatorStore, AggregationType.HistogramMinMax, null, null, new double[] { 0 });
-
-            var ex = Assert.Throws<InvalidOperationException>(() => histogramPoint.GetHistogramMin());
-            Assert.Equal("No values have been recorded yet.", ex.Message);
-
-            ex = Assert.Throws<InvalidOperationException>(() => histogramPoint.GetHistogramMax());
-            Assert.Equal("No values have been recorded yet.", ex.Message);
-        }
     }
 }
