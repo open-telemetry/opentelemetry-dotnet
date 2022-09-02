@@ -17,8 +17,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using OpenTelemetry.Resources;
-using OtlpCommon = Opentelemetry.Proto.Common.V1;
-using OtlpResource = Opentelemetry.Proto.Resource.V1;
+using OtlpCommon = OpenTelemetry.Proto.Common.V1;
+using OtlpResource = OpenTelemetry.Proto.Resource.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation
 {

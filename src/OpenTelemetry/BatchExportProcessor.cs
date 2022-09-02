@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using OpenTelemetry.Internal;
 
@@ -35,10 +36,11 @@ namespace OpenTelemetry
         internal const int DefaultExporterTimeoutMilliseconds = 30000;
         internal const int DefaultMaxExportBatchSize = 512;
 
+        internal readonly int MaxExportBatchSize;
+
         private readonly CircularBuffer<T> circularBuffer;
         private readonly int scheduledDelayMilliseconds;
         private readonly int exporterTimeoutMilliseconds;
-        private readonly int maxExportBatchSize;
         private readonly Thread exporterThread;
         private readonly AutoResetEvent exportTrigger = new(false);
         private readonly ManualResetEvent dataExportedNotification = new(false);
@@ -71,7 +73,7 @@ namespace OpenTelemetry
             this.circularBuffer = new CircularBuffer<T>(maxQueueSize);
             this.scheduledDelayMilliseconds = scheduledDelayMilliseconds;
             this.exporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
-            this.maxExportBatchSize = maxExportBatchSize;
+            this.MaxExportBatchSize = maxExportBatchSize;
             this.exporterThread = new Thread(new ThreadStart(this.ExporterProc))
             {
                 IsBackground = true,
@@ -95,12 +97,12 @@ namespace OpenTelemetry
         /// </summary>
         internal long ProcessedCount => this.circularBuffer.RemovedCount;
 
-        /// <inheritdoc/>
-        protected override void OnExport(T data)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool TryExport(T data)
         {
             if (this.circularBuffer.TryAdd(data, maxSpinCount: 50000))
             {
-                if (this.circularBuffer.Count >= this.maxExportBatchSize)
+                if (this.circularBuffer.Count >= this.MaxExportBatchSize)
                 {
                     try
                     {
@@ -111,11 +113,19 @@ namespace OpenTelemetry
                     }
                 }
 
-                return; // enqueue succeeded
+                return true; // enqueue succeeded
             }
 
             // either the queue is full or exceeded the spin limit, drop the item on the floor
             Interlocked.Increment(ref this.droppedCount);
+
+            return false;
+        }
+
+        /// <inheritdoc/>
+        protected override void OnExport(T data)
+        {
+            this.TryExport(data);
         }
 
         /// <inheritdoc/>
@@ -255,7 +265,7 @@ namespace OpenTelemetry
             while (true)
             {
                 // only wait when the queue doesn't have enough items, otherwise keep busy and send data continuously
-                if (this.circularBuffer.Count < this.maxExportBatchSize)
+                if (this.circularBuffer.Count < this.MaxExportBatchSize)
                 {
                     try
                     {
@@ -270,7 +280,7 @@ namespace OpenTelemetry
 
                 if (this.circularBuffer.Count > 0)
                 {
-                    using (var batch = new Batch<T>(this.circularBuffer, this.maxExportBatchSize))
+                    using (var batch = new Batch<T>(this.circularBuffer, this.MaxExportBatchSize))
                     {
                         this.exporter.Export(batch);
                     }

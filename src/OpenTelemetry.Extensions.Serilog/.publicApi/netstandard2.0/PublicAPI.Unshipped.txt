@@ -1,0 +1,3 @@
+#nullable enable
+Serilog.OpenTelemetrySerilogExtensions
+static Serilog.OpenTelemetrySerilogExtensions.OpenTelemetry(this Serilog.Configuration.LoggerSinkConfiguration! loggerConfiguration, OpenTelemetry.Logs.OpenTelemetryLoggerProvider! openTelemetryLoggerProvider, bool disposeProvider = true) -> Serilog.LoggerConfiguration!

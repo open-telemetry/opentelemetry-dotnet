@@ -42,9 +42,7 @@ namespace OpenTelemetry.Logs
 
             foreach (var log in batch)
             {
-                log.BufferLogScopes();
-
-                exportedItems.Add(log);
+                exportedItems.Add(log.Copy());
             }
 
             return ExportResult.Success;

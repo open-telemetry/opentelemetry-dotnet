@@ -15,7 +15,6 @@
 // </copyright>
 
 using System;
-using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace OpenTelemetry.Trace
@@ -26,60 +25,6 @@ namespace OpenTelemetry.Trace
     public static class TracerProviderBuilderExtensions
     {
         /// <summary>
-        /// Adds instrumentation to the provider.
-        /// </summary>
-        /// <typeparam name="T">Instrumentation type.</typeparam>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder AddInstrumentation<T>(this TracerProviderBuilder tracerProviderBuilder)
-            where T : class
-        {
-            if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
-            {
-                tracerProviderBuilderHosting.Configure((sp, builder) => builder
-                    .AddInstrumentation(() => sp.GetRequiredService<T>()));
-            }
-
-            return tracerProviderBuilder;
-        }
-
-        /// <summary>
-        /// Adds a processor to the provider.
-        /// </summary>
-        /// <typeparam name="T">Processor type.</typeparam>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder AddProcessor<T>(this TracerProviderBuilder tracerProviderBuilder)
-            where T : BaseProcessor<Activity>
-        {
-            if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
-            {
-                tracerProviderBuilderHosting.Configure((sp, builder) => builder
-                    .AddProcessor(sp.GetRequiredService<T>()));
-            }
-
-            return tracerProviderBuilder;
-        }
-
-        /// <summary>
-        /// Sets the sampler on the provider.
-        /// </summary>
-        /// <typeparam name="T">Sampler type.</typeparam>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
-        public static TracerProviderBuilder SetSampler<T>(this TracerProviderBuilder tracerProviderBuilder)
-            where T : Sampler
-        {
-            if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
-            {
-                tracerProviderBuilderHosting.Configure((sp, builder) => builder
-                    .SetSampler(sp.GetRequiredService<T>()));
-            }
-
-            return tracerProviderBuilder;
-        }
-
-        /// <summary>
         /// Register a callback action to configure the <see
         /// cref="TracerProviderBuilder"/> once the application <see
         /// cref="IServiceProvider"/> is available.
@@ -87,14 +32,10 @@ namespace OpenTelemetry.Trace
         /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <param name="configure">Configuration callback.</param>
         /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        [Obsolete("Call ConfigureBuilder instead this method will be removed in a future version.")]
         public static TracerProviderBuilder Configure(this TracerProviderBuilder tracerProviderBuilder, Action<IServiceProvider, TracerProviderBuilder> configure)
         {
-            if (tracerProviderBuilder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
-            {
-                deferredTracerProviderBuilder.Configure(configure);
-            }
-
-            return tracerProviderBuilder;
+            return tracerProviderBuilder.ConfigureBuilder(configure);
         }
 
         /// <summary>
@@ -104,35 +45,12 @@ namespace OpenTelemetry.Trace
         /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
         /// <returns><see cref="IServiceCollection"/> or <see langword="null"/>
         /// if services are unavailable.</returns>
+        [Obsolete("Call ConfigureServices instead this method will be removed in a future version.")]
         public static IServiceCollection GetServices(this TracerProviderBuilder tracerProviderBuilder)
         {
-            if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
-            {
-                return tracerProviderBuilderHosting.Services;
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Run the configured actions to initialize the <see cref="TracerProvider"/>.
-        /// </summary>
-        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
-        /// <param name="serviceProvider"><see cref="IServiceProvider"/>.</param>
-        /// <returns><see cref="TracerProvider"/>.</returns>
-        public static TracerProvider Build(this TracerProviderBuilder tracerProviderBuilder, IServiceProvider serviceProvider)
-        {
-            if (tracerProviderBuilder is TracerProviderBuilderHosting tracerProviderBuilderHosting)
-            {
-                return tracerProviderBuilderHosting.Build(serviceProvider);
-            }
-
-            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
-            {
-                return tracerProviderBuilderBase.Build();
-            }
-
-            return null;
+            IServiceCollection services = null;
+            tracerProviderBuilder.ConfigureServices(s => services = s);
+            return services;
         }
     }
 }

@@ -1,0 +1,1 @@
+static OpenTelemetry.Trace.ActivityExtensions.RecordException(this System.Diagnostics.Activity activity, System.Exception ex, in System.Diagnostics.TagList tags) -> void

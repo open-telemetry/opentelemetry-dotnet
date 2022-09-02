@@ -15,6 +15,7 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Diagnostics.Tracing;
@@ -57,15 +58,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
         public void TraceExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint, ExportProcessorType exportProcessorType, bool forceFlush)
         {
-#if NETCOREAPP3_1
-            // Adding the OtlpExporter creates a GrpcChannel.
-            // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
-            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
-            if (protocol == OtlpExportProtocol.Grpc)
-            {
-                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            }
-#endif
             using EventWaitHandle handle = new ManualResetEvent(false);
 
             var exporterOptions = new OtlpExporterOptions
@@ -79,7 +71,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 },
             };
 
-            DelegatingTestExporter<Activity> delegatingExporter = null;
+            DelegatingExporter<Activity> delegatingExporter = null;
+            var exportResults = new List<ExportResult>();
 
             var activitySourceName = "otlp.collector.test";
 
@@ -93,7 +86,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 serviceProvider: null,
                 configureExporterInstance: otlpExporter =>
                 {
-                    delegatingExporter = new DelegatingTestExporter<Activity>(otlpExporter, onExportAction: () => handle.Set());
+                    delegatingExporter = new DelegatingExporter<Activity>
+                    {
+                        OnExportFunc = (batch) =>
+                        {
+                            var result = otlpExporter.Export(batch);
+                            exportResults.Add(result);
+                            handle.Set();
+                            return result;
+                        },
+                    };
                     return delegatingExporter;
                 });
 
@@ -108,21 +110,21 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 if (forceFlush)
                 {
                     Assert.True(tracerProvider.ForceFlush());
-                    Assert.Single(delegatingExporter.ExportResults);
-                    Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+                    Assert.Single(exportResults);
+                    Assert.Equal(ExportResult.Success, exportResults[0]);
                 }
                 else if (exporterOptions.ExportProcessorType == ExportProcessorType.Batch)
                 {
                     Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
-                    Assert.Single(delegatingExporter.ExportResults);
-                    Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+                    Assert.Single(exportResults);
+                    Assert.Equal(ExportResult.Success, exportResults[0]);
                 }
             }
 
             if (!forceFlush && exportProcessorType == ExportProcessorType.Simple)
             {
-                Assert.Single(delegatingExporter.ExportResults);
-                Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+                Assert.Single(exportResults);
+                Assert.Equal(ExportResult.Success, exportResults[0]);
             }
         }
 
@@ -138,15 +140,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         [SkipUnlessEnvVarFoundTheory(CollectorHostnameEnvVarName)]
         public void MetricExportResultIsSuccess(OtlpExportProtocol protocol, string endpoint, bool useManualExport, bool forceFlush)
         {
-#if NETCOREAPP3_1
-            // Adding the OtlpExporter creates a GrpcChannel.
-            // This switch must be set before creating a GrpcChannel when calling an insecure HTTP/2 endpoint.
-            // See: https://docs.microsoft.com/aspnet/core/grpc/troubleshoot#call-insecure-grpc-services-with-net-core-client
-            if (protocol == OtlpExportProtocol.Grpc)
-            {
-                AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-            }
-#endif
             using EventWaitHandle handle = new ManualResetEvent(false);
 
             var exporterOptions = new OtlpExporterOptions
@@ -155,7 +148,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 Protocol = protocol,
             };
 
-            DelegatingTestExporter<Metric> delegatingExporter = null;
+            DelegatingExporter<Metric> delegatingExporter = null;
+            var exportResults = new List<ExportResult>();
 
             var meterName = "otlp.collector.test";
 
@@ -174,7 +168,16 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 serviceProvider: null,
                 configureExporterInstance: otlpExporter =>
                 {
-                    delegatingExporter = new DelegatingTestExporter<Metric>(otlpExporter, onExportAction: () => handle.Set());
+                    delegatingExporter = new DelegatingExporter<Metric>
+                    {
+                        OnExportFunc = (batch) =>
+                        {
+                            var result = otlpExporter.Export(batch);
+                            exportResults.Add(result);
+                            handle.Set();
+                            return result;
+                        },
+                    };
                     return delegatingExporter;
                 });
 
@@ -191,21 +194,21 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
                 if (forceFlush)
                 {
                     Assert.True(meterProvider.ForceFlush());
-                    Assert.Single(delegatingExporter.ExportResults);
-                    Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+                    Assert.Single(exportResults);
+                    Assert.Equal(ExportResult.Success, exportResults[0]);
                 }
                 else if (!useManualExport)
                 {
                     Assert.True(handle.WaitOne(ExportIntervalMilliseconds * 2));
-                    Assert.Single(delegatingExporter.ExportResults);
-                    Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+                    Assert.Single(exportResults);
+                    Assert.Equal(ExportResult.Success, exportResults[0]);
                 }
             }
 
             if (!forceFlush && useManualExport)
             {
-                Assert.Single(delegatingExporter.ExportResults);
-                Assert.Equal(ExportResult.Success, delegatingExporter.ExportResults[0]);
+                Assert.Single(exportResults);
+                Assert.Equal(ExportResult.Success, exportResults[0]);
             }
         }
 

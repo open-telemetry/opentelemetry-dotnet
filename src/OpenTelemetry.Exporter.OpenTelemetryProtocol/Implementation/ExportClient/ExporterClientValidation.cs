@@ -30,7 +30,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
                 return;
             }
 
-            if (options.Endpoint.Scheme.Equals("http", StringComparison.InvariantCultureIgnoreCase))
+            if (options.Endpoint.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase))
             {
                 if (AppContext.TryGetSwitch(
                         "System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", out var unencryptedIsSupported) == false

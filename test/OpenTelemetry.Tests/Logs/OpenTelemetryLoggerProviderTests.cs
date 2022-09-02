@@ -43,18 +43,15 @@ namespace OpenTelemetry.Logs.Tests
         {
             OpenTelemetryLoggerOptions defaults = new();
 
-            using OpenTelemetryLoggerProvider provider = new(options =>
-            {
-                options.IncludeScopes = !defaults.IncludeScopes;
-                options.IncludeFormattedMessage = !defaults.IncludeFormattedMessage;
-                options.ParseStateValues = !defaults.ParseStateValues;
-
-                options.SetResourceBuilder(ResourceBuilder
+            using OpenTelemetryLoggerProvider provider = Sdk.CreateLoggerProviderBuilder()
+                .SetIncludeScopes(!defaults.IncludeScopes)
+                .SetIncludeFormattedMessage(!defaults.IncludeFormattedMessage)
+                .SetParseStateValues(!defaults.ParseStateValues)
+                .SetResourceBuilder(ResourceBuilder
                     .CreateEmpty()
-                    .AddAttributes(new[] { new KeyValuePair<string, object>("key1", "value1") }));
-
-                options.AddInMemoryExporter(new List<LogRecord>());
-            });
+                    .AddAttributes(new[] { new KeyValuePair<string, object>("key1", "value1") }))
+                .AddInMemoryExporter(new List<LogRecord>())
+                .Build();
 
             Assert.Equal(!defaults.IncludeScopes, provider.IncludeScopes);
             Assert.Equal(!defaults.IncludeFormattedMessage, provider.IncludeFormattedMessage);
@@ -84,6 +81,66 @@ namespace OpenTelemetry.Logs.Tests
             Assert.True(provider.ForceFlush());
 
             Assert.Single(exportedItems);
+        }
+
+        [Fact]
+        public void ThreadStaticPoolUsedByProviderTests()
+        {
+            using var provider1 = new OpenTelemetryLoggerProvider(new OpenTelemetryLoggerOptions());
+
+            Assert.Equal(LogRecordThreadStaticPool.Instance, provider1.LogRecordPool);
+
+            var options = new OpenTelemetryLoggerOptions();
+            options.AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()));
+
+            using var provider2 = new OpenTelemetryLoggerProvider(options);
+
+            Assert.Equal(LogRecordThreadStaticPool.Instance, provider2.LogRecordPool);
+
+            options.AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()));
+
+            using var provider3 = new OpenTelemetryLoggerProvider(options);
+
+            Assert.Equal(LogRecordThreadStaticPool.Instance, provider3.LogRecordPool);
+        }
+
+        [Fact]
+        public void SharedPoolUsedByProviderTests()
+        {
+            var options = new OpenTelemetryLoggerOptions();
+            options.AddProcessor(new BatchLogRecordExportProcessor(new NoopExporter()));
+
+            using var provider1 = new OpenTelemetryLoggerProvider(options);
+
+            Assert.Equal(LogRecordSharedPool.Current, provider1.LogRecordPool);
+
+            options = new OpenTelemetryLoggerOptions();
+            options.AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()));
+            options.AddProcessor(new BatchLogRecordExportProcessor(new NoopExporter()));
+
+            using var provider2 = new OpenTelemetryLoggerProvider(options);
+
+            Assert.Equal(LogRecordSharedPool.Current, provider2.LogRecordPool);
+
+            options = new OpenTelemetryLoggerOptions();
+            options.AddProcessor(new SimpleLogRecordExportProcessor(new NoopExporter()));
+            options.AddProcessor(new CompositeProcessor<LogRecord>(new BaseProcessor<LogRecord>[]
+            {
+                new SimpleLogRecordExportProcessor(new NoopExporter()),
+                new BatchLogRecordExportProcessor(new NoopExporter()),
+            }));
+
+            using var provider3 = new OpenTelemetryLoggerProvider(options);
+
+            Assert.Equal(LogRecordSharedPool.Current, provider3.LogRecordPool);
+        }
+
+        private sealed class NoopExporter : BaseExporter<LogRecord>
+        {
+            public override ExportResult Export(in Batch<LogRecord> batch)
+            {
+                return ExportResult.Success;
+            }
         }
     }
 }

@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using OpenTracing;
@@ -51,14 +50,6 @@ namespace OpenTelemetry.Shims.OpenTracing
         private readonly List<KeyValuePair<string, object>> attributes = new();
 
         /// <summary>
-        /// The set of operation names for System.Diagnostics.Activity based automatic instrumentations that indicate a root span.
-        /// </summary>
-        private readonly IList<string> rootOperationNamesForActivityBasedAutoInstrumentations = new List<string>
-        {
-            "Microsoft.AspNetCore.Hosting.HttpRequestIn",
-        };
-
-        /// <summary>
         /// The parent as an TelemetrySpan, if any.
         /// </summary>
         private TelemetrySpan parentSpan;
@@ -79,7 +70,7 @@ namespace OpenTelemetry.Shims.OpenTracing
 
         private bool error;
 
-        public SpanBuilderShim(Tracer tracer, string spanName, IList<string> rootOperationNamesForActivityBasedAutoInstrumentations = null)
+        public SpanBuilderShim(Tracer tracer, string spanName)
         {
             Guard.ThrowIfNull(tracer);
             Guard.ThrowIfNull(spanName);
@@ -87,7 +78,6 @@ namespace OpenTelemetry.Shims.OpenTracing
             this.tracer = tracer;
             this.spanName = spanName;
             this.ScopeManager = new ScopeManagerShim(this.tracer);
-            this.rootOperationNamesForActivityBasedAutoInstrumentations = rootOperationNamesForActivityBasedAutoInstrumentations ?? this.rootOperationNamesForActivityBasedAutoInstrumentations;
         }
 
         private IScopeManager ScopeManager { get; }
@@ -171,13 +161,6 @@ namespace OpenTelemetry.Shims.OpenTracing
             else if (this.parentSpanContext.IsValid)
             {
                 span = this.tracer.StartSpan(this.spanName, this.spanKind, this.parentSpanContext, default, this.links, this.explicitStartTime ?? default);
-            }
-            else if (this.parentSpan == null && !this.parentSpanContext.IsValid && Activity.Current != null && Activity.Current.IdFormat == ActivityIdFormat.W3C)
-            {
-                if (this.rootOperationNamesForActivityBasedAutoInstrumentations.Contains(Activity.Current.OperationName))
-                {
-                    span = Tracer.CurrentSpan;
-                }
             }
 
             if (span == null)

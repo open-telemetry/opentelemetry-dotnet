@@ -61,7 +61,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             var statusCode = GrpcTagHelper.ResolveSpanStatusForGrpcStatusCode(status);
             activity.SetTag(SemanticConventions.AttributeRpcGrpcStatusCode, status);
 
-            Assert.Equal(StatusCode.Unset, statusCode.StatusCode);
+            Assert.Equal(ActivityStatusCode.Unset, statusCode);
             Assert.Equal(status, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
         }
 

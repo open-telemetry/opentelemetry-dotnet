@@ -19,6 +19,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
 
@@ -30,15 +32,21 @@ namespace OpenTelemetry.Logs
     public sealed class LogRecord
     {
         internal LogRecordData Data;
+        internal List<KeyValuePair<string, object?>>? AttributeStorage;
+        internal List<object?>? BufferedScopes;
+        internal int PoolReferenceCount = int.MaxValue;
 
         private static readonly Action<object?, List<object?>> AddScopeToBufferedList = (object? scope, List<object?> state) =>
         {
             state.Add(scope);
         };
 
-        private List<object?>? bufferedScopes;
+        internal LogRecord()
+        {
+        }
 
         // Note: Some users are calling this with reflection. Try not to change the signature to be nice.
+        [Obsolete("Call LogRecordPool.Rent instead.")]
         internal LogRecord(
             IExternalScopeProvider? scopeProvider,
             DateTime timestamp,
@@ -191,9 +199,9 @@ namespace OpenTelemetry.Logs
 
             var forEachScopeState = new ScopeForEachState<TState>(callback, state);
 
-            if (this.bufferedScopes != null)
+            if (this.BufferedScopes != null)
             {
-                foreach (object? scope in this.bufferedScopes)
+                foreach (object? scope in this.BufferedScopes)
                 {
                     ScopeForEachState<TState>.ForEachScope(scope, forEachScopeState);
                 }
@@ -213,22 +221,99 @@ namespace OpenTelemetry.Logs
             return ref this.Data;
         }
 
-        /// <summary>
-        /// Buffers the scopes attached to the log into a list so that they can
-        /// be safely processed after the log message lifecycle has ended.
-        /// </summary>
-        internal void BufferLogScopes()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void ResetReferenceCount()
         {
-            if (this.ScopeProvider == null || this.bufferedScopes != null)
+            this.PoolReferenceCount = 1;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void AddReference()
+        {
+            Interlocked.Increment(ref this.PoolReferenceCount);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal int RemoveReference()
+        {
+            return Interlocked.Decrement(ref this.PoolReferenceCount);
+        }
+
+        // Note: Typically called when LogRecords are added into a batch so they
+        // can be safely processed outside of the log call chain.
+        internal void Buffer()
+        {
+            // Note: State values are buffered because some states are not safe
+            // to access outside of the log call chain. See:
+            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2905
+            this.BufferLogStateValues();
+
+            this.BufferLogScopes();
+
+            // Note: There is no buffering of "State" only "StateValues". We
+            // don't inspect "object State" at all. It is undefined what
+            // exporters will do with "State". Some might ignore it, some might
+            // attempt to access it as a list. That is potentially dangerous.
+            // TODO: Investigate what to do here. Should we obsolete State and
+            // just use the StateValues design?
+        }
+
+        internal LogRecord Copy()
+        {
+            // Note: We only buffer scopes here because state values are copied
+            // directly below.
+            this.BufferLogScopes();
+
+            return new()
+            {
+                Data = this.Data,
+                State = this.State,
+                StateValues = this.StateValues == null ? null : new List<KeyValuePair<string, object?>>(this.StateValues),
+                BufferedScopes = this.BufferedScopes == null ? null : new List<object?>(this.BufferedScopes),
+            };
+        }
+
+        /// <summary>
+        /// Buffers the state values attached to the log into a list so that
+        /// they can be safely processed after the log message lifecycle has
+        /// ended.
+        /// </summary>
+        private void BufferLogStateValues()
+        {
+            var stateValues = this.StateValues;
+            if (stateValues == null || stateValues == this.AttributeStorage)
             {
                 return;
             }
 
-            List<object?> scopes = new List<object?>();
+            var attributeStorage = this.AttributeStorage ??= new List<KeyValuePair<string, object?>>(stateValues.Count);
 
-            this.ScopeProvider?.ForEachScope(AddScopeToBufferedList, scopes);
+            // Note: AddRange here will copy all of the KeyValuePairs from
+            // stateValues to AttributeStorage. This "captures" the state and
+            // fixes issues where the values are generated at enumeration time
+            // like
+            // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2905.
+            attributeStorage.AddRange(stateValues);
 
-            this.bufferedScopes = scopes;
+            this.StateValues = attributeStorage;
+        }
+
+        /// <summary>
+        /// Buffers the scopes attached to the log into a list so that they can
+        /// be safely processed after the log message lifecycle has ended.
+        /// </summary>
+        private void BufferLogScopes()
+        {
+            if (this.ScopeProvider == null)
+            {
+                return;
+            }
+
+            List<object?> scopes = this.BufferedScopes ??= new List<object?>(LogRecordPoolHelper.DefaultMaxNumberOfScopes);
+
+            this.ScopeProvider.ForEachScope(AddScopeToBufferedList, scopes);
+
+            this.ScopeProvider = null;
         }
 
         private readonly struct ScopeForEachState<TState>

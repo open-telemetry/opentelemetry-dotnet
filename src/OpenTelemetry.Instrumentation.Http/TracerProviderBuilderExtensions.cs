@@ -78,8 +78,16 @@ namespace OpenTelemetry.Trace
             this TracerProviderBuilder builder,
             HttpClientInstrumentation instrumentation)
         {
-            builder.AddSource(HttpHandlerDiagnosticListener.ActivitySourceName);
-            builder.AddLegacySource("System.Net.Http.HttpRequestOut");
+            if (HttpHandlerDiagnosticListener.IsNet7OrGreater)
+            {
+                builder.AddSource(HttpHandlerDiagnosticListener.HttpClientActivitySourceName);
+            }
+            else
+            {
+                builder.AddSource(HttpHandlerDiagnosticListener.ActivitySourceName);
+                builder.AddLegacySource("System.Net.Http.HttpRequestOut");
+            }
+
             return builder.AddInstrumentation(() => instrumentation);
         }
 

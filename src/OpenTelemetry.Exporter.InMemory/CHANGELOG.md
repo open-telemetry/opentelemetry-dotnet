@@ -2,8 +2,27 @@
 
 ## Unreleased
 
+* Changed error handling, `InMemoryExporter` will now throw
+  `ObjectDisposedException` if `Export` is invoked after the exporter is
+  disposed.
+  ([#3607](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3607))
+
+## 1.4.0-alpha.2
+
+Released 2022-Aug-18
+
+## 1.4.0-alpha.1
+
+Released 2022-Aug-02
+
 * `InMemoryExporter` will now buffer scopes when exporting `LogRecord`
   ([#3360](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3360))
+
+* The `MetricReaderOptions` defaults can be overridden using
+  `OTEL_METRIC_EXPORT_INTERVAL` and `OTEL_METRIC_EXPORT_TIMEOUT`
+  environmental variables as defined in the
+  [specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.12.0/specification/sdk-environment-variables.md#periodic-exporting-metricreader).
+  ([#3424](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3424))
 
 ## 1.3.0
 

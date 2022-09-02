@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.4.0-alpha.2
+
+Released 2022-Aug-18
+
+## 1.4.0-alpha.1
+
+Released 2022-Aug-02
+
 * Add `JaegerPropagator`.
   ([1881](https://github.com/open-telemetry/opentelemetry-dotnet/issues/1881))
 

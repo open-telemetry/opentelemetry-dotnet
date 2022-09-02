@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Logs;
 
 namespace OpenTelemetry
 {
@@ -32,9 +33,9 @@ namespace OpenTelemetry
     public readonly struct Batch<T> : IDisposable
         where T : class
     {
-        private readonly T? item;
-        private readonly CircularBuffer<T>? circularBuffer;
-        private readonly T[]? items;
+        private readonly T? item = null;
+        private readonly CircularBuffer<T>? circularBuffer = null;
+        private readonly T[]? items = null;
         private readonly long targetCount;
 
         /// <summary>
@@ -47,8 +48,6 @@ namespace OpenTelemetry
             Guard.ThrowIfNull(items);
             Guard.ThrowIfOutOfRange(count, min: 0, max: items.Length);
 
-            this.item = null;
-            this.circularBuffer = null;
             this.items = items;
             this.Count = this.targetCount = count;
         }
@@ -58,8 +57,6 @@ namespace OpenTelemetry
             Debug.Assert(item != null, $"{nameof(item)} was null.");
 
             this.item = item;
-            this.circularBuffer = null;
-            this.items = null;
             this.Count = this.targetCount = 1;
         }
 
@@ -68,8 +65,6 @@ namespace OpenTelemetry
             Debug.Assert(maxSize > 0, $"{nameof(maxSize)} should be a positive number.");
             Debug.Assert(circularBuffer != null, $"{nameof(circularBuffer)} was null.");
 
-            this.item = null;
-            this.items = null;
             this.circularBuffer = circularBuffer;
             this.Count = Math.Min(maxSize, circularBuffer!.Count);
             this.targetCount = circularBuffer.RemovedCount + this.Count;
@@ -90,7 +85,11 @@ namespace OpenTelemetry
                 // Drain anything left in the batch.
                 while (this.circularBuffer.RemovedCount < this.targetCount)
                 {
-                    this.circularBuffer.Read();
+                    T item = this.circularBuffer.Read();
+                    if (typeof(T) == typeof(LogRecord))
+                    {
+                        LogRecordSharedPool.Current.Return((LogRecord)(object)item);
+                    }
                 }
             }
         }
@@ -140,6 +139,32 @@ namespace OpenTelemetry
                 return false;
             };
 
+            private static readonly BatchEnumeratorMoveNextFunc MoveNextCircularBufferLogRecord = (ref Enumerator enumerator) =>
+            {
+                // Note: This type check here is to give the JIT a hint it can
+                // remove all of this code when T != LogRecord
+                if (typeof(T) == typeof(LogRecord))
+                {
+                    var circularBuffer = enumerator.circularBuffer;
+
+                    var currentItem = enumerator.Current;
+                    if (currentItem != null)
+                    {
+                        LogRecordSharedPool.Current.Return((LogRecord)(object)currentItem);
+                    }
+
+                    if (circularBuffer!.RemovedCount < enumerator.targetCount)
+                    {
+                        enumerator.current = circularBuffer.Read();
+                        return true;
+                    }
+
+                    enumerator.current = null;
+                }
+
+                return false;
+            };
+
             private static readonly BatchEnumeratorMoveNextFunc MoveNextArray = (ref Enumerator enumerator) =>
             {
                 var items = enumerator.items;
@@ -179,7 +204,7 @@ namespace OpenTelemetry
                 this.circularBuffer = circularBuffer;
                 this.targetCount = targetCount;
                 this.itemIndex = 0;
-                this.moveNextFunc = MoveNextCircularBuffer;
+                this.moveNextFunc = typeof(T) == typeof(LogRecord) ? MoveNextCircularBufferLogRecord : MoveNextCircularBuffer;
             }
 
             internal Enumerator(T[] items, long targetCount)
@@ -201,6 +226,15 @@ namespace OpenTelemetry
             /// <inheritdoc/>
             public void Dispose()
             {
+                if (typeof(T) == typeof(LogRecord))
+                {
+                    var currentItem = this.current;
+                    if (currentItem != null)
+                    {
+                        LogRecordSharedPool.Current.Return((LogRecord)(object)currentItem);
+                        this.current = null;
+                    }
+                }
             }
 
             /// <inheritdoc/>

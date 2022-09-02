@@ -264,7 +264,9 @@ namespace OpenTelemetry.Metrics
                 case AggregationType.HistogramSumCount:
                     {
                         this.Update((double)number);
-                        break;
+
+                        // At this point MetricPointStatus is already set to CollectPending so we can simply return.
+                        return;
                     }
             }
 
@@ -339,6 +341,7 @@ namespace OpenTelemetry.Metrics
                         {
                             if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                             {
+                                // Lock acquired
                                 unchecked
                                 {
                                     this.runningValue.AsLong++;
@@ -346,7 +349,8 @@ namespace OpenTelemetry.Metrics
                                     this.histogramBuckets.RunningBucketCounts[i]++;
                                 }
 
-                                this.histogramBuckets.IsCriticalSectionOccupied = 0;
+                                // Release lock
+                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
                                 break;
                             }
 
@@ -363,13 +367,15 @@ namespace OpenTelemetry.Metrics
                         {
                             if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                             {
+                                // Lock acquired
                                 unchecked
                                 {
                                     this.runningValue.AsLong++;
                                     this.histogramBuckets.RunningSum += number;
                                 }
 
-                                this.histogramBuckets.IsCriticalSectionOccupied = 0;
+                                // Release lock
+                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
                                 break;
                             }
 
@@ -495,26 +501,37 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.Histogram:
                     {
-                        lock (this.histogramBuckets.LockObject)
+                        var sw = default(SpinWait);
+                        while (true)
                         {
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
-                            if (outputDelta)
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                             {
-                                this.runningValue.AsLong = 0;
-                                this.histogramBuckets.RunningSum = 0;
-                            }
-
-                            for (int i = 0; i < this.histogramBuckets.RunningBucketCounts.Length; i++)
-                            {
-                                this.histogramBuckets.SnapshotBucketCounts[i] = this.histogramBuckets.RunningBucketCounts[i];
+                                // Lock acquired
+                                this.snapshotValue.AsLong = this.runningValue.AsLong;
+                                this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
                                 if (outputDelta)
                                 {
-                                    this.histogramBuckets.RunningBucketCounts[i] = 0;
+                                    this.runningValue.AsLong = 0;
+                                    this.histogramBuckets.RunningSum = 0;
                                 }
+
+                                for (int i = 0; i < this.histogramBuckets.RunningBucketCounts.Length; i++)
+                                {
+                                    this.histogramBuckets.SnapshotBucketCounts[i] = this.histogramBuckets.RunningBucketCounts[i];
+                                    if (outputDelta)
+                                    {
+                                        this.histogramBuckets.RunningBucketCounts[i] = 0;
+                                    }
+                                }
+
+                                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
                             }
 
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+                            sw.SpinOnce();
                         }
 
                         break;
@@ -522,17 +539,28 @@ namespace OpenTelemetry.Metrics
 
                 case AggregationType.HistogramSumCount:
                     {
-                        lock (this.histogramBuckets.LockObject)
+                        var sw = default(SpinWait);
+                        while (true)
                         {
-                            this.snapshotValue.AsLong = this.runningValue.AsLong;
-                            this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
-                            if (outputDelta)
+                            if (Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 1) == 0)
                             {
-                                this.runningValue.AsLong = 0;
-                                this.histogramBuckets.RunningSum = 0;
+                                // Lock acquired
+                                this.snapshotValue.AsLong = this.runningValue.AsLong;
+                                this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
+                                if (outputDelta)
+                                {
+                                    this.runningValue.AsLong = 0;
+                                    this.histogramBuckets.RunningSum = 0;
+                                }
+
+                                this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
+                                // Release lock
+                                Interlocked.Exchange(ref this.histogramBuckets.IsCriticalSectionOccupied, 0);
+                                break;
                             }
 
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+                            sw.SpinOnce();
                         }
 
                         break;

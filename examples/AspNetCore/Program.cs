@@ -119,7 +119,7 @@ var metricsExporter = builder.Configuration.GetValue<string>("UseMetricsExporter
 builder.Services.AddOpenTelemetryMetrics(options =>
 {
     options.ConfigureResource(configureResource)
-        .AddRuntimeMetrics()
+        .AddRuntimeInstrumentation()
         .AddHttpClientInstrumentation()
         .AddAspNetCoreInstrumentation();
 

@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
@@ -26,19 +27,17 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Implementation
     /// </summary>
     internal class SqlActivitySourceHelper
     {
-        public const string ActivitySourceName = "OpenTelemetry.SqlClient";
-        public const string ActivityName = ActivitySourceName + ".Execute";
-
         public const string MicrosoftSqlServerDatabaseSystemName = "mssql";
+
+        public static readonly AssemblyName AssemblyName = typeof(SqlActivitySourceHelper).Assembly.GetName();
+        public static readonly string ActivitySourceName = AssemblyName.Name;
+        public static readonly Version Version = AssemblyName.Version;
+        public static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
+        public static readonly string ActivityName = ActivitySourceName + ".Execute";
 
         public static readonly IEnumerable<KeyValuePair<string, object>> CreationTags = new[]
         {
             new KeyValuePair<string, object>(SemanticConventions.AttributeDbSystem, MicrosoftSqlServerDatabaseSystemName),
         };
-
-        private static readonly Version Version = typeof(SqlActivitySourceHelper).Assembly.GetName().Version;
-#pragma warning disable SA1202 // Elements should be ordered by access <- In this case, Version MUST come before ActivitySource otherwise null ref exception is thrown.
-        internal static readonly ActivitySource ActivitySource = new(ActivitySourceName, Version.ToString());
-#pragma warning restore SA1202 // Elements should be ordered by access
     }
 }

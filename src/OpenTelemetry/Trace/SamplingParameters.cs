@@ -20,7 +20,7 @@ using System.Diagnostics;
 namespace OpenTelemetry.Trace
 {
     /// <summary>
-    /// Sampling parameters passed to an <see cref="Sampler"/> for it to make a sampling decision.
+    /// Sampling parameters passed to a <see cref="Sampler"/> for it to make a sampling decision.
     /// </summary>
     public readonly struct SamplingParameters
     {
@@ -42,7 +42,7 @@ namespace OpenTelemetry.Trace
             ActivityTraceId traceId,
             string name,
             ActivityKind kind,
-            IEnumerable<KeyValuePair<string, object>> tags = null, // TODO: Empty
+            IEnumerable<KeyValuePair<string, object>> tags = null,
             IEnumerable<ActivityLink> links = null)
         {
             this.ParentContext = parentContext;

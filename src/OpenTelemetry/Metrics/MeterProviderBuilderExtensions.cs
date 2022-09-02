@@ -137,7 +137,7 @@ namespace OpenTelemetry.Metrics
         /// Sets the maximum number of Metric streams supported by the MeterProvider.
         /// When no Views are configured, every instrument will result in one metric stream,
         /// so this control the numbers of instruments supported.
-        /// When Views are configued, a single instrument can result in multiple metric streams,
+        /// When Views are configured, a single instrument can result in multiple metric streams,
         /// so this control the number of streams.
         /// </summary>
         /// <param name="meterProviderBuilder">MeterProviderBuilder instance.</param>

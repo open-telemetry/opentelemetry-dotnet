@@ -57,9 +57,14 @@ namespace OpenTelemetry
             // happen here.
             Debug.Assert(data != null, "LogRecord was null.");
 
-            data!.BufferLogScopes();
+            data!.Buffer();
 
-            base.OnEnd(data);
+            data.AddReference();
+
+            if (!this.TryExport(data))
+            {
+                LogRecordSharedPool.Current.Return(data);
+            }
         }
     }
 }
