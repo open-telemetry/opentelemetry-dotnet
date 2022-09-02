@@ -586,7 +586,7 @@ namespace OpenTelemetry.Metrics.Tests
             exportedItems.Clear();
 
 #if NETFRAMEWORK
-            Thread.Sleep(5000); // Compensates for low resolution timing in netfx.
+            Thread.Sleep(10); // Compensates for low resolution timing in netfx.
 #endif
 
             counterLong.Add(10);
@@ -862,6 +862,224 @@ namespace OpenTelemetry.Metrics.Tests
             // This will fail, as SDK is not "spatially" aggregating the
             // requestCount
             Assert.Equal(30, metricPoint1.GetSumLong());
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void UpDownCounterAggregationTest(bool exportDelta)
+        {
+            DateTime testStartTime = DateTime.UtcNow;
+
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+            var counterLong = meter.CreateUpDownCounter<long>("mycounter");
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+                {
+                    metricReaderOptions.TemporalityPreference = exportDelta ? MetricReaderTemporalityPreference.Delta : MetricReaderTemporalityPreference.Cumulative;
+                })
+                .Build();
+
+            counterLong.Add(10);
+            counterLong.Add(-5);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            long sumReceived = GetLongSum(exportedItems);
+            Assert.Equal(5, sumReceived);
+
+            var metricPoint = GetFirstMetricPoint(exportedItems);
+            Assert.NotNull(metricPoint);
+            Assert.True(metricPoint.Value.StartTime >= testStartTime);
+            Assert.True(metricPoint.Value.EndTime != default);
+
+            DateTimeOffset firstRunStartTime = metricPoint.Value.StartTime;
+            DateTimeOffset firstRunEndTime = metricPoint.Value.EndTime;
+
+            exportedItems.Clear();
+
+#if NETFRAMEWORK
+            Thread.Sleep(10); // Compensates for low resolution timing in netfx.
+#endif
+
+            counterLong.Add(10);
+            counterLong.Add(-5);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            sumReceived = GetLongSum(exportedItems);
+
+            // Same for both cumulative and delta. MetricReaderTemporalityPreference.Delta implies cumulative for UpDownCounters.
+            Assert.Equal(10, sumReceived);
+
+            metricPoint = GetFirstMetricPoint(exportedItems);
+            Assert.NotNull(metricPoint);
+            Assert.True(metricPoint.Value.StartTime >= testStartTime);
+            Assert.True(metricPoint.Value.EndTime != default);
+
+            // Same for both cumulative and delta. MetricReaderTemporalityPreference.Delta implies cumulative for UpDownCounters.
+            Assert.Equal(firstRunStartTime, metricPoint.Value.StartTime);
+
+            Assert.True(metricPoint.Value.EndTime > firstRunEndTime);
+
+            exportedItems.Clear();
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            sumReceived = GetLongSum(exportedItems);
+
+            // Same for both cumulative and delta. MetricReaderTemporalityPreference.Delta implies cumulative for UpDownCounters.
+            Assert.Equal(10, sumReceived);
+
+            exportedItems.Clear();
+            counterLong.Add(40);
+            counterLong.Add(-20);
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            sumReceived = GetLongSum(exportedItems);
+
+            // Same for both cumulative and delta. MetricReaderTemporalityPreference.Delta implies cumulative for UpDownCounters.
+            Assert.Equal(30, sumReceived);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ObservableUpDownCounterAggregationTest(bool exportDelta)
+        {
+            var exportedItems = new List<Metric>();
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+            int i = 1;
+            var counterLong = meter.CreateObservableUpDownCounter(
+                "observable-counter",
+                () =>
+                {
+                    return new List<Measurement<long>>()
+                    {
+                        new Measurement<long>(i++ * 10),
+                    };
+                });
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+                {
+                    metricReaderOptions.TemporalityPreference = exportDelta ? MetricReaderTemporalityPreference.Delta : MetricReaderTemporalityPreference.Cumulative;
+                })
+                .Build();
+
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            long sumReceived = GetLongSum(exportedItems);
+            Assert.Equal(10, sumReceived);
+
+            exportedItems.Clear();
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            sumReceived = GetLongSum(exportedItems);
+
+            // Same for both cumulative and delta. MetricReaderTemporalityPreference.Delta implies cumulative for UpDownCounters.
+            Assert.Equal(20, sumReceived);
+
+            exportedItems.Clear();
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            sumReceived = GetLongSum(exportedItems);
+
+            // Same for both cumulative and delta. MetricReaderTemporalityPreference.Delta implies cumulative for UpDownCounters.
+            Assert.Equal(30, sumReceived);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ObservableUpDownCounterWithTagsAggregationTest(bool exportDelta)
+        {
+            var exportedItems = new List<Metric>();
+            var tags1 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 200),
+                new("verb", "get"),
+            };
+
+            var tags2 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 200),
+                new("verb", "post"),
+            };
+
+            var tags3 = new List<KeyValuePair<string, object>>
+            {
+                new("statusCode", 500),
+                new("verb", "get"),
+            };
+
+            using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+            var counterLong = meter.CreateObservableUpDownCounter(
+                "observable-counter",
+                () =>
+                {
+                    return new List<Measurement<long>>()
+                    {
+                        new Measurement<long>(10, tags1),
+                        new Measurement<long>(10, tags2),
+                        new Measurement<long>(10, tags3),
+                    };
+                });
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+                {
+                    metricReaderOptions.TemporalityPreference = exportDelta ? MetricReaderTemporalityPreference.Delta : MetricReaderTemporalityPreference.Cumulative;
+                })
+                .Build();
+
+            // Export 1
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            var metric = exportedItems[0];
+            Assert.Equal("observable-counter", metric.Name);
+            List<MetricPoint> metricPoints = new List<MetricPoint>();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Equal(3, metricPoints.Count);
+
+            var metricPoint1 = metricPoints[0];
+            Assert.Equal(10, metricPoint1.GetSumLong());
+            ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+            var metricPoint2 = metricPoints[1];
+            Assert.Equal(10, metricPoint2.GetSumLong());
+            ValidateMetricPointTags(tags2, metricPoint2.Tags);
+
+            var metricPoint3 = metricPoints[2];
+            Assert.Equal(10, metricPoint3.GetSumLong());
+            ValidateMetricPointTags(tags3, metricPoint3.Tags);
+
+            // Export 2
+            exportedItems.Clear();
+            meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+            Assert.Single(exportedItems);
+            metric = exportedItems[0];
+            Assert.Equal("observable-counter", metric.Name);
+            metricPoints.Clear();
+            foreach (ref readonly var mp in metric.GetMetricPoints())
+            {
+                metricPoints.Add(mp);
+            }
+
+            Assert.Equal(3, metricPoints.Count);
+
+            // Same for both cumulative and delta. MetricReaderTemporalityPreference.Delta implies cumulative for UpDownCounters.
+            metricPoint1 = metricPoints[0];
+            Assert.Equal(10, metricPoint1.GetSumLong());
+            ValidateMetricPointTags(tags1, metricPoint1.Tags);
+
+            metricPoint2 = metricPoints[1];
+            Assert.Equal(10, metricPoint2.GetSumLong());
+            ValidateMetricPointTags(tags2, metricPoint2.Tags);
+
+            metricPoint3 = metricPoints[2];
+            Assert.Equal(10, metricPoint3.GetSumLong());
+            ValidateMetricPointTags(tags3, metricPoint3.Tags);
         }
 
         [Theory]

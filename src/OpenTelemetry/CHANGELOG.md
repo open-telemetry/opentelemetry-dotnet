@@ -5,6 +5,9 @@
 * Allows samplers the ability to modify tracestate if desired.
   ([#3610](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3610))
 
+* Added support for `UpDownCounter` and `ObservableUpDownCounter` instruments.
+  ([#3606](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3606))
+
 ## 1.4.0-alpha.2
 
 Released 2022-Aug-18
