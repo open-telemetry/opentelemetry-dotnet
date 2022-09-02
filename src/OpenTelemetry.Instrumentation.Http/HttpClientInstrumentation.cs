@@ -25,13 +25,30 @@ namespace OpenTelemetry.Instrumentation.Http
     {
         private readonly DiagnosticSourceSubscriber diagnosticSourceSubscriber;
 
+        private readonly Func<string, object, object, bool> isEnabled = (activityName, obj1, obj2)
+            => !activityName.Equals("System.Net.Http.HttpRequestOut");
+
         /// <summary>
         /// Initializes a new instance of the <see cref="HttpClientInstrumentation"/> class.
         /// </summary>
         /// <param name="options">Configuration options for HTTP client instrumentation.</param>
         public HttpClientInstrumentation(HttpClientInstrumentationOptions options)
         {
-            this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options), null);
+            // For .NET7.0 activity will be created using activitySource.
+            // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Net.Http/src/System/Net/Http/DiagnosticsHandler.cs
+            // However, in case when activity creation returns null (due to sampling)
+            // the framework will fall back to creating activity anyways due to active diagnostic source listener
+            // To prevent this, isEnabled is implemented which will return false always
+            // so that the sampler's decision is respected.
+            if (HttpHandlerDiagnosticListener.IsNet7OrGreater)
+            {
+                this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options), this.isEnabled);
+            }
+            else
+            {
+                this.diagnosticSourceSubscriber = new DiagnosticSourceSubscriber(new HttpHandlerDiagnosticListener(options), null);
+            }
+
             this.diagnosticSourceSubscriber.Subscribe();
         }
 

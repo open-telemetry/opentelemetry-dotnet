@@ -23,7 +23,9 @@ using System.Threading.Tasks;
 using Greet;
 using Grpc.Core;
 using Grpc.Net.Client;
+#if NET6_0_OR_GREATER
 using Microsoft.AspNetCore.Http;
+#endif
 using Moq;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Instrumentation.Grpc.Tests.GrpcTestHelpers;
@@ -117,7 +119,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
             Assert.Equal(0, activity.GetTagValue(SemanticConventions.AttributeRpcGrpcStatusCode));
         }
 
-#if !NETFRAMEWORK
+#if NET6_0_OR_GREATER
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -142,16 +144,13 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                     .AddProcessor(processor.Object)
                     .Build())
             {
-#if NETCOREAPP3_1
-                using var channel = GrpcChannel.ForAddress(uri);
-#else
                 // With net5, based on the grpc changes, the quantity of default activities changed.
                 // TODO: This is a workaround. https://github.com/open-telemetry/opentelemetry-dotnet/issues/1490
                 using var channel = GrpcChannel.ForAddress(uri, new GrpcChannelOptions()
                 {
                     HttpClient = new HttpClient(),
                 });
-#endif
+
                 var client = new Greeter.GreeterClient(channel);
                 var rs = client.SayHello(new HelloRequest());
             }

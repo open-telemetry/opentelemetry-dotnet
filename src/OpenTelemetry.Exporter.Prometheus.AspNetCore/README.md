@@ -16,14 +16,14 @@ to scrape.
 ### Step 1: Install Package
 
 ```shell
-dotnet add package OpenTelemetry.Exporter.Prometheus.AspNetCore
+dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus.AspNetCore
 ```
 
 ### Step 2: Configure OpenTelemetry MeterProvider
 
 * When using
   [OpenTelemetry.Extensions.Hosting](../OpenTelemetry.Extensions.Hosting/README.md)
-  package on .NET Core 3.1+:
+  package on .NET 6.0+:
 
     ```csharp
     services.AddOpenTelemetryMetrics(builder =>
@@ -47,18 +47,13 @@ dotnet add package OpenTelemetry.Exporter.Prometheus.AspNetCore
 ### Step 3: Configure Prometheus Scraping Endpoint
 
 * Register Prometheus scraping middleware using the
-  `UseOpenTelemetryPrometheusScrapingEndpoint` extension:
+  `UseOpenTelemetryPrometheusScrapingEndpoint` extension method
+  on `IApplicationBuilder` :
 
     ```csharp
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-    {
-        app.UseOpenTelemetryPrometheusScrapingEndpoint();
-        app.UseRouting();
-        app.UseEndpoints(endpoints =>
-        {
-            endpoints.MapControllers();
-        });
-    }
+    var builder = WebApplication.CreateBuilder(args);
+    var app = builder.Build();
+    app.UseOpenTelemetryPrometheusScrapingEndpoint();
     ```
 
     Overloads of the `UseOpenTelemetryPrometheusScrapingEndpoint` extension are
@@ -66,17 +61,9 @@ dotnet add package OpenTelemetry.Exporter.Prometheus.AspNetCore
     function can be used:
 
     ```csharp
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-    {
-        app.UseOpenTelemetryPrometheusScrapingEndpoint(
+    app.UseOpenTelemetryPrometheusScrapingEndpoint(
             context => context.Request.Path == "/internal/metrics"
                 && context.Connection.LocalPort == 5067);
-        app.UseRouting();
-        app.UseEndpoints(endpoints =>
-        {
-            endpoints.MapControllers();
-        });
-    }
     ```
 
 ## Configuration

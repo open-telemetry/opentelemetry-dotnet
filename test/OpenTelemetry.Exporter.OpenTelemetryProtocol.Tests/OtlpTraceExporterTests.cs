@@ -28,9 +28,9 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 using Xunit;
-using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
-using OtlpCommon = Opentelemetry.Proto.Common.V1;
-using OtlpTrace = Opentelemetry.Proto.Trace.V1;
+using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
+using OtlpCommon = OpenTelemetry.Proto.Common.V1;
+using OtlpTrace = OpenTelemetry.Proto.Trace.V1;
 using Status = OpenTelemetry.Trace.Status;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
@@ -254,18 +254,23 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 
             Assert.NotNull(otlpSpan);
             Assert.Equal(3, otlpSpan.Attributes.Count);
+            Assert.Equal(1u, otlpSpan.DroppedAttributesCount);
             Assert.Equal("1234", otlpSpan.Attributes[0].Value.StringValue);
             ArrayValueAsserts(otlpSpan.Attributes[1].Value.ArrayValue.Values);
             Assert.Equal(new object().ToString().Substring(0, 4), otlpSpan.Attributes[2].Value.StringValue);
 
             Assert.Single(otlpSpan.Events);
+            Assert.Equal(1u, otlpSpan.DroppedEventsCount);
             Assert.Equal(3, otlpSpan.Events[0].Attributes.Count);
+            Assert.Equal(1u, otlpSpan.Events[0].DroppedAttributesCount);
             Assert.Equal("1234", otlpSpan.Events[0].Attributes[0].Value.StringValue);
             ArrayValueAsserts(otlpSpan.Events[0].Attributes[1].Value.ArrayValue.Values);
             Assert.Equal(new object().ToString().Substring(0, 4), otlpSpan.Events[0].Attributes[2].Value.StringValue);
 
             Assert.Single(otlpSpan.Links);
+            Assert.Equal(1u, otlpSpan.DroppedLinksCount);
             Assert.Equal(3, otlpSpan.Links[0].Attributes.Count);
+            Assert.Equal(1u, otlpSpan.Links[0].DroppedAttributesCount);
             Assert.Equal("1234", otlpSpan.Links[0].Attributes[0].Value.StringValue);
             ArrayValueAsserts(otlpSpan.Links[0].Attributes[1].Value.ArrayValue.Values);
             Assert.Equal(new object().ToString().Substring(0, 4), otlpSpan.Links[0].Attributes[2].Value.StringValue);

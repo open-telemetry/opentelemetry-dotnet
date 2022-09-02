@@ -29,10 +29,9 @@ namespace OpenTelemetry.Logs.Tests
         {
             var exportedItems = new List<LogRecord>();
 
-            using var provider = new OpenTelemetryLoggerProvider(options =>
-            {
-                options.AddInMemoryExporter(exportedItems);
-            });
+            using var provider = Sdk.CreateLoggerProviderBuilder()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
 
             var logEmitter = provider.CreateEmitter();
 
@@ -82,10 +81,9 @@ namespace OpenTelemetry.Logs.Tests
         {
             var exportedItems = new List<LogRecord>();
 
-            using var provider = new OpenTelemetryLoggerProvider(options =>
-            {
-                options.AddInMemoryExporter(exportedItems);
-            });
+            using var provider = Sdk.CreateLoggerProviderBuilder()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
 
             var logEmitter = provider.CreateEmitter();
 
@@ -117,10 +115,9 @@ namespace OpenTelemetry.Logs.Tests
         {
             var exportedItems = new List<LogRecord>();
 
-            using var provider = new OpenTelemetryLoggerProvider(options =>
-            {
-                options.AddInMemoryExporter(exportedItems);
-            });
+            using var provider = Sdk.CreateLoggerProviderBuilder()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
 
             var logEmitter = provider.CreateEmitter();
 
@@ -148,10 +145,9 @@ namespace OpenTelemetry.Logs.Tests
         {
             var exportedItems = new List<LogRecord>();
 
-            using var provider = new OpenTelemetryLoggerProvider(options =>
-            {
-                options.AddInMemoryExporter(exportedItems);
-            });
+            using var provider = Sdk.CreateLoggerProviderBuilder()
+                .AddInMemoryExporter(exportedItems)
+                .Build();
 
             var logEmitter = provider.CreateEmitter();
 

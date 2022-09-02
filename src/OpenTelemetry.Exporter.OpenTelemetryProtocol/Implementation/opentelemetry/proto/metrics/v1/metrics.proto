@@ -19,6 +19,7 @@ package opentelemetry.proto.metrics.v1;
 import "opentelemetry/proto/common/v1/common.proto";
 import "opentelemetry/proto/resource/v1/resource.proto";
 
+option csharp_namespace = "OpenTelemetry.Proto.Metrics.V1";
 option java_multiple_files = true;
 option java_package = "io.opentelemetry.proto.metrics.v1";
 option java_outer_classname = "MetricsProto";
@@ -45,41 +46,14 @@ message MetricsData {
 
 // A collection of ScopeMetrics from a Resource.
 message ResourceMetrics {
+  reserved 1000;
+
   // The resource for the metrics in this message.
   // If this field is not set then no resource info is known.
   opentelemetry.proto.resource.v1.Resource resource = 1;
 
   // A list of metrics that originate from a resource.
   repeated ScopeMetrics scope_metrics = 2;
-
-  // A list of InstrumentationLibraryMetrics that originate from a resource.
-  // This field is deprecated and will be removed after grace period expires on June 15, 2022.
-  //
-  // During the grace period the following rules SHOULD be followed:
-  //
-  // For Binary Protobufs
-  // ====================
-  // Binary Protobuf senders SHOULD NOT set instrumentation_library_metrics. Instead
-  // scope_metrics SHOULD be set.
-  //
-  // Binary Protobuf receivers SHOULD check if instrumentation_library_metrics is set
-  // and scope_metrics is not set then the value in instrumentation_library_metrics
-  // SHOULD be used instead by converting InstrumentationLibraryMetrics into ScopeMetrics.
-  // If scope_metrics is set then instrumentation_library_metrics SHOULD be ignored.
-  //
-  // For JSON
-  // ========
-  // JSON senders that set instrumentation_library_metrics field MAY also set
-  // scope_metrics to carry the same metrics, essentially double-publishing the same data.
-  // Such double-publishing MAY be controlled by a user-settable option.
-  // If double-publishing is not used then the senders SHOULD set scope_metrics and
-  // SHOULD NOT set instrumentation_library_metrics.
-  //
-  // JSON receivers SHOULD check if instrumentation_library_metrics is set and
-  // scope_metrics is not set then the value in instrumentation_library_metrics
-  // SHOULD be used instead by converting InstrumentationLibraryMetrics into ScopeMetrics.
-  // If scope_metrics is set then instrumentation_library_metrics field SHOULD be ignored.
-  repeated InstrumentationLibraryMetrics instrumentation_library_metrics = 1000 [deprecated = true];
 
   // This schema_url applies to the data in the "resource" field. It does not apply
   // to the data in the "scope_metrics" field which have their own schema_url field.
@@ -100,29 +74,10 @@ message ScopeMetrics {
   string schema_url = 3;
 }
 
-// A collection of Metrics produced by an InstrumentationLibrary.
-// InstrumentationLibraryMetrics is wire-compatible with ScopeMetrics for binary
-// Protobuf format.
-// This message is deprecated and will be removed on June 15, 2022.
-message InstrumentationLibraryMetrics {
-  option deprecated = true;
-
-  // The instrumentation library information for the metrics in this message.
-  // Semantically when InstrumentationLibrary isn't set, it is equivalent with
-  // an empty instrumentation library name (unknown).
-  opentelemetry.proto.common.v1.InstrumentationLibrary instrumentation_library = 1;
-
-  // A list of metrics that originate from an instrumentation library.
-  repeated Metric metrics = 2;
-
-  // This schema_url applies to all metrics in the "metrics" field.
-  string schema_url = 3;
-}
-
 // Defines a Metric which has one or more timeseries.  The following is a
 // brief summary of the Metric data model.  For more details, see:
 //
-//   https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/datamodel.md
+//   https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md
 //
 //
 // The data model and relation between entities is shown in the

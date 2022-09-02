@@ -30,7 +30,7 @@ namespace OpenTelemetry.Metrics
             0x50: HistogramWithMinMax
             0x60: ExponentialHistogram (reserved)
             0x70: ExponentialHistogramWithMinMax (reserved)
-            0x80: Reserved
+            0x80: SumNonMonotonic
 
         Point kind:
             0x04: I1 (signed 1-byte integer)
@@ -74,5 +74,15 @@ namespace OpenTelemetry.Metrics
         /// Histogram with minimum and maximum values.
         /// </summary>
         HistogramWithMinMax = 0x50,
+
+        /// </summary>
+        /// Non-monotonic Sum of Long type.
+        /// </summary>
+        LongSumNonMonotonic = 0x8a,
+
+        /// <summary>
+        /// Non-monotonic Sum of Double type.
+        /// </summary>
+        DoubleSumNonMonotonic = 0x8d,
     }
 }

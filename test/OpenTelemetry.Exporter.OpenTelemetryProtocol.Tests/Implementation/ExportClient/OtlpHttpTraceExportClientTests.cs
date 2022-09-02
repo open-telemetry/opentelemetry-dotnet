@@ -30,7 +30,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Xunit;
-using OtlpCollector = Opentelemetry.Proto.Collector.Trace.V1;
+using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
 {

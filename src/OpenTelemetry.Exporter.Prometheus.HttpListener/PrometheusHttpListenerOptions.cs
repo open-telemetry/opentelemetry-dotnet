@@ -18,7 +18,7 @@ using System;
 using System.Collections.Generic;
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter.Prometheus
+namespace OpenTelemetry.Exporter
 {
     /// <summary>
     /// <see cref="PrometheusHttpListener"/> options.

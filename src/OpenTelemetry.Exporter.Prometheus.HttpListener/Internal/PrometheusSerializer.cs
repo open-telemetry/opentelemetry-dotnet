@@ -14,7 +14,7 @@
 // limitations under the License.
 // </copyright>
 
-#if NETCOREAPP3_1_OR_GREATER
+#if NET6_0_OR_GREATER
 using System;
 #endif
 using System.Diagnostics;
@@ -42,7 +42,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         {
             if (MathHelper.IsFinite(value))
             {
-#if NETCOREAPP3_1_OR_GREATER
+#if NET6_0_OR_GREATER
                 Span<char> span = stackalloc char[128];
 
                 var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
@@ -76,7 +76,7 @@ namespace OpenTelemetry.Exporter.Prometheus
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WriteLong(byte[] buffer, int cursor, long value)
         {
-#if NETCOREAPP3_1_OR_GREATER
+#if NET6_0_OR_GREATER
             Span<char> span = stackalloc char[20];
 
             var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);

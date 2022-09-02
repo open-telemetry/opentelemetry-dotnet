@@ -18,6 +18,7 @@ using System;
 using System.Runtime.CompilerServices;
 
 [assembly: CLSCompliant(false)]
+[assembly: InternalsVisibleTo("OpenTelemetry.Extensions.EventSource.Tests" + AssemblyInfo.PublicKey)]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2" + AssemblyInfo.MoqPublicKey)]
 
 #if SIGNED

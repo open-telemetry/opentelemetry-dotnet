@@ -1,10 +1,12 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine AS build
-
+ARG SDK_VERSION=7.0
+FROM mcr.microsoft.com/dotnet/sdk:${SDK_VERSION} AS build
+ARG PUBLISH_CONFIGURATION=Release
+ARG PUBLISH_FRAMEWORK=net7.0
 WORKDIR /app
 COPY . ./
-RUN dotnet publish ./examples/MicroserviceExample/WorkerService -c Release -o /out -p:IntegrationBuild=true
+RUN dotnet publish ./examples/MicroserviceExample/WorkerService -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /out -p:IntegrationBuild=true
 
-FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:${SDK_VERSION} AS runtime
 WORKDIR /app
 COPY --from=build /out ./
 ENTRYPOINT ["dotnet", "WorkerService.dll"]

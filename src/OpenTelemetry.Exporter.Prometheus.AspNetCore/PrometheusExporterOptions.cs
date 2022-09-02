@@ -16,7 +16,7 @@
 
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Exporter.Prometheus
+namespace OpenTelemetry.Exporter
 {
     /// <summary>
     /// Prometheus exporter options.
