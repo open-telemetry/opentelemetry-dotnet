@@ -271,12 +271,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Theory]
-        [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, true)]
-        [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, true)]
-        [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
-        [InlineData("test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative, true)]
-        [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true, "key1", "value1", "key2", 123)]
-        public void TestCounterToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool isMonotonic, params object[] keysValues)
+        [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
+        [InlineData("test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
+        public void TestCounterToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, params object[] keysValues)
         {
             var metrics = new List<Metric>();
 
@@ -324,11 +324,100 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
             Assert.Null(actual.ExponentialHistogram);
             Assert.Null(actual.Summary);
 
-            Assert.Equal(isMonotonic, actual.Sum.IsMonotonic);
+            Assert.True(actual.Sum.IsMonotonic);
 
             var otlpAggregationTemporality = aggregationTemporality == MetricReaderTemporalityPreference.Cumulative
                 ? OtlpMetrics.AggregationTemporality.Cumulative
                 : OtlpMetrics.AggregationTemporality.Delta;
+            Assert.Equal(otlpAggregationTemporality, actual.Sum.AggregationTemporality);
+
+            Assert.Single(actual.Sum.DataPoints);
+            var dataPoint = actual.Sum.DataPoints.First();
+            Assert.True(dataPoint.StartTimeUnixNano > 0);
+            Assert.True(dataPoint.TimeUnixNano > 0);
+
+            if (longValue.HasValue)
+            {
+                Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsInt, dataPoint.ValueCase);
+                Assert.Equal(longValue, dataPoint.AsInt);
+            }
+            else
+            {
+                Assert.Equal(OtlpMetrics.NumberDataPoint.ValueOneofCase.AsDouble, dataPoint.ValueCase);
+                Assert.Equal(doubleValue, dataPoint.AsDouble);
+            }
+
+            if (attributes.Length > 0)
+            {
+                OtlpTestHelpers.AssertOtlpAttributes(attributes, dataPoint.Attributes);
+            }
+            else
+            {
+                Assert.Empty(dataPoint.Attributes);
+            }
+
+            Assert.Empty(dataPoint.Exemplars);
+        }
+
+        [Theory]
+        [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
+        [InlineData("test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
+        public void TestUpDownCounterToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, params object[] keysValues)
+        {
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics, metricReaderOptions =>
+                {
+                    metricReaderOptions.TemporalityPreference = aggregationTemporality;
+                })
+                .Build();
+
+            var attributes = ToAttributes(keysValues).ToArray();
+            if (longValue.HasValue)
+            {
+                var counter = meter.CreateUpDownCounter<long>(name, unit, description);
+                counter.Add(longValue.Value, attributes);
+            }
+            else
+            {
+                var counter = meter.CreateUpDownCounter<double>(name, unit, description);
+                counter.Add(doubleValue.Value, attributes);
+            }
+
+            provider.ForceFlush();
+
+            var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
+
+            var request = new OtlpCollector.ExportMetricsServiceRequest();
+            request.AddMetrics(ResourceBuilder.CreateEmpty().Build().ToOtlpResource(), batch);
+
+            var resourceMetric = request.ResourceMetrics.Single();
+            var scopeMetrics = resourceMetric.ScopeMetrics.Single();
+            var actual = scopeMetrics.Metrics.Single();
+
+            Assert.Equal(name, actual.Name);
+            Assert.Equal(description ?? string.Empty, actual.Description);
+            Assert.Equal(unit ?? string.Empty, actual.Unit);
+
+            Assert.Equal(OtlpMetrics.Metric.DataOneofCase.Sum, actual.DataCase);
+
+            Assert.Null(actual.Gauge);
+            Assert.NotNull(actual.Sum);
+            Assert.Null(actual.Histogram);
+            Assert.Null(actual.ExponentialHistogram);
+            Assert.Null(actual.Summary);
+
+            Assert.False(actual.Sum.IsMonotonic);
+
+            var otlpAggregationTemporality = aggregationTemporality == MetricReaderTemporalityPreference.Cumulative
+                ? OtlpMetrics.AggregationTemporality.Cumulative
+                : OtlpMetrics.AggregationTemporality.Cumulative;
             Assert.Equal(otlpAggregationTemporality, actual.Sum.AggregationTemporality);
 
             Assert.Single(actual.Sum.DataPoints);

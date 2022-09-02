@@ -14,6 +14,7 @@
 // limitations under the License.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
@@ -23,6 +24,10 @@ namespace OpenTelemetry.Exporter
     public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
     {
         private const int RightPaddingLength = 35;
+        private readonly object syncObject = new();
+        private bool disposed;
+        private string disposedStackTrace;
+        private bool isDisposeMessageSent;
 
         public ConsoleLogRecordExporter(ConsoleExporterOptions options)
             : base(options)
@@ -31,6 +36,29 @@ namespace OpenTelemetry.Exporter
 
         public override ExportResult Export(in Batch<LogRecord> batch)
         {
+            if (this.disposed)
+            {
+                if (!this.isDisposeMessageSent)
+                {
+                    lock (this.syncObject)
+                    {
+                        if (this.isDisposeMessageSent)
+                        {
+                            return ExportResult.Failure;
+                        }
+
+                        this.isDisposeMessageSent = true;
+                    }
+
+                    this.WriteLine("The console exporter is still being invoked after it has been disposed. This could be due to the application's incorrect lifecycle management of the LoggerFactory/OpenTelemetry .NET SDK.");
+                    this.WriteLine(Environment.StackTrace);
+                    this.WriteLine(Environment.NewLine + "Dispose was called on the following stack trace:");
+                    this.WriteLine(this.disposedStackTrace);
+                }
+
+                return ExportResult.Failure;
+            }
+
             foreach (var logRecord in batch)
             {
                 this.WriteLine($"{"LogRecord.Timestamp:",-RightPaddingLength}{logRecord.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
@@ -128,6 +156,17 @@ namespace OpenTelemetry.Exporter
             }
 
             return ExportResult.Success;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                this.disposed = true;
+                this.disposedStackTrace = Environment.StackTrace;
+            }
+
+            base.Dispose(disposing);
         }
     }
 }
