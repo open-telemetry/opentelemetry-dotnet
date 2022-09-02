@@ -22,6 +22,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -694,6 +695,136 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             AssertException(exportedItems);
         }
 
+        [Fact(Skip = "Pending Changes https://github.com/open-telemetry/opentelemetry-dotnet/issues/3495")]
+        public async Task DiagnosticSourceCustomCallbacksAreReceivedOnlyForSubscribedEvents()
+        {
+            int numberOfCustomCallbacks = 0;
+            string expectedCustomEventName = "Microsoft.AspNetCore.Mvc.BeforeAction";
+            string actualCustomEventName = null;
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
+                        new TestHttpInListener(new AspNetCoreInstrumentationOptions())
+                        {
+                            OnCustomCallback = (name, activity, payload) =>
+                            {
+                                actualCustomEventName = name;
+                                numberOfCustomCallbacks++;
+                            },
+                        }))
+                    .Build();
+            }
+
+            // Arrange
+            using (var client = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices))
+                .CreateClient())
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, "/api/values");
+
+                // Act
+                using var response = await client.SendAsync(request);
+            }
+
+            Assert.Equal(1, numberOfCustomCallbacks);
+            Assert.Equal(expectedCustomEventName, actualCustomEventName);
+        }
+
+        [Fact]
+        public async Task DiagnosticSourceExceptionCallbackIsReceivedForUnHandledException()
+        {
+            int numberOfExceptionCallbacks = 0;
+            void ConfigureTestServices(IServiceCollection services)
+            {
+                this.tracerProvider = Sdk.CreateTracerProviderBuilder()
+                    .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
+                        new TestHttpInListener(new AspNetCoreInstrumentationOptions())
+                        {
+                            OnExceptionCallback = (activity, payload) =>
+                            {
+                                numberOfExceptionCallbacks++;
+                            },
+                        }))
+                    .Build();
+            }
+
+            // Arrange
+            using (var client = this.factory
+                .WithWebHostBuilder(builder =>
+                    builder.ConfigureTestServices(ConfigureTestServices))
+                .CreateClient())
+            {
+                try
+                {
+                    using var request = new HttpRequestMessage(HttpMethod.Get, "/api/error");
+
+                    // Act
+                    using var response = await client.SendAsync(request);
+                }
+                catch
+                {
+                    // ignore exception
+                }
+            }
+
+            Assert.Equal(1, numberOfExceptionCallbacks);
+        }
+
+        [Fact(Skip = "Pending Changes https://github.com/open-telemetry/opentelemetry-dotnet/issues/3495")]
+        public async Task DiagnosticSourceExceptionCallBackIsNotReceivedForExceptionsHandledInMiddleware()
+        {
+            int numberOfExceptionCallbacks = 0;
+
+            // configure SDK
+            using var tracerprovider = Sdk.CreateTracerProviderBuilder()
+                .AddAspNetCoreInstrumentation(new AspNetCoreInstrumentation(
+                    new TestHttpInListener(new AspNetCoreInstrumentationOptions())
+                    {
+                        OnExceptionCallback = (activity, payload) =>
+                        {
+                            numberOfExceptionCallbacks++;
+                        },
+                    }))
+                    .Build();
+
+            var builder = WebApplication.CreateBuilder();
+            var app = builder.Build();
+
+            app.UseExceptionHandler(handler =>
+            {
+                handler.Run(async (ctx) =>
+                {
+                    await ctx.Response.WriteAsync("handled");
+                });
+            });
+
+            app.Map("/error", ThrowException);
+
+            static void ThrowException(IApplicationBuilder app)
+            {
+                app.Run(context =>
+                {
+                    throw new Exception("CustomException");
+                });
+            }
+
+            _ = app.RunAsync();
+
+            using var client = new HttpClient();
+            try
+            {
+                await client.GetStringAsync("http://localhost:5000/error");
+            }
+            catch
+            {
+                // ignore 500 error.
+            }
+
+            Assert.Equal(0, numberOfExceptionCallbacks);
+        }
+
         public void Dispose()
         {
             this.tracerProvider?.Dispose();
@@ -825,6 +956,10 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
 
             public Action<Activity, object> OnStopActivityCallback;
 
+            public Action<Activity, object> OnExceptionCallback;
+
+            public Action<string, Activity, object> OnCustomCallback;
+
             public TestHttpInListener(AspNetCoreInstrumentationOptions options)
                 : base(options)
             {
@@ -842,6 +977,20 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                 base.OnStopActivity(activity, payload);
 
                 this.OnStopActivityCallback?.Invoke(activity, payload);
+            }
+
+            public override void OnCustom(string name, Activity activity, object payload)
+            {
+                base.OnCustom(name, activity, payload);
+
+                this.OnCustomCallback?.Invoke(name, activity, payload);
+            }
+
+            public override void OnException(Activity activity, object payload)
+            {
+                base.OnException(activity, payload);
+
+                this.OnExceptionCallback?.Invoke(activity, payload);
             }
         }
 

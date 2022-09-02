@@ -204,9 +204,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Theory]
-        [InlineData("test_gauge", null, null, 123, null)]
+        [InlineData("test_gauge", null, null, 123L, null)]
         [InlineData("test_gauge", null, null, null, 123.45)]
-        [InlineData("test_gauge", "description", "unit", 123, null)]
+        [InlineData("test_gauge", "description", "unit", 123L, null)]
         public void TestGaugeToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue)
         {
             var metrics = new List<Metric>();
@@ -271,11 +271,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Theory]
-        [InlineData("test_counter", null, null, 123, null, MetricReaderTemporalityPreference.Cumulative, true)]
+        [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative, true)]
         [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative, true)]
-        [InlineData("test_counter", null, null, 123, null, MetricReaderTemporalityPreference.Delta, true)]
-        [InlineData("test_counter", "description", "unit", 123, null, MetricReaderTemporalityPreference.Cumulative, true)]
-        [InlineData("test_counter", null, null, 123, null, MetricReaderTemporalityPreference.Delta, true, "key1", "value1", "key2", 123)]
+        [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true)]
+        [InlineData("test_counter", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative, true)]
+        [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, true, "key1", "value1", "key2", 123)]
         public void TestCounterToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, bool isMonotonic, params object[] keysValues)
         {
             var metrics = new List<Metric>();
@@ -360,11 +360,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests
         }
 
         [Theory]
-        [InlineData("test_histogram", null, null, 123, null, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
         [InlineData("test_histogram", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
-        [InlineData("test_histogram", null, null, 123, null, MetricReaderTemporalityPreference.Delta)]
-        [InlineData("test_histogram", "description", "unit", 123, null, MetricReaderTemporalityPreference.Cumulative)]
-        [InlineData("test_histogram", null, null, 123, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
+        [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta)]
+        [InlineData("test_histogram", "description", "unit", 123L, null, MetricReaderTemporalityPreference.Cumulative)]
+        [InlineData("test_histogram", null, null, 123L, null, MetricReaderTemporalityPreference.Delta, "key1", "value1", "key2", 123)]
         public void TestHistogramToOtlpMetric(string name, string description, string unit, long? longValue, double? doubleValue, MetricReaderTemporalityPreference aggregationTemporality, params object[] keysValues)
         {
             var metrics = new List<Metric>();
