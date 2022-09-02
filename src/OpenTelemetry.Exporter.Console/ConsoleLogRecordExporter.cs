@@ -50,7 +50,7 @@ namespace OpenTelemetry.Exporter
                         this.isDisposeMessageSent = true;
                     }
 
-                    this.WriteLine("The console exporter is still being invoked after it has been disposed. This could be the result of invalid lifecycle management of the OpenTelemetry .NET SDK.");
+                    this.WriteLine("The console exporter is still being invoked after it has been disposed. This could be due to the application's incorrect lifecycle management of the LoggerFactory/OpenTelemetry .NET SDK.");
                     this.WriteLine(Environment.StackTrace);
                     this.WriteLine(Environment.NewLine + "Dispose was called on the following stack trace:");
                     this.WriteLine(this.disposedStackTrace);
