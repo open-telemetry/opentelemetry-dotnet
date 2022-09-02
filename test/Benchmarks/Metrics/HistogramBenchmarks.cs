@@ -30,6 +30,7 @@ AMD Ryzen 9 3900X, 1 CPU, 24 logical and 12 physical cores
   [Host]     : .NET 6.0.5 (6.0.522.21309), X64 RyuJIT
   DefaultJob : .NET 6.0.5 (6.0.522.21309), X64 RyuJIT
 
+
 |                      Method | BoundCount |      Mean |     Error |    StdDev |
 |---------------------------- |----------- |----------:|----------:|----------:|
 |            HistogramHotPath |         10 |  45.19 ns |  0.321 ns |  0.285 ns |
