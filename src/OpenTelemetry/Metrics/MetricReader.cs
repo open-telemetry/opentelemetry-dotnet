@@ -41,7 +41,7 @@ namespace OpenTelemetry.Metrics
                 var type when type == typeof(ObservableCounter<>) => AggregationTemporality.Delta,
                 var type when type == typeof(Histogram<>) => AggregationTemporality.Delta,
 
-                // Temporatlity is not defined for gauges, so this does not really affect anything.
+                // Temporality is not defined for gauges, so this does not really affect anything.
                 var type when type == typeof(ObservableGauge<>) => AggregationTemporality.Delta,
 
                 var type when type == typeof(UpDownCounter<>) => AggregationTemporality.Cumulative,
