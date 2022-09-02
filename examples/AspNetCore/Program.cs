@@ -27,7 +27,7 @@ var builder = WebApplication.CreateBuilder(args);
 // OpenTelemetry
 var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
 
-// Switch between Zipkin/Jaeger/OTLP by setting UseExporter in appsettings.json.
+// Switch between Zipkin/Jaeger/OTLP/Console by setting UseTracingExporter in appsettings.json.
 var tracingExporter = builder.Configuration.GetValue<string>("UseTracingExporter").ToLowerInvariant();
 
 var serviceName = tracingExporter switch
@@ -90,6 +90,8 @@ builder.Logging.ClearProviders();
 builder.Logging.AddOpenTelemetry(options =>
 {
     options.ConfigureResource(configureResource);
+
+    // Switch between Console/OTLP by setting UseLogExporter in appsettings.json.
     var logExporter = builder.Configuration.GetValue<string>("UseLogExporter").ToLowerInvariant();
     switch (logExporter)
     {
@@ -113,7 +115,7 @@ builder.Services.Configure<OpenTelemetryLoggerOptions>(opt =>
 });
 
 // Metrics
-
+// Switch between Prometheus/OTLP/Console by setting UseMetricsExporter in appsettings.json.
 var metricsExporter = builder.Configuration.GetValue<string>("UseMetricsExporter").ToLowerInvariant();
 
 builder.Services.AddOpenTelemetryMetrics(options =>
