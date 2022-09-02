@@ -44,13 +44,8 @@ namespace OpenTelemetry.Metrics
                 // Temporatlity is not defined for gauges, so this does not really affect anything.
                 var type when type == typeof(ObservableGauge<>) => AggregationTemporality.Delta,
 
-                // With .NET 7 the OpenTelemetry .NET SDK will support UpDownCounters.
-                // These will be aggregated using Cumulative temporatlity.
-                // See:
-                //    https://docs.microsoft.com/dotnet/api/system.diagnostics.metrics.updowncounter-1
-                //    https://docs.microsoft.com/dotnet/api/system.diagnostics.metrics.observableupdowncounter-1
-                // var type when type == typeof(UpDownCounter<>) => AggregationTemporality.Cumulative,
-                // var type when type == typeof(ObservableUpDownCounter<>) => AggregationTemporality.Cumulative,
+                var type when type == typeof(UpDownCounter<>) => AggregationTemporality.Cumulative,
+                var type when type == typeof(ObservableUpDownCounter<>) => AggregationTemporality.Cumulative,
 
                 // TODO: Consider logging here because we should not fall through to this case.
                 _ => AggregationTemporality.Delta,

@@ -67,6 +67,34 @@ namespace OpenTelemetry.Metrics
                 aggType = AggregationType.DoubleSumIncomingCumulative;
                 this.MetricType = MetricType.DoubleSum;
             }
+            else if (instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<long>)
+                || instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<int>)
+                || instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<short>)
+                || instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<byte>))
+            {
+                aggType = AggregationType.LongSumIncomingCumulative;
+                this.MetricType = MetricType.LongSumNonMonotonic;
+            }
+            else if (instrumentIdentity.InstrumentType == typeof(UpDownCounter<long>)
+                || instrumentIdentity.InstrumentType == typeof(UpDownCounter<int>)
+                || instrumentIdentity.InstrumentType == typeof(UpDownCounter<short>)
+                || instrumentIdentity.InstrumentType == typeof(UpDownCounter<byte>))
+            {
+                aggType = AggregationType.LongSumIncomingDelta;
+                this.MetricType = MetricType.LongSumNonMonotonic;
+            }
+            else if (instrumentIdentity.InstrumentType == typeof(UpDownCounter<double>)
+                || instrumentIdentity.InstrumentType == typeof(UpDownCounter<float>))
+            {
+                aggType = AggregationType.DoubleSumIncomingDelta;
+                this.MetricType = MetricType.DoubleSumNonMonotonic;
+            }
+            else if (instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<double>)
+                || instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<float>))
+            {
+                aggType = AggregationType.DoubleSumIncomingCumulative;
+                this.MetricType = MetricType.DoubleSumNonMonotonic;
+            }
             else if (instrumentIdentity.InstrumentType == typeof(ObservableGauge<double>)
                 || instrumentIdentity.InstrumentType == typeof(ObservableGauge<float>))
             {
