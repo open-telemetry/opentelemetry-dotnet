@@ -223,7 +223,7 @@ namespace OpenTelemetry.Instrumentation.Http.Tests
             counter = 0;
             var processor = new Mock<BaseProcessor<Activity>>();
             using (Sdk.CreateTracerProviderBuilder()
-                .SetSampler(sampler)
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(sampler))
                 .AddHttpClientInstrumentation(options => options.Enrich = ActivityEnrichmentCounter)
                 .AddProcessor(processor.Object)
                 .Build())

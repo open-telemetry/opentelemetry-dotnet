@@ -66,7 +66,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 .Start();
 
             using (Sdk.CreateTracerProviderBuilder()
-                    .SetSampler(new AlwaysOnSampler())
+                    .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
                     .AddGrpcClientInstrumentation(options =>
                     {
                         if (shouldEnrich)
@@ -132,7 +132,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 .Start();
 
             using (Sdk.CreateTracerProviderBuilder()
-                    .SetSampler(new AlwaysOnSampler())
+                    .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
                     .AddGrpcClientInstrumentation(options =>
                     {
                         if (shouldEnrich)
@@ -181,7 +181,7 @@ namespace OpenTelemetry.Instrumentation.Grpc.Tests
                 .Start();
 
             using (Sdk.CreateTracerProviderBuilder()
-                    .SetSampler(new AlwaysOnSampler())
+                    .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
                     .AddGrpcClientInstrumentation(o =>
                     {
                         o.SuppressDownstreamInstrumentation = true;

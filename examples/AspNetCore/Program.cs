@@ -46,7 +46,8 @@ builder.Services.AddOpenTelemetryTracing(options =>
 {
     options
         .ConfigureResource(configureResource)
-        .SetSampler(new AlwaysOnSampler())
+        .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
+
         .AddHttpClientInstrumentation()
         .AddAspNetCoreInstrumentation();
 

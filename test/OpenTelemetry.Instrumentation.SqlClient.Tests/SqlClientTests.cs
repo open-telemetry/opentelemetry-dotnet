@@ -20,7 +20,6 @@ using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.Data.SqlClient;
-using Moq;
 using OpenTelemetry.Instrumentation.SqlClient.Implementation;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
@@ -86,7 +85,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             var sampler = new TestSampler();
             var activities = new List<Activity>();
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                .SetSampler(sampler)
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(sampler))
                 .AddInMemoryExporter(activities)
                 .AddSqlClientInstrumentation(options =>
                 {
@@ -300,7 +299,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
             };
             using (Sdk.CreateTracerProviderBuilder()
                 .AddSqlClientInstrumentation()
-                .SetSampler(sampler)
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(sampler))
                 .Build())
             {
                 this.fakeSqlClientDiagnosticSource.Write(beforeCommand, new { });

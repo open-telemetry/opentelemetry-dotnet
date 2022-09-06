@@ -33,20 +33,20 @@ namespace Benchmarks.Trace
             Activity.DefaultIdFormat = ActivityIdFormat.W3C;
 
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(new AlwaysOnSampler())
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
                 .AddSource("Benchmark.OneProcessor")
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(new AlwaysOnSampler())
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
                 .AddSource("Benchmark.TwoProcessors")
                 .AddProcessor(new DummyActivityProcessor())
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(new AlwaysOnSampler())
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
                 .AddSource("Benchmark.ThreeProcessors")
                 .AddProcessor(new DummyActivityProcessor())
                 .AddProcessor(new DummyActivityProcessor())

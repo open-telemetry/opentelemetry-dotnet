@@ -28,7 +28,7 @@ public class Program
     public static void Main()
     {
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .SetSampler(new MySampler())
+            .ConfigureSampler(x => x.SetDefaultSampler(new MySampler()))
             .AddSource("OTel.Demo")
             .SetResourceBuilder(ResourceBuilder.CreateEmpty().AddDetector(new MyResourceDetector()))
             .AddProcessor(new MyProcessor("ProcessorA"))

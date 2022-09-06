@@ -348,7 +348,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
                         builder.ConfigureTestServices(services =>
                         {
                             this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                                .SetSampler(new TestSampler(samplingDecision))
+                                .ConfigureSampler(x => x.Clear().SetDefaultSampler(new TestSampler(samplingDecision)))
                                 .AddAspNetCoreInstrumentation()
                                 .Build();
                         }));
@@ -513,7 +513,7 @@ namespace OpenTelemetry.Instrumentation.AspNetCore.Tests
             void ConfigureTestServices(IServiceCollection services)
             {
                 this.tracerProvider = Sdk.CreateTracerProviderBuilder()
-                    .SetSampler(new TestSampler(samplingDecision))
+                    .ConfigureSampler(x => x.Clear().SetDefaultSampler(new TestSampler(samplingDecision)))
                     .AddAspNetCoreInstrumentation(options =>
                     {
                         options.Filter = (context) =>

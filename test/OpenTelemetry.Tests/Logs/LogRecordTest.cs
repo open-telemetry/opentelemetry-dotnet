@@ -392,7 +392,7 @@ namespace OpenTelemetry.Logs.Tests
             var activitySource = new ActivitySource(activitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(activitySourceName)
-                .SetSampler(sampler)
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(sampler))
                 .AddInMemoryExporter(exportedActivityList)
                 .Build();
 
@@ -420,7 +420,7 @@ namespace OpenTelemetry.Logs.Tests
             var activitySource = new ActivitySource(activitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(activitySourceName)
-                .SetSampler(sampler)
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(sampler))
                 .AddInMemoryExporter(exportedActivityList)
                 .Build();
 

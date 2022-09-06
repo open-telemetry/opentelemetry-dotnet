@@ -121,7 +121,7 @@ namespace OpenTelemetry.Trace.Tests
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
-                .SetSampler(testSampler)
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(testSampler))
                 .Build();
 
             // OpenTelemetry Sdk is expected to set default to W3C.
@@ -241,7 +241,7 @@ namespace OpenTelemetry.Trace.Tests
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
-                .SetSampler(testSampler)
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(testSampler))
                 .Build();
 
             using var rootActivity = activitySource.StartActivity("root");
@@ -260,7 +260,7 @@ namespace OpenTelemetry.Trace.Tests
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource(ActivitySourceName)
-                    .SetSampler(testSampler)
+                    .ConfigureSampler(x => x.Clear().SetDefaultSampler(testSampler))
                     .Build();
 
             testSampler.SamplingAction = (samplingParameters) =>
@@ -292,7 +292,7 @@ namespace OpenTelemetry.Trace.Tests
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource(ActivitySourceName)
-                    .SetSampler(testSampler)
+                    .ConfigureSampler(x => x.Clear().SetDefaultSampler(testSampler))
                     .Build();
 
             testSampler.SamplingAction = (samplingParameters) =>
@@ -350,7 +350,7 @@ namespace OpenTelemetry.Trace.Tests
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddSource(ActivitySourceName)
-                    .SetSampler(testSampler)
+                    .ConfigureSampler(x => x.Clear().SetDefaultSampler(testSampler))
                     .Build();
 
             using var activity = activitySource.StartActivity("root");
@@ -380,7 +380,7 @@ namespace OpenTelemetry.Trace.Tests
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                         .AddLegacySource("random")
                         .AddProcessor(testActivityProcessor)
-                        .SetSampler(new AlwaysOnSampler())
+                        .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
                         .Build();
 
             using (SuppressInstrumentationScope.Begin(true))
@@ -417,7 +417,7 @@ namespace OpenTelemetry.Trace.Tests
             using var openTelemetry = Sdk.CreateTracerProviderBuilder()
                         .AddSource("random")
                         .AddProcessor(testActivityProcessor)
-                        .SetSampler(testSampler)
+                        .ConfigureSampler(x => x.Clear().SetDefaultSampler(testSampler))
                         .Build();
 
             testSampler.SamplingAction = (samplingParameters) =>
@@ -526,7 +526,7 @@ namespace OpenTelemetry.Trace.Tests
 
             // AddLegacyOperationName chained to TracerProviderBuilder
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(sampler)
+                        .ConfigureSampler(x => x.Clear().SetDefaultSampler(sampler))
                         .AddProcessor(testActivityProcessor)
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
@@ -587,7 +587,7 @@ namespace OpenTelemetry.Trace.Tests
 
             // AddLegacyOperationName chained to TracerProviderBuilder
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(sampler)
+                        .ConfigureSampler(x => x.Clear().SetDefaultSampler(sampler))
                         .AddSource("ABCCompany.XYZProduct.*") // Adding a wild card source
                         .AddProcessor(testActivityProcessor)
                         .AddLegacySource(operationNameForLegacyActivity)
@@ -788,7 +788,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var operationNameForLegacyActivity = "TestOperationName";
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(new AlwaysOnSampler())
+                        .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
@@ -811,7 +811,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             var operationNameForLegacyActivity = "TestOperationName";
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(new AlwaysOffSampler())
+                        .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOffSampler()))
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
@@ -839,7 +839,7 @@ namespace OpenTelemetry.Trace.Tests
             var sampler = new TestSampler() { SamplingAction = (samplingParameters) => new SamplingResult(samplingDecision) };
 
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(sampler)
+                        .ConfigureSampler(x => x.Clear().SetDefaultSampler(sampler))
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
@@ -871,7 +871,7 @@ namespace OpenTelemetry.Trace.Tests
             };
 
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(sampler)
+                        .ConfigureSampler(x => x.Clear().SetDefaultSampler(sampler))
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
@@ -912,7 +912,7 @@ namespace OpenTelemetry.Trace.Tests
             };
 
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(sampler)
+                        .ConfigureSampler(x => x.Clear().SetDefaultSampler(sampler))
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
@@ -948,7 +948,7 @@ namespace OpenTelemetry.Trace.Tests
             var operationNameForLegacyActivity = "TestOperationName";
 
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(new AlwaysOnSampler())
+                        .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
@@ -983,7 +983,7 @@ namespace OpenTelemetry.Trace.Tests
             var operationNameForLegacyActivity = "TestOperationName";
 
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(new AlwaysOffSampler())
+                        .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOffSampler()))
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
@@ -1033,7 +1033,7 @@ namespace OpenTelemetry.Trace.Tests
             };
 
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(sampler)
+                        .ConfigureSampler(x => x.Clear().SetDefaultSampler(sampler))
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
@@ -1174,7 +1174,7 @@ namespace OpenTelemetry.Trace.Tests
 
             // AddLegacyOperationName chained to TracerProviderBuilder
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(sampler)
+                        .ConfigureSampler(x => x.Clear().SetDefaultSampler(sampler))
                         .AddProcessor(testActivityProcessor)
                         .AddLegacySource(legacySourceNamespaces[0])
                         .AddLegacySource(legacySourceNamespaces[1])

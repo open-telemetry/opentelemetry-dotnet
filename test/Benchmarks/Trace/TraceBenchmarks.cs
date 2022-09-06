@@ -62,20 +62,20 @@ namespace Benchmarks.Trace
             });
 
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(new AlwaysOnSampler())
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
                 .AddSource(this.sourceWithOneProcessor.Name)
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(new AlwaysOnSampler())
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
                 .AddSource(this.sourceWithTwoProcessors.Name)
                 .AddProcessor(new DummyActivityProcessor())
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(new AlwaysOnSampler())
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
                 .AddSource(this.sourceWithThreeProcessors.Name)
                 .AddProcessor(new DummyActivityProcessor())
                 .AddProcessor(new DummyActivityProcessor())
@@ -83,14 +83,14 @@ namespace Benchmarks.Trace
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(new AlwaysOnSampler())
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
                 .AddSource(this.sourceWithOneLegacyActivityOperationNameSubscription.Name)
                 .AddLegacySource("TestOperationName")
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(new AlwaysOnSampler())
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
                 .AddSource(this.sourceWithTwoLegacyActivityOperationNameSubscriptions.Name)
                 .AddLegacySource("TestOperationName1")
                 .AddLegacySource("TestOperationName2")
@@ -98,13 +98,13 @@ namespace Benchmarks.Trace
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(new AlwaysOnSampler())
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
                 .AddLegacySource("ExactMatch.OperationName1")
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(new AlwaysOnSampler())
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
                 .AddLegacySource("WildcardMatch.*")
                 .AddProcessor(new DummyActivityProcessor())
                 .Build();

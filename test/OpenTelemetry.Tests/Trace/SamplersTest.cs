@@ -93,7 +93,7 @@ namespace OpenTelemetry.Trace.Tests
 
             var operationNameForLegacyActivity = "TestOperationName";
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(testSampler)
+                        .ConfigureSampler(x => x.Clear().SetDefaultSampler(testSampler))
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
@@ -127,7 +127,7 @@ namespace OpenTelemetry.Trace.Tests
 
             var operationNameForLegacyActivity = "TestOperationName";
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(testSampler)
+                        .ConfigureSampler(x => x.Clear().SetDefaultSampler(testSampler))
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
@@ -165,7 +165,7 @@ namespace OpenTelemetry.Trace.Tests
 
             var operationNameForLegacyActivity = "TestOperationName";
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-                        .SetSampler(testSampler)
+                        .ConfigureSampler(x => x.Clear().SetDefaultSampler(testSampler))
                         .AddLegacySource(operationNameForLegacyActivity)
                         .Build();
 
@@ -205,7 +205,7 @@ namespace OpenTelemetry.Trace.Tests
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
-                .SetSampler(testSampler)
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(testSampler))
                 .Build();
 
             var parentContext = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, parentTraceState, true);
@@ -241,7 +241,7 @@ namespace OpenTelemetry.Trace.Tests
             using var activitySource = new ActivitySource(ActivitySourceName);
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource(ActivitySourceName)
-                .SetSampler(testSampler)
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(testSampler))
                 .Build();
 
             var parentContext = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, parentTraceState, true);

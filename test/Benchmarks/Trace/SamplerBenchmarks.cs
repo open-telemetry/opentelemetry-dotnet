@@ -74,17 +74,17 @@ namespace Benchmarks.Trace
             };
 
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(testSamplerNotModifyTracestate)
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(testSamplerNotModifyTracestate))
                 .AddSource(this.sourceNotModifyTracestate.Name)
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(testSamplerModifyTracestate)
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(testSamplerModifyTracestate))
                 .AddSource(this.sourceModifyTracestate.Name)
                 .Build();
 
             Sdk.CreateTracerProviderBuilder()
-                .SetSampler(testSamplerAppendTracestate)
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(testSamplerAppendTracestate))
                 .AddSource(this.sourceAppendTracestate.Name)
                 .Build();
         }

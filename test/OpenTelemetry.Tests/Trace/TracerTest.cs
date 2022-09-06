@@ -279,7 +279,7 @@ namespace OpenTelemetry.Trace.Tests
         {
             using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource("tracername")
-                .SetSampler(new AlwaysOffSampler())
+                .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOffSampler()))
                 .Build();
 
             var span = this.tracer.StartSpan("foo");
