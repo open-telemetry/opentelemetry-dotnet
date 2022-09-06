@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Avoid potential runtime exceptions when upgrading to
+  `System.Diagnostics.DiagnosticSource` version `7.0.0`. See issue
+  ([#3629](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3629))
+
 * Added support for the .NET7 version of the
   `System.Diagnostics.DiagnosticSource` package
   ([#3605](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3605))
@@ -15,9 +19,11 @@ Released 2022-Jun-03
 Released 2022-June-1
 
 * `B3Propagator` class from `OpenTelemetry.Extensions.Propagators` namespace has
-  been deprecated and moved as is to a new `OpenTelemetry.Extensions.Propagators`
-  namespace, shipped as part of the `OpenTelemetry.Extensions.Propagators` package.
-  It will be removed in the next major release, see issue [#3259](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3259)
+  been deprecated and moved as is to a new
+  `OpenTelemetry.Extensions.Propagators` namespace, shipped as part of the
+  `OpenTelemetry.Extensions.Propagators` package. It will be removed in the next
+  major release, see issue
+  [#3259](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3259)
 
 ## 1.3.0-beta.2
 
@@ -27,8 +33,9 @@ Released 2022-May-16
 
 Released 2022-Apr-15
 
-* Removes .NET Framework 4.6.1. The minimum .NET Framework
-  version supported is .NET 4.6.2. ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
+* Removes .NET Framework 4.6.1. The minimum .NET Framework version supported is
+  .NET 4.6.2.
+  ([#3190](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3190))
 
 ## 1.2.0
 
@@ -54,7 +61,8 @@ Released 2022-Mar-04
 
 Released 2022-Feb-02
 
-* Added `ParentSpanId` to `TelemetrySpan` ([#2740](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2740))
+* Added `ParentSpanId` to `TelemetrySpan`
+  ([#2740](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2740))
 
 ## 1.2.0-rc1
 
@@ -74,8 +82,8 @@ Released 2021-Oct-08
 * Added `IDeferredMeterProviderBuilder`
   ([#2412](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2412))
 
-* Breaking: Renamed `AddSource` to `AddMeter` on MeterProviderBuilder
-  to better reflect the intent of the method.
+* Breaking: Renamed `AddSource` to `AddMeter` on MeterProviderBuilder to better
+  reflect the intent of the method.
 
 ## 1.2.0-alpha4
 
@@ -100,10 +108,12 @@ Released 2021-Aug-24
 
 Released 2021-Jul-23
 
-* Add Metrics support.([#2174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2174))
+* Add Metrics
+  support.([#2174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/2174))
 
 * Removes .NET Framework 4.5.2, .NET 4.6 support. The minimum .NET Framework
-  version supported is .NET 4.6.1. ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
+  version supported is .NET 4.6.1.
+  ([#2138](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2138))
 
 ## 1.1.0
 
@@ -177,8 +187,9 @@ Released 2021-Jan-29
 * Relax System.Diagnostics.DiagnosticSource version requirement to allow
   versions >=5.0. Previously only versions up to 6.0 (excluding 6.0) was
   allowed.
-* Metrics removed as it is not part 1.0.0 release. See issue [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655)
-  for details on Metric release plans.
+* Metrics removed as it is not part 1.0.0 release. See issue
+  [#1501](https://github.com/open-telemetry/opentelemetry-dotnet/pull/1655) for
+  details on Metric release plans.
 
 ## 1.0.0-rc1.1
 
