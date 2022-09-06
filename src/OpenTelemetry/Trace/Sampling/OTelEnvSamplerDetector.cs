@@ -20,8 +20,8 @@ namespace OpenTelemetry.Trace;
 
 internal class OTelEnvSamplerDetector : ISamplerDetector
 {
-    private const string OTelTracesSamplerEnvVarKey = "OTEL_TRACES_SAMPLER";
-    private const string OTelTracesSamplerArgEnvVarKey = "OTEL_TRACES_SAMPLER_ARG";
+    public const string OTelTracesSamplerEnvVarKey = "OTEL_TRACES_SAMPLER";
+    public const string OTelTracesSamplerArgEnvVarKey = "OTEL_TRACES_SAMPLER_ARG";
 
     public Sampler Detect()
     {
