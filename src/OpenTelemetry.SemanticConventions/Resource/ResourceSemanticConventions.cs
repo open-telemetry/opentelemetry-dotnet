@@ -23,10 +23,35 @@ namespace OpenTelemetry.Resources
     /// <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md"/>.
     /// </summary>
     /// <remarks>
-    /// Schema and specification version: https://opentelemetry.io/schemas/v1.7.0.
+    /// Schema and specification version: https://opentelemetry.io/schemas/main.
     /// </remarks>
     public static class ResourceSemanticConventions
     {
+        /// <summary>
+        /// Array of brand name and version separated by a space.
+        /// </summary>
+        /// <remarks>
+        /// This value is intended to be taken from the <a href="https://wicg.github.io/ua-client-hints/#interface">UA client hints API</a> (navigator.userAgentData.brands).
+        /// </remarks>
+        public const string AttributeBrowserBrands = "browser.brands";
+
+        /// <summary>
+        /// The platform on which the browser is running.
+        /// </summary>
+        /// <remarks>
+        /// This value is intended to be taken from the <a href="https://wicg.github.io/ua-client-hints/#interface">UA client hints API</a> (navigator.userAgentData.platform). If unavailable, the legacy <c>navigator.platform</c> API SHOULD NOT be used instead and this attribute SHOULD be left unset in order for the values to be consistent.
+        /// The list of possible values is defined in the <a href="https://wicg.github.io/ua-client-hints/#sec-ch-ua-platform">W3C User-Agent Client Hints specification</a>. Note that some (but not all) of these values can overlap with values in the <a href="./os.md">os.type and os.name attributes</a>. However, for consistency, the values in the <c>browser.platform</c> attribute should capture the exact value that the user agent provides.
+        /// </remarks>
+        public const string AttributeBrowserPlatform = "browser.platform";
+
+        /// <summary>
+        /// Full user-agent string provided by the browser.
+        /// </summary>
+        /// <remarks>
+        /// The user-agent value SHOULD be provided only from browsers that do not have a mechanism to retrieve brands and platform individually from the User-Agent Client Hints API. To retrieve the value, the legacy <c>navigator.userAgent</c> API can be used.
+        /// </remarks>
+        public const string AttributeBrowserUserAgent = "browser.user_agent";
+
         /// <summary>
         /// Name of the cloud provider.
         /// </summary>
@@ -38,15 +63,18 @@ namespace OpenTelemetry.Resources
         public const string AttributeCloudAccountId = "cloud.account.id";
 
         /// <summary>
-        /// The geographical region the resource is running. Refer to your provider's docs to see the available regions, for example <a href="https://www.alibabacloud.com/help/doc-detail/40654.htm">Alibaba Cloud regions</a>, <a href="https://aws.amazon.com/about-aws/global-infrastructure/regions_az/">AWS regions</a>, <a href="https://azure.microsoft.com/en-us/global-infrastructure/geographies/">Azure regions</a>, or <a href="https://cloud.google.com/about/locations">Google Cloud regions</a>.
+        /// The geographical region the resource is running.
         /// </summary>
+        /// <remarks>
+        /// Refer to your provider&amp;#39;s docs to see the available regions, for example <a href="https://www.alibabacloud.com/help/doc-detail/40654.htm">Alibaba Cloud regions</a>, <a href="https://aws.amazon.com/about-aws/global-infrastructure/regions_az/">AWS regions</a>, <a href="https://azure.microsoft.com/en-us/global-infrastructure/geographies/">Azure regions</a>, <a href="https://cloud.google.com/about/locations">Google Cloud regions</a>, or <a href="https://intl.cloud.tencent.com/document/product/213/6091">Tencent Cloud regions</a>.
+        /// </remarks>
         public const string AttributeCloudRegion = "cloud.region";
 
         /// <summary>
         /// Cloud regions often have multiple, isolated locations known as zones to increase availability. Availability zone represents the zone where the resource is running.
         /// </summary>
         /// <remarks>
-        /// Availability zones are called "zones" on Alibaba Cloud and Google Cloud.
+        /// Availability zones are called &amp;#34;zones&amp;#34; on Alibaba Cloud and Google Cloud.
         /// </remarks>
         public const string AttributeCloudAvailabilityZone = "cloud.availability_zone";
 
@@ -54,7 +82,7 @@ namespace OpenTelemetry.Resources
         /// The cloud platform in use.
         /// </summary>
         /// <remarks>
-        /// The prefix of the service SHOULD match the one specified in `cloud.provider`.
+        /// The prefix of the service SHOULD match the one specified in <c>cloud.provider</c>.
         /// </remarks>
         public const string AttributeCloudPlatform = "cloud.platform";
 
@@ -105,7 +133,7 @@ namespace OpenTelemetry.Resources
         /// The Amazon Resource Name(s) (ARN) of the AWS log group(s).
         /// </summary>
         /// <remarks>
-        /// See the [log group ARN format documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/iam-access-control-overview-cwl.html#CWL_ARN_Format).
+        /// See the <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/iam-access-control-overview-cwl.html#CWL_ARN_Format">log group ARN format documentation</a>.
         /// </remarks>
         public const string AttributeAwsLogGroupArns = "aws.log.group.arns";
 
@@ -118,12 +146,12 @@ namespace OpenTelemetry.Resources
         /// The ARN(s) of the AWS log stream(s).
         /// </summary>
         /// <remarks>
-        /// See the [log stream ARN format documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/iam-access-control-overview-cwl.html#CWL_ARN_Format). One log group can contain several log streams, so these ARNs necessarily identify both a log group and a log stream.
+        /// See the <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/iam-access-control-overview-cwl.html#CWL_ARN_Format">log stream ARN format documentation</a>. One log group can contain several log streams, so these ARNs necessarily identify both a log group and a log stream.
         /// </remarks>
         public const string AttributeAwsLogStreamArns = "aws.log.stream.arns";
 
         /// <summary>
-        /// Container name.
+        /// Container name used by container runtime.
         /// </summary>
         public const string AttributeContainerName = "container.name";
 
@@ -156,7 +184,7 @@ namespace OpenTelemetry.Resources
         /// A unique identifier representing the device.
         /// </summary>
         /// <remarks>
-        /// The device identifier MUST only be defined using the values outlined below. This value is not an advertising identifier and MUST NOT be used as such. On iOS (Swift or Objective-C), this value MUST be equal to the [vendor identifier](https://developer.apple.com/documentation/uikit/uidevice/1620059-identifierforvendor). On Android (Java or Kotlin), this value MUST be equal to the Firebase Installation ID or a globally unique UUID which is persisted across sessions in your application. More information can be found [here](https://developer.android.com/training/articles/user-data-ids) on best practices and exact implementation details. Caution should be taken when storing personal data or anything which can identify a user. GDPR and data protection laws may apply, ensure you do your own due diligence.
+        /// The device identifier MUST only be defined using the values outlined below. This value is not an advertising identifier and MUST NOT be used as such. On iOS (Swift or Objective-C), this value MUST be equal to the <a href="https://developer.apple.com/documentation/uikit/uidevice/1620059-identifierforvendor">vendor identifier</a>. On Android (Java or Kotlin), this value MUST be equal to the Firebase Installation ID or a globally unique UUID which is persisted across sessions in your application. More information can be found <a href="https://developer.android.com/training/articles/user-data-ids">here</a> on best practices and exact implementation details. Caution should be taken when storing personal data or anything which can identify a user. GDPR and data protection laws may apply, ensure you do your own due diligence.
         /// </remarks>
         public const string AttributeDeviceId = "device.id";
 
@@ -164,7 +192,7 @@ namespace OpenTelemetry.Resources
         /// The model identifier for the device.
         /// </summary>
         /// <remarks>
-        /// It's recommended this value represents a machine readable version of the model identifier rather than the market or consumer-friendly name of the device.
+        /// It&amp;#39;s recommended this value represents a machine readable version of the model identifier rather than the market or consumer-friendly name of the device.
         /// </remarks>
         public const string AttributeDeviceModelIdentifier = "device.model.identifier";
 
@@ -172,15 +200,36 @@ namespace OpenTelemetry.Resources
         /// The marketing name for the device model.
         /// </summary>
         /// <remarks>
-        /// It's recommended this value represents a human readable version of the device model rather than a machine readable alternative.
+        /// It&amp;#39;s recommended this value represents a human readable version of the device model rather than a machine readable alternative.
         /// </remarks>
         public const string AttributeDeviceModelName = "device.model.name";
+
+        /// <summary>
+        /// The name of the device manufacturer.
+        /// </summary>
+        /// <remarks>
+        /// The Android OS provides this field via <a href="https://developer.android.com/reference/android/os/Build#MANUFACTURER">Build</a>. iOS apps SHOULD hardcode the value <c>Apple</c>.
+        /// </remarks>
+        public const string AttributeDeviceManufacturer = "device.manufacturer";
 
         /// <summary>
         /// The name of the single function that this runtime instance executes.
         /// </summary>
         /// <remarks>
-        /// This is the name of the function as configured/deployed on the FaaS platform and is usually different from the name of the callback function (which may be stored in the [`code.namespace`/`code.function`](../../trace/semantic_conventions/span-general.md#source-code-attributes) span attributes).
+        /// This is the name of the function as configured/deployed on the FaaS
+        /// platform and is usually different from the name of the callback
+        /// function (which may be stored in the
+        /// <a href="../../trace/semantic_conventions/span-general.md#source-code-attributes"><c>code.namespace</c>/<c>code.function</c></a>
+        /// span attributes).For some cloud providers, the above definition is ambiguous. The following
+        /// definition of function name MUST be used for this attribute
+        /// (and consequently the span name) for the listed cloud providers/products:<ul>
+        /// <li><strong>Azure:</strong>  The full name <c>&lt;FUNCAPP&gt;/&lt;FUNC&gt;</c>, i.e., function app name
+        /// followed by a forward slash followed by the function name (this form
+        /// can also be seen in the resource JSON for the function).
+        /// This means that a span attribute MUST be used, as an Azure function
+        /// app can host multiple functions that would usually share
+        /// a TracerProvider (see also the <c>faas.id</c> attribute)</li>
+        /// </ul>.
         /// </remarks>
         public const string AttributeFaasName = "faas.name";
 
@@ -188,20 +237,20 @@ namespace OpenTelemetry.Resources
         /// The unique ID of the single function that this runtime instance executes.
         /// </summary>
         /// <remarks>
-        /// Depending on the cloud provider, use:
-        /// 
-        /// * **AWS Lambda:** The function [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
-        /// Take care not to use the "invoked ARN" directly but replace any
-        /// [alias suffix](https://docs.aws.amazon.com/lambda/latest/dg/configuration-aliases.html) with the resolved function version, as the same runtime instance may be invokable with multiple
-        /// different aliases.
-        /// * **GCP:** The [URI of the resource](https://cloud.google.com/iam/docs/full-resource-names)
-        /// * **Azure:** The [Fully Qualified Resource ID](https://docs.microsoft.com/en-us/rest/api/resources/resources/get-by-id).
-        /// 
-        /// On some providers, it may not be possible to determine the full ID at startup,
-        /// which is why this field cannot be made required. For example, on AWS the account ID
-        /// part of the ARN is not available without calling another AWS API
-        /// which may be deemed too slow for a short-running lambda function.
-        /// As an alternative, consider setting `faas.id` as a span attribute instead.
+        /// On some cloud providers, it may not be possible to determine the full ID at startup,
+        /// so consider setting <c>faas.id</c> as a span attribute instead.The exact value to use for <c>faas.id</c> depends on the cloud provider:<ul>
+        /// <li><strong>AWS Lambda:</strong> The function <a href="https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html">ARN</a>.
+        /// Take care not to use the &amp;#34;invoked ARN&amp;#34; directly but replace any
+        /// <a href="https://docs.aws.amazon.com/lambda/latest/dg/configuration-aliases.html">alias suffix</a>
+        /// with the resolved function version, as the same runtime instance may be invokable with
+        /// multiple different aliases.</li>
+        /// <li><strong>GCP:</strong> The <a href="https://cloud.google.com/iam/docs/full-resource-names">URI of the resource</a></li>
+        /// <li><strong>Azure:</strong> The <a href="https://docs.microsoft.com/en-us/rest/api/resources/resources/get-by-id">Fully Qualified Resource ID</a> of the invoked function,
+        /// <em>not</em> the function app, having the form
+        /// <c>/subscriptions/&lt;SUBSCIPTION_GUID&gt;/resourceGroups/&lt;RG&gt;/providers/Microsoft.Web/sites/&lt;FUNCAPP&gt;/functions/&lt;FUNC&gt;</c>.
+        /// This means that a span attribute MUST be used, as an Azure function app can host multiple functions that would usually share
+        /// a TracerProvider</li>
+        /// </ul>.
         /// </remarks>
         public const string AttributeFaasId = "faas.id";
 
@@ -209,15 +258,15 @@ namespace OpenTelemetry.Resources
         /// The immutable version of the function being executed.
         /// </summary>
         /// <remarks>
-        /// Depending on the cloud provider and platform, use:
-        /// 
-        /// * **AWS Lambda:** The [function version](https://docs.aws.amazon.com/lambda/latest/dg/configuration-versions.html)
-        ///   (an integer represented as a decimal string).
-        /// * **Google Cloud Run:** The [revision](https://cloud.google.com/run/docs/managing/revisions)
-        ///   (i.e., the function name plus the revision suffix).
-        /// * **Google Cloud Functions:** The value of the
-        ///   [`K_REVISION` environment variable](https://cloud.google.com/functions/docs/env-var#runtime_environment_variables_set_automatically).
-        /// * **Azure Functions:** Not applicable. Do not set this attribute.
+        /// Depending on the cloud provider and platform, use:<ul>
+        /// <li><strong>AWS Lambda:</strong> The <a href="https://docs.aws.amazon.com/lambda/latest/dg/configuration-versions.html">function version</a>
+        /// (an integer represented as a decimal string).</li>
+        /// <li><strong>Google Cloud Run:</strong> The <a href="https://cloud.google.com/run/docs/managing/revisions">revision</a>
+        /// (i.e., the function name plus the revision suffix).</li>
+        /// <li><strong>Google Cloud Functions:</strong> The value of the
+        /// <a href="https://cloud.google.com/functions/docs/env-var#runtime_environment_variables_set_automatically"><c>K_REVISION</c> environment variable</a>.</li>
+        /// <li><strong>Azure Functions:</strong> Not applicable. Do not set this attribute</li>
+        /// </ul>.
         /// </remarks>
         public const string AttributeFaasVersion = "faas.version";
 
@@ -225,7 +274,9 @@ namespace OpenTelemetry.Resources
         /// The execution environment ID as a string, that will be potentially reused for other invocations to the same function/function version.
         /// </summary>
         /// <remarks>
-        /// * **AWS Lambda:** Use the (full) log stream name.
+        /// <ul>
+        /// <li><strong>AWS Lambda:</strong> Use the (full) log stream name</li>
+        /// </ul>.
         /// </remarks>
         public const string AttributeFaasInstance = "faas.instance";
 
@@ -233,7 +284,7 @@ namespace OpenTelemetry.Resources
         /// The amount of memory available to the serverless function in MiB.
         /// </summary>
         /// <remarks>
-        /// It's recommended to set this attribute since e.g. too little memory can easily stop a Java AWS Lambda function from working correctly. On AWS Lambda, the environment variable `AWS_LAMBDA_FUNCTION_MEMORY_SIZE` provides this information.
+        /// It&amp;#39;s recommended to set this attribute since e.g. too little memory can easily stop a Java AWS Lambda function from working correctly. On AWS Lambda, the environment variable <c>AWS_LAMBDA_FUNCTION_MEMORY_SIZE</c> provides this information.
         /// </remarks>
         public const string AttributeFaasMaxMemory = "faas.max_memory";
 
@@ -303,9 +354,14 @@ namespace OpenTelemetry.Resources
         public const string AttributeK8sPodName = "k8s.pod.name";
 
         /// <summary>
-        /// The name of the Container in a Pod template.
+        /// The name of the Container from Pod specification, must be unique within a Pod. Container runtime usually uses different globally unique name (<c>container.name</c>).
         /// </summary>
         public const string AttributeK8sContainerName = "k8s.container.name";
+
+        /// <summary>
+        /// Number of times the container was restarted. This attribute can be used to identify a particular container (running or stopped) within a container spec.
+        /// </summary>
+        public const string AttributeK8sContainerRestartCount = "k8s.container.restart_count";
 
         /// <summary>
         /// The UID of the ReplicaSet.
@@ -393,6 +449,11 @@ namespace OpenTelemetry.Resources
         public const string AttributeProcessPid = "process.pid";
 
         /// <summary>
+        /// Parent Process identifier (PID).
+        /// </summary>
+        public const string AttributeProcessParentPid = "process.parent_pid";
+
+        /// <summary>
         /// The name of the process executable. On Linux based systems, can be set to the <c>Name</c> in <c>proc/[pid]/status</c>. On Windows, can be set to the base name of <c>GetProcessImageFileNameW</c>.
         /// </summary>
         public const string AttributeProcessExecutableName = "process.executable.name";
@@ -441,7 +502,7 @@ namespace OpenTelemetry.Resources
         /// Logical name of the service.
         /// </summary>
         /// <remarks>
-        /// MUST be the same for all instances of horizontally scaled services. If the value was not specified, SDKs MUST fallback to `unknown_service:` concatenated with [`process.executable.name`](process.md#process), e.g. `unknown_service:bash`. If `process.executable.name` is not available, the value MUST be set to `unknown_service`.
+        /// MUST be the same for all instances of horizontally scaled services. If the value was not specified, SDKs MUST fallback to <c>unknown_service:</c> concatenated with <a href="process.md#process"><c>process.executable.name</c></a>, e.g. <c>unknown_service:bash</c>. If <c>process.executable.name</c> is not available, the value MUST be set to <c>unknown_service</c>.
         /// </remarks>
         public const string AttributeServiceName = "service.name";
 
@@ -449,7 +510,7 @@ namespace OpenTelemetry.Resources
         /// A namespace for <c>service.name</c>.
         /// </summary>
         /// <remarks>
-        /// A string value having a meaning that helps to distinguish a group of services, for example the team name that owns a group of services. `service.name` is expected to be unique within the same namespace. If `service.namespace` is not specified in the Resource then `service.name` is expected to be unique for all services that have no explicit namespace defined (so the empty/unspecified namespace is simply one more valid namespace). Zero-length namespace string is assumed equal to unspecified namespace.
+        /// A string value having a meaning that helps to distinguish a group of services, for example the team name that owns a group of services. <c>service.name</c> is expected to be unique within the same namespace. If <c>service.namespace</c> is not specified in the Resource then <c>service.name</c> is expected to be unique for all services that have no explicit namespace defined (so the empty/unspecified namespace is simply one more valid namespace). Zero-length namespace string is assumed equal to unspecified namespace.
         /// </remarks>
         public const string AttributeServiceNamespace = "service.namespace";
 
@@ -457,7 +518,7 @@ namespace OpenTelemetry.Resources
         /// The string ID of the service instance.
         /// </summary>
         /// <remarks>
-        /// MUST be unique for each instance of the same `service.namespace,service.name` pair (in other words `service.namespace,service.name,service.instance.id` triplet MUST be globally unique). The ID helps to distinguish instances of the same service that exist at the same time (e.g. instances of a horizontally scaled service). It is preferable for the ID to be persistent and stay the same for the lifetime of the service instance, however it is acceptable that the ID is ephemeral and changes during important lifetime events for the service (e.g. service restarts). If the service has no inherent unique ID that can be used as the value of this attribute it is recommended to generate a random Version 1 or Version 4 RFC 4122 UUID (services aiming for reproducible UUIDs may also use Version 5, see RFC 4122 for more recommendations).
+        /// MUST be unique for each instance of the same <c>service.namespace,service.name</c> pair (in other words <c>service.namespace,service.name,service.instance.id</c> triplet MUST be globally unique). The ID helps to distinguish instances of the same service that exist at the same time (e.g. instances of a horizontally scaled service). It is preferable for the ID to be persistent and stay the same for the lifetime of the service instance, however it is acceptable that the ID is ephemeral and changes during important lifetime events for the service (e.g. service restarts). If the service has no inherent unique ID that can be used as the value of this attribute it is recommended to generate a random Version 1 or Version 4 RFC 4122 UUID (services aiming for reproducible UUIDs may also use Version 5, see RFC 4122 for more recommendations).
         /// </remarks>
         public const string AttributeServiceInstanceId = "service.instance.id";
 
@@ -502,159 +563,138 @@ namespace OpenTelemetry.Resources
         public const string AttributeWebengineDescription = "webengine.description";
 
         /// <summary>
+        /// Prefix for 'browser'.
+        /// </summary>
+        public static readonly string PrefixBrowser = "browser";
+
+        /// <summary>
         /// Prefix for 'cloud'.
         /// </summary>
-        /// span
         public static readonly string PrefixCloud = "cloud";
 
         /// <summary>
         /// Prefix for 'aws.ecs'.
         /// </summary>
-        /// span
         public static readonly string PrefixAwsEcs = "aws.ecs";
 
         /// <summary>
         /// Prefix for 'aws.eks'.
         /// </summary>
-        /// span
         public static readonly string PrefixAwsEks = "aws.eks";
 
         /// <summary>
         /// Prefix for 'aws.log'.
         /// </summary>
-        /// span
         public static readonly string PrefixAwsLog = "aws.log";
 
         /// <summary>
         /// Prefix for 'container'.
         /// </summary>
-        /// span
         public static readonly string PrefixContainer = "container";
 
         /// <summary>
         /// Prefix for 'deployment'.
         /// </summary>
-        /// span
         public static readonly string PrefixDeployment = "deployment";
 
         /// <summary>
         /// Prefix for 'device'.
         /// </summary>
-        /// span
         public static readonly string PrefixDevice = "device";
 
         /// <summary>
         /// Prefix for 'faas_resource'.
         /// </summary>
-        /// span
         public static readonly string PrefixFaasResource = "faas";
 
         /// <summary>
         /// Prefix for 'host'.
         /// </summary>
-        /// span
         public static readonly string PrefixHost = "host";
 
         /// <summary>
         /// Prefix for 'k8s.cluster'.
         /// </summary>
-        /// span
         public static readonly string PrefixK8sCluster = "k8s.cluster";
 
         /// <summary>
         /// Prefix for 'k8s.node'.
         /// </summary>
-        /// span
         public static readonly string PrefixK8sNode = "k8s.node";
 
         /// <summary>
         /// Prefix for 'k8s.namespace'.
         /// </summary>
-        /// span
         public static readonly string PrefixK8sNamespace = "k8s.namespace";
 
         /// <summary>
         /// Prefix for 'k8s.pod'.
         /// </summary>
-        /// span
         public static readonly string PrefixK8sPod = "k8s.pod";
 
         /// <summary>
         /// Prefix for 'k8s.container'.
         /// </summary>
-        /// span
         public static readonly string PrefixK8sContainer = "k8s.container";
 
         /// <summary>
         /// Prefix for 'k8s.replicaset'.
         /// </summary>
-        /// span
         public static readonly string PrefixK8sReplicaset = "k8s.replicaset";
 
         /// <summary>
         /// Prefix for 'k8s.deployment'.
         /// </summary>
-        /// span
         public static readonly string PrefixK8sDeployment = "k8s.deployment";
 
         /// <summary>
         /// Prefix for 'k8s.statefulset'.
         /// </summary>
-        /// span
         public static readonly string PrefixK8sStatefulset = "k8s.statefulset";
 
         /// <summary>
         /// Prefix for 'k8s.daemonset'.
         /// </summary>
-        /// span
         public static readonly string PrefixK8sDaemonset = "k8s.daemonset";
 
         /// <summary>
         /// Prefix for 'k8s.job'.
         /// </summary>
-        /// span
         public static readonly string PrefixK8sJob = "k8s.job";
 
         /// <summary>
         /// Prefix for 'k8s.cronjob'.
         /// </summary>
-        /// span
         public static readonly string PrefixK8sCronjob = "k8s.cronjob";
 
         /// <summary>
         /// Prefix for 'os'.
         /// </summary>
-        /// span
         public static readonly string PrefixOs = "os";
 
         /// <summary>
         /// Prefix for 'process'.
         /// </summary>
-        /// span
         public static readonly string PrefixProcess = "process";
 
         /// <summary>
         /// Prefix for 'process.runtime'.
         /// </summary>
-        /// span
         public static readonly string PrefixProcessRuntime = "process.runtime";
 
         /// <summary>
         /// Prefix for 'service'.
         /// </summary>
-        /// span
         public static readonly string PrefixService = "service";
 
         /// <summary>
         /// Prefix for 'telemetry'.
         /// </summary>
-        /// span
         public static readonly string PrefixTelemetry = "telemetry";
 
         /// <summary>
         /// Prefix for 'webengine_resource'.
         /// </summary>
-        /// span
         public static readonly string PrefixWebengineResource = "webengine";
 
         /// <summary>
@@ -681,6 +721,11 @@ namespace OpenTelemetry.Resources
             /// Google Cloud Platform.
             /// </summary>
             public const string Gcp = "gcp";
+
+            /// <summary>
+            /// Tencent Cloud.
+            /// </summary>
+            public const string TencentCloud = "tencent_cloud";
         }
 
         /// <summary>
@@ -722,6 +767,11 @@ namespace OpenTelemetry.Resources
             /// AWS Elastic Beanstalk.
             /// </summary>
             public const string AwsElasticBeanstalk = "aws_elastic_beanstalk";
+
+            /// <summary>
+            /// AWS App Runner.
+            /// </summary>
+            public const string AwsAppRunner = "aws_app_runner";
 
             /// <summary>
             /// Azure Virtual Machines.
@@ -772,6 +822,21 @@ namespace OpenTelemetry.Resources
             /// Google Cloud App Engine (GAE).
             /// </summary>
             public const string GcpAppEngine = "gcp_app_engine";
+
+            /// <summary>
+            /// Tencent Cloud Cloud Virtual Machine (CVM).
+            /// </summary>
+            public const string TencentCloudCvm = "tencent_cloud_cvm";
+
+            /// <summary>
+            /// Tencent Cloud Elastic Kubernetes Service (EKS).
+            /// </summary>
+            public const string TencentCloudEks = "tencent_cloud_eks";
+
+            /// <summary>
+            /// Tencent Cloud Serverless Cloud Function (SCF).
+            /// </summary>
+            public const string TencentCloudScf = "tencent_cloud_scf";
         }
 
         /// <summary>
@@ -824,6 +889,11 @@ namespace OpenTelemetry.Resources
             /// 64-bit PowerPC.
             /// </summary>
             public const string Ppc64 = "ppc64";
+
+            /// <summary>
+            /// IBM z/Architecture.
+            /// </summary>
+            public const string S390x = "s390x";
 
             /// <summary>
             /// 32-bit x86.
@@ -882,7 +952,7 @@ namespace OpenTelemetry.Resources
             public const string Aix = "aix";
 
             /// <summary>
-            /// Oracle Solaris.
+            /// SunOS, Oracle Solaris.
             /// </summary>
             public const string Solaris = "solaris";
 
@@ -946,6 +1016,11 @@ namespace OpenTelemetry.Resources
             /// webjs.
             /// </summary>
             public const string Webjs = "webjs";
+
+            /// <summary>
+            /// swift.
+            /// </summary>
+            public const string Swift = "swift";
         }
     }
 }

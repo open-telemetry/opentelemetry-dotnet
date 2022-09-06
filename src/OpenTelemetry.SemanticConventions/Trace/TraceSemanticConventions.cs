@@ -23,12 +23,12 @@ namespace OpenTelemetry.Trace
     /// <see href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/README.md"/>.
     /// </summary>
     /// <remarks>
-    /// Schema and specification version: https://opentelemetry.io/schemas/v1.7.0.
+    /// Schema and specification version: https://opentelemetry.io/schemas/main.
     /// </remarks>
     public static class TraceSemanticConventions
     {
         /// <summary>
-        /// Attribute for db.instance
+        /// Attribute for db.instance.
         /// </summary>
         public const string AttributeDbInstance = "db.instance";
 
@@ -36,9 +36,42 @@ namespace OpenTelemetry.Trace
         /// The full invoked ARN as provided on the <c>Context</c> passed to the function (<c>Lambda-Runtime-Invoked-Function-Arn</c> header on the <c>/runtime/invocation/next</c> applicable).
         /// </summary>
         /// <remarks>
-        /// This may be different from `faas.id` if an alias is involved.
+        /// This may be different from <c>faas.id</c> if an alias is involved.
         /// </remarks>
         public const string AttributeAwsLambdaInvokedArn = "aws.lambda.invoked_arn";
+
+        /// <summary>
+        /// The <a href="https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md#id">event_id</a> uniquely identifies the event.
+        /// </summary>
+        public const string AttributeCloudeventsEventId = "cloudevents.event_id";
+
+        /// <summary>
+        /// The <a href="https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md#source-1">source</a> identifies the context in which an event happened.
+        /// </summary>
+        public const string AttributeCloudeventsEventSource = "cloudevents.event_source";
+
+        /// <summary>
+        /// The <a href="https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md#specversion">version of the CloudEvents specification</a> which the event uses.
+        /// </summary>
+        public const string AttributeCloudeventsEventSpecVersion = "cloudevents.event_spec_version";
+
+        /// <summary>
+        /// The <a href="https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md#type">event_type</a> contains a value describing the type of event related to the originating occurrence.
+        /// </summary>
+        public const string AttributeCloudeventsEventType = "cloudevents.event_type";
+
+        /// <summary>
+        /// The <a href="https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md#subject">subject</a> of the event in the context of the event producer (identified by source).
+        /// </summary>
+        public const string AttributeCloudeventsEventSubject = "cloudevents.event_subject";
+
+        /// <summary>
+        /// Parent-child Reference type.
+        /// </summary>
+        /// <remarks>
+        /// The causal relationship between a child Span and a parent Span.
+        /// </remarks>
+        public const string AttributeOpentracingRefType = "opentracing.ref_type";
 
         /// <summary>
         /// An identifier for the database management system (DBMS) product being used. See below for a list of well-known identifiers.
@@ -61,10 +94,10 @@ namespace OpenTelemetry.Trace
         public const string AttributeDbJdbcDriverClassname = "db.jdbc.driver_classname";
 
         /// <summary>
-        /// If no <a href="#call-level-attributes-for-specific-technologies">tech-specific attribute</a> is defined, this attribute is used to report the name of the database being accessed. For commands that switch the database, this should be set to the target database (even if the command fails).
+        /// This attribute is used to report the name of the database being accessed. For commands that switch the database, this should be set to the target database (even if the command fails).
         /// </summary>
         /// <remarks>
-        /// In some SQL databases, the database name to be used is called "schema name".
+        /// In some SQL databases, the database name to be used is called &amp;#34;schema name&amp;#34;. In case there are multiple layers that could be considered for database name (e.g. Oracle instance name and schema name), the database name to be used is the more specific layer (e.g. Oracle schema name).
         /// </remarks>
         public const string AttributeDbName = "db.name";
 
@@ -80,7 +113,7 @@ namespace OpenTelemetry.Trace
         /// The name of the operation being executed, e.g. the <a href="https://docs.mongodb.com/manual/reference/command/#database-operations">MongoDB command name</a> such as <c>findAndModify</c>, or the SQL keyword.
         /// </summary>
         /// <remarks>
-        /// When setting this to an SQL keyword, it is not recommended to attempt any client-side parsing of `db.statement` just to get this property, but it should be set if the operation name is provided by the library being instrumented. If the SQL statement has an ambiguous operation, or performs more than one operation, this value may be omitted.
+        /// When setting this to an SQL keyword, it is not recommended to attempt any client-side parsing of <c>db.statement</c> just to get this property, but it should be set if the operation name is provided by the library being instrumented. If the SQL statement has an ambiguous operation, or performs more than one operation, this value may be omitted.
         /// </remarks>
         public const string AttributeDbOperation = "db.operation";
 
@@ -88,14 +121,9 @@ namespace OpenTelemetry.Trace
         /// The Microsoft SQL Server <a href="https://docs.microsoft.com/en-us/sql/connect/jdbc/building-the-connection-url?view=sql-server-ver15">instance name</a> connecting to. This name is used to determine the port of a named instance.
         /// </summary>
         /// <remarks>
-        /// If setting a `db.mssql.instance_name`, `net.peer.port` is no longer required (but still recommended if non-standard).
+        /// If setting a <c>db.mssql.instance_name</c>, <c>net.peer.port</c> is no longer required (but still recommended if non-standard).
         /// </remarks>
         public const string AttributeDbMssqlInstanceName = "db.mssql.instance_name";
-
-        /// <summary>
-        /// The name of the keyspace being accessed. To be used instead of the generic <c>db.name</c> attribute.
-        /// </summary>
-        public const string AttributeDbCassandraKeyspace = "db.cassandra.keyspace";
 
         /// <summary>
         /// The fetch size used for paging, i.e. how many rows will be returned at once.
@@ -108,10 +136,10 @@ namespace OpenTelemetry.Trace
         public const string AttributeDbCassandraConsistencyLevel = "db.cassandra.consistency_level";
 
         /// <summary>
-        /// The name of the primary table that the operation is acting upon, including the schema name (if applicable).
+        /// The name of the primary table that the operation is acting upon, including the keyspace name (if applicable).
         /// </summary>
         /// <remarks>
-        /// This mirrors the db.sql.table attribute but references cassandra rather than sql. It is not recommended to attempt any client-side parsing of `db.statement` just to get this property, but it should be set if it is provided by the library being instrumented. If the operation is acting upon an anonymous table, or more than one table, this value MUST NOT be set.
+        /// This mirrors the db.sql.table attribute but references cassandra rather than sql. It is not recommended to attempt any client-side parsing of <c>db.statement</c> just to get this property, but it should be set if it is provided by the library being instrumented. If the operation is acting upon an anonymous table, or more than one table, this value MUST NOT be set.
         /// </remarks>
         public const string AttributeDbCassandraTable = "db.cassandra.table";
 
@@ -136,11 +164,6 @@ namespace OpenTelemetry.Trace
         public const string AttributeDbCassandraCoordinatorDc = "db.cassandra.coordinator.dc";
 
         /// <summary>
-        /// The <a href="https://hbase.apache.org/book.html#_namespace">HBase namespace</a> being accessed. To be used instead of the generic <c>db.name</c> attribute.
-        /// </summary>
-        public const string AttributeDbHbaseNamespace = "db.hbase.namespace";
-
-        /// <summary>
         /// The index of the database being accessed as used in the <a href="https://redis.io/commands/select"><c>SELECT</c> command</a>, provided as an integer. To be used instead of the generic <c>db.name</c> attribute.
         /// </summary>
         public const string AttributeDbRedisDatabaseIndex = "db.redis.database_index";
@@ -151,10 +174,10 @@ namespace OpenTelemetry.Trace
         public const string AttributeDbMongodbCollection = "db.mongodb.collection";
 
         /// <summary>
-        /// The name of the primary table that the operation is acting upon, including the schema name (if applicable).
+        /// The name of the primary table that the operation is acting upon, including the database name (if applicable).
         /// </summary>
         /// <remarks>
-        /// It is not recommended to attempt any client-side parsing of `db.statement` just to get this property, but it should be set if it is provided by the library being instrumented. If the operation is acting upon an anonymous table, or more than one table, this value MUST NOT be set.
+        /// It is not recommended to attempt any client-side parsing of <c>db.statement</c> just to get this property, but it should be set if it is provided by the library being instrumented. If the operation is acting upon an anonymous table, or more than one table, this value MUST NOT be set.
         /// </remarks>
         public const string AttributeDbSqlTable = "db.sql.table";
 
@@ -178,27 +201,32 @@ namespace OpenTelemetry.Trace
         /// </summary>
         /// <remarks>
         /// An exception is considered to have escaped (or left) the scope of a span,
-        /// if that span is ended while the exception is still logically "in flight".
-        /// This may be actually "in flight" in some languages (e.g. if the exception
-        /// is passed to a Context manager's `__exit__` method in Python) but will
-        /// usually be caught at the point of recording the exception in most languages.
-        /// 
-        /// It is usually not possible to determine at the point where an exception is thrown
+        /// if that span is ended while the exception is still logically &amp;#34;in flight&amp;#34;.
+        /// This may be actually &amp;#34;in flight&amp;#34; in some languages (e.g. if the exception
+        /// is passed to a Context manager&amp;#39;s <c>__exit__</c> method in Python) but will
+        /// usually be caught at the point of recording the exception in most languages.It is usually not possible to determine at the point where an exception is thrown
         /// whether it will escape the scope of a span.
         /// However, it is trivial to know that an exception
         /// will escape, if one checks for an active exception just before ending the span,
-        /// as done in the [example above](#exception-end-example).
-        /// 
-        /// It follows that an exception may still escape the scope of the span
-        /// even if the `exception.escaped` attribute was not set or set to false,
+        /// as done in the <a href="#recording-an-exception">example above</a>.It follows that an exception may still escape the scope of the span
+        /// even if the <c>exception.escaped</c> attribute was not set or set to false,
         /// since the event might have been recorded at a time where it was not
         /// clear whether the exception will escape.
         /// </remarks>
         public const string AttributeExceptionEscaped = "exception.escaped";
 
         /// <summary>
-        /// Type of the trigger on which the function is executed.
+        /// Type of the trigger which caused this function execution.
         /// </summary>
+        /// <remarks>
+        /// For the server/consumer span on the incoming side,
+        /// <c>faas.trigger</c> MUST be set.Clients invoking FaaS instances usually cannot set <c>faas.trigger</c>,
+        /// since they would typically need to look in the payload to determine
+        /// the event type. If clients set it, it should be the same as the
+        /// trigger that corresponding incoming would have (i.e., this has
+        /// nothing to do with the underlying transport used to make the API
+        /// call to invoke the lambda, which is often HTTP).
+        /// </remarks>
         public const string AttributeFaasTrigger = "faas.trigger";
 
         /// <summary>
@@ -245,7 +273,7 @@ namespace OpenTelemetry.Trace
         /// The name of the invoked function.
         /// </summary>
         /// <remarks>
-        /// SHOULD be equal to the `faas.name` resource attribute of the invoked function.
+        /// SHOULD be equal to the <c>faas.name</c> resource attribute of the invoked function.
         /// </remarks>
         public const string AttributeFaasInvokedName = "faas.invoked_name";
 
@@ -253,7 +281,7 @@ namespace OpenTelemetry.Trace
         /// The cloud provider of the invoked function.
         /// </summary>
         /// <remarks>
-        /// SHOULD be equal to the `cloud.provider` resource attribute of the invoked function.
+        /// SHOULD be equal to the <c>cloud.provider</c> resource attribute of the invoked function.
         /// </remarks>
         public const string AttributeFaasInvokedProvider = "faas.invoked_provider";
 
@@ -261,7 +289,7 @@ namespace OpenTelemetry.Trace
         /// The cloud region of the invoked function.
         /// </summary>
         /// <remarks>
-        /// SHOULD be equal to the `cloud.region` resource attribute of the invoked function.
+        /// SHOULD be equal to the <c>cloud.region</c> resource attribute of the invoked function.
         /// </remarks>
         public const string AttributeFaasInvokedRegion = "faas.invoked_region";
 
@@ -271,34 +299,70 @@ namespace OpenTelemetry.Trace
         public const string AttributeNetTransport = "net.transport";
 
         /// <summary>
-        /// Remote address of the peer (dotted decimal for IPv4 or <a href="https://tools.ietf.org/html/rfc5952">RFC5952</a> for IPv6).
+        /// Application layer protocol used. The value SHOULD be normalized to lowercase.
         /// </summary>
-        public const string AttributeNetPeerIp = "net.peer.ip";
+        public const string AttributeNetAppProtocolName = "net.app.protocol.name";
 
         /// <summary>
-        /// Remote port number.
+        /// Version of the application layer protocol used. See note below.
+        /// </summary>
+        /// <remarks>
+        /// <c>net.app.protocol.version</c> refers to the version of the protocol used and might be different from the protocol client&amp;#39;s version. If the HTTP client used has a version of <c>0.27.2</c>, but sends HTTP version <c>1.1</c>, this attribute should be set to <c>1.1</c>.
+        /// </remarks>
+        public const string AttributeNetAppProtocolVersion = "net.app.protocol.version";
+
+        /// <summary>
+        /// Remote socket peer name.
+        /// </summary>
+        public const string AttributeNetSockPeerName = "net.sock.peer.name";
+
+        /// <summary>
+        /// Remote socket peer address: IPv4 or IPv6 for internet protocols, path for local communication, <a href="https://man7.org/linux/man-pages/man7/address_families.7.html">etc</a>.
+        /// </summary>
+        public const string AttributeNetSockPeerAddr = "net.sock.peer.addr";
+
+        /// <summary>
+        /// Remote socket peer port.
+        /// </summary>
+        public const string AttributeNetSockPeerPort = "net.sock.peer.port";
+
+        /// <summary>
+        /// Protocol <a href="https://man7.org/linux/man-pages/man7/address_families.7.html">address family</a> which is used for communication.
+        /// </summary>
+        public const string AttributeNetSockFamily = "net.sock.family";
+
+        /// <summary>
+        /// Logical remote hostname, see note below.
+        /// </summary>
+        /// <remarks>
+        /// <c>net.peer.name</c> SHOULD NOT be set if capturing it would require an extra DNS lookup.
+        /// </remarks>
+        public const string AttributeNetPeerName = "net.peer.name";
+
+        /// <summary>
+        /// Logical remote port number.
         /// </summary>
         public const string AttributeNetPeerPort = "net.peer.port";
 
         /// <summary>
-        /// Remote hostname or similar, see note below.
+        /// Logical local hostname or similar, see note below.
         /// </summary>
-        public const string AttributeNetPeerName = "net.peer.name";
+        public const string AttributeNetHostName = "net.host.name";
 
         /// <summary>
-        /// Like <c>net.peer.ip</c> but for the host IP. Useful in case of a multi-IP host.
-        /// </summary>
-        public const string AttributeNetHostIp = "net.host.ip";
-
-        /// <summary>
-        /// Like <c>net.peer.port</c> but for the host port.
+        /// Logical local port number, preferably the one that the peer used to connect.
         /// </summary>
         public const string AttributeNetHostPort = "net.host.port";
 
         /// <summary>
-        /// Local hostname or similar, see note below.
+        /// Local socket address. Useful in case of a multi-IP host.
         /// </summary>
-        public const string AttributeNetHostName = "net.host.name";
+        public const string AttributeNetSockHostAddr = "net.sock.host.addr";
+
+        /// <summary>
+        /// Local socket port number.
+        /// </summary>
+        public const string AttributeNetSockHostPort = "net.sock.host.port";
 
         /// <summary>
         /// The internet connection type currently being used by the host.
@@ -386,32 +450,6 @@ namespace OpenTelemetry.Trace
         public const string AttributeHttpMethod = "http.method";
 
         /// <summary>
-        /// Full HTTP request URL in the form <c>scheme://host[:port]/path?query[#fragment]</c>. Usually the fragment is not transmitted over HTTP, but if it is known, it should be included nevertheless.
-        /// </summary>
-        /// <remarks>
-        /// `http.url` MUST NOT contain credentials passed via URL in form of `https://username:password@www.example.com/`. In such case the attribute's value should be `https://www.example.com/`.
-        /// </remarks>
-        public const string AttributeHttpUrl = "http.url";
-
-        /// <summary>
-        /// The full request target as passed in a HTTP request line or equivalent.
-        /// </summary>
-        public const string AttributeHttpTarget = "http.target";
-
-        /// <summary>
-        /// The value of the <a href="https://tools.ietf.org/html/rfc7230#section-5.4">HTTP host header</a>. An empty Host header should also be reported, see note.
-        /// </summary>
-        /// <remarks>
-        /// When the header is present but empty the attribute SHOULD be set to the empty string. Note that this is a valid situation that is expected in certain cases, according the aforementioned [section of RFC 7230](https://tools.ietf.org/html/rfc7230#section-5.4). When the header is not set the attribute MUST NOT be set.
-        /// </remarks>
-        public const string AttributeHttpHost = "http.host";
-
-        /// <summary>
-        /// The URI scheme identifying the used protocol.
-        /// </summary>
-        public const string AttributeHttpScheme = "http.scheme";
-
-        /// <summary>
         /// <a href="https://tools.ietf.org/html/rfc7231#section-6">HTTP response status code</a>.
         /// </summary>
         public const string AttributeHttpStatusCode = "http.status_code";
@@ -420,61 +458,67 @@ namespace OpenTelemetry.Trace
         /// Kind of HTTP protocol used.
         /// </summary>
         /// <remarks>
-        /// If `net.transport` is not specified, it can be assumed to be `IP.TCP` except if `http.flavor` is `QUIC`, in which case `IP.UDP` is assumed.
+        /// If <c>net.transport</c> is not specified, it can be assumed to be <c>IP.TCP</c> except if <c>http.flavor</c> is <c>QUIC</c>, in which case <c>IP.UDP</c> is assumed.
         /// </remarks>
         public const string AttributeHttpFlavor = "http.flavor";
 
         /// <summary>
-        /// Value of the <a href="https://tools.ietf.org/html/rfc7231#section-5.5.3">HTTP User-Agent</a> header sent by the client.
+        /// Value of the <a href="https://www.rfc-editor.org/rfc/rfc9110.html#field.user-agent">HTTP User-Agent</a> header sent by the client.
         /// </summary>
         public const string AttributeHttpUserAgent = "http.user_agent";
 
         /// <summary>
-        /// The size of the request payload body in bytes. This is the number of bytes transferred excluding headers and is often, but not always, present as the <a href="https://tools.ietf.org/html/rfc7230#section-3.3.2">Content-Length</a> header. For requests using transport encoding, this should be the compressed size.
+        /// The size of the request payload body in bytes. This is the number of bytes transferred excluding headers and is often, but not always, present as the <a href="https://www.rfc-editor.org/rfc/rfc9110.html#field.content-length">Content-Length</a> header. For requests using transport encoding, this should be the compressed size.
         /// </summary>
         public const string AttributeHttpRequestContentLength = "http.request_content_length";
 
         /// <summary>
-        /// The size of the uncompressed request payload body after transport decoding. Not set if transport encoding not used.
-        /// </summary>
-        public const string AttributeHttpRequestContentLengthUncompressed = "http.request_content_length_uncompressed";
-
-        /// <summary>
-        /// The size of the response payload body in bytes. This is the number of bytes transferred excluding headers and is often, but not always, present as the <a href="https://tools.ietf.org/html/rfc7230#section-3.3.2">Content-Length</a> header. For requests using transport encoding, this should be the compressed size.
+        /// The size of the response payload body in bytes. This is the number of bytes transferred excluding headers and is often, but not always, present as the <a href="https://www.rfc-editor.org/rfc/rfc9110.html#field.content-length">Content-Length</a> header. For requests using transport encoding, this should be the compressed size.
         /// </summary>
         public const string AttributeHttpResponseContentLength = "http.response_content_length";
 
         /// <summary>
-        /// The size of the uncompressed response payload body after transport decoding. Not set if transport encoding not used.
-        /// </summary>
-        public const string AttributeHttpResponseContentLengthUncompressed = "http.response_content_length_uncompressed";
-
-        /// <summary>
-        /// The primary server name of the matched virtual host. This should be obtained via configuration. If no such configuration can be obtained, this attribute MUST NOT be set ( <c>net.host.name</c> should be used instead).
+        /// Full HTTP request URL in the form <c>scheme://host[:port]/path?query[#fragment]</c>. Usually the fragment is not transmitted over HTTP, but if it is known, it should be included nevertheless.
         /// </summary>
         /// <remarks>
-        /// `http.url` is usually not readily available on the server side but would have to be assembled in a cumbersome and sometimes lossy process from other information (see e.g. open-telemetry/opentelemetry-python/pull/148). It is thus preferred to supply the raw data that is available.
+        /// <c>http.url</c> MUST NOT contain credentials passed via URL in form of <c>https://username:password@www.example.com/</c>. In such case the attribute&amp;#39;s value should be <c>https://www.example.com/</c>.
         /// </remarks>
-        public const string AttributeHttpServerName = "http.server_name";
+        public const string AttributeHttpUrl = "http.url";
 
         /// <summary>
-        /// The matched route (path template).
+        /// The ordinal number of request re-sending attempt.
         /// </summary>
+        public const string AttributeHttpRetryCount = "http.retry_count";
+
+        /// <summary>
+        /// The URI scheme identifying the used protocol.
+        /// </summary>
+        public const string AttributeHttpScheme = "http.scheme";
+
+        /// <summary>
+        /// The full request target as passed in a HTTP request line or equivalent.
+        /// </summary>
+        public const string AttributeHttpTarget = "http.target";
+
+        /// <summary>
+        /// The matched route (path template in the format used by the respective server framework). See note below.
+        /// </summary>
+        /// <remarks>
+        /// &amp;#39;http.route&amp;#39; MUST NOT be populated when this is not supported by the HTTP server framework as the route attribute should have low-cardinality and the URI path can NOT substitute it.
+        /// </remarks>
         public const string AttributeHttpRoute = "http.route";
 
         /// <summary>
         /// The IP address of the original client behind all proxies, if known (e.g. from <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For">X-Forwarded-For</a>).
         /// </summary>
         /// <remarks>
-        /// This is not necessarily the same as `net.peer.ip`, which would
-        /// identify the network-level peer, which may be a proxy.
-        /// 
-        /// This attribute should be set when a source of information different
-        /// from the one used for `net.peer.ip`, is available even if that other
-        /// source just confirms the same value as `net.peer.ip`.
-        /// Rationale: For `net.peer.ip`, one typically does not know if it
+        /// This is not necessarily the same as <c>net.sock.peer.addr</c>, which would
+        /// identify the network-level peer, which may be a proxy.This attribute should be set when a source of information different
+        /// from the one used for <c>net.sock.peer.addr</c>, is available even if that other
+        /// source just confirms the same value as <c>net.sock.peer.addr</c>.
+        /// Rationale: For <c>net.sock.peer.addr</c>, one typically does not know if it
         /// comes from a proxy, reverse proxy, or the actual client. Setting
-        /// `http.client_ip` when it's the same as `net.peer.ip` means that
+        /// <c>http.client_ip</c> when it&amp;#39;s the same as <c>net.sock.peer.addr</c> means that
         /// one is at least somewhat confident that the address is not that of
         /// the closest proxy.
         /// </remarks>
@@ -591,6 +635,24 @@ namespace OpenTelemetry.Trace
         public const string AttributeAwsDynamodbGlobalSecondaryIndexUpdates = "aws.dynamodb.global_secondary_index_updates";
 
         /// <summary>
+        /// The name of the operation being executed.
+        /// </summary>
+        public const string AttributeGraphqlOperationName = "graphql.operation.name";
+
+        /// <summary>
+        /// The type of the operation being executed.
+        /// </summary>
+        public const string AttributeGraphqlOperationType = "graphql.operation.type";
+
+        /// <summary>
+        /// The GraphQL document being executed.
+        /// </summary>
+        /// <remarks>
+        /// The value may be sanitized to exclude sensitive information.
+        /// </remarks>
+        public const string AttributeGraphqlDocument = "graphql.document";
+
+        /// <summary>
         /// A string identifying the messaging system.
         /// </summary>
         public const string AttributeMessagingSystem = "messaging.system";
@@ -664,7 +726,7 @@ namespace OpenTelemetry.Trace
         /// Message keys in Kafka are used for grouping alike messages to ensure they're processed on the same partition. They differ from <c>messaging.message_id</c> in that they're not unique. If the key is <c>null</c>, the attribute MUST NOT be set.
         /// </summary>
         /// <remarks>
-        /// If the key type is not string, it's string representation has to be supplied for the attribute. If the key has no unambiguous, canonical string form, don't include its value.
+        /// If the key type is not string, it&amp;#39;s string representation has to be supplied for the attribute. If the key has no unambiguous, canonical string form, don&amp;#39;t include its value.
         /// </remarks>
         public const string AttributeMessagingKafkaMessageKey = "messaging.kafka.message_key";
 
@@ -689,7 +751,42 @@ namespace OpenTelemetry.Trace
         public const string AttributeMessagingKafkaTombstone = "messaging.kafka.tombstone";
 
         /// <summary>
-        /// A string identifying the remoting system.
+        /// Namespace of RocketMQ resources, resources in different namespaces are individual.
+        /// </summary>
+        public const string AttributeMessagingRocketmqNamespace = "messaging.rocketmq.namespace";
+
+        /// <summary>
+        /// Name of the RocketMQ producer/consumer group that is handling the message. The client type is identified by the SpanKind.
+        /// </summary>
+        public const string AttributeMessagingRocketmqClientGroup = "messaging.rocketmq.client_group";
+
+        /// <summary>
+        /// The unique identifier for each client.
+        /// </summary>
+        public const string AttributeMessagingRocketmqClientId = "messaging.rocketmq.client_id";
+
+        /// <summary>
+        /// Type of message.
+        /// </summary>
+        public const string AttributeMessagingRocketmqMessageType = "messaging.rocketmq.message_type";
+
+        /// <summary>
+        /// The secondary classifier of message besides topic.
+        /// </summary>
+        public const string AttributeMessagingRocketmqMessageTag = "messaging.rocketmq.message_tag";
+
+        /// <summary>
+        /// Key(s) of message, another way to mark message besides message id.
+        /// </summary>
+        public const string AttributeMessagingRocketmqMessageKeys = "messaging.rocketmq.message_keys";
+
+        /// <summary>
+        /// Model of message consumption. This only applies to consumer spans.
+        /// </summary>
+        public const string AttributeMessagingRocketmqConsumptionModel = "messaging.rocketmq.consumption_model";
+
+        /// <summary>
+        /// A string identifying the remoting system. See below for a list of well-known identifiers.
         /// </summary>
         public const string AttributeRpcSystem = "rpc.system";
 
@@ -697,7 +794,7 @@ namespace OpenTelemetry.Trace
         /// The full (logical) name of the service being called, including its package name, if applicable.
         /// </summary>
         /// <remarks>
-        /// This is the logical name of the service from the RPC interface perspective, which can be different from the name of any implementing class. The `code.namespace` attribute may be used to store the latter (despite the attribute name, it may include a class name; e.g., class with method actually executing the call on the server side, RPC client stub class on the client side).
+        /// This is the logical name of the service from the RPC interface perspective, which can be different from the name of any implementing class. The <c>code.namespace</c> attribute may be used to store the latter (despite the attribute name, it may include a class name; e.g., class with method actually executing the call on the server side, RPC client stub class on the client side).
         /// </remarks>
         public const string AttributeRpcService = "rpc.service";
 
@@ -705,7 +802,7 @@ namespace OpenTelemetry.Trace
         /// The name of the (logical) method being called, must be equal to the $method part in the span name.
         /// </summary>
         /// <remarks>
-        /// This is the logical name of the method from the RPC interface perspective, which can be different from the name of any implementing method/function. The `code.function` attribute may be used to store the latter (e.g., method actually executing the call on the server side, RPC client stub method on the client side).
+        /// This is the logical name of the method from the RPC interface perspective, which can be different from the name of any implementing method/function. The <c>code.function</c> attribute may be used to store the latter (e.g., method actually executing the call on the server side, RPC client stub method on the client side).
         /// </remarks>
         public const string AttributeRpcMethod = "rpc.method";
 
@@ -760,170 +857,173 @@ namespace OpenTelemetry.Trace
         /// <summary>
         /// Prefix for 'aws.lambda'.
         /// </summary>
-        /// span
         public static readonly string PrefixAwsLambda = "aws.lambda";
+
+        /// <summary>
+        /// Prefix for 'cloudevents'.
+        /// </summary>
+        public static readonly string PrefixCloudevents = "cloudevents";
+
+        /// <summary>
+        /// Prefix for 'opentracing'.
+        /// </summary>
+        public static readonly string PrefixOpentracing = "opentracing";
 
         /// <summary>
         /// Prefix for 'db'.
         /// </summary>
-        /// span
         public static readonly string PrefixDb = "db";
 
         /// <summary>
         /// Prefix for 'db.mssql'.
         /// </summary>
-        /// span
         public static readonly string PrefixDbMssql = "db.mssql";
 
         /// <summary>
         /// Prefix for 'db.cassandra'.
         /// </summary>
-        /// span
         public static readonly string PrefixDbCassandra = "db.cassandra";
-
-        /// <summary>
-        /// Prefix for 'db.hbase'.
-        /// </summary>
-        /// span
-        public static readonly string PrefixDbHbase = "db.hbase";
 
         /// <summary>
         /// Prefix for 'db.redis'.
         /// </summary>
-        /// span
         public static readonly string PrefixDbRedis = "db.redis";
 
         /// <summary>
         /// Prefix for 'db.mongodb'.
         /// </summary>
-        /// span
         public static readonly string PrefixDbMongodb = "db.mongodb";
 
         /// <summary>
         /// Prefix for 'db.sql'.
         /// </summary>
-        /// span
         public static readonly string PrefixDbSql = "db.sql";
 
         /// <summary>
         /// Prefix for 'exception'.
         /// </summary>
-        /// event
         public static readonly string PrefixException = "exception";
 
         /// <summary>
         /// Prefix for 'faas_span'.
         /// </summary>
-        /// span
         public static readonly string PrefixFaasSpan = "faas";
 
         /// <summary>
         /// Prefix for 'faas_span.datasource'.
         /// </summary>
-        /// span
         public static readonly string PrefixFaasSpanDatasource = "faas.document";
 
         /// <summary>
         /// Prefix for 'network'.
         /// </summary>
-        /// span
         public static readonly string PrefixNetwork = "net";
 
         /// <summary>
         /// Prefix for 'peer'.
         /// </summary>
-        /// span
         public static readonly string PrefixPeer = "peer";
 
         /// <summary>
         /// Prefix for 'identity'.
         /// </summary>
-        /// span
         public static readonly string PrefixIdentity = "enduser";
 
         /// <summary>
         /// Prefix for 'thread'.
         /// </summary>
-        /// span
         public static readonly string PrefixThread = "thread";
 
         /// <summary>
         /// Prefix for 'code'.
         /// </summary>
-        /// span
         public static readonly string PrefixCode = "code";
 
         /// <summary>
         /// Prefix for 'http'.
         /// </summary>
-        /// span
         public static readonly string PrefixHttp = "http";
 
         /// <summary>
         /// Prefix for 'aws'.
         /// </summary>
-        /// span
         public static readonly string PrefixAws = "aws";
 
         /// <summary>
         /// Prefix for 'dynamodb.shared'.
         /// </summary>
-        /// span
         public static readonly string PrefixDynamodbShared = "aws.dynamodb";
+
+        /// <summary>
+        /// Prefix for 'graphql'.
+        /// </summary>
+        public static readonly string PrefixGraphql = "graphql";
 
         /// <summary>
         /// Prefix for 'messaging'.
         /// </summary>
-        /// span
         public static readonly string PrefixMessaging = "messaging";
 
         /// <summary>
         /// Prefix for 'messaging.rabbitmq'.
         /// </summary>
-        /// span
         public static readonly string PrefixMessagingRabbitmq = "messaging.rabbitmq";
 
         /// <summary>
         /// Prefix for 'messaging.kafka'.
         /// </summary>
-        /// span
         public static readonly string PrefixMessagingKafka = "messaging.kafka";
+
+        /// <summary>
+        /// Prefix for 'messaging.rocketmq'.
+        /// </summary>
+        public static readonly string PrefixMessagingRocketmq = "messaging.rocketmq";
 
         /// <summary>
         /// Prefix for 'rpc'.
         /// </summary>
-        /// span
         public static readonly string PrefixRpc = "rpc";
 
         /// <summary>
         /// Prefix for 'rpc.grpc'.
         /// </summary>
-        /// span
         public static readonly string PrefixRpcGrpc = "rpc.grpc";
 
         /// <summary>
         /// Prefix for 'rpc.jsonrpc'.
         /// </summary>
-        /// span
         public static readonly string PrefixRpcJsonrpc = "rpc.jsonrpc";
 
         /// <summary>
         /// Prefix for 'rpc.message'.
         /// </summary>
-        /// event
         public static readonly string PrefixRpcMessage = "message";
 
         /// <summary>
         /// Event name for 'exception'.
         /// </summary>
-        /// event
         public static readonly string EventException = "exception";
 
         /// <summary>
         /// Event name for 'rpc.message'.
         /// </summary>
-        /// event
         public static readonly string EventRpcMessage = "message";
+
+        /// <summary>
+        /// Parent-child Reference type.
+        /// </summary>
+        public static class OpentracingRefTypeValues
+        {
+            /// <summary>
+            /// The parent Span depends on the child Span in some capacity.
+            /// </summary>
+            public const string ChildOf = "child_of";
+
+            /// <summary>
+            /// The parent Span does not depend in any way on the result of the child Span.
+            /// </summary>
+            public const string FollowsFrom = "follows_from";
+        }
 
         /// <summary>
         /// An identifier for the database management system (DBMS) product being used. See below for a list of well-known identifiers.
@@ -1164,6 +1264,11 @@ namespace OpenTelemetry.Trace
             /// CockroachDB.
             /// </summary>
             public const string Cockroachdb = "cockroachdb";
+
+            /// <summary>
+            /// OpenSearch.
+            /// </summary>
+            public const string Opensearch = "opensearch";
         }
 
         /// <summary>
@@ -1228,7 +1333,7 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
-        /// Type of the trigger on which the function is executed.
+        /// Type of the trigger which caused this function execution.
         /// </summary>
         public static class FaasTriggerValues
         {
@@ -1303,6 +1408,11 @@ namespace OpenTelemetry.Trace
             /// Google Cloud Platform.
             /// </summary>
             public const string Gcp = "gcp";
+
+            /// <summary>
+            /// Tencent Cloud.
+            /// </summary>
+            public const string TencentCloud = "tencent_cloud";
         }
 
         /// <summary>
@@ -1321,16 +1431,6 @@ namespace OpenTelemetry.Trace
             public const string IpUdp = "ip_udp";
 
             /// <summary>
-            /// Another IP-based protocol.
-            /// </summary>
-            public const string Ip = "ip";
-
-            /// <summary>
-            /// Unix Domain socket. See below.
-            /// </summary>
-            public const string Unix = "unix";
-
-            /// <summary>
             /// Named or anonymous pipe. See note below.
             /// </summary>
             public const string Pipe = "pipe";
@@ -1344,6 +1444,27 @@ namespace OpenTelemetry.Trace
             /// Something else (non IP-based).
             /// </summary>
             public const string Other = "other";
+        }
+
+        /// <summary>
+        /// Protocol <a href="https://man7.org/linux/man-pages/man7/address_families.7.html">address family</a> which is used for communication.
+        /// </summary>
+        public static class NetSockFamilyValues
+        {
+            /// <summary>
+            /// IPv4 address.
+            /// </summary>
+            public const string Inet = "inet";
+
+            /// <summary>
+            /// IPv6 address.
+            /// </summary>
+            public const string Inet6 = "inet6";
+
+            /// <summary>
+            /// Unix domain socket path.
+            /// </summary>
+            public const string Unix = "unix";
         }
 
         /// <summary>
@@ -1494,19 +1615,24 @@ namespace OpenTelemetry.Trace
         public static class HttpFlavorValues
         {
             /// <summary>
-            /// HTTP 1.0.
+            /// HTTP/1.0.
             /// </summary>
             public const string Http10 = "1.0";
 
             /// <summary>
-            /// HTTP 1.1.
+            /// HTTP/1.1.
             /// </summary>
             public const string Http11 = "1.1";
 
             /// <summary>
-            /// HTTP 2.
+            /// HTTP/2.
             /// </summary>
             public const string Http20 = "2.0";
+
+            /// <summary>
+            /// HTTP/3.
+            /// </summary>
+            public const string Http30 = "3.0";
 
             /// <summary>
             /// SPDY protocol.
@@ -1517,6 +1643,27 @@ namespace OpenTelemetry.Trace
             /// QUIC protocol.
             /// </summary>
             public const string Quic = "QUIC";
+        }
+
+        /// <summary>
+        /// The type of the operation being executed.
+        /// </summary>
+        public static class GraphqlOperationTypeValues
+        {
+            /// <summary>
+            /// GraphQL query.
+            /// </summary>
+            public const string Query = "query";
+
+            /// <summary>
+            /// GraphQL mutation.
+            /// </summary>
+            public const string Mutation = "mutation";
+
+            /// <summary>
+            /// GraphQL subscription.
+            /// </summary>
+            public const string Subscription = "subscription";
         }
 
         /// <summary>
@@ -1549,6 +1696,74 @@ namespace OpenTelemetry.Trace
             /// process.
             /// </summary>
             public const string Process = "process";
+        }
+
+        /// <summary>
+        /// Type of message.
+        /// </summary>
+        public static class MessagingRocketmqMessageTypeValues
+        {
+            /// <summary>
+            /// Normal message.
+            /// </summary>
+            public const string Normal = "normal";
+
+            /// <summary>
+            /// FIFO message.
+            /// </summary>
+            public const string Fifo = "fifo";
+
+            /// <summary>
+            /// Delay message.
+            /// </summary>
+            public const string Delay = "delay";
+
+            /// <summary>
+            /// Transaction message.
+            /// </summary>
+            public const string Transaction = "transaction";
+        }
+
+        /// <summary>
+        /// Model of message consumption. This only applies to consumer spans.
+        /// </summary>
+        public static class MessagingRocketmqConsumptionModelValues
+        {
+            /// <summary>
+            /// Clustering consumption model.
+            /// </summary>
+            public const string Clustering = "clustering";
+
+            /// <summary>
+            /// Broadcasting consumption model.
+            /// </summary>
+            public const string Broadcasting = "broadcasting";
+        }
+
+        /// <summary>
+        /// A string identifying the remoting system. See below for a list of well-known identifiers.
+        /// </summary>
+        public static class RpcSystemValues
+        {
+            /// <summary>
+            /// gRPC.
+            /// </summary>
+            public const string Grpc = "grpc";
+
+            /// <summary>
+            /// Java RMI.
+            /// </summary>
+            public const string JavaRmi = "java_rmi";
+
+            /// <summary>
+            /// .NET WCF.
+            /// </summary>
+            public const string DotnetWcf = "dotnet_wcf";
+
+            /// <summary>
+            /// Apache Dubbo.
+            /// </summary>
+            public const string ApacheDubbo = "apache_dubbo";
         }
 
         /// <summary>
