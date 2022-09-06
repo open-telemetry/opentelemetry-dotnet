@@ -2,10 +2,6 @@
 
 ## Unreleased
 
-* Avoid potential runtime exceptions when upgrading to
-  `System.Diagnostics.DiagnosticSource` version `7.0.0`. See issue
-  ([#3629](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3629))
-
 * Added support for the .NET7 version of the
   `System.Diagnostics.DiagnosticSource` package
   ([#3605](https://github.com/open-telemetry/opentelemetry-dotnet/pull/3605)).
