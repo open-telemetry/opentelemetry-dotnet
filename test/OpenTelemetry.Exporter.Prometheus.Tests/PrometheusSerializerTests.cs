@@ -188,6 +188,33 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests
         }
 
         [Fact]
+        public void SumNonMonotonicDouble()
+        {
+            var buffer = new byte[85000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            var counter = meter.CreateUpDownCounter<double>("test_updown_counter");
+            counter.Add(10);
+            counter.Add(-11);
+
+            provider.ForceFlush();
+
+            var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metrics[0]);
+            Assert.Matches(
+                ("^"
+                    + "# TYPE test_updown_counter gauge\n"
+                    + "test_updown_counter -1 \\d+\n"
+                    + "$").Replace('\'', '"'),
+                Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        [Fact]
         public void HistogramZeroDimension()
         {
             var buffer = new byte[85000];

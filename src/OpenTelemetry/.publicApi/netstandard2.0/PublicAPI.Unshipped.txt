@@ -48,3 +48,5 @@ static Microsoft.Extensions.DependencyInjection.TracerProviderBuilderServiceColl
 static Microsoft.Extensions.DependencyInjection.TracerProviderBuilderServiceCollectionExtensions.ConfigureOpenTelemetryTracing(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 ~static OpenTelemetry.Metrics.MeterProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Metrics.MeterProviderBuilder meterProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder> configure) -> OpenTelemetry.Metrics.MeterProviderBuilder
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
+OpenTelemetry.Metrics.MetricType.LongSumNonMonotonic = 138 -> OpenTelemetry.Metrics.MetricType
+OpenTelemetry.Metrics.MetricType.DoubleSumNonMonotonic = 141 -> OpenTelemetry.Metrics.MetricType

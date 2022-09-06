@@ -15,6 +15,8 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Metrics
 {
@@ -24,6 +26,8 @@ namespace OpenTelemetry.Metrics
     // Note: Does not implement IEnumerable<> to prevent accidental boxing.
     public class HistogramBuckets
     {
+        internal const int DefaultBoundaryCountForBinarySearch = 50;
+
         internal readonly double[] ExplicitBounds;
 
         internal readonly long[] RunningBucketCounts;
@@ -36,9 +40,38 @@ namespace OpenTelemetry.Metrics
 
         internal int IsCriticalSectionOccupied = 0;
 
+        private readonly BucketLookupNode bucketLookupTreeRoot;
+
+        private readonly Func<double, int> findHistogramBucketIndex;
+
         internal HistogramBuckets(double[] explicitBounds)
         {
             this.ExplicitBounds = explicitBounds;
+            this.findHistogramBucketIndex = this.FindBucketIndexLinear;
+            if (explicitBounds != null && explicitBounds.Length >= DefaultBoundaryCountForBinarySearch)
+            {
+                this.bucketLookupTreeRoot = ConstructBalancedBST(explicitBounds, 0, explicitBounds.Length);
+                this.findHistogramBucketIndex = this.FindBucketIndexBinary;
+
+                static BucketLookupNode ConstructBalancedBST(double[] values, int min, int max)
+                {
+                    if (min == max)
+                    {
+                        return null;
+                    }
+
+                    int median = min + ((max - min) / 2);
+                    return new BucketLookupNode
+                    {
+                        Index = median,
+                        UpperBoundInclusive = values[median],
+                        LowerBoundExclusive = median > 0 ? values[median - 1] : double.NegativeInfinity,
+                        Left = ConstructBalancedBST(values, min, median),
+                        Right = ConstructBalancedBST(values, median + 1, max),
+                    };
+                }
+            }
+
             this.RunningBucketCounts = explicitBounds != null ? new long[explicitBounds.Length + 1] : null;
             this.SnapshotBucketCounts = explicitBounds != null ? new long[explicitBounds.Length + 1] : new long[0];
         }
@@ -53,6 +86,55 @@ namespace OpenTelemetry.Metrics
             copy.SnapshotSum = this.SnapshotSum;
 
             return copy;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal int FindBucketIndex(double value)
+        {
+            return this.findHistogramBucketIndex(value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal int FindBucketIndexBinary(double value)
+        {
+            BucketLookupNode current = this.bucketLookupTreeRoot;
+
+            Debug.Assert(current != null, "Bucket root was null.");
+
+            do
+            {
+                if (value <= current.LowerBoundExclusive)
+                {
+                    current = current.Left;
+                }
+                else if (value > current.UpperBoundInclusive)
+                {
+                    current = current.Right;
+                }
+                else
+                {
+                    return current.Index;
+                }
+            }
+            while (current != null);
+
+            return this.ExplicitBounds.Length;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal int FindBucketIndexLinear(double value)
+        {
+            int i;
+            for (i = 0; i < this.ExplicitBounds.Length; i++)
+            {
+                // Upper bound is inclusive
+                if (value <= this.ExplicitBounds[i])
+                {
+                    break;
+                }
+            }
+
+            return i;
         }
 
         /// <summary>
@@ -101,6 +183,19 @@ namespace OpenTelemetry.Metrics
 
                 return false;
             }
+        }
+
+        private sealed class BucketLookupNode
+        {
+            public double UpperBoundInclusive { get; set; }
+
+            public double LowerBoundExclusive { get; set; }
+
+            public int Index { get; set; }
+
+            public BucketLookupNode Left { get; set; }
+
+            public BucketLookupNode Right { get; set; }
         }
     }
 }
