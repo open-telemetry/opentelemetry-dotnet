@@ -1,0 +1,1 @@
+override OpenTelemetry.Exporter.ConsoleLogRecordExporter.Dispose(bool disposing) -> void
