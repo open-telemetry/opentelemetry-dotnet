@@ -585,6 +585,12 @@ namespace OpenTelemetry.Metrics
                     // Lock acquired
                     this.snapshotValue.AsLong = this.runningValue.AsLong;
                     this.histogramBuckets.SnapshotSum = this.histogramBuckets.RunningSum;
+                    if (hasMinMax)
+                    {
+                        this.histogramBuckets.SnapshotMin = this.histogramBuckets.RunningMin;
+                        this.histogramBuckets.SnapshotMax = this.histogramBuckets.RunningMax;
+                    }
+
                     if (outputDelta)
                     {
                         this.runningValue.AsLong = 0;
@@ -594,12 +600,6 @@ namespace OpenTelemetry.Metrics
                             this.histogramBuckets.RunningMin = 0;
                             this.histogramBuckets.RunningMax = 0;
                         }
-                    }
-
-                    if (hasMinMax)
-                    {
-                        this.histogramBuckets.SnapshotMin = this.histogramBuckets.RunningMin;
-                        this.histogramBuckets.SnapshotMax = this.histogramBuckets.RunningMax;
                     }
 
                     if (hasBuckets)
