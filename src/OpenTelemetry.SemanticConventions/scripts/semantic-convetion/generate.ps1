@@ -3,9 +3,9 @@ $SCRIPT_DIR=$PSScriptRoot
 $ROOT_DIR="${SCRIPT_DIR}/../../"
 
 # freeze the spec & generator tools versions to make SemanticAttributes generation reproducible
-$SPEC_VERSION="v1.7.0"
+$SPEC_VERSION="v1.12.0"
 $SCHEMA_URL="https://opentelemetry.io/schemas/$SPEC_VERSION"
-$GENERATOR_VERSION="0.8.0"
+$GENERATOR_VERSION="0.14.0"
 
 Set-Location $SCRIPT_DIR
 
@@ -27,6 +27,7 @@ docker run --rm `
   -f /source code `
   --template /templates/SemanticConventions.cs.j2 `
   --output /output/TraceSemanticConventions.cs `
+  --trim-whitespace `
   -D class=TraceSemanticConventions `
   -D schemaUrl=$SCHEMA_URL `
   -D pkg=OpenTelemetry.Trace
@@ -39,11 +40,12 @@ docker run --rm `
   -f /source code `
   --template /templates/SemanticConventions.cs.j2 `
   --output /output/ResourceSemanticConventions.cs `
+  --trim-whitespace `
   -D class=ResourceSemanticConventions `
   -D schemaUrl=$SCHEMA_URL `
   -D pkg=OpenTelemetry.Resources
 
 Set-Location ${ROOT_DIR}
 
-Write-Host "Running dotnet-format on the generated files"
-dotnet format --severity warn
+# Write-Host "Running dotnet-format on the generated files"
+# dotnet format --severity warn

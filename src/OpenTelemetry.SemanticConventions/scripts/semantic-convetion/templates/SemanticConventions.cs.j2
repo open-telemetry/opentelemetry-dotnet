@@ -64,7 +64,7 @@ namespace {{pkg | trim}}
         /// </summary>
   {% if attribute.note %}
         /// <remarks>
-        /// {{format_remarks(attribute.note | to_doc_brief)}}.
+        /// {{format_remarks(attribute.note | to_doc_brief | render_markdown(code="<c>{0}</c>", paragraph="{0}"))}}.
         /// </remarks>
   {% endif %}
   {% if attribute.deprecated %}

@@ -6,7 +6,7 @@ ROOT_DIR="${SCRIPT_DIR}/../../"
 # freeze the spec & generator tools versions to make SemanticAttributes generation reproducible
 SPEC_VERSION=v1.12.0
 SCHEMA_URL=https://opentelemetry.io/schemas/$SPEC_VERSION
-GENERATOR_VERSION=0.11.0
+GENERATOR_VERSION=0.14.0
 
 cd ${SCRIPT_DIR}
 
