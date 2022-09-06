@@ -35,7 +35,7 @@ namespace OpenTelemetry.Trace
         internal readonly List<string> Sources = new();
         internal readonly HashSet<string> LegacyActivityOperationNames = new(StringComparer.OrdinalIgnoreCase);
         internal ResourceBuilder? ResourceBuilder;
-        internal Sampler? Sampler;
+        internal SamplerBuilder? SamplerBuilder;
         internal bool SetErrorStatusOnException;
 
         private TracerProviderBuilderSdk? builder;
@@ -109,11 +109,20 @@ namespace OpenTelemetry.Trace
             this.ResourceBuilder = resourceBuilder;
         }
 
-        public void SetSampler(Sampler sampler)
+        public void ConfigureSampler(Action<SamplerBuilder> configure)
         {
-            Debug.Assert(sampler != null, "sampler was null");
+            Debug.Assert(configure != null, "configure was null");
 
-            this.Sampler = sampler;
+            var samplerBuilder = this.SamplerBuilder ??= SamplerBuilder.CreateDefault();
+
+            configure!(samplerBuilder);
+        }
+
+        public void SetSamplerBuilder(SamplerBuilder samplerBuilder)
+        {
+            Debug.Assert(samplerBuilder != null, "samplerBuilder was null");
+
+            this.SamplerBuilder = samplerBuilder;
         }
 
         internal void EnableErrorStatusOnException()

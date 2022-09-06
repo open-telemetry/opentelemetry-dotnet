@@ -203,11 +203,25 @@ namespace OpenTelemetry.Trace
             return this.ConfigureState((sp, state) => state.SetResourceBuilder(resourceBuilder));
         }
 
+        internal TracerProviderBuilder ConfigureSampler(Action<SamplerBuilder> configure)
+        {
+            Guard.ThrowIfNull(configure);
+
+            return this.ConfigureState((sp, state) => state.ConfigureSampler(configure));
+        }
+
+        internal TracerProviderBuilder SetSamplerBuilder(SamplerBuilder samplerBuilder)
+        {
+            Guard.ThrowIfNull(samplerBuilder);
+
+            return this.ConfigureState((sp, state) => state.SetSamplerBuilder(samplerBuilder));
+        }
+
         internal TracerProviderBuilder SetSampler<T>()
             where T : Sampler
         {
             this.TryAddSingleton<T>();
-            this.ConfigureState((sp, state) => state.SetSampler(sp.GetRequiredService<T>()));
+            this.ConfigureState((sp, state) => state.ConfigureSampler(x => x.SetDefaultSampler(sp.GetRequiredService<T>())));
 
             return this;
         }
@@ -216,7 +230,7 @@ namespace OpenTelemetry.Trace
         {
             Guard.ThrowIfNull(sampler);
 
-            return this.ConfigureState((sp, state) => state.SetSampler(sampler));
+            return this.ConfigureState((sp, state) => state.ConfigureSampler(x => x.SetDefaultSampler(sampler)));
         }
 
         /// <summary>

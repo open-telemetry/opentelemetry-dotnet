@@ -19,6 +19,16 @@ OpenTelemetry.Logs.OpenTelemetryLoggerProvider.AddProcessor(OpenTelemetry.BasePr
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.ForceFlush(int timeoutMilliseconds = -1) -> bool
 OpenTelemetry.Logs.OpenTelemetryLoggerProvider.OpenTelemetryLoggerProvider() -> void
 OpenTelemetry.Logs.OpenTelemetryLoggerOptions.ConfigureResource(System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Logs.OpenTelemetryLoggerOptions!
+OpenTelemetry.Trace.ISamplerDetector
+OpenTelemetry.Trace.SamplerBuilder
+OpenTelemetry.Trace.SamplerBuilderExtensions
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureSampler(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Action<OpenTelemetry.Trace.SamplerBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.SetSamplerBuilder(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, OpenTelemetry.Trace.SamplerBuilder! samplerBuilder) -> OpenTelemetry.Trace.TracerProviderBuilder!
+~OpenTelemetry.Trace.ISamplerDetector.Detect() -> OpenTelemetry.Trace.Sampler
+~OpenTelemetry.Trace.SamplerBuilder.Build() -> OpenTelemetry.Trace.Sampler
+~OpenTelemetry.Trace.SamplerBuilder.Clear() -> OpenTelemetry.Trace.SamplerBuilder
+~OpenTelemetry.Trace.SamplerBuilder.RegisterDetector(OpenTelemetry.Trace.ISamplerDetector samplerDetector) -> OpenTelemetry.Trace.SamplerBuilder
+~OpenTelemetry.Trace.SamplerBuilder.SetDefaultSampler(OpenTelemetry.Trace.Sampler sampler) -> OpenTelemetry.Trace.SamplerBuilder
 ~OpenTelemetry.Trace.SamplingResult.TraceStateString.get -> string
 ~OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, string traceStateString) -> void
 ~OpenTelemetry.Trace.SamplingResult.SamplingResult(OpenTelemetry.Trace.SamplingDecision decision, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, object>> attributes, string traceStateString) -> void
@@ -50,3 +60,6 @@ static Microsoft.Extensions.DependencyInjection.TracerProviderBuilderServiceColl
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureResource(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Action<OpenTelemetry.Resources.ResourceBuilder!>! configure) -> OpenTelemetry.Trace.TracerProviderBuilder!
 OpenTelemetry.Metrics.MetricType.LongSumNonMonotonic = 138 -> OpenTelemetry.Metrics.MetricType
 OpenTelemetry.Metrics.MetricType.DoubleSumNonMonotonic = 141 -> OpenTelemetry.Metrics.MetricType
+~static OpenTelemetry.Trace.SamplerBuilder.CreateDefault() -> OpenTelemetry.Trace.SamplerBuilder
+~static OpenTelemetry.Trace.SamplerBuilder.CreateEmpty() -> OpenTelemetry.Trace.SamplerBuilder
+~static OpenTelemetry.Trace.SamplerBuilderExtensions.RegisterEnvironmentVariableDetector(this OpenTelemetry.Trace.SamplerBuilder samplerBuilder) -> OpenTelemetry.Trace.SamplerBuilder

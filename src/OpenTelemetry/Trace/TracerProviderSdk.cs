@@ -61,7 +61,7 @@ namespace OpenTelemetry.Trace
             }
 
             this.Resource = (state.ResourceBuilder ?? ResourceBuilder.CreateDefault()).Build();
-            this.sampler = state.Sampler ?? new ParentBasedSampler(new AlwaysOnSampler());
+            this.sampler = (state.SamplerBuilder ?? SamplerBuilder.CreateDefault()).Build();
             this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;
 
             bool legacyActivityWildcardMode = false;

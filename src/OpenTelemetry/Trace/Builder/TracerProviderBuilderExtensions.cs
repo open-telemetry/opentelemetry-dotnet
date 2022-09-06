@@ -83,6 +83,42 @@ namespace OpenTelemetry.Trace
         }
 
         /// <summary>
+        /// Modify the <see cref="SamplerBuilder"/> from which the Sampler associated with
+        /// this provider is built from in-place.
+        /// </summary>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <param name="configure">An action which modifies the provided <see cref="SamplerBuilder"/> in-place.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder ConfigureSampler(this TracerProviderBuilder tracerProviderBuilder, Action<SamplerBuilder> configure)
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            {
+                tracerProviderBuilderBase.ConfigureSampler(configure);
+            }
+
+            return tracerProviderBuilder;
+        }
+
+        /// <summary>
+        /// Sets the <see cref="SamplerBuilder"/> from which the Sampler associated with
+        /// this provider is built from. Overwrites currently set SamplerBuilder.
+        /// You should usually use <see cref="ConfigureSampler(TracerProviderBuilder, Action{SamplerBuilder})"/> instead
+        /// (call <see cref="SamplerBuilder.Clear"/> if desired).
+        /// </summary>
+        /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+        /// <param name="samplerBuilder"><see cref="SamplerBuilder"/> from which Resource will be built.</param>
+        /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
+        public static TracerProviderBuilder SetSamplerBuilder(this TracerProviderBuilder tracerProviderBuilder, SamplerBuilder samplerBuilder)
+        {
+            if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
+            {
+                tracerProviderBuilderBase.SetSamplerBuilder(samplerBuilder);
+            }
+
+            return tracerProviderBuilder;
+        }
+
+        /// <summary>
         /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
         /// this provider is built from. Overwrites currently set ResourceBuilder.
         /// You should usually use <see cref="ConfigureResource(TracerProviderBuilder, Action{ResourceBuilder})"/> instead
