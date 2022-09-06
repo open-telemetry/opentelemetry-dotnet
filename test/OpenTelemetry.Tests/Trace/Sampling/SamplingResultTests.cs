@@ -1,4 +1,4 @@
-// <copyright file="SamplingResultTest.cs" company="OpenTelemetry Authors">
+// <copyright file="SamplingResultTests.cs" company="OpenTelemetry Authors">
 // Copyright The OpenTelemetry Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +22,7 @@ using Xunit;
 
 namespace OpenTelemetry.Trace.Tests
 {
-    public class SamplingResultTest
+    public class SamplingResultTests
     {
         [Theory]
         [InlineData(SamplingDecision.Drop)]
