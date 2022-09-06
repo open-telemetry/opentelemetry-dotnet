@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.3.1
+
+Released 2022-Sep-06
+
+* Fixed an issue that can crash applications when using 1.3.0 of the exporter
+  with System.Diagnostics.DiagnosticSource 7.0+.
+  ([#3629](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3629))
+
 ## 1.3.0
 
 Released 2022-Jun-03
