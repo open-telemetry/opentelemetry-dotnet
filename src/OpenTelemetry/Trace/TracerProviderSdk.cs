@@ -219,7 +219,7 @@ namespace OpenTelemetry.Trace
             {
                 // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
                 listener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
-                    !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(options, this.sampler) : ActivitySamplingResult.None;
+                    !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(ref options, this.sampler) : ActivitySamplingResult.None;
                 this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
             }
 
@@ -380,7 +380,7 @@ namespace OpenTelemetry.Trace
         }
 
         private static ActivitySamplingResult ComputeActivitySamplingResult(
-            in ActivityCreationOptions<ActivityContext> options,
+            ref ActivityCreationOptions<ActivityContext> options,
             Sampler sampler)
         {
             var samplingParameters = new SamplingParameters(
@@ -391,9 +391,9 @@ namespace OpenTelemetry.Trace
                 options.Tags,
                 options.Links);
 
-            var shouldSample = sampler.ShouldSample(samplingParameters);
+            var samplingResult = sampler.ShouldSample(samplingParameters);
 
-            var activitySamplingResult = shouldSample.Decision switch
+            var activitySamplingResult = samplingResult.Decision switch
             {
                 SamplingDecision.RecordAndSample => ActivitySamplingResult.AllDataAndRecorded,
                 SamplingDecision.RecordOnly => ActivitySamplingResult.AllData,
@@ -402,9 +402,26 @@ namespace OpenTelemetry.Trace
 
             if (activitySamplingResult != ActivitySamplingResult.PropagationData)
             {
-                foreach (var att in shouldSample.Attributes)
+                foreach (var att in samplingResult.Attributes)
                 {
                     options.SamplingTags.Add(att.Key, att.Value);
+                }
+
+                // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler
+                // Spec requires clearing Tracestate if empty Tracestate is returned.
+                // Since .NET did not have this capability, it'll break
+                // existing samplers if we did that. So the following is
+                // adopted to remain spec-compliant and backward compat.
+                // The behavior is:
+                // if sampler returns null, its treated as if it has no intend
+                // to change Tracestate. Existing SamplingResult ctors will put null as default TraceStateString,
+                // so all existing samplers will get this behavior.
+                // if sampler returns non-null, then it'll be used as the
+                // new value for Tracestate
+                // A sampler can return string.Empty if it intends to clear the state.
+                if (samplingResult.TraceStateString != null)
+                {
+                    options = options with { TraceState = samplingResult.TraceStateString };
                 }
 
                 return activitySamplingResult;
@@ -492,6 +509,11 @@ namespace OpenTelemetry.Trace
                 foreach (var att in samplingResult.Attributes)
                 {
                     activity.SetTag(att.Key, att.Value);
+                }
+
+                if (samplingResult.TraceStateString != null)
+                {
+                    activity.TraceStateString = samplingResult.TraceStateString;
                 }
             }
         }

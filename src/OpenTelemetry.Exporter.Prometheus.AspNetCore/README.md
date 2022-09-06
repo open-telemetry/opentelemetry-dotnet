@@ -47,18 +47,13 @@ dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus.AspNetCore
 ### Step 3: Configure Prometheus Scraping Endpoint
 
 * Register Prometheus scraping middleware using the
-  `UseOpenTelemetryPrometheusScrapingEndpoint` extension:
+  `UseOpenTelemetryPrometheusScrapingEndpoint` extension method
+  on `IApplicationBuilder` :
 
     ```csharp
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-    {
-        app.UseOpenTelemetryPrometheusScrapingEndpoint();
-        app.UseRouting();
-        app.UseEndpoints(endpoints =>
-        {
-            endpoints.MapControllers();
-        });
-    }
+    var builder = WebApplication.CreateBuilder(args);
+    var app = builder.Build();
+    app.UseOpenTelemetryPrometheusScrapingEndpoint();
     ```
 
     Overloads of the `UseOpenTelemetryPrometheusScrapingEndpoint` extension are
@@ -66,17 +61,9 @@ dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus.AspNetCore
     function can be used:
 
     ```csharp
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-    {
-        app.UseOpenTelemetryPrometheusScrapingEndpoint(
+    app.UseOpenTelemetryPrometheusScrapingEndpoint(
             context => context.Request.Path == "/internal/metrics"
                 && context.Connection.LocalPort == 5067);
-        app.UseRouting();
-        app.UseEndpoints(endpoints =>
-        {
-            endpoints.MapControllers();
-        });
-    }
     ```
 
 ## Configuration

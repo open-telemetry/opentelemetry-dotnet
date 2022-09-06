@@ -88,8 +88,10 @@ Only for Maintainers.
 
  7. Open [Pack and publish to MyGet
     workflow](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/publish-packages-1.0.yml)
-    and manually trigger a build. At the end of this, MyGet will have the
-    packages. The package name will be the tag name used in Step 5.
+    and manually trigger a build after selecting the tag that was pushed in Step
+    6 (if you pushed both core and non-core tags, use any one of them). At the
+    end of the workflow run, the packages would be published to MyGet. The
+    package names will be suffixed with the tag names used in Step 1.
 
  8. Validate using MyGet packages. Basic sanity checks :)
 
