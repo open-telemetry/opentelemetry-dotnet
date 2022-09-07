@@ -30,7 +30,7 @@ public class Program
     {
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddSource("MyCompany.MyProduct.MyLibrary")
-            .ConfigureSampler(x => x.SetDefaultSampler(new AlwaysOnSampler()))
+            .ConfigureSampler(x => x.Clear().SetDefaultSampler(new AlwaysOnSampler()))
             .SetErrorStatusOnException()
             .AddConsoleExporter()
             .Build();
